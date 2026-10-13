@@ -7,6 +7,8 @@ const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
 const rooms=new Map();
 const artCache=new Map();
+const cardDetails=JSON.parse(fs.readFileSync(path.join(root,'public','cards.json'),'utf8'));
+
 const listeners=new Map();
 const waiting=new Map();
 const curated={"marvel:thanos":95,"marvel:galactus":99,"marvel:odin":95,"marvel:sentry":94,"marvel:silver surfer":93,"marvel:thor":88,"marvel:hulk":87,"marvel:scarlet witch":94,"marvel:doctor strange":91,"marvel:iron man":75,"marvel:spider-man":70,"marvel:captain america":61,"dc:the spectre":100,"dc:anti-monitor":99,"dc:doctor manhattan":99,"dc:darkseid":97,"dc:superman":92,"dc:batman":65,"dc:wonder woman":88,"dc:the flash":90,"lotr:eru ilúvatar":100,"lotr:morgoth":99,"lotr:sauron":95,"lotr:gandalf":87,"lotr:aragorn":70,"pokemon:arceus":100,"pokemon:mewtwo":94,"pokemon:rayquaza":94,"pokemon:pikachu":65};
@@ -71,28 +73,80 @@ if(url==='/api/rematch'){const{r,seat}=authorize(b);if(r.phase!=='finished')erro
 if(url==='/api/bot'){const universe=['pokemon','marvel','dc','lotr','mixed'].includes(b.universe)?b.universe:'mixed';const name=String(b.name||'Oyuncu').trim().slice(0,24);let id;do{id=code()}while(rooms.has(id));const t=token();const r={code:id,universe,cards:newCards(universe),round:0,phase:'auction',turn:0,deadline:Date.now()+20000,topBid:0,topSeat:null,players:[{name,token:t,credits:20,team:[]},{name:'Bilgisayar',token:token(),credits:20,team:[]}],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'bot'};rooms.set(id,r);return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/match'){const universe=['pokemon','marvel','dc','lotr','mixed'].includes(b.universe)?b.universe:'mixed';const name=String(b.name||'Oyuncu').trim().slice(0,24);for(const [key,item] of waiting){if(item.universe!==universe||Date.now()-item.created>60000)continue;const r=rooms.get(item.code);if(!r||r.players[1]){waiting.delete(key);continue;}const t=token();r.players[1]={name,token:t,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.mode='random';waiting.delete(key);publish(r);return{token:t,room:publicRoom(r,1)}}let id;do{id=code()}while(rooms.has(id));const t=token();const r={code:id,universe,cards:newCards(universe),round:0,phase:'matching',turn:0,deadline:null,topBid:0,topSeat:null,players:[{name,token:t,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'random'};rooms.set(id,r);waiting.set(id,{code:id,universe,created:Date.now()});return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/state'){const{r,seat}=authorize(b);return{room:publicRoom(r,seat)}}
-if(url==='/api/bid'){const{r,seat}=authorize(b);if(r.phase!=='auction')error('İhale aktif değil.');if(r.turn!==seat)error('Teklif sırası sende değil.');const amount=Number(b.amount);if(!Number.isInteger(amount)||amount<=r.topBid||amount>r.players[seat].credits)error('Teklif tutarı geçersiz.');r.topBid=amount;r.topSeat=seat;log(r,`${r.players[seat].name} ${amount} kredi teklif etti.`);const other=1-seat;if(r.players[other].credits<=amount){finishAuction(r);}else{r.turn=other;r.deadline=Date.now()+20000;}publish(r);return{room:publicRoom(r,seat)}}
-if(url==='/api/pass'){const{r,seat}=authorize(b);if(r.phase!=='auction'||r.turn!==seat)error('Şu an çekilemezsin.');if(r.topSeat===null){r.turn=1-seat;r.deadline=Date.now()+20000;log(r,r.players[seat].name+' pas geçti.');}else finishAuction(r);publish(r);return{room:publicRoom(r,seat)}}
+if(url==='/api/bid'){const{r,seat}=authorize(b);if(r.phase!=='auction')error('İhale aktif değil.');if(r.turn!==seat)error('Teklif sırası sende değil.');const amount=Number(b.amount);if(!Number.isInteger(amount)||amount<=r.topBid||amount>r.players[seat].credits)error('Teklif tutarı geçersiz.');r.topBid=amount;r.topSeat=seat;r.openingPassSeat=null;log(r,`${r.players[seat].name} ${amount} kredi teklif etti.`);const other=1-seat;if(r.players[other].credits<=amount){finishAuction(r);}else{r.turn=other;r.deadline=Date.now()+20000;}publish(r);return{room:publicRoom(r,seat)}}
+if(url==='/api/pass'){const{r,seat}=authorize(b);if(r.phase!=='auction'||r.turn!==seat)error('Şu an çekilemezsin.');if(r.topSeat===null){if(r.openingPassSeat===1-seat){log(r,'İki oyuncu da pas geçti. Kart atlandı.');r.round++;advanceRound(r);}else{r.openingPassSeat=seat;r.turn=1-seat;r.deadline=Date.now()+20000;log(r,r.players[seat].name+' pas geçti.');}}else finishAuction(r);publish(r);return{room:publicRoom(r,seat)}}
 error('Bilinmeyen işlem.',404)}
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml'};
+// Public encyclopedia thumbnails and Turkish character summaries. No image is fabricated.
+// Some characters have no verified illustration or Turkish encyclopedia entry.
+const characterHints={marvel:'Marvel Comics',dc:'DC Comics',lotr:'Tolkien',pokemon:'Pokémon'};
+const knownDescriptions={
+ 'marvel:thanos':'Thanos, Marvel evreninin en güçlü kozmik tehditlerinden biridir. Sonsuzluk Taşları ile evrenin kaderini değiştirmeye çalışır.',
+ 'marvel:iron man':'Tony Stark, gelişmiş zırhlar tasarlayan dahi bir mucit ve Avengers üyesidir.',
+ 'marvel:thor':'Thor, Asgardlı gök gürültüsü tanrısı ve güçlü bir Avengers üyesidir.',
+ 'marvel:hulk':'Bruce Banner, öfkelendiğinde olağanüstü güce sahip Hulk’a dönüşür.',
+ 'marvel:spider-man':'Peter Parker, örümcek benzeri güçlere ve güçlü bir sorumluluk duygusuna sahip kahramandır.',
+ 'marvel:scarlet witch':'Wanda Maximoff, gerçekliği değiştirebilen olağanüstü büyü güçlerine sahiptir.',
+ 'marvel:doctor strange':'Stephen Strange, mistik sanatları kullanarak dünyayı büyülü tehditlerden korur.',
+ 'marvel:galactus':'Galactus, yaşamını sürdürmek için gezegenlerin enerjisini tüketen kozmik bir varlıktır.',
+ 'dc:superman':'Kripton gezegeninden gelen Superman, uçuş ve üstün fiziksel güç gibi yeteneklere sahiptir.',
+ 'dc:batman':'Bruce Wayne, ileri teknoloji ve dedektiflik yetenekleriyle Gotham City’yi korur.',
+ 'dc:wonder woman':'Amazon savaşçısı Diana, olağanüstü güç ve savaş becerileriyle tanınır.',
+ 'dc:the flash':'Flash, Süper Hız Gücü sayesinde olağanüstü hızlarda hareket eder.',
+ 'dc:darkseid':'Darkseid, Apokolips’in hükümdarı ve DC evreninin en tehlikeli kozmik düşmanlarından biridir.',
+ 'dc:doctor manhattan':'Doctor Manhattan, maddeyi atomik düzeyde kontrol edebilen son derece güçlü bir varlıktır.',
+ 'dc:the spectre':'Spectre, ilahi intikamın doğaüstü temsilcisi olarak tasvir edilir.',
+ 'lotr:gandalf':'Gandalf, Orta Dünya’da özgür halklara yol gösteren güçlü bir büyücüdür.',
+ 'lotr:aragorn':'Aragorn, Gondor tahtının varisi ve Yüzük Savaşı’nın önde gelen liderlerindendir.',
+ 'lotr:sauron':'Sauron, Tek Yüzük’ü yaratan ve Orta Dünya’ya hükmetmeye çalışan Karanlık Lord’dur.',
+ 'lotr:frodo baggins':'Frodo, Tek Yüzük’ü Mordor’a götürmekle görevlendirilen Hobbit’tir.',
+ 'lotr:legolas':'Legolas, usta bir elf okçusu ve Yüzük Kardeşliği üyesidir.',
+ 'lotr:morgoth':'Morgoth, Tolkien mitolojisindeki ilk Karanlık Lord ve Sauron’un eski efendisidir.',
+ 'pokemon:pikachu':'Pikachu, elektrik türündeki Pokémon’lardan biridir ve elektrik saldırılarıyla tanınır.',
+ 'pokemon:charizard':'Charizard, ateş ve uçan türündeki güçlü bir Pokémon’dur.',
+ 'pokemon:mewtwo':'Mewtwo, genetik deneylerle yaratılmış güçlü bir psişik Pokémon’dur.',
+ 'pokemon:arceus':'Arceus, Pokémon mitolojisinde evrenin yaratılışıyla ilişkilendirilen efsanevi bir Pokémon’dur.'
+};
+const compactText=(raw)=>{const txt=String(raw||'').replace(/\s+/g,' ').trim();if(!txt)return null;const sentences=txt.match(/[^.!?]+[.!?]+/g);return (sentences?.slice(0,2).join(' ')||txt.slice(0,210)).slice(0,320).trim()};
+async function lookupCharacterInfo(universe,name){
+ const key=universe+':'+name.toLowerCase();
+ let image=null,source=null,description=cardDetails[key]?.description||knownDescriptions[key]||null;
+ const queries=[name+' '+characterHints[universe],name];
+ for(const lang of ['tr','en']){
+  if(image&&description)break;
+  try{
+   const apiUrl=new URL('https://'+lang+'.wikipedia.org/w/api.php');
+   apiUrl.searchParams.set('action','query');apiUrl.searchParams.set('generator','search');
+   apiUrl.searchParams.set('gsrsearch',queries[0]);apiUrl.searchParams.set('gsrlimit','6');
+   apiUrl.searchParams.set('prop','pageimages|info|extracts');apiUrl.searchParams.set('inprop','url');
+   apiUrl.searchParams.set('exintro','1');apiUrl.searchParams.set('explaintext','1');
+   apiUrl.searchParams.set('exsentences','2');apiUrl.searchParams.set('pithumbsize','600');
+   apiUrl.searchParams.set('format','json');
+   const response=await fetch(apiUrl,{headers:{'User-Agent':'HeroAuction/1.2 (character information; educational demo)'},signal:AbortSignal.timeout(6500)});
+   if(!response.ok)continue;
+   const payload=await response.json();const pages=Object.values(payload.query?.pages||{});
+   // Avoid attaching a completely unrelated search thumbnail to the character.
+   const norm=x=>String(x).toLocaleLowerCase('en').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+   const needle=norm(name);
+   const match=pages.find(p=>norm(p.title).includes(needle))||null;
+   if(!match)continue;
+   if(!image&&match.thumbnail?.source){image=match.thumbnail.source;source=match.fullurl||null;}
+   if(!description&&lang==='tr'&&match.extract)description=compactText(match.extract);
+  }catch{}
+ }
+ return {url:image,source,description:description||`${name}, ${({marvel:'Marvel',dc:'DC',lotr:'Yüzüklerin Efendisi',pokemon:'Pokémon'})[universe]} evrenindeki karakterlerden biridir. Ayrıntılı Türkçe tanıtım henüz eklenmedi.`};
+}
 const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data))};try{const url=new URL(req.url,'http://localhost');if(req.method==='GET'&&url.pathname==='/api/events'){const r=rooms.get((url.searchParams.get('code')||'').toUpperCase());const t=url.searchParams.get('token');const seat=r?.players.findIndex(p=>p&&p.token===t)??-1;if(!r||seat<0)return send(403,{error:'Yetkisiz'});res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-cache','Connection':'keep-alive','X-Accel-Buffering':'no'});res.write(`data: ${JSON.stringify(publicRoom(r,seat))}\n\n`);const clients=listeners.get(r.code)||new Set();clients.add({res,seat});listeners.set(r.code,clients);req.on('close',()=>{for(const c of clients)if(c.res===res)clients.delete(c)});return}
 if(req.method==='GET'&&url.pathname==='/api/art'){
-  const universe=url.searchParams.get('universe')||'';
-  const name=url.searchParams.get('name')||'';
-  if(!['marvel','dc','lotr'].includes(universe)||name.length>100||!catalogue.has(`${universe}:${name.toLowerCase()}`))return send(400,{error:'Geçersiz karakter'});
-  const cacheKey=universe+':'+name.toLowerCase();
-  if(!artCache.has(cacheKey)){
-    const hint=universe==='marvel'?' Marvel Comics':universe==='dc'?' DC Comics':' Tolkien';
-    try{
-      const q=new URL('https://en.wikipedia.org/w/api.php');
-      q.searchParams.set('action','query');q.searchParams.set('generator','search');q.searchParams.set('gsrsearch',name+hint);q.searchParams.set('gsrlimit','5');q.searchParams.set('prop','pageimages|info');q.searchParams.set('inprop','url');q.searchParams.set('pithumbsize','600');q.searchParams.set('format','json');q.searchParams.set('origin','*');
-      const response=await fetch(q,{headers:{'User-Agent':'HeroAuctionDemo/1.1 (illustration lookup)'},signal:AbortSignal.timeout(5500)});
-      const data=await response.json();const pages=Object.values(data.query?.pages||{});
-      const match=pages.find(x=>x.thumbnail?.source && x.title.toLowerCase().includes(name.toLowerCase())) || pages.find(x=>x.thumbnail?.source);
-      artCache.set(cacheKey,match?{url:match.thumbnail.source,source:match.fullurl||'https://en.wikipedia.org/',credit:'Wikimedia / Wikipedia'}:{url:null});
-    }catch{artCache.set(cacheKey,{url:null})}
-  }
-  return send(200,artCache.get(cacheKey));
+ const universe=url.searchParams.get('universe')||'';
+ const name=url.searchParams.get('name')||'';
+ if(!['marvel','dc','lotr','pokemon'].includes(universe)||name.length>100||!catalogue.has(`${universe}:${name.toLowerCase()}`))return send(400,{error:'Geçersiz karakter'});
+ const key=universe+':'+name.toLowerCase();
+ if(!artCache.has(key)){
+  const result=await lookupCharacterInfo(universe,name);
+  if(result.url)artCache.set(key,result);
+ }
+ return send(200,artCache.get(key));
 }
 if(req.method==='GET'&&url.pathname==='/api/info')return send(200,{catalogueCount:catalogue.size,counts:Object.fromEntries(['pokemon','marvel','dc','lotr'].map(k=>[k,[...catalogue.values()].filter(x=>x.universe===k).length]))});
 if(req.method==='POST'&&url.pathname.startsWith('/api/')){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>12000)error('İstek çok büyük.')}let body;try{body=JSON.parse(raw)}catch{error('Geçersiz JSON')}return send(200,await api(url.pathname,body))}
@@ -101,7 +155,7 @@ setInterval(()=>{for(const r of rooms.values()){
 if(r.phase==='matching'&&Date.now()-r.created>=60000){waiting.delete(r.code);r.players[1]={name:'Bilgisayar',token:token(),credits:20,team:[]};r.mode='bot';r.phase='auction';r.deadline=Date.now()+20000;publish(r);}
 if(r.phase!=='auction')continue;
 if(r.players[r.turn].credits<=r.topBid&&r.topSeat!==null){finishAuction(r);publish(r);continue;}
-if(r.mode==='bot'&&r.turn===1){const card=r.cards[r.round];const max=r.players[1].credits;const offer=r.topBid+1;const willBid=offer<=max && (offer<=2||Math.random()<0.45);if(willBid){r.topBid=offer;r.topSeat=1;if(r.players[0].credits<=offer)finishAuction(r);else{r.turn=0;r.deadline=Date.now()+20000;}}else if(r.topSeat!==null)finishAuction(r);else{r.turn=0;r.deadline=Date.now()+20000;}publish(r);continue;}
-if(r.deadline&&Date.now()>=r.deadline){if(r.topSeat!==null)finishAuction(r);else{r.turn=1-r.turn;r.deadline=Date.now()+20000;log(r,'Süre doldu: otomatik pas.');}publish(r);}
-}for(const [id,r]of rooms)if(Date.now()-r.created>24*3600_000){rooms.delete(id);listeners.delete(id)}},3600_000).unref();
+if(r.mode==='bot'&&r.turn===1){const card=r.cards[r.round];const max=r.players[1].credits;const offer=r.topBid+1;const willBid=offer<=max && (offer<=2||Math.random()<0.45);if(willBid){r.topBid=offer;r.topSeat=1;if(r.players[0].credits<=offer)finishAuction(r);else{r.turn=0;r.deadline=Date.now()+20000;}}else if(r.topSeat!==null)finishAuction(r);else if(r.openingPassSeat===0){log(r,'İki oyuncu da pas geçti. Kart atlandı.');r.round++;advanceRound(r);}else{r.openingPassSeat=1;r.turn=0;r.deadline=Date.now()+20000;}publish(r);continue;}
+if(r.deadline&&Date.now()>=r.deadline){if(r.topSeat!==null)finishAuction(r);else if(r.openingPassSeat===1-r.turn){log(r,'İki oyuncu da pas geçti. Kart atlandı.');r.round++;advanceRound(r);}else{r.openingPassSeat=r.turn;r.turn=1-r.turn;r.deadline=Date.now()+20000;log(r,'Süre doldu: otomatik pas.');}publish(r);}
+}for(const [id,r]of rooms)if(Date.now()-r.created>24*3600_000){rooms.delete(id);listeners.delete(id)}},500).unref();
 server.listen(PORT,'0.0.0.0',()=>console.log(`Hero Auction http://localhost:${PORT} | characters: ${catalogue.size}`));
