@@ -1,0 +1,260 @@
+{
+  "marvel:black widow": {
+    "description": "Natasha Romanoff, casusluk ve yakın dövüşte uzman bir Avengers üyesidir."
+  },
+  "marvel:hawkeye": {
+    "description": "Clint Barton, olağanüstü isabetli okçuluğuyla tanınan bir Avengers üyesidir."
+  },
+  "marvel:black panther": {
+    "description": "T’Challa, Wakanda kralı ve vibranyum teknolojisini kullanan Black Panther’dir."
+  },
+  "marvel:captain marvel": {
+    "description": "Carol Danvers, kozmik enerji kullanabilen güçlü bir süper kahramandır."
+  },
+  "marvel:vision": {
+    "description": "Vision, yapay zekâ kökenli ve madde yoğunluğunu değiştirebilen bir androiddir."
+  },
+  "marvel:loki": {
+    "description": "Loki, Asgard kökenli hile ve illüzyon ustasıdır."
+  },
+  "marvel:ultron": {
+    "description": "Ultron, insanlığı tehdit eden gelişmiş bir yapay zekâ düşmanıdır."
+  },
+  "marvel:magneto": {
+    "description": "Magneto, manyetik alanları kontrol edebilen güçlü bir mutanttır."
+  },
+  "marvel:wolverine": {
+    "description": "Logan, iyileşme yeteneği ve adamantiyum pençeleriyle tanınır."
+  },
+  "marvel:deadpool": {
+    "description": "Wade Wilson, olağanüstü iyileşme gücüne ve sıra dışı mizaha sahip bir paralı askerdir."
+  },
+  "marvel:storm": {
+    "description": "Ororo Munroe, hava olaylarını kontrol edebilen bir X-Men üyesidir."
+  },
+  "marvel:jean grey": {
+    "description": "Jean Grey, telepati ve telekinezi güçlerine sahip bir mutanttır."
+  },
+  "marvel:professor x": {
+    "description": "Charles Xavier, güçlü bir telepat ve X-Men ekibinin kurucusudur."
+  },
+  "marvel:silver surfer": {
+    "description": "Silver Surfer, kozmik güç kullanan ve uzayda yolculuk eden bir varlıktır."
+  },
+  "marvel:doctor doom": {
+    "description": "Victor von Doom, bilim ve büyüyü birleştiren Latveria hükümdarıdır."
+  },
+  "marvel:ghost rider": {
+    "description": "Ghost Rider, doğaüstü alevler ve kefaret güçleriyle tanınır."
+  },
+  "marvel:venom": {
+    "description": "Venom, bir insan konakla birleşen uzaylı simbiyotun oluşturduğu karakterdir."
+  },
+  "marvel:green goblin": {
+    "description": "Green Goblin, gelişmiş ekipman ve tehlikeli planlarıyla Spider-Man’in düşmanıdır."
+  },
+  "marvel:daredevil": {
+    "description": "Matt Murdock, gelişmiş duyularını kullanarak Hell’s Kitchen’da suçla savaşır."
+  },
+  "marvel:sentry": {
+    "description": "Sentry, olağanüstü güçleri ve karanlık yönüyle tanınan Marvel karakteridir."
+  },
+  "marvel:odin": {
+    "description": "Odin, Asgard’ın hükümdarı ve Thor’un babasıdır."
+  },
+  "marvel:hela": {
+    "description": "Hela, ölümle ilişkilendirilen güçlü bir Asgardlıdır."
+  },
+  "marvel:namor": {
+    "description": "Namor, Atlantis hükümdarı ve su altında yaşayan güçlü bir mutanttır."
+  },
+  "marvel:moon knight": {
+    "description": "Marc Spector, Mısır tanrısı Khonshu ile bağlantılı maskeli bir savaşçıdır."
+  },
+  "marvel:groot": {
+    "description": "Groot, bitki benzeri yapıya sahip ve kendini yenileyebilen bir uzaylıdır."
+  },
+  "marvel:rocket raccoon": {
+    "description": "Rocket, gelişmiş silahlar kullanan zeki bir uzaylı savaşçıdır."
+  },
+  "marvel:gamora": {
+    "description": "Gamora, usta bir savaşçı ve Galaksinin Koruyucuları üyesidir."
+  },
+  "marvel:kang": {
+    "description": "Kang, zaman yolculuğu teknolojisini kullanan tehlikeli bir fatih olarak bilinir."
+  },
+  "dc:aquaman": {
+    "description": "Arthur Curry, Atlantis kralı ve deniz canlılarıyla iletişim kurabilen bir kahramandır."
+  },
+  "dc:cyborg": {
+    "description": "Victor Stone, gelişmiş sibernetik sistemlere sahip bir kahramandır."
+  },
+  "dc:martian manhunter": {
+    "description": "J’onn J’onzz, telepati ve şekil değiştirme güçleri olan Marslı bir kahramandır."
+  },
+  "dc:green arrow": {
+    "description": "Oliver Queen, üstün okçuluk becerileriyle suçla savaşır."
+  },
+  "dc:black canary": {
+    "description": "Dinah Lance, dövüş ustalığı ve güçlü ses saldırısıyla tanınır."
+  },
+  "dc:shazam": {
+    "description": "Billy Batson, sihirli bir sözcükle güçlü bir süper kahramana dönüşür."
+  },
+  "dc:supergirl": {
+    "description": "Kara Zor-El, Kripton kökenli ve Superman’e benzer güçleri olan bir kahramandır."
+  },
+  "dc:nightwing": {
+    "description": "Dick Grayson, eski Robin ve Blüdhaven’ın çevik koruyucusudur."
+  },
+  "dc:red hood": {
+    "description": "Jason Todd, silah ve yakın dövüş konusunda uzman bir anti-kahramandır."
+  },
+  "dc:doctor fate": {
+    "description": "Doctor Fate, mistik miğferi sayesinde güçlü büyüler kullanır."
+  },
+  "dc:zatanna": {
+    "description": "Zatanna, sözlerini ters söyleyerek büyü yapan bir sihirbazdır."
+  },
+  "dc:john constantine": {
+    "description": "John Constantine, doğaüstü olayları araştıran kurnaz bir büyücüdür."
+  },
+  "dc:swamp thing": {
+    "description": "Swamp Thing, bitki yaşamıyla bağlantılı doğaüstü bir varlıktır."
+  },
+  "dc:anti-monitor": {
+    "description": "Anti-Monitor, çoklu evrenleri tehdit eden kozmik bir varlıktır."
+  },
+  "dc:lex luthor": {
+    "description": "Lex Luthor, üstün zekâsı ve kaynaklarıyla Superman’in başlıca düşmanıdır."
+  },
+  "dc:joker": {
+    "description": "Joker, Gotham’da kaos yaratan ve Batman’e meydan okuyan bir suçludur."
+  },
+  "dc:harley quinn": {
+    "description": "Harley Quinn, akrobatik dövüşü ve öngörülemez tavırlarıyla tanınır."
+  },
+  "dc:poison ivy": {
+    "description": "Poison Ivy, bitkiler ve toksinler üzerinde uzmanlaşmış bir karakterdir."
+  },
+  "dc:bane": {
+    "description": "Bane, üstün strateji ve fiziksel gücüyle Batman’i zorlayan bir düşmandır."
+  },
+  "dc:deathstroke": {
+    "description": "Slade Wilson, gelişmiş reflekslere sahip bir paralı askerdir."
+  },
+  "dc:black adam": {
+    "description": "Black Adam, antik büyüyle güç kazanmış güçlü bir anti-kahramandır."
+  },
+  "dc:doomsday": {
+    "description": "Doomsday, olağanüstü dayanıklılığıyla Superman’in en tehlikeli düşmanlarındandır."
+  },
+  "dc:brainiac": {
+    "description": "Brainiac, gezegenlerin bilgisini toplayan üstün zekâlı uzaylı bir tehdittir."
+  },
+  "dc:raven": {
+    "description": "Raven, karanlık büyü ve empati yetenekleri olan bir Teen Titans üyesidir."
+  },
+  "dc:starfire": {
+    "description": "Starfire, uçabilen ve enerji patlamaları yapabilen Tamaranlı bir kahramandır."
+  },
+  "lotr:samwise gamgee": {
+    "description": "Sam, Frodo’ya Mordor yolculuğunda sadakatle eşlik eden cesur bir Hobbit’tir."
+  },
+  "lotr:gimli": {
+    "description": "Gimli, baltasıyla savaşan bir cüce ve Yüzük Kardeşliği üyesidir."
+  },
+  "lotr:boromir": {
+    "description": "Boromir, Gondor’un savaşçısı ve Yüzük Kardeşliği’nin üyelerinden biridir."
+  },
+  "lotr:faramir": {
+    "description": "Faramir, Gondor’un soylu komutanı ve Boromir’in kardeşidir."
+  },
+  "lotr:galadriel": {
+    "description": "Galadriel, Lothlórien’in bilge ve güçlü elf hükümdarlarından biridir."
+  },
+  "lotr:elrond": {
+    "description": "Elrond, Ayrıkvadi’nin bilge elf efendisi ve Yüzük Savaşı’nın müttefikidir."
+  },
+  "lotr:arwen": {
+    "description": "Arwen, Elrond’un kızı ve Aragorn’un sevdiği elf prensesidir."
+  },
+  "lotr:éowyn": {
+    "description": "Éowyn, Rohanlı cesur bir savaşçıdır ve Pelennor Çayırları’nda savaşır."
+  },
+  "lotr:éomer": {
+    "description": "Éomer, Rohan süvarilerinin önde gelen komutanlarından biridir."
+  },
+  "lotr:théoden": {
+    "description": "Théoden, Yüzük Savaşı sırasında Rohan’ın kralıdır."
+  },
+  "lotr:saruman": {
+    "description": "Saruman, güce yenik düşerek Sauron’un tarafına kayan bir büyücüdür."
+  },
+  "lotr:gollum": {
+    "description": "Gollum, Tek Yüzük’ün etkisiyle değişmiş ve ona saplantıyla bağlanmış bir varlıktır."
+  },
+  "lotr:bilbo baggins": {
+    "description": "Bilbo, Tek Yüzük’ü bulan ve büyük bir maceraya çıkan Hobbit’tir."
+  },
+  "lotr:treebeard": {
+    "description": "Treebeard, Fangorn Ormanı’nın kadim Ent lideridir."
+  },
+  "lotr:smaug": {
+    "description": "Smaug, Erebor hazinesini ele geçiren devasa ateş püskürten ejderhadır."
+  },
+  "lotr:thorin oakenshield": {
+    "description": "Thorin, Erebor’u geri almak isteyen cüce kafilesinin lideridir."
+  },
+  "lotr:isildur": {
+    "description": "Isildur, Sauron’un elinden Tek Yüzük’ü alan Númenorlu hükümdardır."
+  },
+  "lotr:fingolfin": {
+    "description": "Fingolfin, Morgoth’a meydan okuyan cesur bir Noldor elf kralıdır."
+  },
+  "lotr:ungoliant": {
+    "description": "Ungoliant, karanlıkla beslenen kadim örümcek benzeri bir varlıktır."
+  },
+  "lotr:ancalagon": {
+    "description": "Ancalagon, Birinci Çağ’ın en korkulan kanatlı ejderhalarından biridir."
+  },
+  "lotr:shelob": {
+    "description": "Shelob, Cirith Ungol geçidinde yaşayan dev bir örümcektir."
+  },
+  "pokemon:bulbasaur": {
+    "description": "Bulbasaur, sırtındaki tohumla güneş ışığından enerji alan çimen ve zehir türü Pokémon’dur."
+  },
+  "pokemon:venusaur": {
+    "description": "Venusaur, sırtında büyük bir çiçek taşıyan çimen ve zehir türü Pokémon’dur."
+  },
+  "pokemon:charmander": {
+    "description": "Charmander, kuyruğundaki aleviyle tanınan ateş türü Pokémon’dur."
+  },
+  "pokemon:squirtle": {
+    "description": "Squirtle, kabuğuna çekilebilen ve su püskürten su türü Pokémon’dur."
+  },
+  "pokemon:blastoise": {
+    "description": "Blastoise, kabuğundaki güçlü su toplarıyla saldıran su türü Pokémon’dur."
+  },
+  "pokemon:gengar": {
+    "description": "Gengar, gölgelerde saklanan hayalet ve zehir türü Pokémon’dur."
+  },
+  "pokemon:eevee": {
+    "description": "Eevee, farklı koşullarda birçok evrime dönüşebilen normal tür Pokémon’dur."
+  },
+  "pokemon:snorlax": {
+    "description": "Snorlax, devasa gövdesi ve uzun uykularıyla bilinen normal tür Pokémon’dur."
+  },
+  "pokemon:dragonite": {
+    "description": "Dragonite, hızlı uçabilen ve büyük güce sahip ejderha ve uçan türü Pokémon’dur."
+  },
+  "pokemon:gyarados": {
+    "description": "Gyarados, öfkesi ve yıkıcı saldırılarıyla bilinen su ve uçan türü Pokémon’dur."
+  },
+  "pokemon:rayquaza": {
+    "description": "Rayquaza, gökyüzünde yaşayan efsanevi ejderha ve uçan türü Pokémon’dur."
+  },
+  "pokemon:mew": {
+    "description": "Mew, pek çok hareketi öğrenebilen nadir psişik tür Pokémon’dur."
+  }
+}

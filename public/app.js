@@ -1,6 +1,7 @@
 const $=id=>document.getElementById(id);
 let session=null,room=null,stream=null,world='mixed';
 const artMemo=new Map();
+const infoMemo=new Map();
 const emojis={pokemon:'⚡',marvel:'🦸',dc:'🦇',lotr:'💍'};
 const worldNames={pokemon:'POKÉMON',marvel:'MARVEL',dc:'DC',lotr:'YÜZÜKLERİN EFENDİSİ',mixed:'KARMA EVREN'};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -15,8 +16,8 @@ const stage=$('stage');if(['waiting','matching'].includes(r.phase)){stage.innerH
 if(r.phase==='finished'){const [a,b]=r.final;const winner=a.score===b.score?'BERABERE':a.score>b.score?a.name:b.name;stage.innerHTML=`<div class="card-art">🏆</div><h2>MAÇ SONUCU</h2><div class="results"><div>${esc(a.name)}<strong>${a.score}</strong><small>Toplam puan</small></div><div>${esc(b.name)}<strong>${b.score}</strong><small>Toplam puan</small></div></div><p class="winner">${a.score===b.score?'BERABERE!':esc(winner)+' KAZANDI!'}</p><p class="status">${Math.abs(a.score-b.score)} puan fark · Kalan her kredi için +10 bonus dahildir.</p><div class="final-teams">${[a,b].map(p=>`<section class="final-team"><h3>${esc(p.name)}</h3>${p.team.map(c=>`<div class="final-hero"><span>${esc(c.name)}</span><b>${c.power}/100</b></div>`).join('')}<div class="final-hero"><span>Kalan kredi bonusu (${p.credits} × 10)</span><b>+${p.credits*10}</b></div><div class="final-hero total"><span>GENEL TOPLAM</span><b>${p.score}</b></div></section>`).join('')}</div><p class="status">Seri: ${r.series[0]} - ${r.series[1]}</p><div class="controls"><button class="primary" id="rematch">AYNI RAKİPLE TEKRAR OYNA</button></div><p class="status">${r.rematch[r.me]?'Rakibin onayı bekleniyor.':'Rövanş için aşağıdan evren seç.'}</p><select id="rematchworld"><option value="mixed">Karma</option><option value="pokemon">Pokémon</option><option value="marvel">Marvel</option><option value="dc">DC</option><option value="lotr">Yüzüklerin Efendisi</option></select>`;$('rematch').onclick=()=>act('/api/rematch',{universe:$('rematchworld').value});return}
 const card=r.card;const canBid=r.turn===r.me;const min=r.topBid+1;const max=r.players[r.me].credits;const pid=pokemonId(card.name);const art=card.universe==='pokemon'&&pid?`<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pid}.png" onerror="this.style.display='none'" alt="${esc(card.name)}">`:`<div class="hero-art-placeholder">${emojis[card.universe]}<small>Görsel aranıyor…</small></div>`;
 const timer=`<p class="status" id="turntimer">⏱ ${Math.max(0,Math.ceil((r.deadline-Date.now())/1000))} saniye</p>`;const status=r.topBid?`En yüksek teklif: <b>${r.topBid} kredi</b> · ${esc(r.players[r.topSeat].name)}`:'Henüz teklif yok';
-stage.innerHTML=`<div class="eyebrow">KART ${r.round+1} / 10</div><div class="card-art">${art}</div><div class="card-name">${esc(card.name)}</div><span class="tag">${worldNames[card.universe]} · 🔒 GÜÇ GİZLİ</span><p class="status">${status}</p>${timer}<p class="status">${esc(card.description||"Bu karakter kendi evrenindeki yetenekleriyle tanınır.")}</p>${canBid&&max>=min?`<div class="big-bid" id="bidview">${min} KREDİ</div><div class="controls"><button id="minusbid" type="button">−</button><input id="bidrange" class="range" type="range" min="${min}" max="${max}" value="${min}" step="1"><button id="plusbid" type="button">+</button></div><div class="controls"><button class="primary" id="bidbutton">${r.topBid?'TEKLİFİ ARTIR':'AÇILIŞ TEKLİFİ VER'} →</button><button class="danger" id="passbutton">PAS</button></div>`:canBid?'<p class="status">Bütçen artırmaya yetmiyor. İhale otomatik kapanıyor.</p>':`<p class="status">⏳ Teklif sırası: <b>${esc(r.players[r.turn].name)}</b><br>Arkadaşının kararını bekle.</p>`}`;
-if(card.universe!=='pokemon')loadHeroArt(card);
+stage.innerHTML=`<div class="eyebrow">KART ${r.round+1} / 10</div><div class="card-art">${art}</div><div class="card-name">${esc(card.name)}</div><span class="tag">${worldNames[card.universe]} · 🔒 GÜÇ GİZLİ</span><p class="status">${status}</p>${timer}<p class="status hero-description" id="hero-description">${esc(card.description||"Karakter bilgisi yükleniyor…")}</p>${canBid&&max>=min?`<div class="bid-stepper"><button id="minusbid" type="button" aria-label="Teklifi azalt">−</button><div class="big-bid" id="bidview">${min} KREDİ</div><button id="plusbid" type="button" aria-label="Teklifi artır">+</button></div><input id="bidrange" class="range" type="range" min="${min}" max="${max}" value="${min}" step="1"><div class="controls"><button class="primary" id="bidbutton">${r.topBid?'TEKLİFİ ARTIR':'AÇILIŞ TEKLİFİ VER'} →</button><button class="danger" id="passbutton">PAS</button></div>`:canBid?'<p class="status">Bütçen artırmaya yetmiyor. İhale otomatik kapanıyor.</p>':`<p class="status">⏳ Teklif sırası: <b>${esc(r.players[r.turn].name)}</b><br>Arkadaşının kararını bekle.</p>`}`;
+loadHeroInfo(card);
 if(canBid&&max>=min){$('bidrange').oninput=e=>$('bidview').textContent=e.target.value+' KREDİ';$('bidbutton').onclick=()=>act('/api/bid',{amount:Number($('bidrange').value)});$('minusbid').onclick=()=>{const el=$('bidrange');el.value=Math.max(min,Number(el.value)-1);el.oninput({target:el})};$('plusbid').onclick=()=>{const el=$('bidrange');el.value=Math.min(max,Number(el.value)+1);el.oninput({target:el})};$('passbutton').onclick=()=>act('/api/pass',{})}
 }
 // PokeAPI species are indexed by national Pokédex number; name mapping is loaded lazily.
@@ -33,13 +34,23 @@ $('share').onclick=async()=>{try{await navigator.clipboard.writeText(room.code);
 $('leave').onclick=()=>{if(!confirm('Bu cihazda odadan ayrılmak istiyor musun?'))return;localStorage.removeItem('hero-auction-session');stream?.close();session=null;room=null;$('home').hidden=false;$('game').hidden=true};
 (async()=>{try{const r=await fetch('/api/info');const j=await r.json();$('catalogue').textContent=`Şu anda ${j.catalogueCount} karakter hazır · Pokémon ${j.counts.pokemon} · Marvel ${j.counts.marvel} · DC ${j.counts.dc} · Yüzüklerin Efendisi ${j.counts.lotr}`;}catch{}try{session=JSON.parse(localStorage.getItem('hero-auction-session'));if(session){const j=await post('/api/state',session);show(j.room);connect()}}catch{localStorage.removeItem('hero-auction-session');session=null}loadPokeMap()})();
 
-async function loadHeroArt(card){
+async function loadHeroInfo(card){
  const key=card.universe+':'+card.name;
- if(!artMemo.has(key)){
-  try{const r=await fetch('/api/art?universe='+encodeURIComponent(card.universe)+'&name='+encodeURIComponent(card.name));artMemo.set(key,await r.json())}catch{artMemo.set(key,{url:null})}
+ if(!infoMemo.has(key)){
+  try{const response=await fetch('/api/art?universe='+encodeURIComponent(card.universe)+'&name='+encodeURIComponent(card.name));if(!response.ok)throw Error('Karakter bilgisi alınamadı');infoMemo.set(key,await response.json())}
+  catch{infoMemo.set(key,{url:null,description:null})}
  }
- if(!room||room.phase!=='auction'||room.card?.name!==card.name)return;
+ if(!room||room.phase!=='auction'||room.card?.name!==card.name||room.card?.universe!==card.universe)return;
+ const data=infoMemo.get(key);
+ const desc=document.getElementById('hero-description');
+ if(desc)desc.textContent=data?.description||card.description||card.name+' hakkında doğrulanmış kısa açıklama henüz eklenmedi.';
  const target=document.querySelector('#stage .card-art');if(!target)return;
- const data=artMemo.get(key);
- if(data?.url){target.innerHTML='';const img=document.createElement('img');img.src=data.url;img.alt=card.name;img.onerror=()=>{target.textContent=emojis[card.universe]};target.append(img);if(data.source){const link=document.createElement('a');link.href=data.source;link.target='_blank';link.rel='noopener noreferrer';link.className='art-credit';link.textContent='Görsel kaynağı';target.append(link)}}else target.innerHTML='<div class="hero-art-placeholder">'+emojis[card.universe]+'<small>Görsel bulunamadı</small></div>';
+ if(data?.url){
+  target.innerHTML='';const img=document.createElement('img');img.src=data.url;img.alt=card.name;
+  img.onerror=()=>{target.innerHTML='<div class="hero-art-placeholder">'+emojis[card.universe]+'<small>Görsel yüklenemedi</small></div>'};
+  target.append(img);
+  if(data.source){const link=document.createElement('a');link.href=data.source;link.target='_blank';link.rel='noopener noreferrer';link.className='art-credit';link.textContent='Görsel kaynağı';target.append(link)}
+ }else if(card.universe!=='pokemon'||!pokemonId(card.name)){
+  target.innerHTML='<div class="hero-art-placeholder">'+emojis[card.universe]+'<small>Doğrulanmış görsel yok</small></div>';
+ }
 }
