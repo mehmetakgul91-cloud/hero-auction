@@ -1,0 +1,22 @@
+name: Audit character image coverage
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tools/audit-remote-images.mjs'
+      - '.github/workflows/audit-character-images.yml'
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tools/audit-remote-images.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: character-image-audit
+          path: tools/remote-image-audit.json
