@@ -3,6 +3,7 @@ import path from 'node:path';
 const root=process.cwd(), out=path.join(root,'public','images','pokemon');
 const cardsPath=path.join(root,'public','cards.json');
 const statTr={hp:'dayanıklılığı',attack:'fiziksel saldırısı',defense:'savunması','special-attack':'özel saldırısı','special-defense':'özel savunması',speed:'hızı'};
+const typeTr={normal:'Normal',fire:'Ateş',water:'Su',electric:'Elektrik',grass:'Çimen',ice:'Buz',fighting:'Dövüş',poison:'Zehir',ground:'Yer',flying:'Uçan',psychic:'Psişik',bug:'Böcek',rock:'Kaya',ghost:'Hayalet',dragon:'Ejderha',dark:'Karanlık',steel:'Çelik',fairy:'Peri'};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function getJson(url){for(let i=0;i<4;i++){try{const r=await fetch(url,{signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error('HTTP '+r.status);return await r.json()}catch(e){if(i===3)throw e;await sleep(800*(i+1))}}}
 async function getPng(url){for(let i=0;i<4;i++){try{const r=await fetch(url,{signal:AbortSignal.timeout(25000)});if(!r.ok)throw Error('HTTP '+r.status);const b=Buffer.from(await r.arrayBuffer());if(b.length<200||b.subarray(0,8).toString('hex')!=='89504e470d0a1a0a')throw Error('Geçersiz PNG');return b}catch(e){if(i===3)throw e;await sleep(800*(i+1))}}}
@@ -20,10 +21,10 @@ for(let n=start;n<=end;n++){
   const name=s.name.split('-').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
   const stats=p.stats||[],total=stats.reduce((sum,x)=>sum+x.base_stat,0);
   const top=[...stats].sort((a,b)=>b.base_stat-a.base_stat)[0];
-  const power=s.is_legendary||s.is_mythical?Math.max(86,Math.min(98,Math.round(15+(total-180)*83/540))):Math.max(15,Math.min(98,Math.round(15+(total-180)*83/540)));
+  const power=Math.max(15,Math.min(98,Math.round(15+(total-180)*83/540)));
   const id='pokemon:'+name.toLowerCase();
   const previous=cards[id]||{};
-  cards[id]={...previous,name,image:'/images/pokemon/'+n+'.png',description:name+', '+(s.genera?.find(x=>x.language.name==='en')?.genus||'Pokémon')+' türündedir. '+(statTr[top?.stat?.name]||'Yetenekleri')+' öne çıkar; toplam temel istatistiği '+total+'.',power:n===493?100:power,powerStatus:'stats-based',pokedex:n,statsTotal:total,source:'PokéAPI official-artwork'};
+  cards[id]={...previous,name,image:'/images/pokemon/'+n+'.png',description:name+', '+p.types.map(x=>typeTr[x.type.name]||x.type.name).join(' ve ')+' türündeki bir Pokémon’dur. '+(statTr[top?.stat?.name]||'Yetenekleri')+' öne çıkar; temel istatistik toplamı '+total+' puandır.',power:n===493?100:power,powerStatus:'stats-based',pokedex:n,statsTotal:total,source:'PokéAPI official-artwork'};
   ok++;
  }catch(e){fail.push({number:n,error:e.message})}
  if(n%25===0||n===end)console.log('İlerleme',n,'/',end,'başarılı',ok,'hatalı',fail.length);
