@@ -11190,5 +11190,245 @@
     "description": "Ray Palmer, boyutunu atom ölçeğine kadar küçültebilen bilim insanıdır.",
     "power": 74,
     "powerStatus": "curated"
+  },
+  "dc:firestorm": {
+    "name": "Firestorm",
+    "description": "Firestorm, maddeyi atomik düzeyde dönüştürebilen nükleer enerji temelli kahramandır.",
+    "power": 87,
+    "powerStatus": "curated"
+  },
+  "dc:hawkman": {
+    "name": "Hawkman",
+    "description": "Hawkman, Nth metal ekipmanlarıyla uçabilen ve eski savaş tekniklerini kullanan kahramandır.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "dc:hawkgirl": {
+    "name": "Hawkgirl",
+    "description": "Hawkgirl, Nth metal kanatları ve gürzüyle savaşan kanatlı kahramandır.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "dc:vixen": {
+    "name": "Vixen",
+    "description": "Mari McCabe, Tantu Totemi aracılığıyla hayvanların yeteneklerini kullanabilir.",
+    "power": 75,
+    "powerStatus": "curated"
+  },
+  "dc:plastic man": {
+    "name": "Plastic Man",
+    "description": "Patrick O'Brian, bedenini olağanüstü ölçüde esnetip farklı biçimlere sokabilir.",
+    "power": 82,
+    "powerStatus": "curated"
+  },
+  "dc:metamorpho": {
+    "name": "Metamorpho",
+    "description": "Rex Mason, bedenini çeşitli element ve kimyasal bileşiklere dönüştürebilir.",
+    "power": 79,
+    "powerStatus": "curated"
+  },
+  "dc:red tornado": {
+    "name": "Red Tornado",
+    "description": "Red Tornado, rüzgâr ve hortumları kontrol edebilen gelişmiş bir androiddir.",
+    "power": 81,
+    "powerStatus": "curated"
+  },
+  "dc:orion": {
+    "name": "Orion",
+    "description": "Orion, Yeni Tanrılar'dan biridir ve Apokolips güçlerine karşı savaşır.",
+    "power": 92,
+    "powerStatus": "curated"
+  },
+  "dc:mister miracle": {
+    "name": "Mister Miracle",
+    "description": "Scott Free, olağanüstü kaçış yetenekleri ve Yeni Tanrılar teknolojisiyle tanınır.",
+    "power": 78,
+    "powerStatus": "curated"
+  },
+  "dc:big barda": {
+    "name": "Big Barda",
+    "description": "Big Barda, Apokolips'te eğitilmiş üstün güçlü bir Yeni Tanrı savaşçısıdır.",
+    "power": 85,
+    "powerStatus": "curated"
+  },
+  "dc:highfather": {
+    "name": "Highfather",
+    "description": "Highfather, New Genesis'in lideri ve kozmik bilgelik sahibi Yeni Tanrı'dır.",
+    "power": 96,
+    "powerStatus": "curated"
+  },
+  "dc:steppenwolf": {
+    "name": "Steppenwolf",
+    "description": "Steppenwolf, Apokolips ordularına komuta eden güçlü bir Yeni Tanrı savaşçısıdır.",
+    "power": 88,
+    "powerStatus": "curated"
+  },
+  "dc:granny goodness": {
+    "name": "Granny Goodness",
+    "description": "Granny Goodness, Apokolips'teki acımasız eğitim kurumlarını yöneten Darkseid hizmetkârıdır.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "dc:lobo": {
+    "name": "Lobo",
+    "description": "Lobo, üstün güç ve iyileşme yeteneklerine sahip uzaylı ödül avcısıdır.",
+    "power": 90,
+    "powerStatus": "curated"
+  },
+  "dc:parasite": {
+    "name": "Parasite",
+    "description": "Parasite, dokunduğu canlıların enerjisini ve güçlerini emebilen Superman düşmanıdır.",
+    "power": 84,
+    "powerStatus": "curated"
+  },
+  "dc:metallo": {
+    "name": "Metallo",
+    "description": "John Corben, kriptonit enerji kaynağı kullanan sibernetik Superman düşmanıdır.",
+    "power": 78,
+    "powerStatus": "curated"
+  },
+  "dc:bizarro": {
+    "name": "Bizarro",
+    "description": "Bizarro, Superman'in bozulmuş bir benzeri olarak olağanüstü fiziksel güçlere sahiptir.",
+    "power": 89,
+    "powerStatus": "curated"
+  },
+  "dc:solomon grundy": {
+    "name": "Solomon Grundy",
+    "description": "Solomon Grundy, tekrar tekrar dirilen ve olağanüstü dayanıklılığa sahip ölümsüz düşmandır.",
+    "power": 79,
+    "powerStatus": "curated"
+  },
+  "dc:clayface": {
+    "name": "Clayface",
+    "description": "Clayface, çamur benzeri bedenini farklı insan ve nesne biçimlerine sokabilir.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "dc:man-bat": {
+    "name": "Man-Bat",
+    "description": "Kirk Langstrom, deneysel serum nedeniyle yarasa benzeri güçlü bir yaratığa dönüşür.",
+    "power": 66,
+    "powerStatus": "curated"
+  },
+  "dc:killer croc": {
+    "name": "Killer Croc",
+    "description": "Waylon Jones, sürüngen benzeri derisi ve üstün gücüyle tanınan Gotham suçlusudur.",
+    "power": 66,
+    "powerStatus": "curated"
+  },
+  "dc:calendar man": {
+    "name": "Calendar Man",
+    "description": "Julian Day, suçlarını takvim tarihleri ve özel günler etrafında planlayan Gotham suçlusudur.",
+    "power": 49,
+    "powerStatus": "curated"
+  },
+  "dc:huntress": {
+    "name": "Huntress",
+    "description": "Helena Bertinelli, arbalet ve yakın dövüş yetenekleriyle Gotham'da suçla mücadele eder.",
+    "power": 67,
+    "powerStatus": "curated"
+  },
+  "dc:question": {
+    "name": "Question",
+    "description": "Vic Sage, yüzsüz maskesiyle tanınan araştırmacı ve usta dedektiftir.",
+    "power": 64,
+    "powerStatus": "curated"
+  },
+  "dc:wildcat": {
+    "name": "Wildcat",
+    "description": "Ted Grant, boks ustalığıyla genç kahramanları eğiten deneyimli savaşçıdır.",
+    "power": 65,
+    "powerStatus": "curated"
+  },
+  "dc:stargirl": {
+    "name": "Stargirl",
+    "description": "Courtney Whitmore, Kozmik Asa'nın enerjisini kullanan genç süper kahramandır.",
+    "power": 79,
+    "powerStatus": "curated"
+  },
+  "dc:power girl": {
+    "name": "Power Girl",
+    "description": "Kara Zor-L, farklı bir evrenden gelen ve Kriptonlu güçleri taşıyan kahramandır.",
+    "power": 91,
+    "powerStatus": "curated"
+  },
+  "dc:jay garrick": {
+    "name": "Jay Garrick",
+    "description": "Jay Garrick, altın çağın Flash'ı olarak bilinen deneyimli hızlı kahramandır.",
+    "power": 85,
+    "powerStatus": "curated"
+  },
+  "dc:alan scott": {
+    "name": "Alan Scott",
+    "description": "Alan Scott, mistik yeşil alev gücüyle çalışan yüzüğünü kullanan kahramandır.",
+    "power": 86,
+    "powerStatus": "curated"
+  },
+  "dc:jessica cruz": {
+    "name": "Jessica Cruz",
+    "description": "Jessica Cruz, güçlü iradesiyle Green Lantern yüzüğünü kullanan kahramandır.",
+    "power": 85,
+    "powerStatus": "curated"
+  },
+  "dc:john stewart": {
+    "name": "John Stewart",
+    "description": "John Stewart, Green Lantern Corps üyesi ve eski deniz piyadesi mimardır.",
+    "power": 87,
+    "powerStatus": "curated"
+  },
+  "dc:hal jordan": {
+    "name": "Hal Jordan",
+    "description": "Hal Jordan, Green Lantern Corps'un en tanınmış ve güçlü üyelerindendir.",
+    "power": 89,
+    "powerStatus": "curated"
+  },
+  "dc:kyle rayner": {
+    "name": "Kyle Rayner",
+    "description": "Kyle Rayner, hayal gücüyle enerji yapıları oluşturan Green Lantern kahramanıdır.",
+    "power": 90,
+    "powerStatus": "curated"
+  },
+  "dc:guy gardner": {
+    "name": "Guy Gardner",
+    "description": "Guy Gardner, sert mizacı ve güçlü iradesiyle tanınan Green Lantern üyesidir.",
+    "power": 85,
+    "powerStatus": "curated"
+  },
+  "dc:barry allen": {
+    "name": "Barry Allen",
+    "description": "Barry Allen, Speed Force bağlantısıyla zaman ve boyutlar arasında koşabilen Flash'tır.",
+    "power": 91,
+    "powerStatus": "curated"
+  },
+  "dc:wally west": {
+    "name": "Wally West",
+    "description": "Wally West, Speed Force ile son derece yüksek hızlara ulaşabilen Flash'tır.",
+    "power": 94,
+    "powerStatus": "curated"
+  },
+  "dc:impulse": {
+    "name": "Impulse",
+    "description": "Bart Allen, gelecekle bağlantılı ve olağanüstü hızlı genç kahramandır.",
+    "power": 83,
+    "powerStatus": "curated"
+  },
+  "dc:donna troy": {
+    "name": "Donna Troy",
+    "description": "Donna Troy, Amazonlarla bağlantılı üstün güçlü bir Titans üyesidir.",
+    "power": 85,
+    "powerStatus": "curated"
+  },
+  "dc:cassandra cain": {
+    "name": "Cassandra Cain",
+    "description": "Cassandra Cain, beden dilini okuyabilen ve yakın dövüşte üstün yetenekli Batgirl'dür.",
+    "power": 71,
+    "powerStatus": "curated"
+  },
+  "dc:stephanie brown": {
+    "name": "Stephanie Brown",
+    "description": "Stephanie Brown, Spoiler ve Batgirl kimlikleriyle Gotham'da suçla savaşır.",
+    "power": 65,
+    "powerStatus": "curated"
   }
 }
