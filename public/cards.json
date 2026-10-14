@@ -10710,5 +10710,239 @@
     "description": "Cain Marko, Cyttorak'ın mistik gücüyle durdurulması son derece zor bir savaşçıya dönüşür.",
     "power": 90,
     "powerStatus": "curated"
+  },
+  "marvel:kitty pryde": {
+    "name": "Kitty Pryde",
+    "description": "Kitty Pryde, bedenini katı maddelerin içinden geçirebilen bir X-Men mutantıdır.",
+    "power": 74,
+    "powerStatus": "curated"
+  },
+  "marvel:iceman": {
+    "name": "Iceman",
+    "description": "Bobby Drake, sıcaklığı düşürerek buz oluşturabilen ve bedenini buz biçimine dönüştürebilen mutanttır.",
+    "power": 88,
+    "powerStatus": "curated"
+  },
+  "marvel:angel": {
+    "name": "Angel",
+    "description": "Warren Worthington III, kanatlarıyla uçabilen ve X-Men ekibinde savaşan mutanttır.",
+    "power": 69,
+    "powerStatus": "curated"
+  },
+  "marvel:bishop": {
+    "name": "Bishop",
+    "description": "Lucas Bishop, enerji saldırılarını emip yeniden yönlendirebilen gelecek kökenli mutanttır.",
+    "power": 77,
+    "powerStatus": "curated"
+  },
+  "marvel:cable": {
+    "name": "Cable",
+    "description": "Nathan Summers, telekinezi ve gelişmiş silahlar kullanan gelecekten gelen savaşçıdır.",
+    "power": 83,
+    "powerStatus": "curated"
+  },
+  "marvel:domino": {
+    "name": "Domino",
+    "description": "Domino, olasılıkları lehine etkileyen şans gücüne sahip mutant bir paralı askerdir.",
+    "power": 68,
+    "powerStatus": "curated"
+  },
+  "marvel:black bolt": {
+    "name": "Black Bolt",
+    "description": "Black Bolt, son derece yıkıcı ses gücüyle tanınan Inhuman hükümdarıdır.",
+    "power": 92,
+    "powerStatus": "curated"
+  },
+  "marvel:medusa": {
+    "name": "Medusa",
+    "description": "Medusa, olağanüstü güçlü ve hareketli saçlarını kontrol edebilen Inhuman kraliçesidir.",
+    "power": 75,
+    "powerStatus": "curated"
+  },
+  "marvel:quicksilver": {
+    "name": "Quicksilver",
+    "description": "Pietro Maximoff, olağanüstü hızlarda hareket edebilen mutant kökenli kahramandır.",
+    "power": 84,
+    "powerStatus": "curated"
+  },
+  "marvel:america chavez": {
+    "name": "America Chavez",
+    "description": "America Chavez, boyutlar arasında geçit açabilen ve üstün fiziksel güce sahip kahramandır.",
+    "power": 84,
+    "powerStatus": "curated"
+  },
+  "marvel:ms marvel": {
+    "name": "Ms Marvel",
+    "description": "Kamala Khan, bedenini esnetme ve biçimlendirme güçleriyle tanınan genç kahramandır.",
+    "power": 71,
+    "powerStatus": "curated"
+  },
+  "marvel:iron fist": {
+    "name": "Iron Fist",
+    "description": "Danny Rand, chi enerjisini yumruğunda yoğunlaştırarak güçlü darbeler vurabilen dövüşçüdür.",
+    "power": 72,
+    "powerStatus": "curated"
+  },
+  "marvel:luke cage": {
+    "name": "Luke Cage",
+    "description": "Luke Cage, kurşunlara dayanıklı derisi ve üstün fiziksel gücüyle Harlem'i korur.",
+    "power": 75,
+    "powerStatus": "curated"
+  },
+  "marvel:jessica jones": {
+    "name": "Jessica Jones",
+    "description": "Jessica Jones, üstün güç ve dayanıklılığa sahip özel dedektiftir.",
+    "power": 69,
+    "powerStatus": "curated"
+  },
+  "marvel:elektra": {
+    "name": "Elektra",
+    "description": "Elektra Natchios, sai kullanan ve yakın dövüşte uzman bir suikastçıdır.",
+    "power": 66,
+    "powerStatus": "curated"
+  },
+  "marvel:bullseye": {
+    "name": "Bullseye",
+    "description": "Bullseye, sıradan nesneleri bile ölümcül isabetle fırlatabilen kiralık katildir.",
+    "power": 61,
+    "powerStatus": "curated"
+  },
+  "marvel:red skull": {
+    "name": "Red Skull",
+    "description": "Johann Schmidt, HYDRA ile bağlantılı ve Captain America'nın başlıca düşmanlarından biridir.",
+    "power": 60,
+    "powerStatus": "curated"
+  },
+  "marvel:taskmaster": {
+    "name": "Taskmaster",
+    "description": "Taskmaster, gördüğü fiziksel hareketleri taklit edebilen son derece yetenekli savaşçıdır.",
+    "power": 73,
+    "powerStatus": "curated"
+  },
+  "marvel:abomination": {
+    "name": "Abomination",
+    "description": "Emil Blonsky, gamma kaynaklı dönüşümüyle Hulk'a rakip olabilecek güce ulaşır.",
+    "power": 84,
+    "powerStatus": "curated"
+  },
+  "marvel:enchantress": {
+    "name": "Enchantress",
+    "description": "Amora, güçlü büyü ve zihin etkileme yetenekleri kullanan Asgardlı büyücüdür.",
+    "power": 87,
+    "powerStatus": "curated"
+  },
+  "marvel:mephisto": {
+    "name": "Mephisto",
+    "description": "Mephisto, ruhlarla pazarlık yapan ve kendi boyutunda büyük güç kullanan şeytani varlıktır.",
+    "power": 96,
+    "powerStatus": "curated"
+  },
+  "marvel:modok": {
+    "name": "MODOK",
+    "description": "MODOK, ileri teknoloji ve psişik yeteneklerle donatılmış büyük başlı bir süper kötüdür.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "marvel:kraven": {
+    "name": "Kraven",
+    "description": "Sergei Kravinoff, Spider-Man'i avlamaya çalışan üstün duyulu ve güçlü avcıdır.",
+    "power": 66,
+    "powerStatus": "curated"
+  },
+  "marvel:mysterio": {
+    "name": "Mysterio",
+    "description": "Quentin Beck, illüzyonlar ve özel efektlerle Spider-Man'i yanıltan suçludur.",
+    "power": 64,
+    "powerStatus": "curated"
+  },
+  "marvel:electro": {
+    "name": "Electro",
+    "description": "Max Dillon, elektriği üretip kontrol edebilen Spider-Man düşmanıdır.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "marvel:sandman": {
+    "name": "Sandman",
+    "description": "Flint Marko, bedenini kuma dönüştürüp farklı biçimler alabilen suçludur.",
+    "power": 75,
+    "powerStatus": "curated"
+  },
+  "marvel:lizard": {
+    "name": "Lizard",
+    "description": "Curt Connors, deney sonucu sürüngen benzeri bir yaratığa dönüşen bilim insanıdır.",
+    "power": 73,
+    "powerStatus": "curated"
+  },
+  "marvel:doctor octopus": {
+    "name": "Doctor Octopus",
+    "description": "Otto Octavius, dört mekanik koluyla savaşan dahi bilim insanıdır.",
+    "power": 75,
+    "powerStatus": "curated"
+  },
+  "marvel:rhino": {
+    "name": "Rhino",
+    "description": "Aleksei Sytsevich, zırhı ve büyük fiziksel gücüyle Spider-Man'e meydan okur.",
+    "power": 68,
+    "powerStatus": "curated"
+  },
+  "marvel:vulture": {
+    "name": "Vulture",
+    "description": "Adrian Toomes, özel kanatlı uçuş donanımı kullanan deneyimli suçludur.",
+    "power": 61,
+    "powerStatus": "curated"
+  },
+  "marvel:shocker": {
+    "name": "Shocker",
+    "description": "Herman Schultz, titreşim darbeleri üreten özel eldivenler kullanan suçludur.",
+    "power": 59,
+    "powerStatus": "curated"
+  },
+  "marvel:black cat": {
+    "name": "Black Cat",
+    "description": "Felicia Hardy, akrobatik becerileriyle tanınan usta hırsız ve Spider-Man müttefikidir.",
+    "power": 63,
+    "powerStatus": "curated"
+  },
+  "marvel:silk": {
+    "name": "Silk",
+    "description": "Cindy Moon, örümcek güçleri ve gelişmiş tehlike algısına sahip kahramandır.",
+    "power": 72,
+    "powerStatus": "curated"
+  },
+  "marvel:spider-gwen": {
+    "name": "Spider-Gwen",
+    "description": "Gwen Stacy, kendi evreninde örümcek güçleri kazanan maskeli kahramandır.",
+    "power": 73,
+    "powerStatus": "curated"
+  },
+  "marvel:miles morales": {
+    "name": "Miles Morales",
+    "description": "Miles Morales, görünmezlik ve biyoelektrik saldırılar gibi ek örümcek güçleri taşır.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "marvel:spider-woman": {
+    "name": "Spider-Woman",
+    "description": "Jessica Drew, gelişmiş fiziksel yetenekleri ve biyoelektrik saldırılarıyla tanınır.",
+    "power": 74,
+    "powerStatus": "curated"
+  },
+  "marvel:nick fury": {
+    "name": "Nick Fury",
+    "description": "Nick Fury, S.H.I.E.L.D. teşkilatının önde gelen yöneticilerinden ve deneyimli casuslardandır.",
+    "power": 63,
+    "powerStatus": "curated"
+  },
+  "marvel:maria hill": {
+    "name": "Maria Hill",
+    "description": "Maria Hill, S.H.I.E.L.D. bünyesinde üst düzey görevler üstlenen deneyimli ajandır.",
+    "power": 58,
+    "powerStatus": "curated"
+  },
+  "marvel:agent coulson": {
+    "name": "Agent Coulson",
+    "description": "Phil Coulson, S.H.I.E.L.D. operasyonlarında görev alan deneyimli saha ajanıdır.",
+    "power": 56,
+    "powerStatus": "curated"
   }
 }
