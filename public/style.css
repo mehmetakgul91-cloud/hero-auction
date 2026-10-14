@@ -147,3 +147,13 @@ header{padding:5px 0 12px;margin-bottom:4px}
 /* Character biography is plain visible text: no tap, toggle, or inner scrolling. */
 #game .auction-hero .hero-description{display:block!important;max-height:none!important;height:auto!important;overflow:visible!important;white-space:normal!important;cursor:default;font-size:11px;line-height:1.45}
 @media(max-width:850px){#game .auction-hero .hero-description{max-height:none!important;overflow:visible!important;font-size:10px;line-height:1.4}}
+
+/* Live player counts on the home screen */
+.online-board{margin:15px 0 18px;padding:14px;border:1px solid rgba(118,142,205,.28);border-radius:14px;background:rgba(17,27,56,.72)}
+.online-board-title{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:1.4px;color:#d6e3ff;margin-bottom:12px}
+.online-dot{width:8px;height:8px;border-radius:50%;background:#34d399;box-shadow:0 0 10px #34d399}
+.online-board-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.online-board-grid>div{display:flex;flex-direction:column;gap:4px;text-align:center;min-width:0}
+.online-board-grid>div+div{border-left:1px solid rgba(118,142,205,.24)}
+.online-board-grid strong{font-size:clamp(21px,4vw,29px);line-height:1.1;color:#fff}
+.online-board-grid small{font-size:10px;line-height:1.35;color:#aebcda}
