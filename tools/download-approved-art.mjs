@@ -37,5 +37,5 @@ for(const [id,entry] of Object.entries(manifest)){
  cards[id].imageAttribution=entry.attribution;
  updated.push(id);
 }
-await fs.writeFile(cardsPath,JSON.stringify(cards,null,2)+'\\n');
+await fs.writeFile(cardsPath,JSON.stringify(cards,null,2)+'\n');
 console.log(JSON.stringify({updated:updated.length,cards:updated},null,2));
