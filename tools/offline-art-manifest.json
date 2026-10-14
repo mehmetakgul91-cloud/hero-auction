@@ -1,18 +1,18 @@
 {
   "marvel:iron man": {
-    "approved": true,
+    "approved": false,
     "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Cosplay_of_Iron_Man_at_GEMA_2022.jpg/500px-Cosplay_of_Iron_Man_at_GEMA_2022.jpg",
     "sourcePage": "https://commons.wikimedia.org/wiki/File:Cosplay_of_Iron_Man_at_GEMA_2022.jpg",
     "license": "CC-BY-SA-4.0",
     "attribution": "Chongkian / Wikimedia Commons (CC BY-SA 4.0)",
-    "reviewNote": "Photo licensed; copyrighted character/costume may have separate rights."
+    "reviewNote": "Commons source/license recorded; direct image URL and full image download have not yet been verified."
   },
   "marvel:spider-man": {
-    "approved": true,
+    "approved": false,
     "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Spider-Man_cosplay_2022.jpg/500px-Spider-Man_cosplay_2022.jpg",
     "sourcePage": "https://commons.wikimedia.org/wiki/File:Spider-Man_cosplay_2022.jpg",
     "license": "CC-BY-SA-4.0",
     "attribution": "ManoSolo13241324 / Wikimedia Commons (CC BY-SA 4.0)",
-    "reviewNote": "Photo licensed; copyrighted character/costume may have separate rights."
+    "reviewNote": "Commons source/license recorded; direct image URL and full image download have not yet been verified."
   }
 }
