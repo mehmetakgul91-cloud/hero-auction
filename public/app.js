@@ -54,7 +54,7 @@ function shareInvite(code){
 $('share').textContent='📲 ARKADAŞINI DAVET ET';
 $('share').onclick=()=>{if(room)shareInvite(room.code)};
 const invitedCode=new URLSearchParams(location.search).get('join');
-if(invitedCode&&/^[A-F0-9]{6}$/i.test(invitedCode)){
+if(invitedCode&&/^\d{3}$/.test(invitedCode)){
  $('roomcode').value=invitedCode.toUpperCase();
  $('join-invite').hidden=false;
  $('join-invite-code').textContent=invitedCode.toUpperCase();
