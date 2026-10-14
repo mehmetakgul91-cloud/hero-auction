@@ -1,6 +1,21 @@
 const $=id=>document.getElementById(id);
 let session=null,room=null,stream=null,world='mixed';
 let lastCardKey=null;
+const visitorId=crypto.randomUUID();
+async function refreshOnline(){
+ try{
+  const q=new URLSearchParams({visitor:visitorId});
+  if(session){q.set('code',session.code);q.set('token',session.token);}
+  const res=await fetch('/api/online?'+q,{cache:'no-store'});
+  if(!res.ok)return;
+  const data=await res.json();
+  for(const [id,value] of [['online-players',data.players],['online-matches',data.matches],['online-waiting',data.waiting]]){
+   const el=$(id);if(el)el.textContent=String(value);
+  }
+ }catch{}
+}
+setInterval(refreshOnline,15000);
+
 const artMemo=new Map();
 const infoMemo=new Map();
 const emojis={pokemon:'⚡',marvel:'🦸',dc:'🦇',lotr:'💍'};
@@ -8,7 +23,7 @@ const worldNames={pokemon:'POKÉMON',marvel:'MARVEL',dc:'DC',lotr:'YÜZÜKLERİN
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const notify=msg=>{const t=$('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3300)};
 async function post(url,data){const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const j=await res.json();if(!res.ok)throw Error(j.error||'İşlem başarısız');return j}
-function save(token,r){session={token,code:r.code};localStorage.setItem('hero-auction-session',JSON.stringify(session));show(r);connect()}
+function save(token,r){session={token,code:r.code};localStorage.setItem('hero-auction-session',JSON.stringify(session));show(r);connect();refreshOnline()}
 function connect(){stream?.close();if(!session)return;stream=new EventSource(`/api/events?code=${encodeURIComponent(session.code)}&token=${encodeURIComponent(session.token)}`);stream.onmessage=e=>{try{show(JSON.parse(e.data))}catch{}};stream.onerror=()=>{};}
 function show(r){const currentCardKey=r.phase==='auction'?r.code+':'+r.round+':'+r.card?.name:null;const isNewCard=!!currentCardKey&&currentCardKey!==lastCardKey;lastCardKey=currentCardKey;room=r;$('home').hidden=true;$('game').hidden=false;$('room-title').textContent=r.code;$('phase').textContent=['waiting','matching'].includes(r.phase)?'RAKİP BEKLENİYOR':r.phase==='finished'?'MAÇ TAMAMLANDI':`${worldNames[r.universe]} · KART ${r.round+1}/10`;
 for(let i=0;i<2;i++){const p=r.players[i];$('player'+i).className='player player-side'+(r.me===i?' me':'');$('player'+i).innerHTML=p?`<div class="name">${esc(p.name)} ${r.me===i?'(SEN)':''}</div><div class="credit">${p.credits} <small>kalan kredi</small></div><div class="spent-credit">💸 ${20-p.credits} kredi kullanıldı</div><div class="side-team-title">🎴 KARTLAR (${p.team.length})</div><div class="teams">${p.team.map(x=>`<span class="side-hero"><span class="side-hero-name">${esc(x.name)}</span><span class="side-hero-cost">${Number(x.cost)||0} <small>kredi</small></span></span>`).join('')||'Henüz karakter yok'}</div>`:'<div class="name">2. OYUNCU</div><p class="status">Katılması bekleniyor…</p>'}
@@ -32,8 +47,8 @@ $('bot').onclick=async()=>{try{const j=await post('/api/bot',{name:$('name').val
 $('match').onclick=async()=>{try{const j=await post('/api/match',{name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
 setInterval(()=>{if(room?.phase==='auction'&&room.deadline){const el=$('turntimer');if(el)el.textContent='⏱ '+Math.max(0,Math.ceil((room.deadline-Date.now())/1000))+' saniye'}},250);
 $('share').onclick=async()=>{try{await navigator.clipboard.writeText(room.code);notify('Oda kodu kopyalandı!')}catch{notify('Oda kodu: '+room.code)}};
-$('leave').onclick=()=>{if(!confirm('Bu cihazda odadan ayrılmak istiyor musun?'))return;localStorage.removeItem('hero-auction-session');stream?.close();session=null;room=null;$('home').hidden=false;$('game').hidden=true};
-(async()=>{try{const r=await fetch('/api/info');const j=await r.json();$('catalogue').textContent=`Şu anda ${j.catalogueCount} karakter hazır · Pokémon ${j.counts.pokemon} · Marvel ${j.counts.marvel} · DC ${j.counts.dc} · Yüzüklerin Efendisi ${j.counts.lotr}`;}catch{}try{session=JSON.parse(localStorage.getItem('hero-auction-session'));if(session){const j=await post('/api/state',session);show(j.room);connect()}}catch{localStorage.removeItem('hero-auction-session');session=null}loadPokeMap()})();
+$('leave').onclick=()=>{if(!confirm('Bu cihazda odadan ayrılmak istiyor musun?'))return;localStorage.removeItem('hero-auction-session');stream?.close();session=null;room=null;$('home').hidden=false;$('game').hidden=true;refreshOnline()};
+(async()=>{try{const r=await fetch('/api/info');const j=await r.json();$('catalogue').textContent=`Şu anda ${j.catalogueCount} karakter hazır · Pokémon ${j.counts.pokemon} · Marvel ${j.counts.marvel} · DC ${j.counts.dc} · Yüzüklerin Efendisi ${j.counts.lotr}`;}catch{}try{session=JSON.parse(localStorage.getItem('hero-auction-session'));if(session){const j=await post('/api/state',session);show(j.room);connect()}}catch{localStorage.removeItem('hero-auction-session');session=null}loadPokeMap();refreshOnline()})();
 
 async function loadHeroInfo(card){
  const key=card.universe+':'+card.name;
