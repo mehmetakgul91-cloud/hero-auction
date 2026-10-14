@@ -11682,5 +11682,251 @@
     "description": "Lúthien, Beren ile birlikte Morgoth'un tacından Silmaril almayı başaran elf prensesidir.",
     "power": 93,
     "powerStatus": "curated"
+  },
+  "lotr:beren": {
+    "name": "Beren",
+    "description": "Beren, Lúthien ile birlikte Morgoth'un tacından Silmaril alan ölümlü kahramandır.",
+    "power": 80,
+    "powerStatus": "curated"
+  },
+  "lotr:thingol": {
+    "name": "Thingol",
+    "description": "Thingol, Doriath'ın Sindar elf kralı ve Lúthien'in babasıdır.",
+    "power": 87,
+    "powerStatus": "curated"
+  },
+  "lotr:melian": {
+    "name": "Melian",
+    "description": "Melian, Doriath'ı büyülü kuşatmayla koruyan Maiar kökenli kraliçedir.",
+    "power": 96,
+    "powerStatus": "curated"
+  },
+  "lotr:fëanor": {
+    "name": "Fëanor",
+    "description": "Fëanor, Silmarilleri yaratan ve Noldor'un kaderini değiştiren büyük elf ustasıdır.",
+    "power": 94,
+    "powerStatus": "curated"
+  },
+  "lotr:finrod felagund": {
+    "name": "Finrod Felagund",
+    "description": "Finrod, Nargothrond'un kurucusu ve Beren'e yardım eden güçlü elf kralıdır.",
+    "power": 91,
+    "powerStatus": "curated"
+  },
+  "lotr:maedhros": {
+    "name": "Maedhros",
+    "description": "Maedhros, Fëanor'un en büyük oğlu ve Birinci Çağ'ın önde gelen Noldor savaşçısıdır.",
+    "power": 84,
+    "powerStatus": "curated"
+  },
+  "lotr:maglor": {
+    "name": "Maglor",
+    "description": "Maglor, Fëanor'un oğlu ve büyük müzik yeteneğiyle tanınan Noldor elfidir.",
+    "power": 80,
+    "powerStatus": "curated"
+  },
+  "lotr:tuor": {
+    "name": "Tuor",
+    "description": "Tuor, Gondolin'e ulaşan ve Idril ile evlenen ölümlü insan kahramandır.",
+    "power": 80,
+    "powerStatus": "curated"
+  },
+  "lotr:túrin turambar": {
+    "name": "Túrin Turambar",
+    "description": "Túrin, Glaurung'u öldüren ancak Morgoth'un lanetiyle trajedi yaşayan kahramandır.",
+    "power": 88,
+    "powerStatus": "curated"
+  },
+  "lotr:húrin": {
+    "name": "Húrin",
+    "description": "Húrin, Nirnaeth Arnoediad'da cesurca savaşan ve Morgoth'a meydan okuyan insandır.",
+    "power": 85,
+    "powerStatus": "curated"
+  },
+  "lotr:morgoth": {
+    "name": "Morgoth",
+    "description": "Morgoth, Arda'nın ilk Karanlık Lord'u ve Valar arasındaki en güçlü varlıklardan biridir.",
+    "power": 100,
+    "powerStatus": "curated"
+  },
+  "lotr:glaurung": {
+    "name": "Glaurung",
+    "description": "Glaurung, ejderhaların atası olarak bilinen ve zihinleri etkileyen ateş ejderhasıdır.",
+    "power": 94,
+    "powerStatus": "curated"
+  },
+  "lotr:gothmog the balrog": {
+    "name": "Gothmog the Balrog",
+    "description": "Gothmog, Morgoth'un Balrog ordularının komutanı ve Gondolin'in düşmanıdır.",
+    "power": 95,
+    "powerStatus": "curated"
+  },
+  "lotr:durin’s bane": {
+    "name": "Durin’s Bane",
+    "description": "Durin'in Felaketi, Moria'nın derinliklerinde yaşayan ve Gandalf'la savaşan Balrog'dur.",
+    "power": 94,
+    "powerStatus": "curated"
+  },
+  "lotr:the mouth of sauron": {
+    "name": "The Mouth of Sauron",
+    "description": "Sauron'un Ağzı, Mordor'un Kara Kule elçisi ve Karanlık Lord'un sözcüsüdür.",
+    "power": 69,
+    "powerStatus": "curated"
+  },
+  "lotr:grond the wolf": {
+    "name": "Grond the Wolf",
+    "description": "Grond, Morgoth'un savaş çekiciyle de ilişkilendirilen ve Mordor kuşatma koçuna adını veren simgedir.",
+    "power": 88,
+    "powerStatus": "curated"
+  },
+  "lotr:shagrat": {
+    "name": "Shagrat",
+    "description": "Shagrat, Cirith Ungol kulesindeki ork garnizonunun komutanıdır.",
+    "power": 56,
+    "powerStatus": "curated"
+  },
+  "lotr:gorbag": {
+    "name": "Gorbag",
+    "description": "Gorbag, Minas Morgul'dan gelen ve Cirith Ungol'da Shagrat ile çatışan ork subayıdır.",
+    "power": 54,
+    "powerStatus": "curated"
+  },
+  "lotr:uglúk": {
+    "name": "Uglúk",
+    "description": "Uglúk, Isengard Uruk-hai birliklerinin liderlerinden biridir.",
+    "power": 63,
+    "powerStatus": "curated"
+  },
+  "lotr:lurtz": {
+    "name": "Lurtz",
+    "description": "Lurtz, Yüzüklerin Efendisi film uyarlamasında Uruk-hai komutanı olarak görünür.",
+    "power": 64,
+    "powerStatus": "curated"
+  },
+  "lotr:háma": {
+    "name": "Háma",
+    "description": "Háma, Rohan kralı Théoden'in kapı muhafızı ve sadık hizmetkârıdır.",
+    "power": 59,
+    "powerStatus": "curated"
+  },
+  "lotr:grimbold": {
+    "name": "Grimbold",
+    "description": "Grimbold, Rohan ordularında Pelennor Çayırları Savaşı'na katılan komutandır.",
+    "power": 65,
+    "powerStatus": "curated"
+  },
+  "lotr:erkenbrand": {
+    "name": "Erkenbrand",
+    "description": "Erkenbrand, Rohan'ın Batıağıl bölgesini savunan deneyimli komutandır.",
+    "power": 69,
+    "powerStatus": "curated"
+  },
+  "lotr:halbarad": {
+    "name": "Halbarad",
+    "description": "Halbarad, Kuzeyli Dúnedain korucusu ve Aragorn'un yakın akrabasıdır.",
+    "power": 69,
+    "powerStatus": "curated"
+  },
+  "lotr:elladan": {
+    "name": "Elladan",
+    "description": "Elladan, Elrond'un oğlu ve kardeşi Elrohir ile birlikte savaşan elf savaşçıdır.",
+    "power": 75,
+    "powerStatus": "curated"
+  },
+  "lotr:elrohir": {
+    "name": "Elrohir",
+    "description": "Elrohir, Elrond'un oğlu ve kardeşi Elladan ile birlikte savaşan elf savaşçıdır.",
+    "power": 75,
+    "powerStatus": "curated"
+  },
+  "lotr:imrahil": {
+    "name": "Imrahil",
+    "description": "Imrahil, Dol Amroth prensi ve Gondor'un savunmasında görev alan komutandır.",
+    "power": 74,
+    "powerStatus": "curated"
+  },
+  "lotr:beregond": {
+    "name": "Beregond",
+    "description": "Beregond, Gondor Muhafızları'nda görevli ve Faramir'in hayatını kurtaran askerdir.",
+    "power": 63,
+    "powerStatus": "curated"
+  },
+  "lotr:bergil": {
+    "name": "Bergil",
+    "description": "Bergil, Beregond'un oğlu ve Minas Tirith'te Pippin'e yardım eden gençtir.",
+    "power": 45,
+    "powerStatus": "curated"
+  },
+  "lotr:quickbeam": {
+    "name": "Quickbeam",
+    "description": "Quickbeam, Isengard'a karşı Entlerin yürüyüşüne katılan genç ve çevik Ent'tir.",
+    "power": 77,
+    "powerStatus": "curated"
+  },
+  "lotr:farmer maggot": {
+    "name": "Farmer Maggot",
+    "description": "Çiftçi Maggot, Shire'da yaşayan ve Frodo ile arkadaşlarına yardım eden Hobbit'tir.",
+    "power": 45,
+    "powerStatus": "curated"
+  },
+  "lotr:rosie cotton": {
+    "name": "Rosie Cotton",
+    "description": "Rosie Cotton, Shire'da yaşayan ve Samwise Gamgee ile evlenen Hobbit'tir.",
+    "power": 40,
+    "powerStatus": "curated"
+  },
+  "lotr:barliman butterbur": {
+    "name": "Barliman Butterbur",
+    "description": "Barliman Butterbur, Bree'deki Sıçrayan Midilli Hanı'nın işletmecisidir.",
+    "power": 40,
+    "powerStatus": "curated"
+  },
+  "lotr:bill ferny": {
+    "name": "Bill Ferny",
+    "description": "Bill Ferny, Bree'de yaşayan ve Karanlık güçlerle işbirliği yapan fırsatçı insandır.",
+    "power": 39,
+    "powerStatus": "curated"
+  },
+  "lotr:old man willow": {
+    "name": "Old Man Willow",
+    "description": "İhtiyar Söğüt Adam, Eski Orman'da yolcuları tuzağa düşüren kötü niyetli ağaçtır.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "lotr:déagol": {
+    "name": "Déagol",
+    "description": "Déagol, Anduin'de Tek Yüzük'ü bulan ve Sméagol tarafından öldürülen Hobbit'tir.",
+    "power": 37,
+    "powerStatus": "curated"
+  },
+  "lotr:fredegar bolger": {
+    "name": "Fredegar Bolger",
+    "description": "Fredegar Bolger, Frodo'nun ayrılışını gizlemeye yardım eden Shirelı Hobbit'tir.",
+    "power": 43,
+    "powerStatus": "curated"
+  },
+  "lotr:ar-pharazôn": {
+    "name": "Ar-Pharazôn",
+    "description": "Ar-Pharazôn, Númenor'un son kralı ve Valinor'a sefer düzenleyen hükümdardır.",
+    "power": 82,
+    "powerStatus": "curated"
+  },
+  "lotr:elros": {
+    "name": "Elros",
+    "description": "Elros, Elrond'un kardeşi ve Númenor'un ilk kralıdır.",
+    "power": 82,
+    "powerStatus": "curated"
+  },
+  "lotr:tar-míriel": {
+    "name": "Tar-Míriel",
+    "description": "Tar-Míriel, Númenor'un son dönemindeki meşru kraliçe varisidir.",
+    "power": 70,
+    "powerStatus": "curated"
+  },
+  "lotr:adar": {
+    "name": "Adar",
+    "description": "Adar, Güç Yüzükleri televizyon uyarlamasında orklarla bağlantılı özgün karakterdir.",
+    "power": 69,
+    "powerStatus": "curated"
   }
 }
