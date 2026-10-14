@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,6 +23,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: marvel-art-candidates
+          name: marvel-art-candidates-v2
           path: tools/marvel-art-candidates.json
           if-no-files-found: warn
