@@ -1,14 +1,26 @@
 {
   "marvel:iron man": {
-    "approved": false,
-    "commonsFile": "File:Cosplay of Iron Man at GEMA 2022.jpg",
+    "approved": true,
     "sourcePage": "https://commons.wikimedia.org/wiki/File:Cosplay_of_Iron_Man_at_GEMA_2022.jpg",
-    "reviewNote": "Unverified candidate: file existence, attribution, license, and depicted character must be checked before approval"
+    "commonsTitle": "File:Cosplay of Iron Man at GEMA 2022.jpg",
+    "license": "CC-BY-SA-4.0",
+    "attribution": "Wikimedia Commons contributor (see file page)",
+    "reviewNote": "Iron Man cosplay, image free license; separate character/costume rights may apply"
   },
-  "lotr:gandalf": {
-    "approved": false,
-    "commonsFile": "File:Lord of the Rings cosplay at Fan Expo Denver 2026 02.jpg",
-    "sourcePage": "https://commons.wikimedia.org/wiki/File:Lord_of_the_Rings_cosplay_at_Fan_Expo_Denver_2026_02.jpg",
-    "reviewNote": "Unverified candidate: file existence, attribution, license, and depicted character must be checked before approval"
+  "marvel:spider-man": {
+    "approved": true,
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Spider-Man_cosplay_2022.jpg",
+    "commonsTitle": "File:Spider-Man cosplay 2022.jpg",
+    "license": "CC-BY-SA-4.0",
+    "attribution": "Wikimedia Commons contributor (see file page)",
+    "reviewNote": "Spider-Man cosplay, separate character rights may apply"
+  },
+  "marvel:thor": {
+    "approved": true,
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Cosplay_of_Thor_(Nanjing_CE,_2021).jpg",
+    "commonsTitle": "File:Cosplay of Thor (Nanjing CE, 2021).jpg",
+    "license": "CC-BY-SA-4.0",
+    "attribution": "Wikimedia Commons contributor (see file page)",
+    "reviewNote": "Thor cosplay, separate character rights may apply"
   }
 }
