@@ -44,7 +44,7 @@ async function loadPokemon(){try{const r=await fetch('https://pokeapi.co/api/v2/
 await loadPokemon();
 const rand=n=>crypto.randomInt(n);
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
-const code=()=>crypto.randomBytes(3).toString('hex').toUpperCase();
+const code=()=>String(crypto.randomInt(100,1000));
 const token=()=>crypto.randomBytes(24).toString('hex');
 const publicRoom=(r,seat)=>({code:r.code,universe:r.universe,phase:r.phase,round:r.round,turn:r.turn,deadline:r.deadline||null,series:r.series||[0,0],rematch:r.rematch||[false,false],mode:r.mode||"friend",topBid:r.topBid,topSeat:r.topSeat,history:r.history,players:r.players.map((p,i)=>p?{name:p.name,credits:p.credits,team:p.team.map(x=>({name:x.name,universe:x.universe,cost:x.cost})),connected:true,seat:i}:null),card:r.phase==='auction'?{name:r.cards[r.round].name,universe:r.cards[r.round].universe}:null,final:r.phase==='finished'?r.players.map(p=>({name:p.name,score:p.team.reduce((a,c)=>a+c.power,0)+p.credits*10,credits:p.credits,team:p.team.map(c=>({name:c.name,universe:c.universe,cost:c.cost,power:c.power}))})):null,me:seat,catalogueCount:catalogue.size});
 function publish(r){for(const client of listeners.get(r.code)||[]){try{client.res.write(`data: ${JSON.stringify(publicRoom(r,client.seat))}\n\n`)}catch{}}}
