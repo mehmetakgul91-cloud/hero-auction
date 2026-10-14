@@ -12,6 +12,21 @@ const auditedArt=JSON.parse(fs.readFileSync(path.join(root,'public','verified-ar
 
 const listeners=new Map();
 const waiting=new Map();
+const onlineVisitors=new Map();
+function onlineStats(){
+ const now=Date.now();
+ for(const [id,p] of onlineVisitors)if(now-p.seen>45000)onlineVisitors.delete(id);
+ const activeRooms=new Set(),waitingRooms=new Set();
+ for(const p of onlineVisitors.values()){
+  if(!p.code)continue;
+  const r=rooms.get(p.code);
+  if(!r)continue;
+  if(r.phase==='auction')activeRooms.add(r.code);
+  else if(['waiting','matching'].includes(r.phase))waitingRooms.add(r.code);
+ }
+ return {players:onlineVisitors.size,matches:activeRooms.size,waiting:waitingRooms.size};
+}
+
 const curated={"marvel:thanos":95,"marvel:galactus":99,"marvel:odin":95,"marvel:sentry":94,"marvel:silver surfer":93,"marvel:thor":88,"marvel:hulk":87,"marvel:scarlet witch":94,"marvel:doctor strange":91,"marvel:iron man":75,"marvel:spider-man":70,"marvel:captain america":61,"dc:the spectre":100,"dc:anti-monitor":99,"dc:doctor manhattan":99,"dc:darkseid":97,"dc:superman":92,"dc:batman":65,"dc:wonder woman":88,"dc:the flash":90,"lotr:eru ilúvatar":100,"lotr:morgoth":99,"lotr:sauron":95,"lotr:gandalf":87,"lotr:aragorn":70,"pokemon:arceus":100,"pokemon:mewtwo":94,"pokemon:rayquaza":94,"pokemon:pikachu":65};
 const stablePower=(id)=>{if(Number.isInteger(cardDetails[id]?.power))return cardDetails[id].power;if(curated[id]!=null)return curated[id];const h=crypto.createHash("sha256").update("hero-auction-v3:"+id).digest();return 15+(h.readUInt32BE(0)%86)};
 const newCards=(universe)=>shuffle([...catalogue.values()].filter(x=>universe==="mixed"||x.universe===universe)).slice(0,10).map(x=>({...x,power:stablePower(x.id)}));
@@ -183,6 +198,16 @@ if(req.method==='GET'&&url.pathname==='/api/art'){
   artCache.set(key,result);
  }
  return send(200,artCache.get(key));
+}
+if(req.method==='GET'&&url.pathname==='/api/online'){
+ const id=url.searchParams.get('visitor')||'';
+ if(!/^[a-zA-Z0-9_-]{12,90}$/.test(id))return send(400,{error:'Geçersiz ziyaretçi'});
+ const code=(url.searchParams.get('code')||'').toUpperCase();
+ const t=url.searchParams.get('token')||'';
+ const r=rooms.get(code);
+ const belongs=!!r&&r.players.some(p=>p&&p.token===t);
+ onlineVisitors.set(id,{seen:Date.now(),code:belongs?code:null});
+ return send(200,onlineStats());
 }
 if(req.method==='GET'&&url.pathname==='/api/info')return send(200,{catalogueCount:catalogue.size,counts:Object.fromEntries(['pokemon','marvel','dc','lotr'].map(k=>[k,[...catalogue.values()].filter(x=>x.universe===k).length]))});
 if(req.method==='POST'&&url.pathname.startsWith('/api/')){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>12000)error('İstek çok büyük.')}let body;try{body=JSON.parse(raw)}catch{error('Geçersiz JSON')}return send(200,await api(url.pathname,body))}
