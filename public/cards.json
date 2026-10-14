@@ -1,225 +1,373 @@
 {
   "marvel:black widow": {
-    "description": "Natasha Romanoff, casusluk ve yakın dövüşte uzman bir Avengers üyesidir."
+    "description": "Natasha Romanoff, casusluk ve yakın dövüşte uzman bir Avengers üyesidir.",
+    "power": 58,
+    "powerStatus": "curated"
   },
   "marvel:hawkeye": {
-    "description": "Clint Barton, olağanüstü isabetli okçuluğuyla tanınan bir Avengers üyesidir."
+    "description": "Clint Barton, olağanüstü isabetli okçuluğuyla tanınan bir Avengers üyesidir.",
+    "power": 57,
+    "powerStatus": "curated"
   },
   "marvel:black panther": {
-    "description": "T’Challa, Wakanda kralı ve vibranyum teknolojisini kullanan Black Panther’dir."
+    "description": "T’Challa, Wakanda kralı ve vibranyum teknolojisini kullanan Black Panther’dir.",
+    "power": 73,
+    "powerStatus": "curated"
   },
   "marvel:captain marvel": {
-    "description": "Carol Danvers, kozmik enerji kullanabilen güçlü bir süper kahramandır."
+    "description": "Carol Danvers, kozmik enerji kullanabilen güçlü bir süper kahramandır.",
+    "power": 89,
+    "powerStatus": "curated"
   },
   "marvel:vision": {
-    "description": "Vision, yapay zekâ kökenli ve madde yoğunluğunu değiştirebilen bir androiddir."
+    "description": "Vision, yapay zekâ kökenli ve madde yoğunluğunu değiştirebilen bir androiddir.",
+    "power": 87,
+    "powerStatus": "curated"
   },
   "marvel:loki": {
-    "description": "Loki, Asgard kökenli hile ve illüzyon ustasıdır."
+    "description": "Loki, Asgard kökenli hile ve illüzyon ustasıdır.",
+    "power": 84,
+    "powerStatus": "curated"
   },
   "marvel:ultron": {
-    "description": "Ultron, insanlığı tehdit eden gelişmiş bir yapay zekâ düşmanıdır."
+    "description": "Ultron, insanlığı tehdit eden gelişmiş bir yapay zekâ düşmanıdır.",
+    "power": 86,
+    "powerStatus": "curated"
   },
   "marvel:magneto": {
-    "description": "Magneto, manyetik alanları kontrol edebilen güçlü bir mutanttır."
+    "description": "Magneto, manyetik alanları kontrol edebilen güçlü bir mutanttır.",
+    "power": 92,
+    "powerStatus": "curated"
   },
   "marvel:wolverine": {
-    "description": "Logan, iyileşme yeteneği ve adamantiyum pençeleriyle tanınır."
+    "description": "Logan, iyileşme yeteneği ve adamantiyum pençeleriyle tanınır.",
+    "power": 77,
+    "powerStatus": "curated"
   },
   "marvel:deadpool": {
-    "description": "Wade Wilson, olağanüstü iyileşme gücüne ve sıra dışı mizaha sahip bir paralı askerdir."
+    "description": "Wade Wilson, olağanüstü iyileşme gücüne ve sıra dışı mizaha sahip bir paralı askerdir.",
+    "power": 74,
+    "powerStatus": "curated"
   },
   "marvel:storm": {
-    "description": "Ororo Munroe, hava olaylarını kontrol edebilen bir X-Men üyesidir."
+    "description": "Ororo Munroe, hava olaylarını kontrol edebilen bir X-Men üyesidir.",
+    "power": 87,
+    "powerStatus": "curated"
   },
   "marvel:jean grey": {
-    "description": "Jean Grey, telepati ve telekinezi güçlerine sahip bir mutanttır."
+    "description": "Jean Grey, telepati ve telekinezi güçlerine sahip bir mutanttır.",
+    "power": 95,
+    "powerStatus": "curated"
   },
   "marvel:professor x": {
-    "description": "Charles Xavier, güçlü bir telepat ve X-Men ekibinin kurucusudur."
+    "description": "Charles Xavier, güçlü bir telepat ve X-Men ekibinin kurucusudur.",
+    "power": 88,
+    "powerStatus": "curated"
   },
   "marvel:silver surfer": {
-    "description": "Silver Surfer, kozmik güç kullanan ve uzayda yolculuk eden bir varlıktır."
+    "description": "Silver Surfer, kozmik güç kullanan ve uzayda yolculuk eden bir varlıktır.",
+    "power": 93,
+    "powerStatus": "curated"
   },
   "marvel:doctor doom": {
-    "description": "Victor von Doom, bilim ve büyüyü birleştiren Latveria hükümdarıdır."
+    "description": "Victor von Doom, bilim ve büyüyü birleştiren Latveria hükümdarıdır.",
+    "power": 91,
+    "powerStatus": "curated"
   },
   "marvel:ghost rider": {
-    "description": "Ghost Rider, doğaüstü alevler ve kefaret güçleriyle tanınır."
+    "description": "Ghost Rider, doğaüstü alevler ve kefaret güçleriyle tanınır.",
+    "power": 89,
+    "powerStatus": "curated"
   },
   "marvel:venom": {
-    "description": "Venom, bir insan konakla birleşen uzaylı simbiyotun oluşturduğu karakterdir."
+    "description": "Venom, bir insan konakla birleşen uzaylı simbiyotun oluşturduğu karakterdir.",
+    "power": 79,
+    "powerStatus": "curated"
   },
   "marvel:green goblin": {
-    "description": "Green Goblin, gelişmiş ekipman ve tehlikeli planlarıyla Spider-Man’in düşmanıdır."
+    "description": "Green Goblin, gelişmiş ekipman ve tehlikeli planlarıyla Spider-Man’in düşmanıdır.",
+    "power": 68,
+    "powerStatus": "curated"
   },
   "marvel:daredevil": {
-    "description": "Matt Murdock, gelişmiş duyularını kullanarak Hell’s Kitchen’da suçla savaşır."
+    "description": "Matt Murdock, gelişmiş duyularını kullanarak Hell’s Kitchen’da suçla savaşır.",
+    "power": 63,
+    "powerStatus": "curated"
   },
   "marvel:sentry": {
-    "description": "Sentry, olağanüstü güçleri ve karanlık yönüyle tanınan Marvel karakteridir."
+    "description": "Sentry, olağanüstü güçleri ve karanlık yönüyle tanınan Marvel karakteridir.",
+    "power": 94,
+    "powerStatus": "curated"
   },
   "marvel:odin": {
-    "description": "Odin, Asgard’ın hükümdarı ve Thor’un babasıdır."
+    "description": "Odin, Asgard’ın hükümdarı ve Thor’un babasıdır.",
+    "power": 95,
+    "powerStatus": "curated"
   },
   "marvel:hela": {
-    "description": "Hela, ölümle ilişkilendirilen güçlü bir Asgardlıdır."
+    "description": "Hela, ölümle ilişkilendirilen güçlü bir Asgardlıdır.",
+    "power": 92,
+    "powerStatus": "curated"
   },
   "marvel:namor": {
-    "description": "Namor, Atlantis hükümdarı ve su altında yaşayan güçlü bir mutanttır."
+    "description": "Namor, Atlantis hükümdarı ve su altında yaşayan güçlü bir mutanttır.",
+    "power": 85,
+    "powerStatus": "curated"
   },
   "marvel:moon knight": {
-    "description": "Marc Spector, Mısır tanrısı Khonshu ile bağlantılı maskeli bir savaşçıdır."
+    "description": "Marc Spector, Mısır tanrısı Khonshu ile bağlantılı maskeli bir savaşçıdır.",
+    "power": 68,
+    "powerStatus": "curated"
   },
   "marvel:groot": {
-    "description": "Groot, bitki benzeri yapıya sahip ve kendini yenileyebilen bir uzaylıdır."
+    "description": "Groot, bitki benzeri yapıya sahip ve kendini yenileyebilen bir uzaylıdır.",
+    "power": 72,
+    "powerStatus": "curated"
   },
   "marvel:rocket raccoon": {
-    "description": "Rocket, gelişmiş silahlar kullanan zeki bir uzaylı savaşçıdır."
+    "description": "Rocket, gelişmiş silahlar kullanan zeki bir uzaylı savaşçıdır.",
+    "power": 62,
+    "powerStatus": "curated"
   },
   "marvel:gamora": {
-    "description": "Gamora, usta bir savaşçı ve Galaksinin Koruyucuları üyesidir."
+    "description": "Gamora, usta bir savaşçı ve Galaksinin Koruyucuları üyesidir.",
+    "power": 71,
+    "powerStatus": "curated"
   },
   "marvel:kang": {
-    "description": "Kang, zaman yolculuğu teknolojisini kullanan tehlikeli bir fatih olarak bilinir."
+    "description": "Kang, zaman yolculuğu teknolojisini kullanan tehlikeli bir fatih olarak bilinir.",
+    "power": 91,
+    "powerStatus": "curated"
   },
   "dc:aquaman": {
-    "description": "Arthur Curry, Atlantis kralı ve deniz canlılarıyla iletişim kurabilen bir kahramandır."
+    "description": "Arthur Curry, Atlantis kralı ve deniz canlılarıyla iletişim kurabilen bir kahramandır.",
+    "power": 83,
+    "powerStatus": "curated"
   },
   "dc:cyborg": {
-    "description": "Victor Stone, gelişmiş sibernetik sistemlere sahip bir kahramandır."
+    "description": "Victor Stone, gelişmiş sibernetik sistemlere sahip bir kahramandır.",
+    "power": 80,
+    "powerStatus": "curated"
   },
   "dc:martian manhunter": {
-    "description": "J’onn J’onzz, telepati ve şekil değiştirme güçleri olan Marslı bir kahramandır."
+    "description": "J’onn J’onzz, telepati ve şekil değiştirme güçleri olan Marslı bir kahramandır.",
+    "power": 94,
+    "powerStatus": "curated"
   },
   "dc:green arrow": {
-    "description": "Oliver Queen, üstün okçuluk becerileriyle suçla savaşır."
+    "description": "Oliver Queen, üstün okçuluk becerileriyle suçla savaşır.",
+    "power": 63,
+    "powerStatus": "curated"
   },
   "dc:black canary": {
-    "description": "Dinah Lance, dövüş ustalığı ve güçlü ses saldırısıyla tanınır."
+    "description": "Dinah Lance, dövüş ustalığı ve güçlü ses saldırısıyla tanınır.",
+    "power": 68,
+    "powerStatus": "curated"
   },
   "dc:shazam": {
-    "description": "Billy Batson, sihirli bir sözcükle güçlü bir süper kahramana dönüşür."
+    "description": "Billy Batson, sihirli bir sözcükle güçlü bir süper kahramana dönüşür.",
+    "power": 92,
+    "powerStatus": "curated"
   },
   "dc:supergirl": {
-    "description": "Kara Zor-El, Kripton kökenli ve Superman’e benzer güçleri olan bir kahramandır."
+    "description": "Kara Zor-El, Kripton kökenli ve Superman’e benzer güçleri olan bir kahramandır.",
+    "power": 91,
+    "powerStatus": "curated"
   },
   "dc:nightwing": {
-    "description": "Dick Grayson, eski Robin ve Blüdhaven’ın çevik koruyucusudur."
+    "description": "Dick Grayson, eski Robin ve Blüdhaven’ın çevik koruyucusudur.",
+    "power": 69,
+    "powerStatus": "curated"
   },
   "dc:red hood": {
-    "description": "Jason Todd, silah ve yakın dövüş konusunda uzman bir anti-kahramandır."
+    "description": "Jason Todd, silah ve yakın dövüş konusunda uzman bir anti-kahramandır.",
+    "power": 67,
+    "powerStatus": "curated"
   },
   "dc:doctor fate": {
-    "description": "Doctor Fate, mistik miğferi sayesinde güçlü büyüler kullanır."
+    "description": "Doctor Fate, mistik miğferi sayesinde güçlü büyüler kullanır.",
+    "power": 95,
+    "powerStatus": "curated"
   },
   "dc:zatanna": {
-    "description": "Zatanna, sözlerini ters söyleyerek büyü yapan bir sihirbazdır."
+    "description": "Zatanna, sözlerini ters söyleyerek büyü yapan bir sihirbazdır.",
+    "power": 89,
+    "powerStatus": "curated"
   },
   "dc:john constantine": {
-    "description": "John Constantine, doğaüstü olayları araştıran kurnaz bir büyücüdür."
+    "description": "John Constantine, doğaüstü olayları araştıran kurnaz bir büyücüdür.",
+    "power": 82,
+    "powerStatus": "curated"
   },
   "dc:swamp thing": {
-    "description": "Swamp Thing, bitki yaşamıyla bağlantılı doğaüstü bir varlıktır."
+    "description": "Swamp Thing, bitki yaşamıyla bağlantılı doğaüstü bir varlıktır.",
+    "power": 93,
+    "powerStatus": "curated"
   },
   "dc:anti-monitor": {
-    "description": "Anti-Monitor, çoklu evrenleri tehdit eden kozmik bir varlıktır."
+    "description": "Anti-Monitor, çoklu evrenleri tehdit eden kozmik bir varlıktır.",
+    "power": 99,
+    "powerStatus": "curated"
   },
   "dc:lex luthor": {
-    "description": "Lex Luthor, üstün zekâsı ve kaynaklarıyla Superman’in başlıca düşmanıdır."
+    "description": "Lex Luthor, üstün zekâsı ve kaynaklarıyla Superman’in başlıca düşmanıdır.",
+    "power": 73,
+    "powerStatus": "curated"
   },
   "dc:joker": {
-    "description": "Joker, Gotham’da kaos yaratan ve Batman’e meydan okuyan bir suçludur."
+    "description": "Joker, Gotham’da kaos yaratan ve Batman’e meydan okuyan bir suçludur.",
+    "power": 55,
+    "powerStatus": "curated"
   },
   "dc:harley quinn": {
-    "description": "Harley Quinn, akrobatik dövüşü ve öngörülemez tavırlarıyla tanınır."
+    "description": "Harley Quinn, akrobatik dövüşü ve öngörülemez tavırlarıyla tanınır.",
+    "power": 59,
+    "powerStatus": "curated"
   },
   "dc:poison ivy": {
-    "description": "Poison Ivy, bitkiler ve toksinler üzerinde uzmanlaşmış bir karakterdir."
+    "description": "Poison Ivy, bitkiler ve toksinler üzerinde uzmanlaşmış bir karakterdir.",
+    "power": 75,
+    "powerStatus": "curated"
   },
   "dc:bane": {
-    "description": "Bane, üstün strateji ve fiziksel gücüyle Batman’i zorlayan bir düşmandır."
+    "description": "Bane, üstün strateji ve fiziksel gücüyle Batman’i zorlayan bir düşmandır.",
+    "power": 72,
+    "powerStatus": "curated"
   },
   "dc:deathstroke": {
-    "description": "Slade Wilson, gelişmiş reflekslere sahip bir paralı askerdir."
+    "description": "Slade Wilson, gelişmiş reflekslere sahip bir paralı askerdir.",
+    "power": 78,
+    "powerStatus": "curated"
   },
   "dc:black adam": {
-    "description": "Black Adam, antik büyüyle güç kazanmış güçlü bir anti-kahramandır."
+    "description": "Black Adam, antik büyüyle güç kazanmış güçlü bir anti-kahramandır.",
+    "power": 93,
+    "powerStatus": "curated"
   },
   "dc:doomsday": {
-    "description": "Doomsday, olağanüstü dayanıklılığıyla Superman’in en tehlikeli düşmanlarındandır."
+    "description": "Doomsday, olağanüstü dayanıklılığıyla Superman’in en tehlikeli düşmanlarındandır.",
+    "power": 96,
+    "powerStatus": "curated"
   },
   "dc:brainiac": {
-    "description": "Brainiac, gezegenlerin bilgisini toplayan üstün zekâlı uzaylı bir tehdittir."
+    "description": "Brainiac, gezegenlerin bilgisini toplayan üstün zekâlı uzaylı bir tehdittir.",
+    "power": 92,
+    "powerStatus": "curated"
   },
   "dc:raven": {
-    "description": "Raven, karanlık büyü ve empati yetenekleri olan bir Teen Titans üyesidir."
+    "description": "Raven, karanlık büyü ve empati yetenekleri olan bir Teen Titans üyesidir.",
+    "power": 91,
+    "powerStatus": "curated"
   },
   "dc:starfire": {
-    "description": "Starfire, uçabilen ve enerji patlamaları yapabilen Tamaranlı bir kahramandır."
+    "description": "Starfire, uçabilen ve enerji patlamaları yapabilen Tamaranlı bir kahramandır.",
+    "power": 83,
+    "powerStatus": "curated"
   },
   "lotr:samwise gamgee": {
-    "description": "Sam, Frodo’ya Mordor yolculuğunda sadakatle eşlik eden cesur bir Hobbit’tir."
+    "description": "Sam, Frodo’ya Mordor yolculuğunda sadakatle eşlik eden cesur bir Hobbit’tir.",
+    "power": 52,
+    "powerStatus": "curated"
   },
   "lotr:gimli": {
-    "description": "Gimli, baltasıyla savaşan bir cüce ve Yüzük Kardeşliği üyesidir."
+    "description": "Gimli, baltasıyla savaşan bir cüce ve Yüzük Kardeşliği üyesidir.",
+    "power": 71,
+    "powerStatus": "curated"
   },
   "lotr:boromir": {
-    "description": "Boromir, Gondor’un savaşçısı ve Yüzük Kardeşliği’nin üyelerinden biridir."
+    "description": "Boromir, Gondor’un savaşçısı ve Yüzük Kardeşliği’nin üyelerinden biridir.",
+    "power": 70,
+    "powerStatus": "curated"
   },
   "lotr:faramir": {
-    "description": "Faramir, Gondor’un soylu komutanı ve Boromir’in kardeşidir."
+    "description": "Faramir, Gondor’un soylu komutanı ve Boromir’in kardeşidir.",
+    "power": 68,
+    "powerStatus": "curated"
   },
   "lotr:galadriel": {
-    "description": "Galadriel, Lothlórien’in bilge ve güçlü elf hükümdarlarından biridir."
+    "description": "Galadriel, Lothlórien’in bilge ve güçlü elf hükümdarlarından biridir.",
+    "power": 92,
+    "powerStatus": "curated"
   },
   "lotr:elrond": {
-    "description": "Elrond, Ayrıkvadi’nin bilge elf efendisi ve Yüzük Savaşı’nın müttefikidir."
+    "description": "Elrond, Ayrıkvadi’nin bilge elf efendisi ve Yüzük Savaşı’nın müttefikidir.",
+    "power": 88,
+    "powerStatus": "curated"
   },
   "lotr:arwen": {
-    "description": "Arwen, Elrond’un kızı ve Aragorn’un sevdiği elf prensesidir."
+    "description": "Arwen, Elrond’un kızı ve Aragorn’un sevdiği elf prensesidir.",
+    "power": 69,
+    "powerStatus": "curated"
   },
   "lotr:éowyn": {
-    "description": "Éowyn, Rohanlı cesur bir savaşçıdır ve Pelennor Çayırları’nda savaşır."
+    "description": "Éowyn, Rohanlı cesur bir savaşçıdır ve Pelennor Çayırları’nda savaşır.",
+    "power": 70,
+    "powerStatus": "curated"
   },
   "lotr:éomer": {
-    "description": "Éomer, Rohan süvarilerinin önde gelen komutanlarından biridir."
+    "description": "Éomer, Rohan süvarilerinin önde gelen komutanlarından biridir.",
+    "power": 70,
+    "powerStatus": "curated"
   },
   "lotr:théoden": {
-    "description": "Théoden, Yüzük Savaşı sırasında Rohan’ın kralıdır."
+    "description": "Théoden, Yüzük Savaşı sırasında Rohan’ın kralıdır.",
+    "power": 66,
+    "powerStatus": "curated"
   },
   "lotr:saruman": {
-    "description": "Saruman, güce yenik düşerek Sauron’un tarafına kayan bir büyücüdür."
+    "description": "Saruman, güce yenik düşerek Sauron’un tarafına kayan bir büyücüdür.",
+    "power": 88,
+    "powerStatus": "curated"
   },
   "lotr:gollum": {
-    "description": "Gollum, Tek Yüzük’ün etkisiyle değişmiş ve ona saplantıyla bağlanmış bir varlıktır."
+    "description": "Gollum, Tek Yüzük’ün etkisiyle değişmiş ve ona saplantıyla bağlanmış bir varlıktır.",
+    "power": 47,
+    "powerStatus": "curated"
   },
   "lotr:bilbo baggins": {
-    "description": "Bilbo, Tek Yüzük’ü bulan ve büyük bir maceraya çıkan Hobbit’tir."
+    "description": "Bilbo, Tek Yüzük’ü bulan ve büyük bir maceraya çıkan Hobbit’tir.",
+    "power": 51,
+    "powerStatus": "curated"
   },
   "lotr:treebeard": {
-    "description": "Treebeard, Fangorn Ormanı’nın kadim Ent lideridir."
+    "description": "Treebeard, Fangorn Ormanı’nın kadim Ent lideridir.",
+    "power": 83,
+    "powerStatus": "curated"
   },
   "lotr:smaug": {
-    "description": "Smaug, Erebor hazinesini ele geçiren devasa ateş püskürten ejderhadır."
+    "description": "Smaug, Erebor hazinesini ele geçiren devasa ateş püskürten ejderhadır.",
+    "power": 93,
+    "powerStatus": "curated"
   },
   "lotr:thorin oakenshield": {
-    "description": "Thorin, Erebor’u geri almak isteyen cüce kafilesinin lideridir."
+    "description": "Thorin, Erebor’u geri almak isteyen cüce kafilesinin lideridir.",
+    "power": 73,
+    "powerStatus": "curated"
   },
   "lotr:isildur": {
-    "description": "Isildur, Sauron’un elinden Tek Yüzük’ü alan Númenorlu hükümdardır."
+    "description": "Isildur, Sauron’un elinden Tek Yüzük’ü alan Númenorlu hükümdardır.",
+    "power": 75,
+    "powerStatus": "curated"
   },
   "lotr:fingolfin": {
-    "description": "Fingolfin, Morgoth’a meydan okuyan cesur bir Noldor elf kralıdır."
+    "description": "Fingolfin, Morgoth’a meydan okuyan cesur bir Noldor elf kralıdır.",
+    "power": 93,
+    "powerStatus": "curated"
   },
   "lotr:ungoliant": {
-    "description": "Ungoliant, karanlıkla beslenen kadim örümcek benzeri bir varlıktır."
+    "description": "Ungoliant, karanlıkla beslenen kadim örümcek benzeri bir varlıktır.",
+    "power": 98,
+    "powerStatus": "curated"
   },
   "lotr:ancalagon": {
-    "description": "Ancalagon, Birinci Çağ’ın en korkulan kanatlı ejderhalarından biridir."
+    "description": "Ancalagon, Birinci Çağ’ın en korkulan kanatlı ejderhalarından biridir.",
+    "power": 99,
+    "powerStatus": "curated"
   },
   "lotr:shelob": {
-    "description": "Shelob, Cirith Ungol geçidinde yaşayan dev bir örümcektir."
+    "description": "Shelob, Cirith Ungol geçidinde yaşayan dev bir örümcektir.",
+    "power": 78,
+    "powerStatus": "curated"
   },
   "pokemon:bulbasaur": {
     "description": "Bulbasaur, Çimen ve Zehir türündeki bir Pokémon’dur. özel saldırısı öne çıkar; temel istatistik toplamı 318 puandır.",
@@ -342,91 +490,147 @@
     "source": "PokéAPI official-artwork"
   },
   "marvel:iron man": {
-    "description": "Tony Stark, gelişmiş zırhlar tasarlayan bir mucit ve Avengers üyesidir. Zırhları uçuş, enerji saldırıları ve savunma sağlar."
+    "description": "Tony Stark, gelişmiş zırhlar tasarlayan bir mucit ve Avengers üyesidir. Zırhları uçuş, enerji saldırıları ve savunma sağlar.",
+    "power": 75,
+    "powerStatus": "curated"
   },
   "marvel:thor": {
-    "description": "Thor, Asgard'ın gök gürültüsü tanrısıdır. Mjolnir ve yıldırım gücüyle savaşır."
+    "description": "Thor, Asgard'ın gök gürültüsü tanrısıdır. Mjolnir ve yıldırım gücüyle savaşır.",
+    "power": 88,
+    "powerStatus": "curated"
   },
   "marvel:hulk": {
-    "description": "Bruce Banner öfkelendiğinde Hulk'a dönüşür. Olağanüstü fiziksel gücü ve dayanıklılığı vardır."
+    "description": "Bruce Banner öfkelendiğinde Hulk'a dönüşür. Olağanüstü fiziksel gücü ve dayanıklılığı vardır.",
+    "power": 87,
+    "powerStatus": "curated"
   },
   "marvel:captain america": {
-    "description": "Steve Rogers, süper asker serumu sayesinde güçlenen ve vibranyum kalkan taşıyan bir kahramandır."
+    "description": "Steve Rogers, süper asker serumu sayesinde güçlenen ve vibranyum kalkan taşıyan bir kahramandır.",
+    "power": 61,
+    "powerStatus": "curated"
   },
   "marvel:scarlet witch": {
-    "description": "Wanda Maximoff, gerçekliği değiştirebilen kaos büyüsüyle tanınan güçlü bir büyücüdür."
+    "description": "Wanda Maximoff, gerçekliği değiştirebilen kaos büyüsüyle tanınan güçlü bir büyücüdür.",
+    "power": 94,
+    "powerStatus": "curated"
   },
   "marvel:doctor strange": {
-    "description": "Stephen Strange, mistik sanatlarda uzmanlaşmış bir büyücüdür. Büyü ve boyutlar arası tehditlere karşı savaşır."
+    "description": "Stephen Strange, mistik sanatlarda uzmanlaşmış bir büyücüdür. Büyü ve boyutlar arası tehditlere karşı savaşır.",
+    "power": 91,
+    "powerStatus": "curated"
   },
   "marvel:spider-man": {
-    "description": "Peter Parker, örümcek benzeri çeviklik, duvarlara tutunma ve tehlike sezgisi kazanmış bir kahramandır."
+    "description": "Peter Parker, örümcek benzeri çeviklik, duvarlara tutunma ve tehlike sezgisi kazanmış bir kahramandır.",
+    "power": 70,
+    "powerStatus": "curated"
   },
   "marvel:thanos": {
-    "description": "Thanos, Titan kökenli kozmik bir tehdittir. Sonsuzluk Taşları'nı ele geçirme arzusuyla tanınır."
+    "description": "Thanos, Titan kökenli kozmik bir tehdittir. Sonsuzluk Taşları'nı ele geçirme arzusuyla tanınır.",
+    "power": 95,
+    "powerStatus": "curated"
   },
   "marvel:galactus": {
-    "description": "Galactus, gezegenlerin enerjisiyle beslenen kozmik bir varlıktır."
+    "description": "Galactus, gezegenlerin enerjisiyle beslenen kozmik bir varlıktır.",
+    "power": 99,
+    "powerStatus": "curated"
   },
   "marvel:fantastic four human torch": {
-    "description": "Johnny Storm, vücudunu alevlerle kaplayabilen ve uçabilen Fantastic Four üyesidir."
+    "description": "Johnny Storm, vücudunu alevlerle kaplayabilen ve uçabilen Fantastic Four üyesidir.",
+    "power": 78,
+    "powerStatus": "curated"
   },
   "marvel:the thing": {
-    "description": "Ben Grimm, kayaya benzeyen dayanıklı bedeni ve büyük fiziksel gücüyle Fantastic Four üyesidir."
+    "description": "Ben Grimm, kayaya benzeyen dayanıklı bedeni ve büyük fiziksel gücüyle Fantastic Four üyesidir.",
+    "power": 82,
+    "powerStatus": "curated"
   },
   "dc:superman": {
-    "description": "Kal-El, Krypton gezegeninden gelen bir kahramandır. Güneş enerjisi sayesinde uçabilir ve olağanüstü güç kazanır."
+    "description": "Kal-El, Krypton gezegeninden gelen bir kahramandır. Güneş enerjisi sayesinde uçabilir ve olağanüstü güç kazanır.",
+    "power": 92,
+    "powerStatus": "curated"
   },
   "dc:batman": {
-    "description": "Bruce Wayne, Gotham'ı koruyan, ileri teknoloji ve dedektiflik becerileri kullanan bir kahramandır."
+    "description": "Bruce Wayne, Gotham'ı koruyan, ileri teknoloji ve dedektiflik becerileri kullanan bir kahramandır.",
+    "power": 65,
+    "powerStatus": "curated"
   },
   "dc:wonder woman": {
-    "description": "Diana, Themyscira'nın Amazon savaşçısıdır. Olağanüstü gücü ve Hakikat Kementi ile tanınır."
+    "description": "Diana, Themyscira'nın Amazon savaşçısıdır. Olağanüstü gücü ve Hakikat Kementi ile tanınır.",
+    "power": 88,
+    "powerStatus": "curated"
   },
   "dc:the flash": {
-    "description": "Barry Allen, Hız Gücü'ne erişerek insanüstü hızla hareket edebilen bir kahramandır."
+    "description": "Barry Allen, Hız Gücü'ne erişerek insanüstü hızla hareket edebilen bir kahramandır.",
+    "power": 90,
+    "powerStatus": "curated"
   },
   "dc:green lantern": {
-    "description": "Green Lantern, iradesiyle güç yüzüğünden enerji yapıları oluşturabilen kozmik koruyucudur."
+    "description": "Green Lantern, iradesiyle güç yüzüğünden enerji yapıları oluşturabilen kozmik koruyucudur.",
+    "power": 86,
+    "powerStatus": "curated"
   },
   "dc:darkseid": {
-    "description": "Darkseid, Apokolips'in zalim hükümdarıdır. Omega Işınları ve büyük kozmik gücüyle tanınır."
+    "description": "Darkseid, Apokolips'in zalim hükümdarıdır. Omega Işınları ve büyük kozmik gücüyle tanınır.",
+    "power": 97,
+    "powerStatus": "curated"
   },
   "dc:doctor manhattan": {
-    "description": "Jon Osterman, maddeyi atomik düzeyde kontrol edebilen ve zamanı farklı algılayan güçlü bir varlıktır."
+    "description": "Jon Osterman, maddeyi atomik düzeyde kontrol edebilen ve zamanı farklı algılayan güçlü bir varlıktır.",
+    "power": 99,
+    "powerStatus": "curated"
   },
   "dc:the spectre": {
-    "description": "Spectre, ilahi intikamı temsil eden doğaüstü bir varlıktır. Gerçekliği değiştirebilecek ölçekte güçler sergiler."
+    "description": "Spectre, ilahi intikamı temsil eden doğaüstü bir varlıktır. Gerçekliği değiştirebilecek ölçekte güçler sergiler.",
+    "power": 100,
+    "powerStatus": "curated"
   },
   "dc:batgirl": {
-    "description": "Barbara Gordon, Gotham'da suçla mücadele eden, dövüş ve bilgisayar becerileri gelişmiş bir kahramandır."
+    "description": "Barbara Gordon, Gotham'da suçla mücadele eden, dövüş ve bilgisayar becerileri gelişmiş bir kahramandır.",
+    "power": 66,
+    "powerStatus": "curated"
   },
   "lotr:frodo baggins": {
-    "description": "Frodo, Tek Yüzük'ü Mordor'a taşıma görevini üstlenen Shire'lı bir hobbittir."
+    "description": "Frodo, Tek Yüzük'ü Mordor'a taşıma görevini üstlenen Shire'lı bir hobbittir.",
+    "power": 55,
+    "powerStatus": "curated"
   },
   "lotr:gandalf": {
-    "description": "Gandalf, Orta Dünya'da halklara yol gösteren bir Istari büyücüsüdür. Ateş ve ışıkla ilişkili güçler kullanır."
+    "description": "Gandalf, Orta Dünya'da halklara yol gösteren bir Istari büyücüsüdür. Ateş ve ışıkla ilişkili güçler kullanır.",
+    "power": 88,
+    "powerStatus": "curated"
   },
   "lotr:aragorn": {
-    "description": "Aragorn, Isildur'un soyundan gelen bir Dúnedain'dir. Usta bir savaşçı ve Gondor'un gelecekteki kralıdır."
+    "description": "Aragorn, Isildur'un soyundan gelen bir Dúnedain'dir. Usta bir savaşçı ve Gondor'un gelecekteki kralıdır.",
+    "power": 76,
+    "powerStatus": "curated"
   },
   "lotr:legolas": {
-    "description": "Legolas, Sindar kökenli bir elf prensidir. Keskin görüşü ve okçuluğuyla tanınır."
+    "description": "Legolas, Sindar kökenli bir elf prensidir. Keskin görüşü ve okçuluğuyla tanınır.",
+    "power": 74,
+    "powerStatus": "curated"
   },
   "lotr:sauron": {
-    "description": "Sauron, Tek Yüzük'ü yaratan karanlık Maia'dır. Orta Dünya'yı egemenliği altına almak ister."
+    "description": "Sauron, Tek Yüzük'ü yaratan karanlık Maia'dır. Orta Dünya'yı egemenliği altına almak ister.",
+    "power": 97,
+    "powerStatus": "curated"
   },
   "lotr:morgoth": {
-    "description": "Morgoth, Arda'ya isyan eden ilk Karanlık Lord'dur. Sauron onun eski hizmetkârıdır."
+    "description": "Morgoth, Arda'ya isyan eden ilk Karanlık Lord'dur. Sauron onun eski hizmetkârıdır.",
+    "power": 100,
+    "powerStatus": "curated"
   },
   "lotr:eru ilúvatar": {
     "description": "Eru Ilúvatar, Tolkien'in evreninde varoluşun ve Ainur'un yaratıcısı olan tek Tanrı'dır."
   },
   "lotr:the witch-king of angmar": {
-    "description": "Angmar'ın Cadı Kralı, Nazgûl'ün lideri ve Sauron'un en korkulan hizmetkârlarından biridir."
+    "description": "Angmar'ın Cadı Kralı, Nazgûl'ün lideri ve Sauron'un en korkulan hizmetkârlarından biridir.",
+    "power": 89,
+    "powerStatus": "curated"
   },
   "lotr:tom bombadil": {
-    "description": "Tom Bombadil, Eski Orman'da yaşayan gizemli bir varlıktır. Tek Yüzük onun üzerinde alışılmış etkisini göstermez."
+    "description": "Tom Bombadil, Eski Orman'da yaşayan gizemli bir varlıktır. Tek Yüzük onun üzerinde alışılmış etkisini göstermez.",
+    "power": 90,
+    "powerStatus": "curated"
   },
   "pokemon:pikachu": {
     "description": "Pikachu, Elektrik türündeki bir Pokémon’dur. hızı öne çıkar; temel istatistik toplamı 320 puandır.",
@@ -469,214 +673,354 @@
     "source": "PokéAPI official-artwork"
   },
   "marvel:ant-man": {
-    "description": "Scott Lang, boyut değiştirmeyi sağlayan Pym Parçacıklarıyla küçülüp büyüyebilen bir kahramandır."
+    "description": "Scott Lang, boyut değiştirmeyi sağlayan Pym Parçacıklarıyla küçülüp büyüyebilen bir kahramandır.",
+    "power": 74,
+    "powerStatus": "curated"
   },
   "marvel:wasp": {
-    "description": "Wasp, küçülme ve uçuş yeteneğine sahip, enerji iğneleri kullanabilen bir süper kahramandır."
+    "description": "Wasp, küçülme ve uçuş yeteneğine sahip, enerji iğneleri kullanabilen bir süper kahramandır.",
+    "power": 70,
+    "powerStatus": "curated"
   },
   "marvel:war machine": {
-    "description": "James Rhodes, ağır silahlarla donatılmış War Machine zırhını kullanan bir askerdir."
+    "description": "James Rhodes, ağır silahlarla donatılmış War Machine zırhını kullanan bir askerdir.",
+    "power": 73,
+    "powerStatus": "curated"
   },
   "marvel:falcon": {
-    "description": "Sam Wilson, gelişmiş uçuş ekipmanlarıyla savaşan ve daha sonra Captain America kimliğini üstlenen kahramandır."
+    "description": "Sam Wilson, gelişmiş uçuş ekipmanlarıyla savaşan ve daha sonra Captain America kimliğini üstlenen kahramandır.",
+    "power": 62,
+    "powerStatus": "curated"
   },
   "marvel:winter soldier": {
-    "description": "Bucky Barnes, sibernetik kolu ve askerî eğitimiyle tanınan eski bir süper askerdir."
+    "description": "Bucky Barnes, sibernetik kolu ve askerî eğitimiyle tanınan eski bir süper askerdir.",
+    "power": 65,
+    "powerStatus": "curated"
   },
   "marvel:cyclops": {
-    "description": "Scott Summers, gözlerinden güçlü optik enerji ışınları çıkarabilen X-Men liderlerindendir."
+    "description": "Scott Summers, gözlerinden güçlü optik enerji ışınları çıkarabilen X-Men liderlerindendir.",
+    "power": 76,
+    "powerStatus": "curated"
   },
   "marvel:mystique": {
-    "description": "Mystique, görünüşünü başka insanların biçimine dönüştürebilen mutanttır."
+    "description": "Mystique, görünüşünü başka insanların biçimine dönüştürebilen mutanttır.",
+    "power": 65,
+    "powerStatus": "curated"
   },
   "marvel:beast": {
-    "description": "Hank McCoy, üstün zekâya, çevikliğe ve fiziksel güce sahip mutant bilim insanıdır."
+    "description": "Hank McCoy, üstün zekâya, çevikliğe ve fiziksel güce sahip mutant bilim insanıdır.",
+    "power": 70,
+    "powerStatus": "curated"
   },
   "marvel:nightcrawler": {
-    "description": "Kurt Wagner, kısa mesafelerde ışınlanabilen çevik bir X-Men üyesidir."
+    "description": "Kurt Wagner, kısa mesafelerde ışınlanabilen çevik bir X-Men üyesidir.",
+    "power": 68,
+    "powerStatus": "curated"
   },
   "marvel:rogue": {
-    "description": "Rogue, temas ettiği kişilerin güçlerini ve anılarını geçici olarak emebilen mutanttır."
+    "description": "Rogue, temas ettiği kişilerin güçlerini ve anılarını geçici olarak emebilen mutanttır.",
+    "power": 82,
+    "powerStatus": "curated"
   },
   "marvel:gambit": {
-    "description": "Remy LeBeau, nesnelere kinetik enerji yükleyerek onları patlayıcı hâle getirebilen mutanttır."
+    "description": "Remy LeBeau, nesnelere kinetik enerji yükleyerek onları patlayıcı hâle getirebilen mutanttır.",
+    "power": 71,
+    "powerStatus": "curated"
   },
   "marvel:invisible woman": {
-    "description": "Sue Storm, görünmez olabilen ve güçlü kuvvet alanları oluşturabilen Fantastic Four üyesidir."
+    "description": "Sue Storm, görünmez olabilen ve güçlü kuvvet alanları oluşturabilen Fantastic Four üyesidir.",
+    "power": 86,
+    "powerStatus": "curated"
   },
   "marvel:mr fantastic": {
-    "description": "Reed Richards, vücudunu esnetebilen ve olağanüstü zekâsıyla tanınan Fantastic Four lideridir."
+    "description": "Reed Richards, vücudunu esnetebilen ve olağanüstü zekâsıyla tanınan Fantastic Four lideridir.",
+    "power": 77,
+    "powerStatus": "curated"
   },
   "marvel:blade": {
-    "description": "Blade, vampirlerle savaşan ve vampir özelliklerinin bir bölümünü taşıyan bir avcıdır."
+    "description": "Blade, vampirlerle savaşan ve vampir özelliklerinin bir bölümünü taşıyan bir avcıdır.",
+    "power": 68,
+    "powerStatus": "curated"
   },
   "marvel:carnage": {
-    "description": "Carnage, Cletus Kasady ile birleşmiş, son derece saldırgan bir simbiyottur."
+    "description": "Carnage, Cletus Kasady ile birleşmiş, son derece saldırgan bir simbiyottur.",
+    "power": 83,
+    "powerStatus": "curated"
   },
   "marvel:kingpin": {
-    "description": "Wilson Fisk, New York suç dünyasında büyük nüfuzu olan ve fiziksel gücüyle de tanınan bir liderdir."
+    "description": "Wilson Fisk, New York suç dünyasında büyük nüfuzu olan ve fiziksel gücüyle de tanınan bir liderdir.",
+    "power": 52,
+    "powerStatus": "curated"
   },
   "marvel:punisher": {
-    "description": "Frank Castle, suçlulara karşı ölümcül yöntemler kullanan eski bir askerdir."
+    "description": "Frank Castle, suçlulara karşı ölümcül yöntemler kullanan eski bir askerdir.",
+    "power": 58,
+    "powerStatus": "curated"
   },
   "marvel:shang-chi": {
-    "description": "Shang-Chi, Marvel evreninin en yetenekli yakın dövüş ustalarından biridir."
+    "description": "Shang-Chi, Marvel evreninin en yetenekli yakın dövüş ustalarından biridir.",
+    "power": 70,
+    "powerStatus": "curated"
   },
   "marvel:she-hulk": {
-    "description": "Jennifer Walters, gama ışınları nedeniyle Hulk benzeri güçler kazanmış bir avukattır."
+    "description": "Jennifer Walters, gama ışınları nedeniyle Hulk benzeri güçler kazanmış bir avukattır.",
+    "power": 84,
+    "powerStatus": "curated"
   },
   "marvel:heimdall": {
-    "description": "Heimdall, Asgard'ın Bifröst köprüsünü koruyan ve uzak diyarları görebilen nöbetçidir."
+    "description": "Heimdall, Asgard'ın Bifröst köprüsünü koruyan ve uzak diyarları görebilen nöbetçidir.",
+    "power": 82,
+    "powerStatus": "curated"
   },
   "marvel:star-lord": {
-    "description": "Peter Quill, Guardians of the Galaxy ekibinin liderlerinden olan uzay maceracısıdır."
+    "description": "Peter Quill, Guardians of the Galaxy ekibinin liderlerinden olan uzay maceracısıdır.",
+    "power": 68,
+    "powerStatus": "curated"
   },
   "marvel:drax": {
-    "description": "Drax, güçlü ve dayanıklı bedeniyle yakın dövüşte uzmanlaşmış bir galaktik savaşçıdır."
+    "description": "Drax, güçlü ve dayanıklı bedeniyle yakın dövüşte uzmanlaşmış bir galaktik savaşçıdır.",
+    "power": 74,
+    "powerStatus": "curated"
   },
   "marvel:mantis": {
-    "description": "Mantis, dokunarak başkalarının duygularını hissedebilen ve etkileyebilen bir kahramandır."
+    "description": "Mantis, dokunarak başkalarının duygularını hissedebilen ve etkileyebilen bir kahramandır.",
+    "power": 72,
+    "powerStatus": "curated"
   },
   "marvel:nebula": {
-    "description": "Nebula, sibernetik geliştirmelere sahip, eğitimli bir uzay savaşçısıdır."
+    "description": "Nebula, sibernetik geliştirmelere sahip, eğitimli bir uzay savaşçısıdır.",
+    "power": 71,
+    "powerStatus": "curated"
   },
   "marvel:adam warlock": {
-    "description": "Adam Warlock, kozmik enerjiyle ilişkili olağanüstü güçlere sahip yapay olarak yaratılmış bir varlıktır."
+    "description": "Adam Warlock, kozmik enerjiyle ilişkili olağanüstü güçlere sahip yapay olarak yaratılmış bir varlıktır.",
+    "power": 94,
+    "powerStatus": "curated"
   },
   "dc:robin": {
-    "description": "Robin, Batman'in yanında eğitim almış genç suç savaşçılarının kullandığı kahraman kimliğidir."
+    "description": "Robin, Batman'in yanında eğitim almış genç suç savaşçılarının kullandığı kahraman kimliğidir.",
+    "power": 62,
+    "powerStatus": "curated"
   },
   "dc:red robin": {
-    "description": "Red Robin, genellikle Tim Drake ile ilişkilendirilen, dedektiflik ve dövüş becerileriyle öne çıkan kimliktir."
+    "description": "Red Robin, genellikle Tim Drake ile ilişkilendirilen, dedektiflik ve dövüş becerileriyle öne çıkan kimliktir.",
+    "power": 65,
+    "powerStatus": "curated"
   },
   "dc:blue beetle": {
-    "description": "Blue Beetle, uzaylı kökenli Scarab teknolojisiyle zırh ve gelişmiş silahlar kullanabilen kahramandır."
+    "description": "Blue Beetle, uzaylı kökenli Scarab teknolojisiyle zırh ve gelişmiş silahlar kullanabilen kahramandır.",
+    "power": 77,
+    "powerStatus": "curated"
   },
   "dc:booster gold": {
-    "description": "Booster Gold, gelecekten getirdiği teknolojiyle savaşan ve zaman yolculuğuyla ilişkili bir kahramandır."
+    "description": "Booster Gold, gelecekten getirdiği teknolojiyle savaşan ve zaman yolculuğuyla ilişkili bir kahramandır.",
+    "power": 73,
+    "powerStatus": "curated"
   },
   "dc:catwoman": {
-    "description": "Selina Kyle, Gotham'da faaliyet gösteren çevik ve yetenekli bir hırsızdır."
+    "description": "Selina Kyle, Gotham'da faaliyet gösteren çevik ve yetenekli bir hırsızdır.",
+    "power": 59,
+    "powerStatus": "curated"
   },
   "dc:the riddler": {
-    "description": "Edward Nygma, Batman'i bilmeceler ve zekâ oyunlarıyla sınayan Gotham suçlusudur."
+    "description": "Edward Nygma, Batman'i bilmeceler ve zekâ oyunlarıyla sınayan Gotham suçlusudur.",
+    "power": 52,
+    "powerStatus": "curated"
   },
   "dc:two-face": {
-    "description": "Harvey Dent, yüzünün yarısı yara izleriyle kaplı, kararlarını yazı tura atarak veren eski savcıdır."
+    "description": "Harvey Dent, yüzünün yarısı yara izleriyle kaplı, kararlarını yazı tura atarak veren eski savcıdır.",
+    "power": 52,
+    "powerStatus": "curated"
   },
   "dc:scarecrow": {
-    "description": "Jonathan Crane, korku toksinleri kullanarak insanların en büyük korkularını ortaya çıkaran suçludur."
+    "description": "Jonathan Crane, korku toksinleri kullanarak insanların en büyük korkularını ortaya çıkaran suçludur.",
+    "power": 56,
+    "powerStatus": "curated"
   },
   "dc:mr freeze": {
-    "description": "Victor Fries, kriyojenik teknoloji ve dondurucu silahlar kullanan Gotham bilim insanıdır."
+    "description": "Victor Fries, kriyojenik teknoloji ve dondurucu silahlar kullanan Gotham bilim insanıdır.",
+    "power": 66,
+    "powerStatus": "curated"
   },
   "dc:ra’s al ghul": {
-    "description": "Ra's al Ghul, League of Assassins'in lideri ve Lazarus Çukurlarıyla ilişkili uzun ömürlü stratejisttir."
+    "description": "Ra's al Ghul, League of Assassins'in lideri ve Lazarus Çukurlarıyla ilişkili uzun ömürlü stratejisttir.",
+    "power": 72,
+    "powerStatus": "curated"
   },
   "dc:talia al ghul": {
-    "description": "Talia al Ghul, Ra's al Ghul'un kızı olan, dövüş ve casuslukta uzman bir karakterdir."
+    "description": "Talia al Ghul, Ra's al Ghul'un kızı olan, dövüş ve casuslukta uzman bir karakterdir.",
+    "power": 66,
+    "powerStatus": "curated"
   },
   "dc:deadshot": {
-    "description": "Floyd Lawton, olağanüstü isabet oranıyla tanınan profesyonel bir suikastçıdır."
+    "description": "Floyd Lawton, olağanüstü isabet oranıyla tanınan profesyonel bir suikastçıdır.",
+    "power": 65,
+    "powerStatus": "curated"
   },
   "dc:sinestro": {
-    "description": "Sinestro, korkunun sarı enerjisini kullanan Sinestro Corps'un lideridir."
+    "description": "Sinestro, korkunun sarı enerjisini kullanan Sinestro Corps'un lideridir.",
+    "power": 89,
+    "powerStatus": "curated"
   },
   "dc:atrocitus": {
-    "description": "Atrocitus, öfkenin kırmızı enerjisini kullanan Red Lantern Corps'un kurucusudur."
+    "description": "Atrocitus, öfkenin kırmızı enerjisini kullanan Red Lantern Corps'un kurucusudur.",
+    "power": 86,
+    "powerStatus": "curated"
   },
   "dc:general zod": {
-    "description": "General Zod, Krypton kökenli bir komutandır; sarı güneş altında Superman benzeri güçler kazanır."
+    "description": "General Zod, Krypton kökenli bir komutandır; sarı güneş altında Superman benzeri güçler kazanır.",
+    "power": 91,
+    "powerStatus": "curated"
   },
   "dc:reverse-flash": {
-    "description": "Eobard Thawne, Hız Gücü ile ilişkili güçlerini Flash'a karşı kullanan zaman yolcusu bir düşmandır."
+    "description": "Eobard Thawne, Hız Gücü ile ilişkili güçlerini Flash'a karşı kullanan zaman yolcusu bir düşmandır.",
+    "power": 92,
+    "powerStatus": "curated"
   },
   "dc:zoom": {
-    "description": "Zoom, zaman algısını değiştirebilen ve Flash'ın düşmanları arasında yer alan bir hızcıdır."
+    "description": "Zoom, zaman algısını değiştirebilen ve Flash'ın düşmanları arasında yer alan bir hızcıdır.",
+    "power": 87,
+    "powerStatus": "curated"
   },
   "dc:gorilla grodd": {
-    "description": "Gorilla Grodd, telepatik yeteneklere sahip son derece zeki bir gorildir."
+    "description": "Gorilla Grodd, telepatik yeteneklere sahip son derece zeki bir gorildir.",
+    "power": 82,
+    "powerStatus": "curated"
   },
   "dc:captain cold": {
-    "description": "Leonard Snart, soğuk tabancasıyla Flash'a karşı savaşan bir suçludur."
+    "description": "Leonard Snart, soğuk tabancasıyla Flash'a karşı savaşan bir suçludur.",
+    "power": 68,
+    "powerStatus": "curated"
   },
   "dc:heat wave": {
-    "description": "Mick Rory, gelişmiş alev silahları kullanan Flash düşmanlarından biridir."
+    "description": "Mick Rory, gelişmiş alev silahları kullanan Flash düşmanlarından biridir.",
+    "power": 63,
+    "powerStatus": "curated"
   },
   "dc:mirror master": {
-    "description": "Mirror Master, aynalar ve yansıtıcı yüzeyler üzerinden hareket edebilen teknoloji veya güçler kullanır."
+    "description": "Mirror Master, aynalar ve yansıtıcı yüzeyler üzerinden hareket edebilen teknoloji veya güçler kullanır.",
+    "power": 70,
+    "powerStatus": "curated"
   },
   "dc:trigon": {
-    "description": "Trigon, boyutlar arası güçleriyle tanınan, Raven'ın babası olan şeytani varlıktır."
+    "description": "Trigon, boyutlar arası güçleriyle tanınan, Raven'ın babası olan şeytani varlıktır.",
+    "power": 97,
+    "powerStatus": "curated"
   },
   "lotr:meriadoc brandybuck": {
-    "description": "Merry, Yüzük Kardeşliği'ne katılan ve Rohan'da savaşan Shire'lı bir hobbittir."
+    "description": "Merry, Yüzük Kardeşliği'ne katılan ve Rohan'da savaşan Shire'lı bir hobbittir.",
+    "power": 47,
+    "powerStatus": "curated"
   },
   "lotr:peregrin took": {
-    "description": "Pippin, Yüzük Kardeşliği üyesi olan ve Gondor'da görev yapan genç bir hobbittir."
+    "description": "Pippin, Yüzük Kardeşliği üyesi olan ve Gondor'da görev yapan genç bir hobbittir.",
+    "power": 45,
+    "powerStatus": "curated"
   },
   "lotr:denethor": {
-    "description": "Denethor, Yüzük Savaşı sırasında Gondor'un vekilharcı ve Boromir ile Faramir'in babasıdır."
+    "description": "Denethor, Yüzük Savaşı sırasında Gondor'un vekilharcı ve Boromir ile Faramir'in babasıdır.",
+    "power": 55,
+    "powerStatus": "curated"
   },
   "lotr:celeborn": {
-    "description": "Celeborn, Lothlórien'in Galadriel ile birlikte yöneticiliğini yapan bir elf soylusudur."
+    "description": "Celeborn, Lothlórien'in Galadriel ile birlikte yöneticiliğini yapan bir elf soylusudur.",
+    "power": 78,
+    "powerStatus": "curated"
   },
   "lotr:thranduil": {
-    "description": "Thranduil, Kuyutorman'daki Orman Elfleri'nin kralı ve Legolas'ın babasıdır."
+    "description": "Thranduil, Kuyutorman'daki Orman Elfleri'nin kralı ve Legolas'ın babasıdır.",
+    "power": 80,
+    "powerStatus": "curated"
   },
   "lotr:gríma wormtongue": {
-    "description": "Gríma, Saruman'ın etkisindeki danışman olarak Rohan Kralı Théoden'i yanıltmaya çalışır."
+    "description": "Gríma, Saruman'ın etkisindeki danışman olarak Rohan Kralı Théoden'i yanıltmaya çalışır.",
+    "power": 38,
+    "powerStatus": "curated"
   },
   "lotr:nazgûl": {
-    "description": "Nazgûl, Dokuz Yüzük tarafından köleleştirilmiş, Sauron'a hizmet eden yüzük tayflarıdır."
+    "description": "Nazgûl, Dokuz Yüzük tarafından köleleştirilmiş, Sauron'a hizmet eden yüzük tayflarıdır.",
+    "power": 78,
+    "powerStatus": "curated"
   },
   "lotr:khamûl": {
-    "description": "Khamûl, Doğulu olarak bilinen ve Nazgûl arasında önemli yeri olan bir yüzük tayfıdır."
+    "description": "Khamûl, Doğulu olarak bilinen ve Nazgûl arasında önemli yeri olan bir yüzük tayfıdır.",
+    "power": 81,
+    "powerStatus": "curated"
   },
   "lotr:goldberry": {
-    "description": "Goldberry, Eski Orman yakınında Tom Bombadil ile yaşayan gizemli bir karakterdir."
+    "description": "Goldberry, Eski Orman yakınında Tom Bombadil ile yaşayan gizemli bir karakterdir.",
+    "power": 70,
+    "powerStatus": "curated"
   },
   "lotr:radagast": {
-    "description": "Radagast, hayvanlar ve doğayla güçlü bağı bulunan bir Istari büyücüsüdür."
+    "description": "Radagast, hayvanlar ve doğayla güçlü bağı bulunan bir Istari büyücüsüdür.",
+    "power": 81,
+    "powerStatus": "curated"
   },
   "lotr:beorn": {
-    "description": "Beorn, insan ile ayı biçimleri arasında dönüşebilen ve Hobbitler'e yardım eden bir şekil değiştiricidir."
+    "description": "Beorn, insan ile ayı biçimleri arasında dönüşebilen ve Hobbitler'e yardım eden bir şekil değiştiricidir.",
+    "power": 77,
+    "powerStatus": "curated"
   },
   "lotr:bard the bowman": {
-    "description": "Bard, Dale soyundan gelen okçudur ve Smaug'u öldürmesiyle tanınır."
+    "description": "Bard, Dale soyundan gelen okçudur ve Smaug'u öldürmesiyle tanınır.",
+    "power": 69,
+    "powerStatus": "curated"
   },
   "lotr:balin": {
-    "description": "Balin, Thorin'in Erebor seferine katılan ve daha sonra Moria'ya giden bir cücedir."
+    "description": "Balin, Thorin'in Erebor seferine katılan ve daha sonra Moria'ya giden bir cücedir.",
+    "power": 64,
+    "powerStatus": "curated"
   },
   "lotr:dwalin": {
-    "description": "Dwalin, Thorin Meşekalkan'ın Erebor seferindeki savaşçı cücelerinden biridir."
+    "description": "Dwalin, Thorin Meşekalkan'ın Erebor seferindeki savaşçı cücelerinden biridir.",
+    "power": 66,
+    "powerStatus": "curated"
   },
   "lotr:kíli": {
-    "description": "Kíli, Thorin'in yeğeni ve Erebor seferine katılan genç cüce savaşçıdır."
+    "description": "Kíli, Thorin'in yeğeni ve Erebor seferine katılan genç cüce savaşçıdır.",
+    "power": 62,
+    "powerStatus": "curated"
   },
   "lotr:fíli": {
-    "description": "Fíli, Thorin'in yeğeni ve Erebor seferine katılan genç cüce savaşçıdır."
+    "description": "Fíli, Thorin'in yeğeni ve Erebor seferine katılan genç cüce savaşçıdır.",
+    "power": 63,
+    "powerStatus": "curated"
   },
   "lotr:azog": {
-    "description": "Azog, Moria çevresindeki savaşlarda cücelerin düşmanı olarak tanınan bir ork lideridir."
+    "description": "Azog, Moria çevresindeki savaşlarda cücelerin düşmanı olarak tanınan bir ork lideridir.",
+    "power": 75,
+    "powerStatus": "curated"
   },
   "lotr:bolg": {
-    "description": "Bolg, Azog'un oğlu ve Beş Ordular Savaşı'ndaki ork liderlerinden biridir."
+    "description": "Bolg, Azog'un oğlu ve Beş Ordular Savaşı'ndaki ork liderlerinden biridir.",
+    "power": 72,
+    "powerStatus": "curated"
   },
   "lotr:elendil": {
-    "description": "Elendil, Númenor'un yıkımından kurtulan ve Arnor ile Gondor krallıklarını kuran liderdir."
+    "description": "Elendil, Númenor'un yıkımından kurtulan ve Arnor ile Gondor krallıklarını kuran liderdir.",
+    "power": 83,
+    "powerStatus": "curated"
   },
   "lotr:anárion": {
-    "description": "Anárion, Elendil'in oğlu ve Gondor'un Isildur ile birlikte ilk yöneticilerindendir."
+    "description": "Anárion, Elendil'in oğlu ve Gondor'un Isildur ile birlikte ilk yöneticilerindendir.",
+    "power": 76,
+    "powerStatus": "curated"
   },
   "lotr:gil-galad": {
-    "description": "Gil-galad, Orta Dünya'daki Noldor'un son Yüce Kralı ve Son İttifak'ın liderlerindendir."
+    "description": "Gil-galad, Orta Dünya'daki Noldor'un son Yüce Kralı ve Son İttifak'ın liderlerindendir.",
+    "power": 89,
+    "powerStatus": "curated"
   },
   "lotr:glorfindel": {
-    "description": "Glorfindel, büyük savaş gücü ve ruhsal kudretiyle tanınan eski bir elf kahramanıdır."
+    "description": "Glorfindel, büyük savaş gücü ve ruhsal kudretiyle tanınan eski bir elf kahramanıdır.",
+    "power": 91,
+    "powerStatus": "curated"
   },
   "lotr:círdan": {
-    "description": "Círdan, Gri Limanlar'ın yöneticisi olan ve Üç Elf Yüzüğü'nden Narya'yı Gandalf'a veren elftir."
+    "description": "Círdan, Gri Limanlar'ın yöneticisi olan ve Üç Elf Yüzüğü'nden Narya'yı Gandalf'a veren elftir.",
+    "power": 84,
+    "powerStatus": "curated"
   },
   "pokemon:ivysaur": {
     "name": "Ivysaur",
@@ -10767,5 +11111,875 @@
     "pokedex": 1025,
     "statsTotal": 600,
     "source": "PokéAPI official-artwork"
+  },
+  "marvel:apocalypse": {
+    "name": "Apocalypse",
+    "description": "En Sabah Nur, bedenini değiştirebilen ve teknolojiyi kullanan kadim bir mutanttır.",
+    "power": 93,
+    "powerStatus": "curated"
+  },
+  "marvel:emma frost": {
+    "name": "Emma Frost",
+    "description": "Emma Frost, güçlü telepatisi ve elmas biçimine dönüşme yeteneğiyle tanınır.",
+    "power": 85,
+    "powerStatus": "curated"
+  },
+  "marvel:colossus": {
+    "name": "Colossus",
+    "description": "Piotr Rasputin, vücudunu organik çeliğe dönüştürerek büyük güç ve dayanıklılık kazanır.",
+    "power": 80,
+    "powerStatus": "curated"
+  },
+  "marvel:juggernaut": {
+    "name": "Juggernaut",
+    "description": "Cain Marko, Cyttorak'ın mistik gücüyle durdurulması son derece zor bir savaşçıya dönüşür.",
+    "power": 90,
+    "powerStatus": "curated"
+  },
+  "marvel:kitty pryde": {
+    "name": "Kitty Pryde",
+    "description": "Kitty Pryde, bedenini katı maddelerin içinden geçirebilen bir X-Men mutantıdır.",
+    "power": 74,
+    "powerStatus": "curated"
+  },
+  "marvel:iceman": {
+    "name": "Iceman",
+    "description": "Bobby Drake, sıcaklığı düşürerek buz oluşturabilen ve bedenini buz biçimine dönüştürebilen mutanttır.",
+    "power": 88,
+    "powerStatus": "curated"
+  },
+  "marvel:angel": {
+    "name": "Angel",
+    "description": "Warren Worthington III, kanatlarıyla uçabilen ve X-Men ekibinde savaşan mutanttır.",
+    "power": 69,
+    "powerStatus": "curated"
+  },
+  "marvel:bishop": {
+    "name": "Bishop",
+    "description": "Lucas Bishop, enerji saldırılarını emip yeniden yönlendirebilen gelecek kökenli mutanttır.",
+    "power": 77,
+    "powerStatus": "curated"
+  },
+  "marvel:cable": {
+    "name": "Cable",
+    "description": "Nathan Summers, telekinezi ve gelişmiş silahlar kullanan gelecekten gelen savaşçıdır.",
+    "power": 83,
+    "powerStatus": "curated"
+  },
+  "marvel:domino": {
+    "name": "Domino",
+    "description": "Domino, olasılıkları lehine etkileyen şans gücüne sahip mutant bir paralı askerdir.",
+    "power": 68,
+    "powerStatus": "curated"
+  },
+  "marvel:black bolt": {
+    "name": "Black Bolt",
+    "description": "Black Bolt, son derece yıkıcı ses gücüyle tanınan Inhuman hükümdarıdır.",
+    "power": 92,
+    "powerStatus": "curated"
+  },
+  "marvel:medusa": {
+    "name": "Medusa",
+    "description": "Medusa, olağanüstü güçlü ve hareketli saçlarını kontrol edebilen Inhuman kraliçesidir.",
+    "power": 75,
+    "powerStatus": "curated"
+  },
+  "marvel:quicksilver": {
+    "name": "Quicksilver",
+    "description": "Pietro Maximoff, olağanüstü hızlarda hareket edebilen mutant kökenli kahramandır.",
+    "power": 84,
+    "powerStatus": "curated"
+  },
+  "marvel:america chavez": {
+    "name": "America Chavez",
+    "description": "America Chavez, boyutlar arasında geçit açabilen ve üstün fiziksel güce sahip kahramandır.",
+    "power": 84,
+    "powerStatus": "curated"
+  },
+  "marvel:ms marvel": {
+    "name": "Ms Marvel",
+    "description": "Kamala Khan, bedenini esnetme ve biçimlendirme güçleriyle tanınan genç kahramandır.",
+    "power": 71,
+    "powerStatus": "curated"
+  },
+  "marvel:iron fist": {
+    "name": "Iron Fist",
+    "description": "Danny Rand, chi enerjisini yumruğunda yoğunlaştırarak güçlü darbeler vurabilen dövüşçüdür.",
+    "power": 72,
+    "powerStatus": "curated"
+  },
+  "marvel:luke cage": {
+    "name": "Luke Cage",
+    "description": "Luke Cage, kurşunlara dayanıklı derisi ve üstün fiziksel gücüyle Harlem'i korur.",
+    "power": 75,
+    "powerStatus": "curated"
+  },
+  "marvel:jessica jones": {
+    "name": "Jessica Jones",
+    "description": "Jessica Jones, üstün güç ve dayanıklılığa sahip özel dedektiftir.",
+    "power": 69,
+    "powerStatus": "curated"
+  },
+  "marvel:elektra": {
+    "name": "Elektra",
+    "description": "Elektra Natchios, sai kullanan ve yakın dövüşte uzman bir suikastçıdır.",
+    "power": 66,
+    "powerStatus": "curated"
+  },
+  "marvel:bullseye": {
+    "name": "Bullseye",
+    "description": "Bullseye, sıradan nesneleri bile ölümcül isabetle fırlatabilen kiralık katildir.",
+    "power": 61,
+    "powerStatus": "curated"
+  },
+  "marvel:red skull": {
+    "name": "Red Skull",
+    "description": "Johann Schmidt, HYDRA ile bağlantılı ve Captain America'nın başlıca düşmanlarından biridir.",
+    "power": 60,
+    "powerStatus": "curated"
+  },
+  "marvel:taskmaster": {
+    "name": "Taskmaster",
+    "description": "Taskmaster, gördüğü fiziksel hareketleri taklit edebilen son derece yetenekli savaşçıdır.",
+    "power": 73,
+    "powerStatus": "curated"
+  },
+  "marvel:abomination": {
+    "name": "Abomination",
+    "description": "Emil Blonsky, gamma kaynaklı dönüşümüyle Hulk'a rakip olabilecek güce ulaşır.",
+    "power": 84,
+    "powerStatus": "curated"
+  },
+  "marvel:enchantress": {
+    "name": "Enchantress",
+    "description": "Amora, güçlü büyü ve zihin etkileme yetenekleri kullanan Asgardlı büyücüdür.",
+    "power": 87,
+    "powerStatus": "curated"
+  },
+  "marvel:mephisto": {
+    "name": "Mephisto",
+    "description": "Mephisto, ruhlarla pazarlık yapan ve kendi boyutunda büyük güç kullanan şeytani varlıktır.",
+    "power": 96,
+    "powerStatus": "curated"
+  },
+  "marvel:modok": {
+    "name": "MODOK",
+    "description": "MODOK, ileri teknoloji ve psişik yeteneklerle donatılmış büyük başlı bir süper kötüdür.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "marvel:kraven": {
+    "name": "Kraven",
+    "description": "Sergei Kravinoff, Spider-Man'i avlamaya çalışan üstün duyulu ve güçlü avcıdır.",
+    "power": 66,
+    "powerStatus": "curated"
+  },
+  "marvel:mysterio": {
+    "name": "Mysterio",
+    "description": "Quentin Beck, illüzyonlar ve özel efektlerle Spider-Man'i yanıltan suçludur.",
+    "power": 64,
+    "powerStatus": "curated"
+  },
+  "marvel:electro": {
+    "name": "Electro",
+    "description": "Max Dillon, elektriği üretip kontrol edebilen Spider-Man düşmanıdır.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "marvel:sandman": {
+    "name": "Sandman",
+    "description": "Flint Marko, bedenini kuma dönüştürüp farklı biçimler alabilen suçludur.",
+    "power": 75,
+    "powerStatus": "curated"
+  },
+  "marvel:lizard": {
+    "name": "Lizard",
+    "description": "Curt Connors, deney sonucu sürüngen benzeri bir yaratığa dönüşen bilim insanıdır.",
+    "power": 73,
+    "powerStatus": "curated"
+  },
+  "marvel:doctor octopus": {
+    "name": "Doctor Octopus",
+    "description": "Otto Octavius, dört mekanik koluyla savaşan dahi bilim insanıdır.",
+    "power": 75,
+    "powerStatus": "curated"
+  },
+  "marvel:rhino": {
+    "name": "Rhino",
+    "description": "Aleksei Sytsevich, zırhı ve büyük fiziksel gücüyle Spider-Man'e meydan okur.",
+    "power": 68,
+    "powerStatus": "curated"
+  },
+  "marvel:vulture": {
+    "name": "Vulture",
+    "description": "Adrian Toomes, özel kanatlı uçuş donanımı kullanan deneyimli suçludur.",
+    "power": 61,
+    "powerStatus": "curated"
+  },
+  "marvel:shocker": {
+    "name": "Shocker",
+    "description": "Herman Schultz, titreşim darbeleri üreten özel eldivenler kullanan suçludur.",
+    "power": 59,
+    "powerStatus": "curated"
+  },
+  "marvel:black cat": {
+    "name": "Black Cat",
+    "description": "Felicia Hardy, akrobatik becerileriyle tanınan usta hırsız ve Spider-Man müttefikidir.",
+    "power": 63,
+    "powerStatus": "curated"
+  },
+  "marvel:silk": {
+    "name": "Silk",
+    "description": "Cindy Moon, örümcek güçleri ve gelişmiş tehlike algısına sahip kahramandır.",
+    "power": 72,
+    "powerStatus": "curated"
+  },
+  "marvel:spider-gwen": {
+    "name": "Spider-Gwen",
+    "description": "Gwen Stacy, kendi evreninde örümcek güçleri kazanan maskeli kahramandır.",
+    "power": 73,
+    "powerStatus": "curated"
+  },
+  "marvel:miles morales": {
+    "name": "Miles Morales",
+    "description": "Miles Morales, görünmezlik ve biyoelektrik saldırılar gibi ek örümcek güçleri taşır.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "marvel:spider-woman": {
+    "name": "Spider-Woman",
+    "description": "Jessica Drew, gelişmiş fiziksel yetenekleri ve biyoelektrik saldırılarıyla tanınır.",
+    "power": 74,
+    "powerStatus": "curated"
+  },
+  "marvel:nick fury": {
+    "name": "Nick Fury",
+    "description": "Nick Fury, S.H.I.E.L.D. teşkilatının önde gelen yöneticilerinden ve deneyimli casuslardandır.",
+    "power": 63,
+    "powerStatus": "curated"
+  },
+  "marvel:maria hill": {
+    "name": "Maria Hill",
+    "description": "Maria Hill, S.H.I.E.L.D. bünyesinde üst düzey görevler üstlenen deneyimli ajandır.",
+    "power": 58,
+    "powerStatus": "curated"
+  },
+  "marvel:agent coulson": {
+    "name": "Agent Coulson",
+    "description": "Phil Coulson, S.H.I.E.L.D. operasyonlarında görev alan deneyimli saha ajanıdır.",
+    "power": 56,
+    "powerStatus": "curated"
+  },
+  "dc:beast boy": {
+    "name": "Beast Boy",
+    "description": "Garfield Logan, farklı hayvanlara dönüşebilen Teen Titans üyesidir.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "dc:cyborg superman": {
+    "name": "Cyborg Superman",
+    "description": "Hank Henshaw, gelişmiş sibernetik beden ve Kriptonlu benzeri yetenekler kullanır.",
+    "power": 89,
+    "powerStatus": "curated"
+  },
+  "dc:black manta": {
+    "name": "Black Manta",
+    "description": "Black Manta, ileri teknoloji dalış zırhıyla Aquaman'e karşı savaşan düşmandır.",
+    "power": 72,
+    "powerStatus": "curated"
+  },
+  "dc:ocean master": {
+    "name": "Ocean Master",
+    "description": "Orm, Atlantis kökenli büyü ve savaş yetenekleriyle Aquaman'e rakip olur.",
+    "power": 77,
+    "powerStatus": "curated"
+  },
+  "dc:king shark": {
+    "name": "King Shark",
+    "description": "Nanaue, köpekbalığı benzeri bedeniyle üstün güç ve dayanıklılığa sahiptir.",
+    "power": 79,
+    "powerStatus": "curated"
+  },
+  "dc:peacemaker": {
+    "name": "Peacemaker",
+    "description": "Christopher Smith, barışı sağlamak adına ağır silahlar kullanan anti-kahramandır.",
+    "power": 61,
+    "powerStatus": "curated"
+  },
+  "dc:bloodsport": {
+    "name": "Bloodsport",
+    "description": "Robert DuBois, yüksek teknolojili silahlar kullanan usta nişancı ve paralı askerdir.",
+    "power": 63,
+    "powerStatus": "curated"
+  },
+  "dc:enchantress": {
+    "name": "Enchantress",
+    "description": "June Moone, büyülü varlıkla bağlantısı sayesinde güçlü sihir kullanır.",
+    "power": 85,
+    "powerStatus": "curated"
+  },
+  "dc:katana": {
+    "name": "Katana",
+    "description": "Tatsu Yamashiro, ruhları hapsedebilen Soultaker kılıcını kullanan savaşçıdır.",
+    "power": 68,
+    "powerStatus": "curated"
+  },
+  "dc:the atom": {
+    "name": "The Atom",
+    "description": "Ray Palmer, boyutunu atom ölçeğine kadar küçültebilen bilim insanıdır.",
+    "power": 74,
+    "powerStatus": "curated"
+  },
+  "dc:firestorm": {
+    "name": "Firestorm",
+    "description": "Firestorm, maddeyi atomik düzeyde dönüştürebilen nükleer enerji temelli kahramandır.",
+    "power": 87,
+    "powerStatus": "curated"
+  },
+  "dc:hawkman": {
+    "name": "Hawkman",
+    "description": "Hawkman, Nth metal ekipmanlarıyla uçabilen ve eski savaş tekniklerini kullanan kahramandır.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "dc:hawkgirl": {
+    "name": "Hawkgirl",
+    "description": "Hawkgirl, Nth metal kanatları ve gürzüyle savaşan kanatlı kahramandır.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "dc:vixen": {
+    "name": "Vixen",
+    "description": "Mari McCabe, Tantu Totemi aracılığıyla hayvanların yeteneklerini kullanabilir.",
+    "power": 75,
+    "powerStatus": "curated"
+  },
+  "dc:plastic man": {
+    "name": "Plastic Man",
+    "description": "Patrick O'Brian, bedenini olağanüstü ölçüde esnetip farklı biçimlere sokabilir.",
+    "power": 82,
+    "powerStatus": "curated"
+  },
+  "dc:metamorpho": {
+    "name": "Metamorpho",
+    "description": "Rex Mason, bedenini çeşitli element ve kimyasal bileşiklere dönüştürebilir.",
+    "power": 79,
+    "powerStatus": "curated"
+  },
+  "dc:red tornado": {
+    "name": "Red Tornado",
+    "description": "Red Tornado, rüzgâr ve hortumları kontrol edebilen gelişmiş bir androiddir.",
+    "power": 81,
+    "powerStatus": "curated"
+  },
+  "dc:orion": {
+    "name": "Orion",
+    "description": "Orion, Yeni Tanrılar'dan biridir ve Apokolips güçlerine karşı savaşır.",
+    "power": 92,
+    "powerStatus": "curated"
+  },
+  "dc:mister miracle": {
+    "name": "Mister Miracle",
+    "description": "Scott Free, olağanüstü kaçış yetenekleri ve Yeni Tanrılar teknolojisiyle tanınır.",
+    "power": 78,
+    "powerStatus": "curated"
+  },
+  "dc:big barda": {
+    "name": "Big Barda",
+    "description": "Big Barda, Apokolips'te eğitilmiş üstün güçlü bir Yeni Tanrı savaşçısıdır.",
+    "power": 85,
+    "powerStatus": "curated"
+  },
+  "dc:highfather": {
+    "name": "Highfather",
+    "description": "Highfather, New Genesis'in lideri ve kozmik bilgelik sahibi Yeni Tanrı'dır.",
+    "power": 96,
+    "powerStatus": "curated"
+  },
+  "dc:steppenwolf": {
+    "name": "Steppenwolf",
+    "description": "Steppenwolf, Apokolips ordularına komuta eden güçlü bir Yeni Tanrı savaşçısıdır.",
+    "power": 88,
+    "powerStatus": "curated"
+  },
+  "dc:granny goodness": {
+    "name": "Granny Goodness",
+    "description": "Granny Goodness, Apokolips'teki acımasız eğitim kurumlarını yöneten Darkseid hizmetkârıdır.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "dc:lobo": {
+    "name": "Lobo",
+    "description": "Lobo, üstün güç ve iyileşme yeteneklerine sahip uzaylı ödül avcısıdır.",
+    "power": 90,
+    "powerStatus": "curated"
+  },
+  "dc:parasite": {
+    "name": "Parasite",
+    "description": "Parasite, dokunduğu canlıların enerjisini ve güçlerini emebilen Superman düşmanıdır.",
+    "power": 84,
+    "powerStatus": "curated"
+  },
+  "dc:metallo": {
+    "name": "Metallo",
+    "description": "John Corben, kriptonit enerji kaynağı kullanan sibernetik Superman düşmanıdır.",
+    "power": 78,
+    "powerStatus": "curated"
+  },
+  "dc:bizarro": {
+    "name": "Bizarro",
+    "description": "Bizarro, Superman'in bozulmuş bir benzeri olarak olağanüstü fiziksel güçlere sahiptir.",
+    "power": 89,
+    "powerStatus": "curated"
+  },
+  "dc:solomon grundy": {
+    "name": "Solomon Grundy",
+    "description": "Solomon Grundy, tekrar tekrar dirilen ve olağanüstü dayanıklılığa sahip ölümsüz düşmandır.",
+    "power": 79,
+    "powerStatus": "curated"
+  },
+  "dc:clayface": {
+    "name": "Clayface",
+    "description": "Clayface, çamur benzeri bedenini farklı insan ve nesne biçimlerine sokabilir.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "dc:man-bat": {
+    "name": "Man-Bat",
+    "description": "Kirk Langstrom, deneysel serum nedeniyle yarasa benzeri güçlü bir yaratığa dönüşür.",
+    "power": 66,
+    "powerStatus": "curated"
+  },
+  "dc:killer croc": {
+    "name": "Killer Croc",
+    "description": "Waylon Jones, sürüngen benzeri derisi ve üstün gücüyle tanınan Gotham suçlusudur.",
+    "power": 66,
+    "powerStatus": "curated"
+  },
+  "dc:calendar man": {
+    "name": "Calendar Man",
+    "description": "Julian Day, suçlarını takvim tarihleri ve özel günler etrafında planlayan Gotham suçlusudur.",
+    "power": 49,
+    "powerStatus": "curated"
+  },
+  "dc:huntress": {
+    "name": "Huntress",
+    "description": "Helena Bertinelli, arbalet ve yakın dövüş yetenekleriyle Gotham'da suçla mücadele eder.",
+    "power": 67,
+    "powerStatus": "curated"
+  },
+  "dc:question": {
+    "name": "Question",
+    "description": "Vic Sage, yüzsüz maskesiyle tanınan araştırmacı ve usta dedektiftir.",
+    "power": 64,
+    "powerStatus": "curated"
+  },
+  "dc:wildcat": {
+    "name": "Wildcat",
+    "description": "Ted Grant, boks ustalığıyla genç kahramanları eğiten deneyimli savaşçıdır.",
+    "power": 65,
+    "powerStatus": "curated"
+  },
+  "dc:stargirl": {
+    "name": "Stargirl",
+    "description": "Courtney Whitmore, Kozmik Asa'nın enerjisini kullanan genç süper kahramandır.",
+    "power": 79,
+    "powerStatus": "curated"
+  },
+  "dc:power girl": {
+    "name": "Power Girl",
+    "description": "Kara Zor-L, farklı bir evrenden gelen ve Kriptonlu güçleri taşıyan kahramandır.",
+    "power": 91,
+    "powerStatus": "curated"
+  },
+  "dc:jay garrick": {
+    "name": "Jay Garrick",
+    "description": "Jay Garrick, altın çağın Flash'ı olarak bilinen deneyimli hızlı kahramandır.",
+    "power": 85,
+    "powerStatus": "curated"
+  },
+  "dc:alan scott": {
+    "name": "Alan Scott",
+    "description": "Alan Scott, mistik yeşil alev gücüyle çalışan yüzüğünü kullanan kahramandır.",
+    "power": 86,
+    "powerStatus": "curated"
+  },
+  "dc:jessica cruz": {
+    "name": "Jessica Cruz",
+    "description": "Jessica Cruz, güçlü iradesiyle Green Lantern yüzüğünü kullanan kahramandır.",
+    "power": 85,
+    "powerStatus": "curated"
+  },
+  "dc:john stewart": {
+    "name": "John Stewart",
+    "description": "John Stewart, Green Lantern Corps üyesi ve eski deniz piyadesi mimardır.",
+    "power": 87,
+    "powerStatus": "curated"
+  },
+  "dc:hal jordan": {
+    "name": "Hal Jordan",
+    "description": "Hal Jordan, Green Lantern Corps'un en tanınmış ve güçlü üyelerindendir.",
+    "power": 89,
+    "powerStatus": "curated"
+  },
+  "dc:kyle rayner": {
+    "name": "Kyle Rayner",
+    "description": "Kyle Rayner, hayal gücüyle enerji yapıları oluşturan Green Lantern kahramanıdır.",
+    "power": 90,
+    "powerStatus": "curated"
+  },
+  "dc:guy gardner": {
+    "name": "Guy Gardner",
+    "description": "Guy Gardner, sert mizacı ve güçlü iradesiyle tanınan Green Lantern üyesidir.",
+    "power": 85,
+    "powerStatus": "curated"
+  },
+  "dc:barry allen": {
+    "name": "Barry Allen",
+    "description": "Barry Allen, Speed Force bağlantısıyla zaman ve boyutlar arasında koşabilen Flash'tır.",
+    "power": 91,
+    "powerStatus": "curated"
+  },
+  "dc:wally west": {
+    "name": "Wally West",
+    "description": "Wally West, Speed Force ile son derece yüksek hızlara ulaşabilen Flash'tır.",
+    "power": 94,
+    "powerStatus": "curated"
+  },
+  "dc:impulse": {
+    "name": "Impulse",
+    "description": "Bart Allen, gelecekle bağlantılı ve olağanüstü hızlı genç kahramandır.",
+    "power": 83,
+    "powerStatus": "curated"
+  },
+  "dc:donna troy": {
+    "name": "Donna Troy",
+    "description": "Donna Troy, Amazonlarla bağlantılı üstün güçlü bir Titans üyesidir.",
+    "power": 85,
+    "powerStatus": "curated"
+  },
+  "dc:cassandra cain": {
+    "name": "Cassandra Cain",
+    "description": "Cassandra Cain, beden dilini okuyabilen ve yakın dövüşte üstün yetenekli Batgirl'dür.",
+    "power": 71,
+    "powerStatus": "curated"
+  },
+  "dc:stephanie brown": {
+    "name": "Stephanie Brown",
+    "description": "Stephanie Brown, Spoiler ve Batgirl kimlikleriyle Gotham'da suçla savaşır.",
+    "power": 65,
+    "powerStatus": "curated"
+  },
+  "lotr:bifur": {
+    "name": "Bifur",
+    "description": "Bifur, Thorin'in Erebor'a yolculuğuna katılan cüce kafilesinin üyelerindendir.",
+    "power": 59,
+    "powerStatus": "curated"
+  },
+  "lotr:bofur": {
+    "name": "Bofur",
+    "description": "Bofur, Erebor seferine katılan ve madencilik geçmişi bulunan cücedir.",
+    "power": 59,
+    "powerStatus": "curated"
+  },
+  "lotr:bombur": {
+    "name": "Bombur",
+    "description": "Bombur, Thorin'in kafilesinde yer alan ve dayanıklılığıyla tanınan cücedir.",
+    "power": 53,
+    "powerStatus": "curated"
+  },
+  "lotr:dori": {
+    "name": "Dori",
+    "description": "Dori, Thorin'in Erebor seferine katılan ve Ori'yi koruyan cücedir.",
+    "power": 59,
+    "powerStatus": "curated"
+  },
+  "lotr:nori": {
+    "name": "Nori",
+    "description": "Nori, Thorin'in Erebor seferinde yer alan cüce yol arkadaşlarından biridir.",
+    "power": 59,
+    "powerStatus": "curated"
+  },
+  "lotr:ori": {
+    "name": "Ori",
+    "description": "Ori, Thorin'in kafilesindeki genç cüce ve Moria kayıtlarıyla anılan savaşçıdır.",
+    "power": 54,
+    "powerStatus": "curated"
+  },
+  "lotr:óin": {
+    "name": "Óin",
+    "description": "Óin, Erebor seferine katılan ve daha sonra Balin'in Moria kafilesinde yer alan cücedir.",
+    "power": 59,
+    "powerStatus": "curated"
+  },
+  "lotr:glóin": {
+    "name": "Glóin",
+    "description": "Glóin, Thorin'in kafilesindeki cüce ve Gimli'nin babasıdır.",
+    "power": 62,
+    "powerStatus": "curated"
+  },
+  "lotr:dáin ironfoot": {
+    "name": "Dáin Ironfoot",
+    "description": "Dáin Demirayak, Demir Tepeler'in savaşçı lideri ve Erebor'un kralıdır.",
+    "power": 78,
+    "powerStatus": "curated"
+  },
+  "lotr:elrond half-elven": {
+    "name": "Elrond Half-elven",
+    "description": "Elrond, Ayrıkvadi'nin efendisi ve Üç Elf Yüzüğü'nden Vilya'nın taşıyıcısıdır.",
+    "power": 87,
+    "powerStatus": "curated"
+  },
+  "lotr:eärendil": {
+    "name": "Eärendil",
+    "description": "Eärendil, Silmaril'i gökyüzünde taşıyan ve Valar'a yardım çağrısı götüren denizcidir.",
+    "power": 96,
+    "powerStatus": "curated"
+  },
+  "lotr:lúthien": {
+    "name": "Lúthien",
+    "description": "Lúthien, Beren ile birlikte Morgoth'un tacından Silmaril almayı başaran elf prensesidir.",
+    "power": 93,
+    "powerStatus": "curated"
+  },
+  "lotr:beren": {
+    "name": "Beren",
+    "description": "Beren, Lúthien ile birlikte Morgoth'un tacından Silmaril alan ölümlü kahramandır.",
+    "power": 80,
+    "powerStatus": "curated"
+  },
+  "lotr:thingol": {
+    "name": "Thingol",
+    "description": "Thingol, Doriath'ın Sindar elf kralı ve Lúthien'in babasıdır.",
+    "power": 87,
+    "powerStatus": "curated"
+  },
+  "lotr:melian": {
+    "name": "Melian",
+    "description": "Melian, Doriath'ı büyülü kuşatmayla koruyan Maiar kökenli kraliçedir.",
+    "power": 96,
+    "powerStatus": "curated"
+  },
+  "lotr:fëanor": {
+    "name": "Fëanor",
+    "description": "Fëanor, Silmarilleri yaratan ve Noldor'un kaderini değiştiren büyük elf ustasıdır.",
+    "power": 94,
+    "powerStatus": "curated"
+  },
+  "lotr:finrod felagund": {
+    "name": "Finrod Felagund",
+    "description": "Finrod, Nargothrond'un kurucusu ve Beren'e yardım eden güçlü elf kralıdır.",
+    "power": 91,
+    "powerStatus": "curated"
+  },
+  "lotr:maedhros": {
+    "name": "Maedhros",
+    "description": "Maedhros, Fëanor'un en büyük oğlu ve Birinci Çağ'ın önde gelen Noldor savaşçısıdır.",
+    "power": 84,
+    "powerStatus": "curated"
+  },
+  "lotr:maglor": {
+    "name": "Maglor",
+    "description": "Maglor, Fëanor'un oğlu ve büyük müzik yeteneğiyle tanınan Noldor elfidir.",
+    "power": 80,
+    "powerStatus": "curated"
+  },
+  "lotr:tuor": {
+    "name": "Tuor",
+    "description": "Tuor, Gondolin'e ulaşan ve Idril ile evlenen ölümlü insan kahramandır.",
+    "power": 80,
+    "powerStatus": "curated"
+  },
+  "lotr:túrin turambar": {
+    "name": "Túrin Turambar",
+    "description": "Túrin, Glaurung'u öldüren ancak Morgoth'un lanetiyle trajedi yaşayan kahramandır.",
+    "power": 88,
+    "powerStatus": "curated"
+  },
+  "lotr:húrin": {
+    "name": "Húrin",
+    "description": "Húrin, Nirnaeth Arnoediad'da cesurca savaşan ve Morgoth'a meydan okuyan insandır.",
+    "power": 85,
+    "powerStatus": "curated"
+  },
+  "lotr:glaurung": {
+    "name": "Glaurung",
+    "description": "Glaurung, ejderhaların atası olarak bilinen ve zihinleri etkileyen ateş ejderhasıdır.",
+    "power": 94,
+    "powerStatus": "curated"
+  },
+  "lotr:gothmog the balrog": {
+    "name": "Gothmog the Balrog",
+    "description": "Gothmog, Morgoth'un Balrog ordularının komutanı ve Gondolin'in düşmanıdır.",
+    "power": 95,
+    "powerStatus": "curated"
+  },
+  "lotr:durin’s bane": {
+    "name": "Durin’s Bane",
+    "description": "Durin'in Felaketi, Moria'nın derinliklerinde yaşayan ve Gandalf'la savaşan Balrog'dur.",
+    "power": 94,
+    "powerStatus": "curated"
+  },
+  "lotr:the mouth of sauron": {
+    "name": "The Mouth of Sauron",
+    "description": "Sauron'un Ağzı, Mordor'un Kara Kule elçisi ve Karanlık Lord'un sözcüsüdür.",
+    "power": 69,
+    "powerStatus": "curated"
+  },
+  "lotr:grond the wolf": {
+    "name": "Grond the Wolf",
+    "description": "Grond, Morgoth'un savaş çekiciyle de ilişkilendirilen ve Mordor kuşatma koçuna adını veren simgedir.",
+    "power": 88,
+    "powerStatus": "curated"
+  },
+  "lotr:shagrat": {
+    "name": "Shagrat",
+    "description": "Shagrat, Cirith Ungol kulesindeki ork garnizonunun komutanıdır.",
+    "power": 56,
+    "powerStatus": "curated"
+  },
+  "lotr:gorbag": {
+    "name": "Gorbag",
+    "description": "Gorbag, Minas Morgul'dan gelen ve Cirith Ungol'da Shagrat ile çatışan ork subayıdır.",
+    "power": 54,
+    "powerStatus": "curated"
+  },
+  "lotr:uglúk": {
+    "name": "Uglúk",
+    "description": "Uglúk, Isengard Uruk-hai birliklerinin liderlerinden biridir.",
+    "power": 63,
+    "powerStatus": "curated"
+  },
+  "lotr:lurtz": {
+    "name": "Lurtz",
+    "description": "Lurtz, Yüzüklerin Efendisi film uyarlamasında Uruk-hai komutanı olarak görünür.",
+    "power": 64,
+    "powerStatus": "curated"
+  },
+  "lotr:háma": {
+    "name": "Háma",
+    "description": "Háma, Rohan kralı Théoden'in kapı muhafızı ve sadık hizmetkârıdır.",
+    "power": 59,
+    "powerStatus": "curated"
+  },
+  "lotr:grimbold": {
+    "name": "Grimbold",
+    "description": "Grimbold, Rohan ordularında Pelennor Çayırları Savaşı'na katılan komutandır.",
+    "power": 65,
+    "powerStatus": "curated"
+  },
+  "lotr:erkenbrand": {
+    "name": "Erkenbrand",
+    "description": "Erkenbrand, Rohan'ın Batıağıl bölgesini savunan deneyimli komutandır.",
+    "power": 69,
+    "powerStatus": "curated"
+  },
+  "lotr:halbarad": {
+    "name": "Halbarad",
+    "description": "Halbarad, Kuzeyli Dúnedain korucusu ve Aragorn'un yakın akrabasıdır.",
+    "power": 69,
+    "powerStatus": "curated"
+  },
+  "lotr:elladan": {
+    "name": "Elladan",
+    "description": "Elladan, Elrond'un oğlu ve kardeşi Elrohir ile birlikte savaşan elf savaşçıdır.",
+    "power": 75,
+    "powerStatus": "curated"
+  },
+  "lotr:elrohir": {
+    "name": "Elrohir",
+    "description": "Elrohir, Elrond'un oğlu ve kardeşi Elladan ile birlikte savaşan elf savaşçıdır.",
+    "power": 75,
+    "powerStatus": "curated"
+  },
+  "lotr:imrahil": {
+    "name": "Imrahil",
+    "description": "Imrahil, Dol Amroth prensi ve Gondor'un savunmasında görev alan komutandır.",
+    "power": 74,
+    "powerStatus": "curated"
+  },
+  "lotr:beregond": {
+    "name": "Beregond",
+    "description": "Beregond, Gondor Muhafızları'nda görevli ve Faramir'in hayatını kurtaran askerdir.",
+    "power": 63,
+    "powerStatus": "curated"
+  },
+  "lotr:bergil": {
+    "name": "Bergil",
+    "description": "Bergil, Beregond'un oğlu ve Minas Tirith'te Pippin'e yardım eden gençtir.",
+    "power": 45,
+    "powerStatus": "curated"
+  },
+  "lotr:quickbeam": {
+    "name": "Quickbeam",
+    "description": "Quickbeam, Isengard'a karşı Entlerin yürüyüşüne katılan genç ve çevik Ent'tir.",
+    "power": 77,
+    "powerStatus": "curated"
+  },
+  "lotr:farmer maggot": {
+    "name": "Farmer Maggot",
+    "description": "Çiftçi Maggot, Shire'da yaşayan ve Frodo ile arkadaşlarına yardım eden Hobbit'tir.",
+    "power": 45,
+    "powerStatus": "curated"
+  },
+  "lotr:rosie cotton": {
+    "name": "Rosie Cotton",
+    "description": "Rosie Cotton, Shire'da yaşayan ve Samwise Gamgee ile evlenen Hobbit'tir.",
+    "power": 40,
+    "powerStatus": "curated"
+  },
+  "lotr:barliman butterbur": {
+    "name": "Barliman Butterbur",
+    "description": "Barliman Butterbur, Bree'deki Sıçrayan Midilli Hanı'nın işletmecisidir.",
+    "power": 40,
+    "powerStatus": "curated"
+  },
+  "lotr:bill ferny": {
+    "name": "Bill Ferny",
+    "description": "Bill Ferny, Bree'de yaşayan ve Karanlık güçlerle işbirliği yapan fırsatçı insandır.",
+    "power": 39,
+    "powerStatus": "curated"
+  },
+  "lotr:old man willow": {
+    "name": "Old Man Willow",
+    "description": "İhtiyar Söğüt Adam, Eski Orman'da yolcuları tuzağa düşüren kötü niyetli ağaçtır.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "lotr:déagol": {
+    "name": "Déagol",
+    "description": "Déagol, Anduin'de Tek Yüzük'ü bulan ve Sméagol tarafından öldürülen Hobbit'tir.",
+    "power": 37,
+    "powerStatus": "curated"
+  },
+  "lotr:fredegar bolger": {
+    "name": "Fredegar Bolger",
+    "description": "Fredegar Bolger, Frodo'nun ayrılışını gizlemeye yardım eden Shirelı Hobbit'tir.",
+    "power": 43,
+    "powerStatus": "curated"
+  },
+  "lotr:ar-pharazôn": {
+    "name": "Ar-Pharazôn",
+    "description": "Ar-Pharazôn, Númenor'un son kralı ve Valinor'a sefer düzenleyen hükümdardır.",
+    "power": 82,
+    "powerStatus": "curated"
+  },
+  "lotr:elros": {
+    "name": "Elros",
+    "description": "Elros, Elrond'un kardeşi ve Númenor'un ilk kralıdır.",
+    "power": 82,
+    "powerStatus": "curated"
+  },
+  "lotr:tar-míriel": {
+    "name": "Tar-Míriel",
+    "description": "Tar-Míriel, Númenor'un son dönemindeki meşru kraliçe varisidir.",
+    "power": 70,
+    "powerStatus": "curated"
+  },
+  "lotr:adar": {
+    "name": "Adar",
+    "description": "Adar, Güç Yüzükleri televizyon uyarlamasında orklarla bağlantılı özgün karakterdir.",
+    "power": 69,
+    "powerStatus": "curated"
   }
 }
