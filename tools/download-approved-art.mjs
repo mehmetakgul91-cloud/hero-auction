@@ -1,0 +1,41 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const manifestPath=path.join(root,'tools','offline-art-manifest.json');
+const cardsPath=path.join(root,'public','cards.json');
+const cards=JSON.parse(await fs.readFile(cardsPath,'utf8'));
+const manifest=JSON.parse(await fs.readFile(manifestPath,'utf8'));
+const allowedLicenses=new Set(['CC0-1.0','CC-BY-4.0','CC-BY-SA-4.0','Public Domain']);
+const allowedHosts=new Set(['upload.wikimedia.org','commons.wikimedia.org']);
+const updated=[];
+for(const [id,entry] of Object.entries(manifest)){
+ if(!/^(marvel|dc|lotr):/.test(id)||!cards[id])throw Error('Unknown card '+id);
+ if(!entry.approved)continue;
+ if(!allowedLicenses.has(entry.license))throw Error('Unsupported license for '+id);
+ if(!entry.attribution?.trim()||!entry.sourcePage?.startsWith('https://commons.wikimedia.org/'))throw Error('Missing attribution or source page for '+id);
+ const url=new URL(entry.downloadUrl);
+ if(url.protocol!=='https:'||!allowedHosts.has(url.hostname))throw Error('Disallowed image host for '+id);
+ const response=await fetch(url,{signal:AbortSignal.timeout(20000)});
+ if(!response.ok)throw Error(id+' HTTP '+response.status);
+ const bytes=Buffer.from(await response.arrayBuffer());
+ if(bytes.length>8_000_000||bytes.length<100)throw Error('Invalid image size '+id);
+ const png=bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]));
+ const jpg=bytes[0]===255&&bytes[1]===216&&bytes[2]===255;
+ const webp=bytes.toString('ascii',0,4)==='RIFF'&&bytes.toString('ascii',8,12)==='WEBP';
+ if(!png&&!jpg&&!webp)throw Error('Unexpected image format '+id);
+ const extension=png?'png':jpg?'jpg':'webp';
+ const universe=id.split(':')[0];
+ const slug=id.slice(universe.length+1).normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+ const target='/images/'+universe+'/'+slug+'.'+extension;
+ await fs.mkdir(path.join(root,'public','images',universe),{recursive:true});
+ await fs.writeFile(path.join(root,'public',target.slice(1)),bytes);
+ cards[id].image=target;
+ cards[id].imageSource=entry.sourcePage;
+ cards[id].imageLicense=entry.license;
+ cards[id].imageAttribution=entry.attribution;
+ updated.push(id);
+}
+await fs.writeFile(cardsPath,JSON.stringify(cards,null,2)+'\\n');
+console.log(JSON.stringify({updated:updated.length,cards:updated},null,2));
