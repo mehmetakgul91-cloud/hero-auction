@@ -10590,5 +10590,125 @@
     "description": "Galactus, varlığını sürdürmek için gezegenlerin enerjisini tüketen kozmik bir varlıktır.",
     "power": 99,
     "powerStatus": "curated"
+  },
+  "marvel:fantastic four human torch": {
+    "name": "Fantastic Four Human Torch",
+    "description": "Johnny Storm, vücudunu alevlerle kaplayabilen ve uçabilen Fantastic Four üyesidir.",
+    "power": 78,
+    "powerStatus": "curated"
+  },
+  "marvel:invisible woman": {
+    "name": "Invisible Woman",
+    "description": "Sue Storm, görünmez olabilen ve güçlü koruyucu enerji alanları oluşturabilen Fantastic Four üyesidir.",
+    "power": 86,
+    "powerStatus": "curated"
+  },
+  "marvel:mr fantastic": {
+    "name": "Mr Fantastic",
+    "description": "Reed Richards, vücudunu esnetebilen ve olağanüstü bilimsel zekâya sahip Fantastic Four lideridir.",
+    "power": 77,
+    "powerStatus": "curated"
+  },
+  "marvel:the thing": {
+    "name": "The Thing",
+    "description": "Ben Grimm, kayalık derisi ve olağanüstü fiziksel gücüyle Fantastic Four ekibinde savaşır.",
+    "power": 82,
+    "powerStatus": "curated"
+  },
+  "marvel:blade": {
+    "name": "Blade",
+    "description": "Blade, vampirleri avlayan ve vampir güçlerinin bir kısmını taşıyan usta savaşçıdır.",
+    "power": 68,
+    "powerStatus": "curated"
+  },
+  "marvel:carnage": {
+    "name": "Carnage",
+    "description": "Cletus Kasady ile birleşen Carnage simbiyotu, ölümcül uzantılar ve hızlı iyileşme sağlar.",
+    "power": 83,
+    "powerStatus": "curated"
+  },
+  "marvel:kingpin": {
+    "name": "Kingpin",
+    "description": "Wilson Fisk, New York suç dünyasında geniş nüfuza sahip güçlü bir suç patronudur.",
+    "power": 52,
+    "powerStatus": "curated"
+  },
+  "marvel:punisher": {
+    "name": "Punisher",
+    "description": "Frank Castle, suçlulara karşı ağır silahlar ve askerî taktikler kullanan eski deniz piyadesidir.",
+    "power": 58,
+    "powerStatus": "curated"
+  },
+  "marvel:shang-chi": {
+    "name": "Shang-Chi",
+    "description": "Shang-Chi, Marvel evreninin en yetenekli yakın dövüş ustalarından biridir.",
+    "power": 70,
+    "powerStatus": "curated"
+  },
+  "marvel:she-hulk": {
+    "name": "She-Hulk",
+    "description": "Jennifer Walters, gamma kaynaklı üstün güç ve dayanıklılığa sahip bir avukattır.",
+    "power": 84,
+    "powerStatus": "curated"
+  },
+  "marvel:heimdall": {
+    "name": "Heimdall",
+    "description": "Heimdall, Asgard'ın Bifröst köprüsünü koruyan ve uzakları algılayabilen savaşçıdır.",
+    "power": 82,
+    "powerStatus": "curated"
+  },
+  "marvel:star-lord": {
+    "name": "Star-Lord",
+    "description": "Peter Quill, Galaksinin Koruyucuları ekibine liderlik eden uzay maceracısıdır.",
+    "power": 68,
+    "powerStatus": "curated"
+  },
+  "marvel:drax": {
+    "name": "Drax",
+    "description": "Drax, büyük fiziksel güce sahip ve Thanos'a karşı mücadele eden kozmik savaşçıdır.",
+    "power": 74,
+    "powerStatus": "curated"
+  },
+  "marvel:mantis": {
+    "name": "Mantis",
+    "description": "Mantis, empatik yetenekleri ve yakın dövüş becerileriyle Galaksinin Koruyucuları'na yardım eder.",
+    "power": 72,
+    "powerStatus": "curated"
+  },
+  "marvel:nebula": {
+    "name": "Nebula",
+    "description": "Nebula, sibernetik geliştirmeleri ve savaş eğitimiyle tanınan uzaylı savaşçıdır.",
+    "power": 71,
+    "powerStatus": "curated"
+  },
+  "marvel:adam warlock": {
+    "name": "Adam Warlock",
+    "description": "Adam Warlock, kozmik enerji kullanabilen ve Sonsuzluk Taşları hikâyelerinde rol oynayan varlıktır.",
+    "power": 94,
+    "powerStatus": "curated"
+  },
+  "marvel:apocalypse": {
+    "name": "Apocalypse",
+    "description": "En Sabah Nur, bedenini değiştirebilen ve teknolojiyi kullanan kadim bir mutanttır.",
+    "power": 93,
+    "powerStatus": "curated"
+  },
+  "marvel:emma frost": {
+    "name": "Emma Frost",
+    "description": "Emma Frost, güçlü telepatisi ve elmas biçimine dönüşme yeteneğiyle tanınır.",
+    "power": 85,
+    "powerStatus": "curated"
+  },
+  "marvel:colossus": {
+    "name": "Colossus",
+    "description": "Piotr Rasputin, vücudunu organik çeliğe dönüştürerek büyük güç ve dayanıklılık kazanır.",
+    "power": 80,
+    "powerStatus": "curated"
+  },
+  "marvel:juggernaut": {
+    "name": "Juggernaut",
+    "description": "Cain Marko, Cyttorak'ın mistik gücüyle durdurulması son derece zor bir savaşçıya dönüşür.",
+    "power": 90,
+    "powerStatus": "curated"
   }
 }
