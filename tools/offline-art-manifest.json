@@ -14,5 +14,13 @@
     "license": "CC-BY-SA-4.0",
     "attribution": "ManoSolo13241324 / Wikimedia Commons (CC BY-SA 4.0)",
     "reviewNote": "Commons source/license recorded; direct image URL and full image download have not yet been verified."
+  },
+  "marvel:cyclops": {
+    "approved": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Cyclops_cosplay_at_Anime_Boston_2025-20250523_1558.jpg/450px-Cyclops_cosplay_at_Anime_Boston_2025-20250523_1558.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Cyclops_cosplay_at_Anime_Boston_2025-20250523_1558.jpg",
+    "license": "CC-BY-4.0",
+    "attribution": "Abzeronow / Wikimedia Commons (CC BY 4.0)",
+    "reviewNote": "Verified Commons page explicitly identifies Cyclops X-Men cosplay and CC BY 4.0 photo license. Underlying character rights are separate."
   }
 }
