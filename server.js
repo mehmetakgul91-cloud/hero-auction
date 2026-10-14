@@ -109,9 +109,17 @@ const knownDescriptions={
  'pokemon:arceus':'Arceus, Pokémon mitolojisinde evrenin yaratılışıyla ilişkilendirilen efsanevi bir Pokémon’dur.'
 };
 const compactText=(raw)=>{const txt=String(raw||'').replace(/\s+/g,' ').trim();if(!txt)return null;const sentences=txt.match(/[^.!?]+[.!?]+/g);return (sentences?.slice(0,2).join(' ')||txt.slice(0,210)).slice(0,320).trim()};
+const verifiedRemoteArt={
+ 'marvel:cyclops':{
+  url:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Cyclops_cosplay_at_Anime_Boston_2025-20250523_1558.jpg/450px-Cyclops_cosplay_at_Anime_Boston_2025-20250523_1558.jpg',
+  source:'https://commons.wikimedia.org/wiki/File:Cyclops_cosplay_at_Anime_Boston_2025-20250523_1558.jpg',
+  credit:'Abzeronow · CC BY 4.0'
+ }
+};
 async function lookupCharacterInfo(universe,name){
  const key=universe+':'+name.toLowerCase();
  const local=cardDetails[key];
+ if(verifiedRemoteArt[key])return {...verifiedRemoteArt[key],description:local?.description||knownDescriptions[key]||null};
  if(local?.image&&/^\/images\/[\w/-]+\.png$/i.test(local.image)&&fs.existsSync(path.join(root,'public',local.image.slice(1))))return {url:local.image,source:null,description:local.description||null};
  let image=null,source=null,description=local?.description||knownDescriptions[key]||null;
  const queries=[name+' '+characterHints[universe],name];
@@ -147,7 +155,7 @@ if(req.method==='GET'&&url.pathname==='/api/art'){
  const key=universe+':'+name.toLowerCase();
  if(!artCache.has(key)){
   const result=await lookupCharacterInfo(universe,name);
-  if(result.url)artCache.set(key,result);
+  artCache.set(key,result);
  }
  return send(200,artCache.get(key));
 }
