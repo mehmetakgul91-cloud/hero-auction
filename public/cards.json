@@ -11430,5 +11430,257 @@
     "description": "Stephanie Brown, Spoiler ve Batgirl kimlikleriyle Gotham'da suçla savaşır.",
     "power": 65,
     "powerStatus": "curated"
+  },
+  "lotr:frodo baggins": {
+    "name": "Frodo Baggins",
+    "description": "Frodo, Tek Yüzük'ü Mordor'a götürmekle görevlendirilen Shirelı Hobbit'tir.",
+    "power": 55,
+    "powerStatus": "curated"
+  },
+  "lotr:meriadoc brandybuck": {
+    "name": "Meriadoc Brandybuck",
+    "description": "Merry, Rohan savaşçılarıyla birlikte savaşan ve Yüzük Kardeşliği'ne katılan Hobbit'tir.",
+    "power": 47,
+    "powerStatus": "curated"
+  },
+  "lotr:peregrin took": {
+    "name": "Peregrin Took",
+    "description": "Pippin, Gondor hizmetine giren ve Yüzük Kardeşliği'nde yer alan Hobbit'tir.",
+    "power": 45,
+    "powerStatus": "curated"
+  },
+  "lotr:gandalf": {
+    "name": "Gandalf",
+    "description": "Gandalf, Maiar soyundan gelen ve özgür halklara yol gösteren güçlü büyücüdür.",
+    "power": 88,
+    "powerStatus": "curated"
+  },
+  "lotr:aragorn": {
+    "name": "Aragorn",
+    "description": "Aragorn, Isildur'un varisi ve Gondor'un yeniden tahta çıkan kralıdır.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "lotr:legolas": {
+    "name": "Legolas",
+    "description": "Legolas, Mirkwood kökenli usta elf okçusu ve Yüzük Kardeşliği üyesidir.",
+    "power": 74,
+    "powerStatus": "curated"
+  },
+  "lotr:denethor": {
+    "name": "Denethor",
+    "description": "Denethor, Gondor'un son hükümran vekilharcı ve Boromir ile Faramir'in babasıdır.",
+    "power": 55,
+    "powerStatus": "curated"
+  },
+  "lotr:celeborn": {
+    "name": "Celeborn",
+    "description": "Celeborn, Lothlórien'in Galadriel ile birlikte hüküm süren elf lordudur.",
+    "power": 78,
+    "powerStatus": "curated"
+  },
+  "lotr:thranduil": {
+    "name": "Thranduil",
+    "description": "Thranduil, Kuyutorman elflerinin kralı ve Legolas'ın babasıdır.",
+    "power": 80,
+    "powerStatus": "curated"
+  },
+  "lotr:gríma wormtongue": {
+    "name": "Gríma Wormtongue",
+    "description": "Gríma, Saruman'ın etkisinde kalarak Kral Théoden'i yanıltan danışmandır.",
+    "power": 38,
+    "powerStatus": "curated"
+  },
+  "lotr:sauron": {
+    "name": "Sauron",
+    "description": "Sauron, Tek Yüzük'ü yaratan ve Orta Dünya'ya hükmetmek isteyen Karanlık Lord'dur.",
+    "power": 97,
+    "powerStatus": "curated"
+  },
+  "lotr:the witch-king of angmar": {
+    "name": "The Witch-king of Angmar",
+    "description": "Angmar'ın Cadı Kralı, Nazgûl'ün lideri ve Sauron'un en korkulan hizmetkârıdır.",
+    "power": 89,
+    "powerStatus": "curated"
+  },
+  "lotr:nazgûl": {
+    "name": "Nazgûl",
+    "description": "Nazgûl, Güç Yüzükleri tarafından köleleştirilmiş dokuz ölümlü insan kralın tayflarıdır.",
+    "power": 78,
+    "powerStatus": "curated"
+  },
+  "lotr:khamûl": {
+    "name": "Khamûl",
+    "description": "Khamûl, Nazgûl arasında önde gelen ve Doğulu olarak anılan yüzük tayfıdır.",
+    "power": 81,
+    "powerStatus": "curated"
+  },
+  "lotr:tom bombadil": {
+    "name": "Tom Bombadil",
+    "description": "Tom Bombadil, Eski Orman'da yaşayan ve Tek Yüzük'ten etkilenmeyen gizemli varlıktır.",
+    "power": 90,
+    "powerStatus": "curated"
+  },
+  "lotr:goldberry": {
+    "name": "Goldberry",
+    "description": "Goldberry, Nehir Kızı olarak anılan ve Tom Bombadil ile yaşayan gizemli varlıktır.",
+    "power": 70,
+    "powerStatus": "curated"
+  },
+  "lotr:radagast": {
+    "name": "Radagast",
+    "description": "Radagast, hayvanlar ve doğayla yakın ilişkisi bulunan Maiar kökenli büyücüdür.",
+    "power": 81,
+    "powerStatus": "curated"
+  },
+  "lotr:beorn": {
+    "name": "Beorn",
+    "description": "Beorn, dev bir ayıya dönüşebilen ve Beş Ordular Savaşı'nda savaşan şekil değiştiricidir.",
+    "power": 77,
+    "powerStatus": "curated"
+  },
+  "lotr:bard the bowman": {
+    "name": "Bard the Bowman",
+    "description": "Bard, Smaug'u Kara Ok ile öldüren ve Dale kralı olan usta okçudur.",
+    "power": 69,
+    "powerStatus": "curated"
+  },
+  "lotr:balin": {
+    "name": "Balin",
+    "description": "Balin, Thorin'in kafilesindeki deneyimli cüce ve Moria'yı geri alma girişiminin lideridir.",
+    "power": 64,
+    "powerStatus": "curated"
+  },
+  "lotr:dwalin": {
+    "name": "Dwalin",
+    "description": "Dwalin, Thorin Meşekalkan'ın yanında savaşan güçlü ve deneyimli cücedir.",
+    "power": 66,
+    "powerStatus": "curated"
+  },
+  "lotr:kíli": {
+    "name": "Kíli",
+    "description": "Kíli, Thorin'in genç yeğeni ve Erebor seferine katılan cüce savaşçıdır.",
+    "power": 62,
+    "powerStatus": "curated"
+  },
+  "lotr:fíli": {
+    "name": "Fíli",
+    "description": "Fíli, Thorin'in yeğeni ve Erebor'u geri alma seferindeki cüce savaşçıdır.",
+    "power": 63,
+    "powerStatus": "curated"
+  },
+  "lotr:bifur": {
+    "name": "Bifur",
+    "description": "Bifur, Thorin'in Erebor'a yolculuğuna katılan cüce kafilesinin üyelerindendir.",
+    "power": 59,
+    "powerStatus": "curated"
+  },
+  "lotr:bofur": {
+    "name": "Bofur",
+    "description": "Bofur, Erebor seferine katılan ve madencilik geçmişi bulunan cücedir.",
+    "power": 59,
+    "powerStatus": "curated"
+  },
+  "lotr:bombur": {
+    "name": "Bombur",
+    "description": "Bombur, Thorin'in kafilesinde yer alan ve dayanıklılığıyla tanınan cücedir.",
+    "power": 53,
+    "powerStatus": "curated"
+  },
+  "lotr:dori": {
+    "name": "Dori",
+    "description": "Dori, Thorin'in Erebor seferine katılan ve Ori'yi koruyan cücedir.",
+    "power": 59,
+    "powerStatus": "curated"
+  },
+  "lotr:nori": {
+    "name": "Nori",
+    "description": "Nori, Thorin'in Erebor seferinde yer alan cüce yol arkadaşlarından biridir.",
+    "power": 59,
+    "powerStatus": "curated"
+  },
+  "lotr:ori": {
+    "name": "Ori",
+    "description": "Ori, Thorin'in kafilesindeki genç cüce ve Moria kayıtlarıyla anılan savaşçıdır.",
+    "power": 54,
+    "powerStatus": "curated"
+  },
+  "lotr:óin": {
+    "name": "Óin",
+    "description": "Óin, Erebor seferine katılan ve daha sonra Balin'in Moria kafilesinde yer alan cücedir.",
+    "power": 59,
+    "powerStatus": "curated"
+  },
+  "lotr:glóin": {
+    "name": "Glóin",
+    "description": "Glóin, Thorin'in kafilesindeki cüce ve Gimli'nin babasıdır.",
+    "power": 62,
+    "powerStatus": "curated"
+  },
+  "lotr:dáin ironfoot": {
+    "name": "Dáin Ironfoot",
+    "description": "Dáin Demirayak, Demir Tepeler'in savaşçı lideri ve Erebor'un kralıdır.",
+    "power": 78,
+    "powerStatus": "curated"
+  },
+  "lotr:azog": {
+    "name": "Azog",
+    "description": "Azog, Moria ile bağlantılı ve cücelerle savaşan güçlü ork reisidir.",
+    "power": 75,
+    "powerStatus": "curated"
+  },
+  "lotr:bolg": {
+    "name": "Bolg",
+    "description": "Bolg, Azog'un oğlu ve Beş Ordular Savaşı'nda ork kuvvetlerinin komutanıdır.",
+    "power": 72,
+    "powerStatus": "curated"
+  },
+  "lotr:elendil": {
+    "name": "Elendil",
+    "description": "Elendil, Arnor ve Gondor'un kurucularından olan Númenorlu kraldır.",
+    "power": 83,
+    "powerStatus": "curated"
+  },
+  "lotr:anárion": {
+    "name": "Anárion",
+    "description": "Anárion, Elendil'in oğlu ve Gondor'un Isildur ile ortak kurucusudur.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "lotr:gil-galad": {
+    "name": "Gil-galad",
+    "description": "Gil-galad, Noldor'un Orta Dünya'daki son Yüce Kralı ve Son İttifak lideridir.",
+    "power": 89,
+    "powerStatus": "curated"
+  },
+  "lotr:elrond half-elven": {
+    "name": "Elrond Half-elven",
+    "description": "Elrond, Ayrıkvadi'nin efendisi ve Üç Elf Yüzüğü'nden Vilya'nın taşıyıcısıdır.",
+    "power": 87,
+    "powerStatus": "curated"
+  },
+  "lotr:glorfindel": {
+    "name": "Glorfindel",
+    "description": "Glorfindel, Balrog ile savaşmış ve yeniden Orta Dünya'ya dönmüş güçlü elf lordudur.",
+    "power": 91,
+    "powerStatus": "curated"
+  },
+  "lotr:círdan": {
+    "name": "Círdan",
+    "description": "Círdan, Gri Limanlar'ın efendisi ve kadim elf gemi ustasıdır.",
+    "power": 84,
+    "powerStatus": "curated"
+  },
+  "lotr:eärendil": {
+    "name": "Eärendil",
+    "description": "Eärendil, Silmaril'i gökyüzünde taşıyan ve Valar'a yardım çağrısı götüren denizcidir.",
+    "power": 96,
+    "powerStatus": "curated"
+  },
+  "lotr:lúthien": {
+    "name": "Lúthien",
+    "description": "Lúthien, Beren ile birlikte Morgoth'un tacından Silmaril almayı başaran elf prensesidir.",
+    "power": 93,
+    "powerStatus": "curated"
   }
 }
