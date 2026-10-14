@@ -8,6 +8,7 @@ const PORT=Number(process.env.PORT||3000);
 const rooms=new Map();
 const artCache=new Map();
 const cardDetails=JSON.parse(fs.readFileSync(path.join(root,'public','cards.json'),'utf8'));
+const auditedArt=JSON.parse(fs.readFileSync(path.join(root,'public','verified-art.json'),'utf8'));
 
 const listeners=new Map();
 const waiting=new Map();
@@ -120,6 +121,7 @@ async function lookupCharacterInfo(universe,name){
  const key=universe+':'+name.toLowerCase();
  const local=cardDetails[key];
  if(verifiedRemoteArt[key])return {...verifiedRemoteArt[key],description:local?.description||knownDescriptions[key]||null};
+ if(auditedArt[key]?.url)return {...auditedArt[key],description:local?.description||knownDescriptions[key]||null};
  if(local?.image&&/^\/images\/[\w/-]+\.png$/i.test(local.image)&&fs.existsSync(path.join(root,'public',local.image.slice(1))))return {url:local.image,source:null,description:local.description||null};
  let image=null,source=null,description=local?.description||knownDescriptions[key]||null;
  const queries=[name+' '+characterHints[universe],name];
