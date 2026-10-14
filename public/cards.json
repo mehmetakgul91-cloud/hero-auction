@@ -10470,5 +10470,125 @@
     "pokedex": 1025,
     "statsTotal": 600,
     "source": "PokéAPI official-artwork"
+  },
+  "marvel:iron man": {
+    "name": "Iron Man",
+    "description": "Tony Stark, gelişmiş zırh teknolojisini kullanarak Avengers ekibinde savaşan dahi mucittir.",
+    "power": 75,
+    "powerStatus": "curated"
+  },
+  "marvel:thor": {
+    "name": "Thor",
+    "description": "Thor, Mjolnir ve yıldırım gücüyle savaşan Asgardlı gök gürültüsü tanrısıdır.",
+    "power": 88,
+    "powerStatus": "curated"
+  },
+  "marvel:hulk": {
+    "name": "Hulk",
+    "description": "Bruce Banner, gamma radyasyonu nedeniyle olağanüstü güçlü Hulk'a dönüşür.",
+    "power": 87,
+    "powerStatus": "curated"
+  },
+  "marvel:captain america": {
+    "name": "Captain America",
+    "description": "Steve Rogers, süper asker serumu ve vibranyum kalkanıyla tanınan Avengers lideridir.",
+    "power": 61,
+    "powerStatus": "curated"
+  },
+  "marvel:scarlet witch": {
+    "name": "Scarlet Witch",
+    "description": "Wanda Maximoff, kaos büyüsü ve gerçekliği değiştirebilme yeteneklerine sahiptir.",
+    "power": 94,
+    "powerStatus": "curated"
+  },
+  "marvel:doctor strange": {
+    "name": "Doctor Strange",
+    "description": "Stephen Strange, mistik sanatlarda uzmanlaşmış eski bir beyin cerrahıdır.",
+    "power": 91,
+    "powerStatus": "curated"
+  },
+  "marvel:spider-man": {
+    "name": "Spider-Man",
+    "description": "Peter Parker, duvarlara tırmanma ve örümcek hissi gibi güçlere sahip New York kahramanıdır.",
+    "power": 70,
+    "powerStatus": "curated"
+  },
+  "marvel:ant-man": {
+    "name": "Ant-Man",
+    "description": "Ant-Man, Pym parçacıkları sayesinde boyutunu küçültüp büyütebilen kahramandır.",
+    "power": 74,
+    "powerStatus": "curated"
+  },
+  "marvel:wasp": {
+    "name": "Wasp",
+    "description": "Wasp, boyut değiştirebilen, uçabilen ve enerji saldırıları yapabilen kahramandır.",
+    "power": 70,
+    "powerStatus": "curated"
+  },
+  "marvel:war machine": {
+    "name": "War Machine",
+    "description": "James Rhodes, ağır silahlarla donatılmış gelişmiş bir zırh kullanan kahramandır.",
+    "power": 73,
+    "powerStatus": "curated"
+  },
+  "marvel:falcon": {
+    "name": "Falcon",
+    "description": "Sam Wilson, özel uçuş ekipmanları ve eğitimli savaş becerileriyle tanınır.",
+    "power": 62,
+    "powerStatus": "curated"
+  },
+  "marvel:winter soldier": {
+    "name": "Winter Soldier",
+    "description": "Bucky Barnes, sibernetik kolu ve askerî eğitimiyle tanınan eski bir suikastçıdır.",
+    "power": 65,
+    "powerStatus": "curated"
+  },
+  "marvel:thanos": {
+    "name": "Thanos",
+    "description": "Thanos, Sonsuzluk Taşları'nın gücünü ele geçirmek isteyen kozmik bir fatih olarak bilinir.",
+    "power": 95,
+    "powerStatus": "curated"
+  },
+  "marvel:cyclops": {
+    "name": "Cyclops",
+    "description": "Scott Summers, gözlerinden güçlü optik enerji ışınları yayan X-Men liderlerindendir.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "marvel:mystique": {
+    "name": "Mystique",
+    "description": "Mystique, görünüşünü başka insanların biçimine dönüştürebilen mutant bir casustur.",
+    "power": 65,
+    "powerStatus": "curated"
+  },
+  "marvel:beast": {
+    "name": "Beast",
+    "description": "Hank McCoy, olağanüstü çeviklik ve bilimsel zekâya sahip mutant bir X-Men üyesidir.",
+    "power": 70,
+    "powerStatus": "curated"
+  },
+  "marvel:nightcrawler": {
+    "name": "Nightcrawler",
+    "description": "Kurt Wagner, ışınlanabilen ve akrobatik yetenekleriyle tanınan mutanttır.",
+    "power": 68,
+    "powerStatus": "curated"
+  },
+  "marvel:rogue": {
+    "name": "Rogue",
+    "description": "Rogue, dokunduğu kişilerin anılarını ve güçlerini geçici olarak emebilen mutanttır.",
+    "power": 82,
+    "powerStatus": "curated"
+  },
+  "marvel:gambit": {
+    "name": "Gambit",
+    "description": "Remy LeBeau, nesneleri kinetik enerjiyle yükleyerek patlatabilen mutanttır.",
+    "power": 71,
+    "powerStatus": "curated"
+  },
+  "marvel:galactus": {
+    "name": "Galactus",
+    "description": "Galactus, varlığını sürdürmek için gezegenlerin enerjisini tüketen kozmik bir varlıktır.",
+    "power": 99,
+    "powerStatus": "curated"
   }
 }
