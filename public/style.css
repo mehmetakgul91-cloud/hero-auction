@@ -142,3 +142,8 @@ header{padding:5px 0 12px;margin-bottom:4px}
 #game .auction-main{align-items:start}
 #game .auction-action{align-self:center}
 @media(max-width:850px){header{padding:3px 0 8px;margin-bottom:2px}#game .auction-hero .hero-description{font-size:10px;line-height:1.3;max-height:5.2em}}
+
+
+/* Character biography is plain visible text: no tap, toggle, or inner scrolling. */
+#game .auction-hero .hero-description{display:block!important;max-height:none!important;height:auto!important;overflow:visible!important;white-space:normal!important;cursor:default;font-size:11px;line-height:1.45}
+@media(max-width:850px){#game .auction-hero .hero-description{max-height:none!important;overflow:visible!important;font-size:10px;line-height:1.4}}
