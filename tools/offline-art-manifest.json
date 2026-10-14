@@ -1,18 +1,14 @@
 {
   "marvel:iron man": {
-    "approved": true,
+    "approved": false,
     "commonsFile": "File:Cosplay of Iron Man at GEMA 2022.jpg",
     "sourcePage": "https://commons.wikimedia.org/wiki/File:Cosplay_of_Iron_Man_at_GEMA_2022.jpg",
-    "license": "CC-BY-SA-4.0",
-    "attribution": "Chongkian / Wikimedia Commons, CC BY-SA 4.0",
-    "reviewNote": "Iron Man cosplay; costume/character rights may be separate"
+    "reviewNote": "Unverified candidate: file existence, attribution, license, and depicted character must be checked before approval"
   },
   "lotr:gandalf": {
-    "approved": true,
+    "approved": false,
     "commonsFile": "File:Lord of the Rings cosplay at Fan Expo Denver 2026 02.jpg",
     "sourcePage": "https://commons.wikimedia.org/wiki/File:Lord_of_the_Rings_cosplay_at_Fan_Expo_Denver_2026_02.jpg",
-    "license": "CC-BY-SA-4.0",
-    "attribution": "SpiritedMichelle / WikiPortraits / Wikimedia Commons, CC BY-SA 4.0",
-    "reviewNote": "Gandalf cosplay; costume/character rights may be separate"
+    "reviewNote": "Unverified candidate: file existence, attribution, license, and depicted character must be checked before approval"
   }
 }
