@@ -83,3 +83,11 @@ input{transition:border-color .2s,box-shadow .2s;background:#0c1428;border-color
 .side-hero-cost{flex:none;white-space:nowrap;color:#f4cf92;font-weight:900;font-size:13px;font-variant-numeric:tabular-nums}
 .side-hero-cost small{font-size:9px;color:#c3cde3;font-weight:650}
 @media(max-width:480px){.side-hero-cost{font-size:12px}.side-hero-cost small{font-size:8px}.player-side .side-hero{gap:4px}}
+
+
+/* Compact room controls: no duplicated top scoreboard. */
+.room-tools{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin:0 0 12px;min-height:32px;color:#8e9cba;font-size:11px;font-weight:800;letter-spacing:.5px}
+.room-tools #phase{margin-right:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.room-code-label{white-space:nowrap}.room-code-label strong{color:#f1d19c;letter-spacing:1px}
+.room-tools .outline{font-size:10px;padding:8px 11px}
+@media(max-width:480px){.room-tools{gap:6px;font-size:9px}.room-tools .outline{font-size:9px;padding:7px}.room-code-label{font-size:9px}}
