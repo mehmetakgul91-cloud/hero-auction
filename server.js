@@ -123,6 +123,29 @@ async function lookupCharacterInfo(universe,name){
  if(local?.image&&/^\/images\/[\w/-]+\.png$/i.test(local.image)&&fs.existsSync(path.join(root,'public',local.image.slice(1))))return {url:local.image,source:null,description:local.description||null};
  let image=null,source=null,description=local?.description||knownDescriptions[key]||null;
  const queries=[name+' '+characterHints[universe],name];
+ // Resolve character pages directly before using broad search results.
+ if(universe!=='pokemon'){
+  const suffixes={marvel:[' (Marvel Comics)',' (Marvel Comics character)',' (comics)'],dc:[' (DC Comics)',' (DC Comics character)',' (comics)'],lotr:[' (Middle-earth)',' (The Lord of the Rings)']};
+  const names=[name,...suffixes[universe].map(s=>name+s)];
+  for(const candidate of names){
+   if(image)break;
+   try{
+    const endpoint='https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(candidate.replaceAll(' ','_'));
+    const r=await fetch(endpoint,{headers:{'User-Agent':'HeroAuction/1.3 (character image lookup; contact via GitHub)'},signal:AbortSignal.timeout(3500)});
+    if(!r.ok)continue;
+    const j=await r.json();
+    if(j.type==='disambiguation')continue;
+    const title=String(j.title||'').toLowerCase();
+    const base=name.toLowerCase();
+    if(title!==base&&!title.startsWith(base+' ('))continue;
+    const context=(j.description||'')+' '+(j.extract||'').slice(0,350);
+    const relevant={marvel:/marvel|x-men|spider-man|avengers|comic/i,dc:/dc comics|dc universe|batman|superman|comic/i,lotr:/tolkien|middle-earth|lord of the rings|silmarillion|hobbit/i};
+    if(!relevant[universe].test(context))continue;
+    if(j.thumbnail?.source){image=j.thumbnail.source;source=j.content_urls?.desktop?.page||null;}
+   }catch{}
+  }
+ }
+
  for(const lang of ['tr','en']){
   if(image&&description)break;
   try{
