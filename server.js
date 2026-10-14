@@ -12,7 +12,7 @@ const cardDetails=JSON.parse(fs.readFileSync(path.join(root,'public','cards.json
 const listeners=new Map();
 const waiting=new Map();
 const curated={"marvel:thanos":95,"marvel:galactus":99,"marvel:odin":95,"marvel:sentry":94,"marvel:silver surfer":93,"marvel:thor":88,"marvel:hulk":87,"marvel:scarlet witch":94,"marvel:doctor strange":91,"marvel:iron man":75,"marvel:spider-man":70,"marvel:captain america":61,"dc:the spectre":100,"dc:anti-monitor":99,"dc:doctor manhattan":99,"dc:darkseid":97,"dc:superman":92,"dc:batman":65,"dc:wonder woman":88,"dc:the flash":90,"lotr:eru ilúvatar":100,"lotr:morgoth":99,"lotr:sauron":95,"lotr:gandalf":87,"lotr:aragorn":70,"pokemon:arceus":100,"pokemon:mewtwo":94,"pokemon:rayquaza":94,"pokemon:pikachu":65};
-const stablePower=(id)=>{if(curated[id]!=null)return curated[id];const h=crypto.createHash("sha256").update("hero-auction-v3:"+id).digest();return 15+(h.readUInt32BE(0)%86)};
+const stablePower=(id)=>{if(Number.isInteger(cardDetails[id]?.power))return cardDetails[id].power;if(curated[id]!=null)return curated[id];const h=crypto.createHash("sha256").update("hero-auction-v3:"+id).digest();return 15+(h.readUInt32BE(0)%86)};
 const newCards=(universe)=>shuffle([...catalogue.values()].filter(x=>universe==="mixed"||x.universe===universe)).slice(0,10).map(x=>({...x,power:stablePower(x.id)}));
 const words={
  marvel:'Iron Man,Thor,Hulk,Captain America,Black Widow,Hawkeye,Scarlet Witch,Doctor Strange,Spider-Man,Black Panther,Ant-Man,Wasp,Captain Marvel,Vision,War Machine,Falcon,Winter Soldier,Loki,Thanos,Ultron,Magneto,Wolverine,Deadpool,Storm,Cyclops,Jean Grey,Professor X,Mystique,Beast,Nightcrawler,Rogue,Gambit,Silver Surfer,Galactus,Doctor Doom,Fantastic Four Human Torch,Invisible Woman,Mr Fantastic,The Thing,Ghost Rider,Blade,Venom,Carnage,Green Goblin,Kingpin,Daredevil,Punisher,Shang-Chi,She-Hulk,Sentry,Odin,Hela,Heimdall,Namor,Moon Knight,Star-Lord,Rocket Raccoon,Groot,Gamora,Drax,Mantis,Nebula,Adam Warlock,Kang,Apocalypse,Emma Frost,Colossus,Juggernaut,Kitty Pryde,Iceman,Angel,Bishop,Cable,Domino,Black Bolt,Medusa,Quicksilver,America Chavez,Ms Marvel,Iron Fist,Luke Cage,Jessica Jones,Elektra,Bullseye,Red Skull,Taskmaster,Abomination,Enchantress,Mephisto,MODOK,Kraven,Mysterio,Electro,Sandman,Lizard,Doctor Octopus,Rhino,Vulture,Shocker,Black Cat,Silk,Spider-Gwen,Miles Morales,Spider-Woman,Nick Fury,Maria Hill,Agent Coulson',
@@ -23,6 +23,7 @@ const fallbackPokemon='Pikachu,Raichu,Bulbasaur,Ivysaur,Venusaur,Charmander,Char
 const catalogue=new Map();
 function add(universe,names){for(const name of names){const n=name.trim();if(n)catalogue.set(`${universe}:${n.toLowerCase()}`,{id:`${universe}:${n.toLowerCase()}`,name:n,universe});}}
 for(const [k,v] of Object.entries(words))add(k,v.split(','));add('pokemon',fallbackPokemon.split(','));
+for(const [key,value] of Object.entries(cardDetails)){if(key.startsWith('pokemon:')&&value.pokedex&&value.name)add('pokemon',[value.name]);}
 async function loadPokemon(){try{const r=await fetch('https://pokeapi.co/api/v2/pokemon-species?limit=1025',{signal:AbortSignal.timeout(9000)});if(!r.ok)throw Error('API status '+r.status);const j=await r.json();for(const x of j.results)add('pokemon',[x.name.split('-').map(y=>y[0].toUpperCase()+y.slice(1)).join(' ')]);console.log('Loaded Pokemon species:',j.results.length);}catch(e){console.warn('PokeAPI unavailable; using bundled Kanto fallback:',e.message)}}
 await loadPokemon();
 const rand=n=>crypto.randomInt(n);
@@ -110,7 +111,9 @@ const knownDescriptions={
 const compactText=(raw)=>{const txt=String(raw||'').replace(/\s+/g,' ').trim();if(!txt)return null;const sentences=txt.match(/[^.!?]+[.!?]+/g);return (sentences?.slice(0,2).join(' ')||txt.slice(0,210)).slice(0,320).trim()};
 async function lookupCharacterInfo(universe,name){
  const key=universe+':'+name.toLowerCase();
- let image=null,source=null,description=cardDetails[key]?.description||knownDescriptions[key]||null;
+ const local=cardDetails[key];
+ if(local?.image&&/^\/images\/[\w/-]+\.png$/i.test(local.image)&&fs.existsSync(path.join(root,'public',local.image.slice(1))))return {url:local.image,source:null,description:local.description||null};
+ let image=null,source=null,description=local?.description||knownDescriptions[key]||null;
  const queries=[name+' '+characterHints[universe],name];
  for(const lang of ['tr','en']){
   if(image&&description)break;
