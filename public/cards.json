@@ -355,5 +355,215 @@
   },
   "pokemon:arceus": {
     "description": "Arceus, Pokémon mitolojisinde evrenin yaratılışıyla ilişkilendirilen efsanevi bir Pokémon'dur."
+  },
+  "marvel:ant-man": {
+    "description": "Scott Lang, boyut değiştirmeyi sağlayan Pym Parçacıklarıyla küçülüp büyüyebilen bir kahramandır."
+  },
+  "marvel:wasp": {
+    "description": "Wasp, küçülme ve uçuş yeteneğine sahip, enerji iğneleri kullanabilen bir süper kahramandır."
+  },
+  "marvel:war machine": {
+    "description": "James Rhodes, ağır silahlarla donatılmış War Machine zırhını kullanan bir askerdir."
+  },
+  "marvel:falcon": {
+    "description": "Sam Wilson, gelişmiş uçuş ekipmanlarıyla savaşan ve daha sonra Captain America kimliğini üstlenen kahramandır."
+  },
+  "marvel:winter soldier": {
+    "description": "Bucky Barnes, sibernetik kolu ve askerî eğitimiyle tanınan eski bir süper askerdir."
+  },
+  "marvel:cyclops": {
+    "description": "Scott Summers, gözlerinden güçlü optik enerji ışınları çıkarabilen X-Men liderlerindendir."
+  },
+  "marvel:mystique": {
+    "description": "Mystique, görünüşünü başka insanların biçimine dönüştürebilen mutanttır."
+  },
+  "marvel:beast": {
+    "description": "Hank McCoy, üstün zekâya, çevikliğe ve fiziksel güce sahip mutant bilim insanıdır."
+  },
+  "marvel:nightcrawler": {
+    "description": "Kurt Wagner, kısa mesafelerde ışınlanabilen çevik bir X-Men üyesidir."
+  },
+  "marvel:rogue": {
+    "description": "Rogue, temas ettiği kişilerin güçlerini ve anılarını geçici olarak emebilen mutanttır."
+  },
+  "marvel:gambit": {
+    "description": "Remy LeBeau, nesnelere kinetik enerji yükleyerek onları patlayıcı hâle getirebilen mutanttır."
+  },
+  "marvel:invisible woman": {
+    "description": "Sue Storm, görünmez olabilen ve güçlü kuvvet alanları oluşturabilen Fantastic Four üyesidir."
+  },
+  "marvel:mr fantastic": {
+    "description": "Reed Richards, vücudunu esnetebilen ve olağanüstü zekâsıyla tanınan Fantastic Four lideridir."
+  },
+  "marvel:blade": {
+    "description": "Blade, vampirlerle savaşan ve vampir özelliklerinin bir bölümünü taşıyan bir avcıdır."
+  },
+  "marvel:carnage": {
+    "description": "Carnage, Cletus Kasady ile birleşmiş, son derece saldırgan bir simbiyottur."
+  },
+  "marvel:kingpin": {
+    "description": "Wilson Fisk, New York suç dünyasında büyük nüfuzu olan ve fiziksel gücüyle de tanınan bir liderdir."
+  },
+  "marvel:punisher": {
+    "description": "Frank Castle, suçlulara karşı ölümcül yöntemler kullanan eski bir askerdir."
+  },
+  "marvel:shang-chi": {
+    "description": "Shang-Chi, Marvel evreninin en yetenekli yakın dövüş ustalarından biridir."
+  },
+  "marvel:she-hulk": {
+    "description": "Jennifer Walters, gama ışınları nedeniyle Hulk benzeri güçler kazanmış bir avukattır."
+  },
+  "marvel:heimdall": {
+    "description": "Heimdall, Asgard'ın Bifröst köprüsünü koruyan ve uzak diyarları görebilen nöbetçidir."
+  },
+  "marvel:star-lord": {
+    "description": "Peter Quill, Guardians of the Galaxy ekibinin liderlerinden olan uzay maceracısıdır."
+  },
+  "marvel:drax": {
+    "description": "Drax, güçlü ve dayanıklı bedeniyle yakın dövüşte uzmanlaşmış bir galaktik savaşçıdır."
+  },
+  "marvel:mantis": {
+    "description": "Mantis, dokunarak başkalarının duygularını hissedebilen ve etkileyebilen bir kahramandır."
+  },
+  "marvel:nebula": {
+    "description": "Nebula, sibernetik geliştirmelere sahip, eğitimli bir uzay savaşçısıdır."
+  },
+  "marvel:adam warlock": {
+    "description": "Adam Warlock, kozmik enerjiyle ilişkili olağanüstü güçlere sahip yapay olarak yaratılmış bir varlıktır."
+  },
+  "dc:robin": {
+    "description": "Robin, Batman'in yanında eğitim almış genç suç savaşçılarının kullandığı kahraman kimliğidir."
+  },
+  "dc:red robin": {
+    "description": "Red Robin, genellikle Tim Drake ile ilişkilendirilen, dedektiflik ve dövüş becerileriyle öne çıkan kimliktir."
+  },
+  "dc:blue beetle": {
+    "description": "Blue Beetle, uzaylı kökenli Scarab teknolojisiyle zırh ve gelişmiş silahlar kullanabilen kahramandır."
+  },
+  "dc:booster gold": {
+    "description": "Booster Gold, gelecekten getirdiği teknolojiyle savaşan ve zaman yolculuğuyla ilişkili bir kahramandır."
+  },
+  "dc:catwoman": {
+    "description": "Selina Kyle, Gotham'da faaliyet gösteren çevik ve yetenekli bir hırsızdır."
+  },
+  "dc:the riddler": {
+    "description": "Edward Nygma, Batman'i bilmeceler ve zekâ oyunlarıyla sınayan Gotham suçlusudur."
+  },
+  "dc:two-face": {
+    "description": "Harvey Dent, yüzünün yarısı yara izleriyle kaplı, kararlarını yazı tura atarak veren eski savcıdır."
+  },
+  "dc:scarecrow": {
+    "description": "Jonathan Crane, korku toksinleri kullanarak insanların en büyük korkularını ortaya çıkaran suçludur."
+  },
+  "dc:mr freeze": {
+    "description": "Victor Fries, kriyojenik teknoloji ve dondurucu silahlar kullanan Gotham bilim insanıdır."
+  },
+  "dc:ra’s al ghul": {
+    "description": "Ra's al Ghul, League of Assassins'in lideri ve Lazarus Çukurlarıyla ilişkili uzun ömürlü stratejisttir."
+  },
+  "dc:talia al ghul": {
+    "description": "Talia al Ghul, Ra's al Ghul'un kızı olan, dövüş ve casuslukta uzman bir karakterdir."
+  },
+  "dc:deadshot": {
+    "description": "Floyd Lawton, olağanüstü isabet oranıyla tanınan profesyonel bir suikastçıdır."
+  },
+  "dc:sinestro": {
+    "description": "Sinestro, korkunun sarı enerjisini kullanan Sinestro Corps'un lideridir."
+  },
+  "dc:atrocitus": {
+    "description": "Atrocitus, öfkenin kırmızı enerjisini kullanan Red Lantern Corps'un kurucusudur."
+  },
+  "dc:general zod": {
+    "description": "General Zod, Krypton kökenli bir komutandır; sarı güneş altında Superman benzeri güçler kazanır."
+  },
+  "dc:reverse-flash": {
+    "description": "Eobard Thawne, Hız Gücü ile ilişkili güçlerini Flash'a karşı kullanan zaman yolcusu bir düşmandır."
+  },
+  "dc:zoom": {
+    "description": "Zoom, zaman algısını değiştirebilen ve Flash'ın düşmanları arasında yer alan bir hızcıdır."
+  },
+  "dc:gorilla grodd": {
+    "description": "Gorilla Grodd, telepatik yeteneklere sahip son derece zeki bir gorildir."
+  },
+  "dc:captain cold": {
+    "description": "Leonard Snart, soğuk tabancasıyla Flash'a karşı savaşan bir suçludur."
+  },
+  "dc:heat wave": {
+    "description": "Mick Rory, gelişmiş alev silahları kullanan Flash düşmanlarından biridir."
+  },
+  "dc:mirror master": {
+    "description": "Mirror Master, aynalar ve yansıtıcı yüzeyler üzerinden hareket edebilen teknoloji veya güçler kullanır."
+  },
+  "dc:trigon": {
+    "description": "Trigon, boyutlar arası güçleriyle tanınan, Raven'ın babası olan şeytani varlıktır."
+  },
+  "lotr:meriadoc brandybuck": {
+    "description": "Merry, Yüzük Kardeşliği'ne katılan ve Rohan'da savaşan Shire'lı bir hobbittir."
+  },
+  "lotr:peregrin took": {
+    "description": "Pippin, Yüzük Kardeşliği üyesi olan ve Gondor'da görev yapan genç bir hobbittir."
+  },
+  "lotr:denethor": {
+    "description": "Denethor, Yüzük Savaşı sırasında Gondor'un vekilharcı ve Boromir ile Faramir'in babasıdır."
+  },
+  "lotr:celeborn": {
+    "description": "Celeborn, Lothlórien'in Galadriel ile birlikte yöneticiliğini yapan bir elf soylusudur."
+  },
+  "lotr:thranduil": {
+    "description": "Thranduil, Kuyutorman'daki Orman Elfleri'nin kralı ve Legolas'ın babasıdır."
+  },
+  "lotr:gríma wormtongue": {
+    "description": "Gríma, Saruman'ın etkisindeki danışman olarak Rohan Kralı Théoden'i yanıltmaya çalışır."
+  },
+  "lotr:nazgûl": {
+    "description": "Nazgûl, Dokuz Yüzük tarafından köleleştirilmiş, Sauron'a hizmet eden yüzük tayflarıdır."
+  },
+  "lotr:khamûl": {
+    "description": "Khamûl, Doğulu olarak bilinen ve Nazgûl arasında önemli yeri olan bir yüzük tayfıdır."
+  },
+  "lotr:goldberry": {
+    "description": "Goldberry, Eski Orman yakınında Tom Bombadil ile yaşayan gizemli bir karakterdir."
+  },
+  "lotr:radagast": {
+    "description": "Radagast, hayvanlar ve doğayla güçlü bağı bulunan bir Istari büyücüsüdür."
+  },
+  "lotr:beorn": {
+    "description": "Beorn, insan ile ayı biçimleri arasında dönüşebilen ve Hobbitler'e yardım eden bir şekil değiştiricidir."
+  },
+  "lotr:bard the bowman": {
+    "description": "Bard, Dale soyundan gelen okçudur ve Smaug'u öldürmesiyle tanınır."
+  },
+  "lotr:balin": {
+    "description": "Balin, Thorin'in Erebor seferine katılan ve daha sonra Moria'ya giden bir cücedir."
+  },
+  "lotr:dwalin": {
+    "description": "Dwalin, Thorin Meşekalkan'ın Erebor seferindeki savaşçı cücelerinden biridir."
+  },
+  "lotr:kíli": {
+    "description": "Kíli, Thorin'in yeğeni ve Erebor seferine katılan genç cüce savaşçıdır."
+  },
+  "lotr:fíli": {
+    "description": "Fíli, Thorin'in yeğeni ve Erebor seferine katılan genç cüce savaşçıdır."
+  },
+  "lotr:azog": {
+    "description": "Azog, Moria çevresindeki savaşlarda cücelerin düşmanı olarak tanınan bir ork lideridir."
+  },
+  "lotr:bolg": {
+    "description": "Bolg, Azog'un oğlu ve Beş Ordular Savaşı'ndaki ork liderlerinden biridir."
+  },
+  "lotr:elendil": {
+    "description": "Elendil, Númenor'un yıkımından kurtulan ve Arnor ile Gondor krallıklarını kuran liderdir."
+  },
+  "lotr:anárion": {
+    "description": "Anárion, Elendil'in oğlu ve Gondor'un Isildur ile birlikte ilk yöneticilerindendir."
+  },
+  "lotr:gil-galad": {
+    "description": "Gil-galad, Orta Dünya'daki Noldor'un son Yüce Kralı ve Son İttifak'ın liderlerindendir."
+  },
+  "lotr:glorfindel": {
+    "description": "Glorfindel, büyük savaş gücü ve ruhsal kudretiyle tanınan eski bir elf kahramanıdır."
+  },
+  "lotr:círdan": {
+    "description": "Círdan, Gri Limanlar'ın yöneticisi olan ve Üç Elf Yüzüğü'nden Narya'yı Gandalf'a veren elftir."
   }
 }
