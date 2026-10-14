@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feature/tam-kart-arsivi
+      - release/pokemon-1025
   workflow_dispatch:
 permissions:
   contents: read
