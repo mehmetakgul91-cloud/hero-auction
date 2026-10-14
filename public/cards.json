@@ -256,5 +256,104 @@
   },
   "pokemon:mew": {
     "description": "Mew, pek çok hareketi öğrenebilen nadir psişik tür Pokémon’dur."
+  },
+  "marvel:iron man": {
+    "description": "Tony Stark, gelişmiş zırhlar tasarlayan bir mucit ve Avengers üyesidir. Zırhları uçuş, enerji saldırıları ve savunma sağlar."
+  },
+  "marvel:thor": {
+    "description": "Thor, Asgard'ın gök gürültüsü tanrısıdır. Mjolnir ve yıldırım gücüyle savaşır."
+  },
+  "marvel:hulk": {
+    "description": "Bruce Banner öfkelendiğinde Hulk'a dönüşür. Olağanüstü fiziksel gücü ve dayanıklılığı vardır."
+  },
+  "marvel:captain america": {
+    "description": "Steve Rogers, süper asker serumu sayesinde güçlenen ve vibranyum kalkan taşıyan bir kahramandır."
+  },
+  "marvel:scarlet witch": {
+    "description": "Wanda Maximoff, gerçekliği değiştirebilen kaos büyüsüyle tanınan güçlü bir büyücüdür."
+  },
+  "marvel:doctor strange": {
+    "description": "Stephen Strange, mistik sanatlarda uzmanlaşmış bir büyücüdür. Büyü ve boyutlar arası tehditlere karşı savaşır."
+  },
+  "marvel:spider-man": {
+    "description": "Peter Parker, örümcek benzeri çeviklik, duvarlara tutunma ve tehlike sezgisi kazanmış bir kahramandır."
+  },
+  "marvel:thanos": {
+    "description": "Thanos, Titan kökenli kozmik bir tehdittir. Sonsuzluk Taşları'nı ele geçirme arzusuyla tanınır."
+  },
+  "marvel:galactus": {
+    "description": "Galactus, gezegenlerin enerjisiyle beslenen kozmik bir varlıktır."
+  },
+  "marvel:fantastic four human torch": {
+    "description": "Johnny Storm, vücudunu alevlerle kaplayabilen ve uçabilen Fantastic Four üyesidir."
+  },
+  "marvel:the thing": {
+    "description": "Ben Grimm, kayaya benzeyen dayanıklı bedeni ve büyük fiziksel gücüyle Fantastic Four üyesidir."
+  },
+  "dc:superman": {
+    "description": "Kal-El, Krypton gezegeninden gelen bir kahramandır. Güneş enerjisi sayesinde uçabilir ve olağanüstü güç kazanır."
+  },
+  "dc:batman": {
+    "description": "Bruce Wayne, Gotham'ı koruyan, ileri teknoloji ve dedektiflik becerileri kullanan bir kahramandır."
+  },
+  "dc:wonder woman": {
+    "description": "Diana, Themyscira'nın Amazon savaşçısıdır. Olağanüstü gücü ve Hakikat Kementi ile tanınır."
+  },
+  "dc:the flash": {
+    "description": "Barry Allen, Hız Gücü'ne erişerek insanüstü hızla hareket edebilen bir kahramandır."
+  },
+  "dc:green lantern": {
+    "description": "Green Lantern, iradesiyle güç yüzüğünden enerji yapıları oluşturabilen kozmik koruyucudur."
+  },
+  "dc:darkseid": {
+    "description": "Darkseid, Apokolips'in zalim hükümdarıdır. Omega Işınları ve büyük kozmik gücüyle tanınır."
+  },
+  "dc:doctor manhattan": {
+    "description": "Jon Osterman, maddeyi atomik düzeyde kontrol edebilen ve zamanı farklı algılayan güçlü bir varlıktır."
+  },
+  "dc:the spectre": {
+    "description": "Spectre, ilahi intikamı temsil eden doğaüstü bir varlıktır. Gerçekliği değiştirebilecek ölçekte güçler sergiler."
+  },
+  "dc:batgirl": {
+    "description": "Barbara Gordon, Gotham'da suçla mücadele eden, dövüş ve bilgisayar becerileri gelişmiş bir kahramandır."
+  },
+  "lotr:frodo baggins": {
+    "description": "Frodo, Tek Yüzük'ü Mordor'a taşıma görevini üstlenen Shire'lı bir hobbittir."
+  },
+  "lotr:gandalf": {
+    "description": "Gandalf, Orta Dünya'da halklara yol gösteren bir Istari büyücüsüdür. Ateş ve ışıkla ilişkili güçler kullanır."
+  },
+  "lotr:aragorn": {
+    "description": "Aragorn, Isildur'un soyundan gelen bir Dúnedain'dir. Usta bir savaşçı ve Gondor'un gelecekteki kralıdır."
+  },
+  "lotr:legolas": {
+    "description": "Legolas, Sindar kökenli bir elf prensidir. Keskin görüşü ve okçuluğuyla tanınır."
+  },
+  "lotr:sauron": {
+    "description": "Sauron, Tek Yüzük'ü yaratan karanlık Maia'dır. Orta Dünya'yı egemenliği altına almak ister."
+  },
+  "lotr:morgoth": {
+    "description": "Morgoth, Arda'ya isyan eden ilk Karanlık Lord'dur. Sauron onun eski hizmetkârıdır."
+  },
+  "lotr:eru ilúvatar": {
+    "description": "Eru Ilúvatar, Tolkien'in evreninde varoluşun ve Ainur'un yaratıcısı olan tek Tanrı'dır."
+  },
+  "lotr:the witch-king of angmar": {
+    "description": "Angmar'ın Cadı Kralı, Nazgûl'ün lideri ve Sauron'un en korkulan hizmetkârlarından biridir."
+  },
+  "lotr:tom bombadil": {
+    "description": "Tom Bombadil, Eski Orman'da yaşayan gizemli bir varlıktır. Tek Yüzük onun üzerinde alışılmış etkisini göstermez."
+  },
+  "pokemon:pikachu": {
+    "description": "Pikachu, elektrik türündeki bir Pokémon'dur. Yanaklarındaki keselerde elektrik depolar ve şimşek saldırıları kullanır."
+  },
+  "pokemon:charizard": {
+    "description": "Charizard, ateş ve uçan türündeki bir Pokémon'dur. Güçlü alev saldırıları ve uçuş yeteneğiyle tanınır."
+  },
+  "pokemon:mewtwo": {
+    "description": "Mewtwo, genetik araştırmalarla yaratılmış efsanevi bir psişik Pokémon'dur. Çok güçlü zihinsel saldırılar yapabilir."
+  },
+  "pokemon:arceus": {
+    "description": "Arceus, Pokémon mitolojisinde evrenin yaratılışıyla ilişkilendirilen efsanevi bir Pokémon'dur."
   }
 }
