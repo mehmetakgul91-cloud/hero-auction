@@ -1,0 +1,28 @@
+name: Research Marvel cosplay images
+on:
+  push:
+    branches: [feature/tam-kart-arsivi]
+    paths:
+      - '.github/workflows/research-marvel-art.yml'
+      - 'tools/find-marvel-art.mjs'
+  workflow_dispatch:
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Search Commons for Marvel cosplay photos
+        run: node tools/find-marvel-art.mjs
+      - name: Save candidates for human review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: marvel-art-candidates
+          path: tools/marvel-art-candidates.json
+          if-no-files-found: warn
