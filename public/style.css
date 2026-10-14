@@ -75,3 +75,11 @@ input{transition:border-color .2s,box-shadow .2s;background:#0c1428;border-color
 .arena-stage .card-art{max-width:100%}
 @media(max-width:850px){.arena-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.arena-layout>.arena-stage{grid-column:1/-1;grid-row:2}.player-side{position:static;grid-row:1;min-height:0;padding:12px}.player-side .credit{font-size:28px;margin:8px 0}.spent-credit{margin:8px 0 12px;padding:7px;font-size:11px}.player-side .teams{max-height:115px;overflow:auto}.side-hero{padding:6px 8px;font-size:11px}.player-side .name{font-size:12px}.side-team-title{font-size:10px}}
 @media(min-width:851px){.arena-stage{padding:25px 20px}.arena-stage .card-art{height:300px;width:min(100%,265px)}}
+
+
+/* Show winning bid alongside each collected hero in both side panels. */
+.player-side .side-hero{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.side-hero-name{min-width:0;overflow-wrap:anywhere}
+.side-hero-cost{flex:none;white-space:nowrap;color:#f4cf92;font-weight:900;font-size:13px;font-variant-numeric:tabular-nums}
+.side-hero-cost small{font-size:9px;color:#c3cde3;font-weight:650}
+@media(max-width:480px){.side-hero-cost{font-size:12px}.side-hero-cost small{font-size:8px}.player-side .side-hero{gap:4px}}
