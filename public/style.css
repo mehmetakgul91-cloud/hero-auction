@@ -44,3 +44,17 @@ input{transition:border-color .2s,box-shadow .2s;background:#0c1428;border-color
 #rematchworld{width:100%;padding:13px 15px;background:#101b30;color:#f5f3ff;border:1px solid #617096;border-radius:12px;margin:12px 0 4px}
 #rematch:disabled{opacity:.6}
 @media(prefers-reduced-motion:reduce){.card-reveal,.trophy-reveal{animation:none}}
+
+
+/* Keep the player's budget and collected heroes visible at the bid controls. */
+.bid-summary{max-width:580px;margin:18px auto 12px;text-align:left;border:1px solid #5a648a;background:linear-gradient(145deg,#263354,#19253e);border-radius:17px;padding:14px 16px;box-shadow:inset 0 1px #ffffff0d}
+.bid-summary-credits{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-bottom:11px;border-bottom:1px solid #61709155}
+.bid-summary-credits>div{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.bid-summary small{display:block;color:#b6c5e7;font-size:10px;letter-spacing:.65px;font-weight:850}
+.bid-summary strong{font-size:29px;color:#f2ce91;line-height:1;font-variant-numeric:tabular-nums}
+.bid-summary-credits>div:last-child strong{color:#c9c7f7}
+.bid-summary-team{padding-top:12px}
+.bid-summary-names{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.bid-summary-names span{border:1px solid #64769b;background:#131e34;padding:6px 9px;border-radius:8px;font-size:11px;font-weight:700;color:#edf1ff}
+.bid-summary-names em{color:#8f9dbd;font-size:12px;font-style:normal}
+@media(max-width:480px){.bid-summary{padding:11px 12px;margin:12px auto}.bid-summary-credits{gap:8px}.bid-summary-credits>div{display:block}.bid-summary strong{display:block;margin-top:5px;font-size:26px}.bid-summary small{font-size:9px}}
