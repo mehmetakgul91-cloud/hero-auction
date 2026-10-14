@@ -10944,5 +10944,251 @@
     "description": "Phil Coulson, S.H.I.E.L.D. operasyonlarında görev alan deneyimli saha ajanıdır.",
     "power": 56,
     "powerStatus": "curated"
+  },
+  "dc:superman": {
+    "name": "Superman",
+    "description": "Clark Kent, Kripton kökenli güçleriyle Metropolis'i koruyan Adalet Birliği kahramanıdır.",
+    "power": 92,
+    "powerStatus": "curated"
+  },
+  "dc:batman": {
+    "name": "Batman",
+    "description": "Bruce Wayne, üstün dedektiflik becerileri ve teknolojisiyle Gotham'da suçla savaşır.",
+    "power": 65,
+    "powerStatus": "curated"
+  },
+  "dc:wonder woman": {
+    "name": "Wonder Woman",
+    "description": "Diana, Amazon savaşçısı olarak tanrısal güçleri ve Hakikat Kementi'ni kullanır.",
+    "power": 88,
+    "powerStatus": "curated"
+  },
+  "dc:the flash": {
+    "name": "The Flash",
+    "description": "Flash, Speed Force bağlantısıyla olağanüstü hızda koşabilir ve zamanı etkileyebilir.",
+    "power": 90,
+    "powerStatus": "curated"
+  },
+  "dc:green lantern": {
+    "name": "Green Lantern",
+    "description": "Green Lantern, iradesiyle enerji yapıları oluşturabilen bir güç yüzüğü taşır.",
+    "power": 86,
+    "powerStatus": "curated"
+  },
+  "dc:batgirl": {
+    "name": "Batgirl",
+    "description": "Batgirl, Gotham'da suçla mücadele eden çevik ve yetenekli bir maskeli kahramandır.",
+    "power": 66,
+    "powerStatus": "curated"
+  },
+  "dc:robin": {
+    "name": "Robin",
+    "description": "Robin, Batman'in yanında eğitim almış genç ve çevik bir Gotham kahramanıdır.",
+    "power": 62,
+    "powerStatus": "curated"
+  },
+  "dc:red robin": {
+    "name": "Red Robin",
+    "description": "Tim Drake, dedektiflik ve dövüş yetenekleriyle tanınan eski Robin'dir.",
+    "power": 65,
+    "powerStatus": "curated"
+  },
+  "dc:blue beetle": {
+    "name": "Blue Beetle",
+    "description": "Jaime Reyes, uzaylı Scarab zırhının sağladığı silah ve uçuş yeteneklerini kullanır.",
+    "power": 77,
+    "powerStatus": "curated"
+  },
+  "dc:booster gold": {
+    "name": "Booster Gold",
+    "description": "Michael Carter, gelecek teknolojileriyle donanmış ve zaman yolculuğuyla ilişkili kahramandır.",
+    "power": 73,
+    "powerStatus": "curated"
+  },
+  "dc:the spectre": {
+    "name": "The Spectre",
+    "description": "Spectre, DC evreninde ilahi intikamın neredeyse sınırsız güçlü temsilcisidir.",
+    "power": 100,
+    "powerStatus": "curated"
+  },
+  "dc:darkseid": {
+    "name": "Darkseid",
+    "description": "Darkseid, Apokolips hükümdarı ve Omega Işınları kullanan kozmik tehdittir.",
+    "power": 97,
+    "powerStatus": "curated"
+  },
+  "dc:doctor manhattan": {
+    "name": "Doctor Manhattan",
+    "description": "Jon Osterman, maddeyi atomik düzeyde değiştirebilen ve zamanı farklı algılayan varlıktır.",
+    "power": 99,
+    "powerStatus": "curated"
+  },
+  "dc:catwoman": {
+    "name": "Catwoman",
+    "description": "Selina Kyle, akrobasi ve gizlilikte uzman Gotham hırsızı ve Batman'in müttefikidir.",
+    "power": 59,
+    "powerStatus": "curated"
+  },
+  "dc:the riddler": {
+    "name": "The Riddler",
+    "description": "Edward Nygma, karmaşık bilmeceleri ve planlarıyla Batman'e meydan okur.",
+    "power": 52,
+    "powerStatus": "curated"
+  },
+  "dc:two-face": {
+    "name": "Two-Face",
+    "description": "Harvey Dent, iki yüzlü yazı tura kararlarıyla tanınan eski Gotham savcısıdır.",
+    "power": 52,
+    "powerStatus": "curated"
+  },
+  "dc:scarecrow": {
+    "name": "Scarecrow",
+    "description": "Jonathan Crane, korku toksinleri kullanan psikoloji uzmanı Gotham suçlusudur.",
+    "power": 56,
+    "powerStatus": "curated"
+  },
+  "dc:mr freeze": {
+    "name": "Mr Freeze",
+    "description": "Victor Fries, kriyojenik teknolojiler ve dondurucu silahlar kullanan bilim insanıdır.",
+    "power": 66,
+    "powerStatus": "curated"
+  },
+  "dc:ra’s al ghul": {
+    "name": "Ra’s al Ghul",
+    "description": "Ra's al Ghul, Lazarus Çukurlarıyla ömrünü uzatan Suikastçılar Birliği lideridir.",
+    "power": 72,
+    "powerStatus": "curated"
+  },
+  "dc:talia al ghul": {
+    "name": "Talia al Ghul",
+    "description": "Talia al Ghul, Suikastçılar Birliği bağlantılı usta stratejist ve savaşçıdır.",
+    "power": 66,
+    "powerStatus": "curated"
+  },
+  "dc:deadshot": {
+    "name": "Deadshot",
+    "description": "Floyd Lawton, neredeyse şaşmaz nişancılığıyla bilinen kiralık suikastçıdır.",
+    "power": 65,
+    "powerStatus": "curated"
+  },
+  "dc:sinestro": {
+    "name": "Sinestro",
+    "description": "Sinestro, korku enerjisi kullanan sarı güç yüzüğü ve kendi birliğiyle tanınır.",
+    "power": 89,
+    "powerStatus": "curated"
+  },
+  "dc:atrocitus": {
+    "name": "Atrocitus",
+    "description": "Atrocitus, öfke enerjisini kullanan Kızıl Fenerler Birliği'nin lideridir.",
+    "power": 86,
+    "powerStatus": "curated"
+  },
+  "dc:general zod": {
+    "name": "General Zod",
+    "description": "General Zod, Superman'e benzer Kriptonlu güçleri olan askerî komutandır.",
+    "power": 91,
+    "powerStatus": "curated"
+  },
+  "dc:reverse-flash": {
+    "name": "Reverse-Flash",
+    "description": "Eobard Thawne, Negatif Speed Force ile hareket eden Flash'ın ezeli düşmanıdır.",
+    "power": 92,
+    "powerStatus": "curated"
+  },
+  "dc:zoom": {
+    "name": "Zoom",
+    "description": "Hunter Zolomon, zaman algısını değiştirerek olağanüstü hız izlenimi yaratan düşmandır.",
+    "power": 87,
+    "powerStatus": "curated"
+  },
+  "dc:gorilla grodd": {
+    "name": "Gorilla Grodd",
+    "description": "Grodd, telepatik güçleri ve yüksek zekâsıyla tanınan süper güçlü gorildir.",
+    "power": 82,
+    "powerStatus": "curated"
+  },
+  "dc:captain cold": {
+    "name": "Captain Cold",
+    "description": "Leonard Snart, mutlak sıfıra yaklaşan soğuk saldırıları üreten silah taşır.",
+    "power": 68,
+    "powerStatus": "curated"
+  },
+  "dc:heat wave": {
+    "name": "Heat Wave",
+    "description": "Mick Rory, güçlü alev silahları kullanan Flash düşmanıdır.",
+    "power": 63,
+    "powerStatus": "curated"
+  },
+  "dc:mirror master": {
+    "name": "Mirror Master",
+    "description": "Mirror Master, aynalar ve yansıtıcı boyut üzerinden hareket edebilen suçludur.",
+    "power": 70,
+    "powerStatus": "curated"
+  },
+  "dc:trigon": {
+    "name": "Trigon",
+    "description": "Trigon, boyutları tehdit eden şeytani güçlere sahip ve Raven'ın babası olan varlıktır.",
+    "power": 97,
+    "powerStatus": "curated"
+  },
+  "dc:beast boy": {
+    "name": "Beast Boy",
+    "description": "Garfield Logan, farklı hayvanlara dönüşebilen Teen Titans üyesidir.",
+    "power": 76,
+    "powerStatus": "curated"
+  },
+  "dc:cyborg superman": {
+    "name": "Cyborg Superman",
+    "description": "Hank Henshaw, gelişmiş sibernetik beden ve Kriptonlu benzeri yetenekler kullanır.",
+    "power": 89,
+    "powerStatus": "curated"
+  },
+  "dc:black manta": {
+    "name": "Black Manta",
+    "description": "Black Manta, ileri teknoloji dalış zırhıyla Aquaman'e karşı savaşan düşmandır.",
+    "power": 72,
+    "powerStatus": "curated"
+  },
+  "dc:ocean master": {
+    "name": "Ocean Master",
+    "description": "Orm, Atlantis kökenli büyü ve savaş yetenekleriyle Aquaman'e rakip olur.",
+    "power": 77,
+    "powerStatus": "curated"
+  },
+  "dc:king shark": {
+    "name": "King Shark",
+    "description": "Nanaue, köpekbalığı benzeri bedeniyle üstün güç ve dayanıklılığa sahiptir.",
+    "power": 79,
+    "powerStatus": "curated"
+  },
+  "dc:peacemaker": {
+    "name": "Peacemaker",
+    "description": "Christopher Smith, barışı sağlamak adına ağır silahlar kullanan anti-kahramandır.",
+    "power": 61,
+    "powerStatus": "curated"
+  },
+  "dc:bloodsport": {
+    "name": "Bloodsport",
+    "description": "Robert DuBois, yüksek teknolojili silahlar kullanan usta nişancı ve paralı askerdir.",
+    "power": 63,
+    "powerStatus": "curated"
+  },
+  "dc:enchantress": {
+    "name": "Enchantress",
+    "description": "June Moone, büyülü varlıkla bağlantısı sayesinde güçlü sihir kullanır.",
+    "power": 85,
+    "powerStatus": "curated"
+  },
+  "dc:katana": {
+    "name": "Katana",
+    "description": "Tatsu Yamashiro, ruhları hapsedebilen Soultaker kılıcını kullanan savaşçıdır.",
+    "power": 68,
+    "powerStatus": "curated"
+  },
+  "dc:the atom": {
+    "name": "The Atom",
+    "description": "Ray Palmer, boyutunu atom ölçeğine kadar küçültebilen bilim insanıdır.",
+    "power": 74,
+    "powerStatus": "curated"
   }
 }
