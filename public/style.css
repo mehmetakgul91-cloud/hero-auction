@@ -319,3 +319,8 @@ header{gap:14px;flex-wrap:wrap}
 #game #chat-input{display:block;position:relative;z-index:5;pointer-events:auto;touch-action:manipulation;-webkit-user-select:text;user-select:text;min-height:48px;font-size:16px;margin:0;opacity:1;appearance:none;-webkit-appearance:none}
 #game #chat-input:focus{outline:2px solid #55eaf0;outline-offset:1px}
 #game #chat-send{position:relative;z-index:5;touch-action:manipulation}
+
+/* Acquired heroes: grow the player panels downward instead of scrolling inside them. */
+#game .player-side{height:auto;max-height:none;overflow:visible;align-self:start}
+#game .player-side .teams{height:auto!important;max-height:none!important;overflow:visible!important;overflow-y:visible!important;min-height:0}
+#game .player-side .side-hero{flex-shrink:0}
