@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
 const GOOGLE_CLIENT_ID=process.env.GOOGLE_CLIENT_ID||'742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
-const authSecret=crypto.randomBytes(32);
+const authSecret=process.env.AUTH_SIGNING_SECRET?Buffer.from(process.env.AUTH_SIGNING_SECRET,'hex'):crypto.randomBytes(32);
 function signLogin(user){const data=Buffer.from(JSON.stringify({sub:user.sub,name:user.name,expires:Date.now()+86400000})).toString('base64url');const sig=crypto.createHmac('sha256',authSecret).update(data).digest('base64url');return data+'.'+sig}
 function readLogin(value){try{const [data,sig]=String(value||'').split('.');if(!data||!sig)return null;const expected=crypto.createHmac('sha256',authSecret).update(data).digest();const received=Buffer.from(sig,'base64url');if(expected.length!==received.length||!crypto.timingSafeEqual(expected,received))return null;const user=JSON.parse(Buffer.from(data,'base64url').toString());return user.expires>Date.now()?user:null}catch{return null}}
 function chosenName(body,fallback){return readLogin(body.authToken)?.name||String(body.name||fallback).trim().slice(0,24)}
