@@ -1,6 +1,16 @@
 const $=id=>document.getElementById(id);
 let session=null,room=null,stream=null,world='mixed';
 let lastCardKey=null;
+const googleClientId='742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
+let login=null;try{login=JSON.parse(localStorage.getItem('hero-auction-login')||'null')}catch{}
+function applyLogin(){const isGoogle=login?.type==='google';$('name').readOnly=isGoogle;if(isGoogle)$('name').value=login.user.name;$('login-status').textContent=isGoogle?'Google ile giriş yapıldı: '+login.user.name:'Misafir olarak oynuyorsun.';$('google-logout').hidden=!isGoogle;$('guest-login').hidden=isGoogle}
+$('guest-login').onclick=()=>{login={type:'guest'};localStorage.setItem('hero-auction-login',JSON.stringify(login));applyLogin()};
+$('google-logout').onclick=()=>{login={type:'guest'};localStorage.setItem('hero-auction-login',JSON.stringify(login));applyLogin();window.google?.accounts?.id?.disableAutoSelect()};
+window.heroGoogleCallback=async response=>{try{const result=await post('/api/auth/google',{credential:response.credential});login={type:'google',user:result.user,authToken:result.authToken};localStorage.setItem('hero-auction-login',JSON.stringify(login));applyLogin();notify('Google hesabınla giriş yaptın.')}catch(e){notify(e.message)}};
+function initGoogle(attempt=0){if(!window.google?.accounts?.id){if(attempt<40)setTimeout(()=>initGoogle(attempt+1),500);return}window.google.accounts.id.initialize({client_id:googleClientId,callback:window.heroGoogleCallback});window.google.accounts.id.renderButton($('google-login'),{theme:'outline',size:'large',text:'signin_with',width:270})}
+applyLogin();initGoogle();
+function gameIdentity(){return login?.type==='google'?{authToken:login.authToken}:{}}
+
 const visitorId=crypto.randomUUID();
 async function refreshOnline(){
  try{
@@ -46,10 +56,10 @@ let pokeMap={};async function loadPokeMap(){try{const r=await fetch('https://pok
 function pokemonId(name){return pokeMap[name.toLowerCase()]||null}
 async function act(url,extra){try{const j=await post(url,{...session,...extra});show(j.room)}catch(e){notify(e.message)}}
 $('worlds').onclick=e=>{const b=e.target.closest('[data-world]');if(!b)return;world=b.dataset.world;document.querySelectorAll('[data-world]').forEach(x=>x.classList.toggle('selected',x===b))};
-$('create').onclick=async()=>{try{const j=await post('/api/create',{name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
-$('join').onclick=async()=>{try{const j=await post('/api/join',{name:$('name').value,code:$('roomcode').value.trim().toUpperCase()});save(j.token,j.room)}catch(e){notify(e.message)}};
-$('bot').onclick=async()=>{try{const j=await post('/api/bot',{name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
-$('match').onclick=async()=>{try{const j=await post('/api/match',{name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
+$('create').onclick=async()=>{try{const j=await post('/api/create',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
+$('join').onclick=async()=>{try{const j=await post('/api/join',{...gameIdentity(),name:$('name').value,code:$('roomcode').value.trim().toUpperCase()});save(j.token,j.room)}catch(e){notify(e.message)}};
+$('bot').onclick=async()=>{try{const j=await post('/api/bot',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
+$('match').onclick=async()=>{try{const j=await post('/api/match',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
 setInterval(()=>{if(room?.phase==='auction'&&room.deadline){const el=$('turntimer');if(el)el.textContent='⏱ '+Math.max(0,Math.ceil((room.deadline-Date.now())/1000))+' saniye'}},250);
 function inviteUrl(code){const u=new URL('/',location.origin);u.searchParams.set('join',code);return u.toString()}
 function shareInvite(code){
