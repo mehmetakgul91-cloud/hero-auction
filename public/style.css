@@ -269,3 +269,12 @@ footer{color:#7899b7}
 @media(max-width:900px){#game .arena-layout{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}#game .arena-stage{grid-column:1/-1;grid-row:2}#game .player-side{padding:10px;min-height:0}#game .player-side .teams{max-height:95px;overflow-y:auto}}
 @media(max-width:520px){.shell{padding:12px 10px 30px}.login-landing{border-radius:17px}.landing-layout{padding:20px 12px}.landing-story h1{font-size:clamp(42px,11vw,54px)}.landing-entry{padding:20px 14px}#game .room-tools{flex-wrap:wrap}#game .arena-stage{padding:10px}#game .auction-main{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}#game .auction-action{padding:8px}#game .auction-action .bid-stepper button{min-width:34px}#game .player-side .credit{font-size:23px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* Gold wallet — persistent account currency */
+header{gap:14px;flex-wrap:wrap}
+.gold-wallet[hidden]{display:none!important}
+.gold-wallet{margin-left:auto;display:inline-flex;align-items:center;gap:9px;border:1px solid #f4c85a9c;border-radius:13px;padding:9px 15px;background:linear-gradient(110deg,#3a2c12e8,#181b30);box-shadow:0 0 22px #ffc94e20,inset 0 1px #fff3b21e;color:#ffe9a4}
+.gold-icon{font-size:21px;filter:drop-shadow(0 0 7px #fbd06377)}
+.gold-number{font-size:clamp(17px,2.3vw,23px);font-weight:1000;font-variant-numeric:tabular-nums;line-height:1}
+.gold-label{font-size:10px;font-weight:900;letter-spacing:1.5px;color:#e6c26e}
+@media(max-width:450px){.gold-wallet{padding:8px 10px;gap:5px}.gold-label{font-size:9px}.logo{font-size:19px}}
