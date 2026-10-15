@@ -186,3 +186,6 @@ header{padding:5px 0 12px;margin-bottom:4px}
 
 /* Standalone authentication gate */
 #login-gate[hidden],#home[hidden],#game[hidden],.account-bar [hidden]{display:none!important}.login-gate{max-width:520px;margin:50px auto 30px;text-align:center;padding:28px}.login-gate h1{font-size:clamp(27px,5vw,40px);margin:0 0 10px}.login-gate p{color:#b8c7e3}.login-gate .login-options{margin:20px 0 0}.login-gate input{width:100%;box-sizing:border-box}.account-bar{display:flex;align-items:center;justify-content:flex-end;gap:12px;font-size:12px;color:#c4d2ec;margin:8px 0}.account-bar:has(#account-status:empty){display:none}
+
+/* Harmonized Google sign-in card */
+#login-gate .login-options{gap:14px;padding:20px;border-radius:18px;background:linear-gradient(155deg,rgba(22,34,69,.92),rgba(13,20,43,.95));border:1px solid rgba(135,161,231,.22);box-shadow:0 14px 38px rgba(0,0,0,.15)}#login-gate #guest-login{width:100%;min-height:46px;border-radius:10px}#google-login{display:flex;justify-content:center;align-items:center;width:100%;min-height:44px;overflow:hidden;border-radius:10px}#google-login>div{max-width:100%!important}#login-gate .or{font-size:11px;letter-spacing:2px;color:#93a8cd;margin:0}#login-gate input{min-height:45px;border-radius:10px}@media(max-width:480px){#login-gate .login-options{padding:12px}#login-gate{padding:20px 14px;margin-top:24px}}
