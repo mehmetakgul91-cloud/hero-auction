@@ -180,3 +180,6 @@ header{padding:5px 0 12px;margin-bottom:4px}
 
 /* Bid history stays closed until the player opens it. */
 .activity-collapsible{margin-top:14px}.activity-collapsible summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:800;letter-spacing:.4px;user-select:none}.activity-collapsible summary::-webkit-details-marker{display:none}.activity-chevron{font-size:20px;transition:transform .2s}.activity-collapsible[open] .activity-chevron{transform:rotate(180deg)}.activity-collapsible #log{margin-top:14px}
+
+/* Account entry */
+.login-options{display:flex;flex-direction:column;gap:10px;margin-bottom:18px;padding:14px;border:1px solid rgba(118,142,205,.28);border-radius:12px;background:rgba(12,20,42,.5)}#google-login{display:flex;justify-content:center;min-height:40px}.login-status{font-size:12px;color:#bac7df;text-align:center}.login-options [hidden]{display:none!important}
