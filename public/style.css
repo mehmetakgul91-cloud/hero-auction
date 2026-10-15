@@ -207,3 +207,65 @@ body:has(#login-gate:not([hidden])) header{padding-bottom:10px}
 
 /* Rules guide integrated into the landing story */
 .landing-howto{margin:22px 0 26px;padding:20px;border-radius:17px;background:rgba(10,17,35,.65);border:1px solid rgba(137,156,215,.3)}.howto-heading{display:flex;align-items:center;gap:12px;margin-bottom:16px}.howto-heading span{color:#a5a5ff;font-size:10px;font-weight:900;letter-spacing:1.5px}.howto-heading strong{color:#f4f5ff;font-size:14px;letter-spacing:.6px}.howto-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px 14px}.howto-step{display:flex;align-items:flex-start;gap:10px;text-align:left}.step-number{flex:none;font-size:11px;font-weight:950;color:#9fa9ff;background:rgba(115,113,215,.16);border:1px solid rgba(142,145,238,.32);border-radius:8px;padding:6px}.howto-step strong{font-size:12px;color:#fff}.howto-step p{font-size:11px;color:#b1c0dc;line-height:1.5;margin:4px 0 0}.howto-note{font-size:11px;color:#f0d59b;background:rgba(212,161,66,.08);border-radius:9px;padding:10px;margin-top:17px;text-align:left}@media(max-width:480px){.landing-howto{padding:15px}.howto-grid{grid-template-columns:1fr;gap:14px}.howto-heading{flex-wrap:wrap;gap:7px}.landing-cards{margin-bottom:6px}}
+
+
+/* HERO AUCTION // NEON ESPORTS SYSTEM v1 — presentation-only */
+:root{--arena-bg:#070b16;--arena-panel:#10182c;--arena-border:#2b4260;--arena-gold:#ffe06e;--arena-purple:#a17cff;--neon-cyan:#32e9f3;--neon-pink:#ff4fbd;--neon-violet:#8b68ff;--neon-green:#72f5bd}
+html{color-scheme:dark}body{color:#edf7ff;background:radial-gradient(ellipse 58% 38% at 8% 0%,#172c57 0%,transparent 80%),radial-gradient(ellipse 50% 45% at 100% 30%,#36164e 0%,transparent 78%),#070b16}
+body:before{opacity:.23;background-image:linear-gradient(#34dff010 1px,transparent 1px),linear-gradient(90deg,#34dff010 1px,transparent 1px);background-size:38px 38px}
+.shell{max-width:1480px;padding:18px clamp(12px,2.5vw,38px) 42px}
+header{padding:12px 0 18px;margin-bottom:16px;border-bottom:1px solid #2ee6ee30}
+.logo{font-weight:1000;letter-spacing:-1.3px;text-shadow:0 0 22px #27e3f83b}.logo span{background:linear-gradient(100deg,var(--neon-cyan),#aa8dff 58%,var(--neon-pink));background-clip:text;color:transparent}
+.panel,.landing-entry,.landing-howto,.landing-card,.online-board{border-color:#39b7d14d!important;box-shadow:0 20px 48px #0007,0 0 22px #19c6f10a,inset 0 1px #ffffff10}
+.panel{background:linear-gradient(145deg,#131d33f5,#0b1326f9);border-radius:18px}
+.eyebrow,.entry-eyebrow,.landing-kicker,.panel-heading .eyebrow{color:var(--neon-cyan)!important;letter-spacing:2px}
+.hero h1 em,.landing-story h1 span{background:linear-gradient(100deg,#3cf2f3,#a48aff 55%,#ff6fc5);background-clip:text;-webkit-background-clip:text;color:transparent!important}
+.hero h1,.landing-story h1{text-shadow:0 8px 36px #080c1b}
+.primary{color:#06101d!important;background:linear-gradient(105deg,#40edf3 0%,#82bbff 48%,#b98aff 100%)!important;border:1px solid #b4faff85!important;box-shadow:0 5px 22px #29e6ef38,inset 0 1px #ffffff99;letter-spacing:.7px}
+.primary:not(:disabled):hover{filter:brightness(1.13);box-shadow:0 7px 30px #31e8f480}
+.outline,.join button,.worlds button,.danger{background:#14203a;color:#e6f5ff;border:1px solid #44658c;border-radius:12px}
+.outline:hover,.join button:hover,.worlds button:hover{border-color:#35e8f3;background:#1b2b4b}
+.worlds button.selected{border-color:var(--neon-cyan);background:linear-gradient(125deg,#133e55,#292456);box-shadow:inset 0 0 20px #2be5f019,0 0 15px #2be5f01b;color:#fff}
+input{background:#091327;border-color:#365371;color:#f5fcff}input:focus{border-color:var(--neon-cyan);box-shadow:0 0 0 3px #33e8f324}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--neon-cyan);outline-offset:3px}
+.login-landing{border:1px solid #32b5ce30;border-radius:26px;background:linear-gradient(130deg,#101a35e8,#100f2ce8);overflow:hidden}
+.landing-entry{background:linear-gradient(155deg,#15243ff5,#0c142cf8)!important;border-radius:20px}
+.landing-card-one{border-color:#37dbe4!important;box-shadow:0 0 24px #2ddff04d}.landing-card-two{border-color:#b08cff!important;box-shadow:0 0 28px #9c72ff55}.landing-card-three{border-color:#ff68bd!important;box-shadow:0 0 24px #ff68bd38}
+.landing-howto{background:#0a1429b8;border-color:#4e78905e!important}
+.step-number{color:#57e9f5;border-color:#35e8f34d;background:#1a40514d}
+.howto-note{color:#ffe6a0;background:#44341555}
+.online-board{background:linear-gradient(120deg,#0d233a,#171b39)!important}.online-dot,.live-dot,.live-spark{background:#56f6bf;box-shadow:0 0 13px #56f6bf}
+.account-bar{color:#a9e8f2}.account-bar #account-status{border:1px solid #34e6f34d;background:#0e2536;padding:8px 12px;border-radius:999px}
+#game .room-tools{padding:10px 14px;margin-bottom:14px;border:1px solid #37dbe453;border-radius:14px;background:#101b31}
+#game #phase{color:#7ceff8;font-weight:900;letter-spacing:1.1px}
+#game .room-code-label{color:#a9cce6}#game #room-title{color:#fff;font-size:1.25em;text-shadow:0 0 14px #30e8ff}
+#game .arena-layout{grid-template-columns:minmax(175px,1fr) minmax(0,3.4fr) minmax(175px,1fr);gap:14px;align-items:start}
+#game .player-side{background:linear-gradient(180deg,#14203a,#0c1529);border:1px solid #33d8f252;box-shadow:inset 0 1px #ffffff12,0 10px 32px #0005;min-width:0}
+#game .player-side:last-child{border-color:#ff5fc14d}
+#game .player-side.me{border-color:#38eff5;box-shadow:0 0 0 1px #38eff544,0 0 28px #31e7ee17}
+#game .player-side .name{color:#f2fbff;letter-spacing:.4px}
+#game .player-side .credit{color:#50f2f4;text-shadow:0 0 22px #3ce9f34a}
+#game .player-side:last-child .credit{color:#f99fdb;text-shadow:0 0 22px #f45bbd40}
+#game .player-side .spent-credit{background:#0a172b;border:1px solid #375070;border-radius:9px}
+#game .arena-stage{background:linear-gradient(160deg,#131d37,#0a1227);border:1px solid #5b73ae6e;box-shadow:0 0 32px #665aff15,0 18px 45px #0007;border-radius:18px}
+#game .auction-main{gap:clamp(8px,1.6vw,24px)}
+#game .auction-hero .card-art,.card-art{background:radial-gradient(circle at 50% 30%,#244e6c,#151b42 65%,#0b1329);border:1px solid #41cfea77;box-shadow:0 0 30px #2cdff021,inset 0 0 22px #6a4cde28}
+#game .auction-hero .card-name,.card-name{color:#f5fbff;text-shadow:0 0 18px #5c95ff4d}
+#game .auction-action{background:linear-gradient(155deg,#0b1930,#17152e);border:1px solid #806ad05e;border-radius:14px;padding:clamp(10px,1.4vw,20px)}
+#game .auction-action .big-bid,.big-bid{color:#66f1f3;text-shadow:0 0 20px #34eaf351}
+#game .auction-action .bid-stepper button{border-color:#48d7e18c;background:#132e47;color:#b4fcff}
+#game .auction-action .bid-stepper button:hover{background:#1a4a63}
+#game .auction-action .danger{background:#3a1839;border-color:#ff64b077;color:#ffb7dd}
+.rarity-legendary{color:#ffe17b!important;border-color:#f5c75b!important}.rarity-rare{color:#e5b4ff!important}.rarity-advanced{color:#7beff1!important}
+#game .side-hero{border-color:#3d5670;background:#0d1a30}
+#game .chat-panel,#game .activity-collapsible{border-color:#3c7a9870}
+#game .chat-panel h3{color:#7deef6}.event{border-color:#2c4966}
+#game .results>div,.final-team{background:#101c33;border:1px solid #4e83a077;border-radius:14px}
+#game .results strong,#game .final-hero b{color:#6eeaf6}
+#game .winner{color:#ffe58c;text-shadow:0 0 26px #ffd86c66}
+#game .trophy-reveal{border-color:#ffda71;box-shadow:0 0 34px #ffcf4c36}
+#toast{background:#dffcff;color:#061725;border:1px solid #6deff7;box-shadow:0 12px 38px #0008,0 0 20px #46eafa33}
+footer{color:#7899b7}
+@media(max-width:900px){#game .arena-layout{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}#game .arena-stage{grid-column:1/-1;grid-row:2}#game .player-side{padding:10px;min-height:0}#game .player-side .teams{max-height:95px;overflow-y:auto}}
+@media(max-width:520px){.shell{padding:12px 10px 30px}.login-landing{border-radius:17px}.landing-layout{padding:20px 12px}.landing-story h1{font-size:clamp(42px,11vw,54px)}.landing-entry{padding:20px 14px}#game .room-tools{flex-wrap:wrap}#game .arena-stage{padding:10px}#game .auction-main{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}#game .auction-action{padding:8px}#game .auction-action .bid-stepper button{min-width:34px}#game .player-side .credit{font-size:23px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
