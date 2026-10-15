@@ -174,3 +174,6 @@ header{padding:5px 0 12px;margin-bottom:4px}
 .rarity-legendary{color:#ffd16b;background:rgba(225,160,34,.18);box-shadow:0 0 13px rgba(255,195,55,.15)}
 .rarity-feature{display:table;margin:9px auto 0;padding:6px 12px;font-size:12px}
 .side-hero-name .rarity{margin-left:4px;font-size:9px}
+
+/* In-room player chat */
+.chat-panel{margin-top:16px}.chat-panel[hidden]{display:none}.chat-panel h3{margin:0 0 12px}.chat-messages{height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:rgba(7,12,27,.4)}.chat-line{align-self:flex-start;max-width:90%;display:flex;flex-direction:column;gap:4px;padding:8px 11px;border-radius:10px;background:rgba(92,113,161,.24);overflow-wrap:anywhere}.chat-mine{align-self:flex-end;background:rgba(52,117,197,.28)}.chat-author{font-size:10px;opacity:.7}.chat-text{font-size:13px;line-height:1.4}.chat-compose{display:flex;gap:8px;margin-top:10px}.chat-compose input{min-width:0;flex:1}.chat-compose button{flex-shrink:0}@media(max-width:480px){.chat-compose button{padding-left:12px;padding-right:12px}}
