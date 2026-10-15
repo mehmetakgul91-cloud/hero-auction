@@ -159,3 +159,10 @@ header{padding:5px 0 12px;margin-bottom:4px}
 .online-board-grid small{font-size:10px;line-height:1.35;color:#aebcda}
 
 .join-invite{display:flex;flex-direction:column;gap:10px;padding:15px;margin-bottom:18px;border:1px solid #65c9a2;border-radius:12px;background:rgba(27,102,78,.17);text-align:center}.join-invite[hidden]{display:none}.join-invite strong{color:#b7ffe3;letter-spacing:.5px}.join-invite span{font-size:13px}.join-invite button{width:100%}
+
+/* Character portrait frames reflect their power tier. */
+.card-art.rarity-frame{border:3px solid var(--rarity-frame)!important;box-shadow:0 0 0 1px var(--rarity-frame),0 0 22px var(--rarity-glow)!important;border-radius:16px}
+.rarity-frame-common{--rarity-frame:#aab0bb;--rarity-glow:rgba(170,176,187,.2)}
+.rarity-frame-advanced{--rarity-frame:#4faeff;--rarity-glow:rgba(79,174,255,.34)}
+.rarity-frame-rare{--rarity-frame:#b56bff;--rarity-glow:rgba(181,107,255,.4)}
+.rarity-frame-legendary{--rarity-frame:#ffca50;--rarity-glow:rgba(255,202,80,.55)}
