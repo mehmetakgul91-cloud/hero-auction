@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
+import pg from 'pg';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
 const GOOGLE_CLIENT_ID=process.env.GOOGLE_CLIENT_ID||'742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
@@ -18,6 +19,13 @@ const auditedArt=JSON.parse(fs.readFileSync(path.join(root,'public','verified-ar
 const listeners=new Map();
 const waiting=new Map();
 const onlineVisitors=new Map();
+const database=process.env.DATABASE_URL?new pg.Pool({connectionString:process.env.DATABASE_URL,max:3,connectionTimeoutMillis:5000}):null;
+const dirtyRooms=new Set();
+let databaseReady=false;
+function markRoom(r){if(database&&r)dirtyRooms.add(r.code)}
+async function initializeDatabase(){if(!database)return;try{await database.query('CREATE TABLE IF NOT EXISTS hero_auction_rooms (code VARCHAR(3) PRIMARY KEY, state JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');const result=await database.query('SELECT code,state FROM hero_auction_rooms');for(const row of result.rows){const r=row.state;if(r&&r.code===row.code&&r.players&&r.cards){rooms.set(row.code,r);if(r.phase==='matching'&&!r.players[1])waiting.set(row.code,{code:row.code,universe:r.universe,created:r.created})}}databaseReady=true;console.log('PostgreSQL connected; restored',rooms.size,'rooms')}catch(e){console.error('PostgreSQL initialization failed:',e.message)}}
+async function flushRooms(){if(!database||!databaseReady||!dirtyRooms.size)return;const codes=[...dirtyRooms];dirtyRooms.clear();for(const code of codes){const r=rooms.get(code);try{if(r)await database.query('INSERT INTO hero_auction_rooms(code,state,updated_at) VALUES($1,$2,NOW()) ON CONFLICT(code) DO UPDATE SET state=EXCLUDED.state,updated_at=NOW()',[code,JSON.stringify(r)]);else await database.query('DELETE FROM hero_auction_rooms WHERE code=$1',[code])}catch(e){dirtyRooms.add(code);console.error('Room persistence error:',e.message)}}}
+
 function onlineStats(){
  const now=Date.now();
  for(const [id,p] of onlineVisitors)if(now-p.seen>45000)onlineVisitors.delete(id);
