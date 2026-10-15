@@ -341,3 +341,5 @@ header{gap:14px;flex-wrap:wrap}
 #social-content p{padding:9px;border-bottom:1px solid rgba(150,140,220,.2)}
 #social-content input{max-width:100%;padding:10px;margin:8px 0;background:#11162c;color:#fff;border:1px solid #665bb1;border-radius:8px}
 #social-content button{margin:4px}
+
+.victory-rank{margin:16px auto;padding:12px;border:1px solid #665bb1;border-radius:12px;background:rgba(42,32,80,.6);font-weight:700;line-height:2}.victory-rank span{display:inline-block;margin:0 7px}.rank-plus{color:#50f0ae}.rank-minus{color:#ff7b96}
