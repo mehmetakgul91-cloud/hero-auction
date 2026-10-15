@@ -62,7 +62,16 @@ let chatSending=false;
 $('chat-send').onclick=async()=>{if(!session||room?.mode==='bot'||chatSending)return;const input=$('chat-input');const message=input.value.trim();if(!message)return;chatSending=true;$('chat-send').disabled=true;try{const result=await post('/api/chat',{...session,message});input.value='';show(result.room);}catch(e){notify('Sohbet mesajı gönderilemedi: '+e.message)}finally{chatSending=false;$('chat-send').disabled=false}};
 // Keep chat synchronized even when a proxy interrupts the live event stream.
 setInterval(async()=>{if(!session||!room||room.mode==='bot'||document.hidden)return;try{const result=await post('/api/state',session);if(result.room?.chat?.length!==room.chat?.length||result.room?.code!==room.code)show(result.room)}catch{}},4000);
-$('chat-panel').querySelector('h3')?.addEventListener('click',()=>{if(!room||room.mode==='bot')return;$('chat-input').focus()});
+// Delegate focus directly from the user's tap; iOS requires synchronous focus in the gesture.
+const chatPanel=$('chat-panel');
+const chatInput=$('chat-input');
+chatPanel.addEventListener('click',event=>{
+ if(!room||room.mode==='bot'||event.target.closest('#chat-send'))return;
+ if(event.target!==chatInput)chatInput.focus({preventScroll:true});
+});
+chatInput.addEventListener('touchend',()=>{
+ if(document.activeElement!==chatInput)chatInput.focus({preventScroll:true});
+},{passive:true});
 $('chat-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('chat-send').click()}});
 // PokeAPI species are indexed by national Pokédex number; name mapping is loaded lazily.
 let pokeMap={};async function loadPokeMap(){try{const r=await fetch('https://pokeapi.co/api/v2/pokemon-species?limit=1025');const j=await r.json();j.results.forEach((x,i)=>pokeMap[x.name.replaceAll('-',' ').toLowerCase()]=i+1);if(room)show(room)}catch{}}
