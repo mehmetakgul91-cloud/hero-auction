@@ -120,3 +120,33 @@ async function loadHeroInfo(card){
   target.innerHTML='<div class="hero-art-placeholder">'+emojis[card.universe]+'<small>Doğrulanmış görsel yok</small></div>';
  }
 }
+
+
+const socialEsc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function socialView(type){
+ const el=$('social-content');if(!el)return;
+ el.textContent='Yükleniyor…';
+ try{
+  const api={profile:'/api/profile',leaders:'/api/leaderboard',friends:'/api/friends',live:'/api/spectate/list'}[type];
+  const data=await post(api,{});
+  if(type==='profile'){
+   const p=data.profile;el.innerHTML='<h3>'+socialEsc(p.name)+' · '+socialEsc(p.tier)+'</h3><p>Lig puanı: '+p.rating+' · Galibiyet: '+p.wins+' · Mağlubiyet: '+p.losses+' · Beraberlik: '+p.draws+'</p><h4>Son 20 maç</h4>'+((data.history||[]).map(m=>'<p>'+new Date(m.at).toLocaleDateString('tr-TR')+' · '+socialEsc(m.universe)+' · '+socialEsc(m.participants.map(p=>p.name+' ('+p.score+')').join(' - '))+'</p>').join('')||'<p>Henüz maç yok.</p>');
+  }else if(type==='leaders'){
+   el.innerHTML='<h3>Lig sıralaması</h3>'+((data.players||[]).map((p,i)=>'<p>'+(i+1)+'. '+socialEsc(p.name)+' · '+socialEsc(p.tier)+' · '+p.rating+' puan</p>').join('')||'<p>Henüz sıralama yok.</p>');
+  }else if(type==='friends'){
+   el.innerHTML='<h3>Arkadaşlarım</h3><p>Arkadaş eklemek için sıralamadaki oyuncu kimliğini kullan.</p><input id="friend-id" placeholder="Oyuncu hesap kimliği"><button class="outline" id="friend-add">EKLE</button>'+((data.friends||[]).map(p=>'<p>'+socialEsc(p.name)+' · '+socialEsc(p.tier)+' <button class="outline friend-remove" data-id="'+socialEsc(p.id)+'">ÇIKAR</button></p>').join('')||'<p>Henüz arkadaş yok.</p>');
+   $('friend-add').onclick=async()=>{try{await post('/api/friend/add',{accountId:$('friend-id').value});socialView('friends')}catch(e){notify(e.message)}};
+   el.querySelectorAll('.friend-remove').forEach(b=>b.onclick=async()=>{await post('/api/friend/remove',{accountId:b.dataset.id});socialView('friends')});
+  }else{
+   el.innerHTML='<h3>Canlı maçlar</h3>'+((data.matches||[]).map(m=>'<p>'+socialEsc(m.players.join(' - '))+' · '+socialEsc(m.universe)+' · Kart '+(m.round+1)+'/10 <button class="outline watch-match" data-code="'+socialEsc(m.code)+'">İZLE</button></p>').join('')||'<p>Şu anda izlenebilir maç yok.</p>')+'<div id="watch-content"></div>';
+   el.querySelectorAll('.watch-match').forEach(b=>b.onclick=()=>watchSocialMatch(b.dataset.code));
+  }
+ }catch(e){el.textContent=e.message}
+}
+let watchInterval=null;
+async function watchSocialMatch(code){
+ clearInterval(watchInterval);
+ const update=async()=>{try{const {room:r}=await post('/api/spectate',{code});const el=$('watch-content');if(!el){clearInterval(watchInterval);return}el.innerHTML='<h4>👁 '+socialEsc(r.players.map(p=>p?.name).join(' - '))+'</h4><p>Kart '+(r.round+1)+'/10 · '+socialEsc(r.card?.name||'')+' · En yüksek teklif: '+r.topBid+'</p><p>'+socialEsc((r.history||[]).slice(-5).join(' | '))+'</p>'}catch(e){clearInterval(watchInterval);const el=$('watch-content');if(el)el.textContent='Maç tamamlandı veya kapandı.'}};
+ await update();watchInterval=setInterval(update,3000);
+}
+for(const [id,type] of [['social-profile','profile'],['social-leaders','leaders'],['social-friends','friends'],['social-live','live']]){const b=$(id);if(b)b.onclick=()=>{clearInterval(watchInterval);socialView(type)}}
