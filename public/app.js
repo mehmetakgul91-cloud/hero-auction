@@ -4,6 +4,8 @@ let lastCardKey=null;
 const googleClientId='742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
 let login=null;try{login=JSON.parse(localStorage.getItem('hero-auction-login')||'null')}catch{}
 const signedIn=()=>!!login?.authToken;
+function clearExpiredLogin(){login=null;session=null;room=null;stream?.close();localStorage.removeItem('hero-auction-login');localStorage.removeItem('hero-auction-session');applyLogin();notify('Oturumun sona ermiş. Lütfen yeniden giriş yap.');}
+async function validateLogin(){if(!signedIn())return false;try{await post('/api/auth/check',{});return true}catch(e){if(/giriş yap|Oturumun sona erdi|401/.test(e.message)){clearExpiredLogin();return false}notify('Sunucuya bağlanılamadı. Tekrar dene.');return false}}
 function applyLogin(){const active=signedIn();$('login-gate').hidden=active;$('home').hidden=!active||!!room;$('game').hidden=!active||!room;if(active){$('name').value=login.user?.name||'Oyuncu';$('name').readOnly=login.type==='google';$('account-status').textContent=(login.type==='google'?'Google: ':'Misafir: ')+(login.user?.name||'Oyuncu');}else{$('account-status').textContent='';}}
 async function enterGuest(){try{const name=$('guest-name').value.trim()||'Oyuncu';const result=await post('/api/auth/guest',{name});login={type:'guest',user:result.user,authToken:result.authToken};localStorage.setItem('hero-auction-login',JSON.stringify(login));applyLogin();restoreGame()}catch(e){notify(e.message)}}
 $('guest-login').onclick=enterGuest;
@@ -11,7 +13,7 @@ $('google-logout').onclick=()=>{login=null;localStorage.removeItem('hero-auction
 window.heroGoogleCallback=async response=>{try{const result=await post('/api/auth/google',{credential:response.credential});login={type:'google',user:result.user,authToken:result.authToken};localStorage.setItem('hero-auction-login',JSON.stringify(login));applyLogin();restoreGame();notify('Google hesabınla giriş yaptın.')}catch(e){notify(e.message)}};
 function initGoogle(attempt=0){if(!window.google?.accounts?.id){if(attempt<40)setTimeout(()=>initGoogle(attempt+1),500);return}window.google.accounts.id.initialize({client_id:googleClientId,callback:window.heroGoogleCallback});window.google.accounts.id.renderButton($('google-login'),{theme:'filled_black',size:'large',shape:'rectangular',text:'continue_with',logo_alignment:'left',width:400})}
 function gameIdentity(){return signedIn()?{authToken:login.authToken}:{}}
-async function restoreGame(){if(!signedIn())return;try{session=JSON.parse(localStorage.getItem('hero-auction-session'));if(session){const j=await post('/api/state',{...session,...gameIdentity()});show(j.room);connect()}}catch(e){if(e.message.includes('giriş yap')||e.message.includes('Oturumun sona erdi')){login=null;localStorage.removeItem('hero-auction-login');localStorage.removeItem('hero-auction-session');session=null;room=null;applyLogin();notify('Oturum süren doldu. Yeniden giriş yap.')}else if(e.message==='Oda bulunamadı.'||e.message==='Oyuncu yetkisi geçersiz.'){localStorage.removeItem('hero-auction-session');session=null;room=null;applyLogin();notify('Önceki oda artık mevcut değil. Yeni bir maç oluşturabilirsin.')}else{notify('Bağlantı kurulamadı. Biraz sonra tekrar dene.')}}}
+async function restoreGame(){if(!signedIn()||!await validateLogin())return;try{session=JSON.parse(localStorage.getItem('hero-auction-session'));if(session){const j=await post('/api/state',{...session,...gameIdentity()});show(j.room);connect()}}catch(e){if(e.message.includes('giriş yap')||e.message.includes('Oturumun sona erdi')){login=null;localStorage.removeItem('hero-auction-login');localStorage.removeItem('hero-auction-session');session=null;room=null;applyLogin();notify('Oturum süren doldu. Yeniden giriş yap.')}else if(e.message==='Oda bulunamadı.'||e.message==='Oyuncu yetkisi geçersiz.'){localStorage.removeItem('hero-auction-session');session=null;room=null;applyLogin();notify('Önceki oda artık mevcut değil. Yeni bir maç oluşturabilirsin.')}else{notify('Bağlantı kurulamadı. Biraz sonra tekrar dene.')}}}
 applyLogin();initGoogle();
 
 const visitorId=crypto.randomUUID();
@@ -59,10 +61,10 @@ let pokeMap={};async function loadPokeMap(){try{const r=await fetch('https://pok
 function pokemonId(name){return pokeMap[name.toLowerCase()]||null}
 async function act(url,extra){try{const j=await post(url,{...session,...extra});show(j.room)}catch(e){notify(e.message)}}
 $('worlds').onclick=e=>{const b=e.target.closest('[data-world]');if(!b)return;world=b.dataset.world;document.querySelectorAll('[data-world]').forEach(x=>x.classList.toggle('selected',x===b))};
-$('create').onclick=async()=>{try{const j=await post('/api/create',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
-$('join').onclick=async()=>{try{const j=await post('/api/join',{...gameIdentity(),name:$('name').value,code:$('roomcode').value.trim().toUpperCase()});save(j.token,j.room)}catch(e){notify(e.message)}};
-$('bot').onclick=async()=>{try{const j=await post('/api/bot',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
-$('match').onclick=async()=>{try{const j=await post('/api/match',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
+$('create').onclick=async()=>{if(!await validateLogin())return;try{const j=await post('/api/create',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
+$('join').onclick=async()=>{if(!await validateLogin())return;try{const j=await post('/api/join',{...gameIdentity(),name:$('name').value,code:$('roomcode').value.trim().toUpperCase()});save(j.token,j.room)}catch(e){notify(e.message)}};
+$('bot').onclick=async()=>{if(!await validateLogin())return;try{const j=await post('/api/bot',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
+$('match').onclick=async()=>{if(!await validateLogin())return;try{const j=await post('/api/match',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
 setInterval(()=>{if(room?.phase==='auction'&&room.deadline){const el=$('turntimer');if(el)el.textContent='⏱ '+Math.max(0,Math.ceil((room.deadline-Date.now())/1000))+' saniye'}},250);
 function inviteUrl(code){const u=new URL('/',location.origin);u.searchParams.set('join',code);return u.toString()}
 function shareInvite(code){
