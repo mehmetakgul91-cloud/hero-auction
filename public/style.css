@@ -278,3 +278,37 @@ header{gap:14px;flex-wrap:wrap}
 .gold-number{font-size:clamp(17px,2.3vw,23px);font-weight:1000;font-variant-numeric:tabular-nums;line-height:1}
 .gold-label{font-size:10px;font-weight:900;letter-spacing:1.5px;color:#e6c26e}
 @media(max-width:450px){.gold-wallet{padding:8px 10px;gap:5px}.gold-label{font-size:9px}.logo{font-size:19px}}
+
+/* Neon esports match results — SVG emblem, no AI-generated assets */
+#game .victory-screen{width:100%;max-width:1050px;margin:auto;text-align:center}
+.victory-kicker{font-size:11px;font-weight:950;letter-spacing:3px;color:#60eaf5;margin:10px 0 6px}
+.victory-emblem{width:clamp(120px,17vw,190px);height:clamp(120px,17vw,190px);position:relative;margin:0 auto;display:grid;place-items:center;filter:drop-shadow(0 0 22px #4be7f04d)}
+.victory-emblem svg{position:relative;width:100%;height:100%;z-index:1}
+.victory-rays{position:absolute;inset:10%;border-radius:50%;background:radial-gradient(circle,#65dff43a 0%,#7e54f32a 40%,transparent 70%);box-shadow:0 0 58px #4ae9f222}
+.victory-heading{font-size:clamp(27px,4vw,52px);font-weight:1000;line-height:1.05;letter-spacing:-1.2px;background:linear-gradient(100deg,#4bf1f4,#b9a1ff 60%,#ff80ce);background-clip:text;-webkit-background-clip:text;color:transparent}
+.victory-subtitle{font-size:clamp(13px,1.5vw,17px);color:#b9cbe6;margin:10px auto 20px}
+#game .victory-results{max-width:700px;margin:0 auto;gap:12px}
+#game .victory-results>div{display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 12px;border:1px solid #3d607b;border-radius:16px;background:linear-gradient(155deg,#13223c,#0a152a)}
+#game .victory-results>div.victory-leader{border-color:#52e8e7;box-shadow:0 0 26px #45e5ef20,inset 0 1px #9fffff24}
+.victory-player-label{font-size:10px;letter-spacing:1.6px;font-weight:900;color:#7c9cb7}
+.victory-leader .victory-player-label{color:#65f3db}
+.victory-player-name{font-size:clamp(13px,2vw,18px);font-weight:850;overflow-wrap:anywhere}
+#game .victory-results strong{font-size:clamp(32px,5vw,56px);line-height:1.1;margin:4px 0;color:#e8f6ff}
+#game .victory-results .victory-leader strong{color:#69f1f1;text-shadow:0 0 20px #42e9ed60}
+#game .victory-results small{color:#94afc9;letter-spacing:1px;font-size:10px}
+.victory-reward{display:flex;align-items:center;justify-content:center;gap:14px;margin:18px auto 12px;padding:14px 18px;max-width:470px;border-radius:14px;background:linear-gradient(110deg,#30231b,#18192b);border:1px solid #ab803e6e;text-align:left}
+.victory-reward.reward-earned{border-color:#f3c75f;box-shadow:0 0 24px #f8ce5228}
+.reward-coin{font-size:34px;filter:drop-shadow(0 0 9px #f6c45c55)}
+.victory-reward strong{display:block;font-size:16px;color:#ffe09a;letter-spacing:.6px}
+.victory-reward small{display:block;font-size:12px;color:#c8bca6;margin-top:4px}
+.victory-scoreline{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;font-size:11px;letter-spacing:1px;color:#9bb5d0;margin:16px 0}
+.victory-scoreline b{color:#d8f7ff}.victory-scoreline span{color:#49dfe9}
+#game .victory-teams{margin-top:20px;text-align:left;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#game .victory-teams .final-team{min-width:0;background:linear-gradient(150deg,#13213b,#0b1528);border-color:#3c6887}
+#game .victory-teams .final-team h3{font-size:13px;color:#7feef1}
+#game .victory-teams .final-hero{gap:8px;overflow-wrap:anywhere}
+#game .victory-rematch-note{margin:22px 0 12px}
+#game .victory-controls{max-width:470px;margin:0 auto 12px}
+#game .victory-controls button{min-height:54px;font-size:14px;box-shadow:0 0 22px #3ee4ef2a}
+@media(max-width:560px){.victory-kicker{letter-spacing:2px}.victory-reward{padding:12px}.victory-reward strong{font-size:14px}#game .victory-teams{grid-template-columns:1fr}#game .victory-results>div{padding:12px 7px}.victory-player-label{font-size:9px}}
+@media(prefers-reduced-motion:no-preference){.victory-emblem{animation:victoryRise .65s cubic-bezier(.2,.8,.2,1) both}@keyframes victoryRise{from{opacity:0;transform:translateY(12px) scale(.85)}to{opacity:1;transform:translateY(0) scale(1)}}}
