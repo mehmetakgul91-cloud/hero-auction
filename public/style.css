@@ -324,3 +324,10 @@ header{gap:14px;flex-wrap:wrap}
 #game .player-side{height:auto;max-height:none;overflow:visible;align-self:start}
 #game .player-side .teams{height:auto!important;max-height:none!important;overflow:visible!important;overflow-y:visible!important;min-height:0}
 #game .player-side .side-hero{flex-shrink:0}
+
+/* Chat must receive taps above the arena on iOS Safari. */
+#game #chat-panel{display:block;position:relative;z-index:20;pointer-events:auto;overflow:visible}
+#game #chat-panel[hidden]{display:none!important}
+#game #chat-messages{pointer-events:auto}
+#game #chat-input{display:block!important;visibility:visible!important;pointer-events:auto!important;position:relative;z-index:22;user-select:text!important;-webkit-user-select:text!important;-webkit-touch-callout:default;touch-action:auto!important;font-size:16px!important;cursor:text}
+#game #chat-panel .chat-compose{position:relative;z-index:21;pointer-events:auto}
