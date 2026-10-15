@@ -177,3 +177,6 @@ header{padding:5px 0 12px;margin-bottom:4px}
 
 /* In-room player chat */
 .chat-panel{margin-top:16px}.chat-panel[hidden]{display:none}.chat-panel h3{margin:0 0 12px}.chat-messages{height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:rgba(7,12,27,.4)}.chat-line{align-self:flex-start;max-width:90%;display:flex;flex-direction:column;gap:4px;padding:8px 11px;border-radius:10px;background:rgba(92,113,161,.24);overflow-wrap:anywhere}.chat-mine{align-self:flex-end;background:rgba(52,117,197,.28)}.chat-author{font-size:10px;opacity:.7}.chat-text{font-size:13px;line-height:1.4}.chat-compose{display:flex;gap:8px;margin-top:10px}.chat-compose input{min-width:0;flex:1}.chat-compose button{flex-shrink:0}@media(max-width:480px){.chat-compose button{padding-left:12px;padding-right:12px}}
+
+/* Bid history stays closed until the player opens it. */
+.activity-collapsible{margin-top:14px}.activity-collapsible summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:800;letter-spacing:.4px;user-select:none}.activity-collapsible summary::-webkit-details-marker{display:none}.activity-chevron{font-size:20px;transition:transform .2s}.activity-collapsible[open] .activity-chevron{transform:rotate(180deg)}.activity-collapsible #log{margin-top:14px}
