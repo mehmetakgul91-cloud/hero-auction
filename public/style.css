@@ -331,3 +331,13 @@ header{gap:14px;flex-wrap:wrap}
 #game #chat-messages{pointer-events:auto}
 #game #chat-input{display:block!important;visibility:visible!important;pointer-events:auto!important;position:relative;z-index:22;user-select:text!important;-webkit-user-select:text!important;-webkit-touch-callout:default;touch-action:auto!important;font-size:16px!important;cursor:text}
 #game #chat-panel .chat-compose{position:relative;z-index:21;pointer-events:auto}
+
+/* Social hub */
+.social-panel{margin:18px 0;padding:16px;border:1px solid #5b4fa5;border-radius:16px;background:rgba(20,22,49,.92)}
+.social-panel summary{cursor:pointer;font-weight:800;color:#d9c8ff;letter-spacing:.04em}
+.social-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:16px 0}
+.social-actions button{min-width:0;white-space:normal;font-size:12px;padding:10px 6px}
+#social-content{overflow-wrap:anywhere;font-size:14px}
+#social-content p{padding:9px;border-bottom:1px solid rgba(150,140,220,.2)}
+#social-content input{max-width:100%;padding:10px;margin:8px 0;background:#11162c;color:#fff;border:1px solid #665bb1;border-radius:8px}
+#social-content button{margin:4px}
