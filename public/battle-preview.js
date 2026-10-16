@@ -88,20 +88,21 @@ async function build(){
   render();
  }catch(e){$('message').textContent='⚠ '+e.message}
 }
+const arenaArtCache=new Map();
 let finalResult=null;
 function render(flash){
  for(let side=0;side<2;side++){
   const parent=$(side?'team-b':'team-a');parent.replaceChildren();
   for(const [unitIndex,u] of states[side].entries()){
    const card=document.createElement('article');card.dataset.heroId=u.id;card.className='hero arena-hero'+(unitIndex<2?' frontline':' backline')+(u.hp<=0?' dead':'')+(flash?.actorId===u.id?' cast':'')+(flash?.targetId===u.id?' hit':'');
-   const top=document.createElement('div');top.className='hero-top';
-   const name=document.createElement('span');name.className='hero-name';name.textContent=u.name;
-   const role=document.createElement('span');role.className='role';role.textContent=roleNames[u.role];
-   top.append(name,role);
-   const stats=document.createElement('div');stats.className='stats';stats.textContent='⚔ '+u.attack+'  🛡 '+u.defense+'  ⚡ '+u.speed;
-   const bar=document.createElement('div');bar.className='hp';const fill=document.createElement('span');fill.style.width=(100*u.hp/u.maxHp)+'%';bar.append(fill);
-   const hp=document.createElement('div');hp.className='health';hp.textContent='❤️ '+u.hp+' / '+u.maxHp;
-   card.append(top,stats,bar,hp);parent.append(card);
+   const portrait=document.createElement('div');portrait.className='arena-portrait';portrait.setAttribute('role','img');portrait.setAttribute('aria-label',u.name+' - '+roleNames[u.role]);
+   const fallback=document.createElement('span');fallback.className='portrait-fallback';fallback.textContent=u.name.slice(0,1);portrait.append(fallback);
+   const universe=side?'dc':'marvel';const artKey=universe+':'+u.name;
+   if(!arenaArtCache.has(artKey))arenaArtCache.set(artKey,fetch('/api/art?universe='+universe+'&name='+encodeURIComponent(u.name)).then(r=>r.ok?r.json():null).then(j=>j?.url||null).catch(()=>null));
+   void arenaArtCache.get(artKey).then(url=>{if(!url||!portrait.isConnected)return;const img=document.createElement('img');img.className='arena-portrait-image';img.alt=u.name;img.src=url;img.onload=()=>{if(portrait.isConnected){fallback.remove();portrait.append(img)}}});
+   const bar=document.createElement('div');bar.className='hp';bar.setAttribute('aria-label','Can '+u.hp+' / '+u.maxHp);const fill=document.createElement('span');fill.style.width=(100*u.hp/u.maxHp)+'%';bar.append(fill);
+   card.title=u.name+' · '+roleNames[u.role]+' · Can '+u.hp+'/'+u.maxHp;
+   card.append(portrait,bar);parent.append(card);
   }
   $(side?'score-b':'score-a').textContent=states[side].filter(u=>u.hp>0).length+' / 5';
  }
