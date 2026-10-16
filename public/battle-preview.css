@@ -112,3 +112,13 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 @keyframes arenaBurst{0%{opacity:0;transform:scale(.15) rotate(-20deg)}25%{opacity:1;transform:scale(1.4) rotate(12deg)}100%{opacity:0;transform:scale(2.2) rotate(25deg)}}
 @keyframes arenaFlash{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
 @media(prefers-reduced-motion:reduce){.arena-impact-burst,.arena-impact-flash{display:none!important}}
+
+/* Live team-wide health bars, derived from existing combat snapshots */
+.team-total-health{display:grid;gap:5px;min-width:0;margin-top:5px}
+.team-total-health>span{font-size:clamp(10px,1.4vw,13px);font-weight:800;color:#d9e9ff;font-variant-numeric:tabular-nums}
+.team-total-track{height:clamp(10px,1.6vw,16px);border-radius:99px;overflow:hidden;background:#080e1c;border:1px solid #ffffff36;box-shadow:inset 0 2px 6px #000a}
+.team-total-track>span{display:block;width:100%;height:100%;border-radius:inherit;transition:width .5s cubic-bezier(.2,.7,.2,1)}
+.score>div:first-child .team-total-track>span{background:linear-gradient(90deg,#1679ff,#4fe9ff);box-shadow:0 0 14px #30dfff77}
+.score>div:last-child .team-total-track>span{background:linear-gradient(90deg,#ff336d,#ff8c9c);box-shadow:0 0 14px #ff4c8277}
+@media(max-width:600px){.score{grid-template-columns:minmax(0,1fr) 55px minmax(0,1fr)}.team-total-health>span{font-size:10px}.team-total-track{height:12px}}
+@media(prefers-reduced-motion:reduce){.team-total-track>span{transition:none}}
