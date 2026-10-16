@@ -19,4 +19,4 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Run battle engine tests
-        run: node --test battle-engine.test.js battle-roster.test.js battle-balance.test.js
+        run: node --test battle-engine.test.js battle-roster.test.js battle-balance.test.js battle-match.test.js
