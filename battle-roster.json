@@ -1,308 +1,808 @@
 {
-  "version": 1,
+  "version": 2,
   "mode": "auto-battle",
   "rosterSize": 50,
-  "description": "Initial 50-character Marvel/DC roster for Hero Auction 2.0. Existing card power remains authoritative; roles are battle-only.",
+  "description": "50 hero prototype roster with unique named active/passive skills and initial balance coefficients.",
   "characters": [
     {
       "id": "marvel:hulk",
       "name": "Hulk",
       "universe": "marvel",
-      "role": "tank"
+      "role": "tank",
+      "active": {
+        "name": "Öfke Patlaması",
+        "effect": "burst",
+        "power": 1.15
+      },
+      "passive": {
+        "name": "Öfke Birikimi",
+        "effect": "rage",
+        "value": 0.06
+      }
     },
     {
       "id": "marvel:juggernaut",
       "name": "Juggernaut",
       "universe": "marvel",
-      "role": "tank"
+      "role": "tank",
+      "active": {
+        "name": "Durdurulamaz Hücum",
+        "effect": "sunder",
+        "power": 1.25
+      },
+      "passive": {
+        "name": "Sarsılmaz İrade",
+        "effect": "guard",
+        "value": 0.09
+      }
     },
     {
       "id": "marvel:colossus",
       "name": "Colossus",
       "universe": "marvel",
-      "role": "tank"
+      "role": "tank",
+      "active": {
+        "name": "Çelik Yumruk",
+        "effect": "shield",
+        "power": 1.3499999999999999
+      },
+      "passive": {
+        "name": "Organik Çelik",
+        "effect": "regen",
+        "value": 0.12
+      }
     },
     {
       "id": "marvel:the thing",
       "name": "The Thing",
       "universe": "marvel",
-      "role": "tank"
+      "role": "tank",
+      "active": {
+        "name": "Kayalık Darbe",
+        "effect": "drain",
+        "power": 1.45
+      },
+      "passive": {
+        "name": "Taş Deri",
+        "effect": "evasion",
+        "value": 0.06
+      }
     },
     {
       "id": "marvel:luke cage",
       "name": "Luke Cage",
       "universe": "marvel",
-      "role": "tank"
+      "role": "tank",
+      "active": {
+        "name": "Sokak Darbesi",
+        "effect": "heal",
+        "power": 1.15
+      },
+      "passive": {
+        "name": "Kurşun Geçirmez",
+        "effect": "focus",
+        "value": 0.09
+      }
     },
     {
       "id": "dc:doomsday",
       "name": "Doomsday",
       "universe": "dc",
-      "role": "tank"
+      "role": "tank",
+      "active": {
+        "name": "Kıyamet Yumruğu",
+        "effect": "splash",
+        "power": 1.25
+      },
+      "passive": {
+        "name": "Uyarlanabilir Zırh",
+        "effect": "thorns",
+        "value": 0.12
+      }
     },
     {
       "id": "dc:bane",
       "name": "Bane",
       "universe": "dc",
-      "role": "tank"
+      "role": "tank",
+      "active": {
+        "name": "Venom Hücumu",
+        "effect": "pierce",
+        "power": 1.3499999999999999
+      },
+      "passive": {
+        "name": "Venom Gücü",
+        "effect": "momentum",
+        "value": 0.06
+      }
     },
     {
       "id": "dc:solomon grundy",
       "name": "Solomon Grundy",
       "universe": "dc",
-      "role": "tank"
+      "role": "tank",
+      "active": {
+        "name": "Mezar Darbesi",
+        "effect": "haste",
+        "power": 1.45
+      },
+      "passive": {
+        "name": "Ölümsüz Direnç",
+        "effect": "resist",
+        "value": 0.09
+      }
     },
     {
       "id": "dc:killer croc",
       "name": "Killer Croc",
       "universe": "dc",
-      "role": "tank"
+      "role": "tank",
+      "active": {
+        "name": "Yırtıcı Pençe",
+        "effect": "execute",
+        "power": 1.15
+      },
+      "passive": {
+        "name": "Kalın Deri",
+        "effect": "rage",
+        "value": 0.12
+      }
     },
     {
       "id": "dc:metallo",
       "name": "Metallo",
       "universe": "dc",
-      "role": "tank"
+      "role": "tank",
+      "active": {
+        "name": "Kriptonit Işını",
+        "effect": "weaken",
+        "power": 1.25
+      },
+      "passive": {
+        "name": "Metal Gövde",
+        "effect": "guard",
+        "value": 0.06
+      }
     },
     {
       "id": "marvel:thor",
       "name": "Thor",
       "universe": "marvel",
-      "role": "fighter"
+      "role": "fighter",
+      "active": {
+        "name": "Mjölnir Yıldırımı",
+        "effect": "burst",
+        "power": 1.3499999999999999
+      },
+      "passive": {
+        "name": "Asgard Dayanıklılığı",
+        "effect": "regen",
+        "value": 0.09
+      }
     },
     {
       "id": "marvel:captain america",
       "name": "Captain America",
       "universe": "marvel",
-      "role": "fighter"
+      "role": "fighter",
+      "active": {
+        "name": "Kalkan Fırlatma",
+        "effect": "sunder",
+        "power": 1.45
+      },
+      "passive": {
+        "name": "Liderlik",
+        "effect": "evasion",
+        "value": 0.12
+      }
     },
     {
       "id": "marvel:wolverine",
       "name": "Wolverine",
       "universe": "marvel",
-      "role": "fighter"
+      "role": "fighter",
+      "active": {
+        "name": "Adamantium Pençeler",
+        "effect": "shield",
+        "power": 1.15
+      },
+      "passive": {
+        "name": "İyileşme Faktörü",
+        "effect": "focus",
+        "value": 0.06
+      }
     },
     {
       "id": "marvel:black panther",
       "name": "Black Panther",
       "universe": "marvel",
-      "role": "fighter"
+      "role": "fighter",
+      "active": {
+        "name": "Kinetik Patlama",
+        "effect": "drain",
+        "power": 1.25
+      },
+      "passive": {
+        "name": "Vibranyum Zırhı",
+        "effect": "thorns",
+        "value": 0.09
+      }
     },
     {
       "id": "marvel:shang-chi",
       "name": "Shang-Chi",
       "universe": "marvel",
-      "role": "fighter"
+      "role": "fighter",
+      "active": {
+        "name": "On Halka Darbesi",
+        "effect": "heal",
+        "power": 1.3499999999999999
+      },
+      "passive": {
+        "name": "Dövüş Ustalığı",
+        "effect": "momentum",
+        "value": 0.12
+      }
     },
     {
       "id": "marvel:sentry",
       "name": "Sentry",
       "universe": "marvel",
-      "role": "fighter"
+      "role": "fighter",
+      "active": {
+        "name": "Güneş Patlaması",
+        "effect": "splash",
+        "power": 1.45
+      },
+      "passive": {
+        "name": "Void Direnci",
+        "effect": "resist",
+        "value": 0.06
+      }
     },
     {
       "id": "marvel:hela",
       "name": "Hela",
       "universe": "marvel",
-      "role": "fighter"
+      "role": "fighter",
+      "active": {
+        "name": "Ölüm Kılıçları",
+        "effect": "pierce",
+        "power": 1.15
+      },
+      "passive": {
+        "name": "Ölüm Tanrıçası",
+        "effect": "rage",
+        "value": 0.09
+      }
     },
     {
       "id": "marvel:namor",
       "name": "Namor",
       "universe": "marvel",
-      "role": "fighter"
+      "role": "fighter",
+      "active": {
+        "name": "Üç Dişli Mızrak",
+        "effect": "haste",
+        "power": 1.25
+      },
+      "passive": {
+        "name": "Atlantis Gücü",
+        "effect": "guard",
+        "value": 0.12
+      }
     },
     {
       "id": "dc:superman",
       "name": "Superman",
       "universe": "dc",
-      "role": "fighter"
+      "role": "fighter",
+      "active": {
+        "name": "Isı Görüşü",
+        "effect": "execute",
+        "power": 1.3499999999999999
+      },
+      "passive": {
+        "name": "Güneş Enerjisi",
+        "effect": "regen",
+        "value": 0.06
+      }
     },
     {
       "id": "dc:wonder woman",
       "name": "Wonder Woman",
       "universe": "dc",
-      "role": "fighter"
+      "role": "fighter",
+      "active": {
+        "name": "Hakikat Kılıcı",
+        "effect": "weaken",
+        "power": 1.45
+      },
+      "passive": {
+        "name": "Amazon Disiplini",
+        "effect": "evasion",
+        "value": 0.09
+      }
     },
     {
       "id": "dc:aquaman",
       "name": "Aquaman",
       "universe": "dc",
-      "role": "fighter"
+      "role": "fighter",
+      "active": {
+        "name": "Okyanus Dalgası",
+        "effect": "burst",
+        "power": 1.15
+      },
+      "passive": {
+        "name": "Denizlerin Kralı",
+        "effect": "focus",
+        "value": 0.12
+      }
     },
     {
       "id": "dc:shazam",
       "name": "Shazam",
       "universe": "dc",
-      "role": "fighter"
+      "role": "fighter",
+      "active": {
+        "name": "Sihirli Şimşek",
+        "effect": "sunder",
+        "power": 1.25
+      },
+      "passive": {
+        "name": "Tanrıların Gücü",
+        "effect": "thorns",
+        "value": 0.06
+      }
     },
     {
       "id": "dc:black adam",
       "name": "Black Adam",
       "universe": "dc",
-      "role": "fighter"
+      "role": "fighter",
+      "active": {
+        "name": "Kara Şimşek",
+        "effect": "shield",
+        "power": 1.3499999999999999
+      },
+      "passive": {
+        "name": "Kadim Büyü",
+        "effect": "momentum",
+        "value": 0.09
+      }
     },
     {
       "id": "dc:darkseid",
       "name": "Darkseid",
       "universe": "dc",
-      "role": "fighter"
+      "role": "fighter",
+      "active": {
+        "name": "Omega Işınları",
+        "effect": "drain",
+        "power": 1.45
+      },
+      "passive": {
+        "name": "Apokolips Zırhı",
+        "effect": "resist",
+        "value": 0.12
+      }
     },
     {
       "id": "dc:deathstroke",
       "name": "Deathstroke",
       "universe": "dc",
-      "role": "fighter"
+      "role": "fighter",
+      "active": {
+        "name": "Keskin Nişan",
+        "effect": "heal",
+        "power": 1.15
+      },
+      "passive": {
+        "name": "Taktik Analiz",
+        "effect": "rage",
+        "value": 0.06
+      }
     },
     {
       "id": "marvel:scarlet witch",
       "name": "Scarlet Witch",
       "universe": "marvel",
-      "role": "energy"
+      "role": "energy",
+      "active": {
+        "name": "Kaos Büyüsü",
+        "effect": "splash",
+        "power": 1.25
+      },
+      "passive": {
+        "name": "Olasılık Bükümü",
+        "effect": "guard",
+        "value": 0.09
+      }
     },
     {
       "id": "marvel:doctor strange",
       "name": "Doctor Strange",
       "universe": "marvel",
-      "role": "energy"
+      "role": "energy",
+      "active": {
+        "name": "Agamotto Büyüsü",
+        "effect": "pierce",
+        "power": 1.3499999999999999
+      },
+      "passive": {
+        "name": "Mistik Kalkan",
+        "effect": "regen",
+        "value": 0.12
+      }
     },
     {
       "id": "marvel:captain marvel",
       "name": "Captain Marvel",
       "universe": "marvel",
-      "role": "energy"
+      "role": "energy",
+      "active": {
+        "name": "Foton Yağmuru",
+        "effect": "haste",
+        "power": 1.45
+      },
+      "passive": {
+        "name": "Enerji Emilimi",
+        "effect": "evasion",
+        "value": 0.06
+      }
     },
     {
       "id": "marvel:silver surfer",
       "name": "Silver Surfer",
       "universe": "marvel",
-      "role": "energy"
+      "role": "energy",
+      "active": {
+        "name": "Kozmik Dalga",
+        "effect": "execute",
+        "power": 1.15
+      },
+      "passive": {
+        "name": "Kozmik Farkındalık",
+        "effect": "focus",
+        "value": 0.09
+      }
     },
     {
       "id": "marvel:magneto",
       "name": "Magneto",
       "universe": "marvel",
-      "role": "energy"
+      "role": "energy",
+      "active": {
+        "name": "Manyetik Fırtına",
+        "effect": "weaken",
+        "power": 1.25
+      },
+      "passive": {
+        "name": "Metal Kontrolü",
+        "effect": "thorns",
+        "value": 0.12
+      }
     },
     {
       "id": "marvel:storm",
       "name": "Storm",
       "universe": "marvel",
-      "role": "energy"
+      "role": "energy",
+      "active": {
+        "name": "Şimşek Fırtınası",
+        "effect": "burst",
+        "power": 1.3499999999999999
+      },
+      "passive": {
+        "name": "Hava Hakimiyeti",
+        "effect": "momentum",
+        "value": 0.06
+      }
     },
     {
       "id": "dc:doctor fate",
       "name": "Doctor Fate",
       "universe": "dc",
-      "role": "energy"
+      "role": "energy",
+      "active": {
+        "name": "Kader Mührü",
+        "effect": "sunder",
+        "power": 1.45
+      },
+      "passive": {
+        "name": "Kaderin Koruması",
+        "effect": "resist",
+        "value": 0.09
+      }
     },
     {
       "id": "dc:zatanna",
       "name": "Zatanna",
       "universe": "dc",
-      "role": "energy"
+      "role": "energy",
+      "active": {
+        "name": "Ters Büyü",
+        "effect": "shield",
+        "power": 1.15
+      },
+      "passive": {
+        "name": "Sihirli Denge",
+        "effect": "rage",
+        "value": 0.12
+      }
     },
     {
       "id": "dc:green lantern",
       "name": "Green Lantern",
       "universe": "dc",
-      "role": "energy"
+      "role": "energy",
+      "active": {
+        "name": "İrade Yapısı",
+        "effect": "drain",
+        "power": 1.25
+      },
+      "passive": {
+        "name": "Yeşil Enerji Kalkanı",
+        "effect": "guard",
+        "value": 0.06
+      }
     },
     {
       "id": "dc:raven",
       "name": "Raven",
       "universe": "dc",
-      "role": "energy"
+      "role": "energy",
+      "active": {
+        "name": "Ruh Enerjisi",
+        "effect": "heal",
+        "power": 1.3499999999999999
+      },
+      "passive": {
+        "name": "Empatik Direnç",
+        "effect": "regen",
+        "value": 0.09
+      }
     },
     {
       "id": "marvel:spider-man",
       "name": "Spider-Man",
       "universe": "marvel",
-      "role": "assassin"
+      "role": "assassin",
+      "active": {
+        "name": "Ağ Tuzağı",
+        "effect": "splash",
+        "power": 1.45
+      },
+      "passive": {
+        "name": "Örümcek Hissi",
+        "effect": "evasion",
+        "value": 0.12
+      }
     },
     {
       "id": "marvel:deadpool",
       "name": "Deadpool",
       "universe": "marvel",
-      "role": "assassin"
+      "role": "assassin",
+      "active": {
+        "name": "Çifte Kılıç",
+        "effect": "pierce",
+        "power": 1.15
+      },
+      "passive": {
+        "name": "Yenilenme",
+        "effect": "focus",
+        "value": 0.06
+      }
     },
     {
       "id": "marvel:black widow",
       "name": "Black Widow",
       "universe": "marvel",
-      "role": "assassin"
+      "role": "assassin",
+      "active": {
+        "name": "Elektrikli Darbe",
+        "effect": "haste",
+        "power": 1.25
+      },
+      "passive": {
+        "name": "Casus Refleksi",
+        "effect": "thorns",
+        "value": 0.09
+      }
     },
     {
       "id": "marvel:elektra",
       "name": "Elektra",
       "universe": "marvel",
-      "role": "assassin"
+      "role": "assassin",
+      "active": {
+        "name": "Sai Saldırısı",
+        "effect": "execute",
+        "power": 1.3499999999999999
+      },
+      "passive": {
+        "name": "Gölge Adımları",
+        "effect": "momentum",
+        "value": 0.12
+      }
     },
     {
       "id": "marvel:quicksilver",
       "name": "Quicksilver",
       "universe": "marvel",
-      "role": "assassin"
+      "role": "assassin",
+      "active": {
+        "name": "Hız Kasırgası",
+        "effect": "weaken",
+        "power": 1.45
+      },
+      "passive": {
+        "name": "Süper Refleks",
+        "effect": "resist",
+        "value": 0.06
+      }
     },
     {
       "id": "dc:batman",
       "name": "Batman",
       "universe": "dc",
-      "role": "assassin"
+      "role": "assassin",
+      "active": {
+        "name": "Batarang Serisi",
+        "effect": "burst",
+        "power": 1.15
+      },
+      "passive": {
+        "name": "Hazırlıklı Plan",
+        "effect": "rage",
+        "value": 0.09
+      }
     },
     {
       "id": "dc:nightwing",
       "name": "Nightwing",
       "universe": "dc",
-      "role": "assassin"
+      "role": "assassin",
+      "active": {
+        "name": "Akrobatik Kombinasyon",
+        "effect": "sunder",
+        "power": 1.25
+      },
+      "passive": {
+        "name": "Çeviklik",
+        "effect": "guard",
+        "value": 0.12
+      }
     },
     {
       "id": "dc:the flash",
       "name": "The Flash",
       "universe": "dc",
-      "role": "assassin"
+      "role": "assassin",
+      "active": {
+        "name": "Hız Gücü Darbesi",
+        "effect": "shield",
+        "power": 1.3499999999999999
+      },
+      "passive": {
+        "name": "Hız Gücü",
+        "effect": "regen",
+        "value": 0.06
+      }
     },
     {
       "id": "marvel:iron man",
       "name": "Iron Man",
       "universe": "marvel",
-      "role": "support"
+      "role": "support",
+      "active": {
+        "name": "Mikro Füze Desteği",
+        "effect": "drain",
+        "power": 1.45
+      },
+      "passive": {
+        "name": "Zırh Sistemleri",
+        "effect": "evasion",
+        "value": 0.09
+      }
     },
     {
       "id": "marvel:vision",
       "name": "Vision",
       "universe": "marvel",
-      "role": "support"
+      "role": "support",
+      "active": {
+        "name": "Faz Işını",
+        "effect": "heal",
+        "power": 1.15
+      },
+      "passive": {
+        "name": "Faz Kayması",
+        "effect": "focus",
+        "value": 0.12
+      }
     },
     {
       "id": "marvel:loki",
       "name": "Loki",
       "universe": "marvel",
-      "role": "support"
+      "role": "support",
+      "active": {
+        "name": "İllüzyon Ordusu",
+        "effect": "splash",
+        "power": 1.25
+      },
+      "passive": {
+        "name": "Hilebazlık",
+        "effect": "thorns",
+        "value": 0.06
+      }
     },
     {
       "id": "marvel:professor x",
       "name": "Professor X",
       "universe": "marvel",
-      "role": "support"
+      "role": "support",
+      "active": {
+        "name": "Telepatik Baskı",
+        "effect": "pierce",
+        "power": 1.3499999999999999
+      },
+      "passive": {
+        "name": "Zihin Kalkanı",
+        "effect": "momentum",
+        "value": 0.09
+      }
     },
     {
       "id": "dc:cyborg",
       "name": "Cyborg",
       "universe": "dc",
-      "role": "support"
+      "role": "support",
+      "active": {
+        "name": "Sonic Cannon",
+        "effect": "haste",
+        "power": 1.45
+      },
+      "passive": {
+        "name": "Sibernetik Onarım",
+        "effect": "resist",
+        "value": 0.12
+      }
     },
     {
       "id": "dc:martian manhunter",
       "name": "Martian Manhunter",
       "universe": "dc",
-      "role": "support"
+      "role": "support",
+      "active": {
+        "name": "Zihinsel Darbe",
+        "effect": "execute",
+        "power": 1.15
+      },
+      "passive": {
+        "name": "Şekil Değiştirme",
+        "effect": "rage",
+        "value": 0.06
+      }
     },
     {
       "id": "dc:starfire",
       "name": "Starfire",
       "universe": "dc",
-      "role": "support"
+      "role": "support",
+      "active": {
+        "name": "Yıldız Alevi",
+        "effect": "weaken",
+        "power": 1.25
+      },
+      "passive": {
+        "name": "Tamaranean Enerjisi",
+        "effect": "guard",
+        "value": 0.09
+      }
     }
   ]
 }
