@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import pg from 'pg';
 import {simulateRosterBattle,battleRoster} from './battle-roster.js';
+import {auctionRoomToBattleState,prepareBattleTeams} from './battle-match.js';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
 const GOOGLE_CLIENT_ID=process.env.GOOGLE_CLIENT_ID||'742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
@@ -267,7 +268,18 @@ const battleIdsB=['dc:superman','dc:wonder woman','dc:doomsday','dc:the flash','
 function battleSessionView(session,token){const seat=session.players.findIndex(p=>p?.token===token);if(seat<0)return null;return {code:session.code,seat,ready:session.players.map(p=>Boolean(p?.ready)),joined:session.players.map(Boolean),started:Boolean(session.result),result:session.result,created:session.created};}
 function battleSessionResult(session){const cards=(ids,formation)=>formation.map((index,slot)=>({id:ids[index],power:Math.max(1,Math.min(100,Number(cardDetails[ids[index]]?.power)||70)),lane:session.players[ids===battleIdsA?0:1].lanes?.[slot]||(slot<2?'front':'back'),role:session.players[ids===battleIdsA?0:1].roles?.[slot]||((slot<2)?'tank':'energy')}));const a=cards(battleIdsA,session.players[0].positions),b=cards(battleIdsB,session.players[1].positions);const result=simulateRosterBattle(a,b,{seed:'battle-room-'+session.code+'-'+session.created});return {winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log};}
 function validBattlePositions(v){return Array.isArray(v)&&v.length===5&&new Set(v).size===5&&v.every(x=>Number.isInteger(x)&&x>=0&&x<5)}
-const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data))};try{const url=new URL(req.url,'http://localhost');if(req.method==='GET'&&url.pathname==='/api/battle-room'){const session=battleSessions.get(String(url.searchParams.get('code')||'').toUpperCase());const view=session&&battleSessionView(session,url.searchParams.get('token'));return view?send(200,view):send(404,{error:'Oda veya oturum bulunamadı.'})}
+const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data))};try{const url=new URL(req.url,'http://localhost');if(req.method==='GET'&&url.pathname==='/api/battle-auction-team'){
+ const room=rooms.get(String(url.searchParams.get('code')||'').toUpperCase());
+ const seat=room?.players?.findIndex(p=>p?.token===url.searchParams.get('token'))??-1;
+ if(!room||seat<0)return send(403,{error:'Oda veya oyuncu yetkisi geçersiz.'});
+ if(room.phase!=='finished')return send(409,{error:'Açık artırma henüz bitmedi.'});
+ try{
+  const state=auctionRoomToBattleState(room);
+  const teams=prepareBattleTeams(state);
+  return send(200,{ready:true,seat,credits:[state.remainingCreditsA,state.remainingCreditsB],teams:teams.map(team=>team.map(card=>{const hero=battleRoster.find(h=>h.id===card.id);return {...card,name:hero.name,universe:hero.universe}}))});
+ }catch(e){return send(422,{error:'Bu açık artırma 2.0 savaşına uygun değil: '+e.message})}
+}
+if(req.method==='GET'&&url.pathname==='/api/battle-room'){const session=battleSessions.get(String(url.searchParams.get('code')||'').toUpperCase());const view=session&&battleSessionView(session,url.searchParams.get('token'));return view?send(200,view):send(404,{error:'Oda veya oturum bulunamadı.'})}
 if(req.method==='POST'&&url.pathname==='/api/battle-room'){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>4000)return send(413,{error:'İstek çok büyük'})}let body;try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz veri'})}const action=body?.action;let session;if(action==='create'){let code;do{code=String(100000+crypto.randomInt(900000))}while(battleSessions.has(code));session={code,created:Date.now(),players:[{token:crypto.randomBytes(24).toString('hex'),ready:false,positions:null},null],result:null};battleSessions.set(code,session);return send(200,{...battleSessionView(session,session.players[0].token),token:session.players[0].token})}
  session=battleSessions.get(String(body?.code||'').toUpperCase());if(!session)return send(404,{error:'Oda bulunamadı'});
  if(action==='join'){if(session.players[1])return send(409,{error:'Oda dolu'});session.players[1]={token:crypto.randomBytes(24).toString('hex'),ready:false,positions:null};return send(200,{...battleSessionView(session,session.players[1].token),token:session.players[1].token})}
