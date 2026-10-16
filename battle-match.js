@@ -27,6 +27,9 @@ export function finishAuctionWithBattle(auctionState,{matchId,seed}={}){
   const [a,b]=prepareBattleTeams(auctionState);
   // Production server should persist seed and result once per match to prevent rerolls.
   const battleSeed=seed||crypto.createHash('sha256').update(String(matchId)).digest('hex');
-  const result=simulateRosterBattle(a,b,{seed:battleSeed});
-  return {matchId:String(matchId),winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log,seed:battleSeed};
+  // Read final balances from authoritative, completed auction state only.
+  const remainingCredits=[auctionState.remainingCreditsA,auctionState.remainingCreditsB];
+  if(remainingCredits.some(v=>!Number.isSafeInteger(v)||v<0))throw new Error('Final auction credit balances are required');
+  const result=simulateRosterBattle(a,b,{seed:battleSeed,remainingCredits});
+  return {matchId:String(matchId),winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log,remainingCredits,seed:battleSeed};
 }
