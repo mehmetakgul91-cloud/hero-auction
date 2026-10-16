@@ -33,3 +33,15 @@ export function finishAuctionWithBattle(auctionState,{matchId,seed}={}){
   const result=simulateRosterBattle(a,b,{seed:battleSeed,remainingCredits});
   return {matchId:String(matchId),winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log,remainingCredits,seed:battleSeed};
 }
+
+// Explicit adapter for the existing server-side auction room shape.
+// Kept isolated until Hero Auction 2.0 is enabled for real matches.
+export function auctionRoomToBattleState(room){
+  if(!room||room.phase!=='finished'||!Array.isArray(room.players)||room.players.length!==2)
+    throw new Error('A finished two-player auction room is required');
+  const [a,b]=room.players;
+  if(!a||!b||!Array.isArray(a.team)||!Array.isArray(b.team))throw new Error('Auction teams are missing');
+  if(!Number.isSafeInteger(a.credits)||a.credits<0||!Number.isSafeInteger(b.credits)||b.credits<0)
+    throw new Error('Auction credit balances are invalid');
+  return {finished:true,teamA:a.team.map(c=>({id:c.id,name:c.name,power:c.power})),teamB:b.team.map(c=>({id:c.id,name:c.name,power:c.power})),remainingCreditsA:a.credits,remainingCreditsB:b.credits};
+}
