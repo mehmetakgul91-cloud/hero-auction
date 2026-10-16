@@ -132,6 +132,7 @@ function render(flash){
  $('next').disabled=cursor>=events.length;
  $('play').disabled=cursor>=events.length;
  if(cursor===events.length){
+  if(auctionMode)void showAuctionRematch();
   $('message').textContent=finalResult?.winner===null?'🤝 Beraberlik':finalResult?.winner===0?'🏆 Mavi takım kazandı!':'🏆 Kırmızı takım kazandı!';
  }
 }
@@ -160,3 +161,13 @@ if(auctionCode&&auctionToken){void (async()=>{try{
  $('battle-lobby-status').textContent='Açık artırma kartların yüklendi · Kalan kredi: '+previewCredits+' · Bonus: %'+(creditBonus(previewCredits)*100).toFixed(1);
  if(!arenaMode){auctionLoaded=true;renderBoard();renderRolePickers();$('apply-roles').disabled=false;startPreparation();$('prep-note').textContent='Kartlar doğrulandı. Diziliş için 60 saniyen var.'}else{await build();if(events.length)$('play').click()}
  }catch(e){$('prep-note').textContent='⚠ '+e.message;$('message').textContent='⚠ '+e.message;$('apply-roles').disabled=true}})()}
+
+let battleRematchShown=false;
+async function showAuctionRematch(){
+ if(battleRematchShown||!auctionMode)return;battleRematchShown=true;
+ try{const response=await fetch('/api/battle-auction-complete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken})});const data=await response.json();if(!response.ok)throw Error(data.error||'Savaş tamamlanamadı');
+ const controls=document.querySelector('.controls .buttons');if(!controls)return;
+ const button=document.createElement('button');button.type='button';button.textContent='⚔ RÖVANŞ İSTE';button.className='primary';controls.append(button);
+ button.onclick=async()=>{button.disabled=true;try{const auth=JSON.parse(localStorage.getItem('hero-auction-login')||'null');const response=await fetch('/api/rematch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,authToken:auth?.authToken})});const result=await response.json();if(!response.ok)throw Error(result.error||'Rövanş gönderilemedi');button.textContent='✓ RÖVANŞ İSTEĞİ GÖNDERİLDİ';}catch(e){button.disabled=false;$('message').textContent='⚠ '+e.message}};
+ }catch(e){battleRematchShown=false;$('message').textContent='⚠ '+e.message}
+}
