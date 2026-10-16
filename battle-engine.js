@@ -16,7 +16,7 @@ export function fighterFromCard(card,position=0){
   const defense=clamp(25+Math.round(power*.45)+mods[1],5,110);
   const maxHp=clamp(95+power+mods[2],50,250);
   const speed=clamp(25+Math.round(power*.5)+mods[3],10,110);
-  return {id:String(card.id||card.name),name:String(card.name||'Hero'),role,position,attack,defense,maxHp,hp:maxHp,speed,shield:0,kills:0,damage:0,healing:0};
+  return {id:String(card.id||card.name),name:String(card.name||'Hero'),role,position,attack,defense,maxHp,hp:maxHp,speed,shield:0,kills:0,damage:0,healing:0,active:card.active||null,passive:card.passive||null};
 }
 function targetOf(enemies,attacker){
   const alive=enemies.filter(x=>x.hp>0);
@@ -29,7 +29,20 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10}=
   const random=seedRandom(seed);
   const teams=[cardsA,cardsB].map(cards=>cards.map((c,i)=>fighterFromCard(c,i)));
   const log=[];
+  // Passive effects are applied before the first round and each round's actions.
+  for(const team of teams)for(const u of team){
+    const p=u.passive;if(!p)continue;
+    if(p.effect==='guard'||p.effect==='resist')u.defense=Math.round(u.defense*(1+p.value));
+    if(p.effect==='focus')u.attack=Math.round(u.attack*(1+p.value));
+    if(p.effect==='evasion'||p.effect==='momentum')u.speed=Math.round(u.speed*(1+p.value));
+  }
   for(let round=1;round<=maxRounds;round++){
+    for(const team of teams)for(const u of team){
+      if(u.hp<=0||!u.passive)continue;
+      const {effect,value}=u.passive;
+      if(effect==='regen'){const healed=Math.min(u.maxHp-u.hp,Math.max(1,Math.floor(u.maxHp*value)));u.hp+=healed;u.healing+=healed;if(healed)log.push({round,actor:u.id,action:'passive-heal',value:healed});}
+      if(effect==='rage'&&u.hp/u.maxHp<.5)u.attack=Math.min(180,u.attack+Math.max(1,Math.floor(u.attack*value)));
+    }
     const order=teams.flatMap((team,side)=>team.map(unit=>({unit,side})))
       .sort((a,b)=>b.unit.speed-a.unit.speed||a.side-b.side||a.unit.position-b.unit.position);
     for(const {unit,side} of order){
@@ -43,15 +56,25 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10}=
       const target=targetOf(enemies,unit);
       if(!target)break;
       const special=round%3===0;
-      const multiplier=special?(unit.role==='energy'?1.45:1.25):1;
+      const skill=special?unit.active:null;
+      const multiplier=skill?.power??(special?(unit.role==='energy'?1.45:1.25):1);
       const critical=random()<.10;
-      const raw=Math.max(1,Math.floor(unit.attack*multiplier*100/(100+target.defense)*(critical?1.5:1)));
+      const defense=skill?.effect==='pierce'?Math.floor(target.defense*.6):target.defense;
+      const raw=Math.max(1,Math.floor(unit.attack*multiplier*100/(100+defense)*(critical?1.5:1)));
       const absorbed=Math.min(target.shield,raw);
       target.shield-=absorbed;
       const damage=Math.min(target.hp,raw-absorbed);
       target.hp-=damage;unit.damage+=damage;
       if(target.hp===0)unit.kills++;
-      log.push({round,side,actor:unit.id,action:special?'special':'attack',target:target.id,value:damage,critical});
+      if(skill?.effect==='drain'||skill?.effect==='heal'){const healed=Math.min(unit.maxHp-unit.hp,Math.floor(damage*.35));unit.hp+=healed;unit.healing+=healed;}
+      if(skill?.effect==='shield')unit.shield+=Math.round(unit.defense*.4);
+      if(skill?.effect==='sunder')target.defense=Math.max(5,Math.floor(target.defense*.85));
+      if(skill?.effect==='weaken')target.attack=Math.max(5,Math.floor(target.attack*.9));
+      if(skill?.effect==='haste')unit.speed=Math.min(150,unit.speed+8);
+      if(skill?.effect==='execute'&&target.hp>0&&target.hp/target.maxHp<.12){unit.damage+=target.hp;target.hp=0;unit.kills++;}
+      if(skill?.effect==='splash')for(const other of enemies.filter(x=>x!==target&&x.hp>0)){const extra=Math.min(other.hp,Math.floor(damage*.25));other.hp-=extra;unit.damage+=extra;if(other.hp===0)unit.kills++;log.push({round,side,actor:unit.id,action:'splash',target:other.id,value:extra});}
+      if(unit.passive?.effect==='thorns'&&unit.hp>0)unit.shield+=Math.floor(unit.defense*unit.passive.value);
+      log.push({round,side,actor:unit.id,action:skill?.name|| (special?'special':'attack'),target:target.id,value:damage,critical});
       if(unit.role==='tank'&&special)unit.shield+=Math.round(unit.defense*.2);
     }
     if(teams.some(team=>team.every(x=>x.hp<=0)))break;
