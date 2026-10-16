@@ -20,6 +20,10 @@ const listeners=new Map();
 const waiting=new Map();
 const onlineVisitors=new Map();
 const database=process.env.DATABASE_URL?new pg.Pool({connectionString:process.env.DATABASE_URL,max:3,connectionTimeoutMillis:5000}):null;
+// Rewarded advertising remains disabled until an approved, verifiable provider is integrated.
+const REWARDED_AD_DAILY_LIMIT=5;
+const REWARDED_AD_GOLD=100;
+const rewardedAdsEnabled=false;
 const dirtyRooms=new Set();
 const pendingGold=new Map();
 const matchRecords=new Map();
@@ -120,6 +124,8 @@ if(url==='/api/friend/add'){const u=readLogin(b.authToken);const id=String(b.acc
 if(url==='/api/friend/remove'){const u=readLogin(b.authToken);friendLinks.get(u.sub)?.delete(String(b.accountId||''));await saveSocial();return{ok:true}}
 if(url==='/api/spectate/list'){return{matches:[...rooms.values()].filter(r=>r.phase==='auction'&&r.mode!=='bot').map(r=>({code:r.code,universe:r.universe,round:r.round,players:r.players.map(p=>p?.name||'Bekleniyor')})).slice(0,30)}}
 if(url==='/api/spectate'){const r=rooms.get(String(b.code||''));if(!r||r.phase!=='auction'||r.mode==='bot')error('İzlenebilir maç bulunamadı.',404);return{room:publicRoom(r,-1)}}
+if(url==='/api/rewarded/status'){return{enabled:rewardedAdsEnabled,rewardGold:REWARDED_AD_GOLD,dailyLimit:REWARDED_AD_DAILY_LIMIT,remaining:0,message:'Google reklam onayı ve güvenli ödül doğrulaması bekleniyor.'}}
+if(url==='/api/rewarded/claim'){error('Ödüllü reklam sistemi henüz etkin değil.',503)}
 if(url==='/api/wallet'){return{gold:await goldBalance(readLogin(b.authToken).sub)}}
 if(url==='/api/auth/google'){const credential=String(b.credential||'');if(credential.length<100||credential.length>8000)error('Geçersiz Google kimliği.');const response=await fetch('https://oauth2.googleapis.com/tokeninfo?id_token='+encodeURIComponent(credential),{signal:AbortSignal.timeout(8000)});if(!response.ok)error('Google kimliği doğrulanamadı.',401);const claims=await response.json();if(claims.aud!==GOOGLE_CLIENT_ID||!['accounts.google.com','https://accounts.google.com'].includes(claims.iss)||Number(claims.exp)*1000<Date.now()||!claims.sub||claims.email_verified!=='true')error('Google kimliği doğrulanamadı.',401);const user={sub:claims.sub,name:String(claims.name||claims.given_name||'Oyuncu').slice(0,24)};return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}
 if(url==='/api/create'){const name=chosenName(b,'Oyuncu 1');const universe=['pokemon','marvel','dc','lotr','mixed'].includes(b.universe)?b.universe:'mixed';const pool=shuffle([...catalogue.values()].filter(x=>universe==='mixed'||x.universe===universe));if(pool.length<10)error('Bu evrende yeterli karakter yok.');const cards=pool.slice(0,10).map(x=>({...x,power:stablePower(x.id)}));let id;do{id=code()}while(rooms.has(id));const t=token();const accountId=readLogin(b.authToken).sub;const r={code:id,universe,cards,round:0,phase:'waiting',turn:0,topBid:0,topSeat:null,players:[{name,token:t,accountId,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],deadline:null,mode:'friend'};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
