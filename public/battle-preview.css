@@ -19,3 +19,6 @@
 
 /* Compact roster: only unplaced heroes remain visible */
 .role-pickers{gap:8px;margin:8px 0 12px;padding:3px 2px 8px;min-height:72px}.formation-card{flex:0 0 min(45vw,165px);padding:8px;border-radius:11px;box-shadow:none}.formation-hero{font-size:13px;line-height:1.25}.formation-role{font-size:9px;margin:4px 0}.formation-stats{font-size:10px;line-height:1.35;padding:5px 0;white-space:normal}.formation-select{font-size:10px;padding:8px 5px;margin-top:6px}.formation-choices{display:none}@media(max-width:600px){.formation-card{flex-basis:min(43vw,155px);padding:7px}.formation-stats{font-size:9px}.formation-select{font-size:9px;padding:7px 3px}}
+
+/* Two-second hover role power preview, no commitment until drop */
+.formation-card.previewing{border-color:#5effd2;box-shadow:0 0 15px #34f8bc55}.formation-card.previewing .formation-stats{color:#7fffd8;font-weight:800}.board-slot.circle-slot.hover-preview{border-color:#6effd4;border-style:solid;box-shadow:0 0 28px #2dfdc488,inset 0 0 24px #36eeb044}
