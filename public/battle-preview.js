@@ -66,8 +66,22 @@ $('apply-roles').onclick=lockFormation;
 if(arenaMode){document.body.classList.add('arena-room');document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;$('play').textContent='▶ SAVAŞI BAŞLAT';}else{renderRolePickers();renderBoard();if(!auctionMode)startPreparation();else{$('apply-roles').disabled=true;$('prep-clock').textContent='--:--';$('prep-note').textContent='Açık artırma kartları doğrulanıyor…'}}
 const motion=()=> $('motion').checked&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const duration=()=>Number($('speed').value);
+function comicBattleCue(e){
+ if(!motion()||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+ const action=String(e.action||'');
+ const healing=/heal|regen/i.test(action),guard=/shield|guard|resist/i.test(action);
+ const special=/special|burst|splash|pierce|magic|energy|ultimate/i.test(action);
+ const impact=Number(e.value)>0&&!healing&&!guard;
+ if(!special&&!healing&&!guard&&!(impact&&Number(e.value)>=100))return;
+ const cue=document.createElement('div');
+ cue.className='battle-comic-banner'+(healing?' heal':guard?' shield':'');
+ cue.textContent=healing?'ŞİFA!':guard?'KALKAN!':special?'ÖZEL GÜÇ!':'BAM!';
+ cue.setAttribute('aria-hidden','true');document.body.append(cue);
+ setTimeout(()=>cue.remove(),750);
+}
 function animateMove(e){
  if(!motion())return;
+ comicBattleCue(e);
  const actor=[...document.querySelectorAll('.hero')].find(x=>x.dataset.heroId===e.actorId);
  const target=[...document.querySelectorAll('.hero')].find(x=>x.dataset.heroId===e.targetId);
  if(!actor)return;
