@@ -90,6 +90,23 @@ function animateMove(e){
  const special=/special|burst|splash|pierce|magic|energy|ultimate/i.test(action);
  const ranged=special||heal||shield||/thor|iron man|scarlet witch|doctor fate|storm|superman|vision|magneto/i.test(e.actorId);
  const style=heal?'heal':shield?'shield':/thor|lightning/i.test(e.actorId+' '+action)?'lightning':/witch|fate|magic/i.test(e.actorId+' '+action)?'magic':special?'special':'standard';
+ // Move the existing hero card toward the opponent and return it without changing combat state.
+ if(target&&!heal&&!shield&&typeof actor.animate==='function'){
+  const ar=actor.getBoundingClientRect(),tr=target.getBoundingClientRect();
+  const dx=(tr.left+tr.width/2)-(ar.left+ar.width/2);
+  const dy=(tr.top+tr.height/2)-(ar.top+ar.height/2);
+  const time=Math.max(320,Math.min(780,duration()*.72));
+  if(!ranged){
+   actor.animate([{transform:'translate(0,0) scale(1)',offset:0},{transform:`translate(${dx*.77}px,${dy*.77}px) scale(1.13)`,offset:.42},{transform:`translate(${dx*.77}px,${dy*.77}px) scale(1.13)`,offset:.56},{transform:'translate(0,0) scale(1)',offset:1}],{duration:time,easing:'ease-in-out'});
+  }else{
+   actor.animate([{transform:'scale(1)',filter:'brightness(1)'},{transform:'scale(1.12)',filter:'brightness(1.7)'},{transform:'scale(1)',filter:'brightness(1)'}],{duration:time*.8,easing:'ease-out'});
+  }
+  target.animate([{transform:'translate(0,0)'},{transform:`translate(${Math.sign(dx)*-13}px,7px) rotate(3deg)`,offset:.55},{transform:'translate(0,0)'}],{duration:time,easing:'ease-out'});
+  if(special){
+   const flash=document.createElement('div');flash.className='arena-impact-flash';document.body.append(flash);setTimeout(()=>flash.remove(),Math.min(time,550));
+  }
+  const hit=document.createElement('span');hit.className='arena-impact-burst';target.append(hit);setTimeout(()=>hit.remove(),650);
+ }
  actor.classList.add(ranged?'attack-energy':'attack-melee');
  if(special)actor.classList.add('special-cast');
  const effectTarget=target||actor;
