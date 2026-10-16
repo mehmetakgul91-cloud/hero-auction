@@ -3,7 +3,7 @@ const $=id=>document.getElementById(id);
 let demoA=[['Hulk','tank',85],['Thor','fighter',88],['Wolverine','fighter',78],['Scarlet Witch','energy',90],['Iron Man','support',80]];
 // Preview uses zero credits until verified auction balances are wired in.
 let previewCredits=0;
-const creditBonus=credits=>Math.min(credits,8)*0.01+Math.max(0,credits-8)*0.005;
+const creditBonus=credits=>credits<0?Math.max(-0.99,credits*0.01):Math.min(credits,8)*0.01+Math.max(0,credits-8)*0.005;
 const effectivePower=power=>Math.round(power*(1+creditBonus(previewCredits))*10)/10;
 let demoB=[['Superman','fighter',92],['Wonder Woman','fighter',85],['Doomsday','tank',84],['The Flash','assassin',81],['Doctor Fate','energy',87]];
 const roleNames={tank:'TANK',fighter:'SAVAŞÇI',energy:'ENERJİ / MESAFELİ',assassin:'SUİKASTÇI',support:'DESTEK'};
