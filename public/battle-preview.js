@@ -4,6 +4,11 @@ const demoA=[['Hulk','tank',85],['Thor','fighter',88],['Wolverine','fighter',78]
 const demoB=[['Superman','fighter',92],['Wonder Woman','fighter',85],['Doomsday','tank',84],['The Flash','assassin',81],['Doctor Fate','energy',87]];
 const roleNames={tank:'TANK',fighter:'SAVAŞÇI',energy:'ENERJİ',assassin:'SUİKASTÇI',support:'DESTEK'};
 let states=[],events=[],cursor=0,timer=null;
+const roleOptions=['tank','fighter','energy','assassin','support'];
+const assignedRoles=demoA.map(x=>x[1]);
+function renderRolePickers(){const root=$('role-pickers');root.replaceChildren();demoA.forEach(([name],i)=>{const label=document.createElement('label');label.textContent=name;const select=document.createElement('select');select.setAttribute('aria-label',name+' rolü');for(const role of roleOptions){const option=document.createElement('option');option.value=role;option.textContent=roleNames[role];select.append(option)}select.value=assignedRoles[i];select.onchange=()=>{assignedRoles[i]=select.value};label.append(select);root.append(label)})}
+$('apply-roles').onclick=()=>{stop();$('events').replaceChildren();$('play').textContent='▶ SAVAŞI OYNAT';void build()};
+renderRolePickers();
 const motion=()=> $('motion').checked&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const duration=()=>Number($('speed').value);
 function animateMove(e){
@@ -25,7 +30,7 @@ async function build(){
  stop();cursor=0;events=[];$('next').disabled=true;$('play').disabled=true;
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
  try{
-  const response=await fetch('/api/battle-preview',{cache:'no-store'});
+  const response=await fetch('/api/battle-preview?roles='+encodeURIComponent(assignedRoles.join(',')),{cache:'no-store'});
   if(!response.ok)throw Error('Savaş verisi alınamadı ('+response.status+')');
   const result=await response.json();
   states=result.teams.map(team=>team.map(u=>({...u,hp:u.maxHp,shield:0})));
