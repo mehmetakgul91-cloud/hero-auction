@@ -7,7 +7,8 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "audit": "node tools/audit-cards.mjs",
-    "audit:strict": "node tools/audit-cards.mjs --strict"
+    "audit:strict": "node tools/audit-cards.mjs --strict",
+    "battle:balance": "node tools/battle-balance.mjs"
   },
   "engines": {
     "node": ">=18"

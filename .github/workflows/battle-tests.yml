@@ -1,0 +1,22 @@
+name: Hero Auction 2.0 Battle Tests
+on:
+  push:
+    branches:
+      - feature/hero-auction-2-auto-battle
+  pull_request:
+    paths:
+      - 'battle-*'
+      - '.github/workflows/battle-tests.yml'
+jobs:
+  battle-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Run battle engine tests
+        run: node --test battle-engine.test.js battle-roster.test.js battle-balance.test.js battle-match.test.js tests/battle-tactics.test.js

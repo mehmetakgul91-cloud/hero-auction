@@ -4,6 +4,8 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import pg from 'pg';
+import {simulateRosterBattle,battleRoster} from './battle-roster.js';
+import {auctionRoomToBattleState,prepareBattleTeams} from './battle-match.js';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
 const GOOGLE_CLIENT_ID=process.env.GOOGLE_CLIENT_ID||'742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
@@ -86,7 +88,8 @@ function onlineStats(){
 const curated={"marvel:thanos":95,"marvel:galactus":99,"marvel:odin":95,"marvel:sentry":94,"marvel:silver surfer":93,"marvel:thor":88,"marvel:hulk":87,"marvel:scarlet witch":94,"marvel:doctor strange":91,"marvel:iron man":75,"marvel:spider-man":70,"marvel:captain america":61,"dc:the spectre":100,"dc:anti-monitor":99,"dc:doctor manhattan":99,"dc:darkseid":97,"dc:superman":92,"dc:batman":65,"dc:wonder woman":88,"dc:the flash":90,"lotr:eru ilúvatar":100,"lotr:morgoth":99,"lotr:sauron":95,"lotr:gandalf":87,"lotr:aragorn":70,"pokemon:arceus":100,"pokemon:mewtwo":94,"pokemon:rayquaza":94,"pokemon:pikachu":65};
 const stablePower=(id)=>{if(Number.isInteger(cardDetails[id]?.power))return cardDetails[id].power;if(curated[id]!=null)return curated[id];const h=crypto.createHash("sha256").update("hero-auction-v3:"+id).digest();return 15+(h.readUInt32BE(0)%86)};
 const rarityForPower=(power)=>power>=90?'legendary':power>=70?'rare':power>=50?'advanced':'common';
-const newCards=(universe)=>shuffle([...catalogue.values()].filter(x=>universe==="mixed"||x.universe===universe)).slice(0,10).map(x=>({...x,power:stablePower(x.id)}));
+const liveBattleIds=new Set(battleRoster.map(x=>x.id));
+const newCards=(universe)=>shuffle([...catalogue.values()].filter(x=>liveBattleIds.has(x.id)&&(universe==="mixed"||x.universe===universe))).slice(0,10).map(x=>({...x,power:stablePower(x.id)}));
 const words={
  marvel:'Iron Man,Thor,Hulk,Captain America,Black Widow,Hawkeye,Scarlet Witch,Doctor Strange,Spider-Man,Black Panther,Ant-Man,Wasp,Captain Marvel,Vision,War Machine,Falcon,Winter Soldier,Loki,Thanos,Ultron,Magneto,Wolverine,Deadpool,Storm,Cyclops,Jean Grey,Professor X,Mystique,Beast,Nightcrawler,Rogue,Gambit,Silver Surfer,Galactus,Doctor Doom,Fantastic Four Human Torch,Invisible Woman,Mr Fantastic,The Thing,Ghost Rider,Blade,Venom,Carnage,Green Goblin,Kingpin,Daredevil,Punisher,Shang-Chi,She-Hulk,Sentry,Odin,Hela,Heimdall,Namor,Moon Knight,Star-Lord,Rocket Raccoon,Groot,Gamora,Drax,Mantis,Nebula,Adam Warlock,Kang,Apocalypse,Emma Frost,Colossus,Juggernaut,Kitty Pryde,Iceman,Angel,Bishop,Cable,Domino,Black Bolt,Medusa,Quicksilver,America Chavez,Ms Marvel,Iron Fist,Luke Cage,Jessica Jones,Elektra,Bullseye,Red Skull,Taskmaster,Abomination,Enchantress,Mephisto,MODOK,Kraven,Mysterio,Electro,Sandman,Lizard,Doctor Octopus,Rhino,Vulture,Shocker,Black Cat,Silk,Spider-Gwen,Miles Morales,Spider-Woman,Nick Fury,Maria Hill,Agent Coulson',
  dc:'Superman,Batman,Wonder Woman,The Flash,Green Lantern,Aquaman,Cyborg,Martian Manhunter,Green Arrow,Black Canary,Shazam,Supergirl,Batgirl,Nightwing,Robin,Red Hood,Red Robin,Blue Beetle,Booster Gold,Doctor Fate,Zatanna,John Constantine,Swamp Thing,The Spectre,Darkseid,Anti-Monitor,Doctor Manhattan,Lex Luthor,Joker,Harley Quinn,Poison Ivy,Catwoman,The Riddler,Two-Face,Bane,Scarecrow,Mr Freeze,Ra’s al Ghul,Talia al Ghul,Deathstroke,Deadshot,Black Adam,Sinestro,Atrocitus,Brainiac,Doomsday,General Zod,Reverse-Flash,Zoom,Gorilla Grodd,Captain Cold,Heat Wave,Mirror Master,Trigon,Raven,Starfire,Beast Boy,Cyborg Superman,Black Manta,Ocean Master,King Shark,Peacemaker,Bloodsport,Enchantress,Katana,The Atom,Firestorm,Hawkman,Hawkgirl,Vixen,Plastic Man,Metamorpho,Red Tornado,Orion,Mister Miracle,Big Barda,Highfather,Steppenwolf,Granny Goodness,Lobo,Parasite,Metallo,Bizarro,Solomon Grundy,Clayface,Man-Bat,Killer Croc,Calendar Man,Huntress,Question,Wildcat,Stargirl,Power Girl,Jay Garrick,Alan Scott,Jessica Cruz,John Stewart,Hal Jordan,Kyle Rayner,Guy Gardner,Barry Allen,Wally West,Impulse,Donna Troy,Cassandra Cain,Stephanie Brown',
@@ -129,7 +132,42 @@ function advanceRound(r){
   endGame(r);
   log(r,'Oyun bitti. Toplam puanlar açıklandı.');
 }
-function endGame(r){if(r.phase==='finished')return;r.phase="finished";r.turn=null;r.deadline=null;r.topBid=0;r.topSeat=null;const scores=r.players.map(p=>p.team.reduce((a,c)=>a+c.power,0)+p.credits*10);recordMatch(r,scores);if(scores[0]!==scores[1]){const winner=scores[0]>scores[1]?0:1;r.series[winner]++;const accountId=r.players[winner].accountId;if(accountId){if(r.entryPaid&&r.mode!=='bot'){r.goldAward={id:r.code+':'+(r.matchNumber||1)+':'+(r.created||0),accountId,amount:100};queueGoldAward(r);}if(r.entryPaid&&r.mode!=='bot')log(r,'🏆 Kazanan oyuncu 100 altın kazandı!')}}else if(r.entryPaid&&r.mode!=='bot'){for(let i=0;i<2;i++){const accountId=r.players[i].accountId;if(accountId){const a={id:r.code+':refund:'+i+':'+(r.matchNumber||1)+':'+(r.created||0),accountId,amount:50};pendingGold.set(a.id,a);(r.goldRefunds??=[]).push(a)}}}}
+function settleFinishedMatch(r,winner,scores){
+ if(r.matchSettled)return;
+ if(r.phase!=='finished')throw Error('Match must finish before settlement');
+ if(winner!==null&&winner!==0&&winner!==1)throw Error('Invalid match winner');
+ r.matchSettled=true;
+ const rankedScores=winner===null?[0,0]:winner===0?[1,0]:[0,1];
+ recordMatch(r,rankedScores);
+ if(winner!==null){
+  r.series[winner]++;
+  const accountId=r.players[winner].accountId;
+  if(accountId&&r.entryPaid&&r.mode!=='bot'){
+   r.goldAward={id:r.code+':'+(r.matchNumber||1)+':'+(r.created||0),accountId,amount:100};queueGoldAward(r);
+   log(r,'🏆 Savaşı kazanan oyuncu 100 altın kazandı!');
+  }
+ }else if(r.entryPaid&&r.mode!=='bot'){
+  for(let i=0;i<2;i++){
+   const accountId=r.players[i].accountId;
+   if(accountId){const award={id:r.code+':refund:'+i+':'+(r.matchNumber||1)+':'+(r.created||0),accountId,amount:50};pendingGold.set(award.id,award);(r.goldRefunds??=[]).push(award)}
+  }
+ }
+ markRoom(r);
+}
+function endGame(r){
+ if(r.phase==='finished')return;
+ r.phase='finished';r.turn=null;r.deadline=null;r.topBid=0;r.topSeat=null;
+ // Real-player five-card auctions must be decided by the authoritative 2.0 battle.
+ // Unsupported rosters retain the classic scoring path until the adapter supports them.
+ if(r.mode!=='bot'&&r.players.every(p=>p?.team?.length===5)){
+  try{prepareBattleTeams(auctionRoomToBattleState(r));r.battleSettlementPending=true;markRoom(r);return}
+  catch(e){log(r,'2.0 savaş havuzu desteklenmiyor; klasik sonuç uygulanıyor.')}
+ }
+ const scores=r.players.map(p=>p.team.reduce((sum,c)=>sum+c.power,0)+p.credits*10);
+ const winner=scores[0]===scores[1]?null:scores[0]>scores[1]?0:1;
+ settleFinishedMatch(r,winner,scores);
+}
+
 function finishAuction(r){
   const winner=r.topSeat,price=r.topBid,card=r.cards[r.round];
   if(winner===null||price<1)error('Kazanan teklif yok.');
@@ -154,11 +192,11 @@ if(url==='/api/rewarded/status'){return await rewardedAdStatus(readLogin(b.authT
 if(url==='/api/rewarded/claim'){error('Ödüllü reklam sistemi henüz etkin değil.',503)}
 if(url==='/api/wallet'){return{gold:await goldBalance(readLogin(b.authToken).sub)}}
 if(url==='/api/auth/google'){const credential=String(b.credential||'');if(credential.length<100||credential.length>8000)error('Geçersiz Google kimliği.');const response=await fetch('https://oauth2.googleapis.com/tokeninfo?id_token='+encodeURIComponent(credential),{signal:AbortSignal.timeout(8000)});if(!response.ok)error('Google kimliği doğrulanamadı.',401);const claims=await response.json();if(claims.aud!==GOOGLE_CLIENT_ID||!['accounts.google.com','https://accounts.google.com'].includes(claims.iss)||Number(claims.exp)*1000<Date.now()||!claims.sub||claims.email_verified!=='true')error('Google kimliği doğrulanamadı.',401);const user={sub:claims.sub,name:String(claims.name||claims.given_name||'Oyuncu').slice(0,24)};return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}
-if(url==='/api/create'){const name=chosenName(b,'Oyuncu 1');const universe=['pokemon','marvel','dc','lotr','mixed'].includes(b.universe)?b.universe:'mixed';const pool=shuffle([...catalogue.values()].filter(x=>universe==='mixed'||x.universe===universe));if(pool.length<10)error('Bu evrende yeterli karakter yok.');const cards=pool.slice(0,10).map(x=>({...x,power:stablePower(x.id)}));let id;do{id=code()}while(rooms.has(id));const t=token();const accountId=readLogin(b.authToken).sub;const r={code:id,universe,cards,round:0,phase:'waiting',turn:0,topBid:0,topSeat:null,players:[{name,token:t,accountId,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],deadline:null,mode:'friend'};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
+if(url==='/api/create'){const name=chosenName(b,'Oyuncu 1');const universe=['marvel','dc','mixed'].includes(b.universe)?b.universe:'mixed';const pool=shuffle([...catalogue.values()].filter(x=>universe==='mixed'||x.universe===universe));if(pool.length<10)error('Bu evrende yeterli karakter yok.');const cards=pool.slice(0,10).map(x=>({...x,power:stablePower(x.id)}));let id;do{id=code()}while(rooms.has(id));const t=token();const accountId=readLogin(b.authToken).sub;const r={code:id,universe,cards,round:0,phase:'waiting',turn:0,topBid:0,topSeat:null,players:[{name,token:t,accountId,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],deadline:null,mode:'friend'};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/join'){const r=rooms.get(String(b.code||'').toUpperCase());if(!r)error('Oda bulunamadı.',404);if(r.players[1])error('Oda dolu.');await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name:chosenName(b,'Oyuncu 2'),token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;log(r,`Oyun başladı. 1. kart için açılış: ${r.players[0].name}`);publish(r);return{token:t,room:publicRoom(r,1)}}
-if(url==='/api/rematch'){const{r,seat}=authorize(b);if(r.phase!=='finished')error('Maç henüz bitmedi.');r.rematch[seat]=true;if(r.mode==='bot')r.rematch[1]=true;if(r.rematch.every(Boolean)){if(r.mode!=='bot'){try{await chargeEntry(r.players.map(p=>p.accountId),r.code);}catch(e){r.rematch=[false,false];throw e}}r.entryPaid=r.mode!=='bot';r.goldRefunds=null;r.matchNumber=(r.matchNumber||1)+1;r.goldAward=null;r.rankChange=null;r.rankBefore=null;r.cards=newCards(r.universe);r.round=0;r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.topBid=0;r.topSeat=null;r.history=[];r.openingPassSeat=null;r.rematch=[false,false];r.created=Date.now();r.lastActivity=Date.now();for(const p of r.players){p.credits=20;p.team=[];}log(r,'Rövanş başladı!');}publish(r);return{room:publicRoom(r,seat)}}
-if(url==='/api/bot'){const universe=['pokemon','marvel','dc','lotr','mixed'].includes(b.universe)?b.universe:'mixed';const name=chosenName(b,'Oyuncu');let id;do{id=code()}while(rooms.has(id));const t=token();const r={entryPaid:false,code:id,universe,cards:newCards(universe),round:0,phase:'auction',turn:0,deadline:Date.now()+20000,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},{name:'Bilgisayar',token:token(),credits:20,team:[]}],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'bot'};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
-if(url==='/api/match'){const universe=['pokemon','marvel','dc','lotr','mixed'].includes(b.universe)?b.universe:'mixed';const name=chosenName(b,'Oyuncu');for(const [key,item] of waiting){if(item.universe!==universe||Date.now()-item.created>60000)continue;const r=rooms.get(item.code);if(!r||r.players[1]){waiting.delete(key);continue;}await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.mode='random';waiting.delete(key);publish(r);return{token:t,room:publicRoom(r,1)}}let id;do{id=code()}while(rooms.has(id));const t=token();const r={code:id,universe,cards:newCards(universe),round:0,phase:'matching',turn:0,deadline:null,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'random'};rooms.set(id,r);markRoom(r);waiting.set(id,{code:id,universe,created:Date.now()});return{token:t,room:publicRoom(r,0)}}
+if(url==='/api/rematch'){const{r,seat}=authorize(b);if(r.battleSettlementPending&&!r.matchSettled)error('Savaş sonucu henüz kesinleşmedi.');if(r.mode!=='bot'&&r.players.every(p=>p?.team?.length===5)&&r.battleSync?.result&&!r.battleCompleted?.[seat])error('Önce 2.0 savaşını tamamlamalısın.');if(r.phase!=='finished')error('Maç henüz bitmedi.');r.rematch[seat]=true;if(r.mode==='bot')r.rematch[1]=true;if(r.rematch.every(Boolean)){if(r.mode!=='bot'){try{await chargeEntry(r.players.map(p=>p.accountId),r.code);}catch(e){r.rematch=[false,false];throw e}}r.entryPaid=r.mode!=='bot';r.goldRefunds=null;r.matchNumber=(r.matchNumber||1)+1;r.goldAward=null;r.rankChange=null;r.rankBefore=null;r.cards=newCards(r.universe);r.round=0;r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.topBid=0;r.topSeat=null;r.history=[];r.openingPassSeat=null;r.rematch=[false,false];r.battleCompleted=[false,false];r.matchSettled=false;r.battleSettlementPending=false;r.battleSync=null;r.created=Date.now();r.lastActivity=Date.now();for(const p of r.players){p.credits=20;p.team=[];}log(r,'Rövanş başladı!');}publish(r);return{room:publicRoom(r,seat)}}
+if(url==='/api/bot'){const universe=['marvel','dc','mixed'].includes(b.universe)?b.universe:'mixed';const name=chosenName(b,'Oyuncu');let id;do{id=code()}while(rooms.has(id));const t=token();const r={entryPaid:false,code:id,universe,cards:newCards(universe),round:0,phase:'auction',turn:0,deadline:Date.now()+20000,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},{name:'Bilgisayar',token:token(),credits:20,team:[]}],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'bot'};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
+if(url==='/api/match'){const universe=['marvel','dc','mixed'].includes(b.universe)?b.universe:'mixed';const name=chosenName(b,'Oyuncu');for(const [key,item] of waiting){if(item.universe!==universe||Date.now()-item.created>60000)continue;const r=rooms.get(item.code);if(!r||r.players[1]){waiting.delete(key);continue;}await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.mode='random';waiting.delete(key);publish(r);return{token:t,room:publicRoom(r,1)}}let id;do{id=code()}while(rooms.has(id));const t=token();const r={code:id,universe,cards:newCards(universe),round:0,phase:'matching',turn:0,deadline:null,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'random'};rooms.set(id,r);markRoom(r);waiting.set(id,{code:id,universe,created:Date.now()});return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/chat'){const{r,seat}=authorize(b);if(r.mode==='bot')error('Sohbet yalnızca gerçek oyuncularla kullanılabilir.');const message=String(b.message||'').trim().replace(/[\u0000-\u001f\u007f]/g,' ');if(!message||message.length>240)error('Mesaj 1–240 karakter olmalı.');if(Date.now()-(r.lastChatAt?.[seat]||0)<1000)error('Yeni mesaj için bir saniye bekle.');r.lastChatAt??=[0,0];r.lastChatAt[seat]=Date.now();r.chat??=[];r.chat.push({seat,name:r.players[seat].name,message,time:Date.now()});if(r.chat.length>60)r.chat.shift();r.lastActivity=Date.now();publish(r);return{room:publicRoom(r,seat)}}
 if(url==='/api/state'){const{r,seat}=authorize(b);r.lastActivity=Date.now();return{room:publicRoom(r,seat)}}
 if(url==='/api/bid'){const{r,seat}=authorize(b);if(r.phase!=='auction')error('İhale aktif değil.');if(r.turn!==seat)error('Teklif sırası sende değil.');const amount=Number(b.amount);if(!Number.isInteger(amount)||amount<=r.topBid||amount>r.players[seat].credits)error('Teklif tutarı geçersiz.');r.topBid=amount;r.topSeat=seat;r.openingPassSeat=null;log(r,`${r.players[seat].name} ${amount} kredi teklif etti.`);const other=1-seat;if(r.players[other].credits<=amount){finishAuction(r);}else{r.turn=other;r.deadline=Date.now()+20000;}publish(r);return{room:publicRoom(r,seat)}}
@@ -258,7 +296,81 @@ async function lookupCharacterInfo(universe,name){
  }
  return {url:image,source,description:description||`${name}, ${({marvel:'Marvel',dc:'DC',lotr:'Yüzüklerin Efendisi',pokemon:'Pokémon'})[universe]} evrenindeki karakterlerden biridir. Ayrıntılı Türkçe tanıtım henüz eklenmedi.`};
 }
-const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data))};try{const url=new URL(req.url,'http://localhost');if(req.method==='GET'&&url.pathname==='/api/events'){const r=rooms.get((url.searchParams.get('code')||'').toUpperCase());const t=url.searchParams.get('token');const seat=r?.players.findIndex(p=>p&&p.token===t)??-1;const loggedIn=readLogin(url.searchParams.get('authToken'));if(!r||seat<0||!loggedIn)return send(403,{error:'Yetkisiz'});res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-cache','Connection':'keep-alive','X-Accel-Buffering':'no'});res.write(`data: ${JSON.stringify(publicRoom(r,seat))}\n\n`);const clients=listeners.get(r.code)||new Set();clients.add({res,seat});listeners.set(r.code,clients);const heartbeat=setInterval(()=>{if(!res.destroyed)res.write(': heartbeat\n\n')},15000);req.on('close',()=>{clearInterval(heartbeat);for(const c of clients)if(c.res===res)clients.delete(c);if(!clients.size)listeners.delete(r.code)});return}
+// Isolated two-player preview sessions; no classic rooms or wallet effects.
+const battleSessions=new Map();
+setInterval(()=>{for(const [code,s] of battleSessions)if(Date.now()-s.created>2*3600_000)battleSessions.delete(code)},60000).unref();
+const battleIdsA=['marvel:hulk','marvel:thor','marvel:wolverine','marvel:scarlet witch','marvel:iron man'];
+const battleIdsB=['dc:superman','dc:wonder woman','dc:doomsday','dc:the flash','dc:doctor fate'];
+function battleSessionView(session,token){const seat=session.players.findIndex(p=>p?.token===token);if(seat<0)return null;return {code:session.code,seat,ready:session.players.map(p=>Boolean(p?.ready)),joined:session.players.map(Boolean),started:Boolean(session.result),result:session.result,created:session.created};}
+function battleSessionResult(session){const cards=(ids,formation)=>formation.map((index,slot)=>({id:ids[index],power:Math.max(1,Math.min(100,Number(cardDetails[ids[index]]?.power)||70)),lane:session.players[ids===battleIdsA?0:1].lanes?.[slot]||(slot<2?'front':'back'),role:session.players[ids===battleIdsA?0:1].roles?.[slot]||((slot<2)?'tank':'energy')}));const a=cards(battleIdsA,session.players[0].positions),b=cards(battleIdsB,session.players[1].positions);const result=simulateRosterBattle(a,b,{seed:'battle-room-'+session.code+'-'+session.created});return {winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log};}
+function validBattlePositions(v){return Array.isArray(v)&&v.length===5&&new Set(v).size===5&&v.every(x=>Number.isInteger(x)&&x>=0&&x<5)}
+const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data))};try{const url=new URL(req.url,'http://localhost');if(req.method==='POST'&&url.pathname==='/api/battle-auction-complete'){
+ let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>1000)return send(413,{error:'İstek çok büyük'})}
+ let body;try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz veri'})}
+ const room=rooms.get(String(body?.code||'').toUpperCase());const seat=room?.players?.findIndex(p=>p?.token===body?.token)??-1;
+ if(!room||seat<0)return send(403,{error:'Yetkisiz'});
+ if(room.phase!=='finished')return send(409,{error:'Açık artırma bitmedi'});
+ try{prepareBattleTeams(auctionRoomToBattleState(room))}catch(e){return send(422,{error:e.message})}
+ if(!room.battleSync?.result)return send(409,{error:'Savaş henüz başlamadı'});
+ room.battleCompleted??=[false,false];room.battleCompleted[seat]=true;markRoom(room);return send(200,{ok:true,completed:room.battleCompleted});
+}
+if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.method==='GET')){
+ let body={};if(req.method==='POST'){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>4000)return send(413,{error:'İstek çok büyük'})}try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz JSON'})}}
+ else body={code:url.searchParams.get('code'),token:url.searchParams.get('token')};
+ const room=rooms.get(String(body?.code||'').toUpperCase());const seat=room?.players?.findIndex(p=>p?.token===body?.token)??-1;
+ if(!room||seat<0)return send(403,{error:'Yetkisiz oda'});
+ if(room.phase!=='finished')return send(409,{error:'Açık artırma tamamlanmadı'});
+ try{const state=auctionRoomToBattleState(room),teams=prepareBattleTeams(state);
+ const matchKey=String(room.matchNumber||1)+':'+String(room.created);
+ if(room.battleSync?.key!==matchKey)room.battleSync={key:matchKey,ready:[null,null],result:null};
+ const sync=room.battleSync;
+ if(req.method==='POST'){
+ if(sync.ready[seat])return send(409,{error:'Diziliş zaten onaylandı'});
+ if(!validBattlePositions(body.positions)||!Array.isArray(body.lanes)||body.lanes.length!==5||body.lanes.some(l=>!['front','back'].includes(l)))return send(400,{error:'Geçersiz diziliş'});
+ if(!Array.isArray(body.roles)||body.roles.length!==5||body.roles.some((v,i)=>body.lanes[i]==='back'?v!=='energy':!['tank','fighter'].includes(v)))return send(400,{error:'Geçersiz roller'});
+ sync.ready[seat]={positions:body.positions,lanes:body.lanes,roles:body.roles};
+ if(sync.ready.every(Boolean)){
+ const ordered=teams.map((team,i)=>sync.ready[i].positions.map((index,slot)=>({...team[index],lane:sync.ready[i].lanes[slot],role:sync.ready[i].roles[slot]})));
+ const result=simulateRosterBattle(ordered[0],ordered[1],{seed:'auction-battle-'+room.code+'-'+matchKey,remainingCredits:[state.remainingCreditsA,state.remainingCreditsB]});
+ sync.result={winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log};
+ if(room.battleSettlementPending&&!room.matchSettled){settleFinishedMatch(room,result.winner);room.battleSettlementPending=false;}
+ }markRoom(room);
+ }
+ return send(200,{ready:sync.ready.map(Boolean),started:Boolean(sync.result),result:sync.result?{...sync.result,winner:sync.result.winner===null?null:sync.result.winner===seat?0:1,teams:seat===0?sync.result.teams:[...sync.result.teams].reverse(),log:seat===0?sync.result.log:sync.result.log.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side}))}:null});
+ }catch(e){return send(422,{error:e.message})}
+}
+if(req.method==='GET'&&url.pathname==='/api/battle-auction-team'){
+ const room=rooms.get(String(url.searchParams.get('code')||'').toUpperCase());
+ const seat=room?.players?.findIndex(p=>p?.token===url.searchParams.get('token'))??-1;
+ if(!room||seat<0)return send(403,{error:'Oda veya oyuncu yetkisi geçersiz.'});
+ if(room.phase!=='finished')return send(409,{error:'Açık artırma henüz bitmedi.'});
+ try{
+  const state=auctionRoomToBattleState(room);
+  const teams=prepareBattleTeams(state);
+  return send(200,{ready:true,seat,credits:[state.remainingCreditsA,state.remainingCreditsB],teams:teams.map(team=>team.map(card=>{const hero=battleRoster.find(h=>h.id===card.id);return {...card,name:hero.name,universe:hero.universe}}))});
+ }catch(e){return send(422,{error:'Bu açık artırma 2.0 savaşına uygun değil: '+e.message})}
+}
+if(req.method==='GET'&&url.pathname==='/api/battle-room'){const session=battleSessions.get(String(url.searchParams.get('code')||'').toUpperCase());const view=session&&battleSessionView(session,url.searchParams.get('token'));return view?send(200,view):send(404,{error:'Oda veya oturum bulunamadı.'})}
+if(req.method==='POST'&&url.pathname==='/api/battle-room'){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>4000)return send(413,{error:'İstek çok büyük'})}let body;try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz veri'})}const action=body?.action;let session;if(action==='create'){let code;do{code=String(100000+crypto.randomInt(900000))}while(battleSessions.has(code));session={code,created:Date.now(),players:[{token:crypto.randomBytes(24).toString('hex'),ready:false,positions:null},null],result:null};battleSessions.set(code,session);return send(200,{...battleSessionView(session,session.players[0].token),token:session.players[0].token})}
+ session=battleSessions.get(String(body?.code||'').toUpperCase());if(!session)return send(404,{error:'Oda bulunamadı'});
+ if(action==='join'){if(session.players[1])return send(409,{error:'Oda dolu'});session.players[1]={token:crypto.randomBytes(24).toString('hex'),ready:false,positions:null};return send(200,{...battleSessionView(session,session.players[1].token),token:session.players[1].token})}
+ const seat=session.players.findIndex(p=>p?.token===body?.token);if(seat<0)return send(403,{error:'Geçersiz oturum'});if(action==='ready'){if(!validBattlePositions(body.positions))return send(400,{error:'Geçersiz diziliş'});if(session.result)return send(409,{error:'Savaş başladı'});if(!Array.isArray(body.lanes)||body.lanes.length!==5||body.lanes.some(l=>l!=='front'&&l!=='back'))return send(400,{error:'Geçersiz ön/arka saf dizilişi'});if(!Array.isArray(body.roles)||body.roles.length!==5||body.roles.some((role,i)=>body.lanes[i]==='back'?role!=='energy':!['tank','fighter'].includes(role)))return send(400,{error:'Geçersiz savaş rolü'});session.players[seat].roles=body.roles;session.players[seat].lanes=body.lanes;session.players[seat].positions=body.positions;session.players[seat].ready=true;if(session.players.every(p=>p?.ready))session.result=battleSessionResult(session);return send(200,battleSessionView(session,body.token))}return send(400,{error:'Geçersiz işlem'})}
+if(req.method==='GET'&&url.pathname==='/api/battle-preview'){
+ // Fixed public demo teams. This endpoint never accesses rooms, accounts or wallets.
+ const idsA=['marvel:hulk','marvel:thor','marvel:wolverine','marvel:scarlet witch','marvel:iron man'];
+ const idsB=['dc:superman','dc:wonder woman','dc:doomsday','dc:the flash','dc:doctor fate'];
+ const roles=['tank','fighter','energy'];
+ const selected=String(url.searchParams.get('roles')||'').split(',');
+ if(selected.length!==5||selected.some(role=>!roles.includes(role)))return send(400,{error:'Beş geçerli rol seçilmelidir.'});
+ const positions=String(url.searchParams.get('positions')||'0,1,2,3,4').split(',').map(Number);
+ if(positions.length!==5||new Set(positions).size!==5||positions.some(n=>!Number.isInteger(n)||n<0||n>4))return send(400,{error:'Beş farklı yuva seçilmelidir.'});
+ const cards=(ids,custom)=>ids.map((id,i)=>({id,power:Math.max(1,Math.min(100,Number(cardDetails[id]?.power)||70)),...(custom?{role:selected[i]}:{})}));
+ const chosen=cards(idsA,true);
+ const laneParam=String(url.searchParams.get('lanes')||'front,front,back,back,back').split(',');if(laneParam.length!==5||laneParam.some(l=>l!=='front'&&l!=='back'))return send(400,{error:'Geçersiz saf'});const ordered=positions.map((heroIndex,i)=>({...chosen[heroIndex],lane:laneParam[i],role:laneParam[i]==='back'?'energy':selected[i]}));
+ const result=simulateRosterBattle(ordered,cards(idsB,false),{seed:'hero-auction-preview-v1'});
+ return send(200,{demo:true,winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log});
+}
+if(req.method==='GET'&&url.pathname==='/api/events'){const r=rooms.get((url.searchParams.get('code')||'').toUpperCase());const t=url.searchParams.get('token');const seat=r?.players.findIndex(p=>p&&p.token===t)??-1;const loggedIn=readLogin(url.searchParams.get('authToken'));if(!r||seat<0||!loggedIn)return send(403,{error:'Yetkisiz'});res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-cache','Connection':'keep-alive','X-Accel-Buffering':'no'});res.write(`data: ${JSON.stringify(publicRoom(r,seat))}\n\n`);const clients=listeners.get(r.code)||new Set();clients.add({res,seat});listeners.set(r.code,clients);const heartbeat=setInterval(()=>{if(!res.destroyed)res.write(': heartbeat\n\n')},15000);req.on('close',()=>{clearInterval(heartbeat);for(const c of clients)if(c.res===res)clients.delete(c);if(!clients.size)listeners.delete(r.code)});return}
 if(req.method==='GET'&&url.pathname==='/api/art'){
  const universe=url.searchParams.get('universe')||'';
  const name=url.searchParams.get('name')||'';
