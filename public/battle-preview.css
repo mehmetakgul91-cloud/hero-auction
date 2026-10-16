@@ -61,3 +61,12 @@
 .battle-summary-stats>div{padding:11px 5px;background:#07192d99;border:1px solid #355679;border-radius:11px;display:flex;flex-direction:column;gap:5px}
 .battle-summary-stats small{font-size:10px;color:#9eb9d6}
 .battle-summary-stats strong{font-size:clamp(16px,3vw,22px);color:#fff}
+
+/* Distinct visual language for character abilities; existing comic artwork is reused. */
+.arena-hero.special-cast .arena-portrait{box-shadow:0 0 0 3px #f9cf62,0 0 25px 7px #f3a83b99;filter:saturate(1.35)}
+.arena-hero.healing-aura .arena-portrait{box-shadow:0 0 0 3px #64ffb0,0 0 25px 9px #20d88b99}
+.arena-hero.shield-aura .arena-portrait{box-shadow:0 0 0 3px #78dcff,0 0 25px 9px #3aa7ff99}
+.battle-projectile.effect-lightning{background:#dff9ff;box-shadow:0 0 9px 4px #68d9ff,0 0 22px 9px #4878ff}
+.battle-projectile.effect-magic{background:#f3c4ff;box-shadow:0 0 10px 4px #e36dff,0 0 24px 10px #7e47ec}
+.battle-projectile.effect-special{background:#ffe7a2;box-shadow:0 0 10px 5px #ffbe4c,0 0 24px 10px #ff6c32}
+@media(prefers-reduced-motion:reduce){.arena-hero.special-cast .arena-portrait,.arena-hero.healing-aura .arena-portrait,.arena-hero.shield-aura .arena-portrait{transition:none}}
