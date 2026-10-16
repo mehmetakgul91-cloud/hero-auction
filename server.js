@@ -159,7 +159,7 @@ function endGame(r){
  r.phase='finished';r.turn=null;r.deadline=null;r.topBid=0;r.topSeat=null;
  // Real-player five-card auctions must be decided by the authoritative 2.0 battle.
  // Unsupported rosters retain the classic scoring path until the adapter supports them.
- if(r.mode!=='bot'&&r.players.every(p=>p?.team?.length===5)){
+ if(r.players.every(p=>p?.team?.length===5)){
   try{prepareBattleTeams(auctionRoomToBattleState(r));r.battleSettlementPending=true;markRoom(r);return}
   catch(e){log(r,'2.0 savaş havuzu desteklenmiyor; klasik sonuç uygulanıyor.')}
  }
@@ -324,6 +324,10 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
  const matchKey=String(room.matchNumber||1)+':'+String(room.created);
  if(room.battleSync?.key!==matchKey)room.battleSync={key:matchKey,ready:[null,null],result:null};
  const sync=room.battleSync;
+ // Computer opponent uses an automatic, server-owned formation.
+ if(room.mode==='bot'&&!sync.ready[1]){
+  sync.ready[1]={positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:['tank','fighter','energy','energy','energy']};
+ }
  if(req.method==='POST'){
  if(sync.ready[seat])return send(409,{error:'Diziliş zaten onaylandı'});
  if(!validBattlePositions(body.positions)||!Array.isArray(body.lanes)||body.lanes.length!==5||body.lanes.some(l=>!['front','back'].includes(l)))return send(400,{error:'Geçersiz diziliş'});
