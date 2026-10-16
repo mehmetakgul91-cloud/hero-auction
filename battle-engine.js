@@ -34,6 +34,10 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10}=
   if(!Number.isInteger(maxRounds)||maxRounds<1||maxRounds>100)throw Error('Invalid round limit.');
   const random=seedRandom(seed);
   const teams=[cardsA,cardsB].map(cards=>cards.map((c,i)=>fighterFromCard(c,i)));
+  // Diminishing returns for stacked roles, rewarding a balanced composition.
+  for(const team of teams){const counts={tank:0,fighter:0,energy:0};for(const unit of team)counts[unit.role]++;
+    for(const unit of team){const count=counts[unit.role];const multiplier=[1,1,1,.90,.78,.66][count];unit.attack=Math.max(1,Math.round(unit.attack*multiplier));unit.defense=Math.max(1,Math.round(unit.defense*multiplier));unit.maxHp=Math.max(1,Math.round(unit.maxHp*multiplier));unit.hp=unit.maxHp;unit.compositionMultiplier=multiplier;}
+  }
   const log=[];
   // Passive effects are applied before the first round and each round's actions.
   for(const team of teams)for(const u of team){
@@ -70,7 +74,9 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10}=
       const guarded=!isFront(target)&&enemies.some(x=>x.hp>0&&isFront(x));
       const defense=skill?.effect==='pierce'?Math.floor(target.defense*.6):target.defense;
       const roleMultiplier=unit.role==='fighter'&&isFront(target)?1.08:unit.role==='energy'&&!isFront(unit)?1.12:1;
-      const raw=Math.max(1,Math.floor(unit.attack*multiplier*roleMultiplier*(guarded?.8:1)*100/(100+defense)*(critical?1.5:1)));
+      // Exposed all-ranged squads lose protection; mixed frontlines intercept fire.
+      const unguardedRanged=!isFront(target)&&!enemies.some(x=>x.hp>0&&isFront(x));
+      const raw=Math.max(1,Math.floor(unit.attack*multiplier*roleMultiplier*(guarded?.8:unguardedRanged?1.20:1)*100/(100+defense)*(critical?1.5:1)));
       const absorbed=Math.min(target.shield,raw);
       target.shield-=absorbed;
       const damage=Math.min(target.hp,raw-absorbed);
