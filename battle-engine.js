@@ -1,0 +1,68 @@
+// Hero Auction 2.0 - isolated, deterministic automatic battle prototype.
+// Not connected to live matchmaking or wallet payouts.
+import crypto from 'node:crypto';
+
+const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+const roles=['tank','fighter','energy','assassin','support'];
+function seedRandom(seed){
+  let n=crypto.createHash('sha256').update(String(seed)).digest().readUInt32BE(0);
+  return ()=>{n=(Math.imul(1664525,n)+1013904223)>>>0;return n/4294967296};
+}
+export function fighterFromCard(card,position=0){
+  const power=clamp(Math.round(Number(card.power)||50),1,100);
+  const role=card.role&&roles.includes(card.role)?card.role:roles[power%roles.length];
+  const mods={tank:[-12,22,30,-8],fighter:[6,7,8,0],energy:[15,-10,-12,2],assassin:[17,-14,-15,17],support:[-7,0,4,9]}[role];
+  const attack=clamp(30+Math.round(power*.65)+mods[0],10,120);
+  const defense=clamp(25+Math.round(power*.45)+mods[1],5,110);
+  const maxHp=clamp(95+power+mods[2],50,250);
+  const speed=clamp(25+Math.round(power*.5)+mods[3],10,110);
+  return {id:String(card.id||card.name),name:String(card.name||'Hero'),role,position,attack,defense,maxHp,hp:maxHp,speed,shield:0,kills:0,damage:0,healing:0};
+}
+function targetOf(enemies,attacker){
+  const alive=enemies.filter(x=>x.hp>0);
+  if(!alive.length)return null;
+  const pool=attacker.role==='assassin'?alive:alive.some(x=>x.position<3)?alive.filter(x=>x.position<3):alive;
+  return [...pool].sort((a,b)=>a.hp-b.hp||a.position-b.position||a.id.localeCompare(b.id))[0];
+}
+export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10}={}){
+  if(!Array.isArray(cardsA)||!Array.isArray(cardsB)||cardsA.length!==5||cardsB.length!==5)throw Error('Each team must contain exactly five cards.');
+  const random=seedRandom(seed);
+  const teams=[cardsA,cardsB].map(cards=>cards.map((c,i)=>fighterFromCard(c,i)));
+  const log=[];
+  for(let round=1;round<=maxRounds;round++){
+    const order=teams.flatMap((team,side)=>team.map(unit=>({unit,side})))
+      .sort((a,b)=>b.unit.speed-a.unit.speed||a.side-b.side||a.unit.position-b.unit.position);
+    for(const {unit,side} of order){
+      if(unit.hp<=0)continue;
+      const allies=teams[side],enemies=teams[1-side];
+      if(!enemies.some(x=>x.hp>0))break;
+      if(unit.role==='support'&&round%3===0){
+        const ally=[...allies].filter(x=>x.hp>0&&x.hp<x.maxHp).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
+        if(ally){const heal=Math.min(ally.maxHp-ally.hp,Math.round(unit.attack*.55));ally.hp+=heal;unit.healing+=heal;log.push({round,side,actor:unit.id,action:'heal',target:ally.id,value:heal});continue}
+      }
+      const target=targetOf(enemies,unit);
+      if(!target)break;
+      const special=round%3===0;
+      const multiplier=special?(unit.role==='energy'?1.45:1.25):1;
+      const critical=random()<.10;
+      const raw=Math.max(1,Math.floor(unit.attack*multiplier*100/(100+target.defense)*(critical?1.5:1)));
+      const absorbed=Math.min(target.shield,raw);
+      target.shield-=absorbed;
+      const damage=Math.min(target.hp,raw-absorbed);
+      target.hp-=damage;unit.damage+=damage;
+      if(target.hp===0)unit.kills++;
+      log.push({round,side,actor:unit.id,action:special?'special':'attack',target:target.id,value:damage,critical});
+      if(unit.role==='tank'&&special)unit.shield+=Math.round(unit.defense*.2);
+    }
+    if(teams.some(team=>team.every(x=>x.hp<=0)))break;
+  }
+  const hpRatio=teams.map(team=>team.reduce((n,x)=>n+x.hp/x.maxHp,0));
+  const damage=teams.map(team=>team.reduce((n,x)=>n+x.damage,0));
+  const survivors=teams.map(team=>team.filter(x=>x.hp>0).length);
+  let winner=null;
+  if(survivors[0]!==survivors[1]&&(survivors[0]===0||survivors[1]===0))winner=survivors[0]>survivors[1]?0:1;
+  else if(Math.abs(hpRatio[0]-hpRatio[1])>1e-9)winner=hpRatio[0]>hpRatio[1]?0:1;
+  else if(damage[0]!==damage[1])winner=damage[0]>damage[1]?0:1;
+  else if(survivors[0]!==survivors[1])winner=survivors[0]>survivors[1]?0:1;
+  return {version:1,seed:String(seed),winner,rounds:Math.max(0,...log.map(x=>x.round)),teams,damage,survivors,log};
+}
