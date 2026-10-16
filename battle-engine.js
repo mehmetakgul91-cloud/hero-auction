@@ -29,7 +29,7 @@ function targetOf(enemies,attacker){
   return [...pool].sort((a,b)=>a.hp-b.hp||a.position-b.position||a.id.localeCompare(b.id))[0];
 }
 export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10,remainingCredits=[0,0]}={}){
-  if(!Array.isArray(remainingCredits)||remainingCredits.length!==2||remainingCredits.some(v=>!Number.isSafeInteger(v)||v<0||v>10000))throw Error('Invalid auction remaining credits');
+  if(!Array.isArray(remainingCredits)||remainingCredits.length!==2||remainingCredits.some(v=>!Number.isSafeInteger(v)||v< -10000||v>10000))throw Error('Invalid auction remaining credits');
   if(!Array.isArray(cardsA)||!Array.isArray(cardsB)||cardsA.length!==5||cardsB.length!==5)throw Error('Each team must contain exactly five cards.');
   if(!Number.isInteger(maxRounds)||maxRounds<1||maxRounds>100)throw Error('Invalid round limit.');
   const random=seedRandom(seed);
@@ -53,7 +53,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10,r
   // The first eight unspent credits grant +1% each; subsequent credits +0.5% each.
   for(let side=0;side<2;side++){
     const credits=remainingCredits[side];
-    const creditMultiplier=1+Math.min(credits,8)*0.01+Math.max(0,credits-8)*0.005;
+    const creditMultiplier=credits<0?Math.max(0.01,1+credits*0.01):1+Math.min(credits,8)*0.01+Math.max(0,credits-8)*0.005;
     for(const u of teams[side]){
       u.auctionCreditMultiplier=creditMultiplier;
       u.attack=Math.round(u.attack*creditMultiplier);
