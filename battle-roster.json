@@ -1,0 +1,308 @@
+{
+  "version": 1,
+  "mode": "auto-battle",
+  "rosterSize": 50,
+  "description": "Initial 50-character Marvel/DC roster for Hero Auction 2.0. Existing card power remains authoritative; roles are battle-only.",
+  "characters": [
+    {
+      "id": "marvel:hulk",
+      "name": "Hulk",
+      "universe": "marvel",
+      "role": "tank"
+    },
+    {
+      "id": "marvel:juggernaut",
+      "name": "Juggernaut",
+      "universe": "marvel",
+      "role": "tank"
+    },
+    {
+      "id": "marvel:colossus",
+      "name": "Colossus",
+      "universe": "marvel",
+      "role": "tank"
+    },
+    {
+      "id": "marvel:the thing",
+      "name": "The Thing",
+      "universe": "marvel",
+      "role": "tank"
+    },
+    {
+      "id": "marvel:luke cage",
+      "name": "Luke Cage",
+      "universe": "marvel",
+      "role": "tank"
+    },
+    {
+      "id": "dc:doomsday",
+      "name": "Doomsday",
+      "universe": "dc",
+      "role": "tank"
+    },
+    {
+      "id": "dc:bane",
+      "name": "Bane",
+      "universe": "dc",
+      "role": "tank"
+    },
+    {
+      "id": "dc:solomon grundy",
+      "name": "Solomon Grundy",
+      "universe": "dc",
+      "role": "tank"
+    },
+    {
+      "id": "dc:killer croc",
+      "name": "Killer Croc",
+      "universe": "dc",
+      "role": "tank"
+    },
+    {
+      "id": "dc:metallo",
+      "name": "Metallo",
+      "universe": "dc",
+      "role": "tank"
+    },
+    {
+      "id": "marvel:thor",
+      "name": "Thor",
+      "universe": "marvel",
+      "role": "fighter"
+    },
+    {
+      "id": "marvel:captain america",
+      "name": "Captain America",
+      "universe": "marvel",
+      "role": "fighter"
+    },
+    {
+      "id": "marvel:wolverine",
+      "name": "Wolverine",
+      "universe": "marvel",
+      "role": "fighter"
+    },
+    {
+      "id": "marvel:black panther",
+      "name": "Black Panther",
+      "universe": "marvel",
+      "role": "fighter"
+    },
+    {
+      "id": "marvel:shang-chi",
+      "name": "Shang-Chi",
+      "universe": "marvel",
+      "role": "fighter"
+    },
+    {
+      "id": "marvel:sentry",
+      "name": "Sentry",
+      "universe": "marvel",
+      "role": "fighter"
+    },
+    {
+      "id": "marvel:hela",
+      "name": "Hela",
+      "universe": "marvel",
+      "role": "fighter"
+    },
+    {
+      "id": "marvel:namor",
+      "name": "Namor",
+      "universe": "marvel",
+      "role": "fighter"
+    },
+    {
+      "id": "dc:superman",
+      "name": "Superman",
+      "universe": "dc",
+      "role": "fighter"
+    },
+    {
+      "id": "dc:wonder woman",
+      "name": "Wonder Woman",
+      "universe": "dc",
+      "role": "fighter"
+    },
+    {
+      "id": "dc:aquaman",
+      "name": "Aquaman",
+      "universe": "dc",
+      "role": "fighter"
+    },
+    {
+      "id": "dc:shazam",
+      "name": "Shazam",
+      "universe": "dc",
+      "role": "fighter"
+    },
+    {
+      "id": "dc:black adam",
+      "name": "Black Adam",
+      "universe": "dc",
+      "role": "fighter"
+    },
+    {
+      "id": "dc:darkseid",
+      "name": "Darkseid",
+      "universe": "dc",
+      "role": "fighter"
+    },
+    {
+      "id": "dc:deathstroke",
+      "name": "Deathstroke",
+      "universe": "dc",
+      "role": "fighter"
+    },
+    {
+      "id": "marvel:scarlet witch",
+      "name": "Scarlet Witch",
+      "universe": "marvel",
+      "role": "energy"
+    },
+    {
+      "id": "marvel:doctor strange",
+      "name": "Doctor Strange",
+      "universe": "marvel",
+      "role": "energy"
+    },
+    {
+      "id": "marvel:captain marvel",
+      "name": "Captain Marvel",
+      "universe": "marvel",
+      "role": "energy"
+    },
+    {
+      "id": "marvel:silver surfer",
+      "name": "Silver Surfer",
+      "universe": "marvel",
+      "role": "energy"
+    },
+    {
+      "id": "marvel:magneto",
+      "name": "Magneto",
+      "universe": "marvel",
+      "role": "energy"
+    },
+    {
+      "id": "marvel:storm",
+      "name": "Storm",
+      "universe": "marvel",
+      "role": "energy"
+    },
+    {
+      "id": "dc:doctor fate",
+      "name": "Doctor Fate",
+      "universe": "dc",
+      "role": "energy"
+    },
+    {
+      "id": "dc:zatanna",
+      "name": "Zatanna",
+      "universe": "dc",
+      "role": "energy"
+    },
+    {
+      "id": "dc:green lantern",
+      "name": "Green Lantern",
+      "universe": "dc",
+      "role": "energy"
+    },
+    {
+      "id": "dc:raven",
+      "name": "Raven",
+      "universe": "dc",
+      "role": "energy"
+    },
+    {
+      "id": "marvel:spider-man",
+      "name": "Spider-Man",
+      "universe": "marvel",
+      "role": "assassin"
+    },
+    {
+      "id": "marvel:deadpool",
+      "name": "Deadpool",
+      "universe": "marvel",
+      "role": "assassin"
+    },
+    {
+      "id": "marvel:black widow",
+      "name": "Black Widow",
+      "universe": "marvel",
+      "role": "assassin"
+    },
+    {
+      "id": "marvel:elektra",
+      "name": "Elektra",
+      "universe": "marvel",
+      "role": "assassin"
+    },
+    {
+      "id": "marvel:quicksilver",
+      "name": "Quicksilver",
+      "universe": "marvel",
+      "role": "assassin"
+    },
+    {
+      "id": "dc:batman",
+      "name": "Batman",
+      "universe": "dc",
+      "role": "assassin"
+    },
+    {
+      "id": "dc:nightwing",
+      "name": "Nightwing",
+      "universe": "dc",
+      "role": "assassin"
+    },
+    {
+      "id": "dc:the flash",
+      "name": "The Flash",
+      "universe": "dc",
+      "role": "assassin"
+    },
+    {
+      "id": "marvel:iron man",
+      "name": "Iron Man",
+      "universe": "marvel",
+      "role": "support"
+    },
+    {
+      "id": "marvel:vision",
+      "name": "Vision",
+      "universe": "marvel",
+      "role": "support"
+    },
+    {
+      "id": "marvel:loki",
+      "name": "Loki",
+      "universe": "marvel",
+      "role": "support"
+    },
+    {
+      "id": "marvel:professor x",
+      "name": "Professor X",
+      "universe": "marvel",
+      "role": "support"
+    },
+    {
+      "id": "dc:cyborg",
+      "name": "Cyborg",
+      "universe": "dc",
+      "role": "support"
+    },
+    {
+      "id": "dc:martian manhunter",
+      "name": "Martian Manhunter",
+      "universe": "dc",
+      "role": "support"
+    },
+    {
+      "id": "dc:starfire",
+      "name": "Starfire",
+      "universe": "dc",
+      "role": "support"
+    }
+  ]
+}
