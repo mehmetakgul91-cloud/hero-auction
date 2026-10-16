@@ -22,3 +22,6 @@
 
 /* Two-second hover role power preview, no commitment until drop */
 .formation-card.previewing{border-color:#5effd2;box-shadow:0 0 15px #34f8bc55}.formation-card.previewing .formation-stats{color:#7fffd8;font-weight:800}.board-slot.circle-slot.hover-preview{border-color:#6effd4;border-style:solid;box-shadow:0 0 28px #2dfdc488,inset 0 0 24px #36eeb044}
+
+/* Smaller battlefield: preserve distinct role zones and touch targets */
+.battle-board{max-width:650px;margin:12px auto;padding:9px 10px;border-radius:14px}.board-label{margin:6px auto;padding:5px;font-size:10px;letter-spacing:1px}.board-row{gap:7px;margin-bottom:8px}.slot-wrap{max-width:128px;gap:4px;padding:4px}.slot-role{font-size:10px;min-height:18px}.board-slot.circle-slot{max-width:96px;min-height:0;padding:5px}.board-slot.circle-slot strong{font-size:11px}.board-slot.circle-slot.empty strong{font-size:25px}@media(max-width:600px){.battle-board{max-width:440px;padding:7px 5px}.board-row{gap:4px;margin-bottom:7px}.slot-wrap{max-width:105px;padding:3px}.slot-role{font-size:9px;min-height:25px}.board-slot.circle-slot{max-width:78px}.board-slot.circle-slot strong{font-size:10px}}
