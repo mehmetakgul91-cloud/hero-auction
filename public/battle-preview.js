@@ -21,7 +21,7 @@ const roleIcons={tank:'🛡️',fighter:'⚔️',energy:'⚡',assassin:'🗡️'
 const modifiers={tank:[-12,22,30,-8],fighter:[6,7,8,0],energy:[15,-10,-12,2],assassin:[17,-14,-15,17],support:[-7,0,4,9]};
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 function roleStats(power,role){const m=modifiers[role];return [clamp(30+Math.round(power*.65)+m[0],10,120),clamp(25+Math.round(power*.45)+m[1],5,110),clamp(95+power+m[2],50,250),clamp(25+Math.round(power*.5)+m[3],10,110)]}
-function renderRolePickers(){const root=$('role-pickers');root.replaceChildren();demoA.forEach(([name,,power],i)=>{
+function renderRolePickers(){const root=$('role-pickers');root.replaceChildren();demoA.forEach(([name,,power],i)=>{if(positions.includes(i))return;
  const card=document.createElement('article');card.className='formation-card';
  const heading=document.createElement('div');heading.className='formation-hero';heading.textContent=name;
  const badge=document.createElement('div');badge.className='formation-role';
