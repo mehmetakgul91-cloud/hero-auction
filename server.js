@@ -131,7 +131,42 @@ function advanceRound(r){
   endGame(r);
   log(r,'Oyun bitti. Toplam puanlar açıklandı.');
 }
-function endGame(r){if(r.phase==='finished')return;r.phase="finished";r.turn=null;r.deadline=null;r.topBid=0;r.topSeat=null;const scores=r.players.map(p=>p.team.reduce((a,c)=>a+c.power,0)+p.credits*10);recordMatch(r,scores);if(scores[0]!==scores[1]){const winner=scores[0]>scores[1]?0:1;r.series[winner]++;const accountId=r.players[winner].accountId;if(accountId){if(r.entryPaid&&r.mode!=='bot'){r.goldAward={id:r.code+':'+(r.matchNumber||1)+':'+(r.created||0),accountId,amount:100};queueGoldAward(r);}if(r.entryPaid&&r.mode!=='bot')log(r,'🏆 Kazanan oyuncu 100 altın kazandı!')}}else if(r.entryPaid&&r.mode!=='bot'){for(let i=0;i<2;i++){const accountId=r.players[i].accountId;if(accountId){const a={id:r.code+':refund:'+i+':'+(r.matchNumber||1)+':'+(r.created||0),accountId,amount:50};pendingGold.set(a.id,a);(r.goldRefunds??=[]).push(a)}}}}
+function settleFinishedMatch(r,winner,scores){
+ if(r.matchSettled)return;
+ if(r.phase!=='finished')throw Error('Match must finish before settlement');
+ if(winner!==null&&winner!==0&&winner!==1)throw Error('Invalid match winner');
+ r.matchSettled=true;
+ const rankedScores=winner===null?[0,0]:winner===0?[1,0]:[0,1];
+ recordMatch(r,rankedScores);
+ if(winner!==null){
+  r.series[winner]++;
+  const accountId=r.players[winner].accountId;
+  if(accountId&&r.entryPaid&&r.mode!=='bot'){
+   r.goldAward={id:r.code+':'+(r.matchNumber||1)+':'+(r.created||0),accountId,amount:100};queueGoldAward(r);
+   log(r,'🏆 Savaşı kazanan oyuncu 100 altın kazandı!');
+  }
+ }else if(r.entryPaid&&r.mode!=='bot'){
+  for(let i=0;i<2;i++){
+   const accountId=r.players[i].accountId;
+   if(accountId){const award={id:r.code+':refund:'+i+':'+(r.matchNumber||1)+':'+(r.created||0),accountId,amount:50};pendingGold.set(award.id,award);(r.goldRefunds??=[]).push(award)}
+  }
+ }
+ markRoom(r);
+}
+function endGame(r){
+ if(r.phase==='finished')return;
+ r.phase='finished';r.turn=null;r.deadline=null;r.topBid=0;r.topSeat=null;
+ // Real-player five-card auctions must be decided by the authoritative 2.0 battle.
+ // Unsupported rosters retain the classic scoring path until the adapter supports them.
+ if(r.mode!=='bot'&&r.players.every(p=>p?.team?.length===5)){
+  try{prepareBattleTeams(auctionRoomToBattleState(r));r.battleSettlementPending=true;markRoom(r);return}
+  catch(e){log(r,'2.0 savaş havuzu desteklenmiyor; klasik sonuç uygulanıyor.')}
+ }
+ const scores=r.players.map(p=>p.team.reduce((sum,c)=>sum+c.power,0)+p.credits*10);
+ const winner=scores[0]===scores[1]?null:scores[0]>scores[1]?0:1;
+ settleFinishedMatch(r,winner,scores);
+}
+
 function finishAuction(r){
   const winner=r.topSeat,price=r.topBid,card=r.cards[r.round];
   if(winner===null||price<1)error('Kazanan teklif yok.');
@@ -158,7 +193,7 @@ if(url==='/api/wallet'){return{gold:await goldBalance(readLogin(b.authToken).sub
 if(url==='/api/auth/google'){const credential=String(b.credential||'');if(credential.length<100||credential.length>8000)error('Geçersiz Google kimliği.');const response=await fetch('https://oauth2.googleapis.com/tokeninfo?id_token='+encodeURIComponent(credential),{signal:AbortSignal.timeout(8000)});if(!response.ok)error('Google kimliği doğrulanamadı.',401);const claims=await response.json();if(claims.aud!==GOOGLE_CLIENT_ID||!['accounts.google.com','https://accounts.google.com'].includes(claims.iss)||Number(claims.exp)*1000<Date.now()||!claims.sub||claims.email_verified!=='true')error('Google kimliği doğrulanamadı.',401);const user={sub:claims.sub,name:String(claims.name||claims.given_name||'Oyuncu').slice(0,24)};return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}
 if(url==='/api/create'){const name=chosenName(b,'Oyuncu 1');const universe=['pokemon','marvel','dc','lotr','mixed'].includes(b.universe)?b.universe:'mixed';const pool=shuffle([...catalogue.values()].filter(x=>universe==='mixed'||x.universe===universe));if(pool.length<10)error('Bu evrende yeterli karakter yok.');const cards=pool.slice(0,10).map(x=>({...x,power:stablePower(x.id)}));let id;do{id=code()}while(rooms.has(id));const t=token();const accountId=readLogin(b.authToken).sub;const r={code:id,universe,cards,round:0,phase:'waiting',turn:0,topBid:0,topSeat:null,players:[{name,token:t,accountId,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],deadline:null,mode:'friend'};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/join'){const r=rooms.get(String(b.code||'').toUpperCase());if(!r)error('Oda bulunamadı.',404);if(r.players[1])error('Oda dolu.');await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name:chosenName(b,'Oyuncu 2'),token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;log(r,`Oyun başladı. 1. kart için açılış: ${r.players[0].name}`);publish(r);return{token:t,room:publicRoom(r,1)}}
-if(url==='/api/rematch'){const{r,seat}=authorize(b);if(r.mode!=='bot'&&r.players.every(p=>p?.team?.length===5)&&!r.battleCompleted?.[seat])error('Önce 2.0 savaşını tamamlamalısın.');if(r.phase!=='finished')error('Maç henüz bitmedi.');r.rematch[seat]=true;if(r.mode==='bot')r.rematch[1]=true;if(r.rematch.every(Boolean)){if(r.mode!=='bot'){try{await chargeEntry(r.players.map(p=>p.accountId),r.code);}catch(e){r.rematch=[false,false];throw e}}r.entryPaid=r.mode!=='bot';r.goldRefunds=null;r.matchNumber=(r.matchNumber||1)+1;r.goldAward=null;r.rankChange=null;r.rankBefore=null;r.cards=newCards(r.universe);r.round=0;r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.topBid=0;r.topSeat=null;r.history=[];r.openingPassSeat=null;r.rematch=[false,false];r.battleCompleted=[false,false];r.created=Date.now();r.lastActivity=Date.now();for(const p of r.players){p.credits=20;p.team=[];}log(r,'Rövanş başladı!');}publish(r);return{room:publicRoom(r,seat)}}
+if(url==='/api/rematch'){const{r,seat}=authorize(b);if(r.mode!=='bot'&&r.players.every(p=>p?.team?.length===5)&&!r.battleCompleted?.[seat])error('Önce 2.0 savaşını tamamlamalısın.');if(r.phase!=='finished')error('Maç henüz bitmedi.');r.rematch[seat]=true;if(r.mode==='bot')r.rematch[1]=true;if(r.rematch.every(Boolean)){if(r.mode!=='bot'){try{await chargeEntry(r.players.map(p=>p.accountId),r.code);}catch(e){r.rematch=[false,false];throw e}}r.entryPaid=r.mode!=='bot';r.goldRefunds=null;r.matchNumber=(r.matchNumber||1)+1;r.goldAward=null;r.rankChange=null;r.rankBefore=null;r.cards=newCards(r.universe);r.round=0;r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.topBid=0;r.topSeat=null;r.history=[];r.openingPassSeat=null;r.rematch=[false,false];r.battleCompleted=[false,false];r.matchSettled=false;r.battleSettlementPending=false;r.battleSync=null;r.created=Date.now();r.lastActivity=Date.now();for(const p of r.players){p.credits=20;p.team=[];}log(r,'Rövanş başladı!');}publish(r);return{room:publicRoom(r,seat)}}
 if(url==='/api/bot'){const universe=['pokemon','marvel','dc','lotr','mixed'].includes(b.universe)?b.universe:'mixed';const name=chosenName(b,'Oyuncu');let id;do{id=code()}while(rooms.has(id));const t=token();const r={entryPaid:false,code:id,universe,cards:newCards(universe),round:0,phase:'auction',turn:0,deadline:Date.now()+20000,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},{name:'Bilgisayar',token:token(),credits:20,team:[]}],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'bot'};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/match'){const universe=['pokemon','marvel','dc','lotr','mixed'].includes(b.universe)?b.universe:'mixed';const name=chosenName(b,'Oyuncu');for(const [key,item] of waiting){if(item.universe!==universe||Date.now()-item.created>60000)continue;const r=rooms.get(item.code);if(!r||r.players[1]){waiting.delete(key);continue;}await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.mode='random';waiting.delete(key);publish(r);return{token:t,room:publicRoom(r,1)}}let id;do{id=code()}while(rooms.has(id));const t=token();const r={code:id,universe,cards:newCards(universe),round:0,phase:'matching',turn:0,deadline:null,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'random'};rooms.set(id,r);markRoom(r);waiting.set(id,{code:id,universe,created:Date.now()});return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/chat'){const{r,seat}=authorize(b);if(r.mode==='bot')error('Sohbet yalnızca gerçek oyuncularla kullanılabilir.');const message=String(b.message||'').trim().replace(/[\u0000-\u001f\u007f]/g,' ');if(!message||message.length>240)error('Mesaj 1–240 karakter olmalı.');if(Date.now()-(r.lastChatAt?.[seat]||0)<1000)error('Yeni mesaj için bir saniye bekle.');r.lastChatAt??=[0,0];r.lastChatAt[seat]=Date.now();r.chat??=[];r.chat.push({seat,name:r.players[seat].name,message,time:Date.now()});if(r.chat.length>60)r.chat.shift();r.lastActivity=Date.now();publish(r);return{room:publicRoom(r,seat)}}
@@ -297,6 +332,7 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
  const ordered=teams.map((team,i)=>sync.ready[i].positions.map((index,slot)=>({...team[index],lane:sync.ready[i].lanes[slot],role:sync.ready[i].roles[slot]})));
  const result=simulateRosterBattle(ordered[0],ordered[1],{seed:'auction-battle-'+room.code+'-'+matchKey,remainingCredits:[state.remainingCreditsA,state.remainingCreditsB]});
  sync.result={winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log};
+ if(room.battleSettlementPending&&!room.matchSettled){settleFinishedMatch(room,result.winner);room.battleSettlementPending=false;}
  }markRoom(room);
  }
  return send(200,{ready:sync.ready.map(Boolean),started:Boolean(sync.result),result:sync.result?{...sync.result,winner:sync.result.winner===null?null:sync.result.winner===seat?0:1,teams:seat===0?sync.result.teams:[...sync.result.teams].reverse(),log:seat===0?sync.result.log:sync.result.log.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side}))}:null});
