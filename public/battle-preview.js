@@ -154,6 +154,7 @@ if(auctionCode&&auctionToken){void (async()=>{try{
  const response=await fetch('/api/battle-auction-team?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});
  const data=await response.json();if(!response.ok)throw Error(data.error||'Açık artırma verisi alınamadı');
  const own=data.teams[data.seat],rival=data.teams[1-data.seat];
+ if(!Array.isArray(own)||own.length!==5||!Array.isArray(rival)||rival.length!==5)throw Error('Her oyuncunun beş kahramanı olmalı');
  demoA=own.map(c=>[c.name,'fighter',c.power,c.universe]);demoB=rival.map(c=>[c.name,'fighter',c.power,c.universe]);
  previewCredits=data.credits[data.seat];assignedRoles=demoA.map(()=> 'fighter');heroArtCache.clear();
  $('battle-lobby-status').textContent='Açık artırma kartların yüklendi · Kalan kredi: '+previewCredits+' · Bonus: %'+(creditBonus(previewCredits)*100).toFixed(1);
