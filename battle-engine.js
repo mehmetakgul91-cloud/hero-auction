@@ -106,13 +106,13 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10,r
       const damage=Math.min(target.hp,raw-absorbed);
       target.hp-=damage;unit.damage+=damage;
       if(target.hp===0)unit.kills++;
-      if(skill?.effect==='drain'||skill?.effect==='heal'){const healed=Math.min(unit.maxHp-unit.hp,Math.floor(damage*.35));unit.hp+=healed;unit.healing+=healed;}
-      if(skill?.effect==='shield')unit.shield+=Math.round(unit.defense*.4);
+      if(skill?.effect==='drain'||skill?.effect==='heal'){const healed=Math.min(unit.maxHp-unit.hp,Math.floor(damage*.35));unit.hp+=healed;unit.healing+=healed;if(healed)log.push({round,side,actor:unit.id,action:'heal',target:unit.id,value:healed});}
+      if(skill?.effect==='shield'){const amount=Math.round(unit.defense*.4);unit.shield+=amount;log.push({round,side,actor:unit.id,action:'shield',target:unit.id,value:amount});}
       // Tanks reinforce their whole front line during their special turns.
       if(unit.role==='tank'&&special)for(const ally of allies.filter(x=>x.hp>0&&isFront(x)))ally.shield+=Math.max(1,Math.round(unit.defense*.16));
-      if(skill?.effect==='sunder')target.defense=Math.max(5,Math.floor(target.defense*.85));
-      if(skill?.effect==='weaken')target.attack=Math.max(5,Math.floor(target.attack*.9));
-      if(skill?.effect==='haste')unit.speed=Math.min(150,unit.speed+8);
+      if(skill?.effect==='sunder'){target.defense=Math.max(5,Math.floor(target.defense*.85));log.push({round,side,actor:unit.id,action:'armor-break',target:target.id,value:0});}
+      if(skill?.effect==='weaken'){target.attack=Math.max(5,Math.floor(target.attack*.9));log.push({round,side,actor:unit.id,action:'weaken',target:target.id,value:0});}
+      if(skill?.effect==='haste'){unit.speed=Math.min(150,unit.speed+8);log.push({round,side,actor:unit.id,action:'haste',target:unit.id,value:8});}
       if(skill?.effect==='execute'&&target.hp>0&&target.hp/target.maxHp<.12){unit.damage+=target.hp;target.hp=0;unit.kills++;}
       if(skill?.effect==='splash'||unit.role==='energy'&&special)for(const other of enemies.filter(x=>x!==target&&x.hp>0)){const extra=Math.min(other.hp,Math.max(1,Math.floor(damage*(unit.role==='energy'?.30:.25))));other.hp-=extra;unit.damage+=extra;if(other.hp===0)unit.kills++;log.push({round,side,actor:unit.id,action:'splash',target:other.id,value:extra});}
       if(unit.passive?.effect==='thorns'&&unit.hp>0)unit.shield+=Math.floor(unit.defense*unit.passive.value);
