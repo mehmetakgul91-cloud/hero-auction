@@ -268,7 +268,17 @@ const battleIdsB=['dc:superman','dc:wonder woman','dc:doomsday','dc:the flash','
 function battleSessionView(session,token){const seat=session.players.findIndex(p=>p?.token===token);if(seat<0)return null;return {code:session.code,seat,ready:session.players.map(p=>Boolean(p?.ready)),joined:session.players.map(Boolean),started:Boolean(session.result),result:session.result,created:session.created};}
 function battleSessionResult(session){const cards=(ids,formation)=>formation.map((index,slot)=>({id:ids[index],power:Math.max(1,Math.min(100,Number(cardDetails[ids[index]]?.power)||70)),lane:session.players[ids===battleIdsA?0:1].lanes?.[slot]||(slot<2?'front':'back'),role:session.players[ids===battleIdsA?0:1].roles?.[slot]||((slot<2)?'tank':'energy')}));const a=cards(battleIdsA,session.players[0].positions),b=cards(battleIdsB,session.players[1].positions);const result=simulateRosterBattle(a,b,{seed:'battle-room-'+session.code+'-'+session.created});return {winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log};}
 function validBattlePositions(v){return Array.isArray(v)&&v.length===5&&new Set(v).size===5&&v.every(x=>Number.isInteger(x)&&x>=0&&x<5)}
-const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data))};try{const url=new URL(req.url,'http://localhost');if(req.method==='GET'&&url.pathname==='/api/battle-auction-team'){
+const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data))};try{const url=new URL(req.url,'http://localhost');if(req.method==='POST'&&url.pathname==='/api/battle-auction-preview'){
+ let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>4000)return send(413,{error:'İstek çok büyük'})}
+ let body;try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz JSON'})}
+ const room=rooms.get(String(body?.code||'').toUpperCase());const seat=room?.players?.findIndex(p=>p?.token===body?.token)??-1;
+ if(!room||seat<0)return send(403,{error:'Yetkisiz oda'});
+ if(room.phase!=='finished')return send(409,{error:'Açık artırma tamamlanmadı'});
+ if(!validBattlePositions(body.positions)||!Array.isArray(body.lanes)||body.lanes.length!==5||body.lanes.some(l=>!['front','back'].includes(l)))return send(400,{error:'Geçersiz diziliş'});
+ if(!Array.isArray(body.roles)||body.roles.length!==5||body.roles.some((v,i)=>body.lanes[i]==='back'?v!=='energy':!['tank','fighter'].includes(v)))return send(400,{error:'Geçersiz roller'});
+ try{const state=auctionRoomToBattleState(room),teams=prepareBattleTeams(state);const own=body.positions.map((index,i)=>({...teams[seat][index],lane:body.lanes[i],role:body.roles[i]}));const other=teams[1-seat].map((card,i)=>({...card,lane:i<2?'front':'back',role:i<2?'fighter':'energy'}));const credits=seat===0?[state.remainingCreditsA,state.remainingCreditsB]:[state.remainingCreditsB,state.remainingCreditsA];const result=simulateRosterBattle(own,other,{seed:'auction-preview-'+room.code+'-'+(room.matchNumber||1),remainingCredits:credits});return send(200,{winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log,remainingCredits:credits,preview:true})}catch(e){return send(422,{error:e.message})}
+}
+if(req.method==='GET'&&url.pathname==='/api/battle-auction-team'){
  const room=rooms.get(String(url.searchParams.get('code')||'').toUpperCase());
  const seat=room?.players?.findIndex(p=>p?.token===url.searchParams.get('token'))??-1;
  if(!room||seat<0)return send(403,{error:'Oda veya oyuncu yetkisi geçersiz.'});
