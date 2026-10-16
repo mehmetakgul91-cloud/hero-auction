@@ -67,7 +67,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10}=
       const critical=random()<.10;
       // Tanks shield their allies by holding the frontline. Rear units take reduced
       // damage until their front line falls, except when assassins infiltrate.
-      const guarded=!isFront(target)&&enemies.some(isFront)&&unit.role!=='assassin';
+      const guarded=!isFront(target)&&enemies.some(x=>x.hp>0&&isFront(x))&&unit.role!=='assassin';
       const defense=skill?.effect==='pierce'?Math.floor(target.defense*.6):target.defense;
       const roleMultiplier=unit.role==='fighter'&&isFront(target)?1.08:unit.role==='assassin'&&!isFront(target)?1.18:1;
       const raw=Math.max(1,Math.floor(unit.attack*multiplier*roleMultiplier*(guarded?.8:1)*100/(100+defense)*(critical?1.5:1)));
