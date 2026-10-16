@@ -113,6 +113,18 @@ function advanceRound(r){
   r.deadline=null;
   // A player without credits cannot block the next opening bid.
   while(r.round<10){
+    if(r.mode==='bot'){
+      const open=r.players.map((p,i)=>p.team.length<5?i:-1).filter(i=>i>=0);
+      if(!open.length)break;
+      const fundedOpen=open.filter(i=>r.players[i].credits>0);
+      if(open.length===1||fundedOpen.length===0){
+        const seat=open.length===1?open[0]:open.reduce((a,b)=>r.players[a].team.length<=r.players[b].team.length?a:b);
+        const cost=r.players[seat].credits>0?1:0;
+        r.players[seat].credits-=cost;r.players[seat].team.push({...r.cards[r.round],cost});
+        log(r,`${r.players[seat].name} ${r.cards[r.round].name} karakterini takımını tamamlamak için aldı.`);
+        r.round++;continue;
+      }
+    }
     const funded=r.players.map((p,i)=>p.credits>0?i:-1).filter(i=>i>=0);
     if(funded.length===0){endGame(r);log(r,'Krediler tükendi. Oyun sona erdi.');return;}
     if(funded.length===1){
@@ -171,6 +183,7 @@ function endGame(r){
 function finishAuction(r){
   const winner=r.topSeat,price=r.topBid,card=r.cards[r.round];
   if(winner===null||price<1)error('Kazanan teklif yok.');
+  if(r.mode==='bot'&&r.players[winner].team.length>=5)error('Takımında zaten 5 kahraman var.');
   r.players[winner].credits-=price;
   r.players[winner].team.push({...card,cost:price});
   log(r,`${r.players[winner].name} ${card.name} karakterini ${price} krediye kazandı.`);
@@ -199,8 +212,12 @@ if(url==='/api/bot'){const universe=['marvel','dc','mixed'].includes(b.universe)
 if(url==='/api/match'){const universe=['marvel','dc','mixed'].includes(b.universe)?b.universe:'mixed';const name=chosenName(b,'Oyuncu');for(const [key,item] of waiting){if(item.universe!==universe||Date.now()-item.created>60000)continue;const r=rooms.get(item.code);if(!r||r.players[1]){waiting.delete(key);continue;}await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.mode='random';waiting.delete(key);publish(r);return{token:t,room:publicRoom(r,1)}}let id;do{id=code()}while(rooms.has(id));const t=token();const r={code:id,universe,cards:newCards(universe),round:0,phase:'matching',turn:0,deadline:null,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'random'};rooms.set(id,r);markRoom(r);waiting.set(id,{code:id,universe,created:Date.now()});return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/chat'){const{r,seat}=authorize(b);if(r.mode==='bot')error('Sohbet yalnızca gerçek oyuncularla kullanılabilir.');const message=String(b.message||'').trim().replace(/[\u0000-\u001f\u007f]/g,' ');if(!message||message.length>240)error('Mesaj 1–240 karakter olmalı.');if(Date.now()-(r.lastChatAt?.[seat]||0)<1000)error('Yeni mesaj için bir saniye bekle.');r.lastChatAt??=[0,0];r.lastChatAt[seat]=Date.now();r.chat??=[];r.chat.push({seat,name:r.players[seat].name,message,time:Date.now()});if(r.chat.length>60)r.chat.shift();r.lastActivity=Date.now();publish(r);return{room:publicRoom(r,seat)}}
 if(url==='/api/state'){const{r,seat}=authorize(b);r.lastActivity=Date.now();return{room:publicRoom(r,seat)}}
-if(url==='/api/bid'){const{r,seat}=authorize(b);if(r.phase!=='auction')error('İhale aktif değil.');if(r.turn!==seat)error('Teklif sırası sende değil.');const amount=Number(b.amount);if(!Number.isInteger(amount)||amount<=r.topBid||amount>r.players[seat].credits)error('Teklif tutarı geçersiz.');r.topBid=amount;r.topSeat=seat;r.openingPassSeat=null;log(r,`${r.players[seat].name} ${amount} kredi teklif etti.`);const other=1-seat;if(r.players[other].credits<=amount){finishAuction(r);}else{r.turn=other;r.deadline=Date.now()+20000;}publish(r);return{room:publicRoom(r,seat)}}
-if(url==='/api/pass'){const{r,seat}=authorize(b);if(r.phase!=='auction'||r.turn!==seat)error('Şu an çekilemezsin.');if(r.topSeat===null){if(r.openingPassSeat===1-seat){log(r,'İki oyuncu da pas geçti. Kart atlandı.');r.round++;advanceRound(r);}else{r.openingPassSeat=seat;r.turn=1-seat;r.deadline=Date.now()+20000;log(r,r.players[seat].name+' pas geçti.');}}else finishAuction(r);publish(r);return{room:publicRoom(r,seat)}}
+if(url==='/api/bid'){const{r,seat}=authorize(b);if(r.phase!=='auction')error('İhale aktif değil.');if(r.turn!==seat)error('Teklif sırası sende değil.');const amount=Number(b.amount);if(!Number.isInteger(amount)||amount<=r.topBid||amount>r.players[seat].credits)error('Teklif tutarı geçersiz.');if(r.mode==='bot'&&r.players[seat].team.length>=5)error('Takımın tamamlandı.');r.topBid=amount;r.topSeat=seat;r.openingPassSeat=null;log(r,`${r.players[seat].name} ${amount} kredi teklif etti.`);const other=1-seat;if(r.players[other].credits<=amount){finishAuction(r);}else{r.turn=other;r.deadline=Date.now()+20000;}publish(r);return{room:publicRoom(r,seat)}}
+if(url==='/api/pass'){const{r,seat}=authorize(b);if(r.phase!=='auction'||r.turn!==seat)error('Şu an çekilemezsin.');if(r.topSeat===null){if(r.openingPassSeat===1-seat){if(r.mode==='bot'){
+ const open=r.players.map((p,i)=>p.team.length<5?i:-1).filter(i=>i>=0);
+ const chosen=open.reduce((best,i)=>best<0||r.players[i].team.length<r.players[best].team.length?i:best,-1);
+ if(chosen>=0){r.players[chosen].team.push({...r.cards[r.round],cost:0});log(r,`${r.players[chosen].name} ${r.cards[r.round].name} karakterini ücretsiz aldı.`)}
+ }else log(r,'İki oyuncu da pas geçti. Kart atlandı.');r.round++;advanceRound(r);}else{r.openingPassSeat=seat;r.turn=1-seat;r.deadline=Date.now()+20000;log(r,r.players[seat].name+' pas geçti.');}}else finishAuction(r);publish(r);return{room:publicRoom(r,seat)}}
 error('Bilinmeyen işlem.',404)}
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml'};
 // Public encyclopedia thumbnails and Turkish character summaries. No image is fabricated.
