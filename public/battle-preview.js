@@ -6,8 +6,11 @@ const roleNames={tank:'TANK',fighter:'SAVAŞÇI',energy:'ENERJİ',assassin:'SUİ
 let states=[],events=[],cursor=0,timer=null;
 const roleOptions=['tank','fighter','energy','assassin','support'];
 const assignedRoles=demoA.map(x=>x[1]);
+const positions=[0,1,2,3,4];let selectedHero=0;
+function renderBoard(){for(const [container,indices] of [['front-slots',[0,1,2]],['back-slots',[3,4]]]){const root=$(container);root.replaceChildren();for(const slot of indices){const heroIndex=positions[slot];const btn=document.createElement('button');btn.type='button';btn.className='board-slot'+(selectedHero===heroIndex?' selected':'');btn.disabled=prepDone;btn.innerHTML='<span class="slot-number">YUVA '+(slot+1)+'</span><strong>'+demoA[heroIndex][0]+'</strong><small>'+roleIcons[assignedRoles[heroIndex]]+' '+roleNames[assignedRoles[heroIndex]]+'</small>';btn.onclick=()=>{const other=positions.indexOf(selectedHero);[positions[slot],positions[other]]=[positions[other],positions[slot]];renderBoard()};root.append(btn)}}}
+
 let prepTimer=null,prepDeadline=0,prepDone=false;
-function lockFormation(){if(prepDone)return;prepDone=true;if(prepTimer!==null){clearInterval(prepTimer);prepTimer=null}document.querySelectorAll('.formation-choices button').forEach(b=>b.disabled=true);$('apply-roles').disabled=true;$('apply-roles').textContent='✓ HAZIR';$('ready-a').textContent='🔵 Sen: Hazır';$('prep-note').textContent='İki taraf hazır. Savaş başlıyor!';stop();$('events').replaceChildren();$('play').textContent='▶ SAVAŞI OYNAT';void build().then(()=>{if(events.length)$('play').click()})}
+function lockFormation(){if(prepDone)return;prepDone=true;if(prepTimer!==null){clearInterval(prepTimer);prepTimer=null}document.querySelectorAll('.formation-choices button,.board-slot,.formation-select').forEach(b=>b.disabled=true);$('apply-roles').disabled=true;$('apply-roles').textContent='✓ HAZIR';$('ready-a').textContent='🔵 Sen: Hazır';$('prep-note').textContent='İki taraf hazır. Savaş başlıyor!';stop();$('events').replaceChildren();$('play').textContent='▶ SAVAŞI OYNAT';void build().then(()=>{if(events.length)$('play').click()})}
 function startPreparation(){if(prepTimer!==null)clearInterval(prepTimer);prepDone=false;prepDeadline=Date.now()+30000;const tick=()=>{const remaining=Math.max(0,Math.ceil((prepDeadline-Date.now())/1000));$('prep-clock').textContent='00:'+String(remaining).padStart(2,'0');if(!remaining)lockFormation()};tick();prepTimer=setInterval(tick,200)}
 const roleIcons={tank:'🛡️',fighter:'⚔️',energy:'⚡',assassin:'🗡️',support:'💚'};
 const modifiers={tank:[-12,22,30,-8],fighter:[6,7,8,0],energy:[15,-10,-12,2],assassin:[17,-14,-15,17],support:[-7,0,4,9]};
@@ -20,11 +23,11 @@ function renderRolePickers(){const root=$('role-pickers');root.replaceChildren()
  const stats=document.createElement('div');stats.className='formation-stats';
  const choices=document.createElement('div');choices.className='formation-choices';choices.setAttribute('role','group');choices.setAttribute('aria-label',name+' için rol seçimi');
  function update(){const role=assignedRoles[i],v=roleStats(power,role);badge.textContent=roleIcons[role]+' '+roleNames[role];stats.textContent='❤️ '+v[2]+'   ⚔ '+v[0]+'   🛡 '+v[1]+'   ⚡ '+v[3];for(const b of choices.children){b.classList.toggle('selected',b.dataset.role===role);b.setAttribute('aria-pressed',String(b.dataset.role===role))}}
- for(const role of roleOptions){const btn=document.createElement('button');btn.type='button';btn.dataset.role=role;btn.textContent=roleIcons[role]+' '+roleNames[role];btn.onclick=()=>{assignedRoles[i]=role;update();$('apply-roles').textContent='✓ HAZIRIM'};choices.append(btn)}
- card.append(heading,badge,stats,choices);root.append(card);update();
+ for(const role of roleOptions){const btn=document.createElement('button');btn.type='button';btn.dataset.role=role;btn.textContent=roleIcons[role]+' '+roleNames[role];btn.onclick=()=>{assignedRoles[i]=role;update();renderBoard();$('apply-roles').textContent='✓ HAZIRIM'};choices.append(btn)}
+ const pick=document.createElement('button');pick.className='formation-select';pick.type='button';pick.textContent='📍 BU KAHRAMANI YERLEŞTİR';pick.onclick=()=>{selectedHero=i;renderBoard()};card.append(heading,badge,stats,choices,pick);root.append(card);update();
  })}
 $('apply-roles').onclick=lockFormation;
-renderRolePickers();startPreparation();
+renderRolePickers();renderBoard();startPreparation();
 const motion=()=> $('motion').checked&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const duration=()=>Number($('speed').value);
 function animateMove(e){
@@ -46,7 +49,7 @@ async function build(){
  stop();cursor=0;events=[];$('next').disabled=true;$('play').disabled=true;
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
  try{
-  const response=await fetch('/api/battle-preview?roles='+encodeURIComponent(assignedRoles.join(',')),{cache:'no-store'});
+  const response=await fetch('/api/battle-preview?roles='+encodeURIComponent(positions.map(i=>assignedRoles[i]).join(','))+'&positions='+encodeURIComponent(positions.join(',')),{cache:'no-store'});
   if(!response.ok)throw Error('Savaş verisi alınamadı ('+response.status+')');
   const result=await response.json();
   states=result.teams.map(team=>team.map(u=>({...u,hp:u.maxHp,shield:0})));
