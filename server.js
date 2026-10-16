@@ -275,6 +275,7 @@ const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.w
  if(!room||seat<0)return send(403,{error:'Yetkisiz'});
  if(room.phase!=='finished')return send(409,{error:'Açık artırma bitmedi'});
  try{prepareBattleTeams(auctionRoomToBattleState(room))}catch(e){return send(422,{error:e.message})}
+ if(!room.battleSync?.result)return send(409,{error:'Savaş henüz başlamadı'});
  room.battleCompleted??=[false,false];room.battleCompleted[seat]=true;markRoom(room);return send(200,{ok:true,completed:room.battleCompleted});
 }
 if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.method==='GET')){
