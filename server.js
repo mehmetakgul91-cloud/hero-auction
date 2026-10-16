@@ -277,15 +277,29 @@ const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.w
  try{prepareBattleTeams(auctionRoomToBattleState(room))}catch(e){return send(422,{error:e.message})}
  room.battleCompleted??=[false,false];room.battleCompleted[seat]=true;markRoom(room);return send(200,{ok:true,completed:room.battleCompleted});
 }
-if(req.method==='POST'&&url.pathname==='/api/battle-auction-preview'){
- let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>4000)return send(413,{error:'İstek çok büyük'})}
- let body;try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz JSON'})}
+if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.method==='GET')){
+ let body={};if(req.method==='POST'){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>4000)return send(413,{error:'İstek çok büyük'})}try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz JSON'})}}
+ else body={code:url.searchParams.get('code'),token:url.searchParams.get('token')};
  const room=rooms.get(String(body?.code||'').toUpperCase());const seat=room?.players?.findIndex(p=>p?.token===body?.token)??-1;
  if(!room||seat<0)return send(403,{error:'Yetkisiz oda'});
  if(room.phase!=='finished')return send(409,{error:'Açık artırma tamamlanmadı'});
+ try{const state=auctionRoomToBattleState(room),teams=prepareBattleTeams(state);
+ const matchKey=String(room.matchNumber||1)+':'+String(room.created);
+ if(room.battleSync?.key!==matchKey)room.battleSync={key:matchKey,ready:[null,null],result:null};
+ const sync=room.battleSync;
+ if(req.method==='POST'){
+ if(sync.ready[seat])return send(409,{error:'Diziliş zaten onaylandı'});
  if(!validBattlePositions(body.positions)||!Array.isArray(body.lanes)||body.lanes.length!==5||body.lanes.some(l=>!['front','back'].includes(l)))return send(400,{error:'Geçersiz diziliş'});
  if(!Array.isArray(body.roles)||body.roles.length!==5||body.roles.some((v,i)=>body.lanes[i]==='back'?v!=='energy':!['tank','fighter'].includes(v)))return send(400,{error:'Geçersiz roller'});
- try{const state=auctionRoomToBattleState(room),teams=prepareBattleTeams(state);const own=body.positions.map((index,i)=>({...teams[seat][index],lane:body.lanes[i],role:body.roles[i]}));const other=teams[1-seat].map((card,i)=>({...card,lane:i<2?'front':'back',role:i<2?'fighter':'energy'}));const credits=seat===0?[state.remainingCreditsA,state.remainingCreditsB]:[state.remainingCreditsB,state.remainingCreditsA];const result=simulateRosterBattle(own,other,{seed:'auction-preview-'+room.code+'-'+(room.matchNumber||1),remainingCredits:credits});return send(200,{winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log,remainingCredits:credits,preview:true})}catch(e){return send(422,{error:e.message})}
+ sync.ready[seat]={positions:body.positions,lanes:body.lanes,roles:body.roles};
+ if(sync.ready.every(Boolean)){
+ const ordered=teams.map((team,i)=>sync.ready[i].positions.map((index,slot)=>({...team[index],lane:sync.ready[i].lanes[slot],role:sync.ready[i].roles[slot]})));
+ const result=simulateRosterBattle(ordered[0],ordered[1],{seed:'auction-battle-'+room.code+'-'+matchKey,remainingCredits:[state.remainingCreditsA,state.remainingCreditsB]});
+ sync.result={winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log};
+ }markRoom(room);
+ }
+ return send(200,{ready:sync.ready.map(Boolean),started:Boolean(sync.result),result:sync.result?{...sync.result,winner:sync.result.winner===null?null:sync.result.winner===seat?0:1,teams:seat===0?sync.result.teams:[...sync.result.teams].reverse(),log:seat===0?sync.result.log:sync.result.log.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side}))}:null});
+ }catch(e){return send(422,{error:e.message})}
 }
 if(req.method==='GET'&&url.pathname==='/api/battle-auction-team'){
  const room=rooms.get(String(url.searchParams.get('code')||'').toUpperCase());
