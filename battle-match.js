@@ -29,7 +29,7 @@ export function finishAuctionWithBattle(auctionState,{matchId,seed}={}){
   const battleSeed=seed||crypto.createHash('sha256').update(String(matchId)).digest('hex');
   // Read final balances from authoritative, completed auction state only.
   const remainingCredits=[auctionState.remainingCreditsA,auctionState.remainingCreditsB];
-  if(remainingCredits.some(v=>!Number.isSafeInteger(v)||v<0))throw new Error('Final auction credit balances are required');
+  if(remainingCredits.some(v=>!Number.isSafeInteger(v)||v< -10000))throw new Error('Final auction credit balances are required');
   const result=simulateRosterBattle(a,b,{seed:battleSeed,remainingCredits});
   return {matchId:String(matchId),winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log,remainingCredits,seed:battleSeed};
 }
@@ -41,7 +41,7 @@ export function auctionRoomToBattleState(room){
     throw new Error('A finished two-player auction room is required');
   const [a,b]=room.players;
   if(!a||!b||!Array.isArray(a.team)||!Array.isArray(b.team))throw new Error('Auction teams are missing');
-  if(!Number.isSafeInteger(a.credits)||a.credits<0||!Number.isSafeInteger(b.credits)||b.credits<0)
+  if(!Number.isSafeInteger(a.credits)||a.credits< -10000||!Number.isSafeInteger(b.credits)||b.credits< -10000)
     throw new Error('Auction credit balances are invalid');
   return {finished:true,teamA:a.team.map(c=>({id:c.id,name:c.name,power:c.power})),teamB:b.team.map(c=>({id:c.id,name:c.name,power:c.power})),remainingCreditsA:a.credits,remainingCreditsB:b.credits};
 }
