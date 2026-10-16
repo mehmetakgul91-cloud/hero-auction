@@ -28,7 +28,8 @@ function targetOf(enemies,attacker){
   const pool=frontline.length?frontline:alive;
   return [...pool].sort((a,b)=>a.hp-b.hp||a.position-b.position||a.id.localeCompare(b.id))[0];
 }
-export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10}={}){
+export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10,remainingCredits=[0,0]}={}){
+  if(!Array.isArray(remainingCredits)||remainingCredits.length!==2||remainingCredits.some(v=>!Number.isSafeInteger(v)||v<0||v>10000))throw Error('Invalid auction remaining credits');
   if(!Array.isArray(cardsA)||!Array.isArray(cardsB)||cardsA.length!==5||cardsB.length!==5)throw Error('Each team must contain exactly five cards.');
   if(!Number.isInteger(maxRounds)||maxRounds<1||maxRounds>100)throw Error('Invalid round limit.');
   const random=seedRandom(seed);
@@ -46,6 +47,18 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10}=
       u.defense=Math.round(u.defense*multiplier);
       u.maxHp=Math.round(u.maxHp*multiplier);u.hp=u.maxHp;
       u.speed=Math.round(u.speed*multiplier);
+    }
+  }
+  // Auction savings bonus is separate from the capped 15% formation modifier.
+  // Each unspent auction credit grants +1% to all five heroes on that side.
+  for(let side=0;side<2;side++){
+    const creditMultiplier=1+remainingCredits[side]*0.01;
+    for(const u of teams[side]){
+      u.auctionCreditMultiplier=creditMultiplier;
+      u.attack=Math.round(u.attack*creditMultiplier);
+      u.defense=Math.round(u.defense*creditMultiplier);
+      u.maxHp=Math.round(u.maxHp*creditMultiplier);u.hp=u.maxHp;
+      u.speed=Math.round(u.speed*creditMultiplier);
     }
   }
   const log=[];
@@ -115,5 +128,5 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10}=
   else if(Math.abs(hpRatio[0]-hpRatio[1])>1e-9)winner=hpRatio[0]>hpRatio[1]?0:1;
   else if(damage[0]!==damage[1])winner=damage[0]>damage[1]?0:1;
   else if(survivors[0]!==survivors[1])winner=survivors[0]>survivors[1]?0:1;
-  return {version:2,seed:String(seed),winner,rounds:Math.max(0,...log.map(x=>x.round)),teams,damage,survivors,log};
+  return {version:3,remainingCredits:[...remainingCredits],seed:String(seed),winner,rounds:Math.max(0,...log.map(x=>x.round)),teams,damage,survivors,log};
 }
