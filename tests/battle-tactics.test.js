@@ -11,3 +11,5 @@ test('90 auction power retains higher base combat stats than 70 under worst form
 
 test('four unspent credits boost all five heroes by four percent',()=>{const a=team('a'),b=team('b');const baseline=simulateBattle(a,b,{seed:'credits',maxRounds:1});const boosted=simulateBattle(a,b,{seed:'credits',maxRounds:1,remainingCredits:[4,0]});for(let i=0;i<5;i++){assert.equal(boosted.teams[0][i].auctionCreditMultiplier,1.04);assert.equal(boosted.teams[1][i].auctionCreditMultiplier,1);assert.equal(boosted.teams[0][i].maxHp,Math.round(baseline.teams[0][i].maxHp*1.04))}});
 test('negative or fractional credits cannot generate battle bonuses',()=>{for(const value of [-1,1.5,NaN])assert.throws(()=>simulateBattle(team('a'),team('b'),{remainingCredits:[value,0]}))});
+
+test('credit bonus gives 1 percent for first eight, half percent after',()=>{for(const [credits,expected] of [[0,1],[4,1.04],[8,1.08],[9,1.085],[10,1.09],[12,1.10],[20,1.14]]){const result=simulateBattle(team('a'),team('b'),{remainingCredits:[credits,0],maxRounds:1});for(const hero of result.teams[0])assert.ok(Math.abs(hero.auctionCreditMultiplier-expected)<1e-10)}});
