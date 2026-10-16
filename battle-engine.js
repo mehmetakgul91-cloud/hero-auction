@@ -13,12 +13,11 @@ export function fighterFromCard(card,position=0){
   // Formation controls the battle role: both rear slots and rear specialists use ranged energy.
   const lane=card.lane==='front'||card.lane==='back'?card.lane:position>=2?'back':'front';
   const role=lane==='back'?'energy':card.role==='tank'?'tank':'fighter';
-  const mods={tank:[-12,22,30,-8],fighter:[6,7,8,0],energy:[15,-10,-12,2],assassin:[17,-14,-15,17],support:[-7,0,4,9]}[role];
-  const attack=clamp(30+Math.round(power*.65)+mods[0]+(lane==='back'?8:0),10,120);
-  const defense=clamp(25+Math.round(power*.45)+mods[1],5,110);
-  const maxHp=clamp(95+power+mods[2],50,250);
-  const speed=clamp(25+Math.round(power*.5)+mods[3]+(lane==='back'?5:0),10,110);
-  return {id:String(card.id||card.name),name:String(card.name||'Hero'),role,lane,position,attack,defense,maxHp,hp:maxHp,speed,shield:0,kills:0,damage:0,healing:0,active:card.active||null,passive:card.passive||null};
+  // Hero auction power is the baseline; positioning can change stats by at most 15%.
+  const base={attack:power,defense:power,maxHp:power*2,speed:power};
+  return {id:String(card.id||card.name),name:String(card.name||'Hero'),power,role,lane,position,
+    attack:base.attack,defense:base.defense,maxHp:base.maxHp,hp:base.maxHp,speed:base.speed,
+    shield:0,kills:0,damage:0,healing:0,active:card.active||null,passive:card.passive||null};
 }
 // Slots 0-1 are the front line; slots 2-4 are the protected rear line.
 function isFront(unit){return unit.lane==='front'}
@@ -34,9 +33,20 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10}=
   if(!Number.isInteger(maxRounds)||maxRounds<1||maxRounds>100)throw Error('Invalid round limit.');
   const random=seedRandom(seed);
   const teams=[cardsA,cardsB].map(cards=>cards.map((c,i)=>fighterFromCard(c,i)));
-  // Diminishing returns for stacked roles, rewarding a balanced composition.
-  for(const team of teams){const counts={tank:0,fighter:0,energy:0};for(const unit of team)counts[unit.role]++;
-    for(const unit of team){const count=counts[unit.role];const multiplier=[1,1,1,.90,.78,.66][count];unit.attack=Math.max(1,Math.round(unit.attack*multiplier));unit.defense=Math.max(1,Math.round(unit.defense*multiplier));unit.maxHp=Math.max(1,Math.round(unit.maxHp*multiplier));unit.hp=unit.maxHp;unit.compositionMultiplier=multiplier;}
+  // One bounded tactical multiplier: role + formation + duplicate penalty.
+  // No stacking of independent bonuses beyond the 0.85–1.15 interval.
+  for(const team of teams){
+    const counts={tank:0,fighter:0,energy:0};for(const u of team)counts[u.role]++;
+    for(const u of team){
+      const roleBonus=u.role==='tank'?0.06:u.role==='fighter'?0.04:0.08;
+      const duplicates=Math.max(0,counts[u.role]-3)*0.075;
+      const multiplier=clamp(1+roleBonus-duplicates,0.85,1.15);
+      u.compositionMultiplier=multiplier;
+      u.attack=Math.round(u.attack*multiplier);
+      u.defense=Math.round(u.defense*multiplier);
+      u.maxHp=Math.round(u.maxHp*multiplier);u.hp=u.maxHp;
+      u.speed=Math.round(u.speed*multiplier);
+    }
   }
   const log=[];
   // Passive effects are applied before the first round and each round's actions.
@@ -67,16 +77,16 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10}=
       if(!target)break;
       const special=round%3===0;
       const skill=special?unit.active:null;
-      const multiplier=skill?.power??(special?(unit.role==='energy'?1.45:1.25):1);
+      const multiplier=skill?.power??(special?1.15:1);
       const critical=random()<.10;
       // Tanks shield their allies by holding the frontline. Rear units take reduced
       // damage until their front line falls, except when assassins infiltrate.
       const guarded=!isFront(target)&&enemies.some(x=>x.hp>0&&isFront(x));
       const defense=skill?.effect==='pierce'?Math.floor(target.defense*.6):target.defense;
-      const roleMultiplier=unit.role==='fighter'&&isFront(target)?1.08:unit.role==='energy'&&!isFront(unit)?1.12:1;
+      const roleMultiplier=1;
       // Exposed all-ranged squads lose protection; mixed frontlines intercept fire.
       const unguardedRanged=!isFront(target)&&!enemies.some(x=>x.hp>0&&isFront(x));
-      const raw=Math.max(1,Math.floor(unit.attack*multiplier*roleMultiplier*(guarded?.8:unguardedRanged?1.20:1)*100/(100+defense)*(critical?1.5:1)));
+      const raw=Math.max(1,Math.floor(unit.attack*multiplier*roleMultiplier*1*100/(100+defense)*(critical?1.5:1)));
       const absorbed=Math.min(target.shield,raw);
       target.shield-=absorbed;
       const damage=Math.min(target.hp,raw-absorbed);
