@@ -6,7 +6,20 @@ const roleNames={tank:'TANK',fighter:'SAVAŞÇI',energy:'ENERJİ',assassin:'SUİ
 let states=[],events=[],cursor=0,timer=null;
 const roleOptions=['tank','fighter','energy','assassin','support'];
 const assignedRoles=demoA.map(x=>x[1]);
-function renderRolePickers(){const root=$('role-pickers');root.replaceChildren();demoA.forEach(([name],i)=>{const label=document.createElement('label');label.textContent=name;const select=document.createElement('select');select.setAttribute('aria-label',name+' rolü');for(const role of roleOptions){const option=document.createElement('option');option.value=role;option.textContent=roleNames[role];select.append(option)}select.value=assignedRoles[i];select.onchange=()=>{assignedRoles[i]=select.value};label.append(select);root.append(label)})}
+const roleIcons={tank:'🛡️',fighter:'⚔️',energy:'⚡',assassin:'🗡️',support:'💚'};
+const modifiers={tank:[-12,22,30,-8],fighter:[6,7,8,0],energy:[15,-10,-12,2],assassin:[17,-14,-15,17],support:[-7,0,4,9]};
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+function roleStats(power,role){const m=modifiers[role];return [clamp(30+Math.round(power*.65)+m[0],10,120),clamp(25+Math.round(power*.45)+m[1],5,110),clamp(95+power+m[2],50,250),clamp(25+Math.round(power*.5)+m[3],10,110)]}
+function renderRolePickers(){const root=$('role-pickers');root.replaceChildren();demoA.forEach(([name,,power],i)=>{
+ const card=document.createElement('article');card.className='formation-card';
+ const heading=document.createElement('div');heading.className='formation-hero';heading.textContent=name;
+ const badge=document.createElement('div');badge.className='formation-role';
+ const stats=document.createElement('div');stats.className='formation-stats';
+ const choices=document.createElement('div');choices.className='formation-choices';choices.setAttribute('role','group');choices.setAttribute('aria-label',name+' için rol seçimi');
+ function update(){const role=assignedRoles[i],v=roleStats(power,role);badge.textContent=roleIcons[role]+' '+roleNames[role];stats.textContent='❤️ '+v[2]+'   ⚔ '+v[0]+'   🛡 '+v[1]+'   ⚡ '+v[3];for(const b of choices.children){b.classList.toggle('selected',b.dataset.role===role);b.setAttribute('aria-pressed',String(b.dataset.role===role))}}
+ for(const role of roleOptions){const btn=document.createElement('button');btn.type='button';btn.dataset.role=role;btn.textContent=roleIcons[role]+' '+roleNames[role];btn.onclick=()=>{assignedRoles[i]=role;update();$('apply-roles').textContent='⚔ SEÇİLEN ROLLERLE SAVAŞI HAZIRLA'};choices.append(btn)}
+ card.append(heading,badge,stats,choices);root.append(card);update();
+ })}
 $('apply-roles').onclick=()=>{stop();$('events').replaceChildren();$('play').textContent='▶ SAVAŞI OYNAT';void build()};
 renderRolePickers();
 const motion=()=> $('motion').checked&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
