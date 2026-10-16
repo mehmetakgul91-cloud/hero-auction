@@ -11,16 +11,17 @@ function seedRandom(seed){
 export function fighterFromCard(card,position=0){
   const power=clamp(Math.round(Number(card.power)||50),1,100);
   // Formation controls the battle role: both rear slots and rear specialists use ranged energy.
-  const role=position>=2?'energy':position===0?'tank':'fighter';
+  const lane=card.lane==='front'||card.lane==='back'?card.lane:position>=2?'back':'front';
+  const role=lane==='back'?'energy':card.role==='tank'?'tank':'fighter';
   const mods={tank:[-12,22,30,-8],fighter:[6,7,8,0],energy:[15,-10,-12,2],assassin:[17,-14,-15,17],support:[-7,0,4,9]}[role];
-  const attack=clamp(30+Math.round(power*.65)+mods[0]+(position>=2?8:0),10,120);
+  const attack=clamp(30+Math.round(power*.65)+mods[0]+(lane==='back'?8:0),10,120);
   const defense=clamp(25+Math.round(power*.45)+mods[1],5,110);
   const maxHp=clamp(95+power+mods[2],50,250);
-  const speed=clamp(25+Math.round(power*.5)+mods[3]+(position>=2?5:0),10,110);
-  return {id:String(card.id||card.name),name:String(card.name||'Hero'),role,position,attack,defense,maxHp,hp:maxHp,speed,shield:0,kills:0,damage:0,healing:0,active:card.active||null,passive:card.passive||null};
+  const speed=clamp(25+Math.round(power*.5)+mods[3]+(lane==='back'?5:0),10,110);
+  return {id:String(card.id||card.name),name:String(card.name||'Hero'),role,lane,position,attack,defense,maxHp,hp:maxHp,speed,shield:0,kills:0,damage:0,healing:0,active:card.active||null,passive:card.passive||null};
 }
 // Slots 0-1 are the front line; slots 2-4 are the protected rear line.
-function isFront(unit){return unit.position<2}
+function isFront(unit){return unit.lane==='front'}
 function targetOf(enemies,attacker){
   const alive=enemies.filter(x=>x.hp>0);
   if(!alive.length)return null;
