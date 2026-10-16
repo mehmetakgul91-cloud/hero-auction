@@ -4,26 +4,41 @@ const demoA=[['Hulk','tank',85],['Thor','fighter',88],['Wolverine','fighter',78]
 const demoB=[['Superman','fighter',92],['Wonder Woman','fighter',85],['Doomsday','tank',84],['The Flash','assassin',81],['Doctor Fate','energy',87]];
 const roleNames={tank:'TANK',fighter:'SAVAŞÇI',energy:'ENERJİ',assassin:'SUİKASTÇI',support:'DESTEK'};
 let states=[],events=[],cursor=0,timer=null;
-function build(){
- const team=(arr,side)=>arr.map(([name,role,power],position)=>({id:side+'-'+position,name,role,position,attack:Math.round(30+power*.65),defense:Math.round(25+power*.45),maxHp:95+power,hp:95+power,speed:Math.round(25+power*.5),shield:0}));
- const a=team(demoA,0),b=team(demoB,1);states=[a,b];events=[];cursor=0;
- // Visual demo only. The authoritative deterministic engine lives on the server.
- for(let round=1;round<=10;round++){
-  const order=states.flatMap((team,side)=>team.map(u=>({u,side}))).sort((x,y)=>y.u.speed-x.u.speed||x.side-y.side);
-  for(const {u,side} of order){
-   if(u.hp<=0)continue;
-   const enemies=states[1-side].filter(x=>x.hp>0);
-   if(!enemies.length)break;
-   const target=enemies.sort((x,y)=>x.hp-y.hp)[0];
-   const special=round%3===0,damage=Math.min(target.hp,Math.max(1,Math.floor(u.attack*(special?1.35:1)*100/(100+target.defense))));
-   target.hp-=damage;
-   events.push({round,actor:u.name,actorId:u.id,target:target.name,targetId:target.id,damage,special,snapshot:states.map(t=>t.map(x=>x.hp))});
-  }
-  if(states.some(t=>t.every(x=>x.hp<=0)))break;
- }
- states=[team(demoA,0),team(demoB,1)];
- render();
+async function build(){
+ stop();cursor=0;events=[];$('next').disabled=true;$('play').disabled=true;
+ $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
+ try{
+  const response=await fetch('/api/battle-preview',{cache:'no-store'});
+  if(!response.ok)throw Error('Savaş verisi alınamadı ('+response.status+')');
+  const result=await response.json();
+  states=result.teams.map(team=>team.map(u=>({...u,hp:u.maxHp,shield:0})));
+  const lookup=new Map(states.flat().map(u=>[u.id,u.name]));
+  const health=states.map(team=>team.map(u=>u.maxHp));
+  const shield=states.map(team=>team.map(()=>0));
+  events=result.log.map(entry=>{
+   const side=entry.side??states.findIndex(team=>team.some(u=>u.id===entry.actor));
+   const targetSide=1-side;
+   const target=states[targetSide]?.findIndex(u=>u.id===entry.target)??-1;
+   const actorIndex=states[side]?.findIndex(u=>u.id===entry.actor)??-1;
+   if(entry.action==='heal'||entry.action==='passive-heal'){
+    const healSide=entry.action==='passive-heal'?side:side;
+    const idx=states[healSide]?.findIndex(u=>u.id===(entry.target||entry.actor))??-1;
+    if(idx>=0)health[healSide][idx]=Math.min(states[healSide][idx].maxHp,health[healSide][idx]+entry.value);
+   }else if(target>=0&&entry.value>0){
+    const absorbed=Math.min(shield[targetSide][target],entry.value);
+    shield[targetSide][target]-=absorbed;
+    health[targetSide][target]=Math.max(0,health[targetSide][target]-entry.value);
+   }
+   return {...entry,actorId:entry.actor,targetId:entry.target,actor:lookup.get(entry.actor)||entry.actor,target:lookup.get(entry.target)||entry.target,snapshot:health.map(team=>team.slice())};
+  });
+  // The server is authoritative for the final HP and winner. Intermediate HP
+  // will be refined with full engine snapshots in a subsequent iteration.
+  finalResult=result;
+  $('message').textContent='Gerçek savaş motoru hazır · '+result.rounds+' tur';
+  render();
+ }catch(e){$('message').textContent='⚠ '+e.message}
 }
+let finalResult=null;
 function render(flash){
  for(let side=0;side<2;side++){
   const parent=$(side?'team-b':'team-a');parent.replaceChildren();
@@ -44,20 +59,19 @@ function render(flash){
  $('next').disabled=cursor>=events.length;
  $('play').disabled=cursor>=events.length;
  if(cursor===events.length){
-  const a=states[0].reduce((s,u)=>s+u.hp/u.maxHp,0),b=states[1].reduce((s,u)=>s+u.hp/u.maxHp,0);
-  $('message').textContent=a===b?'🤝 Beraberlik':a>b?'🏆 Mavi takım kazandı!':'🏆 Kırmızı takım kazandı!';
+  $('message').textContent=finalResult?.winner===null?'🤝 Beraberlik':finalResult?.winner===0?'🏆 Mavi takım kazandı!':'🏆 Kırmızı takım kazandı!';
  }
 }
 function step(){
  if(cursor>=events.length){stop();return}
  const e=events[cursor++];
  states.forEach((t,side)=>t.forEach((u,i)=>u.hp=e.snapshot[side][i]));
- const li=document.createElement('li');li.textContent='Tur '+e.round+' · '+e.actor+(e.special?' ✨ özel saldırı':' ⚔ saldırı')+' → '+e.target+' (−'+e.damage+' can)';
- $('events').prepend(li);$('message').textContent=e.actor+' → '+e.target+' · '+e.damage+' hasar';
+ const li=document.createElement('li');li.textContent='Tur '+e.round+' · '+e.actor+' · '+e.action+(e.target?' → '+e.target:'')+' ('+e.value+')';
+ $('events').prepend(li);$('message').textContent=e.actor+' · '+e.action+(e.target?' → '+e.target:'');
  render(e);if(cursor>=events.length)stop();
 }
 function stop(){if(timer!==null){clearInterval(timer);timer=null}}
 $('play').onclick=()=>{if(timer!==null){stop();$('play').textContent='▶ DEVAM ET';return}timer=setInterval(step,550);$('play').textContent='⏸ DURDUR'};
 $('next').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';step()};
 $('reset').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';$('events').replaceChildren();$('message').textContent='Başlamak için savaşı oynat.';build()};
-build();
+void build();
