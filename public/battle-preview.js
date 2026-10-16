@@ -82,7 +82,7 @@ function animateMove(e){
 }
 
 async function build(overrideResult){
- stop();cursor=0;events=[];$('next').disabled=true;$('play').disabled=true;
+ stop();cursor=0;events=[];if($('battle-summary'))$('battle-summary').hidden=true;$('next').disabled=true;$('play').disabled=true;
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
  try{
   let result=overrideResult;
@@ -132,9 +132,21 @@ function render(flash){
  $('next').disabled=cursor>=events.length;
  $('play').disabled=cursor>=events.length;
  if(cursor===events.length){
+  showBattleSummary();
   if(auctionMode)void showAuctionRematch();
   $('message').textContent=finalResult?.winner===null?'🤝 Beraberlik':finalResult?.winner===0?'🏆 Mavi takım kazandı!':'🏆 Kırmızı takım kazandı!';
  }
+}
+function showBattleSummary(){
+ const panel=$('battle-summary');if(!panel||!finalResult)return;
+ const winner=finalResult.winner;
+ const survivors=states.map(team=>team.filter(unit=>unit.hp>0).length);
+ $('battle-summary-title').textContent=winner===null?'🤝 BERABERLİK':winner===0?'🏆 MAVİ TAKIM KAZANDI':'🏆 KIRMIZI TAKIM KAZANDI';
+ $('battle-summary-detail').textContent='Açık artırma gücü, diziliş ve kahraman yetenekleri savaş sonucunu belirledi.';
+ $('battle-summary-rounds').textContent=String(finalResult.rounds??events.at(-1)?.round??0);
+ $('battle-summary-survivors').textContent=survivors.join(' - ');
+ $('battle-summary-actions').textContent=String(events.length);
+ panel.hidden=false;
 }
 function step(){
  if(cursor>=events.length){stop();return}
