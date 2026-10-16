@@ -50,9 +50,10 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10,r
     }
   }
   // Auction savings bonus is separate from the capped 15% formation modifier.
-  // Each unspent auction credit grants +1% to all five heroes on that side.
+  // The first eight unspent credits grant +1% each; subsequent credits +0.5% each.
   for(let side=0;side<2;side++){
-    const creditMultiplier=1+remainingCredits[side]*0.01;
+    const credits=remainingCredits[side];
+    const creditMultiplier=1+Math.min(credits,8)*0.01+Math.max(0,credits-8)*0.005;
     for(const u of teams[side]){
       u.auctionCreditMultiplier=creditMultiplier;
       u.attack=Math.round(u.attack*creditMultiplier);
