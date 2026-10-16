@@ -14,25 +14,20 @@ async function build(){
   states=result.teams.map(team=>team.map(u=>({...u,hp:u.maxHp,shield:0})));
   const lookup=new Map(states.flat().map(u=>[u.id,u.name]));
   const health=states.map(team=>team.map(u=>u.maxHp));
-  const shield=states.map(team=>team.map(()=>0));
   events=result.log.map(entry=>{
    const side=entry.side??states.findIndex(team=>team.some(u=>u.id===entry.actor));
    const targetSide=1-side;
    const target=states[targetSide]?.findIndex(u=>u.id===entry.target)??-1;
-   const actorIndex=states[side]?.findIndex(u=>u.id===entry.actor)??-1;
-   if(entry.action==='heal'||entry.action==='passive-heal'){
+    if(entry.action==='heal'||entry.action==='passive-heal'){
     const healSide=entry.action==='passive-heal'?side:side;
     const idx=states[healSide]?.findIndex(u=>u.id===(entry.target||entry.actor))??-1;
     if(idx>=0)health[healSide][idx]=Math.min(states[healSide][idx].maxHp,health[healSide][idx]+entry.value);
    }else if(target>=0&&entry.value>0){
-    const absorbed=Math.min(shield[targetSide][target],entry.value);
-    shield[targetSide][target]-=absorbed;
     health[targetSide][target]=Math.max(0,health[targetSide][target]-entry.value);
    }
    return {...entry,actorId:entry.actor,targetId:entry.target,actor:lookup.get(entry.actor)||entry.actor,target:lookup.get(entry.target)||entry.target,snapshot:health.map(team=>team.slice())};
   });
-  // The server is authoritative for the final HP and winner. Intermediate HP
-  // will be refined with full engine snapshots in a subsequent iteration.
+  // The server is authoritative for winner; the UI reconstructs interim HP from logs.
   finalResult=result;
   $('message').textContent='Gerçek savaş motoru hazır · '+result.rounds+' tur';
   render();
