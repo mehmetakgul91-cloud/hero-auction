@@ -16,6 +16,10 @@ const arenaMode=query.get('room')==='arena';
 const multiplayerCode=query.get('code');
 const multiplayerToken=query.get('token');
 let battlePoll=null;
+async function battleLobby(action){try{const code=$('join-battle-code').value.trim();const response=await fetch('/api/battle-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,code})});const v=await response.json();if(!response.ok)throw Error(v.error);location.href='/battle-preview.html?code='+encodeURIComponent(v.code)+'&token='+encodeURIComponent(v.token)}catch(e){$('battle-lobby-status').textContent='⚠ '+e.message}}
+$('create-battle-room').onclick=()=>battleLobby('create');
+$('join-battle-room').onclick=()=>battleLobby('join');
+if(multiplayerCode){$('battle-lobby-status').textContent='Oda kodu: '+multiplayerCode+' · Arkadaşınla paylaş. Dizilişini hazırlayıp Hazırım düğmesine bas.';$('battle-lobby').classList.add('lobby-connected')}if(arenaMode)$('battle-lobby').hidden=true;
 const savedFormation=(()=>{try{return JSON.parse(sessionStorage.getItem('hero-auction-formation')||'null')}catch{return null}})();
 const positions=arenaMode&&Array.isArray(savedFormation)&&savedFormation.length===5&&new Set(savedFormation).size===5&&savedFormation.every(x=>Number.isInteger(x)&&x>=0&&x<5)?savedFormation:[null,null,null,null,null];let selectedHero=null,dragHero=null,dragGhost=null,dragOrigin=null,nativeDragAvatar=null;
 function clearNativeDragAvatar(){if(nativeDragAvatar){nativeDragAvatar.remove();nativeDragAvatar=null}}
