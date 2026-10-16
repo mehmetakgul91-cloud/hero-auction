@@ -1,26 +1,28 @@
 // Browser-only battle replay preview. No wallet or live room mutations.
 const $=id=>document.getElementById(id);
-const demoA=[['Hulk','tank',85],['Thor','fighter',88],['Wolverine','fighter',78],['Scarlet Witch','energy',90],['Iron Man','support',80]];
+let demoA=[['Hulk','tank',85],['Thor','fighter',88],['Wolverine','fighter',78],['Scarlet Witch','energy',90],['Iron Man','support',80]];
 // Preview uses zero credits until verified auction balances are wired in.
-const previewCredits=0;
+let previewCredits=0;
 const creditBonus=credits=>Math.min(credits,8)*0.01+Math.max(0,credits-8)*0.005;
 const effectivePower=power=>Math.round(power*(1+creditBonus(previewCredits))*10)/10;
-const demoB=[['Superman','fighter',92],['Wonder Woman','fighter',85],['Doomsday','tank',84],['The Flash','assassin',81],['Doctor Fate','energy',87]];
+let demoB=[['Superman','fighter',92],['Wonder Woman','fighter',85],['Doomsday','tank',84],['The Flash','assassin',81],['Doctor Fate','energy',87]];
 const roleNames={tank:'TANK',fighter:'SAVAŞÇI',energy:'ENERJİ / MESAFELİ',assassin:'SUİKASTÇI',support:'DESTEK'};
 let states=[],events=[],cursor=0,timer=null;
 const roleOptions=['tank','fighter','energy'];
-const assignedRoles=demoA.map(x=>['tank','fighter','energy'].includes(x[1])?x[1]:'energy');
+let assignedRoles=demoA.map(x=>['tank','fighter','energy'].includes(x[1])?x[1]:'energy');
 const slotRoles=['tank','fighter','energy','energy','energy'];
 const lanes=['front','front','back','back','back'];
 function roleAt(slot){return lanes[slot]==='back'?'energy':(positions[slot]===null?'tank':assignedRoles[positions[slot]]==='tank'?'tank':'fighter')}
 function setLane(slot,lane){if(prepDone)return;lanes[slot]=lane;renderBoard();renderRolePickers()}
 
 const heroArtCache=new Map();
-async function loadHeroArt(i){if(heroArtCache.has(i))return heroArtCache.get(i);const promise=fetch('/api/art?universe=marvel&name='+encodeURIComponent(demoA[i][0])).then(r=>r.ok?r.json():null).then(data=>data?.url||null).catch(()=>null);heroArtCache.set(i,promise);return promise}
+async function loadHeroArt(i){if(heroArtCache.has(i))return heroArtCache.get(i);const promise=fetch('/api/art?universe='+encodeURIComponent(demoA[i][3]||'marvel')+'&name='+encodeURIComponent(demoA[i][0])).then(r=>r.ok?r.json():null).then(data=>data?.url||null).catch(()=>null);heroArtCache.set(i,promise);return promise}
 function heroPortrait(i,container){const img=document.createElement('img');img.className='slot-portrait';img.alt=demoA[i][0];img.loading='lazy';const fallback=document.createElement('span');fallback.className='portrait-fallback';fallback.textContent=demoA[i][0].slice(0,1);container.append(fallback);void loadHeroArt(i).then(url=>{if(!url||!container.isConnected)return;img.src=url;img.onload=()=>{if(container.isConnected){fallback.remove();container.append(img)}};img.onerror=()=>img.remove()})}
 
 const query=new URLSearchParams(location.search);
 const arenaMode=query.get('room')==='arena';
+const auctionCode=query.get('auctionCode');
+const auctionToken=query.get('auctionToken');
 const multiplayerCode=query.get('code');
 const multiplayerToken=query.get('token');
 let battlePoll=null;
@@ -43,7 +45,7 @@ function attachDrag(card,i){card.classList.add('draggable-hero');card.draggable=
 function clearDrag(){clearNativeDragAvatar();clearHover();dragOrigin=null;if(dragGhost){dragGhost.remove();dragGhost=null}document.body.classList.remove('dragging-formation');document.querySelectorAll('.board-slot').forEach(x=>x.classList.remove('drop-target'))}
 document.addEventListener('dragover',e=>{const slot=e.target.closest('.board-slot');if(slot){e.preventDefault();if(dragHero!==null)previewHover(dragHero,Number(slot.dataset.slot))}else clearHover()});document.addEventListener('drop',e=>{const slot=e.target.closest('.board-slot');if(!slot||prepDone)return;e.preventDefault();const i=Number(e.dataTransfer.getData('text/plain'));if(Number.isInteger(i)&&i>=0&&i<5)placeHero(i,Number(slot.dataset.slot))});
 let prepTimer=null,prepDeadline=0,prepDone=false;
-function lockFormation(){if(prepDone)return;clearHover();completeSlots();if(!arenaMode){sessionStorage.setItem('hero-auction-formation',JSON.stringify(positions));sessionStorage.setItem('hero-auction-lanes',JSON.stringify(lanes));if(multiplayerCode&&multiplayerToken){void fetch('/api/battle-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ready',code:multiplayerCode,token:multiplayerToken,positions,lanes,roles:positions.map((_,slot)=>roleAt(slot))})}).then(async r=>{const v=await r.json();if(!r.ok)throw Error(v.error);location.href='/battle-preview.html?room=arena&code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken)}).catch(e=>{$('prep-note').textContent='⚠ '+e.message});return}location.href='/battle-preview.html?room=arena';return}prepDone=true;document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;if(prepTimer!==null){clearInterval(prepTimer);prepTimer=null}document.querySelectorAll('.formation-choices button,.board-slot,.formation-select').forEach(b=>b.disabled=true);$('apply-roles').disabled=true;$('apply-roles').textContent='✓ HAZIR';$('ready-a').textContent='🔵 Sen: Hazır';$('prep-note').textContent='İki taraf hazır. Savaş başlıyor!';stop();$('events').replaceChildren();$('play').textContent='▶ SAVAŞI OYNAT';void build().then(()=>{if(events.length)$('play').click()})}
+function lockFormation(){if(prepDone)return;clearHover();completeSlots();if(!arenaMode){sessionStorage.setItem('hero-auction-formation',JSON.stringify(positions));sessionStorage.setItem('hero-auction-lanes',JSON.stringify(lanes));if(multiplayerCode&&multiplayerToken){void fetch('/api/battle-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ready',code:multiplayerCode,token:multiplayerToken,positions,lanes,roles:positions.map((_,slot)=>roleAt(slot))})}).then(async r=>{const v=await r.json();if(!r.ok)throw Error(v.error);location.href='/battle-preview.html?room=arena&code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken)}).catch(e=>{$('prep-note').textContent='⚠ '+e.message});return}location.href='/battle-preview.html?room=arena'+(auctionCode&&auctionToken?'&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken):'');return}prepDone=true;document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;if(prepTimer!==null){clearInterval(prepTimer);prepTimer=null}document.querySelectorAll('.formation-choices button,.board-slot,.formation-select').forEach(b=>b.disabled=true);$('apply-roles').disabled=true;$('apply-roles').textContent='✓ HAZIR';$('ready-a').textContent='🔵 Sen: Hazır';$('prep-note').textContent='İki taraf hazır. Savaş başlıyor!';stop();$('events').replaceChildren();$('play').textContent='▶ SAVAŞI OYNAT';void build().then(()=>{if(events.length)$('play').click()})}
 function startPreparation(){if(prepTimer!==null)clearInterval(prepTimer);prepDone=false;prepDeadline=Date.now()+60000;const tick=()=>{const remaining=Math.max(0,Math.ceil((prepDeadline-Date.now())/1000));$('prep-clock').textContent=String(Math.floor(remaining/60)).padStart(2,'0')+':'+String(remaining%60).padStart(2,'0');if(!remaining)lockFormation()};tick();prepTimer=setInterval(tick,200)}
 const roleIcons={tank:'🛡️',fighter:'⚔️',energy:'⚡',assassin:'🗡️',support:'💚'};
 const modifiers={tank:[-12,22,30,-8],fighter:[6,7,8,0],energy:[15,-10,-12,2],assassin:[17,-14,-15,17],support:[-7,0,4,9]};
@@ -83,6 +85,7 @@ async function build(overrideResult){
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
  try{
   let result=overrideResult;
+  if(!result&&auctionCode&&auctionToken){const response=await fetch('/api/battle-auction-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,positions,lanes,roles:positions.map((_,slot)=>roleAt(slot))})});result=await response.json();if(!response.ok)throw Error(result.error||'Açık artırma savaşı alınamadı')}
   if(!result){const response=await fetch('/api/battle-preview?roles='+encodeURIComponent(positions.map((i,slot)=>roleAt(slot)).join(','))+'&positions='+encodeURIComponent(positions.join(','))+'&lanes='+encodeURIComponent(lanes.join(',')),{cache:'no-store'});if(!response.ok)throw Error('Savaş verisi alınamadı ('+response.status+')');result=await response.json()}
   states=result.teams.map(team=>team.map(u=>({...u,hp:u.maxHp,shield:0})));
   const lookup=new Map(states.flat().map(u=>[u.id,u.name]));
@@ -145,3 +148,13 @@ $('speed').onchange=()=>{if(timer!==null){stop();timer=setInterval(step,duration
 $('next').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';step()};
 $('reset').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';$('events').replaceChildren();$('message').textContent='Başlamak için savaşı oynat.';build()};
 if(multiplayerCode&&multiplayerToken){const check=async()=>{try{const response=await fetch('/api/battle-room?code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken),{cache:'no-store'});const v=await response.json();if(!response.ok)throw Error(v.error);if(v.started){clearInterval(battlePoll);battlePoll=null;document.body.classList.add('online-battle');if(!arenaMode){location.href='/battle-preview.html?room=arena&code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken);return}await build(v.result);if(events.length)$('play').click()}else{$('message').textContent='Rakibin hazırlanması bekleniyor… '+v.ready.filter(Boolean).length+'/2 hazır';if(arenaMode)$('play').disabled=true}}catch(e){$('message').textContent='⚠ '+e.message}};void check();battlePoll=setInterval(check,1800)}else if(arenaMode){void build().then(()=>{if(events.length)$('play').click()})}
+
+if(auctionCode&&auctionToken){void (async()=>{try{
+ const response=await fetch('/api/battle-auction-team?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});
+ const data=await response.json();if(!response.ok)throw Error(data.error||'Açık artırma verisi alınamadı');
+ const own=data.teams[data.seat],rival=data.teams[1-data.seat];
+ demoA=own.map(c=>[c.name,'fighter',c.power,c.universe]);demoB=rival.map(c=>[c.name,'fighter',c.power,c.universe]);
+ previewCredits=data.credits[data.seat];assignedRoles=demoA.map(()=> 'fighter');heroArtCache.clear();
+ $('battle-lobby-status').textContent='Açık artırma kartların yüklendi · Kalan kredi: '+previewCredits+' · Bonus: %'+(creditBonus(previewCredits)*100).toFixed(1);
+ if(!arenaMode){renderBoard();renderRolePickers()}else{await build();if(events.length)$('play').click()}
+ }catch(e){$('prep-note').textContent='⚠ '+e.message;$('message').textContent='⚠ '+e.message}})()}
