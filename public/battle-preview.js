@@ -124,7 +124,7 @@ function animateMove(e){
 }
 
 async function build(overrideResult){
- stop();cursor=0;events=[];if($('battle-summary'))$('battle-summary').hidden=true;$('next').disabled=true;$('play').disabled=true;
+ stop();cursor=0;events=[];$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;$('next').disabled=true;$('play').disabled=true;
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
  try{
   let result=overrideResult;
@@ -148,6 +148,7 @@ async function build(overrideResult){
   });
   // The server is authoritative for winner; the UI reconstructs interim HP from logs.
   finalResult=result;
+  $('arena-score').hidden=false;
   $('message').textContent='Gerçek savaş motoru hazır · '+result.rounds+' tur';
   render();
  }catch(e){$('message').textContent='⚠ '+e.message}
