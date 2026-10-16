@@ -105,3 +105,10 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 .battle-arena .hero.cast{box-shadow:0 0 0 2px #3ceaff,0 0 28px #30e3ff88}
 @media(max-width:640px){.shell{padding:10px 8px 40px}.battle-arena{padding:8px;gap:7px;border-radius:15px}.arena-side{padding:5px}.arena-side h2{margin-bottom:8px;font-size:10px}.team{gap:6px}.arena-hero{padding:5px;border-radius:9px}.arena-portrait{aspect-ratio:1/1}.arena-hero-label{font-size:10px;margin:4px 0}.score{margin:12px 0;padding:9px 5px}.score b{font-size:18px}.controls{padding:10px}.buttons{gap:6px}.buttons button{min-height:44px;padding:10px 8px;font-size:11px}.log{margin-top:12px}}
 @media(prefers-reduced-motion:reduce){.battle-comic-banner{animation:none!important;display:none!important}}
+
+/* Action choreography: preserve existing combat engine and hero artwork */
+.arena-impact-burst{position:absolute;inset:12%;z-index:7;pointer-events:none;border-radius:50%;background:radial-gradient(circle,#fff 0%,#ffe45e 13%,#ff6d3a99 36%,transparent 68%);mix-blend-mode:screen;animation:arenaBurst .62s ease-out both}
+.arena-impact-flash{position:fixed;inset:0;z-index:95;pointer-events:none;background:radial-gradient(circle,#ffffff6b,transparent 67%);animation:arenaFlash .48s ease-out both}
+@keyframes arenaBurst{0%{opacity:0;transform:scale(.15) rotate(-20deg)}25%{opacity:1;transform:scale(1.4) rotate(12deg)}100%{opacity:0;transform:scale(2.2) rotate(25deg)}}
+@keyframes arenaFlash{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.arena-impact-burst,.arena-impact-flash{display:none!important}}
