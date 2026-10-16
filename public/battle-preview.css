@@ -48,3 +48,6 @@
 
 /* Flexible five-unit front/back formation */
 .board-row{display:flex!important;flex-wrap:wrap;justify-content:center;gap:8px;min-height:55px}.slot-wrap{flex:0 1 auto}.lane-switch{display:block;margin:6px auto 0;padding:5px 7px!important;font-size:10px!important;background:#284a69!important;border:1px solid #47718d!important}.board-row:empty::after{content:'Bu safta kahraman yok';font-size:12px;color:#8ca5c5;padding:18px}
+
+.board-power{display:block;position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);white-space:nowrap;padding:3px 7px;border-radius:12px;background:#10294b;color:#e6f9ff;border:1px solid #52d5ff;font-size:10px;font-weight:800;z-index:2;pointer-events:none}
+.board-slot{position:relative}
