@@ -26,6 +26,7 @@ function targetOf(enemies,attacker){
 }
 export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10}={}){
   if(!Array.isArray(cardsA)||!Array.isArray(cardsB)||cardsA.length!==5||cardsB.length!==5)throw Error('Each team must contain exactly five cards.');
+  if(!Number.isInteger(maxRounds)||maxRounds<1||maxRounds>100)throw Error('Invalid round limit.');
   const random=seedRandom(seed);
   const teams=[cardsA,cardsB].map(cards=>cards.map((c,i)=>fighterFromCard(c,i)));
   const log=[];
@@ -41,7 +42,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10}=
       if(u.hp<=0||!u.passive)continue;
       const {effect,value}=u.passive;
       if(effect==='regen'){const healed=Math.min(u.maxHp-u.hp,Math.max(1,Math.floor(u.maxHp*value)));u.hp+=healed;u.healing+=healed;if(healed)log.push({round,actor:u.id,action:'passive-heal',value:healed});}
-      if(effect==='rage'&&u.hp/u.maxHp<.5)u.attack=Math.min(180,u.attack+Math.max(1,Math.floor(u.attack*value)));
+      if(effect==='rage'&&u.hp/u.maxHp<.5&&!u.rageActivated){u.attack=Math.min(180,u.attack+Math.max(1,Math.floor(u.attack*value)));u.rageActivated=true;log.push({round,actor:u.id,action:'rage',value:u.attack});}
     }
     const order=teams.flatMap((team,side)=>team.map(unit=>({unit,side})))
       .sort((a,b)=>b.unit.speed-a.unit.speed||a.side-b.side||a.unit.position-b.unit.position);
