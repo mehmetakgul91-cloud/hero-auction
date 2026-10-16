@@ -169,6 +169,14 @@ function render(flash){
    const heroLabel=document.createElement('span');heroLabel.className='arena-hero-label';heroLabel.textContent=u.name;card.append(portrait,heroLabel,bar);parent.append(card);
   }
   $(side?'score-b':'score-a').textContent=states[side].filter(u=>u.hp>0).length+' / 5';
+  const suffix=side?'b':'a';
+  const maxHp=states[side].reduce((sum,u)=>sum+Math.max(0,Number(u.maxHp)||0),0);
+  const remainingHp=states[side].reduce((sum,u)=>sum+Math.max(0,Math.min(Number(u.hp)||0,Number(u.maxHp)||0)),0);
+  const percent=maxHp>0?Math.max(0,Math.min(100,remainingHp/maxHp*100)):0;
+  $('team-hp-'+suffix+'-fill').style.width=percent+'%';
+  $('team-hp-'+suffix+'-label').textContent=Math.round(remainingHp).toLocaleString('tr-TR')+' / '+Math.round(maxHp).toLocaleString('tr-TR')+' HP';
+  $('team-hp-'+suffix+'-track').setAttribute('aria-valuenow',String(Math.round(percent)));
+  $('team-hp-'+suffix+'-track').setAttribute('aria-valuetext',Math.round(remainingHp)+' / '+Math.round(maxHp)+' HP');
  }
  $('round').textContent=cursor?events[cursor-1].round:'0';
  $('next').disabled=cursor>=events.length;
