@@ -49,7 +49,7 @@ async function build(){
  stop();cursor=0;events=[];$('next').disabled=true;$('play').disabled=true;
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
  try{
-  const response=await fetch('/api/battle-preview?roles='+encodeURIComponent(positions.map(i=>assignedRoles[i]).join(','))+'&positions='+encodeURIComponent(positions.join(',')),{cache:'no-store'});
+  const response=await fetch('/api/battle-preview?roles='+encodeURIComponent(assignedRoles.join(','))+'&positions='+encodeURIComponent(positions.join(',')),{cache:'no-store'});
   if(!response.ok)throw Error('Savaş verisi alınamadı ('+response.status+')');
   const result=await response.json();
   states=result.teams.map(team=>team.map(u=>({...u,hp:u.maxHp,shield:0})));
