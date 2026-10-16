@@ -70,3 +70,38 @@
 .battle-projectile.effect-magic{background:#f3c4ff;box-shadow:0 0 10px 4px #e36dff,0 0 24px 10px #7e47ec}
 .battle-projectile.effect-special{background:#ffe7a2;box-shadow:0 0 10px 5px #ffbe4c,0 0 24px 10px #ff6c32}
 @media(prefers-reduced-motion:reduce){.arena-hero.special-cast .arena-portrait,.arena-hero.healing-aura .arena-portrait,.arena-hero.shield-aura .arena-portrait{transition:none}}
+
+/* Neon esports x comic arena: visual-only enhancement */
+:root{--arena-cyan:#40e9ff;--arena-rose:#ff4c82;--arena-gold:#ffe279}
+body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),radial-gradient(ellipse at 88% 30%,#45152e 0,transparent 36%),#070b18}
+.battle-arena{position:relative;isolation:isolate;padding:clamp(10px,2vw,24px);border:1px solid #3a5684;border-radius:24px;background:radial-gradient(ellipse at 50% 52%,#17436988,transparent 62%),repeating-linear-gradient(0deg,transparent 0 39px,#65caff0b 40px),linear-gradient(145deg,#0c1c36,#0a1024 62%,#261128);box-shadow:inset 0 0 65px #0b6b9d33,0 18px 55px #0007;overflow:hidden}
+.battle-arena::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,#00ddff0b 0 48%,transparent 49% 51%,#ff4b790b 52%);z-index:-1}
+.arena-side{min-width:0;padding:clamp(5px,1.4vw,14px);border-radius:17px}
+.arena-blue{background:linear-gradient(145deg,#153d6922,#0a142222);border:1px solid #2c9be044}
+.arena-red{background:linear-gradient(215deg,#71214422,#0a142222);border:1px solid #ff4c8244}
+.arena-side h2{margin:0 0 14px;text-align:center;font-size:clamp(11px,2vw,17px);letter-spacing:.12em;text-shadow:0 0 15px currentColor}
+.arena-blue h2{color:var(--arena-cyan)}.arena-red h2{color:var(--arena-rose)}
+.arena-hero{overflow:hidden;border-radius:15px;background:linear-gradient(135deg,#183558,#0a1427);box-shadow:0 8px 22px #0006,inset 0 1px #ffffff1b;min-width:0}
+.arena-blue .arena-hero{border-color:#338ec0}.arena-red .arena-hero{border-color:#b44977}
+.arena-portrait{position:relative;overflow:hidden;border-radius:10px;background:radial-gradient(circle at 50% 20%,#34658e,#0d1425 80%);aspect-ratio:4/3;display:flex;align-items:center;justify-content:center}
+.arena-red .arena-portrait{background:radial-gradient(circle at 50% 20%,#74354d,#0d1425 80%)}
+.arena-portrait-image{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 7px 12px #0008)}
+.arena-hero-label{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(10px,1.4vw,14px);font-weight:900;text-align:center;margin:7px 0}
+.arena-hero .hp{height:7px;margin-top:4px;background:#0a1422;border:1px solid #ffffff21}
+.arena-hero .hp span{background:linear-gradient(90deg,#1ce7a5,#bcffdd)}
+.arena-hero.dead{filter:grayscale(1);opacity:.36}
+.score{border-color:#477ca5;background:linear-gradient(90deg,#0a2a49,#10192d 50%,#40172d);box-shadow:0 0 24px #00ccff13}
+.score>div:first-child{color:var(--arena-cyan)}.score>div:last-child{color:var(--arena-rose)}
+.round strong{text-shadow:0 0 18px #23eaff88}
+.controls{background:linear-gradient(155deg,#122b48,#11172d);border-color:#42769d}
+#message{font-weight:900;letter-spacing:.02em;min-height:36px}
+.battle-summary{background:radial-gradient(ellipse at top,#153c60,#0b1426);border:1px solid #4bd5ee;border-radius:20px;box-shadow:0 0 32px #17c8e722}
+.battle-summary h2{text-shadow:0 0 24px #3be6ff}
+.battle-comic-banner{position:fixed;top:30%;left:50%;z-index:100;transform:translate(-50%,-50%) rotate(-4deg);pointer-events:none;font-weight:1000;font-size:clamp(24px,6vw,64px);white-space:nowrap;letter-spacing:.05em;color:#fff;text-shadow:4px 5px 0 #101325,0 0 22px #ff408d;-webkit-text-stroke:1px #091025;animation:comicPop .7s ease-out both}
+.battle-comic-banner.heal{color:#86ffc6;text-shadow:4px 5px 0 #101325,0 0 22px #35d89a}
+.battle-comic-banner.shield{color:#8feeff;text-shadow:4px 5px 0 #101325,0 0 22px #39b9ff}
+@keyframes comicPop{0%{opacity:0;transform:translate(-50%,-50%) rotate(-8deg) scale(.5)}25%{opacity:1;transform:translate(-50%,-50%) rotate(-4deg) scale(1.16)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-65%) rotate(-2deg) scale(1)}}
+.battle-arena .hero.hit{box-shadow:0 0 0 2px #ff6387,0 0 28px #ff456999}
+.battle-arena .hero.cast{box-shadow:0 0 0 2px #3ceaff,0 0 28px #30e3ff88}
+@media(max-width:640px){.shell{padding:10px 8px 40px}.battle-arena{padding:8px;gap:7px;border-radius:15px}.arena-side{padding:5px}.arena-side h2{margin-bottom:8px;font-size:10px}.team{gap:6px}.arena-hero{padding:5px;border-radius:9px}.arena-portrait{aspect-ratio:1/1}.arena-hero-label{font-size:10px;margin:4px 0}.score{margin:12px 0;padding:9px 5px}.score b{font-size:18px}.controls{padding:10px}.buttons{gap:6px}.buttons button{min-height:44px;padding:10px 8px;font-size:11px}.log{margin-top:12px}}
+@media(prefers-reduced-motion:reduce){.battle-comic-banner{animation:none!important;display:none!important}}
