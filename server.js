@@ -109,40 +109,37 @@ const token=()=>crypto.randomBytes(24).toString('hex');
 const publicRoom=(r,seat)=>({code:r.code,universe:r.universe,phase:r.phase,round:r.round,turn:r.turn,deadline:r.deadline||null,series:r.series||[0,0],rematch:r.rematch||[false,false],mode:r.mode||"friend",rankChange:r.phase==='finished'?(r.rankChange||[0,0]):null,rankBefore:r.phase==='finished'?(r.rankBefore||[null,null]):null,topBid:r.topBid,topSeat:r.topSeat,history:r.history,chat:r.chat||[],players:r.players.map((p,i)=>p?{name:p.name,credits:p.credits,team:p.team.map(x=>({name:x.name,universe:x.universe,cost:x.cost,rarity:rarityForPower(x.power)})),connected:true,seat:i}:null),card:r.phase==='auction'?{name:r.cards[r.round].name,universe:r.cards[r.round].universe,rarity:rarityForPower(r.cards[r.round].power)}:null,final:r.phase==='finished'?r.players.map(p=>({name:p.name,score:p.team.reduce((a,c)=>a+c.power,0)+p.credits*10,credits:p.credits,team:p.team.map(c=>({name:c.name,universe:c.universe,cost:c.cost,power:c.power,rarity:rarityForPower(c.power)}))})):null,me:seat,catalogueCount:catalogue.size});
 function publish(r){markRoom(r);for(const client of listeners.get(r.code)||[]){try{client.res.write(`data: ${JSON.stringify(publicRoom(r,client.seat))}\n\n`)}catch{}}}
 function log(r,msg){r.history.push(msg);if(r.history.length>30)r.history.shift();}
+function forcedCardCost(card){return ({common:2,advanced:3,rare:4,legendary:5})[rarityForPower(card.power)]||2}
 function advanceRound(r){
-  r.deadline=null;
-  // A player without credits cannot block the next opening bid.
-  while(r.round<10){
-    if(r.mode==='bot'){
-      const open=r.players.map((p,i)=>p.team.length<5?i:-1).filter(i=>i>=0);
-      if(!open.length)break;
-      const fundedOpen=open.filter(i=>r.players[i].credits>0);
-      if(open.length===1||fundedOpen.length===0){
-        const seat=open.length===1?open[0]:open.reduce((a,b)=>r.players[a].team.length<=r.players[b].team.length?a:b);
-        const cost=r.players[seat].credits>0?1:0;
-        r.players[seat].credits-=cost;r.players[seat].team.push({...r.cards[r.round],cost});
-        log(r,`${r.players[seat].name} ${r.cards[r.round].name} karakterini takımını tamamlamak için aldı.`);
-        r.round++;continue;
-      }
-    }
-    const funded=r.players.map((p,i)=>p.credits>0?i:-1).filter(i=>i>=0);
-    if(funded.length===0){endGame(r);log(r,'Krediler tükendi. Oyun sona erdi.');return;}
-    if(funded.length===1){
-      const winner=funded[0],card=r.cards[r.round];
-      r.players[winner].credits-=1;
-      r.players[winner].team.push({...card,cost:1});
-      log(r,`${r.players[winner].name}, rakibinin kredisi kalmadığı için ${card.name} karakterini 1 krediye kazandı.`);
-      r.round++;
-      continue;
-    }
-    r.topBid=0;r.topSeat=null;r.openingPassSeat=null;
-    r.turn=r.round%2;
-    r.deadline=Date.now()+20000;
-    log(r,`${r.round+1}. kart açıldı. İlk teklif: ${r.players[r.turn].name}`);
-    return;
+ r.deadline=null;
+ while(r.round<10){
+  const open=r.players.map((p,i)=>p.team.length<5?i:-1).filter(i=>i>=0);
+  if(!open.length)break;
+  if(open.length===1){
+   const seat=open[0],card=r.cards[r.round],cost=forcedCardCost(card);
+   r.players[seat].credits-=cost;
+   r.players[seat].team.push({...card,cost});
+   log(r,`${r.players[seat].name} ${card.name} karakterini zorunlu alımda ${cost} krediye aldı.`);
+   r.round++;continue;
   }
-  endGame(r);
-  log(r,'Oyun bitti. Toplam puanlar açıklandı.');
+  const funded=open.filter(i=>r.players[i].credits>0);
+  if(!funded.length){
+   // Both players ran out of funds; keep normal bidding fair by moving on to the next card.
+   r.round++;continue;
+  }
+  if(funded.length===1){
+   const seat=funded[0],card=r.cards[r.round],cost=forcedCardCost(card);
+   r.players[seat].credits-=cost;r.players[seat].team.push({...card,cost});
+   log(r,`${r.players[seat].name} ${card.name} karakterini ${cost} krediye aldı.`);
+   r.round++;continue;
+  }
+  r.topBid=0;r.topSeat=null;r.openingPassSeat=null;
+  r.turn=funded.includes(r.round%2)?r.round%2:funded[0];
+  r.deadline=Date.now()+20000;
+  log(r,`${r.round+1}. kart açıldı. İlk teklif: ${r.players[r.turn].name}`);
+  return;
+ }
+ endGame(r);log(r,'Açık artırma tamamlandı.');
 }
 function settleFinishedMatch(r,winner,scores){
  if(r.matchSettled)return;
@@ -213,11 +210,7 @@ if(url==='/api/match'){const universe=['marvel','dc','mixed'].includes(b.univers
 if(url==='/api/chat'){const{r,seat}=authorize(b);if(r.mode==='bot')error('Sohbet yalnızca gerçek oyuncularla kullanılabilir.');const message=String(b.message||'').trim().replace(/[\u0000-\u001f\u007f]/g,' ');if(!message||message.length>240)error('Mesaj 1–240 karakter olmalı.');if(Date.now()-(r.lastChatAt?.[seat]||0)<1000)error('Yeni mesaj için bir saniye bekle.');r.lastChatAt??=[0,0];r.lastChatAt[seat]=Date.now();r.chat??=[];r.chat.push({seat,name:r.players[seat].name,message,time:Date.now()});if(r.chat.length>60)r.chat.shift();r.lastActivity=Date.now();publish(r);return{room:publicRoom(r,seat)}}
 if(url==='/api/state'){const{r,seat}=authorize(b);r.lastActivity=Date.now();return{room:publicRoom(r,seat)}}
 if(url==='/api/bid'){const{r,seat}=authorize(b);if(r.phase!=='auction')error('İhale aktif değil.');if(r.turn!==seat)error('Teklif sırası sende değil.');const amount=Number(b.amount);if(!Number.isInteger(amount)||amount<=r.topBid||amount>r.players[seat].credits)error('Teklif tutarı geçersiz.');if(r.mode==='bot'&&r.players[seat].team.length>=5)error('Takımın tamamlandı.');r.topBid=amount;r.topSeat=seat;r.openingPassSeat=null;log(r,`${r.players[seat].name} ${amount} kredi teklif etti.`);const other=1-seat;if(r.players[other].credits<=amount){finishAuction(r);}else{r.turn=other;r.deadline=Date.now()+20000;}publish(r);return{room:publicRoom(r,seat)}}
-if(url==='/api/pass'){const{r,seat}=authorize(b);if(r.phase!=='auction'||r.turn!==seat)error('Şu an çekilemezsin.');if(r.topSeat===null){if(r.openingPassSeat===1-seat){if(r.mode==='bot'){
- const open=r.players.map((p,i)=>p.team.length<5?i:-1).filter(i=>i>=0);
- const chosen=open.reduce((best,i)=>best<0||r.players[i].team.length<r.players[best].team.length?i:best,-1);
- if(chosen>=0){r.players[chosen].team.push({...r.cards[r.round],cost:0});log(r,`${r.players[chosen].name} ${r.cards[r.round].name} karakterini ücretsiz aldı.`)}
- }else log(r,'İki oyuncu da pas geçti. Kart atlandı.');r.round++;advanceRound(r);}else{r.openingPassSeat=seat;r.turn=1-seat;r.deadline=Date.now()+20000;log(r,r.players[seat].name+' pas geçti.');}}else finishAuction(r);publish(r);return{room:publicRoom(r,seat)}}
+if(url==='/api/pass'){const{r,seat}=authorize(b);if(r.phase!=='auction'||r.turn!==seat)error('Şu an çekilemezsin.');if(r.topSeat===null){if(r.openingPassSeat===1-seat){log(r,'İki oyuncu da pas geçti. Kart atlandı.');r.round++;advanceRound(r);}else{r.openingPassSeat=seat;r.turn=1-seat;r.deadline=Date.now()+20000;log(r,r.players[seat].name+' pas geçti.');}}else finishAuction(r);publish(r);return{room:publicRoom(r,seat)}}
 error('Bilinmeyen işlem.',404)}
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml'};
 // Public encyclopedia thumbnails and Turkish character summaries. No image is fabricated.
