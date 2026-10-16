@@ -10,12 +10,13 @@ function seedRandom(seed){
 }
 export function fighterFromCard(card,position=0){
   const power=clamp(Math.round(Number(card.power)||50),1,100);
-  const role=card.role&&roles.includes(card.role)?card.role:roles[power%roles.length];
+  // Formation controls the battle role: both rear slots and rear specialists use ranged energy.
+  const role=position>=2?'energy':position===0?'tank':'fighter';
   const mods={tank:[-12,22,30,-8],fighter:[6,7,8,0],energy:[15,-10,-12,2],assassin:[17,-14,-15,17],support:[-7,0,4,9]}[role];
-  const attack=clamp(30+Math.round(power*.65)+mods[0],10,120);
+  const attack=clamp(30+Math.round(power*.65)+mods[0]+(position>=2?8:0),10,120);
   const defense=clamp(25+Math.round(power*.45)+mods[1],5,110);
   const maxHp=clamp(95+power+mods[2],50,250);
-  const speed=clamp(25+Math.round(power*.5)+mods[3],10,110);
+  const speed=clamp(25+Math.round(power*.5)+mods[3]+(position>=2?5:0),10,110);
   return {id:String(card.id||card.name),name:String(card.name||'Hero'),role,position,attack,defense,maxHp,hp:maxHp,speed,shield:0,kills:0,damage:0,healing:0,active:card.active||null,passive:card.passive||null};
 }
 // Slots 0-1 are the front line; slots 2-4 are the protected rear line.
@@ -24,9 +25,7 @@ function targetOf(enemies,attacker){
   const alive=enemies.filter(x=>x.hp>0);
   if(!alive.length)return null;
   const frontline=alive.filter(isFront);
-  // Assassins bypass guards and prioritize vulnerable rear-line targets.
-  const rear=alive.filter(x=>!isFront(x));
-  const pool=attacker.role==='assassin'&&rear.length?rear:frontline.length?frontline:alive;
+  const pool=frontline.length?frontline:alive;
   return [...pool].sort((a,b)=>a.hp-b.hp||a.position-b.position||a.id.localeCompare(b.id))[0];
 }
 export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10}={}){
@@ -67,9 +66,9 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10}=
       const critical=random()<.10;
       // Tanks shield their allies by holding the frontline. Rear units take reduced
       // damage until their front line falls, except when assassins infiltrate.
-      const guarded=!isFront(target)&&enemies.some(x=>x.hp>0&&isFront(x))&&unit.role!=='assassin';
+      const guarded=!isFront(target)&&enemies.some(x=>x.hp>0&&isFront(x));
       const defense=skill?.effect==='pierce'?Math.floor(target.defense*.6):target.defense;
-      const roleMultiplier=unit.role==='fighter'&&isFront(target)?1.08:unit.role==='assassin'&&!isFront(target)?1.18:1;
+      const roleMultiplier=unit.role==='fighter'&&isFront(target)?1.08:unit.role==='energy'&&!isFront(unit)?1.12:1;
       const raw=Math.max(1,Math.floor(unit.attack*multiplier*roleMultiplier*(guarded?.8:1)*100/(100+defense)*(critical?1.5:1)));
       const absorbed=Math.min(target.shield,raw);
       target.shield-=absorbed;
