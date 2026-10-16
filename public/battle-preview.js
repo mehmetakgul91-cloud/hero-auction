@@ -4,6 +4,23 @@ const demoA=[['Hulk','tank',85],['Thor','fighter',88],['Wolverine','fighter',78]
 const demoB=[['Superman','fighter',92],['Wonder Woman','fighter',85],['Doomsday','tank',84],['The Flash','assassin',81],['Doctor Fate','energy',87]];
 const roleNames={tank:'TANK',fighter:'SAVAŞÇI',energy:'ENERJİ',assassin:'SUİKASTÇI',support:'DESTEK'};
 let states=[],events=[],cursor=0,timer=null;
+const motion=()=> $('motion').checked&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const duration=()=>Number($('speed').value);
+function animateMove(e){
+ if(!motion())return;
+ const actor=[...document.querySelectorAll('.hero')].find(x=>x.dataset.heroId===e.actorId);
+ const target=[...document.querySelectorAll('.hero')].find(x=>x.dataset.heroId===e.targetId);
+ if(!actor)return;
+ const ranged=/thor|iron man|scarlet witch|doctor fate|storm|superman|vision|magneto/i.test(e.actorId)||/burst|splash|shield|heal|energy|magic/i.test(e.action||'');
+ actor.classList.add(ranged?'attack-energy':'attack-melee');
+ if(target){
+  const ar=actor.getBoundingClientRect(),tr=target.getBoundingClientRect();
+  if(ranged){const orb=document.createElement('span');orb.className='battle-projectile'+(/thor/i.test(e.actorId)?' lightning':/witch|fate/i.test(e.actorId)?' magic':'');orb.style.setProperty('--from-x',ar.left+ar.width/2+'px');orb.style.setProperty('--from-y',ar.top+ar.height/2+'px');orb.style.setProperty('--to-x',tr.left+tr.width/2+'px');orb.style.setProperty('--to-y',tr.top+tr.height/2+'px');orb.style.setProperty('--duration',Math.min(600,duration()*.5)+'ms');document.body.append(orb);setTimeout(()=>orb.remove(),Math.min(600,duration()*.5)+100)}
+  if(Number(e.value)>0){const label=document.createElement('span');label.className='damage-number'+(/heal/i.test(e.action||'')?' heal-number':'');label.textContent=(/heal/i.test(e.action||'')?'+':'−')+e.value;target.append(label);setTimeout(()=>label.remove(),850)}
+ }
+ setTimeout(()=>actor.classList.remove('attack-melee','attack-energy'),650);
+}
+
 async function build(){
  stop();cursor=0;events=[];$('next').disabled=true;$('play').disabled=true;
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
@@ -38,7 +55,7 @@ function render(flash){
  for(let side=0;side<2;side++){
   const parent=$(side?'team-b':'team-a');parent.replaceChildren();
   for(const u of states[side]){
-   const card=document.createElement('article');card.className='hero'+(u.hp<=0?' dead':'')+(flash?.actorId===u.id?' cast':'')+(flash?.targetId===u.id?' hit':'');
+   const card=document.createElement('article');card.dataset.heroId=u.id;card.className='hero'+(u.hp<=0?' dead':'')+(flash?.actorId===u.id?' cast':'')+(flash?.targetId===u.id?' hit':'');
    const top=document.createElement('div');top.className='hero-top';
    const name=document.createElement('span');name.className='hero-name';name.textContent=u.name;
    const role=document.createElement('span');role.className='role';role.textContent=roleNames[u.role];
@@ -63,10 +80,11 @@ function step(){
  states.forEach((t,side)=>t.forEach((u,i)=>u.hp=e.snapshot[side][i]));
  const li=document.createElement('li');li.textContent='Tur '+e.round+' · '+e.actor+' · '+e.action+(e.target?' → '+e.target:'')+' ('+e.value+')';
  $('events').prepend(li);$('message').textContent=e.actor+' · '+e.action+(e.target?' → '+e.target:'');
- render(e);if(cursor>=events.length)stop();
+ render(e);animateMove(e);if(cursor>=events.length)stop();
 }
 function stop(){if(timer!==null){clearInterval(timer);timer=null}}
-$('play').onclick=()=>{if(timer!==null){stop();$('play').textContent='▶ DEVAM ET';return}timer=setInterval(step,550);$('play').textContent='⏸ DURDUR'};
+$('play').onclick=()=>{if(timer!==null){stop();$('play').textContent='▶ DEVAM ET';return}timer=setInterval(step,duration());$('play').textContent='⏸ DURDUR'};
+$('speed').onchange=()=>{if(timer!==null){stop();timer=setInterval(step,duration())}};
 $('next').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';step()};
 $('reset').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';$('events').replaceChildren();$('message').textContent='Başlamak için savaşı oynat.';build()};
 void build();
