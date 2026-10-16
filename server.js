@@ -4,6 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import pg from 'pg';
+import {simulateRosterBattle,battleRoster} from './battle-roster.js';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
 const GOOGLE_CLIENT_ID=process.env.GOOGLE_CLIENT_ID||'742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
@@ -258,7 +259,15 @@ async function lookupCharacterInfo(universe,name){
  }
  return {url:image,source,description:description||`${name}, ${({marvel:'Marvel',dc:'DC',lotr:'Yüzüklerin Efendisi',pokemon:'Pokémon'})[universe]} evrenindeki karakterlerden biridir. Ayrıntılı Türkçe tanıtım henüz eklenmedi.`};
 }
-const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data))};try{const url=new URL(req.url,'http://localhost');if(req.method==='GET'&&url.pathname==='/api/events'){const r=rooms.get((url.searchParams.get('code')||'').toUpperCase());const t=url.searchParams.get('token');const seat=r?.players.findIndex(p=>p&&p.token===t)??-1;const loggedIn=readLogin(url.searchParams.get('authToken'));if(!r||seat<0||!loggedIn)return send(403,{error:'Yetkisiz'});res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-cache','Connection':'keep-alive','X-Accel-Buffering':'no'});res.write(`data: ${JSON.stringify(publicRoom(r,seat))}\n\n`);const clients=listeners.get(r.code)||new Set();clients.add({res,seat});listeners.set(r.code,clients);const heartbeat=setInterval(()=>{if(!res.destroyed)res.write(': heartbeat\n\n')},15000);req.on('close',()=>{clearInterval(heartbeat);for(const c of clients)if(c.res===res)clients.delete(c);if(!clients.size)listeners.delete(r.code)});return}
+const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data))};try{const url=new URL(req.url,'http://localhost');if(req.method==='GET'&&url.pathname==='/api/battle-preview'){
+ // Fixed public demo teams. This endpoint never accesses rooms, accounts or wallets.
+ const idsA=['marvel:hulk','marvel:thor','marvel:wolverine','marvel:scarlet witch','marvel:iron man'];
+ const idsB=['dc:superman','dc:wonder woman','dc:doomsday','dc:the flash','dc:doctor fate'];
+ const cards=ids=>ids.map(id=>({id,power:Math.max(1,Math.min(100,Number(cardDetails[id]?.power)||70))}));
+ const result=simulateRosterBattle(cards(idsA),cards(idsB),{seed:'hero-auction-preview-v1'});
+ return send(200,{demo:true,winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log});
+}
+if(req.method==='GET'&&url.pathname==='/api/events'){const r=rooms.get((url.searchParams.get('code')||'').toUpperCase());const t=url.searchParams.get('token');const seat=r?.players.findIndex(p=>p&&p.token===t)??-1;const loggedIn=readLogin(url.searchParams.get('authToken'));if(!r||seat<0||!loggedIn)return send(403,{error:'Yetkisiz'});res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-cache','Connection':'keep-alive','X-Accel-Buffering':'no'});res.write(`data: ${JSON.stringify(publicRoom(r,seat))}\n\n`);const clients=listeners.get(r.code)||new Set();clients.add({res,seat});listeners.set(r.code,clients);const heartbeat=setInterval(()=>{if(!res.destroyed)res.write(': heartbeat\n\n')},15000);req.on('close',()=>{clearInterval(heartbeat);for(const c of clients)if(c.res===res)clients.delete(c);if(!clients.size)listeners.delete(r.code)});return}
 if(req.method==='GET'&&url.pathname==='/api/art'){
  const universe=url.searchParams.get('universe')||'';
  const name=url.searchParams.get('name')||'';
