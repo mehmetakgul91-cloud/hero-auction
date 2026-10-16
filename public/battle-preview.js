@@ -88,7 +88,7 @@ function animateMove(e){
   orb.style.setProperty('--duration',Math.min(600,duration()*.5)+'ms');document.body.append(orb);
   setTimeout(()=>orb.remove(),Math.min(600,duration()*.5)+120);
  }
- if(target&&Number(e.value)>0){const label=document.createElement('span');label.className='damage-number'+(heal?' heal-number':'');label.textContent=(heal?'+':'−')+e.value;target.append(label);setTimeout(()=>label.remove(),850)}
+ if(effectTarget&&Number(e.value)>0&&(heal||shield||!(/haste/i.test(action)))){const label=document.createElement('span');label.className='damage-number'+(heal?' heal-number':'');label.textContent=(heal||shield?'+':'−')+e.value;effectTarget.append(label);setTimeout(()=>label.remove(),850)}
  setTimeout(()=>{actor.classList.remove('attack-melee','attack-energy','special-cast');effectTarget.classList.remove('healing-aura','shield-aura')},700);
 }
 
