@@ -51,3 +51,13 @@
 
 .board-power{display:block;position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);white-space:nowrap;padding:3px 7px;border-radius:12px;background:#10294b;color:#e6f9ff;border:1px solid #52d5ff;font-size:10px;font-weight:800;z-index:2;pointer-events:none}
 .board-slot{position:relative}
+
+/* Battle 2.0 post-match summary */
+.battle-summary{margin:16px 0;padding:18px;border:1px solid #4c91c0;border-radius:16px;background:linear-gradient(130deg,#102b49,#191b3d);text-align:center;box-shadow:0 10px 30px #0005}
+.battle-summary[hidden]{display:none!important}
+.battle-summary h2{margin:0 0 8px;font-size:clamp(18px,4vw,26px);letter-spacing:.07em;color:#d9faff}
+.battle-summary p{font-size:12px;color:#bdd4ed;margin:0 0 15px}
+.battle-summary-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.battle-summary-stats>div{padding:11px 5px;background:#07192d99;border:1px solid #355679;border-radius:11px;display:flex;flex-direction:column;gap:5px}
+.battle-summary-stats small{font-size:10px;color:#9eb9d6}
+.battle-summary-stats strong{font-size:clamp(16px,3vw,22px);color:#fff}
