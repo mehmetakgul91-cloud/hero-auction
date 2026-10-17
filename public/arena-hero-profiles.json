@@ -1,0 +1,355 @@
+{
+  "version": 1,
+  "characters": {
+    "marvel:hulk": {
+      "name": "Hulk",
+      "style": "charge",
+      "ability": "Öfke Patlaması",
+      "role": "tank",
+      "accent": "#ff9d62"
+    },
+    "marvel:juggernaut": {
+      "name": "Juggernaut",
+      "style": "charge",
+      "ability": "Durdurulamaz Hücum",
+      "role": "tank",
+      "accent": "#ff9d62"
+    },
+    "marvel:colossus": {
+      "name": "Colossus",
+      "style": "shield",
+      "ability": "Çelik Yumruk",
+      "role": "tank",
+      "accent": "#4dffd3"
+    },
+    "marvel:the thing": {
+      "name": "The Thing",
+      "style": "charge",
+      "ability": "Kayalık Darbe",
+      "role": "tank",
+      "accent": "#ff9d62"
+    },
+    "marvel:luke cage": {
+      "name": "Luke Cage",
+      "style": "charge",
+      "ability": "Sokak Darbesi",
+      "role": "tank",
+      "accent": "#ff9d62"
+    },
+    "dc:doomsday": {
+      "name": "Doomsday",
+      "style": "charge",
+      "ability": "Kıyamet Yumruğu",
+      "role": "tank",
+      "accent": "#ff9d62"
+    },
+    "dc:bane": {
+      "name": "Bane",
+      "style": "charge",
+      "ability": "Venom Hücumu",
+      "role": "tank",
+      "accent": "#ff9d62"
+    },
+    "dc:solomon grundy": {
+      "name": "Solomon Grundy",
+      "style": "charge",
+      "ability": "Mezar Darbesi",
+      "role": "tank",
+      "accent": "#ff9d62"
+    },
+    "dc:killer croc": {
+      "name": "Killer Croc",
+      "style": "slash",
+      "ability": "Yırtıcı Pençe",
+      "role": "tank",
+      "accent": "#ff596c"
+    },
+    "dc:metallo": {
+      "name": "Metallo",
+      "style": "beam",
+      "ability": "Kriptonit Işını",
+      "role": "tank",
+      "accent": "#ff657b"
+    },
+    "marvel:thor": {
+      "name": "Thor",
+      "style": "lightning",
+      "ability": "Mjölnir Yıldırımı",
+      "role": "fighter",
+      "accent": "#8beaff"
+    },
+    "marvel:captain america": {
+      "name": "Captain America",
+      "style": "shield",
+      "ability": "Kalkan Fırlatma",
+      "role": "fighter",
+      "accent": "#4dffd3"
+    },
+    "marvel:wolverine": {
+      "name": "Wolverine",
+      "style": "slash",
+      "ability": "Adamantium Pençeler",
+      "role": "fighter",
+      "accent": "#ff596c"
+    },
+    "marvel:black panther": {
+      "name": "Black Panther",
+      "style": "slash",
+      "ability": "Kinetik Patlama",
+      "role": "fighter",
+      "accent": "#ff596c"
+    },
+    "marvel:shang-chi": {
+      "name": "Shang-Chi",
+      "style": "slash",
+      "ability": "On Halka Darbesi",
+      "role": "fighter",
+      "accent": "#ff596c"
+    },
+    "marvel:sentry": {
+      "name": "Sentry",
+      "style": "cosmic",
+      "ability": "Güneş Patlaması",
+      "role": "fighter",
+      "accent": "#f9cf6c"
+    },
+    "marvel:hela": {
+      "name": "Hela",
+      "style": "slash",
+      "ability": "Ölüm Kılıçları",
+      "role": "fighter",
+      "accent": "#ff596c"
+    },
+    "marvel:namor": {
+      "name": "Namor",
+      "style": "water",
+      "ability": "Üç Dişli Mızrak",
+      "role": "fighter",
+      "accent": "#4faaff"
+    },
+    "dc:superman": {
+      "name": "Superman",
+      "style": "beam",
+      "ability": "Isı Görüşü",
+      "role": "fighter",
+      "accent": "#ff657b"
+    },
+    "dc:wonder woman": {
+      "name": "Wonder Woman",
+      "style": "shield",
+      "ability": "Hakikat Kılıcı",
+      "role": "fighter",
+      "accent": "#4dffd3"
+    },
+    "dc:aquaman": {
+      "name": "Aquaman",
+      "style": "water",
+      "ability": "Okyanus Dalgası",
+      "role": "fighter",
+      "accent": "#4faaff"
+    },
+    "dc:shazam": {
+      "name": "Shazam",
+      "style": "lightning",
+      "ability": "Sihirli Şimşek",
+      "role": "fighter",
+      "accent": "#8beaff"
+    },
+    "dc:black adam": {
+      "name": "Black Adam",
+      "style": "lightning",
+      "ability": "Kara Şimşek",
+      "role": "fighter",
+      "accent": "#8beaff"
+    },
+    "dc:darkseid": {
+      "name": "Darkseid",
+      "style": "beam",
+      "ability": "Omega Işınları",
+      "role": "fighter",
+      "accent": "#ff657b"
+    },
+    "dc:deathstroke": {
+      "name": "Deathstroke",
+      "style": "slash",
+      "ability": "Keskin Nişan",
+      "role": "fighter",
+      "accent": "#ff596c"
+    },
+    "marvel:scarlet witch": {
+      "name": "Scarlet Witch",
+      "style": "magic",
+      "ability": "Kaos Büyüsü",
+      "role": "energy",
+      "accent": "#cb77ff"
+    },
+    "marvel:doctor strange": {
+      "name": "Doctor Strange",
+      "style": "magic",
+      "ability": "Agamotto Büyüsü",
+      "role": "energy",
+      "accent": "#cb77ff"
+    },
+    "marvel:captain marvel": {
+      "name": "Captain Marvel",
+      "style": "cosmic",
+      "ability": "Foton Yağmuru",
+      "role": "energy",
+      "accent": "#f9cf6c"
+    },
+    "marvel:silver surfer": {
+      "name": "Silver Surfer",
+      "style": "cosmic",
+      "ability": "Kozmik Dalga",
+      "role": "energy",
+      "accent": "#f9cf6c"
+    },
+    "marvel:magneto": {
+      "name": "Magneto",
+      "style": "mind",
+      "ability": "Manyetik Fırtına",
+      "role": "energy",
+      "accent": "#c47cff"
+    },
+    "marvel:storm": {
+      "name": "Storm",
+      "style": "lightning",
+      "ability": "Şimşek Fırtınası",
+      "role": "energy",
+      "accent": "#8beaff"
+    },
+    "dc:doctor fate": {
+      "name": "Doctor Fate",
+      "style": "magic",
+      "ability": "Kader Mührü",
+      "role": "energy",
+      "accent": "#cb77ff"
+    },
+    "dc:zatanna": {
+      "name": "Zatanna",
+      "style": "magic",
+      "ability": "Ters Büyü",
+      "role": "energy",
+      "accent": "#cb77ff"
+    },
+    "dc:green lantern": {
+      "name": "Green Lantern",
+      "style": "shield",
+      "ability": "İrade Yapısı",
+      "role": "energy",
+      "accent": "#4dffd3"
+    },
+    "dc:raven": {
+      "name": "Raven",
+      "style": "magic",
+      "ability": "Ruh Enerjisi",
+      "role": "energy",
+      "accent": "#cb77ff"
+    },
+    "marvel:spider-man": {
+      "name": "Spider-Man",
+      "style": "web",
+      "ability": "Ağ Tuzağı",
+      "role": "assassin",
+      "accent": "#e5f6ff"
+    },
+    "marvel:deadpool": {
+      "name": "Deadpool",
+      "style": "slash",
+      "ability": "Çifte Kılıç",
+      "role": "assassin",
+      "accent": "#ff596c"
+    },
+    "marvel:black widow": {
+      "name": "Black Widow",
+      "style": "lightning",
+      "ability": "Elektrikli Darbe",
+      "role": "assassin",
+      "accent": "#8beaff"
+    },
+    "marvel:elektra": {
+      "name": "Elektra",
+      "style": "slash",
+      "ability": "Sai Saldırısı",
+      "role": "assassin",
+      "accent": "#ff596c"
+    },
+    "marvel:quicksilver": {
+      "name": "Quicksilver",
+      "style": "speed",
+      "ability": "Hız Kasırgası",
+      "role": "assassin",
+      "accent": "#ffe761"
+    },
+    "dc:batman": {
+      "name": "Batman",
+      "style": "speed",
+      "ability": "Batarang Serisi",
+      "role": "assassin",
+      "accent": "#ffe761"
+    },
+    "dc:nightwing": {
+      "name": "Nightwing",
+      "style": "speed",
+      "ability": "Akrobatik Kombinasyon",
+      "role": "assassin",
+      "accent": "#ffe761"
+    },
+    "dc:the flash": {
+      "name": "The Flash",
+      "style": "speed",
+      "ability": "Hız Gücü Darbesi",
+      "role": "assassin",
+      "accent": "#ffe761"
+    },
+    "marvel:iron man": {
+      "name": "Iron Man",
+      "style": "beam",
+      "ability": "Mikro Füze Desteği",
+      "role": "support",
+      "accent": "#ff657b"
+    },
+    "marvel:vision": {
+      "name": "Vision",
+      "style": "beam",
+      "ability": "Faz Işını",
+      "role": "support",
+      "accent": "#ff657b"
+    },
+    "marvel:loki": {
+      "name": "Loki",
+      "style": "magic",
+      "ability": "İllüzyon Ordusu",
+      "role": "support",
+      "accent": "#cb77ff"
+    },
+    "marvel:professor x": {
+      "name": "Professor X",
+      "style": "mind",
+      "ability": "Telepatik Baskı",
+      "role": "support",
+      "accent": "#c47cff"
+    },
+    "dc:cyborg": {
+      "name": "Cyborg",
+      "style": "beam",
+      "ability": "Sonic Cannon",
+      "role": "support",
+      "accent": "#ff657b"
+    },
+    "dc:martian manhunter": {
+      "name": "Martian Manhunter",
+      "style": "cosmic",
+      "ability": "Zihinsel Darbe",
+      "role": "support",
+      "accent": "#f9cf6c"
+    },
+    "dc:starfire": {
+      "name": "Starfire",
+      "style": "beam",
+      "ability": "Yıldız Alevi",
+      "role": "support",
+      "accent": "#ff657b"
+    }
+  }
+}
