@@ -108,10 +108,11 @@ if(stage){
     window.addEventListener('heroarena:move',move);
     const resize=new ResizeObserver(()=>{const w=stage.clientWidth,h=stage.clientHeight;if(w&&h){camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)}});resize.observe(stage);
     const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const maxFps=matchMedia('(max-width: 700px)').matches?30:60;let lastDraw=0;
     const tick=now=>{
       if(!active)return;
       elapsed+=Math.min(.05,(now-last)/1000);last=now;
-      if(!document.hidden){
+      if(!document.hidden&&now-lastDraw>=1000/maxFps){lastDraw=now;
         for(const mesh of fighters.values()){
           const d=mesh.userData,progress=Math.max(0,Math.min(1,(d.until-elapsed)/.55));
           const travel=d.style==='speed'?3.2:d.style==='charge'||d.style==='slash'?2.3:.65;
