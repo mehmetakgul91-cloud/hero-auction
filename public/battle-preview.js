@@ -236,10 +236,13 @@ function showBattleSummary(){
  for(let side=0;side<2;side++){
   const section=document.createElement('section');section.className='battle-hero-stats-team';
   const heading=document.createElement('h3');heading.textContent=side?'🔴 KIRMIZI TAKIM':'🔵 MAVİ TAKIM';section.append(heading);
-  for(const hero of finalResult.teams[side]){
-   const dealt=damageEvents.filter(e=>e.actor===hero.id&&e.damageType).reduce((n,e)=>n+(Number(e.value)||0),0);
-   const taken=damageEvents.filter(e=>e.target===hero.id&&e.damageType).reduce((n,e)=>n+(Number(e.value)||0),0);
-   const blocked=damageEvents.filter(e=>e.target===hero.id&&e.damageType).reduce((n,e)=>n+(Number(e.absorbed)||0),0);
+  const rankedHeroes=finalResult.teams[side].map((hero,index)=>({
+   hero,index,
+   dealt:damageEvents.filter(e=>e.actor===hero.id&&e.damageType).reduce((n,e)=>n+(Number(e.value)||0),0),
+   taken:damageEvents.filter(e=>e.target===hero.id&&e.damageType).reduce((n,e)=>n+(Number(e.value)||0),0),
+   blocked:damageEvents.filter(e=>e.target===hero.id&&e.damageType).reduce((n,e)=>n+(Number(e.absorbed)||0),0)
+  })).sort((a,b)=>b.dealt-a.dealt||a.index-b.index);
+  for(const {hero,dealt,taken,blocked} of rankedHeroes){
    const line=document.createElement('div');line.className='battle-hero-stat-row';
    const name=document.createElement('strong');name.textContent=hero.name;
    const numbers=document.createElement('span');numbers.textContent='⚔ '+dealt+' vurdu · 🛡 '+blocked+' engelledi · ❤️ '+taken+' aldı';
