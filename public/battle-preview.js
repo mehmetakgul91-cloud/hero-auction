@@ -8,6 +8,11 @@ const effectivePower=power=>Math.round(power*(1+creditBonus(previewCredits))*10)
 let demoB=[['Superman','fighter',92],['Wonder Woman','fighter',85],['Doomsday','tank',84],['The Flash','assassin',81],['Doctor Fate','energy',87]];
 const roleNames={tank:'TANK',fighter:'SAVAŞÇI',energy:'ENERJİ / MESAFELİ',assassin:'SUİKASTÇI',support:'DESTEK'};
 let states=[],events=[],cursor=0,timer=null;
+let arenaElapsedMs=0,arenaClockStartedAt=0,arenaClockTicker=null;
+function updateArenaClock(){const elapsed=arenaElapsedMs+(arenaClockStartedAt?Date.now()-arenaClockStartedAt:0);const seconds=Math.floor(elapsed/1000);const el=$('arena-live-seconds');if(el)el.textContent=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0')}
+function startArenaClock(){if(arenaClockStartedAt)return;arenaClockStartedAt=Date.now();arenaClockTicker=setInterval(updateArenaClock,250);updateArenaClock()}
+function pauseArenaClock(){if(arenaClockStartedAt){arenaElapsedMs+=Date.now()-arenaClockStartedAt;arenaClockStartedAt=0}if(arenaClockTicker!==null){clearInterval(arenaClockTicker);arenaClockTicker=null}updateArenaClock()}
+function resetArenaClock(){pauseArenaClock();arenaElapsedMs=0;updateArenaClock()}
 const roleOptions=['tank','fighter','energy'];
 let auctionLaneModifiers=[];
 let assignedRoles=demoA.map(x=>roleNames[x[1]]?x[1]:'fighter');
@@ -146,7 +151,7 @@ function animateMove(e){
 }
 
 async function build(overrideResult){
- stop();cursor=0;events=[];$('arena-counter-round').textContent='0';$('arena-counter-move').textContent='0 / 0';$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;$('next').disabled=true;$('play').disabled=true;
+ stop();resetArenaClock();cursor=0;events=[];$('arena-counter-round').textContent='0';$('arena-counter-move').textContent='0 / 0';$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;$('next').disabled=true;$('play').disabled=true;
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
  try{
   let result=overrideResult;
@@ -248,9 +253,9 @@ function step(){
  $('events').prepend(li);$('message').textContent=e.actor+' · '+e.action+(e.target?' → '+e.target:'');
  render(e);animateMove(e);window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position})));window.dispatchEvent(new CustomEvent('heroarena:move',{detail:{event:e,teams:window.heroArenaTeams}}));if(cursor>=events.length){stop();showBattleSummary()}
 }
-function stop(){if(timer!==null){clearInterval(timer);timer=null}}
-$('play').onclick=()=>{if(timer!==null){stop();$('play').textContent='▶ DEVAM ET';return}timer=setInterval(step,duration());$('play').textContent='⏸ DURDUR'};
-$('speed').onchange=()=>{if(timer!==null){stop();timer=setInterval(step,duration())}};
+function stop(){if(timer!==null){clearInterval(timer);timer=null}pauseArenaClock()}
+$('play').onclick=()=>{if(timer!==null){stop();$('play').textContent='▶ DEVAM ET';return}startArenaClock();timer=setInterval(step,duration());$('play').textContent='⏸ DURDUR'};
+$('speed').onchange=()=>{if(timer!==null){stop();startArenaClock();timer=setInterval(step,duration())}};
 $('next').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';step()};
 $('reset').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';$('events').replaceChildren();$('message').textContent='Başlamak için savaşı oynat.';build()};
 if(multiplayerCode&&multiplayerToken){const check=async()=>{try{const response=await fetch('/api/battle-room?code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken),{cache:'no-store'});const v=await response.json();if(!response.ok)throw Error(v.error);if(v.started){clearInterval(battlePoll);battlePoll=null;document.body.classList.add('online-battle');if(!arenaMode){location.href='/battle-preview.html?room=arena&code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken);return}await build(v.result);if(events.length)$('play').click()}else{$('message').textContent='Rakibin hazırlanması bekleniyor… '+v.ready.filter(Boolean).length+'/2 hazır';if(arenaMode)$('play').disabled=true}}catch(e){$('message').textContent='⚠ '+e.message}};void check();battlePoll=setInterval(check,1800)}else if(arenaMode&&!auctionCode){void build().then(()=>{if(events.length)$('play').click()})}
