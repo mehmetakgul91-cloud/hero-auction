@@ -89,8 +89,13 @@ if(stage){
       const valid=new Set();
       teams.forEach((team,side)=>team.forEach((unit,i)=>{
         const key=side+':'+i;valid.add(key);
+        if(fighters.has(key)&&fighters.get(key).userData.unit.id!==unit.id){
+          const old=fighters.get(key);scene.remove(old);old.traverse(node=>{node.geometry?.dispose();if(node.material)(Array.isArray(node.material)?node.material:[node.material]).forEach(m=>m.dispose())});fighters.delete(key);
+        }
         if(!fighters.has(key))make(unit,side,i);
-        const mesh=fighters.get(key);mesh.userData.unit=unit;mesh.scale.setScalar(cardScale(unit));mesh.userData.style=profiles[String(unit.id||'').toLowerCase()]?.style||'charge';
+        const mesh=fighters.get(key);mesh.userData.unit=unit;mesh.scale.setScalar(cardScale(unit));
+        if(/hulk|juggernaut|doomsday|the thing|bane|solomon grundy|killer croc/i.test(String(unit.name)))mesh.scale.x*=1.22;
+        mesh.userData.style=profiles[String(unit.id||'').toLowerCase()]?.style||'charge';
         const ratio=Math.max(0,Math.min(1,unit.hp/Math.max(1,unit.maxHp)));
         mesh.userData.hpFill.scale.x=ratio;mesh.userData.hpFill.position.x=-(1-ratio)*.9;
         mesh.visible=unit.hp>0;
