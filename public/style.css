@@ -386,3 +386,33 @@ header{gap:14px;flex-wrap:wrap}
 #home .cinema-live-stat .online-dot{position:absolute;margin-left:-35px;margin-top:-15px;width:6px;height:6px}
 @media(min-width:601px){#home .cinema-hero{padding-top:98px}}
 @media(max-width:600px){#home .cinema-live-corner{top:9px;right:9px;gap:4px;max-width:calc(100% - 18px)}#home .cinema-live-stat{min-width:65px;padding:7px 6px;border-radius:9px;gap:3px}#home .cinema-live-stat strong{font-size:15px}#home .cinema-live-stat small{font-size:7px}#home .cinema-live-stat .online-dot{margin-left:-28px;margin-top:-12px}#home .cinema-hero{padding-top:95px}}
+
+/* Compact cinematic dashboard: actions and secondary features share the screen. */
+#home .cinema-dashboard{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:12px;align-items:start;padding:0 14px 14px}
+#home .cinema-dashboard>.cinema-command{margin:0;min-width:0}
+#home .cinema-extras{display:flex;flex-direction:column;gap:12px;min-width:0}
+#home .cinema-extras>.panel{margin:0;min-width:0}
+#home .cinema-hero{min-height:0;padding-bottom:18px}
+#home .cinema-hero h1{font-size:clamp(34px,5.5vw,59px);margin:13px 0 12px;line-height:.98}
+#home .cinema-hero p{font-size:13px;margin:8px 0}
+#home .cinema-hero .hero-features{margin-top:12px}
+#home .cinema-command{padding:16px}
+#home .cinema-command-top{padding-bottom:9px;margin-bottom:12px}
+#home .cinema-command .panel-heading h2{font-size:21px;margin:4px 0 8px}
+#home .cinema-command input{padding:10px 12px;margin-bottom:9px}
+#home .cinema-command label{margin:6px 0;font-size:10px}
+#home .cinema-command .worlds{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-bottom:12px}
+#home .cinema-command .worlds button:first-child{grid-column:auto}
+#home .cinema-command .worlds button{padding:10px 3px;font-size:11px;min-width:0}
+#home .cinema-play-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+#home .cinema-play-grid #create{grid-column:1/-1;min-height:44px;padding:11px}
+#home .cinema-play-grid #bot,#home .cinema-play-grid #match{min-height:48px;padding:8px 5px;font-size:11px;margin:0;white-space:normal}
+#home .cinema-extras .social-panel{padding:13px}
+#home .cinema-extras .social-actions{gap:6px;margin:10px 0;grid-template-columns:repeat(2,minmax(0,1fr))}
+#home .cinema-extras .social-actions button{font-size:10px;padding:9px 4px}
+#home .cinema-extras .rewarded-ad-panel{padding:13px}
+#home .cinema-extras .rewarded-ad-panel strong{font-size:12px}
+#home .cinema-command .or{margin:14px 0 9px}
+#home .cinema-command .join input{margin:0}
+@media(max-width:700px){#home .cinema-dashboard{grid-template-columns:minmax(0,1fr) minmax(0,.86fr);gap:7px;padding:0 7px 10px}#home .cinema-command{padding:11px 9px}#home .cinema-extras{gap:7px}#home .cinema-extras .social-panel,#home .cinema-extras .rewarded-ad-panel{padding:10px 7px}#home .cinema-extras .social-panel summary{font-size:11px}#home .cinema-extras .social-actions{grid-template-columns:1fr 1fr;gap:4px}#home .cinema-extras .social-actions button{font-size:9px;padding:7px 2px}#home .cinema-command .panel-heading h2{font-size:17px}#home .cinema-command .worlds button{font-size:10px}#home .cinema-play-grid #bot,#home .cinema-play-grid #match{font-size:10px}#home .cinema-hero{padding-top:88px;padding-bottom:12px}#home .cinema-hero h1{font-size:clamp(32px,8vw,44px)}#home .cinema-hero p{display:none}#home .cinema-hero .hero-features{margin-top:10px}#home .cinema-command .hint{font-size:10px}#home .cinema-command .join{gap:4px}#home .cinema-command .join button{padding:9px 6px;font-size:10px}#home .cinema-command .join input{font-size:12px;padding:9px 5px}#home .cinema-command-top{font-size:8px}}
+@media(max-width:370px){#home .cinema-dashboard{grid-template-columns:minmax(0,1fr)}#home .cinema-extras .social-actions{grid-template-columns:repeat(2,minmax(0,1fr))}}
