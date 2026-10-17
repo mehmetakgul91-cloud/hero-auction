@@ -73,7 +73,7 @@ if(stage){
     let loaderPromise;
     const loadHeroModel=async(mesh,unit)=>{
       const id=String(unit.id||'').toLowerCase(),entry=modelDefinitions[id];
-      if(!entry?.url||!entry.url.startsWith('/models/')||!entry.url.endsWith('.glb'))return;
+      if(!entry?.url||!entry.url.startsWith('/models/')||!entry.url.endsWith('.glb')||entry.url.includes('..'))return;
       const requestId=Symbol('hero-model');mesh.userData.modelRequest=requestId;
       try{
         loaderPromise??=import('https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/loaders/GLTFLoader.js').then(m=>new m.GLTFLoader());
