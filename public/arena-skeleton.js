@@ -212,6 +212,51 @@ export function makeRig(THREE,profile={}){
    const cloakCollar=add(new THREE.TorusGeometry(.41,.1,8,20),suitMat,0,1.4,-.08);
    cloakCollar.rotation.x=Math.PI/2;
  }
+
+ // Showcase-quality identity pass for three contrasting hero archetypes.
+ const animatedDetails=[];
+ if(name==='hulk'){
+   const emerald=new THREE.MeshStandardMaterial({color:0x3eae58,roughness:.76,metalness:0});
+   const violet=new THREE.MeshStandardMaterial({color:0x573482,roughness:.82});
+   body.material=emerald;head.material=emerald;helmet.material=emerald;
+   for(const key of ['leftArm','rightArm'])limbs[key].children.forEach(n=>{if(n.isMesh)n.material=emerald});
+   for(const key of ['leftLeg','rightLeg'])limbs[key].children.forEach(n=>{if(n.isMesh)n.material=violet});
+   const brow=add(new THREE.BoxGeometry(.58,.13,.17),emerald,0,1.7,.28);
+   for(const side of [-1,1]){
+     const knuckle=add(new THREE.DodecahedronGeometry(.24,1),emerald,side*.68,.24,.3);
+     knuckle.scale.set(1.4,1.1,1.15);
+     const deltoid=add(new THREE.SphereGeometry(.35,12,10),emerald,side*.62,1.21,0);
+     deltoid.scale.set(1.2,.85,1.12);
+   }
+ }
+ if(name==='iron man'){
+   const crimson=new THREE.MeshStandardMaterial({color:0xb82635,metalness:.88,roughness:.2});
+   const gold=new THREE.MeshStandardMaterial({color:0xf6b744,metalness:.8,roughness:.25});
+   const arc=new THREE.MeshBasicMaterial({color:0x7ceeff});
+   body.material=crimson;helmet.material=gold;head.material=gold;
+   const visor=add(new THREE.BoxGeometry(.42,.12,.09),arc,0,1.61,.34);
+   const reactor=add(new THREE.TorusGeometry(.19,.055,8,20),arc,0,1.08,.47);reactor.rotation.x=Math.PI/2;
+   for(const side of [-1,1]){
+     const shoulder=add(new THREE.SphereGeometry(.29,12,8),crimson,side*.57,1.26,0);
+     shoulder.scale.set(1.1,.8,1.2);
+     const repulsor=add(new THREE.CylinderGeometry(.12,.12,.04,12),arc,side*.72,.28,.32);
+     repulsor.rotation.x=Math.PI/2;
+   }
+   animatedDetails.push({type:'pulse',mesh:reactor});
+ }
+ if(name==='doctor strange'){
+   const navy=new THREE.MeshStandardMaterial({color:0x1a3768,roughness:.63});
+   const scarlet=new THREE.MeshStandardMaterial({color:0xb92c3f,side:THREE.DoubleSide,roughness:.7});
+   const gold=new THREE.MeshBasicMaterial({color:0xffca62,transparent:true,opacity:.95});
+   body.material=navy;
+   for(const panel of cloth)panel.material=scarlet;
+   const collarL=add(new THREE.ConeGeometry(.26,.76,8),scarlet,-.4,1.48,-.28);
+   const collarR=add(new THREE.ConeGeometry(.26,.76,8),scarlet,.4,1.48,-.28);
+   collarL.rotation.z=.42;collarR.rotation.z=-.42;
+   const amulet=add(new THREE.OctahedronGeometry(.15),gold,0,1.21,.46);
+   const glyph=add(new THREE.TorusGeometry(.46,.055,8,32),gold,.8,.9,.42);
+   glyph.rotation.y=.2;animatedDetails.push({type:'spin',mesh:glyph});
+ }
  const stance=style==='speed'?'runner':style==='magic'||style==='mind'||style==='cosmic'?'caster':style==='slash'?'blade':'brawler';
  const animate=(time,attack,hit,reduced)=>{
   const wave=reduced?0:Math.sin(time*2)*.065;
@@ -232,6 +277,7 @@ export function makeRig(THREE,profile={}){
   limbs.rightElbow.rotation.z=-attack*(stance==='caster'?.35:.1);
   limbs.leftElbow.rotation.z=attack*(stance==='caster'?.35:.1);
   weapon.rotation.z=-attack*1.2;
+  for(const detail of animatedDetails){if(detail.type==='spin')detail.mesh.rotation.z=time*.7+attack*3;else detail.mesh.scale.setScalar(1+Math.sin(time*5)*.08)}
   cloth.forEach((panel,j)=>{panel.rotation.x=-.24+(reduced?0:Math.sin(time*5+j*.7)*.12)+attack*.35});
  };
  return {root,animate};
