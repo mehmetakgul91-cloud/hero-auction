@@ -34,6 +34,37 @@ export function makeRig(THREE,profile={}){
   const shield=new THREE.Mesh(new THREE.CylinderGeometry(.36,.36,.075,12),armor);
   shield.rotation.x=Math.PI/2;shield.position.set(-.85,.7,.32);root.add(shield);
  }
+ // Low-poly identity cues are attached to the rig, not separate textures.
+ const id=String(profile.id||'').toLowerCase();
+ const name=String(profile.name||'').toLowerCase();
+ const add=(geometry,material,x,y,z,parent=root)=>{const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);parent.add(m);return m};
+ const bright=new THREE.MeshBasicMaterial({color:accent});
+ const capeNames=/superman|thor|doctor strange|shazam|black adam|magneto|raven|hela|sentry|doctor fate|vision/;
+ if(capeNames.test(name)){const cape=add(new THREE.PlaneGeometry(.95,1.15),new THREE.MeshStandardMaterial({color:accent,side:THREE.DoubleSide}),0,.85,-.31);cape.rotation.x=-.15}
+ if(/batman|black panther|wolverine|nightwing|deathstroke|deadpool|spider-man/.test(name)){
+  add(new THREE.BoxGeometry(.6,.16,.08),bright,0,1.5,.22);
+ }
+ if(/iron man|cyborg|metallo|colossus|vision/.test(name)){
+  add(new THREE.BoxGeometry(.43,.35,.13),bright,0,.96,.37);
+ }
+ if(/thor|shazam|black adam|storm/.test(name)){
+  const bolt=add(new THREE.ConeGeometry(.13,.7,5),bright,.85,.55,.3);bolt.rotation.z=.5;
+ }
+ if(/captain america|wonder woman|green lantern/.test(name)){
+  const disc=add(new THREE.CylinderGeometry(.38,.38,.065,12),bright,-.9,.78,.2);disc.rotation.x=Math.PI/2;
+ }
+ if(/wolverine|deadpool|elektra|hela|deathstroke/.test(name)){
+  for(const side of [-1,1]){const blade=add(new THREE.ConeGeometry(.07,.62,5),bright,side*.8,.22,.25);blade.rotation.z=side*.25}
+ }
+ if(/aquaman|namor/.test(name)){
+  const spear=add(new THREE.CylinderGeometry(.045,.045,1.8,6),bright,.85,.6,.15);spear.rotation.z=.16;
+ }
+ if(/spider-man/.test(name)){
+  for(const side of [-1,1])add(new THREE.SphereGeometry(.09,7,5),bright,side*.14,1.52,.26);
+ }
+ if(/hulk|juggernaut|doomsday|the thing|bane|solomon grundy/.test(name))root.scale.set(1.32,1.17,1.32);
+ if(/quicksilver|the flash|nightwing/.test(name))root.scale.set(.85,1.05,.85);
+ if(/silver surfer/.test(name)){const board=add(new THREE.BoxGeometry(.65,.07,1.6),bright,0,-.38,.2);board.rotation.x=.08}
  const animate=(time,attack,hit,reduced)=>{
   const wave=reduced?0:Math.sin(time*2)*.065;
   spine.rotation.z=wave+hit*Math.sin(time*40)*.22;
