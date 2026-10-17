@@ -180,7 +180,7 @@ if(stage){
     };
     const floatingNumbers=[];
     const floatDamage=(target,event)=>{
-      const raw=Number(event.damage??event.amount??0);
+      const raw=Number(event.damage??event.amount??event.value??0);
       if(!Number.isFinite(raw)||raw<=0)return;
       const canvas=document.createElement('canvas');canvas.width=256;canvas.height=96;
       const ctx=canvas.getContext('2d');if(!ctx)return;
@@ -208,11 +208,13 @@ if(stage){
     const resize=new ResizeObserver(()=>{const w=stage.clientWidth,h=stage.clientHeight;if(w&&h){fitCamera();renderer.setSize(w,h,false)}});resize.observe(stage);
     const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
     const maxFps=mobile?30:60;let lastDraw=0;
+    const stageVisible={value:true};
+    const observer=new IntersectionObserver(entries=>{stageVisible.value=entries.some(e=>e.isIntersecting)},{threshold:.01});observer.observe(stage);
     const cameraTarget=new THREE.Vector3(0,.3,0);
     const tick=now=>{
       if(!active)return;
       elapsed+=Math.min(.05,(now-last)/1000);last=now;
-      if(!document.hidden&&now-lastDraw>=1000/maxFps){lastDraw=now;
+      if(!document.hidden&&stageVisible.value&&now-lastDraw>=1000/maxFps){lastDraw=now;
         for(const mesh of fighters.values()){
           const d=mesh.userData;if(elapsed>=d.until){d.kind='';d.targetPosition=null}const progress=Math.max(0,Math.min(1,(d.until-elapsed)/.55));
           const travel=d.style==='speed'?2.2:d.style==='charge'||d.style==='slash'?1.65:.5;
@@ -264,7 +266,7 @@ if(stage){
       animationId=requestAnimationFrame(tick);
     };
     animationId=requestAnimationFrame(tick);
-    window.addEventListener('pagehide',()=>{active=false;cancelAnimationFrame(animationId);resize.disconnect();renderer.dispose()},{once:true});
+    window.addEventListener('pagehide',()=>{active=false;cancelAnimationFrame(animationId);resize.disconnect();observer.disconnect();renderer.dispose()},{once:true});
     stage.classList.add('three-enabled');
   }catch(error){showError(error);try{await fallback()}catch(fallbackError){showError(fallbackError)}}
 }
