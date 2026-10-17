@@ -416,3 +416,10 @@ header{gap:14px;flex-wrap:wrap}
 #home .cinema-command .join input{margin:0}
 @media(max-width:700px){#home .cinema-dashboard{grid-template-columns:minmax(0,1fr) minmax(0,.86fr);gap:7px;padding:0 7px 10px}#home .cinema-command{padding:11px 9px}#home .cinema-extras{gap:7px}#home .cinema-extras .social-panel,#home .cinema-extras .rewarded-ad-panel{padding:10px 7px}#home .cinema-extras .social-panel summary{font-size:11px}#home .cinema-extras .social-actions{grid-template-columns:1fr 1fr;gap:4px}#home .cinema-extras .social-actions button{font-size:9px;padding:7px 2px}#home .cinema-command .panel-heading h2{font-size:17px}#home .cinema-command .worlds button{font-size:10px}#home .cinema-play-grid #bot,#home .cinema-play-grid #match{font-size:10px}#home .cinema-hero{padding-top:88px;padding-bottom:12px}#home .cinema-hero h1{font-size:clamp(32px,8vw,44px)}#home .cinema-hero p{display:none}#home .cinema-hero .hero-features{margin-top:10px}#home .cinema-command .hint{font-size:10px}#home .cinema-command .join{gap:4px}#home .cinema-command .join button{padding:9px 6px;font-size:10px}#home .cinema-command .join input{font-size:12px;padding:9px 5px}#home .cinema-command-top{font-size:8px}}
 @media(max-width:370px){#home .cinema-dashboard{grid-template-columns:minmax(0,1fr)}#home .cinema-extras .social-actions{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Fix column nesting: both columns must be direct dashboard children. */
+#home .cinema-dashboard>.cinema-extras{grid-column:2;min-width:0}
+#home .cinema-dashboard>.cinema-command{grid-column:1;min-width:0}
+#home .cinema-extras .rewarded-ad-panel button{font-size:11px;white-space:normal;line-height:1.25}
+@media(max-width:700px){#home .cinema-extras .rewarded-ad-panel .hint{font-size:10px;line-height:1.35}#home .cinema-extras .rewarded-ad-panel strong{font-size:11px}#home .cinema-extras .social-actions button{white-space:normal;overflow-wrap:anywhere}}
+@media(max-width:370px){#home .cinema-dashboard>.cinema-extras,#home .cinema-dashboard>.cinema-command{grid-column:1}}
