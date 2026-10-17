@@ -141,3 +141,10 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 .arena-live-clock small{font-size:10px;letter-spacing:.05em;color:#8ee8ff}
 .arena-live-clock strong{font-size:clamp(15px,3.6vw,24px);color:#fff}
 @media(max-width:480px){.arena-live-clock{padding:5px 4px}.arena-live-clock small{font-size:8px}.arena-live-clock strong{font-size:15px}.score .round{gap:4px}}
+
+/* Emphasize direct targets; keep secondary area damage visually quiet. */
+.battle-arena .hero.primary-target{z-index:8!important;outline:2px solid #ffdf76;outline-offset:2px;box-shadow:0 0 0 3px #ffb43d88,0 0 30px #ffd061bb!important}
+.battle-arena .hero.splash-target{box-shadow:0 0 0 1px #ffa2a244,0 0 9px #f85b5b33!important}
+.arena-impact-burst.splash-burst{opacity:.22;filter:blur(3px);animation-duration:.35s}
+.arena-impact-burst.target-burst{opacity:1;filter:brightness(1.35)}
+.damage-number.splash-damage{opacity:.55;font-size:clamp(11px,2vw,14px);color:#c9a3ae;text-shadow:none;animation-duration:.5s}
