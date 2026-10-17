@@ -39,7 +39,7 @@ if(stage){
       const mesh=rig.root;
       const baseX=(side?4.5:-4.5)+(side?-.9:.9)*(i%3);
       const baseZ=(Math.floor(i/3)-.5)*3.2+(i%3)*.35;
-      mesh.position.set(baseX,1.6,baseZ);
+      mesh.position.set(baseX,.65,baseZ);
       mesh.userData={key,baseX,baseZ,side,i,phase:i*.9,unit,until:0,kind:'',rig,style:profiles[String(unit.id||'').toLowerCase()]?.style||'charge'};
       scene.add(mesh);fighters.set(key,mesh);
       const hpBg=new THREE.Mesh(new THREE.PlaneGeometry(1.8,.11),new THREE.MeshBasicMaterial({color:0x47172a,side:THREE.DoubleSide}));
@@ -123,7 +123,7 @@ if(stage){
           const d=mesh.userData,progress=Math.max(0,Math.min(1,(d.until-elapsed)/.55));
           const travel=d.style==='speed'?3.2:d.style==='charge'||d.style==='slash'?2.3:.65;
           mesh.position.x=d.baseX+(d.kind==='attack'?(d.side?-1:1)*travel*Math.sin(progress*Math.PI):0);
-          mesh.position.y=1.6+(reduce?0:Math.sin(elapsed*2+d.phase)*.07)+(d.kind==='hit'?Math.sin(progress*40)*.14:0)+(d.kind==='attack'&&['cosmic','speed','lightning'].includes(d.style)?Math.sin(progress*Math.PI)*.6:0);
+          mesh.position.y=.65+(reduce?0:Math.sin(elapsed*2+d.phase)*.07)+(d.kind==='hit'?Math.sin(progress*40)*.14:0)+(d.kind==='attack'&&['cosmic','speed','lightning'].includes(d.style)?Math.sin(progress*Math.PI)*.6:0);
           mesh.rotation.y=d.side?-.23:.23;
           d.rig.animate(elapsed,d.kind==='attack'?Math.sin(progress*Math.PI):0,d.kind==='hit'?Math.sin(progress*Math.PI):0,reduce);
         }
