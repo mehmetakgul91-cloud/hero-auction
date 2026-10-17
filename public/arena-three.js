@@ -11,24 +11,42 @@ if(stage){
   try{
     const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js');
     if(!stage.clientWidth||!stage.clientHeight)throw Error('Arena boyutları sıfır');
-    const renderer=new THREE.WebGLRenderer({alpha:true,antialias:false,powerPreference:'low-power'});
+    const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance'});
     renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
     renderer.setSize(stage.clientWidth,stage.clientHeight,false);
     renderer.outputColorSpace=THREE.SRGBColorSpace;
     renderer.domElement.className='three-arena-canvas';
     stage.prepend(renderer.domElement);
     const scene=new THREE.Scene();
-    scene.fog=new THREE.FogExp2(0x080f28,0.026);
-    const camera=new THREE.PerspectiveCamera(43,stage.clientWidth/stage.clientHeight,.1,100);
-    camera.position.set(0,9,20);camera.lookAt(0,0,0);
-    scene.add(new THREE.HemisphereLight(0x7fdfff,0x151025,2));
+    scene.background=new THREE.Color(0x050b1b);scene.fog=new THREE.FogExp2(0x050b1b,0.018);
+    const camera=new THREE.PerspectiveCamera(40,stage.clientWidth/stage.clientHeight,.1,100);
+    const mobile=window.matchMedia('(max-width: 700px)').matches;
+    camera.position.set(0,mobile?8.8:7.2,mobile?18.8:17);camera.lookAt(0,1,0);
+    scene.add(new THREE.HemisphereLight(0xa8dfff,0x201025,2.5));
+    const keyLight=new THREE.DirectionalLight(0xffffff,2.5);keyLight.position.set(0,12,7);scene.add(keyLight);
     const light=new THREE.PointLight(0x42ddff,45,24);light.position.set(-6,7,2);scene.add(light);
     const red=new THREE.PointLight(0xff43b9,45,24);red.position.set(6,7,2);scene.add(red);
-    const floor=new THREE.Mesh(new THREE.PlaneGeometry(32,18),new THREE.MeshStandardMaterial({color:0x111a35,metalness:.45,roughness:.35}));
+    const floor=new THREE.Mesh(new THREE.PlaneGeometry(32,22),new THREE.MeshStandardMaterial({color:0x101a33,metalness:.7,roughness:.23}));
     floor.rotation.x=-Math.PI/2;scene.add(floor);
-    const grid=new THREE.GridHelper(32,22,0x3b8dd0,0x243957);grid.position.y=.02;scene.add(grid);
+    const grid=new THREE.GridHelper(30,30,0x3299cf,0x23345d);grid.position.y=.025;scene.add(grid);
     const ring=new THREE.Mesh(new THREE.TorusGeometry(7,.045,6,96),new THREE.MeshBasicMaterial({color:0x5e6ef5}));
     ring.rotation.x=Math.PI/2;ring.position.y=.06;scene.add(ring);
+    const platform=new THREE.Mesh(new THREE.CylinderGeometry(8.4,8.8,.35,64),new THREE.MeshStandardMaterial({color:0x121b38,metalness:.72,roughness:.3}));
+    platform.position.y=-.22;scene.add(platform);
+    const platformRim=new THREE.Mesh(new THREE.TorusGeometry(8.25,.11,8,80),new THREE.MeshBasicMaterial({color:0x38cfff}));
+    platformRim.rotation.x=Math.PI/2;platformRim.position.y=-.02;scene.add(platformRim);
+    const centerSigil=new THREE.Mesh(new THREE.RingGeometry(1.65,1.75,48),new THREE.MeshBasicMaterial({color:0xb454ff,side:THREE.DoubleSide,transparent:true,opacity:.72}));
+    centerSigil.rotation.x=-Math.PI/2;centerSigil.position.y=.05;scene.add(centerSigil);
+    const pillars=[];
+    for(const x of [-8.1,8.1])for(const z of [-5.1,5.1]){
+      const pillar=new THREE.Mesh(new THREE.BoxGeometry(.28,3.6,.28),new THREE.MeshStandardMaterial({color:0x27365c,emissive:x<0?0x004d77:0x6a003f,emissiveIntensity:.9}));
+      pillar.position.set(x,1.6,z);scene.add(pillar);pillars.push(pillar);
+      const beacon=new THREE.PointLight(x<0?0x25caff:0xff4ac3,12,8);beacon.position.set(x,3.7,z);scene.add(beacon);
+    }
+    const teamPads=[-4.4,4.4].map((x,i)=>{
+      const pad=new THREE.Mesh(new THREE.RingGeometry(2.4,2.55,48),new THREE.MeshBasicMaterial({color:i?0xff4ca7:0x35cfff,side:THREE.DoubleSide,transparent:true,opacity:.85}));
+      pad.rotation.x=-Math.PI/2;pad.position.set(x,.07,0);scene.add(pad);return pad;
+    });
     const profiles=await fetch('/arena-hero-profiles.json').then(r=>{if(!r.ok)throw Error('Hero visual profiles unavailable');return r.json()}).then(v=>v.characters);
     const fighters=new Map();
     let teams=[],effects=[],last=performance.now(),elapsed=0,active=true,animationId=0;
@@ -36,15 +54,16 @@ if(stage){
       const key=side+':'+i;
       const rig=makeRig(THREE,{...(profiles[String(unit.id||'').toLowerCase()]||{}),id:unit.id,name:unit.name});
       const mesh=rig.root;
-      const baseX=(side?4.5:-4.5)+(side?-.9:.9)*(i%3);
-      const baseZ=(Math.floor(i/3)-.5)*3.2+(i%3)*.35;
-      mesh.position.set(baseX,.65,baseZ);
+      const baseX=(side?4.5:-4.5)+(side?-.62:.62)*(i%3);
+      const baseZ=(Math.floor(i/3)-.5)*3.6+(i%3)*.26;
+      mesh.position.set(baseX,0,baseZ);
+      mesh.scale.multiplyScalar(1.15);
       mesh.userData={key,baseX,baseZ,side,i,phase:i*.9,unit,until:0,kind:'',rig,style:profiles[String(unit.id||'').toLowerCase()]?.style||'charge'};
       scene.add(mesh);fighters.set(key,mesh);
       const hpBg=new THREE.Mesh(new THREE.PlaneGeometry(1.8,.11),new THREE.MeshBasicMaterial({color:0x47172a,side:THREE.DoubleSide}));
-      hpBg.position.y=1.53;mesh.add(hpBg);
+      hpBg.position.y=2.25;mesh.add(hpBg);
       const hpFill=new THREE.Mesh(new THREE.PlaneGeometry(1.8,.11),new THREE.MeshBasicMaterial({color:0x4affb5,side:THREE.DoubleSide}));
-      hpFill.position.set(0,1.53,.005);mesh.add(hpFill);mesh.userData.hpFill=hpFill;
+      hpFill.position.set(0,2.25,.005);mesh.add(hpFill);mesh.userData.hpFill=hpFill;
     };
     const sync=next=>{
       teams=next||[];
@@ -124,12 +143,14 @@ if(stage){
           const d=mesh.userData,progress=Math.max(0,Math.min(1,(d.until-elapsed)/.55));
           const travel=d.style==='speed'?3.2:d.style==='charge'||d.style==='slash'?2.3:.65;
           mesh.position.x=d.baseX+(d.kind==='attack'?(d.side?-1:1)*travel*Math.sin(progress*Math.PI):0);
-          mesh.position.y=.65+(reduce?0:Math.sin(elapsed*2+d.phase)*.07)+(d.kind==='hit'?Math.sin(progress*40)*.14:0)+(d.kind==='attack'&&['cosmic','speed','lightning'].includes(d.style)?Math.sin(progress*Math.PI)*.6:0);
-          mesh.rotation.y=d.side?-.23:.23;
+          mesh.position.y=0+(reduce?0:Math.sin(elapsed*2+d.phase)*.07)+(d.kind==='hit'?Math.sin(progress*40)*.14:0)+(d.kind==='attack'&&['cosmic','speed','lightning'].includes(d.style)?Math.sin(progress*Math.PI)*.6:0);
+          mesh.rotation.y=d.side?-Math.PI/2:Math.PI/2;
+          d.hpFill.parent.children.find(n=>n!==d.hpFill&&n.geometry?.type==='PlaneGeometry')?.lookAt(camera.position);
+          d.hpFill.lookAt(camera.position);
           d.rig.animate(elapsed,d.kind==='attack'?Math.sin(progress*Math.PI):0,d.kind==='hit'?Math.sin(progress*Math.PI):0,reduce);
         }
         for(let i=effects.length-1;i>=0;i--){const e=effects[i];e.mesh.material.opacity=Math.max(0,(e.expires-elapsed)/.4);if(elapsed>=e.expires){scene.remove(e.mesh);e.mesh.geometry.dispose();e.mesh.material.dispose();effects.splice(i,1)}}
-        if(!reduce){camera.position.x=Math.sin(elapsed*.23)*.65;camera.lookAt(0,0,0)}
+        if(!reduce){camera.position.x=Math.sin(elapsed*.23)*.65;camera.lookAt(0,1,0)}
         renderer.render(scene,camera);
       }
       animationId=requestAnimationFrame(tick);
