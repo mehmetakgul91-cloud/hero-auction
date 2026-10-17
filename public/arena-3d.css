@@ -8,3 +8,5 @@
 .arena-3d-stage{height:clamp(330px,46vw,560px);background:radial-gradient(ellipse at center,#172c57,#050a19 75%);border:1px solid #31548c;border-radius:16px}
 .arena-3d-title{font-size:13px;text-shadow:0 0 12px #34d8ff88}
 @media(max-width:700px){.arena-3d{margin:10px 0;padding:6px}.arena-3d-stage{height:clamp(340px,92vw,490px)}}
+
+.arena-battle-counter{display:flex;justify-content:center;gap:clamp(12px,5vw,38px);align-items:center;flex-wrap:wrap;margin:0 auto 9px;padding:7px 12px;width:max-content;max-width:100%;border:1px solid #3c85be;border-radius:12px;background:#081a34e8;box-shadow:0 0 18px #1f8fff33;color:#bde9ff;font-size:12px;font-weight:800;letter-spacing:.08em}.arena-battle-counter strong{color:#fff;font-size:19px;font-variant-numeric:tabular-nums}.arena-room .arena-3d{margin-top:8px}@media(max-width:600px){.arena-battle-counter{font-size:11px;gap:15px}.arena-battle-counter strong{font-size:16px}}
