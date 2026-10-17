@@ -19,9 +19,18 @@ if(stage){
     stage.prepend(renderer.domElement);
     const scene=new THREE.Scene();
     scene.background=new THREE.Color(0x050b1b);scene.fog=new THREE.FogExp2(0x050b1b,0.018);
-    const camera=new THREE.PerspectiveCamera(40,stage.clientWidth/stage.clientHeight,.1,100);
     const mobile=window.matchMedia('(max-width: 700px)').matches;
-    camera.position.set(0,mobile?8.8:7.2,mobile?18.8:17);camera.lookAt(0,1,0);
+    const camera=new THREE.OrthographicCamera(-10,10,7,-7,.1,100);
+    const fitCamera=()=>{
+      const aspect=Math.max(.5,stage.clientWidth/Math.max(1,stage.clientHeight));
+      const halfHeight=mobile?10.5:8.5;
+      camera.left=-halfHeight*aspect;camera.right=halfHeight*aspect;
+      camera.top=halfHeight;camera.bottom=-halfHeight;
+      camera.updateProjectionMatrix();
+    };
+    fitCamera();
+    // Tactical bird's-eye view: the 3D models remain visible, not flat sprites.
+    camera.position.set(0,21,7.8);camera.lookAt(0,.3,0);
     scene.add(new THREE.HemisphereLight(0xa8dfff,0x201025,2.5));
     const keyLight=new THREE.DirectionalLight(0xffffff,2.5);keyLight.position.set(0,12,7);scene.add(keyLight);
     const light=new THREE.PointLight(0x42ddff,45,24);light.position.set(-6,7,2);scene.add(light);
@@ -49,15 +58,24 @@ if(stage){
     });
     const profiles=await fetch('/arena-hero-profiles.json').then(r=>{if(!r.ok)throw Error('Hero visual profiles unavailable');return r.json()}).then(v=>v.characters);
     const fighters=new Map();
+    const cardScale=unit=>{
+      const tier=String(unit.rarity||'').toLowerCase();
+      if(tier==='legendary')return 1.65;
+      if(tier==='rare')return 1.35;
+      if(tier==='advanced')return 1.12;
+      if(tier==='common')return .94;
+      const power=Number(unit.power);
+      return Number.isFinite(power)?power>=90?1.65:power>=70?1.35:power>=50?1.12:.94:1.12;
+    };
     let teams=[],effects=[],last=performance.now(),elapsed=0,active=true,animationId=0;
     const make=(unit,side,i)=>{
       const key=side+':'+i;
       const rig=makeRig(THREE,{...(profiles[String(unit.id||'').toLowerCase()]||{}),id:unit.id,name:unit.name});
       const mesh=rig.root;
-      const baseX=(side?4.5:-4.5)+(side?-.62:.62)*(i%3);
-      const baseZ=(Math.floor(i/3)-.5)*3.6+(i%3)*.26;
+      const baseX=(side?3.35:-3.35)+(side?-.62:.62)*(i%3);
+      const baseZ=(i-2)*2.5;
       mesh.position.set(baseX,0,baseZ);
-      mesh.scale.multiplyScalar(1.15);
+      mesh.scale.setScalar(cardScale(unit));
       mesh.userData={key,baseX,baseZ,side,i,phase:i*.9,unit,until:0,kind:'',rig,style:profiles[String(unit.id||'').toLowerCase()]?.style||'charge'};
       scene.add(mesh);fighters.set(key,mesh);
       const hpBg=new THREE.Mesh(new THREE.PlaneGeometry(1.8,.11),new THREE.MeshBasicMaterial({color:0x47172a,side:THREE.DoubleSide}));
@@ -71,7 +89,7 @@ if(stage){
       teams.forEach((team,side)=>team.forEach((unit,i)=>{
         const key=side+':'+i;valid.add(key);
         if(!fighters.has(key))make(unit,side,i);
-        const mesh=fighters.get(key);mesh.userData.unit=unit;mesh.userData.style=profiles[String(unit.id||'').toLowerCase()]?.style||'charge';
+        const mesh=fighters.get(key);mesh.userData.unit=unit;mesh.scale.setScalar(cardScale(unit));mesh.userData.style=profiles[String(unit.id||'').toLowerCase()]?.style||'charge';
         const ratio=Math.max(0,Math.min(1,unit.hp/Math.max(1,unit.maxHp)));
         mesh.userData.hpFill.scale.x=ratio;mesh.userData.hpFill.position.x=-(1-ratio)*.9;
         mesh.visible=unit.hp>0;
@@ -132,7 +150,7 @@ if(stage){
     window.addEventListener('heroarena:ready',e=>sync(e.detail.teams));
     window.addEventListener('heroarena:move',move);
     if(Array.isArray(window.heroArenaTeams))sync(window.heroArenaTeams);
-    const resize=new ResizeObserver(()=>{const w=stage.clientWidth,h=stage.clientHeight;if(w&&h){camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)}});resize.observe(stage);
+    const resize=new ResizeObserver(()=>{const w=stage.clientWidth,h=stage.clientHeight;if(w&&h){fitCamera();renderer.setSize(w,h,false)}});resize.observe(stage);
     const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
     const maxFps=mobile?30:60;let lastDraw=0;
     const tick=now=>{
@@ -151,7 +169,7 @@ if(stage){
           d.rig.animate(elapsed,d.kind==='attack'?Math.sin(progress*Math.PI):0,d.kind==='hit'?Math.sin(progress*Math.PI):0,reduce);
         }
         for(let i=effects.length-1;i>=0;i--){const e=effects[i];e.mesh.material.opacity=Math.max(0,(e.expires-elapsed)/.4);if(elapsed>=e.expires){scene.remove(e.mesh);e.mesh.geometry.dispose();e.mesh.material.dispose();effects.splice(i,1)}}
-        if(!reduce){camera.position.x=Math.sin(elapsed*.23)*.65;camera.lookAt(0,1,0)}
+        if(!reduce){camera.position.x=Math.sin(elapsed*.23)*.12;camera.lookAt(0,.3,0)}
         renderer.render(scene,camera);
       }
       animationId=requestAnimationFrame(tick);
