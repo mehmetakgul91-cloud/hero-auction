@@ -94,6 +94,7 @@ if(stage){
       const hpFill=new THREE.Mesh(new THREE.PlaneGeometry(1.8,.11),new THREE.MeshBasicMaterial({color:0x4affb5,side:THREE.DoubleSide}));
       hpFill.position.set(0,2.25,.005);mesh.add(hpFill);mesh.userData.hpFill=hpFill;
       const halo=new THREE.Mesh(new THREE.RingGeometry(.8,.91,32),new THREE.MeshBasicMaterial({color:0x49cbff,side:THREE.DoubleSide,transparent:true,opacity:.8}));halo.rotation.x=-Math.PI/2;halo.position.y=.08;mesh.add(halo);mesh.userData.halo=halo;
+      const selection=new THREE.Mesh(new THREE.RingGeometry(1.02,1.09,40),new THREE.MeshBasicMaterial({color:side?0xff5eab:0x55dcff,side:THREE.DoubleSide,transparent:true,opacity:.45}));selection.rotation.x=-Math.PI/2;selection.position.y=.085;mesh.add(selection);mesh.userData.selection=selection;
     };
     const sync=next=>{
       teams=next||[];
@@ -216,8 +217,8 @@ if(stage){
           const d=mesh.userData;if(elapsed>=d.until){d.kind='';d.targetPosition=null}const progress=Math.max(0,Math.min(1,(d.until-elapsed)/.55));
           const travel=d.style==='speed'?2.2:d.style==='charge'||d.style==='slash'?1.65:.5;
           const attackPhase=d.kind==='attack'?Math.max(0,Math.min(1,(elapsed-(d.attackStart||0))/.7)):0;
-          const lunge=d.kind==='attack'?Math.sin(attackPhase*Math.PI):0;
-          const jump=d.kind==='attack'?Math.sin(attackPhase*Math.PI)*.32:0;
+          const lunge=d.kind==='attack'?(attackPhase<.16?0:attackPhase<.53?(attackPhase-.16)/.37:1-(attackPhase-.53)/.47):0;
+          const jump=d.kind==='attack'?Math.sin(attackPhase*Math.PI)*.42:0;
           mesh.position.x=d.baseX+(d.targetPosition?(d.targetPosition.x-d.baseX)*.73:((d.side?-1:1)*travel))*lunge;
           mesh.position.z=d.baseZ+(d.targetPosition?(d.targetPosition.z-d.baseZ)*.73:0)*lunge;
           mesh.position.y=jump+(reduce?0:Math.sin(elapsed*2+d.phase)*.07)+(d.kind==='hit'?Math.sin(progress*40)*.14:0)+(d.kind==='attack'&&['cosmic','speed','lightning'].includes(d.style)?Math.sin(progress*Math.PI)*.6:0);
@@ -228,7 +229,9 @@ if(stage){
           if(hpBg)hpBg.quaternion.copy(camera.quaternion);
           d.hpFill.quaternion.copy(camera.quaternion);
           d.halo.material.opacity=.72+(reduce?0:Math.sin(elapsed*2+d.phase)*.12);
-          d.rig.animate(elapsed,d.kind==='attack'?Math.sin(progress*Math.PI):0,d.kind==='hit'?Math.sin(progress*Math.PI):0,reduce);
+          d.selection.material.opacity=d.kind==='attack'?.9:d.kind==='hit'?.75:.23;
+          d.selection.scale.setScalar(d.kind==='attack'?1.18:1);
+          d.rig.animate(elapsed,d.kind==='attack'?Math.sin(attackPhase*Math.PI):0,d.kind==='hit'?Math.sin(progress*Math.PI):0,reduce);
         }
         for(let i=specialEffects.length-1;i>=0;i--){
           const fx=specialEffects[i],age=elapsed-fx.born;
