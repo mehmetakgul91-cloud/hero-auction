@@ -150,7 +150,7 @@ async function build(overrideResult){
   finalResult=result;
   $('arena-score').hidden=false;
   $('message').textContent='Gerçek savaş motoru hazır · '+result.rounds+' tur';
-  render();
+  render();window.dispatchEvent(new CustomEvent('heroarena:ready',{detail:{teams:states.map(t=>t.map(u=>({name:u.name,hp:u.hp,maxHp:u.maxHp})))}}));
  }catch(e){$('message').textContent='⚠ '+e.message}
 }
 const arenaArtCache=new Map();
@@ -205,7 +205,7 @@ function step(){
  states.forEach((t,side)=>t.forEach((u,i)=>u.hp=e.snapshot[side][i]));
  const li=document.createElement('li');li.textContent='Tur '+e.round+' · '+e.actor+' · '+e.action+(e.target?' → '+e.target:'')+' ('+e.value+')';
  $('events').prepend(li);$('message').textContent=e.actor+' · '+e.action+(e.target?' → '+e.target:'');
- render(e);animateMove(e);if(cursor>=events.length)stop();
+ render(e);animateMove(e);window.dispatchEvent(new CustomEvent('heroarena:move',{detail:{event:e,teams:states.map(t=>t.map(u=>({name:u.name,hp:u.hp,maxHp:u.maxHp})))}}));if(cursor>=events.length)stop();
 }
 function stop(){if(timer!==null){clearInterval(timer);timer=null}}
 $('play').onclick=()=>{if(timer!==null){stop();$('play').textContent='▶ DEVAM ET';return}timer=setInterval(step,duration());$('play').textContent='⏸ DURDUR'};
