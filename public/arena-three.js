@@ -22,6 +22,7 @@ if(stage){
     const grid=new THREE.GridHelper(32,22,0x3b8dd0,0x243957);grid.position.y=.02;scene.add(grid);
     const ring=new THREE.Mesh(new THREE.TorusGeometry(7,.045,6,96),new THREE.MeshBasicMaterial({color:0x5e6ef5}));
     ring.rotation.x=Math.PI/2;ring.position.y=.06;scene.add(ring);
+    const profiles=await fetch('/arena-hero-profiles.json').then(r=>{if(!r.ok)throw Error('Hero visual profiles unavailable');return r.json()}).then(v=>v.characters);
     const fighters=new Map();const textureLoader=new THREE.TextureLoader();const art=new Map();
     const geometry=new THREE.PlaneGeometry(1.9,2.5);
     let teams=[],effects=[],last=performance.now(),elapsed=0,active=true,animationId=0;
@@ -38,7 +39,7 @@ if(stage){
       const baseX=(side?4.5:-4.5)+(side?-.9:.9)*(i%3);
       const baseZ=(Math.floor(i/3)-.5)*3.2+(i%3)*.35;
       mesh.position.set(baseX,1.6,baseZ);
-      mesh.userData={key,baseX,baseZ,side,i,phase:i*.9,unit,until:0,kind:''};
+      mesh.userData={key,baseX,baseZ,side,i,phase:i*.9,unit,until:0,kind:'',style:profiles[String(unit.id||'').toLowerCase()]?.style||'charge'};
       scene.add(mesh);fighters.set(key,mesh);portrait(unit,mesh);
       const hpBg=new THREE.Mesh(new THREE.PlaneGeometry(1.8,.11),new THREE.MeshBasicMaterial({color:0x47172a,side:THREE.DoubleSide}));
       hpBg.position.y=1.53;mesh.add(hpBg);
@@ -51,12 +52,48 @@ if(stage){
       teams.forEach((team,side)=>team.forEach((unit,i)=>{
         const key=side+':'+i;valid.add(key);
         if(!fighters.has(key))make(unit,side,i);
-        const mesh=fighters.get(key);mesh.userData.unit=unit;
+        const mesh=fighters.get(key);mesh.userData.unit=unit;mesh.userData.style=profiles[String(unit.id||'').toLowerCase()]?.style||'charge';
         const ratio=Math.max(0,Math.min(1,unit.hp/Math.max(1,unit.maxHp)));
         mesh.userData.hpFill.scale.x=ratio;mesh.userData.hpFill.position.x=-(1-ratio)*.9;
         mesh.material.opacity=unit.hp>0?1:.25;
       }));
       for(const [key,mesh] of fighters)if(!valid.has(key)){scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();fighters.delete(key)}
+    };
+    const visualEffect=(actor,target)=>{
+      const profile=profiles[String(actor.userData.unit.id||'').toLowerCase()]||{style:'charge',accent:'#65ddff'};
+      const style=profile.style,color=new THREE.Color(profile.accent);
+      const from=actor.position.clone(),to=target.position.clone(),direction=to.clone().sub(from);
+      const distance=direction.length();
+      const segments=style==='lightning'?7:style==='web'?5:style==='speed'?4:1;
+      const radius=style==='beam'?.12:style==='cosmic'?.25:.07;
+      const material=new THREE.MeshBasicMaterial({color,transparent:true,opacity:1,depthWrite:false});
+      if(style==='magic'||style==='shield'||style==='mind'){
+        const ring=new THREE.Mesh(new THREE.TorusGeometry(style==='shield'?1.1:.8,.065,8,32),material);
+        ring.position.copy(style==='shield'?actor.position:target.position);ring.rotation.y=Math.PI/2;
+        scene.add(ring);effects.push({mesh:ring,expires:elapsed+.55});
+      }
+      if(style==='charge'||style==='slash'){
+        const shock=new THREE.Mesh(new THREE.TorusGeometry(.8,.13,6,24),material.clone());
+        shock.position.copy(to);scene.add(shock);effects.push({mesh:shock,expires:elapsed+.4});
+      }else{
+        for(let i=0;i<segments;i++){
+          const start=from.clone().lerp(to,i/segments),end=from.clone().lerp(to,(i+1)/segments);
+          if(style==='lightning'||style==='web'||style==='speed'){
+            const jitter=(style==='lightning'?.42:.19);
+            if(i>0)start.y+=(i%2?1:-1)*jitter;
+            if(i<segments-1)end.y+=((i+1)%2?1:-1)*jitter;
+          }
+          const vector=end.clone().sub(start);
+          const mesh=new THREE.Mesh(new THREE.CylinderGeometry(radius*.65,radius,vector.length(),6),material.clone());
+          mesh.position.copy(start).add(end).multiplyScalar(.5);
+          mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),vector.normalize());
+          scene.add(mesh);effects.push({mesh,expires:elapsed+.45});
+        }
+      }
+      if(style==='water'||style==='cosmic'){
+        const wave=new THREE.Mesh(new THREE.TorusGeometry(1.1,.12,8,32),material.clone());
+        wave.rotation.x=Math.PI/2;wave.position.copy(to);scene.add(wave);effects.push({mesh:wave,expires:elapsed+.55});
+      }
     };
     const spark=(from,to,heal=false)=>{
       const dir=to.clone().sub(from);const geo=new THREE.CylinderGeometry(.07,.15,dir.length(),7);
@@ -71,7 +108,7 @@ if(stage){
       const target=[...fighters.values()].find(m=>m.userData.unit.name===event.target);
       if(actor){actor.userData.until=elapsed+.55;actor.userData.kind='attack'}
       if(target){target.userData.until=elapsed+.5;target.userData.kind='hit'}
-      if(actor&&target)spark(actor.position,target.position,/heal/i.test(event.action));
+      if(actor&&target)visualEffect(actor,target);
     };
     window.addEventListener('heroarena:ready',e=>sync(e.detail.teams));
     window.addEventListener('heroarena:move',move);
@@ -83,8 +120,9 @@ if(stage){
       if(!document.hidden){
         for(const mesh of fighters.values()){
           const d=mesh.userData,progress=Math.max(0,Math.min(1,(d.until-elapsed)/.55));
-          mesh.position.x=d.baseX+(d.kind==='attack'? (d.side?-1:1)*2.3*Math.sin(progress*Math.PI):0);
-          mesh.position.y=1.6+(reduce?0:Math.sin(elapsed*2+d.phase)*.07)+(d.kind==='hit'?Math.sin(progress*40)*.14:0);
+          const travel=d.style==='speed'?3.2:d.style==='charge'||d.style==='slash'?2.3:.65;
+          mesh.position.x=d.baseX+(d.kind==='attack'?(d.side?-1:1)*travel*Math.sin(progress*Math.PI):0);
+          mesh.position.y=1.6+(reduce?0:Math.sin(elapsed*2+d.phase)*.07)+(d.kind==='hit'?Math.sin(progress*40)*.14:0)+(d.kind==='attack'&&['cosmic','speed','lightning'].includes(d.style)?Math.sin(progress*Math.PI)*.6:0);
           mesh.rotation.y=d.side?-.23:.23;
           mesh.lookAt(camera.position.x,mesh.position.y,camera.position.z);
         }
