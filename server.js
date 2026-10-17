@@ -345,12 +345,12 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
  const sync=room.battleSync;
  // Computer opponent uses an automatic, server-owned formation.
  if(room.mode==='bot'&&!sync.ready[1]){
-  sync.ready[1]={positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:['tank','fighter','energy','energy','energy']};
+  sync.ready[1]={positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:[0,1,2,3,4].map(index=>battleRoster.find(hero=>hero.id===teams[1][index].id)?.role||'fighter')};
  }
  if(req.method==='POST'){
  if(sync.ready[seat])return send(409,{error:'Diziliş zaten onaylandı'});
  if(!validBattlePositions(body.positions)||!Array.isArray(body.lanes)||body.lanes.length!==5||body.lanes.some(l=>!['front','back'].includes(l)))return send(400,{error:'Geçersiz diziliş'});
- if(!Array.isArray(body.roles)||body.roles.length!==5||body.roles.some((v,i)=>body.lanes[i]==='back'?v!=='energy':!['tank','fighter'].includes(v)))return send(400,{error:'Geçersiz roller'});
+ if(!Array.isArray(body.roles)||body.roles.length!==5||body.roles.some((v,i)=>v!==(battleRoster.find(hero=>hero.id===teams[seat][body.positions[i]].id)?.role)))return send(400,{error:'Kart türü değiştirilemez'});
  sync.ready[seat]={positions:body.positions,lanes:body.lanes,roles:body.roles};
  if(sync.ready.every(Boolean)){
  const ordered=teams.map((team,i)=>sync.ready[i].positions.map((index,slot)=>({...team[index],lane:sync.ready[i].lanes[slot],role:sync.ready[i].roles[slot]})));
@@ -370,7 +370,7 @@ if(req.method==='GET'&&url.pathname==='/api/battle-auction-team'){
  try{
   const state=auctionRoomToBattleState(room);
   const teams=prepareBattleTeams(state);
-  return send(200,{ready:true,seat,credits:[state.remainingCreditsA,state.remainingCreditsB],teams:teams.map(team=>team.map(card=>{const hero=battleRoster.find(h=>h.id===card.id);return {...card,name:hero.name,universe:hero.universe}}))});
+  return send(200,{ready:true,seat,credits:[state.remainingCreditsA,state.remainingCreditsB],teams:teams.map(team=>team.map(card=>{const hero=battleRoster.find(h=>h.id===card.id);return {...card,name:hero.name,universe:hero.universe,role:hero.role,laneModifiers:hero.laneModifiers}}))});
  }catch(e){return send(422,{error:'Bu açık artırma 2.0 savaşına uygun değil: '+e.message})}
 }
 if(req.method==='GET'&&url.pathname==='/api/battle-room'){const session=battleSessions.get(String(url.searchParams.get('code')||'').toUpperCase());const view=session&&battleSessionView(session,url.searchParams.get('token'));return view?send(200,view):send(404,{error:'Oda veya oturum bulunamadı.'})}
