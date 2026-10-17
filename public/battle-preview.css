@@ -128,3 +128,9 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 .arena-room .arena-room-nav a{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:9px 12px;border:1px solid #496c9e;border-radius:10px;background:#152949;color:#e4f6ff;text-decoration:none;font-weight:700;white-space:nowrap;touch-action:manipulation}
 .arena-room .arena-room-nav a:focus-visible{outline:2px solid #60d7ff;outline-offset:3px}
 @media(max-width:600px){.arena-room .arena-room-nav{gap:6px;padding:6px}.arena-room .arena-room-nav a{min-height:44px;padding:8px;font-size:12px}.arena-room .arena-room-nav strong{font-size:11px;text-align:center}}
+
+/* Battle layout: actual front/back formation, not fixed nth-child slots. */
+.arena-room .arena-side .team,.arena-side .team{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(5,minmax(62px,auto));align-content:center;align-items:center;justify-items:center;gap:6px 5px;min-height:0}
+.arena-side .arena-hero,.arena-side .arena-hero.frontline,.arena-blue .arena-hero:nth-child(n),.arena-red .arena-hero:nth-child(n){grid-column:unset;grid-row:unset}
+.arena-room .arena-side .team{grid-template-rows:repeat(5,minmax(62px,auto));min-height:0}
+.battle-hero-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px;text-align:left}.battle-hero-stats-team{min-width:0;padding:12px;background:#0c1b34;border:1px solid #375c88;border-radius:12px}.battle-hero-stats-team h3{margin:0 0 10px;font-size:13px}.battle-hero-stat-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid #294563;font-size:12px}.battle-hero-stat-row span{text-align:right;color:#bcd9f7}@media(max-width:650px){.arena-room .arena-side .team,.arena-side .team{grid-template-rows:repeat(5,minmax(52px,auto));gap:4px 2px}.battle-hero-stats{grid-template-columns:1fr}.battle-hero-stat-row{font-size:11px}}
