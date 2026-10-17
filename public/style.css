@@ -347,3 +347,33 @@ header{gap:14px;flex-wrap:wrap}
 /* Prevent iOS Safari double-tap zoom on rapidly tapped bid controls. */
 .bid-stepper,.bid-stepper button,#bidbutton,#passbutton{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 .bid-stepper button{cursor:pointer}
+
+
+/* Cinematic Hero Arena — home-only visual layer; gameplay elements and IDs remain intact. */
+#home.cinema-home{position:relative;isolation:isolate;padding:16px 0 30px;overflow:hidden;border-radius:30px;background:radial-gradient(ellipse at 76% 12%,rgba(66,117,207,.24),transparent 38%),radial-gradient(ellipse at 15% 29%,rgba(209,44,85,.19),transparent 40%),linear-gradient(155deg,#070b17,#10192e 45%,#090d1a);border:1px solid rgba(111,147,221,.24);box-shadow:0 30px 90px #0008}
+#home .cinema-sky{position:absolute;inset:0 0 auto;height:540px;overflow:hidden;pointer-events:none;z-index:-1;background:repeating-linear-gradient(112deg,transparent 0 69px,rgba(255,255,255,.025) 70px 71px,transparent 72px 140px)}
+#home .cinema-sky:before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(4,9,22,.85),transparent 75%),radial-gradient(circle at 78% 32%,rgba(84,194,255,.23),transparent 35%)}
+#home .cinema-ring{position:absolute;right:-150px;top:8px;width:470px;height:470px;border:2px solid rgba(103,210,255,.22);border-radius:50%;box-shadow:0 0 100px rgba(0,159,255,.12),inset 0 0 100px rgba(0,159,255,.1);transform:rotate(-18deg)}
+#home .ring-two{right:-100px;top:59px;width:370px;height:370px;border:16px double rgba(247,70,104,.18)}
+#home .cinema-burst{position:absolute;right:35px;top:95px;font-size:170px;color:rgba(135,214,255,.27);text-shadow:0 0 70px rgba(58,192,255,.75);animation:cinema-float 6s ease-in-out infinite}
+#home .cinema-orbit{position:absolute;color:#a5dfff;font-size:42px;filter:drop-shadow(0 0 20px #37cfff);animation:cinema-float 5s ease-in-out infinite}
+#home .orbit-one{right:190px;top:30px}#home .orbit-two{right:18px;top:300px;color:#ff688d;animation-delay:-2s}
+@keyframes cinema-float{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-13px) rotate(6deg)}}
+#home .cinema-hero{position:relative;padding:44px 28px 32px;min-height:390px}#home .cinema-kicker{display:inline-flex;align-items:center;gap:9px;border:1px solid rgba(97,218,255,.4);border-radius:50px;padding:10px 14px;background:#081c31bd;color:#8fe5ff;backdrop-filter:blur(8px)}
+#home .cinema-pulse{width:8px;height:8px;border-radius:50%;background:#45f6ca;box-shadow:0 0 15px #45f6ca}
+#home .cinema-hero h1{font-size:clamp(42px,8vw,76px);line-height:.94;letter-spacing:-.055em;margin:25px 0;text-shadow:0 5px 26px #0009;max-width:650px}
+#home .cinema-hero h1 em{color:#70dfff;background:linear-gradient(100deg,#79eaff,#c0a2ff 55%,#ff739e);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+#home .cinema-hero p{color:#d0d9ed;max-width:450px;text-shadow:0 2px 10px #000b}
+#home .cinema-hero .hero-features{display:flex;flex-wrap:wrap;gap:8px;margin-top:23px}#home .cinema-hero .hero-features span{background:#0b1736cf;border:1px solid rgba(120,171,255,.32);padding:9px 12px;border-radius:10px;font-size:10px;letter-spacing:.06em}
+#home .cinema-command{position:relative;margin:0 16px 16px;border:1px solid rgba(117,168,255,.36);background:linear-gradient(145deg,rgba(21,31,59,.97),rgba(11,16,35,.98));box-shadow:0 15px 60px #0008,0 0 40px rgba(52,132,255,.1);padding:22px;border-radius:22px}
+#home .cinema-command-top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;color:#86a7d4;font-size:10px;font-weight:900;letter-spacing:.12em;border-bottom:1px solid #344365;padding-bottom:16px;margin-bottom:19px}
+#home .cinema-command-light{color:#56e7c6}#home .cinema-command .panel-heading h2{font-size:clamp(22px,4vw,32px);letter-spacing:-.03em}
+#home .cinema-command #create{background:linear-gradient(110deg,#54dfff,#758bff 60%,#c19cff);color:#061023;box-shadow:0 8px 25px #268dff40;min-height:57px;font-size:15px}
+#home .cinema-command #bot,#home .cinema-command #match{min-height:51px;background:linear-gradient(90deg,#1b2848,#202044);border-color:#647ab2;white-space:normal}
+#home .cinema-command #bot:active,#home .cinema-command #match:active,#home .cinema-command #create:active{transform:scale(.99)}
+#home .cinema-command .online-board{border:1px solid #3c577c;background:#0c1830e8;border-radius:14px}
+#home .cinema-command .worlds button.selected{border-color:#5cdbff;box-shadow:inset 0 0 20px #41b7ff2b;color:#e9faff}
+#home .cinema-command input{font-size:16px}#home .cinema-command button{touch-action:manipulation}
+@media(min-width:1050px){body:has(#home.cinema-home:not([hidden])) .shell{max-width:1050px}#home .cinema-hero{padding:55px 52px 42px;min-height:420px}#home .cinema-command{margin:0 44px 28px;padding:30px 36px}}
+@media(max-width:600px){#home.cinema-home{border-radius:19px;padding-top:0}#home .cinema-sky{height:440px}#home .cinema-ring{width:290px;height:290px;right:-125px;top:48px}#home .ring-two{width:230px;height:230px;right:-95px;top:76px}#home .cinema-burst{font-size:100px;right:10px;top:115px}#home .orbit-one{right:96px;top:47px}#home .orbit-two{right:4px;top:270px}#home .cinema-hero{padding:32px 18px 22px;min-height:350px}#home .cinema-hero h1{font-size:clamp(39px,10.4vw,58px);margin:22px 0}#home .cinema-hero p{font-size:13px;max-width:320px}#home .cinema-kicker{font-size:9px;letter-spacing:.08em}#home .cinema-hero .hero-features span{font-size:9px;padding:8px}#home .cinema-command{margin:0 9px 14px;padding:17px 13px}#home .cinema-command-top{font-size:9px}#home .cinema-command .online-board-grid{gap:4px}}
+@media(prefers-reduced-motion:reduce){#home .cinema-burst,#home .cinema-orbit{animation:none}}
