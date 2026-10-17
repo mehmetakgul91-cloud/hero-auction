@@ -119,7 +119,7 @@ if(stage){
     const visualEffect=(actor,target)=>{
       const profile=profiles[String(actor.userData.unit.id||'').toLowerCase()]||{style:'charge',accent:'#65ddff'};
       const style=profile.style,color=new THREE.Color(profile.accent);
-      const from=actor.position.clone(),to=target.position.clone(),direction=to.clone().sub(from);
+      const from=actor.position.clone(),to=target.position.clone();from.y+=1;to.y+=1;const direction=to.clone().sub(from);
 
       const segments=style==='lightning'?7:style==='web'?5:style==='speed'?4:1;
       const radius=style==='beam'?.12:style==='cosmic'?.25:.07;
@@ -178,7 +178,7 @@ if(stage){
       elapsed+=Math.min(.05,(now-last)/1000);last=now;
       if(!document.hidden&&now-lastDraw>=1000/maxFps){lastDraw=now;
         for(const mesh of fighters.values()){
-          const d=mesh.userData,progress=Math.max(0,Math.min(1,(d.until-elapsed)/.55));
+          const d=mesh.userData;if(elapsed>=d.until)d.kind='';const progress=Math.max(0,Math.min(1,(d.until-elapsed)/.55));
           const travel=d.style==='speed'?2.2:d.style==='charge'||d.style==='slash'?1.65:.5;
           const attackPhase=d.kind==='attack'?Math.max(0,Math.min(1,(elapsed-(d.attackStart||0))/.55)):0;
           const lunge=d.kind==='attack'?Math.sin(attackPhase*Math.PI):0;
