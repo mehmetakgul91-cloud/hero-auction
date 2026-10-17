@@ -15,6 +15,8 @@ if(stage){
     renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
     renderer.setSize(stage.clientWidth,stage.clientHeight,false);
     renderer.outputColorSpace=THREE.SRGBColorSpace;
+    renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+    renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.35;
     renderer.domElement.className='three-arena-canvas';
     stage.prepend(renderer.domElement);
     const scene=new THREE.Scene();
@@ -32,11 +34,11 @@ if(stage){
     // Tactical bird's-eye view: the 3D models remain visible, not flat sprites.
     camera.position.set(0,21,7.8);camera.lookAt(0,.3,0);
     scene.add(new THREE.HemisphereLight(0xa8dfff,0x201025,2.5));
-    const keyLight=new THREE.DirectionalLight(0xffffff,2.5);keyLight.position.set(0,12,7);scene.add(keyLight);
+    const keyLight=new THREE.DirectionalLight(0xffffff,2.5);keyLight.position.set(0,12,7);keyLight.castShadow=true;keyLight.shadow.mapSize.set(1024,1024);keyLight.shadow.camera.left=-12;keyLight.shadow.camera.right=12;keyLight.shadow.camera.top=12;keyLight.shadow.camera.bottom=-12;scene.add(keyLight);
     const light=new THREE.PointLight(0x42ddff,45,24);light.position.set(-6,7,2);scene.add(light);
     const red=new THREE.PointLight(0xff43b9,45,24);red.position.set(6,7,2);scene.add(red);
     const floor=new THREE.Mesh(new THREE.PlaneGeometry(32,22),new THREE.MeshStandardMaterial({color:0x101a33,metalness:.7,roughness:.23}));
-    floor.rotation.x=-Math.PI/2;scene.add(floor);
+    floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
     const grid=new THREE.GridHelper(30,30,0x3299cf,0x23345d);grid.position.y=.025;scene.add(grid);
     const ring=new THREE.Mesh(new THREE.TorusGeometry(7,.045,6,96),new THREE.MeshBasicMaterial({color:0x5e6ef5}));
     ring.rotation.x=Math.PI/2;ring.position.y=.06;scene.add(ring);
@@ -75,6 +77,7 @@ if(stage){
       const baseX=(side?3.1:-3.1)+(side?-.2:.2)*(i%2);
       const baseZ=(i-2)*2.15;
       mesh.position.set(baseX,0,baseZ);
+      mesh.traverse(node=>{if(node.isMesh)node.castShadow=true});
       mesh.scale.setScalar(cardScale(unit));
       if(/hulk|juggernaut|doomsday|the thing|bane|solomon grundy|killer croc/i.test(String(unit.name)))mesh.scale.x*=1.22;
       mesh.userData={key,baseX,baseZ,side,i,phase:i*.9,unit,until:0,kind:'',rig,style:profiles[String(unit.id||'').toLowerCase()]?.style||'charge'};
@@ -149,8 +152,8 @@ if(stage){
       const event=e.detail.event;sync(e.detail.teams);
       const actor=[...fighters.values()].find(m=>m.userData.unit.id===event.actor||m.userData.unit.name===event.actor);
       const target=[...fighters.values()].find(m=>m.userData.unit.id===event.target||m.userData.unit.name===event.target);
-      if(actor){actor.userData.until=elapsed+.55;actor.userData.kind='attack'}
-      if(target){target.userData.until=elapsed+.5;target.userData.kind='hit'}
+      if(actor){actor.userData.until=elapsed+.55;actor.userData.kind='attack';actor.userData.attackStart=elapsed}
+      if(target){target.userData.until=elapsed+.5;target.userData.kind='hit';target.userData.hitStart=elapsed}
       if(actor&&target)visualEffect(actor,target);
     };
     window.addEventListener('heroarena:ready',e=>sync(e.detail.teams));
@@ -166,9 +169,12 @@ if(stage){
         for(const mesh of fighters.values()){
           const d=mesh.userData,progress=Math.max(0,Math.min(1,(d.until-elapsed)/.55));
           const travel=d.style==='speed'?2.2:d.style==='charge'||d.style==='slash'?1.65:.5;
-          mesh.position.x=d.baseX+(d.kind==='attack'?(d.side?-1:1)*travel*Math.sin(progress*Math.PI):0);
+          const attackPhase=d.kind==='attack'?Math.max(0,Math.min(1,(elapsed-(d.attackStart||0))/.55)):0;
+          const lunge=d.kind==='attack'?Math.sin(attackPhase*Math.PI):0;
+          mesh.position.x=d.baseX+(d.side?-1:1)*travel*lunge;
           mesh.position.y=0+(reduce?0:Math.sin(elapsed*2+d.phase)*.07)+(d.kind==='hit'?Math.sin(progress*40)*.14:0)+(d.kind==='attack'&&['cosmic','speed','lightning'].includes(d.style)?Math.sin(progress*Math.PI)*.6:0);
           mesh.rotation.y=d.side?-Math.PI/2:Math.PI/2;
+          mesh.rotation.z=d.kind==='hit'?Math.sin(progress*Math.PI)*.13:0;
           const hpBg=d.hpFill.parent.children.find(n=>n!==d.hpFill&&n.geometry?.type==='PlaneGeometry');
           if(hpBg)hpBg.quaternion.copy(camera.quaternion);
           d.hpFill.quaternion.copy(camera.quaternion);
