@@ -423,3 +423,9 @@ header{gap:14px;flex-wrap:wrap}
 #home .cinema-extras .rewarded-ad-panel button{font-size:11px;white-space:normal;line-height:1.25}
 @media(max-width:700px){#home .cinema-extras .rewarded-ad-panel .hint{font-size:10px;line-height:1.35}#home .cinema-extras .rewarded-ad-panel strong{font-size:11px}#home .cinema-extras .social-actions button{white-space:normal;overflow-wrap:anywhere}}
 @media(max-width:370px){#home .cinema-dashboard>.cinema-extras,#home .cinema-dashboard>.cinema-command{grid-column:1}}
+
+/* Tappable guest/Google account identity and accessible sign-out menu. */
+.account-bar .account-identity{border:1px solid #5e749d;border-radius:11px;background:#141e38;color:#dcecff;padding:9px 12px;cursor:pointer;min-height:42px;text-align:left;font-weight:800;font-size:12px;touch-action:manipulation}
+.account-bar .account-identity:not([hidden]):after{content:' ▾';color:#8fe5ff}
+.account-bar #google-logout:not([hidden]){border-color:#c58d9c;color:#ffe2e8}
+.account-bar [hidden]{display:none!important}
