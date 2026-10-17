@@ -3,7 +3,7 @@ const $=id=>document.getElementById(id);
 let demoA=[['Hulk','tank',85],['Thor','fighter',88],['Wolverine','fighter',78],['Scarlet Witch','energy',90],['Iron Man','support',80]];
 // Preview uses zero credits until verified auction balances are wired in.
 let previewCredits=0;
-const creditBonus=credits=>credits<0?Math.max(-0.99,credits*0.01):Math.min(credits,8)*0.01+Math.max(0,credits-8)*0.005;
+const creditBonus=credits=>Math.max(-0.99,credits*0.01);
 const effectivePower=power=>Math.round(power*(1+creditBonus(previewCredits))*10)/10;
 let demoB=[['Superman','fighter',92],['Wonder Woman','fighter',85],['Doomsday','tank',84],['The Flash','assassin',81],['Doctor Fate','energy',87]];
 const roleNames={tank:'TANK',fighter:'SAVAŞÇI',energy:'ENERJİ / MESAFELİ',assassin:'SUİKASTÇI',support:'DESTEK'};
@@ -239,11 +239,12 @@ if(auctionCode&&auctionToken){void (async()=>{try{
  const data=await response.json();if(!response.ok)throw Error(data.error||'Açık artırma verisi alınamadı');
  const own=data.teams[data.seat],rival=data.teams[1-data.seat];
  if(!Array.isArray(own)||own.length!==5||!Array.isArray(rival)||rival.length!==5)throw Error('Her oyuncunun beş kahramanı olmalı');
+ if(own.some(c=>!c.id||!c.name)||rival.some(c=>!c.id||!c.name))throw Error('Açık artırma kahramanları doğrulanamadı');
  demoA=own.map(c=>[c.name,'fighter',c.power,c.universe]);demoB=rival.map(c=>[c.name,'fighter',c.power,c.universe]);
  previewCredits=data.credits[data.seat];assignedRoles=demoA.map(()=> 'fighter');heroArtCache.clear();
  $('battle-lobby-status').textContent='Açık artırma kartların yüklendi · Kalan kredi: '+previewCredits+' · Bonus: %'+(creditBonus(previewCredits)*100).toFixed(1);
  if(!arenaMode){auctionLoaded=true;renderBoard();renderRolePickers();$('apply-roles').disabled=false;startPreparation();$('prep-note').textContent='Kartlar doğrulandı. Diziliş için 60 saniyen var.'}else{const check=async()=>{try{const response=await fetch('/api/battle-auction-preview?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});const data=await response.json();if(!response.ok)throw Error(data.error||'Savaş durumu alınamadı');if(data.started){if(battlePoll)clearInterval(battlePoll);battlePoll=-1;await build(data.result);if(events.length)$('play').click()}else $('message').textContent='Rakibin dizilişi bekleniyor… '+data.ready.filter(Boolean).length+'/2 hazır'}catch(e){$('message').textContent='⚠ '+e.message}};await check();if(battlePoll===null)battlePoll=setInterval(check,1800)}
- }catch(e){$('prep-note').textContent='⚠ '+e.message;$('message').textContent='⚠ '+e.message;$('apply-roles').disabled=true}})()}
+ }catch(e){$('prep-note').textContent='⚠ '+e.message;$('message').textContent='⚠ '+e.message;$('battle-lobby-status').textContent='⚠ Açık artırmada seçilen kahramanlar yüklenemedi: '+e.message;$('apply-roles').disabled=true;$('play').disabled=true}})()}
 
 let battleRematchShown=false;
 async function showAuctionRematch(){
