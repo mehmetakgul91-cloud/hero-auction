@@ -134,7 +134,7 @@ if(stage){
     if(Array.isArray(window.heroArenaTeams))sync(window.heroArenaTeams);
     const resize=new ResizeObserver(()=>{const w=stage.clientWidth,h=stage.clientHeight;if(w&&h){camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)}});resize.observe(stage);
     const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const maxFps=matchMedia('(max-width: 700px)').matches?30:60;let lastDraw=0;
+    const maxFps=mobile?30:60;let lastDraw=0;
     const tick=now=>{
       if(!active)return;
       elapsed+=Math.min(.05,(now-last)/1000);last=now;
@@ -145,8 +145,9 @@ if(stage){
           mesh.position.x=d.baseX+(d.kind==='attack'?(d.side?-1:1)*travel*Math.sin(progress*Math.PI):0);
           mesh.position.y=0+(reduce?0:Math.sin(elapsed*2+d.phase)*.07)+(d.kind==='hit'?Math.sin(progress*40)*.14:0)+(d.kind==='attack'&&['cosmic','speed','lightning'].includes(d.style)?Math.sin(progress*Math.PI)*.6:0);
           mesh.rotation.y=d.side?-Math.PI/2:Math.PI/2;
-          d.hpFill.parent.children.find(n=>n!==d.hpFill&&n.geometry?.type==='PlaneGeometry')?.lookAt(camera.position);
-          d.hpFill.lookAt(camera.position);
+          const hpBg=d.hpFill.parent.children.find(n=>n!==d.hpFill&&n.geometry?.type==='PlaneGeometry');
+          if(hpBg)hpBg.quaternion.copy(camera.quaternion);
+          d.hpFill.quaternion.copy(camera.quaternion);
           d.rig.animate(elapsed,d.kind==='attack'?Math.sin(progress*Math.PI):0,d.kind==='hit'?Math.sin(progress*Math.PI):0,reduce);
         }
         for(let i=effects.length-1;i>=0;i--){const e=effects[i];e.mesh.material.opacity=Math.max(0,(e.expires-elapsed)/.4);if(elapsed>=e.expires){scene.remove(e.mesh);e.mesh.geometry.dispose();e.mesh.material.dispose();effects.splice(i,1)}}
