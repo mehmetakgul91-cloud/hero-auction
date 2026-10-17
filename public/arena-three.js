@@ -67,6 +67,32 @@ if(stage){
     });
     const profiles=await fetch('/arena-hero-profiles.json').then(r=>{if(!r.ok)throw Error('Hero visual profiles unavailable');return r.json()}).then(v=>v.characters);
     const fighters=new Map();
+    // GLB asset loader: assets are optional until individually licensed and uploaded.
+    const modelManifest=await fetch('/arena-models.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
+    const modelDefinitions=modelManifest.heroes||{};
+    let loaderPromise;
+    const loadHeroModel=async(mesh,unit)=>{
+      const id=String(unit.id||'').toLowerCase(),entry=modelDefinitions[id];
+      if(!entry?.url||!entry.url.startsWith('/models/')||!entry.url.endsWith('.glb'))return;
+      const requestId=Symbol('hero-model');mesh.userData.modelRequest=requestId;
+      try{
+        loaderPromise??=import('https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/loaders/GLTFLoader.js').then(m=>new m.GLTFLoader());
+        const loader=await loaderPromise,gltf=await loader.loadAsync(entry.url);
+        if(mesh.userData.modelRequest!==requestId||!mesh.parent)return;
+        const model=gltf.scene,box=new THREE.Box3().setFromObject(model);
+        const height=box.max.y-box.min.y;if(height<=0)return;
+        model.scale.setScalar(2.05/height);
+        const bounds=new THREE.Box3().setFromObject(model),center=bounds.getCenter(new THREE.Vector3());
+        model.position.set(-center.x,-bounds.min.y,-center.z);
+        model.traverse(n=>{if(n.isMesh)n.castShadow=true});
+        for(const child of mesh.userData.proceduralChildren||[])child.visible=false;
+        mesh.add(model);mesh.userData.importedModel=model;
+        mesh.userData.mixer=new THREE.AnimationMixer(model);
+        mesh.userData.clips=Object.fromEntries(gltf.animations.map(clip=>[clip.name.toLowerCase(),clip]));
+        mesh.userData.currentClip='';
+      }catch(error){console.warn('Optional 3D model unavailable:',id,error)}
+    };
+
     const cardScale=unit=>{
       const tier=String(unit.rarity||'').toLowerCase();
       if(tier==='legendary')return 1.65;
@@ -88,6 +114,7 @@ if(stage){
       mesh.scale.setScalar(cardScale(unit));
       if(/hulk|juggernaut|doomsday|the thing|bane|solomon grundy|killer croc/i.test(String(unit.name)))mesh.scale.x*=1.22;
       mesh.userData={key,baseX,baseZ,side,i,phase:i*.9,unit,until:0,kind:'',rig,style:profiles[String(unit.id||'').toLowerCase()]?.style||'charge'};
+      mesh.userData.proceduralChildren=[...mesh.children];
       scene.add(mesh);fighters.set(key,mesh);
       const hpBg=new THREE.Mesh(new THREE.PlaneGeometry(1.8,.11),new THREE.MeshBasicMaterial({color:0x47172a,side:THREE.DoubleSide}));
       hpBg.position.y=2.25;mesh.add(hpBg);
@@ -95,6 +122,7 @@ if(stage){
       hpFill.position.set(0,2.25,.005);mesh.add(hpFill);mesh.userData.hpFill=hpFill;
       const halo=new THREE.Mesh(new THREE.RingGeometry(.8,.91,32),new THREE.MeshBasicMaterial({color:0x49cbff,side:THREE.DoubleSide,transparent:true,opacity:.8}));halo.rotation.x=-Math.PI/2;halo.position.y=.08;mesh.add(halo);mesh.userData.halo=halo;
       const selection=new THREE.Mesh(new THREE.RingGeometry(1.02,1.09,40),new THREE.MeshBasicMaterial({color:side?0xff5eab:0x55dcff,side:THREE.DoubleSide,transparent:true,opacity:.45}));selection.rotation.x=-Math.PI/2;selection.position.y=.085;mesh.add(selection);mesh.userData.selection=selection;
+      void loadHeroModel(mesh,unit);
     };
     const sync=next=>{
       teams=next||[];
@@ -233,7 +261,14 @@ if(stage){
           d.halo.material.opacity=.72+(reduce?0:Math.sin(elapsed*2+d.phase)*.12);
           d.selection.material.opacity=d.kind==='attack'?.9:d.kind==='hit'?.75:.23;
           d.selection.scale.setScalar(d.kind==='attack'?1.18:1);
-          d.rig.animate(elapsed,d.kind==='attack'?Math.sin(attackPhase*Math.PI):0,d.kind==='hit'?Math.sin(progress*Math.PI):0,reduce);
+          if(d.importedModel&&d.mixer){
+            const state=d.kind==='attack'?'attack':d.kind==='hit'?'hit':'idle';
+            const clip=d.clips[state]||d.clips[state==='attack'?'cast':'idle'];
+            if(clip&&d.currentClip!==clip.name.toLowerCase()){
+              d.mixer.stopAllAction();d.mixer.clipAction(clip).reset().play();d.currentClip=clip.name.toLowerCase();
+            }
+            d.mixer.update(Math.min(.05,1/maxFps));
+          }else d.rig.animate(elapsed,d.kind==='attack'?Math.sin(attackPhase*Math.PI):0,d.kind==='hit'?Math.sin(progress*Math.PI):0,reduce);
         }
         for(let i=specialEffects.length-1;i>=0;i--){
           const fx=specialEffects[i],age=elapsed-fx.born;
