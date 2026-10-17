@@ -90,6 +90,8 @@ if(stage){
         mesh.userData.mixer=new THREE.AnimationMixer(model);
         mesh.userData.clips=Object.fromEntries(gltf.animations.map(clip=>[clip.name.toLowerCase(),clip]));
         mesh.userData.currentClip='';
+        const idle=mesh.userData.clips.idle||gltf.animations[0];
+        if(idle){mesh.userData.mixer.clipAction(idle).play();mesh.userData.currentClip=idle.name.toLowerCase()}
       }catch(error){console.warn('Optional 3D model unavailable:',id,error)}
     };
 
