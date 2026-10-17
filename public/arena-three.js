@@ -32,14 +32,21 @@ if(stage){
     };
     fitCamera();
     // Tactical bird's-eye view: the 3D models remain visible, not flat sprites.
-    camera.position.set(0,21,7.8);camera.lookAt(0,.3,0);
+    camera.position.set(0,19,11);camera.lookAt(0,.3,0);
     scene.add(new THREE.HemisphereLight(0xa8dfff,0x201025,2.5));
     const keyLight=new THREE.DirectionalLight(0xffffff,2.5);keyLight.position.set(0,12,7);keyLight.castShadow=true;keyLight.shadow.mapSize.set(1024,1024);keyLight.shadow.camera.left=-12;keyLight.shadow.camera.right=12;keyLight.shadow.camera.top=12;keyLight.shadow.camera.bottom=-12;scene.add(keyLight);
     const light=new THREE.PointLight(0x42ddff,45,24);light.position.set(-6,7,2);scene.add(light);
     const red=new THREE.PointLight(0xff43b9,45,24);red.position.set(6,7,2);scene.add(red);
     const floor=new THREE.Mesh(new THREE.PlaneGeometry(32,22),new THREE.MeshStandardMaterial({color:0x101a33,metalness:.7,roughness:.23}));
     floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
-    const grid=new THREE.GridHelper(30,30,0x3299cf,0x23345d);grid.position.y=.025;scene.add(grid);
+    // Magic Chess-inspired checkerboard with raised beveled tiles and distinct team territories.
+    const tileGeometry=new THREE.BoxGeometry(1.8,.16,1.8);
+    const tileMaterials=[0x1d3152,0x263b61,0x253051,0x35274f].map(color=>new THREE.MeshStandardMaterial({color,metalness:.32,roughness:.65}));
+    for(let x=0;x<8;x++)for(let z=0;z<6;z++){
+      const tile=new THREE.Mesh(tileGeometry,tileMaterials[(x+z)%2+(x>=4?2:0)]);
+      tile.position.set((x-3.5)*1.85,-.02,(z-2.5)*1.85);
+      tile.receiveShadow=true;scene.add(tile);
+    }
     const ring=new THREE.Mesh(new THREE.TorusGeometry(7,.045,6,96),new THREE.MeshBasicMaterial({color:0x5e6ef5}));
     ring.rotation.x=Math.PI/2;ring.position.y=.06;scene.add(ring);
     const platform=new THREE.Mesh(new THREE.CylinderGeometry(8.4,8.8,.35,64),new THREE.MeshStandardMaterial({color:0x121b38,metalness:.72,roughness:.3}));
@@ -74,8 +81,8 @@ if(stage){
       const key=side+':'+i;
       const rig=makeRig(THREE,{...(profiles[String(unit.id||'').toLowerCase()]||{}),id:unit.id,name:unit.name});
       const mesh=rig.root;
-      const baseX=(side?3.1:-3.1)+(side?-.2:.2)*(i%2);
-      const baseZ=(i-2)*2.15;
+      const baseX=(side?3.7:-3.7)+(side?-.5:.5)*(i%2);
+      const baseZ=(i-2)*1.85;
       mesh.position.set(baseX,0,baseZ);
       mesh.traverse(node=>{if(node.isMesh)node.castShadow=true});
       mesh.scale.setScalar(cardScale(unit));
@@ -165,7 +172,7 @@ if(stage){
       const event=e.detail.event;sync(e.detail.teams);
       const actor=[...fighters.values()].find(m=>m.userData.unit.id===event.actor||m.userData.unit.name===event.actor);
       const target=[...fighters.values()].find(m=>m.userData.unit.id===event.target||m.userData.unit.name===event.target);
-      if(actor){actor.userData.until=elapsed+.55;actor.userData.kind='attack';actor.userData.attackStart=elapsed}
+      if(actor){actor.userData.until=elapsed+.7;actor.userData.kind='attack';actor.userData.attackStart=elapsed;actor.userData.targetPosition=target?target.position.clone():null}
       if(target){target.userData.until=elapsed+.5;target.userData.kind='hit';target.userData.hitStart=elapsed}
       if(actor&&target){visualEffect(actor,target);spawnImpact(target.position,profiles[String(actor.userData.unit.id||'').toLowerCase()]?.accent||'#65ddff')}
     };
@@ -182,11 +189,13 @@ if(stage){
         for(const mesh of fighters.values()){
           const d=mesh.userData;if(elapsed>=d.until)d.kind='';const progress=Math.max(0,Math.min(1,(d.until-elapsed)/.55));
           const travel=d.style==='speed'?2.2:d.style==='charge'||d.style==='slash'?1.65:.5;
-          const attackPhase=d.kind==='attack'?Math.max(0,Math.min(1,(elapsed-(d.attackStart||0))/.55)):0;
+          const attackPhase=d.kind==='attack'?Math.max(0,Math.min(1,(elapsed-(d.attackStart||0))/.7)):0;
           const lunge=d.kind==='attack'?Math.sin(attackPhase*Math.PI):0;
-          mesh.position.x=d.baseX+(d.side?-1:1)*travel*lunge;
+          mesh.position.x=d.baseX+(d.targetPosition?(d.targetPosition.x-d.baseX)*.73:((d.side?-1:1)*travel))*lunge;
+          mesh.position.z=d.baseZ+(d.targetPosition?(d.targetPosition.z-d.baseZ)*.73:0)*lunge;
           mesh.position.y=0+(reduce?0:Math.sin(elapsed*2+d.phase)*.07)+(d.kind==='hit'?Math.sin(progress*40)*.14:0)+(d.kind==='attack'&&['cosmic','speed','lightning'].includes(d.style)?Math.sin(progress*Math.PI)*.6:0);
           mesh.rotation.y=d.side?-Math.PI/2:Math.PI/2;
+          if(d.kind==='attack'&&d.targetPosition)mesh.rotation.y=Math.atan2(d.targetPosition.x-mesh.position.x,d.targetPosition.z-mesh.position.z);
           mesh.rotation.z=d.kind==='hit'?Math.sin(progress*Math.PI)*.13:0;
           const hpBg=d.hpFill.parent.children.find(n=>n!==d.hpFill&&n.geometry?.type==='PlaneGeometry');
           if(hpBg)hpBg.quaternion.copy(camera.quaternion);
