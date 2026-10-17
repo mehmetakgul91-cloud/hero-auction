@@ -2,3 +2,9 @@
 /* Three.js canvas replaces CSS stage only after WebGL initializes. */
 .arena-3d-stage.three-enabled>.arena-3d-floor,.arena-3d-stage.three-enabled>.arena-3d-fighters,.arena-3d-stage.three-enabled>.arena-3d-flash{display:none}
 .three-arena-canvas{display:block;position:absolute;inset:0;width:100%;height:100%;z-index:2;touch-action:pan-y}
+
+/* Cinematic 3D battle presentation */
+.arena-3d{padding:10px;border-color:#3b65a8;background:linear-gradient(155deg,#0b1735,#060a1a);box-shadow:0 15px 45px #0007,0 0 30px #2059af25}
+.arena-3d-stage{height:clamp(330px,46vw,560px);background:radial-gradient(ellipse at center,#172c57,#050a19 75%);border:1px solid #31548c;border-radius:16px}
+.arena-3d-title{font-size:13px;text-shadow:0 0 12px #34d8ff88}
+@media(max-width:700px){.arena-3d{margin:10px 0;padding:6px}.arena-3d-stage{height:clamp(340px,92vw,490px)}}
