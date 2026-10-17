@@ -207,6 +207,7 @@ if(stage){
     const resize=new ResizeObserver(()=>{const w=stage.clientWidth,h=stage.clientHeight;if(w&&h){fitCamera();renderer.setSize(w,h,false)}});resize.observe(stage);
     const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
     const maxFps=mobile?30:60;let lastDraw=0;
+    const cameraTarget=new THREE.Vector3(0,.3,0);
     const tick=now=>{
       if(!active)return;
       elapsed+=Math.min(.05,(now-last)/1000);last=now;
@@ -247,7 +248,14 @@ if(stage){
           if(age>.65){scene.remove(burst.group);burst.group.traverse(node=>{node.geometry?.dispose();node.material?.dispose()});impactBursts.splice(i,1)}
         }
         for(let i=effects.length-1;i>=0;i--){const e=effects[i];if(e.shockwave)e.mesh.scale.setScalar(1+(1-(e.expires-elapsed)/.45)*5);e.mesh.material.opacity=Math.max(0,(e.expires-elapsed)/.4);if(elapsed>=e.expires){scene.remove(e.mesh);e.mesh.geometry.dispose();e.mesh.material.dispose();effects.splice(i,1)}}
-        if(!reduce){camera.position.x=Math.sin(elapsed*.23)*.12;camera.lookAt(0,.3,0)}
+        if(!reduce){
+          const activeAttacker=[...fighters.values()].find(m=>m.userData.kind==='attack'&&m.userData.until>elapsed);
+          const desiredX=activeAttacker?THREE.MathUtils.clamp(activeAttacker.position.x*.14,-.7,.7):0;
+          const desiredZ=activeAttacker?THREE.MathUtils.clamp(activeAttacker.position.z*.08,-.4,.4):0;
+          cameraTarget.x=THREE.MathUtils.lerp(cameraTarget.x,desiredX,.045);
+          cameraTarget.z=THREE.MathUtils.lerp(cameraTarget.z,desiredZ,.045);
+          camera.position.x=cameraTarget.x;camera.position.z=11+cameraTarget.z;camera.lookAt(cameraTarget);
+        }
         renderer.render(scene,camera);
       }
       animationId=requestAnimationFrame(tick);
