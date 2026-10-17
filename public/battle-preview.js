@@ -97,9 +97,10 @@ function comicBattleCue(e){
  if(!motion()||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
  const action=String(e.action||'');
  const healing=/heal|regen/i.test(action),guard=/shield|guard|resist/i.test(action);
- const special=/special|burst|splash|pierce|magic|energy|ultimate/i.test(action);
+ const splash=e.damageType==='splash';
+ const special=!splash&&(/special|burst|pierce|magic|energy|ultimate/i.test(action)||e.damageType==='special');
  const impact=Number(e.value)>0&&!healing&&!guard;
- if(!special&&!healing&&!guard&&!(impact&&Number(e.value)>=100))return;
+ if(splash||(!special&&!healing&&!guard&&!(impact&&Number(e.value)>=100)))return;
  const cue=document.createElement('div');
  cue.className='battle-comic-banner'+(healing?' heal':guard?' shield':'');
  cue.textContent=healing?'ŞİFA!':guard?'KALKAN!':special?'ÖZEL GÜÇ!':'BAM!';
@@ -108,37 +109,40 @@ function comicBattleCue(e){
 }
 function animateMove(e){
  if(!motion())return;
- comicBattleCue(e);
+ const splash=e.damageType==='splash';
+ // Splash entries belong to the same ability: don't replay the caster's special attack.
+ if(!splash)comicBattleCue(e);
  const actor=[...document.querySelectorAll('.hero')].find(x=>x.dataset.heroId===e.actorId);
  const target=[...document.querySelectorAll('.hero')].find(x=>x.dataset.heroId===e.targetId);
  if(!actor)return;
  const action=String(e.action||'');
  const heal=/heal|regen/i.test(action),shield=/shield|guard|resist/i.test(action);
- const special=/special|burst|splash|pierce|magic|energy|ultimate/i.test(action);
- const ranged=special||heal||shield||/thor|iron man|scarlet witch|doctor fate|storm|superman|vision|magneto/i.test(e.actorId);
+ const special=!splash&&(/special|burst|pierce|magic|energy|ultimate/i.test(action)||e.damageType==='special');
+ const ranged=special||splash||heal||shield||/thor|iron man|scarlet witch|doctor fate|storm|superman|vision|magneto/i.test(e.actorId);
  const style=heal?'heal':shield?'shield':/thor|lightning/i.test(e.actorId+' '+action)?'lightning':/witch|fate|magic/i.test(e.actorId+' '+action)?'magic':special?'special':'standard';
- // Move the existing hero card toward the opponent and return it without changing combat state.
- if(target&&!heal&&!shield&&typeof actor.animate==='function'){
-  const ar=actor.getBoundingClientRect(),tr=target.getBoundingClientRect();
-  const dx=(tr.left+tr.width/2)-(ar.left+ar.width/2);
-  const dy=(tr.top+tr.height/2)-(ar.top+ar.height/2);
-  const time=Math.max(320,Math.min(780,duration()*.72));
-  if(!ranged){
-   actor.animate([{transform:'translate(0,0) scale(1)',offset:0},{transform:`translate(${dx*.77}px,${dy*.77}px) scale(1.13)`,offset:.42},{transform:`translate(${dx*.77}px,${dy*.77}px) scale(1.13)`,offset:.56},{transform:'translate(0,0) scale(1)',offset:1}],{duration:time,easing:'ease-in-out'});
-  }else{
-   actor.animate([{transform:'scale(1)',filter:'brightness(1)'},{transform:'scale(1.12)',filter:'brightness(1.7)'},{transform:'scale(1)',filter:'brightness(1)'}],{duration:time*.8,easing:'ease-out'});
+ const time=Math.max(320,Math.min(780,duration()*.72));
+ if(target&&!heal&&!shield&&typeof target.animate==='function'){
+  if(!splash&&typeof actor.animate==='function'){
+   const ar=actor.getBoundingClientRect(),tr=target.getBoundingClientRect();
+   const dx=(tr.left+tr.width/2)-(ar.left+ar.width/2),dy=(tr.top+tr.height/2)-(ar.top+ar.height/2);
+   if(!ranged)actor.animate([{transform:'translate(0,0) scale(1)'},{transform:`translate(${dx*.77}px,${dy*.77}px) scale(1.13)`,offset:.45},{transform:'translate(0,0) scale(1)'}],{duration:time,easing:'ease-in-out'});
+   else actor.animate([{filter:'brightness(1)'},{filter:'brightness(1.7)',offset:.5},{filter:'brightness(1)'}],{duration:time*.8,easing:'ease-out'});
   }
-  target.animate([{transform:'translate(0,0)'},{transform:`translate(${Math.sign(dx)*-13}px,7px) rotate(3deg)`,offset:.55},{transform:'translate(0,0)'}],{duration:time,easing:'ease-out'});
-  if(special){
+  target.animate(splash?[{opacity:1,filter:'brightness(1)'},{opacity:.8,filter:'brightness(1.3)',offset:.5},{opacity:1,filter:'brightness(1)'}]:[{transform:'scale(1)',filter:'brightness(1)'},{transform:'scale(1.13)',filter:'brightness(2.2)',offset:.5},{transform:'scale(1)',filter:'brightness(1)'}],{duration:time,easing:'ease-out'});
+  if(!splash&&special){
    const flash=document.createElement('div');flash.className='arena-impact-flash';document.body.append(flash);setTimeout(()=>flash.remove(),Math.min(time,550));
   }
-  const hit=document.createElement('span');hit.className='arena-impact-burst';target.append(hit);setTimeout(()=>hit.remove(),650);
+  const hit=document.createElement('span');hit.className='arena-impact-burst'+(splash?' splash-burst':' target-burst');target.append(hit);setTimeout(()=>hit.remove(),splash?400:750);
+  target.classList.add(splash?'splash-target':'primary-target');
+  setTimeout(()=>target.classList.remove('splash-target','primary-target'),splash?450:850);
  }
- actor.classList.add(ranged?'attack-energy':'attack-melee');
- if(special)actor.classList.add('special-cast');
+ if(!splash){
+  actor.classList.add(ranged?'attack-energy':'attack-melee');
+  if(special)actor.classList.add('special-cast');
+ }
  const effectTarget=target||actor;
  if(heal||shield)effectTarget.classList.add(heal?'healing-aura':'shield-aura');
- if(target&&ranged&&!heal&&!shield){
+ if(target&&ranged&&!heal&&!shield&&!splash){
   const ar=actor.getBoundingClientRect(),tr=target.getBoundingClientRect();
   const orb=document.createElement('span');orb.className='battle-projectile effect-'+style;
   orb.style.setProperty('--from-x',ar.left+ar.width/2+'px');orb.style.setProperty('--from-y',ar.top+ar.height/2+'px');
@@ -146,8 +150,11 @@ function animateMove(e){
   orb.style.setProperty('--duration',Math.min(600,duration()*.5)+'ms');document.body.append(orb);
   setTimeout(()=>orb.remove(),Math.min(600,duration()*.5)+120);
  }
- if(effectTarget&&Number(e.value)>0&&(heal||shield||!(/haste/i.test(action)))){const label=document.createElement('span');label.className='damage-number'+(heal?' heal-number':'');label.textContent=(heal||shield?'+':'−')+e.value;effectTarget.append(label);setTimeout(()=>label.remove(),850)}
- setTimeout(()=>{actor.classList.remove('attack-melee','attack-energy','special-cast');effectTarget.classList.remove('healing-aura','shield-aura')},700);
+ if(effectTarget&&Number(e.value)>0&&(heal||shield||!(/haste/i.test(action)))){
+  const label=document.createElement('span');label.className='damage-number'+(heal?' heal-number':'')+(splash?' splash-damage':'');
+  label.textContent=(heal||shield?'+':'−')+e.value;effectTarget.append(label);setTimeout(()=>label.remove(),splash?550:850);
+ }
+ if(!splash)setTimeout(()=>{actor.classList.remove('attack-melee','attack-energy','special-cast');effectTarget.classList.remove('healing-aura','shield-aura')},700);
 }
 
 async function build(overrideResult){
