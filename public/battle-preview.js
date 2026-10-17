@@ -170,7 +170,7 @@ async function build(overrideResult){
   finalResult=result;
   $('arena-score').hidden=false;
   $('message').textContent='Gerçek savaş motoru hazır · '+result.rounds+' tur';
-  render();window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity})));window.dispatchEvent(new CustomEvent('heroarena:ready',{detail:{teams:window.heroArenaTeams}}));
+  render();window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position})));window.dispatchEvent(new CustomEvent('heroarena:ready',{detail:{teams:window.heroArenaTeams}}));
  }catch(e){$('message').textContent='⚠ '+e.message}
 }
 const arenaArtCache=new Map();
@@ -179,7 +179,7 @@ function render(flash){
  for(let side=0;side<2;side++){
   const parent=$(side?'team-b':'team-a');parent.replaceChildren();
   for(const [unitIndex,u] of states[side].entries()){
-   const card=document.createElement('article');card.dataset.heroId=u.id;card.className='hero arena-hero'+(unitIndex<2?' frontline':' backline')+(u.hp<=0?' dead':'')+(flash?.actorId===u.id?' cast':'')+(flash?.targetId===u.id?' hit':'');
+   const card=document.createElement('article');card.dataset.heroId=u.id;card.className='hero arena-hero'+(u.lane==='front'?' frontline':' backline')+(u.hp<=0?' dead':'')+(flash?.actorId===u.id?' cast':'')+(flash?.targetId===u.id?' hit':'');
    const portrait=document.createElement('div');portrait.className='arena-portrait';portrait.setAttribute('role','img');portrait.setAttribute('aria-label',u.name+' - '+roleNames[u.role]);
    const fallback=document.createElement('span');fallback.className='portrait-fallback';fallback.textContent=u.name.slice(0,1);portrait.append(fallback);
    const universe=String(u.id||'').split(':')[0]|| (side?'dc':'marvel');const artKey=universe+':'+u.name;
@@ -225,7 +225,7 @@ function step(){
  states.forEach((t,side)=>t.forEach((u,i)=>u.hp=e.snapshot[side][i]));
  const li=document.createElement('li');li.textContent='Tur '+e.round+' · '+e.actor+' · '+e.action+(e.target?' → '+e.target:'')+' ('+e.value+')';
  $('events').prepend(li);$('message').textContent=e.actor+' · '+e.action+(e.target?' → '+e.target:'');
- render(e);animateMove(e);window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity})));window.dispatchEvent(new CustomEvent('heroarena:move',{detail:{event:e,teams:window.heroArenaTeams}}));if(cursor>=events.length)stop();
+ render(e);animateMove(e);window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position})));window.dispatchEvent(new CustomEvent('heroarena:move',{detail:{event:e,teams:window.heroArenaTeams}}));if(cursor>=events.length)stop();
 }
 function stop(){if(timer!==null){clearInterval(timer);timer=null}}
 $('play').onclick=()=>{if(timer!==null){stop();$('play').textContent='▶ DEVAM ET';return}timer=setInterval(step,duration());$('play').textContent='⏸ DURDUR'};
