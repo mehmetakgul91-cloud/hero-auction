@@ -150,7 +150,7 @@ async function build(overrideResult){
   finalResult=result;
   $('arena-score').hidden=false;
   $('message').textContent='Gerçek savaş motoru hazır · '+result.rounds+' tur';
-  render();window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp})));window.dispatchEvent(new CustomEvent('heroarena:ready',{detail:{teams:window.heroArenaTeams}}));
+  render();window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity})));window.dispatchEvent(new CustomEvent('heroarena:ready',{detail:{teams:window.heroArenaTeams}}));
  }catch(e){$('message').textContent='⚠ '+e.message}
 }
 const arenaArtCache=new Map();
@@ -205,7 +205,7 @@ function step(){
  states.forEach((t,side)=>t.forEach((u,i)=>u.hp=e.snapshot[side][i]));
  const li=document.createElement('li');li.textContent='Tur '+e.round+' · '+e.actor+' · '+e.action+(e.target?' → '+e.target:'')+' ('+e.value+')';
  $('events').prepend(li);$('message').textContent=e.actor+' · '+e.action+(e.target?' → '+e.target:'');
- render(e);animateMove(e);window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp})));window.dispatchEvent(new CustomEvent('heroarena:move',{detail:{event:e,teams:window.heroArenaTeams}}));if(cursor>=events.length)stop();
+ render(e);animateMove(e);window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity})));window.dispatchEvent(new CustomEvent('heroarena:move',{detail:{event:e,teams:window.heroArenaTeams}}));if(cursor>=events.length)stop();
 }
 function stop(){if(timer!==null){clearInterval(timer);timer=null}}
 $('play').onclick=()=>{if(timer!==null){stop();$('play').textContent='▶ DEVAM ET';return}timer=setInterval(step,duration());$('play').textContent='⏸ DURDUR'};
