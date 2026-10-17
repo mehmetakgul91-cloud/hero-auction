@@ -23,7 +23,7 @@ if(stage){
     const camera=new THREE.OrthographicCamera(-10,10,7,-7,.1,100);
     const fitCamera=()=>{
       const aspect=Math.max(.5,stage.clientWidth/Math.max(1,stage.clientHeight));
-      const halfHeight=Math.max(mobile?9.8:7.8,5.9/aspect);
+      const halfHeight=Math.max(mobile?9.8:7.8,6.6/aspect);
       camera.left=-halfHeight*aspect;camera.right=halfHeight*aspect;
       camera.top=halfHeight;camera.bottom=-halfHeight;
       camera.updateProjectionMatrix();
@@ -72,7 +72,7 @@ if(stage){
       const key=side+':'+i;
       const rig=makeRig(THREE,{...(profiles[String(unit.id||'').toLowerCase()]||{}),id:unit.id,name:unit.name});
       const mesh=rig.root;
-      const baseX=(side?3.15:-3.15)+(side?-.25:.25)*(i%2);
+      const baseX=(side?3.1:-3.1)+(side?-.2:.2)*(i%2);
       const baseZ=(i-2)*2.15;
       mesh.position.set(baseX,0,baseZ);
       mesh.scale.setScalar(cardScale(unit));
