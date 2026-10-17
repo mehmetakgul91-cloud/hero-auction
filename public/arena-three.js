@@ -105,6 +105,17 @@ if(stage){
       }));
       for(const [key,mesh] of fighters)if(!valid.has(key)){scene.remove(mesh);mesh.traverse(node=>{node.geometry?.dispose();if(node.material){(Array.isArray(node.material)?node.material:[node.material]).forEach(m=>m.dispose())}});fighters.delete(key)}
     };
+    const impactBursts=[];
+    const spawnImpact=(position,color)=>{
+      const group=new THREE.Group();group.position.copy(position);group.position.y+=.9;
+      const material=new THREE.MeshBasicMaterial({color,transparent:true,opacity:.9,depthWrite:false});
+      for(let j=0;j<8;j++){
+        const spark=new THREE.Mesh(new THREE.OctahedronGeometry(.075,0),material.clone());
+        const angle=j*Math.PI/4;spark.userData.velocity=new THREE.Vector3(Math.cos(angle)*2.5,.9+Math.sin(j*2)*.3,Math.sin(angle)*2.5);
+        group.add(spark);
+      }
+      scene.add(group);impactBursts.push({group,born:elapsed});
+    };
     const visualEffect=(actor,target)=>{
       const profile=profiles[String(actor.userData.unit.id||'').toLowerCase()]||{style:'charge',accent:'#65ddff'};
       const style=profile.style,color=new THREE.Color(profile.accent);
@@ -154,7 +165,7 @@ if(stage){
       const target=[...fighters.values()].find(m=>m.userData.unit.id===event.target||m.userData.unit.name===event.target);
       if(actor){actor.userData.until=elapsed+.55;actor.userData.kind='attack';actor.userData.attackStart=elapsed}
       if(target){target.userData.until=elapsed+.5;target.userData.kind='hit';target.userData.hitStart=elapsed}
-      if(actor&&target)visualEffect(actor,target);
+      if(actor&&target){visualEffect(actor,target);spawnImpact(target.position,profiles[String(actor.userData.unit.id||'').toLowerCase()]?.accent||'#65ddff')}
     };
     window.addEventListener('heroarena:ready',e=>sync(e.detail.teams));
     window.addEventListener('heroarena:move',move);
@@ -179,6 +190,11 @@ if(stage){
           if(hpBg)hpBg.quaternion.copy(camera.quaternion);
           d.hpFill.quaternion.copy(camera.quaternion);
           d.rig.animate(elapsed,d.kind==='attack'?Math.sin(progress*Math.PI):0,d.kind==='hit'?Math.sin(progress*Math.PI):0,reduce);
+        }
+        for(let i=impactBursts.length-1;i>=0;i--){
+          const burst=impactBursts[i],age=elapsed-burst.born;
+          for(const spark of burst.group.children){spark.position.copy(spark.userData.velocity).multiplyScalar(age);spark.material.opacity=Math.max(0,1-age/.65)}
+          if(age>.65){scene.remove(burst.group);burst.group.traverse(node=>{node.geometry?.dispose();node.material?.dispose()});impactBursts.splice(i,1)}
         }
         for(let i=effects.length-1;i>=0;i--){const e=effects[i];e.mesh.material.opacity=Math.max(0,(e.expires-elapsed)/.4);if(elapsed>=e.expires){scene.remove(e.mesh);e.mesh.geometry.dispose();e.mesh.material.dispose();effects.splice(i,1)}}
         if(!reduce){camera.position.x=Math.sin(elapsed*.23)*.12;camera.lookAt(0,.3,0)}
