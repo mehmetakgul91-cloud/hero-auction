@@ -43,7 +43,7 @@ async function leaveBattleAndGoHome(event){
   }
  }catch(error){console.warn('Battle leave request failed:',error)}
  try{sessionStorage.removeItem('hero-auction-formation');sessionStorage.removeItem('hero-auction-lanes')}catch{}
- location.assign('/');
+ location.replace('https://heroauction.com.tr/');
 }
 document.querySelectorAll('.arena-home-link').forEach(link=>link.addEventListener('click',leaveBattleAndGoHome));
 
