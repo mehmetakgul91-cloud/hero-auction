@@ -189,7 +189,7 @@ async function build(overrideResult){
 }
 const arenaArtCache=new Map();
 let finalResult=null;
-function centeredLaneRows(count){return Array.from({length:count},(_,i)=>Math.max(1,Math.min(5,Math.round((i+1)*6/(count+1)))))}
+function centeredLaneRows(count){const layouts={0:[],1:[3],2:[2,4],3:[2,3,4],4:[1,2,4,5],5:[1,2,3,4,5]};return layouts[Math.max(0,Math.min(5,count))].slice()}
 function render(flash){
  for(let side=0;side<2;side++){
   const parent=$(side?'team-b':'team-a');parent.replaceChildren();
