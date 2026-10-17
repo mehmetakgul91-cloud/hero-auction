@@ -158,3 +158,6 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 .battle-board .board-row{gap:7px}
 .battle-board .lane-switch{margin-top:0!important}
 @media(max-width:600px){.battle-board .slot-wrap{flex:0 1 calc(25% - 6px);max-width:125px;padding:5px 2px}.board-hero-identity{min-height:50px;gap:3px}.board-hero-name{font-size:11px}.board-hero-power{font-size:10px;padding:4px 3px}.battle-board .lane-switch{font-size:9px!important;padding:5px 3px!important}}
+
+.arena-music-toggle{background:#164f76;border:1px solid #42b9e6;border-radius:9px;color:#e8faff;padding:8px 12px;font-size:12px;min-height:36px;white-space:nowrap}
+.arena-music-toggle[aria-pressed=false]{background:#283247;border-color:#64748b;color:#b8c5d7}
