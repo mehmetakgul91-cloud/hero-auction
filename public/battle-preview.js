@@ -27,6 +27,26 @@ const auctionMode=Boolean(auctionCode&&auctionToken);
 const multiplayerCode=query.get('code');
 const multiplayerToken=query.get('token');
 let battlePoll=null;
+let leavingBattle=false;
+async function leaveBattleAndGoHome(event){
+ event?.preventDefault();
+ if(leavingBattle)return;
+ leavingBattle=true;
+ const button=event?.currentTarget;if(button){button.textContent='Ayrılıyor…';button.style.pointerEvents='none'}
+ if(battlePoll&&battlePoll!==-1)clearInterval(battlePoll);
+ if(timer){clearInterval(timer);timer=null}
+ try{
+  if(multiplayerCode&&multiplayerToken){
+   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),3000);
+   try{await fetch('/api/battle-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'leave',code:multiplayerCode,token:multiplayerToken}),signal:controller.signal,keepalive:true})}
+   finally{clearTimeout(timeout)}
+  }
+ }catch(error){console.warn('Battle leave request failed:',error)}
+ try{sessionStorage.removeItem('hero-auction-formation');sessionStorage.removeItem('hero-auction-lanes')}catch{}
+ location.assign('/');
+}
+document.querySelectorAll('.arena-home-link').forEach(link=>link.addEventListener('click',leaveBattleAndGoHome));
+
 async function battleLobby(action){try{const code=$('join-battle-code').value.trim();const response=await fetch('/api/battle-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,code})});const v=await response.json();if(!response.ok)throw Error(v.error);location.href='/battle-preview.html?code='+encodeURIComponent(v.code)+'&token='+encodeURIComponent(v.token)}catch(e){$('battle-lobby-status').textContent='⚠ '+e.message}}
 $('create-battle-room').onclick=()=>battleLobby('create');
 $('join-battle-room').onclick=()=>battleLobby('join');
