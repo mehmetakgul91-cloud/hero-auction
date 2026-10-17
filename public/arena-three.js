@@ -124,6 +124,7 @@ if(stage){
         group.add(spark);
       }
       scene.add(group);impactBursts.push({group,born:elapsed});
+      const shockwave=new THREE.Mesh(new THREE.RingGeometry(.18,.32,24),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.85,side:THREE.DoubleSide,depthWrite:false}));shockwave.rotation.x=-Math.PI/2;shockwave.position.copy(position);shockwave.position.y=.12;scene.add(shockwave);effects.push({mesh:shockwave,expires:elapsed+.45,shockwave:true});
     };
     const visualEffect=(actor,target)=>{
       const profile=profiles[String(actor.userData.unit.id||'').toLowerCase()]||{style:'charge',accent:'#65ddff'};
@@ -191,9 +192,10 @@ if(stage){
           const travel=d.style==='speed'?2.2:d.style==='charge'||d.style==='slash'?1.65:.5;
           const attackPhase=d.kind==='attack'?Math.max(0,Math.min(1,(elapsed-(d.attackStart||0))/.7)):0;
           const lunge=d.kind==='attack'?Math.sin(attackPhase*Math.PI):0;
+          const jump=d.kind==='attack'?Math.sin(attackPhase*Math.PI)*.32:0;
           mesh.position.x=d.baseX+(d.targetPosition?(d.targetPosition.x-d.baseX)*.73:((d.side?-1:1)*travel))*lunge;
           mesh.position.z=d.baseZ+(d.targetPosition?(d.targetPosition.z-d.baseZ)*.73:0)*lunge;
-          mesh.position.y=0+(reduce?0:Math.sin(elapsed*2+d.phase)*.07)+(d.kind==='hit'?Math.sin(progress*40)*.14:0)+(d.kind==='attack'&&['cosmic','speed','lightning'].includes(d.style)?Math.sin(progress*Math.PI)*.6:0);
+          mesh.position.y=jump+(reduce?0:Math.sin(elapsed*2+d.phase)*.07)+(d.kind==='hit'?Math.sin(progress*40)*.14:0)+(d.kind==='attack'&&['cosmic','speed','lightning'].includes(d.style)?Math.sin(progress*Math.PI)*.6:0);
           mesh.rotation.y=d.side?-Math.PI/2:Math.PI/2;
           if(d.kind==='attack'&&d.targetPosition)mesh.rotation.y=Math.atan2(d.targetPosition.x-mesh.position.x,d.targetPosition.z-mesh.position.z);
           mesh.rotation.z=d.kind==='hit'?Math.sin(progress*Math.PI)*.13:0;
@@ -208,7 +210,7 @@ if(stage){
           for(const spark of burst.group.children){spark.position.copy(spark.userData.velocity).multiplyScalar(age);spark.material.opacity=Math.max(0,1-age/.65)}
           if(age>.65){scene.remove(burst.group);burst.group.traverse(node=>{node.geometry?.dispose();node.material?.dispose()});impactBursts.splice(i,1)}
         }
-        for(let i=effects.length-1;i>=0;i--){const e=effects[i];e.mesh.material.opacity=Math.max(0,(e.expires-elapsed)/.4);if(elapsed>=e.expires){scene.remove(e.mesh);e.mesh.geometry.dispose();e.mesh.material.dispose();effects.splice(i,1)}}
+        for(let i=effects.length-1;i>=0;i--){const e=effects[i];if(e.shockwave)e.mesh.scale.setScalar(1+(1-(e.expires-elapsed)/.45)*5);e.mesh.material.opacity=Math.max(0,(e.expires-elapsed)/.4);if(elapsed>=e.expires){scene.remove(e.mesh);e.mesh.geometry.dispose();e.mesh.material.dispose();effects.splice(i,1)}}
         if(!reduce){camera.position.x=Math.sin(elapsed*.23)*.12;camera.lookAt(0,.3,0)}
         renderer.render(scene,camera);
       }
