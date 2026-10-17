@@ -65,14 +65,48 @@ export function makeRig(THREE,profile={}){
  if(/hulk|juggernaut|doomsday|the thing|bane|solomon grundy/.test(name))root.scale.set(1.32,1.17,1.32);
  if(/quicksilver|the flash|nightwing/.test(name))root.scale.set(.85,1.05,.85);
  if(/silver surfer/.test(name)){const board=add(new THREE.BoxGeometry(.65,.07,1.6),bright,0,-.38,.2);board.rotation.x=.08}
+ // Distinct top-view silhouette: shoulder armor, helmet, torso insignia and equipment.
+ const shoulderMat=new THREE.MeshStandardMaterial({color:accent,metalness:.65,roughness:.27});
+ const visorMat=new THREE.MeshBasicMaterial({color:accent});
+ const shoulderWidth=/hulk|juggernaut|doomsday|thing|bane|grundy|croc/.test(name)?.38:.26;
+ for(const side of [-1,1]){
+  const shoulder=add(new THREE.SphereGeometry(shoulderWidth,10,8),shoulderMat,side*.57,1.22,.02);
+  shoulder.scale.set(1.15,.62,1.2);
+ }
+ const helmet=add(new THREE.SphereGeometry(.325,12,10),/iron man|batman|black panther|doctor fate|cyborg|deathstroke|magneto|ant-man/.test(name)?armor:dark,0,1.54,0);
+ helmet.scale.set(1.05,.83,1.05);
+ const crest=add(new THREE.BoxGeometry(.33,.055,.24),visorMat,0,1.81,.04);
+ if(/batman|black panther|wolverine/.test(name)){
+  for(const side of [-1,1]){const ear=add(new THREE.ConeGeometry(.11,.44,5),dark,side*.24,1.94,0);ear.rotation.z=side*.15}
+ }
+ if(/thor|loki|hela|wonder woman|magneto|doctor fate/.test(name)){
+  for(const side of [-1,1]){const horn=add(new THREE.ConeGeometry(.09,.44,6),shoulderMat,side*.26,1.94,0);horn.rotation.z=side*.48}
+ }
+ if(/hulk|doomsday|juggernaut|the thing/.test(name)){
+  const backPlate=add(new THREE.BoxGeometry(.85,.12,.55),dark,0,1.36,-.2);
+  backPlate.rotation.x=-.12;
+ }
+ if(/doctor strange|scarlet witch|raven|doctor fate|zatanna/.test(name)){
+  const rune=add(new THREE.TorusGeometry(.49,.035,6,24),visorMat,0,1.42,.15);
+  rune.rotation.x=Math.PI/2;
+ }
+ if(/superman|shazam|black adam|sentry|vision|captain marvel|iron man/.test(name)){
+  const emblem=add(new THREE.OctahedronGeometry(.18),visorMat,0,1.2,.35);
+  emblem.rotation.y=Math.PI/4;
+ }
+ if(/green lantern|silver surfer|nova|starfire|storm/.test(name)){
+  const energyOrb=add(new THREE.IcosahedronGeometry(.14,1),visorMat,.68,1.05,.28);
+  energyOrb.name='energy-orb';
+ }
+ const stance=style==='speed'?'runner':style==='magic'||style==='mind'||style==='cosmic'?'caster':style==='slash'?'blade':'brawler';
  const animate=(time,attack,hit,reduced)=>{
   const wave=reduced?0:Math.sin(time*2)*.065;
   spine.rotation.z=wave+hit*Math.sin(time*40)*.22;
   spine.rotation.x=attack*.22;
-  limbs.leftArm.rotation.x=wave+attack*(style==='magic'||style==='beam'?-1.5:-1.1);
-  limbs.rightArm.rotation.x=-wave+attack*(style==='slash'||style==='charge'?-2.2:-1.3);
+  limbs.leftArm.rotation.x=wave+attack*(stance==='caster'?-1.7:stance==='runner'?-1.3:-1.1);
+  limbs.rightArm.rotation.x=-wave+attack*(stance==='blade'||stance==='brawler'?-2.2:-1.3);
   limbs.leftElbow.rotation.x=-.2-attack*.55;limbs.rightElbow.rotation.x=-.2-attack*.75;
-  limbs.leftLeg.rotation.x=attack*.55;limbs.rightLeg.rotation.x=-attack*.55;
+  limbs.leftLeg.rotation.x=attack*(stance==='runner'?1.1:.55);limbs.rightLeg.rotation.x=-attack*(stance==='runner'?1.1:.55);
   limbs.leftKnee.rotation.x=Math.max(0,attack*.35);limbs.rightKnee.rotation.x=Math.max(0,attack*.4);
   root.rotation.z=hit*.15;
  };
