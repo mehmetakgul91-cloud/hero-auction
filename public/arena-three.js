@@ -115,6 +115,14 @@ if(stage){
       for(const [key,mesh] of fighters)if(!valid.has(key)){scene.remove(mesh);mesh.traverse(node=>{node.geometry?.dispose();if(node.material){(Array.isArray(node.material)?node.material:[node.material]).forEach(m=>m.dispose())}});fighters.delete(key)}
     };
     const impactBursts=[];
+    const specialEffects=[];
+    const spawnAbility=(actor,style,color)=>{
+      if(!actor)return;
+      const origin=actor.position.clone();origin.y=.14;
+      const ring=new THREE.Mesh(new THREE.RingGeometry(.5,.67,40),new THREE.MeshBasicMaterial({color,side:THREE.DoubleSide,transparent:true,opacity:.85,depthWrite:false}));
+      ring.rotation.x=-Math.PI/2;ring.position.copy(origin);scene.add(ring);
+      specialEffects.push({mesh:ring,born:elapsed,style});
+    };
     const spawnImpact=(position,color)=>{
       const group=new THREE.Group();group.position.copy(position);group.position.y+=.9;
       const material=new THREE.MeshBasicMaterial({color,transparent:true,opacity:.9,depthWrite:false});
@@ -187,7 +195,11 @@ if(stage){
       const target=[...fighters.values()].find(m=>m.userData.unit.id===event.target||m.userData.unit.name===event.target);
       if(actor){actor.userData.until=elapsed+.7;actor.userData.kind='attack';actor.userData.attackStart=elapsed;actor.userData.targetPosition=target?target.position.clone():null}
       if(target){target.userData.until=elapsed+.5;target.userData.kind='hit';target.userData.hitStart=elapsed}
-      if(actor&&target){visualEffect(actor,target);spawnImpact(target.position,profiles[String(actor.userData.unit.id||'').toLowerCase()]?.accent||'#65ddff');floatDamage(target,event)}
+      if(actor&&target){
+        const profile=profiles[String(actor.userData.unit.id||'').toLowerCase()]||{};
+        visualEffect(actor,target);spawnImpact(target.position,profile.accent||'#65ddff');floatDamage(target,event);
+        if(['magic','cosmic','lightning','mind','shield'].includes(profile.style))spawnAbility(actor,profile.style,profile.accent||'#65ddff');
+      }
     };
     window.addEventListener('heroarena:ready',e=>sync(e.detail.teams));
     window.addEventListener('heroarena:move',move);
@@ -216,6 +228,13 @@ if(stage){
           d.hpFill.quaternion.copy(camera.quaternion);
           d.halo.material.opacity=.72+(reduce?0:Math.sin(elapsed*2+d.phase)*.12);
           d.rig.animate(elapsed,d.kind==='attack'?Math.sin(progress*Math.PI):0,d.kind==='hit'?Math.sin(progress*Math.PI):0,reduce);
+        }
+        for(let i=specialEffects.length-1;i>=0;i--){
+          const fx=specialEffects[i],age=elapsed-fx.born;
+          fx.mesh.scale.setScalar(1+age*(fx.style==='cosmic'?5:3));
+          fx.mesh.material.opacity=Math.max(0,1-age/.8);
+          fx.mesh.rotation.z=age*1.8;
+          if(age>.8){scene.remove(fx.mesh);fx.mesh.geometry.dispose();fx.mesh.material.dispose();specialEffects.splice(i,1)}
         }
         for(let i=floatingNumbers.length-1;i>=0;i--){
           const d=floatingNumbers[i],age=elapsed-d.born;
