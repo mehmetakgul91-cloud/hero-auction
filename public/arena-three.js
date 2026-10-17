@@ -57,7 +57,7 @@ if(stage){
       const profile=profiles[String(actor.userData.unit.id||'').toLowerCase()]||{style:'charge',accent:'#65ddff'};
       const style=profile.style,color=new THREE.Color(profile.accent);
       const from=actor.position.clone(),to=target.position.clone(),direction=to.clone().sub(from);
-      const distance=direction.length();
+
       const segments=style==='lightning'?7:style==='web'?5:style==='speed'?4:1;
       const radius=style==='beam'?.12:style==='cosmic'?.25:.07;
       const material=new THREE.MeshBasicMaterial({color,transparent:true,opacity:1,depthWrite:false});
@@ -98,14 +98,15 @@ if(stage){
     };
     const move=e=>{
       const event=e.detail.event;sync(e.detail.teams);
-      const actor=[...fighters.values()].find(m=>m.userData.unit.name===event.actor);
-      const target=[...fighters.values()].find(m=>m.userData.unit.name===event.target);
+      const actor=[...fighters.values()].find(m=>m.userData.unit.id===event.actor||m.userData.unit.name===event.actor);
+      const target=[...fighters.values()].find(m=>m.userData.unit.id===event.target||m.userData.unit.name===event.target);
       if(actor){actor.userData.until=elapsed+.55;actor.userData.kind='attack'}
       if(target){target.userData.until=elapsed+.5;target.userData.kind='hit'}
       if(actor&&target)visualEffect(actor,target);
     };
     window.addEventListener('heroarena:ready',e=>sync(e.detail.teams));
     window.addEventListener('heroarena:move',move);
+    if(Array.isArray(window.heroArenaTeams))sync(window.heroArenaTeams);
     const resize=new ResizeObserver(()=>{const w=stage.clientWidth,h=stage.clientHeight;if(w&&h){camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)}});resize.observe(stage);
     const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
     const maxFps=matchMedia('(max-width: 700px)').matches?30:60;let lastDraw=0;
