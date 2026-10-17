@@ -122,3 +122,9 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 .score>div:last-child .team-total-track>span{background:linear-gradient(90deg,#ff336d,#ff8c9c);box-shadow:0 0 14px #ff4c8277}
 @media(max-width:600px){.score{grid-template-columns:minmax(0,1fr) 55px minmax(0,1fr)}.team-total-health>span{font-size:10px}.team-total-track{height:12px}}
 @media(prefers-reduced-motion:reduce){.team-total-track>span{transition:none}}
+
+/* Persistent mobile-friendly escape route from the dedicated arena screen. */
+.arena-room .arena-room-nav{gap:10px;min-height:48px}
+.arena-room .arena-room-nav a{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:9px 12px;border:1px solid #496c9e;border-radius:10px;background:#152949;color:#e4f6ff;text-decoration:none;font-weight:700;white-space:nowrap;touch-action:manipulation}
+.arena-room .arena-room-nav a:focus-visible{outline:2px solid #60d7ff;outline-offset:3px}
+@media(max-width:600px){.arena-room .arena-room-nav{gap:6px;padding:6px}.arena-room .arena-room-nav a{min-height:44px;padding:8px;font-size:12px}.arena-room .arena-room-nav strong{font-size:11px;text-align:center}}
