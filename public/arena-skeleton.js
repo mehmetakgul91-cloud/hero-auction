@@ -151,6 +151,19 @@ export function makeRig(THREE,profile={}){
      gauntlet.rotation.z=side*.17;
    }
  }
+ // Stylized animated cloth and armor silhouettes for tactical readability.
+ const cloth=[];
+ if(capeNames.test(name)){
+  const capeMaterial=new THREE.MeshStandardMaterial({color:accent,side:THREE.DoubleSide,roughness:.78,metalness:.08});
+  for(let j=0;j<3;j++){
+   const panel=add(new THREE.BoxGeometry(.31,.055,.86),capeMaterial,(j-1)*.32,.91,-.67);
+   panel.rotation.x=-.24;cloth.push(panel);
+  }
+ }
+ const weapon=new THREE.Group();weapon.position.set(.76,.58,.28);root.add(weapon);
+ if(/thor|wonder woman|aquaman|namor|wolverine|deadpool|deathstroke|elektra/.test(name)){
+  const blade=new THREE.Mesh(new THREE.ConeGeometry(.095,.8,7),visorMat);blade.position.y=.25;weapon.add(blade);
+ }
  const stance=style==='speed'?'runner':style==='magic'||style==='mind'||style==='cosmic'?'caster':style==='slash'?'blade':'brawler';
  const animate=(time,attack,hit,reduced)=>{
   const wave=reduced?0:Math.sin(time*2)*.065;
@@ -165,6 +178,9 @@ export function makeRig(THREE,profile={}){
   limbs.leftLeg.rotation.x=attack*(stance==='runner'?1.1:.55)+stride;limbs.rightLeg.rotation.x=-attack*(stance==='runner'?1.1:.55)-stride;
   limbs.leftKnee.rotation.x=Math.max(0,attack*.35);limbs.rightKnee.rotation.x=Math.max(0,attack*.4);
   root.rotation.z=hit*.15;
+  root.rotation.x=hit*.1;
+  weapon.rotation.z=-attack*1.2;
+  cloth.forEach((panel,j)=>{panel.rotation.x=-.24+(reduced?0:Math.sin(time*5+j*.7)*.12)+attack*.35});
  };
  return {root,animate};
 }
