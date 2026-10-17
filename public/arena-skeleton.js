@@ -62,8 +62,7 @@ export function makeRig(THREE,profile={}){
  if(/spider-man/.test(name)){
   for(const side of [-1,1])add(new THREE.SphereGeometry(.09,7,5),bright,side*.14,1.52,.26);
  }
- if(/hulk|juggernaut|doomsday|the thing|bane|solomon grundy/.test(name))root.scale.set(1.32,1.17,1.32);
- if(/quicksilver|the flash|nightwing/.test(name))root.scale.set(.85,1.05,.85);
+ // Physical silhouette is modeled separately; rarity controls the overall root scale.
  if(/silver surfer/.test(name)){const board=add(new THREE.BoxGeometry(.65,.07,1.6),bright,0,-.38,.2);board.rotation.x=.08}
  // Distinct top-view silhouette: shoulder armor, helmet, torso insignia and equipment.
  const shoulderMat=new THREE.MeshStandardMaterial({color:accent,metalness:.65,roughness:.27});
@@ -97,6 +96,38 @@ export function makeRig(THREE,profile={}){
  if(/green lantern|silver surfer|nova|starfire|storm/.test(name)){
   const energyOrb=add(new THREE.IcosahedronGeometry(.14,1),visorMat,.68,1.05,.28);
   energyOrb.name='energy-orb';
+ }
+ // Raised geometry remains readable from a high tactical camera.
+ const plateMat=new THREE.MeshStandardMaterial({color:accent,metalness:.55,roughness:.32});
+ const chest=add(new THREE.BoxGeometry(.57,.42,.19),plateMat,0,1.11,.31);
+ chest.rotation.x=-.13;
+ const belt=add(new THREE.BoxGeometry(.69,.13,.28),dark,0,.55,.14);
+ for(const side of [-1,1]){
+  const boot=add(new THREE.BoxGeometry(.29,.19,.46),dark,side*.23,-.07,.19);
+  boot.rotation.y=side*.1;
+  const glove=add(new THREE.SphereGeometry(.18,8,6),plateMat,side*.6,.48,.12);
+  glove.scale.set(1,.8,1.15);
+ }
+ if(/iron man|war machine|cyborg|colossus|metallo/.test(name)){
+  for(const side of [-1,1]){
+   const thruster=add(new THREE.CylinderGeometry(.14,.18,.25,8),dark,side*.3,.8,-.4);
+   thruster.rotation.x=Math.PI/2;
+  }
+ }
+ if(/thor/.test(name)){
+  const hammer=add(new THREE.BoxGeometry(.43,.31,.3),dark,.95,.39,.35);
+  const grip=add(new THREE.CylinderGeometry(.045,.045,.65,7),shoulderMat,.95,.07,.35);
+  grip.rotation.z=.18;
+ }
+ if(/doctor strange|scarlet witch|doctor fate|raven/.test(name)){
+  const aura=add(new THREE.RingGeometry(.5,.58,32),new THREE.MeshBasicMaterial({color:accent,side:THREE.DoubleSide,transparent:true,opacity:.65}),0,.2,.02);
+  aura.rotation.x=-Math.PI/2;
+ }
+ if(/the flash|quicksilver|sonic/.test(name)){
+  for(const side of [-1,1]){
+   const fin=add(new THREE.ConeGeometry(.12,.44,5),visorMat,side*.34,1.66,-.09);
+   fin.rotation.z=side*1.15;
+  }
  }
  const stance=style==='speed'?'runner':style==='magic'||style==='mind'||style==='cosmic'?'caster':style==='slash'?'blade':'brawler';
  const animate=(time,attack,hit,reduced)=>{
