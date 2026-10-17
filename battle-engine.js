@@ -12,7 +12,7 @@ export function fighterFromCard(card,position=0){
   const power=clamp(Math.round(Number(card.power)||50),1,100);
   // Formation controls the battle role: both rear slots and rear specialists use ranged energy.
   const lane=card.lane==='front'||card.lane==='back'?card.lane:position>=2?'back':'front';
-  const role=lane==='back'?'energy':card.role==='tank'?'tank':'fighter';
+  const role=roles.includes(card.role)?card.role:(lane==='back'?'energy':'fighter');
   // Hero auction power is the baseline; positioning can change stats by at most 10%.
   const base={attack:power,defense:power,maxHp:power*2,speed:power};
   return {id:String(card.id||card.name),name:String(card.name||'Hero'),power,role,lane,position,specialty:card.specialty||null,laneModifiers:card.laneModifiers||null,
@@ -21,12 +21,12 @@ export function fighterFromCard(card,position=0){
 }
 // Slots 0-1 are the front line; slots 2-4 are the protected rear line.
 function isFront(unit){return unit.lane==='front'}
-function targetOf(enemies,attacker){
+function targetOf(enemies,attacker,round){
   const alive=enemies.filter(x=>x.hp>0);
   if(!alive.length)return null;
   const frontline=alive.filter(isFront);
-  const pool=frontline.length?frontline:alive;
-  return [...pool].sort((a,b)=>a.hp-b.hp||a.position-b.position||a.id.localeCompare(b.id))[0];
+  const pool=attacker.role==='assassin'&&round%3===0?alive:(frontline.length?frontline:alive);
+  return [...pool].sort((a,b)=>a.position-b.position||a.id.localeCompare(b.id))[0];
 }
 export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10,remainingCredits=[0,0]}={}){
   if(!Array.isArray(remainingCredits)||remainingCredits.length!==2||remainingCredits.some(v=>!Number.isSafeInteger(v)||v< -10000||v>10000))throw Error('Invalid auction remaining credits');
@@ -37,9 +37,9 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10,r
   // One bounded tactical multiplier: role + formation + duplicate penalty.
   // No stacking of independent bonuses beyond the 0.90–1.10 interval.
   for(const team of teams){
-    const counts={tank:0,fighter:0,energy:0};for(const u of team)counts[u.role]++;
+    const counts=Object.fromEntries(roles.map(role=>[role,0]));for(const u of team)counts[u.role]++;
     for(const u of team){
-      const roleBonus=u.role==='tank'?0.06:u.role==='fighter'?0.04:0.08;
+      const roleBonus=u.role==='tank'?0.06:u.role==='fighter'?0.04:u.role==='energy'?0.08:0.05;
       const duplicates=Math.max(0,counts[u.role]-3)*0.075;
       const laneBonus=Number(u.laneModifiers?.[u.lane]);
       const specialtyBonus=Number.isFinite(laneBonus)?clamp(laneBonus,-0.10,0.10):0;
@@ -88,20 +88,20 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10,r
         const ally=[...allies].filter(x=>x.hp>0&&x.hp<x.maxHp).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
         if(ally){const heal=Math.min(ally.maxHp-ally.hp,Math.round(unit.attack*.55));ally.hp+=heal;unit.healing+=heal;log.push({round,side,actor:unit.id,action:'heal',target:ally.id,value:heal});continue}
       }
-      const target=targetOf(enemies,unit);
+      const target=targetOf(enemies,unit,round);
       if(!target)break;
       const special=round%3===0;
       const skill=special?unit.active:null;
       const multiplier=skill?.power??(special?1.15:1);
-      const critical=random()<.10;
+      const critical=random()<.08;
       // Tanks shield their allies by holding the frontline. Rear units take reduced
       // damage until their front line falls, except when assassins infiltrate.
       const guarded=!isFront(target)&&enemies.some(x=>x.hp>0&&isFront(x));
       const defense=skill?.effect==='pierce'?Math.floor(target.defense*.6):target.defense;
-      const roleMultiplier=1;
+      const roleMultiplier=guarded?0.85:1;
       // Exposed all-ranged squads lose protection; mixed frontlines intercept fire.
-      const unguardedRanged=!isFront(target)&&!enemies.some(x=>x.hp>0&&isFront(x));
-      const raw=Math.max(1,Math.floor(unit.attack*multiplier*roleMultiplier*1*100/(100+defense)*(critical?1.5:1)));
+      
+      const raw=Math.max(1,Math.floor(unit.attack*multiplier*roleMultiplier*1*100/(100+defense)*(critical?1.3:1)));
       const absorbed=Math.min(target.shield,raw);
       target.shield-=absorbed;
       const damage=Math.min(target.hp,raw-absorbed);
@@ -115,7 +115,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10,r
       if(skill?.effect==='weaken'){target.attack=Math.max(5,Math.floor(target.attack*.9));log.push({round,side,actor:unit.id,action:'weaken',target:target.id,value:0});}
       if(skill?.effect==='haste'){unit.speed=Math.min(150,unit.speed+8);log.push({round,side,actor:unit.id,action:'haste',target:unit.id,value:8});}
       if(skill?.effect==='execute'&&target.hp>0&&target.hp/target.maxHp<.12){unit.damage+=target.hp;target.hp=0;unit.kills++;}
-      if(skill?.effect==='splash'||unit.role==='energy'&&special)for(const other of enemies.filter(x=>x!==target&&x.hp>0)){const extra=Math.min(other.hp,Math.max(1,Math.floor(damage*(unit.role==='energy'?.30:.25))));other.hp-=extra;unit.damage+=extra;if(other.hp===0)unit.kills++;log.push({round,side,actor:unit.id,action:'splash',target:other.id,value:extra,damageType:'splash'});}
+      if(skill?.effect==='splash'||unit.role==='energy'&&special)for(const other of enemies.filter(x=>x!==target&&x.hp>0)){const splashRaw=Math.max(1,Math.floor(unit.attack*multiplier*(skill?.effect==='splash'?.20:.12)*100/(100+other.defense)));const splashAbsorbed=Math.min(other.shield,splashRaw);other.shield-=splashAbsorbed;const extra=Math.min(other.hp,splashRaw-splashAbsorbed);other.hp-=extra;unit.damage+=extra;if(other.hp===0)unit.kills++;log.push({round,side,actor:unit.id,action:'splash',target:other.id,value:extra,absorbed:splashAbsorbed,rawDamage:splashRaw,damageType:'splash'});}
       if(unit.passive?.effect==='thorns'&&unit.hp>0)unit.shield+=Math.floor(unit.defense*unit.passive.value);
       log.push({round,side,actor:unit.id,action:skill?.name|| (special?'special':'attack'),target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:special?'special':'normal'});
       if(unit.role==='tank'&&special)unit.shield+=Math.round(unit.defense*.2);
