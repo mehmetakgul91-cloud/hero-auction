@@ -1,10 +1,16 @@
 import {makeRig} from '/arena-skeleton.js?v=1';
 // Visual-only Three.js renderer. All outcomes and HP come from server replay events.
 const stage=document.getElementById('arena-3d-stage');
+const showError=error=>{
+  console.error('[Hero Auction 3D]',error);
+  const message=document.getElementById('message');
+  if(message)message.textContent='3D arena yüklenemedi: '+(error?.message||'Bilinmeyen hata')+' · Ayrıntılar tarayıcı konsolunda.';
+};
 const fallback=()=>import('/arena-3d.js?v=1');
 if(stage){
   try{
     const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js');
+    if(!stage.clientWidth||!stage.clientHeight)throw Error('Arena boyutları sıfır');
     const renderer=new THREE.WebGLRenderer({alpha:true,antialias:false,powerPreference:'low-power'});
     renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
     renderer.setSize(stage.clientWidth,stage.clientHeight,false);
@@ -131,5 +137,5 @@ if(stage){
     animationId=requestAnimationFrame(tick);
     window.addEventListener('pagehide',()=>{active=false;cancelAnimationFrame(animationId);resize.disconnect();renderer.dispose()},{once:true});
     stage.classList.add('three-enabled');
-  }catch(error){console.warn('3D arena unavailable; using lightweight fallback',error);await fallback()}
+  }catch(error){showError(error);try{await fallback()}catch(fallbackError){showError(fallbackError)}}
 }
