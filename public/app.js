@@ -1,5 +1,6 @@
 const $=id=>document.getElementById(id);
-let session=null,room=null,stream=null,world='mixed';
+let session=null,room=null,stream=null;
+const world='mixed';
 let lastCardKey=null;
 const googleClientId='742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
 let login=null;try{login=JSON.parse(localStorage.getItem('hero-auction-login')||'null')}catch{}
@@ -126,7 +127,7 @@ $('chat-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){
 let pokeMap={};async function loadPokeMap(){try{const r=await fetch('https://pokeapi.co/api/v2/pokemon-species?limit=1025');const j=await r.json();j.results.forEach((x,i)=>pokeMap[x.name.replaceAll('-',' ').toLowerCase()]=i+1);if(room)show(room)}catch{}}
 function pokemonId(name){return pokeMap[name.toLowerCase()]||null}
 async function act(url,extra){try{const j=await post(url,{...session,...extra});show(j.room)}catch(e){notify(e.message)}}
-$('worlds').onclick=e=>{const b=e.target.closest('[data-world]');if(!b)return;world=b.dataset.world;document.querySelectorAll('[data-world]').forEach(x=>x.classList.toggle('selected',x===b))};
+
 $('create').onclick=async()=>{if(!await validateLogin())return;try{const j=await post('/api/create',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
 $('join').onclick=async()=>{if(!await validateLogin())return;try{const j=await post('/api/join',{...gameIdentity(),name:$('name').value,code:$('roomcode').value.trim().toUpperCase()});save(j.token,j.room)}catch(e){notify(e.message)}};
 $('bot').onclick=async()=>{if(!await validateLogin())return;try{const j=await post('/api/bot',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
