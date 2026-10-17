@@ -189,9 +189,11 @@ async function build(overrideResult){
 }
 const arenaArtCache=new Map();
 let finalResult=null;
+function centeredLaneRows(count){return Array.from({length:count},(_,i)=>Math.max(1,Math.min(5,Math.round((i+1)*6/(count+1)))))}
 function render(flash){
  for(let side=0;side<2;side++){
   const parent=$(side?'team-b':'team-a');parent.replaceChildren();
+  const laneRows={front:centeredLaneRows(states[side].filter(u=>u.lane==='front').length),back:centeredLaneRows(states[side].filter(u=>u.lane!=='front').length)};
   for(const [unitIndex,u] of states[side].entries()){
    const card=document.createElement('article');card.dataset.heroId=u.id;card.className='hero arena-hero'+(u.lane==='front'?' frontline':' backline')+(u.hp<=0?' dead':'')+(flash?.actorId===u.id?' cast':'')+(flash?.targetId===u.id?' hit':'');
    const portrait=document.createElement('div');portrait.className='arena-portrait';portrait.setAttribute('role','img');portrait.setAttribute('aria-label',u.name+' - '+roleNames[u.role]);
@@ -200,7 +202,7 @@ function render(flash){
    if(!arenaArtCache.has(artKey))arenaArtCache.set(artKey,fetch('/api/art?universe='+universe+'&name='+encodeURIComponent(u.name)).then(r=>r.ok?r.json():null).then(j=>j?.url||null).catch(()=>null));
    void arenaArtCache.get(artKey).then(url=>{if(!url||!portrait.isConnected)return;const img=document.createElement('img');img.className='arena-portrait-image';img.alt=u.name;img.src=url;img.onload=()=>{if(portrait.isConnected){fallback.remove();portrait.append(img)}}});
    const bar=document.createElement('div');bar.className='hp';bar.setAttribute('aria-label','Can '+u.hp+' / '+u.maxHp);const fill=document.createElement('span');fill.style.width=(100*u.hp/u.maxHp)+'%';bar.append(fill);
-   card.dataset.lane=u.lane==='front'?'front':'back';card.style.gridColumn=u.lane==='front'?(side?'1':'2'):(side?'2':'1');card.style.gridRow=String((states[side].slice(0,unitIndex).filter(x=>(x.lane==='front')===(u.lane==='front')).length)+1);card.title=u.name+' · '+roleNames[u.role]+' · Can '+u.hp+'/'+u.maxHp;
+   card.dataset.lane=u.lane==='front'?'front':'back';card.style.gridColumn=u.lane==='front'?(side?'1':'2'):(side?'2':'1');card.style.gridRow=String(laneRows[u.lane==='front'?'front':'back'][states[side].slice(0,unitIndex).filter(x=>(x.lane==='front')===(u.lane==='front')).length]);card.title=u.name+' · '+roleNames[u.role]+' · Can '+u.hp+'/'+u.maxHp;
    const heroLabel=document.createElement('span');heroLabel.className='arena-hero-label';heroLabel.textContent=u.name;card.append(portrait,heroLabel,bar);parent.append(card);
   }
   $(side?'score-b':'score-a').textContent=states[side].filter(u=>u.hp>0).length+' / 5';
@@ -257,11 +259,37 @@ function showBattleSummary(){
 }
 function step(){
  if(cursor>=events.length){stop();return}
- const e=events[cursor++];
- states.forEach((t,side)=>t.forEach((u,i)=>u.hp=e.snapshot[side][i]));
- const li=document.createElement('li');const hitInfo=e.absorbed>0?' · Kalkan '+e.absorbed+' engelledi':'';const hitKind=e.critical?' · KRİTİK':e.damageType==='special'?' · ÖZEL GÜÇ':e.damageType==='splash'?' · ALAN HASARI':'';li.textContent='Tur '+e.round+' · '+e.actor+' · '+e.action+(e.target?' → '+e.target:'')+' · '+e.value+(e.damageType?' hasar':'')+hitKind+hitInfo;
- $('events').prepend(li);$('message').textContent=e.actor+' · '+e.action+(e.target?' → '+e.target:'');
- render(e);animateMove(e);window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position})));window.dispatchEvent(new CustomEvent('heroarena:move',{detail:{event:e,teams:window.heroArenaTeams}}));if(cursor>=events.length){stop();showBattleSummary()}
+ // The engine logs splash hits before the primary hit. Show all hits from one cast
+ // in the same animation frame, without changing any damage or the server result.
+ const first=events[cursor];
+ const batch=[];
+ if(first.damageType==='splash'){
+  let end=cursor;
+  while(end<events.length&&events[end].damageType==='splash'&&events[end].actorId===first.actorId&&events[end].round===first.round)end++;
+  const primary=events[end];
+  if(primary&&primary.damageType==='special'&&primary.actorId===first.actorId&&primary.round===first.round){
+   batch.push(...events.slice(cursor,end+1));cursor=end+1;
+  }
+ }
+ if(!batch.length){batch.push(events[cursor++])}
+ const last=batch[batch.length-1];
+ states.forEach((t,side)=>t.forEach((u,i)=>u.hp=last.snapshot[side][i]));
+ for(const e of batch){
+  const li=document.createElement('li');
+  const hitInfo=e.absorbed>0?' · Kalkan '+e.absorbed+' engelledi':'';
+  const hitKind=e.critical?' · KRİTİK':e.damageType==='special'?' · ÖZEL GÜÇ':e.damageType==='splash'?' · ALAN HASARI':'';
+  li.textContent='Tur '+e.round+' · '+e.actor+' · '+e.action+(e.target?' → '+e.target:'')+' · '+e.value+(e.damageType?' hasar':'')+hitKind+hitInfo;
+  $('events').prepend(li);
+ }
+ const primary=batch.find(e=>e.damageType!=='splash')||last;
+ $('message').textContent=primary.actor+' · '+primary.action+(primary.target?' → '+primary.target:'');
+ render(primary);
+ // Main target and all secondary splash targets are animated together.
+ animateMove(primary);
+ for(const e of batch){if(e!==primary)animateMove(e)}
+ window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position})));
+ window.dispatchEvent(new CustomEvent('heroarena:move',{detail:{event:primary,events:batch,teams:window.heroArenaTeams}}));
+ if(cursor>=events.length){stop();showBattleSummary()}
 }
 function stop(){if(timer!==null){clearInterval(timer);timer=null}pauseArenaClock()}
 $('play').onclick=()=>{if(timer!==null){stop();$('play').textContent='▶ DEVAM ET';return}startArenaClock();timer=setInterval(step,duration());$('play').textContent='⏸ DURDUR'};
