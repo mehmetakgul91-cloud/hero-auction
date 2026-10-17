@@ -101,7 +101,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10,r
       const roleMultiplier=guarded?0.85:1;
       // Exposed all-ranged squads lose protection; mixed frontlines intercept fire.
       
-      const raw=Math.max(1,Math.floor(unit.attack*multiplier*roleMultiplier*1*100/(100+defense)*(critical?1.3:1)));
+      const raw=Math.max(1,Math.floor(unit.attack*multiplier*roleMultiplier*0.7*100/(100+defense)*(critical?1.3:1)));
       const absorbed=Math.min(target.shield,raw);
       target.shield-=absorbed;
       const damage=Math.min(target.hp,raw-absorbed);
