@@ -25,7 +25,7 @@ if(stage){
     const camera=new THREE.OrthographicCamera(-10,10,7,-7,.1,100);
     const fitCamera=()=>{
       const aspect=Math.max(.5,stage.clientWidth/Math.max(1,stage.clientHeight));
-      const halfHeight=Math.max(mobile?9.8:7.8,7.1/aspect);
+      const halfHeight=Math.max(mobile?9.8:8.2,7.6/aspect);
       camera.left=-halfHeight*aspect;camera.right=halfHeight*aspect;
       camera.top=halfHeight;camera.bottom=-halfHeight;
       camera.updateProjectionMatrix();
@@ -188,7 +188,7 @@ if(stage){
       elapsed+=Math.min(.05,(now-last)/1000);last=now;
       if(!document.hidden&&now-lastDraw>=1000/maxFps){lastDraw=now;
         for(const mesh of fighters.values()){
-          const d=mesh.userData;if(elapsed>=d.until)d.kind='';const progress=Math.max(0,Math.min(1,(d.until-elapsed)/.55));
+          const d=mesh.userData;if(elapsed>=d.until){d.kind='';d.targetPosition=null}const progress=Math.max(0,Math.min(1,(d.until-elapsed)/.55));
           const travel=d.style==='speed'?2.2:d.style==='charge'||d.style==='slash'?1.65:.5;
           const attackPhase=d.kind==='attack'?Math.max(0,Math.min(1,(elapsed-(d.attackStart||0))/.7)):0;
           const lunge=d.kind==='attack'?Math.sin(attackPhase*Math.PI):0;
