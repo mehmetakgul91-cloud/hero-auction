@@ -232,7 +232,7 @@ if(stage){
         const texture=new THREE.CanvasTexture(canvas);
         const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false}));
         sprite.position.copy(target.position);sprite.position.y+=2.7+i*.65;sprite.scale.set(3.3,.72,1);
-        scene.add(sprite);floatingNumbers.push({sprite,born:elapsed});
+        scene.add(sprite);floatingNumbers.push({sprite,born:elapsed,baseScale:3.3,baseY:sprite.position.y});
       });
     };
     const move=e=>{
@@ -297,8 +297,11 @@ if(stage){
         }
         for(let i=floatingNumbers.length-1;i>=0;i--){
           const d=floatingNumbers[i],age=elapsed-d.born;
-          d.sprite.position.y+=.035;d.sprite.material.opacity=Math.max(0,1-age/.85);
-          if(age>.85){scene.remove(d.sprite);d.sprite.material.map.dispose();d.sprite.material.dispose();floatingNumbers.splice(i,1)}
+          const life=1.8,progress=Math.min(1,age/life);
+          d.sprite.position.y=d.baseY+progress*.95;
+          d.sprite.scale.set(3.3*(1+progress*.65),.72*(1+progress*.65),1);
+          d.sprite.material.opacity=Math.max(0,1-Math.pow(progress,1.5));
+          if(age>life){scene.remove(d.sprite);d.sprite.material.map.dispose();d.sprite.material.dispose();floatingNumbers.splice(i,1)}
         }
         for(let i=impactBursts.length-1;i>=0;i--){
           const burst=impactBursts[i],age=elapsed-burst.born;
