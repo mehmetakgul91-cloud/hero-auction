@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "description": "Optional licensed hero GLB files. Add entries only after the assets exist in public/models/. Animation names: idle, attack, cast, hit.",
+  "heroes": {}
+}
