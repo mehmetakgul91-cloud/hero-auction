@@ -9,7 +9,7 @@ export function battleCard(card){
   const hero=byId.get(id);
   if(!hero)throw new Error('Character is not in the Hero Auction 2.0 roster: '+id);
   if(!Number.isInteger(card.power)||card.power<1||card.power>100)throw new Error('Invalid character power: '+id);
-  return {...card,id:hero.id,name:hero.name,universe:hero.universe,role:card.role??hero.role,active:hero.active,passive:hero.passive};
+  return {...card,id:hero.id,name:hero.name,universe:hero.universe,role:card.role??hero.role,active:hero.active,passive:hero.passive,specialty:hero.specialty,laneModifiers:hero.laneModifiers};
 }
 export function battlePool(catalogue,universe='mixed'){
   if(!['mixed','marvel','dc'].includes(universe))throw new Error('Unsupported battle universe');
