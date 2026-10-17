@@ -86,6 +86,7 @@ if(stage){
       hpBg.position.y=2.25;mesh.add(hpBg);
       const hpFill=new THREE.Mesh(new THREE.PlaneGeometry(1.8,.11),new THREE.MeshBasicMaterial({color:0x4affb5,side:THREE.DoubleSide}));
       hpFill.position.set(0,2.25,.005);mesh.add(hpFill);mesh.userData.hpFill=hpFill;
+      const halo=new THREE.Mesh(new THREE.RingGeometry(.8,.91,32),new THREE.MeshBasicMaterial({color:0x49cbff,side:THREE.DoubleSide,transparent:true,opacity:.8}));halo.rotation.x=-Math.PI/2;halo.position.y=.08;mesh.add(halo);mesh.userData.halo=halo;
     };
     const sync=next=>{
       teams=next||[];
@@ -100,7 +101,8 @@ if(stage){
         if(/hulk|juggernaut|doomsday|the thing|bane|solomon grundy|killer croc/i.test(String(unit.name)))mesh.scale.x*=1.22;
         mesh.userData.style=profiles[String(unit.id||'').toLowerCase()]?.style||'charge';
         const ratio=Math.max(0,Math.min(1,unit.hp/Math.max(1,unit.maxHp)));
-        mesh.userData.hpFill.scale.x=ratio;mesh.userData.hpFill.position.x=-(1-ratio)*.9;
+        mesh.userData.hpFill.scale.x=ratio;
+        const tier=String(unit.rarity||'').toLowerCase();mesh.userData.halo.material.color.setHex(tier==='legendary'?0xffd36c:tier==='rare'?0xb877ff:tier==='advanced'?0x49cbff:0x8ca2b8);mesh.userData.hpFill.position.x=-(1-ratio)*.9;
         mesh.visible=unit.hp>0;
       }));
       for(const [key,mesh] of fighters)if(!valid.has(key)){scene.remove(mesh);mesh.traverse(node=>{node.geometry?.dispose();if(node.material){(Array.isArray(node.material)?node.material:[node.material]).forEach(m=>m.dispose())}});fighters.delete(key)}
@@ -189,6 +191,7 @@ if(stage){
           const hpBg=d.hpFill.parent.children.find(n=>n!==d.hpFill&&n.geometry?.type==='PlaneGeometry');
           if(hpBg)hpBg.quaternion.copy(camera.quaternion);
           d.hpFill.quaternion.copy(camera.quaternion);
+          d.halo.material.opacity=.72+(reduce?0:Math.sin(elapsed*2+d.phase)*.12);
           d.rig.animate(elapsed,d.kind==='attack'?Math.sin(progress*Math.PI):0,d.kind==='hit'?Math.sin(progress*Math.PI):0,reduce);
         }
         for(let i=impactBursts.length-1;i>=0;i--){
