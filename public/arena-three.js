@@ -26,16 +26,9 @@ if(stage){
     const profiles=await fetch('/arena-hero-profiles.json').then(r=>{if(!r.ok)throw Error('Hero visual profiles unavailable');return r.json()}).then(v=>v.characters);
     const fighters=new Map();
     let teams=[],effects=[],last=performance.now(),elapsed=0,active=true,animationId=0;
-    const portrait=(unit,mesh)=>{
-      const universe=String(unit.id||'').split(':')[0]||(/superman|batman|flash|wonder woman|doomsday|doctor fate/i.test(unit.name)?'dc':'marvel');
-      const key=universe+':'+unit.name;
-      if(!art.has(key))art.set(key,fetch('/api/art?universe='+encodeURIComponent(universe)+'&name='+encodeURIComponent(unit.name)).then(r=>r.ok?r.json():null).then(d=>d?.url||null).catch(()=>null));
-      art.get(key).then(url=>{if(!url||!fighters.has(mesh.userData.key))return;textureLoader.load(url,t=>{if(!fighters.has(mesh.userData.key)){t.dispose();return}t.colorSpace=THREE.SRGBColorSpace;mesh.material.map=t;mesh.material.needsUpdate=true},undefined,()=>{})});
-    };
     const make=(unit,side,i)=>{
       const key=side+':'+i;
-      const mat=new THREE.MeshBasicMaterial({color:side?0xff83c6:0x9fefff,transparent:true,side:THREE.DoubleSide,depthWrite:false});
-      const rig=makeRig(THREE,profiles[String(unit.id||'').toLowerCase()]||{});
+      const rig=makeRig(THREE,{...(profiles[String(unit.id||'').toLowerCase()]||{}),id:unit.id,name:unit.name});
       const mesh=rig.root;
       const baseX=(side?4.5:-4.5)+(side?-.9:.9)*(i%3);
       const baseZ=(Math.floor(i/3)-.5)*3.2+(i%3)*.35;
