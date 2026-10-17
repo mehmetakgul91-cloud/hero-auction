@@ -134,3 +134,10 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 .arena-side .arena-hero,.arena-side .arena-hero.frontline,.arena-blue .arena-hero:nth-child(n),.arena-red .arena-hero:nth-child(n){grid-column:unset;grid-row:unset}
 .arena-room .arena-side .team{grid-template-rows:repeat(5,minmax(62px,auto));min-height:0}
 .battle-hero-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px;text-align:left}.battle-hero-stats-team{min-width:0;padding:12px;background:#0c1b34;border:1px solid #375c88;border-radius:12px}.battle-hero-stats-team h3{margin:0 0 10px;font-size:13px}.battle-hero-stat-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid #294563;font-size:12px}.battle-hero-stat-row span{text-align:right;color:#bcd9f7}@media(max-width:650px){.arena-room .arena-side .team,.arena-side .team{grid-template-rows:repeat(5,minmax(52px,auto));gap:4px 2px}.battle-hero-stats{grid-template-columns:1fr}.battle-hero-stat-row{font-size:11px}}
+
+/* 2D arena elapsed timer */
+.score .round{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:7px;text-align:center}
+.arena-live-clock{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 9px;border:1px solid #39b6d8;border-radius:10px;background:#08263b;white-space:nowrap;font-variant-numeric:tabular-nums}
+.arena-live-clock small{font-size:10px;letter-spacing:.05em;color:#8ee8ff}
+.arena-live-clock strong{font-size:clamp(15px,3.6vw,24px);color:#fff}
+@media(max-width:480px){.arena-live-clock{padding:5px 4px}.arena-live-clock small{font-size:8px}.arena-live-clock strong{font-size:15px}.score .round{gap:4px}}
