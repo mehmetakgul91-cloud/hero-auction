@@ -185,6 +185,33 @@ export function makeRig(THREE,profile={}){
    fin.rotation.x=-.8;
   }
  }
+ // Character-class geometry is layered over the skinned torso, never a flat billboard.
+ const suitMat=new THREE.MeshStandardMaterial({color:accent,metalness:.25,roughness:.55});
+ if(/hulk|the thing|doomsday|juggernaut|bane/.test(name)){
+   for(const side of [-1,1]){
+     const fist=add(new THREE.DodecahedronGeometry(.24,1),skin,side*.63,.32,.17);
+     fist.scale.set(1.2,.85,1.15);
+   }
+ }
+ if(/iron man|war machine|cyborg|ultron|metallo/.test(name)){
+   const reactor=add(new THREE.CylinderGeometry(.17,.17,.055,16),bright,0,1.06,.43);
+   reactor.rotation.x=Math.PI/2;
+   for(const side of [-1,1]){
+     const jet=add(new THREE.ConeGeometry(.13,.32,9),bright,side*.27,.06,-.15);
+     jet.rotation.x=Math.PI;
+   }
+ }
+ if(/spider-man|black panther|batman|nightwing|deadpool/.test(name)){
+   const faceplate=add(new THREE.BoxGeometry(.49,.19,.1),dark,0,1.57,.29);
+   for(const side of [-1,1]){
+     const eye=add(new THREE.SphereGeometry(.085,10,6),bright,side*.13,1.59,.35);
+     eye.scale.set(1.4,.6,.5);
+   }
+ }
+ if(/storm|scarlet witch|raven|doctor strange|zatanna/.test(name)){
+   const cloakCollar=add(new THREE.TorusGeometry(.41,.1,8,20),suitMat,0,1.4,-.08);
+   cloakCollar.rotation.x=Math.PI/2;
+ }
  const stance=style==='speed'?'runner':style==='magic'||style==='mind'||style==='cosmic'?'caster':style==='slash'?'blade':'brawler';
  const animate=(time,attack,hit,reduced)=>{
   const wave=reduced?0:Math.sin(time*2)*.065;
