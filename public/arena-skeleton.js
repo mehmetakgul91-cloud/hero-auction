@@ -164,6 +164,27 @@ export function makeRig(THREE,profile={}){
  if(/thor|wonder woman|aquaman|namor|wolverine|deadpool|deathstroke|elektra/.test(name)){
   const blade=new THREE.Mesh(new THREE.ConeGeometry(.095,.8,7),visorMat);blade.position.y=.25;weapon.add(blade);
  }
+ // Three-dimensional archetype silhouettes, visible from the isometric camera.
+ const role=String(profile.role||'').toLowerCase();
+ const heavy=role==='tank'||/hulk|juggernaut|doomsday|thing|colossus/.test(name);
+ if(heavy){
+  const backArmor=add(new THREE.DodecahedronGeometry(.44,0),dark,0,1.1,-.37);
+  backArmor.scale.set(1.5,.72,.7);
+  for(const side of [-1,1]){
+   const pauldron=add(new THREE.DodecahedronGeometry(.31,0),shoulderMat,side*.63,1.3,-.04);
+   pauldron.scale.set(1.3,.72,1.2);
+  }
+ }
+ if(style==='magic'||style==='mind'||style==='cosmic'){
+  const focus=add(new THREE.IcosahedronGeometry(.23,1),visorMat,0,2.06,0);
+  focus.name='spell-focus';
+ }
+ if(style==='speed'){
+  for(const side of [-1,1]){
+   const fin=add(new THREE.ConeGeometry(.13,.5,5),shoulderMat,side*.55,1.33,-.34);
+   fin.rotation.x=-.8;
+  }
+ }
  const stance=style==='speed'?'runner':style==='magic'||style==='mind'||style==='cosmic'?'caster':style==='slash'?'blade':'brawler';
  const animate=(time,attack,hit,reduced)=>{
   const wave=reduced?0:Math.sin(time*2)*.065;
@@ -179,6 +200,10 @@ export function makeRig(THREE,profile={}){
   limbs.leftKnee.rotation.x=Math.max(0,attack*.35);limbs.rightKnee.rotation.x=Math.max(0,attack*.4);
   root.rotation.z=hit*.15;
   root.rotation.x=hit*.1;
+  root.position.y=attack*(stance==='caster'?.13:stance==='runner'?.2:.06);
+  spine.rotation.y=attack*(stance==='blade'?.28:stance==='brawler'?.2:-.14);
+  limbs.rightElbow.rotation.z=-attack*(stance==='caster'?.35:.1);
+  limbs.leftElbow.rotation.z=attack*(stance==='caster'?.35:.1);
   weapon.rotation.z=-attack*1.2;
   cloth.forEach((panel,j)=>{panel.rotation.x=-.24+(reduced?0:Math.sin(time*5+j*.7)*.12)+attack*.35});
  };
