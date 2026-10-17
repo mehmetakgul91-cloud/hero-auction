@@ -169,13 +169,25 @@ if(stage){
       beam.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
       scene.add(beam);effects.push({mesh:beam,expires:elapsed+.4});
     };
+    const floatingNumbers=[];
+    const floatDamage=(target,event)=>{
+      const raw=Number(event.damage??event.amount??0);
+      if(!Number.isFinite(raw)||raw<=0)return;
+      const canvas=document.createElement('canvas');canvas.width=256;canvas.height=96;
+      const ctx=canvas.getContext('2d');if(!ctx)return;
+      ctx.font='bold 58px sans-serif';ctx.textAlign='center';ctx.lineWidth=8;ctx.strokeStyle='#200c29';ctx.strokeText('-'+Math.round(raw),128,65);ctx.fillStyle='#ffe277';ctx.fillText('-'+Math.round(raw),128,65);
+      const texture=new THREE.CanvasTexture(canvas);
+      const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false}));
+      sprite.position.copy(target.position);sprite.position.y+=2.8;sprite.scale.set(1.7,.64,1);
+      scene.add(sprite);floatingNumbers.push({sprite,born:elapsed});
+    };
     const move=e=>{
       const event=e.detail.event;sync(e.detail.teams);
       const actor=[...fighters.values()].find(m=>m.userData.unit.id===event.actor||m.userData.unit.name===event.actor);
       const target=[...fighters.values()].find(m=>m.userData.unit.id===event.target||m.userData.unit.name===event.target);
       if(actor){actor.userData.until=elapsed+.7;actor.userData.kind='attack';actor.userData.attackStart=elapsed;actor.userData.targetPosition=target?target.position.clone():null}
       if(target){target.userData.until=elapsed+.5;target.userData.kind='hit';target.userData.hitStart=elapsed}
-      if(actor&&target){visualEffect(actor,target);spawnImpact(target.position,profiles[String(actor.userData.unit.id||'').toLowerCase()]?.accent||'#65ddff')}
+      if(actor&&target){visualEffect(actor,target);spawnImpact(target.position,profiles[String(actor.userData.unit.id||'').toLowerCase()]?.accent||'#65ddff');floatDamage(target,event)}
     };
     window.addEventListener('heroarena:ready',e=>sync(e.detail.teams));
     window.addEventListener('heroarena:move',move);
@@ -204,6 +216,11 @@ if(stage){
           d.hpFill.quaternion.copy(camera.quaternion);
           d.halo.material.opacity=.72+(reduce?0:Math.sin(elapsed*2+d.phase)*.12);
           d.rig.animate(elapsed,d.kind==='attack'?Math.sin(progress*Math.PI):0,d.kind==='hit'?Math.sin(progress*Math.PI):0,reduce);
+        }
+        for(let i=floatingNumbers.length-1;i>=0;i--){
+          const d=floatingNumbers[i],age=elapsed-d.born;
+          d.sprite.position.y+=.035;d.sprite.material.opacity=Math.max(0,1-age/.85);
+          if(age>.85){scene.remove(d.sprite);d.sprite.material.map.dispose();d.sprite.material.dispose();floatingNumbers.splice(i,1)}
         }
         for(let i=impactBursts.length-1;i>=0;i--){
           const burst=impactBursts[i],age=elapsed-burst.born;
