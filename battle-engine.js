@@ -39,7 +39,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10,r
   for(const team of teams){
     const counts=Object.fromEntries(roles.map(role=>[role,0]));for(const u of team)counts[u.role]++;
     for(const u of team){
-      const roleBonus=u.role==='tank'?0.06:u.role==='fighter'?0.04:u.role==='energy'?0.08:0.05;
+      const roleBonus=u.role==='tank'?0.06:u.role==='fighter'?0.04:u.role==='energy'?0.06:u.role==='support'?0.06:0.05;
       const duplicates=Math.max(0,counts[u.role]-3)*0.075;
       const laneBonus=Number(u.laneModifiers?.[u.lane]);
       const specialtyBonus=Number.isFinite(laneBonus)?clamp(laneBonus,-0.10,0.10):0;
@@ -86,7 +86,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10,r
       if(!enemies.some(x=>x.hp>0))break;
       if(unit.role==='support'&&round%3===0){
         const ally=[...allies].filter(x=>x.hp>0&&x.hp<x.maxHp).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
-        if(ally){const heal=Math.min(ally.maxHp-ally.hp,Math.round(unit.attack*.55));ally.hp+=heal;unit.healing+=heal;log.push({round,side,actor:unit.id,action:'heal',target:ally.id,value:heal});continue}
+        if(ally){const heal=Math.min(ally.maxHp-ally.hp,Math.round(unit.attack*.52));ally.hp+=heal;unit.healing+=heal;log.push({round,side,actor:unit.id,action:'heal',target:ally.id,value:heal});continue}
       }
       const target=targetOf(enemies,unit,round);
       if(!target)break;
@@ -98,7 +98,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10,r
       // damage until their front line falls, except when assassins infiltrate.
       const guarded=!isFront(target)&&enemies.some(x=>x.hp>0&&isFront(x));
       const defense=skill?.effect==='pierce'?Math.floor(target.defense*.6):target.defense;
-      const roleMultiplier=guarded?0.85:1;
+      const roleMultiplier=(guarded?0.85:1)*(unit.role==='energy'?0.97:unit.role==='support'?1.03:1);
       // Exposed all-ranged squads lose protection; mixed frontlines intercept fire.
       
       const raw=Math.max(1,Math.floor(unit.attack*multiplier*roleMultiplier*0.7*100/(100+defense)*(critical?1.3:1)));
