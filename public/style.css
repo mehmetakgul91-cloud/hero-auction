@@ -377,3 +377,12 @@ header{gap:14px;flex-wrap:wrap}
 @media(min-width:1050px){body:has(#home.cinema-home:not([hidden])) .shell{max-width:1050px}#home .cinema-hero{padding:55px 52px 42px;min-height:420px}#home .cinema-command{margin:0 44px 28px;padding:30px 36px}}
 @media(max-width:600px){#home.cinema-home{border-radius:19px;padding-top:0}#home .cinema-sky{height:440px}#home .cinema-ring{width:290px;height:290px;right:-125px;top:48px}#home .ring-two{width:230px;height:230px;right:-95px;top:76px}#home .cinema-burst{font-size:100px;right:10px;top:115px}#home .orbit-one{right:96px;top:47px}#home .orbit-two{right:4px;top:270px}#home .cinema-hero{padding:32px 18px 22px;min-height:350px}#home .cinema-hero h1{font-size:clamp(39px,10.4vw,58px);margin:22px 0}#home .cinema-hero p{font-size:13px;max-width:320px}#home .cinema-kicker{font-size:9px;letter-spacing:.08em}#home .cinema-hero .hero-features span{font-size:9px;padding:8px}#home .cinema-command{margin:0 9px 14px;padding:17px 13px}#home .cinema-command-top{font-size:9px}#home .cinema-command .online-board-grid{gap:4px}}
 @media(prefers-reduced-motion:reduce){#home .cinema-burst,#home .cinema-orbit{animation:none}}
+
+/* Compact live statistics anchored to the upper-right of the cinematic lobby. */
+#home .cinema-live-corner{position:absolute;top:16px;right:16px;z-index:3;display:flex;gap:6px;align-items:stretch;max-width:calc(100% - 32px)}
+#home .cinema-live-stat{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:77px;padding:9px 8px;border:1px solid rgba(100,207,255,.4);border-radius:12px;background:rgba(6,18,38,.86);box-shadow:0 6px 20px #0006,inset 0 0 18px #44baff12;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#home .cinema-live-stat strong{font-size:19px;line-height:1;font-weight:950;color:#f4f9ff;font-variant-numeric:tabular-nums}
+#home .cinema-live-stat small{font-size:8px;letter-spacing:.035em;font-weight:800;color:#9bb9da;white-space:nowrap}
+#home .cinema-live-stat .online-dot{position:absolute;margin-left:-35px;margin-top:-15px;width:6px;height:6px}
+@media(min-width:601px){#home .cinema-hero{padding-top:98px}}
+@media(max-width:600px){#home .cinema-live-corner{top:9px;right:9px;gap:4px;max-width:calc(100% - 18px)}#home .cinema-live-stat{min-width:65px;padding:7px 6px;border-radius:9px;gap:3px}#home .cinema-live-stat strong{font-size:15px}#home .cinema-live-stat small{font-size:7px}#home .cinema-live-stat .online-dot{margin-left:-28px;margin-top:-12px}#home .cinema-hero{padding-top:95px}}
