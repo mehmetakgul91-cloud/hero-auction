@@ -223,7 +223,7 @@ function step(){
  if(cursor>=events.length){stop();return}
  const e=events[cursor++];
  states.forEach((t,side)=>t.forEach((u,i)=>u.hp=e.snapshot[side][i]));
- const li=document.createElement('li');li.textContent='Tur '+e.round+' · '+e.actor+' · '+e.action+(e.target?' → '+e.target:'')+' ('+e.value+')';
+ const li=document.createElement('li');const hitInfo=e.absorbed>0?' · Kalkan '+e.absorbed+' engelledi':'';const hitKind=e.critical?' · KRİTİK':e.damageType==='special'?' · ÖZEL GÜÇ':e.damageType==='splash'?' · ALAN HASARI':'';li.textContent='Tur '+e.round+' · '+e.actor+' · '+e.action+(e.target?' → '+e.target:'')+' · '+e.value+(e.damageType?' hasar':'')+hitKind+hitInfo;
  $('events').prepend(li);$('message').textContent=e.actor+' · '+e.action+(e.target?' → '+e.target:'');
  render(e);animateMove(e);window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position})));window.dispatchEvent(new CustomEvent('heroarena:move',{detail:{event:e,teams:window.heroArenaTeams}}));if(cursor>=events.length)stop();
 }
