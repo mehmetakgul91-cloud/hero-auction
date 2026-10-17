@@ -22,6 +22,7 @@ if(stage){
     const scene=new THREE.Scene();
     scene.background=new THREE.Color(0x050b1b);scene.fog=new THREE.FogExp2(0x050b1b,0.018);
     const mobile=window.matchMedia('(max-width: 700px)').matches;
+    const heroShowcase=new URLSearchParams(location.search).get('showcase')==='1';
     const camera=new THREE.OrthographicCamera(-10,10,7,-7,.1,100);
     const fitCamera=()=>{
       const aspect=Math.max(.5,stage.clientWidth/Math.max(1,stage.clientHeight));
@@ -235,6 +236,7 @@ if(stage){
     window.addEventListener('heroarena:ready',e=>sync(e.detail.teams));
     window.addEventListener('heroarena:move',move);
     if(Array.isArray(window.heroArenaTeams))sync(window.heroArenaTeams);
+    if(heroShowcase){sync([[{id:'marvel:hulk',name:'Hulk',hp:100,maxHp:100,rarity:'legendary'},{id:'marvel:iron man',name:'Iron Man',hp:100,maxHp:100,rarity:'rare'},{id:'marvel:doctor strange',name:'Doctor Strange',hp:100,maxHp:100,rarity:'advanced'}],[]]);}
     const resize=new ResizeObserver(()=>{const w=stage.clientWidth,h=stage.clientHeight;if(w&&h){fitCamera();renderer.setSize(w,h,false)}});resize.observe(stage);
     const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
     const maxFps=mobile?30:60;let lastDraw=0;
