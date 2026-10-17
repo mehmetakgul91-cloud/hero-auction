@@ -23,7 +23,7 @@ if(stage){
     const camera=new THREE.OrthographicCamera(-10,10,7,-7,.1,100);
     const fitCamera=()=>{
       const aspect=Math.max(.5,stage.clientWidth/Math.max(1,stage.clientHeight));
-      const halfHeight=Math.max(mobile?9.8:7.8,6.6/aspect);
+      const halfHeight=Math.max(mobile?9.8:7.8,7.1/aspect);
       camera.left=-halfHeight*aspect;camera.right=halfHeight*aspect;
       camera.top=halfHeight;camera.bottom=-halfHeight;
       camera.updateProjectionMatrix();
@@ -159,7 +159,7 @@ if(stage){
       if(!document.hidden&&now-lastDraw>=1000/maxFps){lastDraw=now;
         for(const mesh of fighters.values()){
           const d=mesh.userData,progress=Math.max(0,Math.min(1,(d.until-elapsed)/.55));
-          const travel=d.style==='speed'?3.2:d.style==='charge'||d.style==='slash'?2.3:.65;
+          const travel=d.style==='speed'?2.2:d.style==='charge'||d.style==='slash'?1.65:.5;
           mesh.position.x=d.baseX+(d.kind==='attack'?(d.side?-1:1)*travel*Math.sin(progress*Math.PI):0);
           mesh.position.y=0+(reduce?0:Math.sin(elapsed*2+d.phase)*.07)+(d.kind==='hit'?Math.sin(progress*40)*.14:0)+(d.kind==='attack'&&['cosmic','speed','lightning'].includes(d.style)?Math.sin(progress*Math.PI)*.6:0);
           mesh.rotation.y=d.side?-Math.PI/2:Math.PI/2;
