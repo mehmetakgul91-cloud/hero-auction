@@ -231,8 +231,8 @@ if(stage){
         ctx.font='bold 42px sans-serif';ctx.textAlign='center';ctx.lineWidth=7;ctx.strokeStyle='#100c29';ctx.strokeText(text,256,73);ctx.fillStyle=color;ctx.fillText(text,256,73);
         const texture=new THREE.CanvasTexture(canvas);
         const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false}));
-        sprite.position.copy(target.position);sprite.position.y+=2.7+i*.65;sprite.scale.set(3.3,.72,1);
-        scene.add(sprite);floatingNumbers.push({sprite,born:elapsed,baseScale:3.3,baseY:sprite.position.y});
+        sprite.position.copy(target.position);sprite.position.y+=2.7+i*.65;sprite.scale.set(4.6,1.05,1);
+        scene.add(sprite);floatingNumbers.push({sprite,born:elapsed,baseScale:4.6,baseY:sprite.position.y});
       });
     };
     const move=e=>{
@@ -297,9 +297,9 @@ if(stage){
         }
         for(let i=floatingNumbers.length-1;i>=0;i--){
           const d=floatingNumbers[i],age=elapsed-d.born;
-          const life=1.8,progress=Math.min(1,age/life);
-          d.sprite.position.y=d.baseY+progress*.95;
-          d.sprite.scale.set(3.3*(1+progress*.65),.72*(1+progress*.65),1);
+          const life=3.2,progress=Math.min(1,age/life);
+          d.sprite.position.y=d.baseY+progress*1.2;
+          d.sprite.scale.set(4.6*(1+progress*.8),1.05*(1+progress*.8),1);
           d.sprite.material.opacity=Math.max(0,1-Math.pow(progress,1.5));
           if(age>life){scene.remove(d.sprite);d.sprite.material.map.dispose();d.sprite.material.dispose();floatingNumbers.splice(i,1)}
         }
