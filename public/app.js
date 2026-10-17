@@ -14,7 +14,19 @@ async function enterGuest(){try{const name=$('guest-name').value.trim()||'Oyuncu
 $('guest-login').onclick=enterGuest;
 $('google-logout').onclick=()=>{login=null;localStorage.removeItem('hero-auction-login');localStorage.removeItem('hero-auction-session');session=null;room=null;stream?.close();showGold(0);window.google?.accounts?.id?.disableAutoSelect();applyLogin()};
 window.heroGoogleCallback=async response=>{try{const result=await post('/api/auth/google',{credential:response.credential});login={type:'google',user:result.user,authToken:result.authToken};localStorage.setItem('hero-auction-login',JSON.stringify(login));showGold(result.gold);applyLogin();restoreGame();notify('Google hesabınla giriş yaptın.')}catch(e){notify(e.message)}};
-function initGoogle(attempt=0){if(!window.google?.accounts?.id){if(attempt<40)setTimeout(()=>initGoogle(attempt+1),500);return}window.google.accounts.id.initialize({client_id:googleClientId,callback:window.heroGoogleCallback});window.google.accounts.id.renderButton($('google-login'),{theme:'filled_black',size:'large',shape:'rectangular',text:'continue_with',logo_alignment:'left',width:400})}
+function initGoogle(attempt=0){
+ const target=$('google-login');if(!target)return;
+ if(!window.google?.accounts?.id){
+  if(attempt<40){setTimeout(()=>initGoogle(attempt+1),500);return}
+  target.textContent='Google giriş hizmeti yüklenemedi. Sayfayı yenileyip tekrar deneyin.';
+  return;
+ }
+ try{
+  window.google.accounts.id.initialize({client_id:googleClientId,callback:window.heroGoogleCallback});
+  target.replaceChildren();
+  window.google.accounts.id.renderButton(target,{theme:'filled_black',size:'large',shape:'rectangular',text:'continue_with',logo_alignment:'left',width:Math.min(320,Math.max(220,window.innerWidth-80))});
+ }catch(e){target.textContent='Google giriş düğmesi başlatılamadı. Lütfen tekrar deneyin.';console.error('Google sign-in initialization:',e)}
+}
 function gameIdentity(){return signedIn()?{authToken:login.authToken}:{}}
 async function restoreGame(){if(!signedIn()||!await validateLogin())return;try{session=JSON.parse(localStorage.getItem('hero-auction-session'));if(session){const j=await post('/api/state',{...session,...gameIdentity()});show(j.room);connect()}}catch(e){if(e.message.includes('giriş yap')||e.message.includes('Oturumun sona erdi')){login=null;localStorage.removeItem('hero-auction-login');localStorage.removeItem('hero-auction-session');session=null;room=null;applyLogin();notify('Oturum süren doldu. Yeniden giriş yap.')}else if(e.message==='Oda bulunamadı.'||e.message==='Oyuncu yetkisi geçersiz.'){localStorage.removeItem('hero-auction-session');session=null;room=null;applyLogin();notify('Önceki oda artık mevcut değil. Yeni bir maç oluşturabilirsin.')}else{notify('Bağlantı kurulamadı. Biraz sonra tekrar dene.')}}}
 applyLogin();initGoogle();
