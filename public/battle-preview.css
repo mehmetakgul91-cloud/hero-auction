@@ -148,3 +148,13 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 .arena-impact-burst.splash-burst{opacity:.22;filter:blur(3px);animation-duration:.35s}
 .arena-impact-burst.target-burst{opacity:1;filter:brightness(1.35)}
 .damage-number.splash-damage{opacity:.55;font-size:clamp(11px,2vw,14px);color:#c9a3ae;text-shadow:none;animation-duration:.5s}
+
+/* Formation cards: full hero names and power outside cropped circular portraits. */
+.board-hero-identity{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:100%;min-width:0;min-height:44px;text-align:center}
+.board-hero-name{display:block;width:100%;font-size:clamp(12px,1.8vw,15px);line-height:1.2;font-weight:900;color:#fff;overflow-wrap:anywhere;text-shadow:0 1px 4px #000}
+.board-hero-power{display:inline-block;max-width:100%;padding:4px 7px;border-radius:7px;background:#073c53;border:1px solid #49d7f5;color:#aef8ff;font-size:clamp(11px,1.7vw,13px);line-height:1.2;font-weight:900;white-space:nowrap;font-variant-numeric:tabular-nums}
+.battle-board .board-slot.circle-slot .board-power{display:none}
+.battle-board .slot-wrap{max-width:155px;min-width:0;padding:7px 5px;gap:5px}
+.battle-board .board-row{gap:7px}
+.battle-board .lane-switch{margin-top:0!important}
+@media(max-width:600px){.battle-board .slot-wrap{flex:0 1 calc(25% - 6px);max-width:125px;padding:5px 2px}.board-hero-identity{min-height:50px;gap:3px}.board-hero-name{font-size:11px}.board-hero-power{font-size:10px;padding:4px 3px}.battle-board .lane-switch{font-size:9px!important;padding:5px 3px!important}}
