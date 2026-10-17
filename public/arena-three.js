@@ -110,8 +110,12 @@ if(stage){
       const key=side+':'+i;
       const rig=makeRig(THREE,{...(profiles[String(unit.id||'').toLowerCase()]||{}),id:unit.id,name:unit.name});
       const mesh=rig.root;
-      const baseX=(side?3.7:-3.7)+(side?-.5:.5)*(i%2);
-      const baseZ=(i-2)*1.85;
+      // Respect the actual formation chosen in preparation. Front units face the centre.
+      const lane=unit.lane==='front'?'front':'back';
+      const laneIndex=teams[side].slice(0,i).filter(u=>(u.lane==='front'?'front':'back')===lane).length;
+      const laneCount=teams[side].filter(u=>(u.lane==='front'?'front':'back')===lane).length;
+      const baseX=(side?1:-1)*(lane==='front'?2.15:5.25);
+      const baseZ=(laneIndex-(laneCount-1)/2)*1.85;
       mesh.position.set(baseX,0,baseZ);
       mesh.traverse(node=>{if(node.isMesh)node.castShadow=true});
       mesh.scale.setScalar(cardScale(unit));
