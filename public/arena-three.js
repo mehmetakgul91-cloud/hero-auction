@@ -1,3 +1,4 @@
+import {makeRig} from '/arena-skeleton.js?v=1';
 // Visual-only Three.js renderer. All outcomes and HP come from server replay events.
 const stage=document.getElementById('arena-3d-stage');
 const fallback=()=>import('/arena-3d.js?v=1');
@@ -23,8 +24,7 @@ if(stage){
     const ring=new THREE.Mesh(new THREE.TorusGeometry(7,.045,6,96),new THREE.MeshBasicMaterial({color:0x5e6ef5}));
     ring.rotation.x=Math.PI/2;ring.position.y=.06;scene.add(ring);
     const profiles=await fetch('/arena-hero-profiles.json').then(r=>{if(!r.ok)throw Error('Hero visual profiles unavailable');return r.json()}).then(v=>v.characters);
-    const fighters=new Map();const textureLoader=new THREE.TextureLoader();const art=new Map();
-    const geometry=new THREE.PlaneGeometry(1.9,2.5);
+    const fighters=new Map();
     let teams=[],effects=[],last=performance.now(),elapsed=0,active=true,animationId=0;
     const portrait=(unit,mesh)=>{
       const universe=String(unit.id||'').split(':')[0]||(/superman|batman|flash|wonder woman|doomsday|doctor fate/i.test(unit.name)?'dc':'marvel');
@@ -35,12 +35,13 @@ if(stage){
     const make=(unit,side,i)=>{
       const key=side+':'+i;
       const mat=new THREE.MeshBasicMaterial({color:side?0xff83c6:0x9fefff,transparent:true,side:THREE.DoubleSide,depthWrite:false});
-      const mesh=new THREE.Mesh(geometry,mat);
+      const rig=makeRig(THREE,profiles[String(unit.id||'').toLowerCase()]||{});
+      const mesh=rig.root;
       const baseX=(side?4.5:-4.5)+(side?-.9:.9)*(i%3);
       const baseZ=(Math.floor(i/3)-.5)*3.2+(i%3)*.35;
       mesh.position.set(baseX,1.6,baseZ);
-      mesh.userData={key,baseX,baseZ,side,i,phase:i*.9,unit,until:0,kind:'',style:profiles[String(unit.id||'').toLowerCase()]?.style||'charge'};
-      scene.add(mesh);fighters.set(key,mesh);portrait(unit,mesh);
+      mesh.userData={key,baseX,baseZ,side,i,phase:i*.9,unit,until:0,kind:'',rig,style:profiles[String(unit.id||'').toLowerCase()]?.style||'charge'};
+      scene.add(mesh);fighters.set(key,mesh);
       const hpBg=new THREE.Mesh(new THREE.PlaneGeometry(1.8,.11),new THREE.MeshBasicMaterial({color:0x47172a,side:THREE.DoubleSide}));
       hpBg.position.y=1.53;mesh.add(hpBg);
       const hpFill=new THREE.Mesh(new THREE.PlaneGeometry(1.8,.11),new THREE.MeshBasicMaterial({color:0x4affb5,side:THREE.DoubleSide}));
@@ -55,9 +56,9 @@ if(stage){
         const mesh=fighters.get(key);mesh.userData.unit=unit;mesh.userData.style=profiles[String(unit.id||'').toLowerCase()]?.style||'charge';
         const ratio=Math.max(0,Math.min(1,unit.hp/Math.max(1,unit.maxHp)));
         mesh.userData.hpFill.scale.x=ratio;mesh.userData.hpFill.position.x=-(1-ratio)*.9;
-        mesh.material.opacity=unit.hp>0?1:.25;
+        mesh.visible=unit.hp>0;
       }));
-      for(const [key,mesh] of fighters)if(!valid.has(key)){scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();fighters.delete(key)}
+      for(const [key,mesh] of fighters)if(!valid.has(key)){scene.remove(mesh);mesh.traverse(node=>{node.geometry?.dispose();if(node.material){(Array.isArray(node.material)?node.material:[node.material]).forEach(m=>m.dispose())}});fighters.delete(key)}
     };
     const visualEffect=(actor,target)=>{
       const profile=profiles[String(actor.userData.unit.id||'').toLowerCase()]||{style:'charge',accent:'#65ddff'};
@@ -124,7 +125,7 @@ if(stage){
           mesh.position.x=d.baseX+(d.kind==='attack'?(d.side?-1:1)*travel*Math.sin(progress*Math.PI):0);
           mesh.position.y=1.6+(reduce?0:Math.sin(elapsed*2+d.phase)*.07)+(d.kind==='hit'?Math.sin(progress*40)*.14:0)+(d.kind==='attack'&&['cosmic','speed','lightning'].includes(d.style)?Math.sin(progress*Math.PI)*.6:0);
           mesh.rotation.y=d.side?-.23:.23;
-          mesh.lookAt(camera.position.x,mesh.position.y,camera.position.z);
+          d.rig.animate(elapsed,d.kind==='attack'?Math.sin(progress*Math.PI):0,d.kind==='hit'?Math.sin(progress*Math.PI):0,reduce);
         }
         for(let i=effects.length-1;i>=0;i--){const e=effects[i];e.mesh.material.opacity=Math.max(0,(e.expires-elapsed)/.4);if(elapsed>=e.expires){scene.remove(e.mesh);e.mesh.geometry.dispose();e.mesh.material.dispose();effects.splice(i,1)}}
         if(!reduce){camera.position.x=Math.sin(elapsed*.23)*.65;camera.lookAt(0,0,0)}
