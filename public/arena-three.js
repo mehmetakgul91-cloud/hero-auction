@@ -215,15 +215,25 @@ if(stage){
     };
     const floatingNumbers=[];
     const floatDamage=(target,event)=>{
-      const raw=Number(event.damage??event.amount??event.value??0);
-      if(!Number.isFinite(raw)||raw<=0)return;
-      const canvas=document.createElement('canvas');canvas.width=256;canvas.height=96;
-      const ctx=canvas.getContext('2d');if(!ctx)return;
-      ctx.font='bold 58px sans-serif';ctx.textAlign='center';ctx.lineWidth=8;ctx.strokeStyle='#200c29';ctx.strokeText('-'+Math.round(raw),128,65);ctx.fillStyle='#ffe277';ctx.fillText('-'+Math.round(raw),128,65);
-      const texture=new THREE.CanvasTexture(canvas);
-      const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false}));
-      sprite.position.copy(target.position);sprite.position.y+=2.8;sprite.scale.set(1.7,.64,1);
-      scene.add(sprite);floatingNumbers.push({sprite,born:elapsed});
+      const value=Number(event.value||0),absorbed=Number(event.absorbed||0);
+      const action=String(event.action||'');
+      const healing=/heal/i.test(action),shield=/shield/i.test(action),critical=Boolean(event.critical);
+      const labels=[];
+      if(healing&&value>0)labels.push({text:'+'+Math.round(value)+' CAN',color:'#65f5a5'});
+      else if(shield&&value>0)labels.push({text:'+'+Math.round(value)+' KALKAN',color:'#5ecaff'});
+      else {
+        if(value>0)labels.push({text:'-'+Math.round(value)+(critical?' KRİTİK':event.damageType==='special'?' ÖZEL':event.damageType==='splash'?' ALAN':''),color:critical?'#ff637e':event.damageType==='special'?'#c69aff':'#ffe277'});
+        if(absorbed>0)labels.push({text:Math.round(absorbed)+' ENGELLENDİ',color:'#5ecaff'});
+      }
+      labels.forEach(({text,color},i)=>{
+        const canvas=document.createElement('canvas');canvas.width=512;canvas.height=112;
+        const ctx=canvas.getContext('2d');if(!ctx)return;
+        ctx.font='bold 42px sans-serif';ctx.textAlign='center';ctx.lineWidth=7;ctx.strokeStyle='#100c29';ctx.strokeText(text,256,73);ctx.fillStyle=color;ctx.fillText(text,256,73);
+        const texture=new THREE.CanvasTexture(canvas);
+        const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false}));
+        sprite.position.copy(target.position);sprite.position.y+=2.7+i*.65;sprite.scale.set(3.3,.72,1);
+        scene.add(sprite);floatingNumbers.push({sprite,born:elapsed});
+      });
     };
     const move=e=>{
       const event=e.detail.event;sync(e.detail.teams);
