@@ -10,6 +10,12 @@ test('formation bonuses are bounded to fifteen percent',()=>{for(const front of 
 test('90 auction power retains higher base combat stats than 70 under worst formation multiplier',()=>{const a=team('a').map(c=>({...c,power:90,lane:'front',role:'tank'}));const b=team('b').map((c,i)=>({...c,power:70,lane:i<2?'front':'back',role:i<2?'fighter':'energy'}));const result=simulateBattle(a,b,{seed:'power-priority',maxRounds:1});assert.ok(Math.min(...result.teams[0].map(x=>x.attack))>Math.max(...result.teams[1].map(x=>x.attack)));});
 
 test('four unspent credits boost all five heroes by four percent',()=>{const a=team('a'),b=team('b');const baseline=simulateBattle(a,b,{seed:'credits',maxRounds:1});const boosted=simulateBattle(a,b,{seed:'credits',maxRounds:1,remainingCredits:[4,0]});for(let i=0;i<5;i++){assert.equal(boosted.teams[0][i].auctionCreditMultiplier,1.04);assert.equal(boosted.teams[1][i].auctionCreditMultiplier,1);assert.equal(boosted.teams[0][i].maxHp,Math.round(baseline.teams[0][i].maxHp*1.04))}});
-test('negative or fractional credits cannot generate battle bonuses',()=>{for(const value of [-1,1.5,NaN])assert.throws(()=>simulateBattle(team('a'),team('b'),{remainingCredits:[value,0]}))});
+test('negative integer credits apply a penalty while fractional or non-finite credits are rejected',()=>{
+ const a=team('a'),b=team('b');
+ const result=simulateBattle(a,b,{remainingCredits:[-1,0],maxRounds:1});
+ assert.equal(result.teams[0][0].auctionCreditMultiplier,.99);
+ assert.equal(result.teams[1][0].auctionCreditMultiplier,1);
+ for(const value of [1.5,-1.5,NaN,Infinity])assert.throws(()=>simulateBattle(a,b,{remainingCredits:[value,0]}));
+});
 
 test('credit bonus gives 1 percent for first eight, half percent after',()=>{for(const [credits,expected] of [[0,1],[4,1.04],[8,1.08],[9,1.085],[10,1.09],[12,1.10],[20,1.14]]){const result=simulateBattle(team('a'),team('b'),{remainingCredits:[credits,0],maxRounds:1});for(const hero of result.teams[0])assert.ok(Math.abs(hero.auctionCreditMultiplier-expected)<1e-10)}});
