@@ -129,15 +129,40 @@ export function makeRig(THREE,profile={}){
    fin.rotation.z=side*1.15;
   }
  }
+ // Layered armor and facial planes make the figure volumetric from an overhead camera.
+ const trim=new THREE.MeshStandardMaterial({color:0xe7f5ff,metalness:.8,roughness:.2});
+ const waist=add(new THREE.CylinderGeometry(.32,.26,.27,10),dark,0,.46,0);
+ const collar=add(new THREE.CylinderGeometry(.42,.33,.18,12),shoulderMat,0,1.38,0);
+ for(const side of [-1,1]){
+   const forearm=add(new THREE.CylinderGeometry(.15,.12,.38,9),plateMat,side*.59,.48,.14);
+   forearm.rotation.z=side*.18;
+   const shin=add(new THREE.BoxGeometry(.23,.4,.26),plateMat,side*.23,.08,.11);
+   shin.rotation.x=-.08;
+   const eye=add(new THREE.BoxGeometry(.13,.065,.055),visorMat,side*.14,1.59,.30);
+   eye.rotation.y=side*.1;
+ }
+ if(/batman|superman|shazam|thor|doctor strange|magneto|raven|sentry|doctor fate|vision/.test(name)){
+   const capeTop=add(new THREE.BoxGeometry(.95,.12,.18),shoulderMat,0,1.24,-.37);
+   capeTop.rotation.x=.1;
+ }
+ if(/wolverine|deadpool|deathstroke|elektra/.test(name)){
+   for(const side of [-1,1]){
+     const gauntlet=add(new THREE.BoxGeometry(.21,.36,.27),dark,side*.7,.33,.21);
+     gauntlet.rotation.z=side*.17;
+   }
+ }
  const stance=style==='speed'?'runner':style==='magic'||style==='mind'||style==='cosmic'?'caster':style==='slash'?'blade':'brawler';
  const animate=(time,attack,hit,reduced)=>{
   const wave=reduced?0:Math.sin(time*2)*.065;
+  const stride=reduced?0:Math.sin(time*8)*Math.min(1,attack)*.5;
   spine.rotation.z=wave+hit*Math.sin(time*40)*.22;
-  spine.rotation.x=attack*.22;
+  spine.rotation.x=attack*(stance==='caster'?.34:.22);
+  hip.rotation.y=attack*(stance==='blade'?.22:.09);
+  head.rotation.z=hit*Math.sin(time*31)*.14;
   limbs.leftArm.rotation.x=wave+attack*(stance==='caster'?-1.7:stance==='runner'?-1.3:-1.1);
   limbs.rightArm.rotation.x=-wave+attack*(stance==='blade'||stance==='brawler'?-2.2:-1.3);
   limbs.leftElbow.rotation.x=-.2-attack*.55;limbs.rightElbow.rotation.x=-.2-attack*.75;
-  limbs.leftLeg.rotation.x=attack*(stance==='runner'?1.1:.55);limbs.rightLeg.rotation.x=-attack*(stance==='runner'?1.1:.55);
+  limbs.leftLeg.rotation.x=attack*(stance==='runner'?1.1:.55)+stride;limbs.rightLeg.rotation.x=-attack*(stance==='runner'?1.1:.55)-stride;
   limbs.leftKnee.rotation.x=Math.max(0,attack*.35);limbs.rightKnee.rotation.x=Math.max(0,attack*.4);
   root.rotation.z=hit*.15;
  };
