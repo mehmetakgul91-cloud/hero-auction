@@ -15,7 +15,7 @@ export function fighterFromCard(card,position=0){
   const role=lane==='back'?'energy':card.role==='tank'?'tank':'fighter';
   // Hero auction power is the baseline; positioning can change stats by at most 10%.
   const base={attack:power,defense:power,maxHp:power*2,speed:power};
-  return {id:String(card.id||card.name),name:String(card.name||'Hero'),power,role,lane,position,
+  return {id:String(card.id||card.name),name:String(card.name||'Hero'),power,role,lane,position,specialty:card.specialty||null,laneModifiers:card.laneModifiers||null,
     attack:base.attack,defense:base.defense,maxHp:base.maxHp,hp:base.maxHp,speed:base.speed,
     shield:0,kills:0,damage:0,healing:0,active:card.active||null,passive:card.passive||null};
 }
@@ -41,7 +41,9 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10,r
     for(const u of team){
       const roleBonus=u.role==='tank'?0.06:u.role==='fighter'?0.04:0.08;
       const duplicates=Math.max(0,counts[u.role]-3)*0.075;
-      const multiplier=clamp(1+roleBonus-duplicates,0.90,1.10);
+      const laneBonus=Number(u.laneModifiers?.[u.lane]);
+      const specialtyBonus=Number.isFinite(laneBonus)?clamp(laneBonus,-0.10,0.10):0;
+      const multiplier=clamp(1+roleBonus-duplicates+specialtyBonus,0.90,1.10);
       u.compositionMultiplier=multiplier;
       u.attack=Math.round(u.attack*multiplier);
       u.defense=Math.round(u.defense*multiplier);
