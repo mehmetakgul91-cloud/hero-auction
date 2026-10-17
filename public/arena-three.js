@@ -226,13 +226,13 @@ if(stage){
         if(absorbed>0)labels.push({text:Math.round(absorbed)+' ENGELLENDİ',color:'#5ecaff'});
       }
       labels.forEach(({text,color},i)=>{
-        const canvas=document.createElement('canvas');canvas.width=512;canvas.height=112;
+        const canvas=document.createElement('canvas');canvas.width=768;canvas.height=160;
         const ctx=canvas.getContext('2d');if(!ctx)return;
-        ctx.font='bold 42px sans-serif';ctx.textAlign='center';ctx.lineWidth=7;ctx.strokeStyle='#100c29';ctx.strokeText(text,256,73);ctx.fillStyle=color;ctx.fillText(text,256,73);
+        ctx.font='900 58px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';ctx.lineWidth=13;ctx.strokeStyle='#080c1d';ctx.strokeText(text,384,80,735);ctx.lineWidth=5;ctx.strokeStyle='#ffffff';ctx.strokeText(text,384,80,735);ctx.fillStyle=color;ctx.fillText(text,384,80,735);
         const texture=new THREE.CanvasTexture(canvas);
         const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false}));
-        sprite.position.copy(target.position);sprite.position.y+=2.7+i*.65;sprite.scale.set(4.6,1.05,1);
-        scene.add(sprite);floatingNumbers.push({sprite,born:elapsed,baseScale:4.6,baseY:sprite.position.y});
+        sprite.position.copy(target.position);sprite.position.y+=3.1+i*.85;sprite.scale.set(6.1,1.35,1);
+        scene.add(sprite);floatingNumbers.push({sprite,born:elapsed,baseScale:6.1,baseY:sprite.position.y});
       });
     };
     const move=e=>{
@@ -297,10 +297,10 @@ if(stage){
         }
         for(let i=floatingNumbers.length-1;i>=0;i--){
           const d=floatingNumbers[i],age=elapsed-d.born;
-          const life=3.2,progress=Math.min(1,age/life);
+          const life=2.2,progress=Math.min(1,age/life);
           d.sprite.position.y=d.baseY+progress*1.2;
-          d.sprite.scale.set(4.6*(1+progress*.8),1.05*(1+progress*.8),1);
-          d.sprite.material.opacity=Math.max(0,1-Math.pow(progress,1.5));
+          d.sprite.scale.set(6.1*(1+progress*.3),1.35*(1+progress*.3),1);
+          d.sprite.material.opacity=progress<.65?1:Math.max(0,(1-progress)/.35);
           if(age>life){scene.remove(d.sprite);d.sprite.material.map.dispose();d.sprite.material.dispose();floatingNumbers.splice(i,1)}
         }
         for(let i=impactBursts.length-1;i>=0;i--){
