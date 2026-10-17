@@ -13,7 +13,7 @@ export function fighterFromCard(card,position=0){
   // Formation controls the battle role: both rear slots and rear specialists use ranged energy.
   const lane=card.lane==='front'||card.lane==='back'?card.lane:position>=2?'back':'front';
   const role=lane==='back'?'energy':card.role==='tank'?'tank':'fighter';
-  // Hero auction power is the baseline; positioning can change stats by at most 15%.
+  // Hero auction power is the baseline; positioning can change stats by at most 10%.
   const base={attack:power,defense:power,maxHp:power*2,speed:power};
   return {id:String(card.id||card.name),name:String(card.name||'Hero'),power,role,lane,position,
     attack:base.attack,defense:base.defense,maxHp:base.maxHp,hp:base.maxHp,speed:base.speed,
@@ -35,13 +35,13 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=10,r
   const random=seedRandom(seed);
   const teams=[cardsA,cardsB].map(cards=>cards.map((c,i)=>fighterFromCard(c,i)));
   // One bounded tactical multiplier: role + formation + duplicate penalty.
-  // No stacking of independent bonuses beyond the 0.85–1.15 interval.
+  // No stacking of independent bonuses beyond the 0.90–1.10 interval.
   for(const team of teams){
     const counts={tank:0,fighter:0,energy:0};for(const u of team)counts[u.role]++;
     for(const u of team){
       const roleBonus=u.role==='tank'?0.06:u.role==='fighter'?0.04:0.08;
       const duplicates=Math.max(0,counts[u.role]-3)*0.075;
-      const multiplier=clamp(1+roleBonus-duplicates,0.85,1.15);
+      const multiplier=clamp(1+roleBonus-duplicates,0.90,1.10);
       u.compositionMultiplier=multiplier;
       u.attack=Math.round(u.attack*multiplier);
       u.defense=Math.round(u.defense*multiplier);
