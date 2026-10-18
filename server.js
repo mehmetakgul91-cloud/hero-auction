@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import pg from 'pg';
 import {simulateRosterBattle,battleRoster} from './battle-roster.js';
+import {createCommanderProfile,validateCommanderProfile,resolveCommander,previewCommanderUpgrade,commanderLevelCap,commanderUpgradeCost,COMMANDER_STATS} from './arena-commanders.js';
 import {auctionRoomToBattleState,prepareBattleTeams} from './battle-match.js';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
@@ -38,7 +39,7 @@ function recordMatch(r,scores){const id=r.code+':'+(r.matchNumber||1)+':'+r.crea
 
 let databaseReady=false;
 function markRoom(r){if(database&&r)dirtyRooms.add(r.code)}
-async function initializeDatabase(){if(!database)return;try{await database.query('CREATE TABLE IF NOT EXISTS hero_auction_rooms (code VARCHAR(3) PRIMARY KEY, state JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_wallets (account_id TEXT PRIMARY KEY, gold INTEGER NOT NULL DEFAULT 500 CHECK(gold>=0))');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_social (id TEXT PRIMARY KEY, state JSONB NOT NULL)');const social=await database.query('SELECT state FROM hero_auction_social WHERE id=$1',['global']);if(social.rows[0]){const state=social.rows[0].state;for(const [k,v] of state.ratings||[])ratings.set(k,v);for(const [k,v] of state.matches||[])matchRecords.set(k,v);for(const [k,v] of state.friends||[])friendLinks.set(k,new Set(v))}await database.query('CREATE TABLE IF NOT EXISTS hero_auction_gold_awards (award_id TEXT PRIMARY KEY, account_id TEXT NOT NULL, amount INTEGER NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_rewarded_claims (provider_event_id TEXT PRIMARY KEY, account_id TEXT NOT NULL, reward_day DATE NOT NULL, amount INTEGER NOT NULL CHECK(amount=100), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');await database.query('CREATE INDEX IF NOT EXISTS hero_auction_rewarded_claims_account_day ON hero_auction_rewarded_claims(account_id,reward_day)');const result=await database.query('SELECT code,state FROM hero_auction_rooms');for(const row of result.rows){const r=row.state;if(r&&r.code===row.code&&r.players&&r.cards){rooms.set(row.code,r);if(r.phase==='finished'&&r.goldAward)queueGoldAward(r);if(r.phase==='finished'&&r.goldRefunds)for(const a of r.goldRefunds)pendingGold.set(a.id,a);if(r.phase==='matching'&&!r.players[1])waiting.set(row.code,{code:row.code,universe:r.universe,created:r.created})}}databaseReady=true;console.log('PostgreSQL connected; restored',rooms.size,'rooms')}catch(e){console.error('PostgreSQL initialization failed:',e.message)}}
+async function initializeDatabase(){if(!database)return;try{await database.query('CREATE TABLE IF NOT EXISTS hero_auction_rooms (code VARCHAR(3) PRIMARY KEY, state JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_wallets (account_id TEXT PRIMARY KEY, gold INTEGER NOT NULL DEFAULT 500 CHECK(gold>=0))');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_commanders (account_id TEXT PRIMARY KEY, profile JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_social (id TEXT PRIMARY KEY, state JSONB NOT NULL)');const social=await database.query('SELECT state FROM hero_auction_social WHERE id=$1',['global']);if(social.rows[0]){const state=social.rows[0].state;for(const [k,v] of state.ratings||[])ratings.set(k,v);for(const [k,v] of state.matches||[])matchRecords.set(k,v);for(const [k,v] of state.friends||[])friendLinks.set(k,new Set(v))}await database.query('CREATE TABLE IF NOT EXISTS hero_auction_gold_awards (award_id TEXT PRIMARY KEY, account_id TEXT NOT NULL, amount INTEGER NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_rewarded_claims (provider_event_id TEXT PRIMARY KEY, account_id TEXT NOT NULL, reward_day DATE NOT NULL, amount INTEGER NOT NULL CHECK(amount=100), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');await database.query('CREATE INDEX IF NOT EXISTS hero_auction_rewarded_claims_account_day ON hero_auction_rewarded_claims(account_id,reward_day)');const result=await database.query('SELECT code,state FROM hero_auction_rooms');for(const row of result.rows){const r=row.state;if(r&&r.code===row.code&&r.players&&r.cards){rooms.set(row.code,r);if(r.phase==='finished'&&r.goldAward)queueGoldAward(r);if(r.phase==='finished'&&r.goldRefunds)for(const a of r.goldRefunds)pendingGold.set(a.id,a);if(r.phase==='matching'&&!r.players[1])waiting.set(row.code,{code:row.code,universe:r.universe,created:r.created})}}databaseReady=true;console.log('PostgreSQL connected; restored',rooms.size,'rooms')}catch(e){console.error('PostgreSQL initialization failed:',e.message)}}
 async function flushRooms(){if(!database||!databaseReady||!dirtyRooms.size)return;const codes=[...dirtyRooms];dirtyRooms.clear();for(const code of codes){const r=rooms.get(code);try{if(r)await database.query('INSERT INTO hero_auction_rooms(code,state,updated_at) VALUES($1,$2,NOW()) ON CONFLICT(code) DO UPDATE SET state=EXCLUDED.state,updated_at=NOW()',[code,JSON.stringify(r)]);else await database.query('DELETE FROM hero_auction_rooms WHERE code=$1',[code])}catch(e){dirtyRooms.add(code);console.error('Room persistence error:',e.message)}}}
 
 function queueGoldAward(r){const a=r.goldAward;if(a&&a.accountId&&a.id)pendingGold.set(a.id,a)}
@@ -194,6 +195,41 @@ function error(message,status=400){const e=new Error(message);e.status=status;th
 function authorize(body){const r=rooms.get(String(body.code||'').toUpperCase());if(!r)error('Oda bulunamadı.',404);const seat=r.players.findIndex(p=>p&&p.token===body.token);if(seat<0)error('Oyuncu yetkisi geçersiz.',403);return{r,seat}}
 async function api(url,b){if(url==='/api/auth/check'){const user=readLogin(b.authToken);if(!user)error('Oturumun sona erdi. Yeniden giriş yap.',401);return{user:{name:user.name},gold:await goldBalance(user.sub)}}if(url==='/api/auth/guest'){const name=String(b.name||'Oyuncu').trim().slice(0,24)||'Oyuncu';const user={sub:'guest:'+crypto.randomUUID(),name};return{user:{name},authToken:signLogin(user),gold:await goldBalance(user.sub)}}
 if(!url.startsWith('/api/auth/')){if(!readLogin(b.authToken))error('Odaya erişmek için giriş yapmalısın.',401)}
+if(url==='/api/commander/get'){
+ const user=readLogin(b.authToken);
+ if(!database||!databaseReady)error('Komutan sistemi geçici olarak kullanılamıyor.',503);
+ const found=await database.query('SELECT profile FROM hero_auction_commanders WHERE account_id=$1',[user.sub]);
+ return{profile:found.rows[0]?.profile||null,gold:await goldBalance(user.sub)};
+}
+if(url==='/api/commander/select'){
+ const user=readLogin(b.authToken);
+ if(!database||!databaseReady)error('Komutan sistemi geçici olarak kullanılamıyor.',503);
+ const profile=createCommanderProfile(String(b.commanderId||''));
+ const result=await database.query('INSERT INTO hero_auction_commanders(account_id,profile) VALUES($1,$2::jsonb) ON CONFLICT(account_id) DO NOTHING RETURNING profile',[user.sub,JSON.stringify(profile)]);
+ if(!result.rows.length)error('Komutanın zaten seçilmiş. Değiştirilemez.',409);
+ return{profile:result.rows[0].profile,gold:await goldBalance(user.sub)};
+}
+if(url==='/api/commander/upgrade'){
+ const user=readLogin(b.authToken);
+ if(!database||!databaseReady)error('Komutan sistemi geçici olarak kullanılamıyor.',503);
+ const stat=String(b.stat||'');
+ if(!COMMANDER_STATS.includes(stat))error('Geçersiz geliştirme alanı.',400);
+ const client=await database.connect();
+ try{
+  await client.query('BEGIN');
+  const existing=await client.query('SELECT profile FROM hero_auction_commanders WHERE account_id=$1 FOR UPDATE',[user.sub]);
+  if(!existing.rows.length)error('Önce komutan seçmelisin.',409);
+  const profile=validateCommanderProfile(existing.rows[0].profile);
+  if(profile.levels[stat]>=commanderLevelCap(profile.commanderId,stat))error('Bu dal maksimum seviyede.',409);
+  const cost=commanderUpgradeCost(profile.levels[stat]);
+  const wallet=await client.query('UPDATE hero_auction_wallets SET gold=gold-$2 WHERE account_id=$1 AND gold >= $2 RETURNING gold',[user.sub,cost]);
+  if(!wallet.rows.length)error('Yetersiz altın.',409);
+  const upgraded=previewCommanderUpgrade(profile,stat,cost).profile;
+  await client.query('UPDATE hero_auction_commanders SET profile=$2::jsonb,updated_at=NOW() WHERE account_id=$1',[user.sub,JSON.stringify(upgraded)]);
+  await client.query('COMMIT');
+  return{profile:upgraded,gold:Number(wallet.rows[0].gold),cost};
+ }catch(e){await client.query('ROLLBACK');throw e}finally{client.release()}
+}
 if(url==='/api/profile'){const u=readLogin(b.authToken);return{profile:{...profileOf(u.sub),name:u.name},history:[...matchRecords.values()].filter(m=>m.participants.some(p=>p.id===u.sub)).reverse().slice(0,20)}}
 if(url==='/api/leaderboard'){return{players:[...ratings.entries()].map(([id,p])=>({id,...profileOf(id)})).sort((a,b)=>b.rating-a.rating).slice(0,30)}}
 if(url==='/api/friends'){const u=readLogin(b.authToken);return{friends:[...(friendLinks.get(u.sub)||[])].map(id=>({id,...profileOf(id)}))}} 
