@@ -28,18 +28,47 @@ function arenaMusicBeat(){
  if(step===0||step===8){const chord=[220,261.63,329.63];chord.forEach((n,i)=>arenaTone(n,now+i*.03,.7,'sine',.012))}
  if(step===4||step===12)arenaTone(73.42,now,.13,'sawtooth',.019);
 }
+// The approved 120-second track plays when the MP3 has been uploaded.
+// Until then, retain the existing procedural music as a safe fallback.
+const arenaTrack=new Audio('/audio/hero-auction-senkron-davul-bas-2dk.mp3');
+arenaTrack.loop=true;
+arenaTrack.preload='none';
+arenaTrack.volume=.60;
+let arenaTrackAvailable=null;
+let arenaMusicSession=0;
 async function startArenaMusic(){
- if(!arenaMusicEnabled||arenaMusicInterval!==null)return;
+ if(!arenaMusicEnabled||timer===null)return;
+ const session=++arenaMusicSession;
+ if(arenaTrackAvailable!==false){
+  try{
+   // Detect missing assets without replacing the existing playable soundtrack.
+   if(arenaTrackAvailable===null){
+    const response=await fetch(arenaTrack.src,{method:'HEAD',cache:'no-store'});
+    if(!response.ok||!(response.headers.get('content-type')||'').includes('audio/'))throw Error('MP3 unavailable');
+    arenaTrackAvailable=true;
+   }
+   if(session!==arenaMusicSession||!arenaMusicEnabled||timer===null)return;
+   await arenaTrack.play();
+   return;
+  }catch(e){
+   if(session!==arenaMusicSession)return;
+   arenaTrackAvailable=false;
+   arenaTrack.pause();
+  }
+ }
+ if(!arenaMusicEnabled||arenaMusicInterval!==null||timer===null)return;
  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
  if(!AudioContextClass)return;
  try{
   if(!arenaAudio)arenaAudio=new AudioContextClass();
   if(arenaAudio.state!=='running')await arenaAudio.resume();
-  if(!arenaMusicEnabled||arenaMusicInterval!==null||timer===null)return;
+  if(session!==arenaMusicSession||!arenaMusicEnabled||arenaMusicInterval!==null||timer===null)return;
   arenaMusicStep=0;arenaMusicBeat();arenaMusicInterval=setInterval(arenaMusicBeat,190);
- }catch(e){/* Mobile browser may require a user gesture before audio is allowed. */}
+ }catch(e){/* iOS may require a user gesture to start sound. */}
 }
 function stopArenaMusic(){
+ ++arenaMusicSession;
+ arenaTrack.pause();
  if(arenaMusicInterval!==null){clearInterval(arenaMusicInterval);arenaMusicInterval=null}
  if(arenaAudio&&arenaAudio.state==='running')void arenaAudio.suspend().catch(()=>{});
 }
