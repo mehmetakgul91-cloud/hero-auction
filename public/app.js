@@ -103,9 +103,9 @@ function renderCommanderProfile(){
  const sub=document.createElement('small');sub.textContent='UZMANLIK AĞACI · 4 GELİŞİM DALI';
  const portrait=document.createElement('img');portrait.className='commander-hub-portrait';portrait.src='/images/commander-'+commanderProfile.commanderId+'.svg';portrait.alt=chosen?.name||'Komutan';hub.append(portrait,emblem,heading,sub);root.append(spine,hub);
  for(const c of commanderOptions){
-  const level=commanderProfile.levels[c.id],max=c.id===commanderProfile.commanderId?20:8,cost=200*(level+1);
-  const card=document.createElement('div');card.className='commander-upgrade-card commander-fishbone-branch'+(max===20?' specialty':'');
-  const title=document.createElement('strong');title.textContent=c.icon+' '+c.name+(max===20?' · ANA UZMANLIK':'');
+  const level=commanderProfile.levels[c.id],max=c.id===commanderProfile.commanderId?40:20,cost=200*(level+1);
+  const card=document.createElement('div');card.className='commander-upgrade-card commander-fishbone-branch'+(max===40?' specialty':'');
+  const title=document.createElement('strong');title.textContent=c.icon+' '+c.name+(max===40?' · ANA UZMANLIK':'');
   const details=document.createElement('span');details.textContent='Seviye '+level+'/'+max+' · Bonus %'+(level*.5).toLocaleString('tr-TR');
   const bar=document.createElement('div');bar.className='commander-upgrade-bar';
   const fill=document.createElement('span');fill.style.width=(100*level/max)+'%';bar.append(fill);
