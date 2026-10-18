@@ -323,7 +323,7 @@ function showBattleSummary(){
  panel.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function step(){
- if(cursor>=events.length){stop();return}
+ if(cursor>=events.length){stop();if(events.length)showBattleSummary();return}
  // The engine logs splash hits before the primary hit. Show all hits from one cast
  // in the same animation frame, without changing any damage or the server result.
  const first=events[cursor];
@@ -354,7 +354,7 @@ function step(){
  for(const e of batch){if(e!==primary)animateMove(e)}
  window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position})));
  window.dispatchEvent(new CustomEvent('heroarena:move',{detail:{event:primary,events:batch,teams:window.heroArenaTeams}}));
- if(cursor>=events.length){stop();showBattleSummary()}
+ if(cursor>=events.length){stop();$('play').textContent='✓ SAVAŞ TAMAMLANDI';showBattleSummary()}
 }
 // Advance the replay by elapsed wall-clock time, not by the number of browser timer ticks.
 // Mobile browsers throttle or suspend intervals when the tab is in the background.
@@ -374,6 +374,7 @@ function advanceReplay(){
   steps++;
  }
  document.body.classList.remove('arena-catching-up');
+ if(cursor>=events.length&&events.length){stop();$('play').textContent='✓ SAVAŞ TAMAMLANDI';showBattleSummary()}
 }
 function startReplay(){
  if(timer!==null)return;
