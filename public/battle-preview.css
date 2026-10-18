@@ -197,3 +197,10 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 .formation-power-summary .negative{color:#ff9a9a}
 .formation-power-explanation{font-size:11px;color:#b9cce3;line-height:1.5;margin:4px 0 12px}
 @media(min-width:700px){.formation-power-summary{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+.arena-commander-matchup[hidden]{display:none!important}
+.arena-commander-matchup{display:grid;grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr);align-items:center;gap:8px;margin:10px 0;padding:12px;border:1px solid #cfad62;border-radius:14px;background:linear-gradient(115deg,#142b4a,#1d1c38,#402032);box-shadow:0 0 16px #d4af5a33;color:#f7f5ed;text-align:center}
+.arena-commander-matchup>div{display:flex;flex-direction:column;gap:5px;min-width:0;overflow-wrap:anywhere}
+.arena-commander-matchup strong{font-size:clamp(11px,2.8vw,15px)}
+.arena-commander-matchup small{font-size:clamp(9px,2.1vw,12px);line-height:1.4;color:#c3d7ed}
+.arena-commander-versus{font-weight:1000;color:#f2d17e;font-size:15px;text-shadow:0 0 8px #ffd37599}
