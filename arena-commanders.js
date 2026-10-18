@@ -1,16 +1,16 @@
-// Commander progression domain model. Server must authorize wallet deductions atomically.
-export const COMMANDER_STATS=Object.freeze(['attack','defense','maxHp','speed']);
+// Commander progression prototype; real gold spending must be validated server-side.
+export const COMMANDER_STATS=Object.freeze(['attack','defense','magic','support']);
 export const COMMANDER_MAX_LEVEL=10;
 export const COMMANDERS=Object.freeze([
- {id:'guardian',name:'Muhafız Komutan',icon:'🛡️',description:'Savunmada uzman',specialty:'defense'},
- {id:'strategist',name:'Stratejist Komutan',icon:'🎯',description:'Saldırıda uzman',specialty:'attack'},
- {id:'medic',name:'Şifacı Komutan',icon:'💚',description:'Dayanıklılıkta uzman',specialty:'maxHp'},
- {id:'scout',name:'Öncü Komutan',icon:'⚡',description:'Hızda uzman',specialty:'speed'}
+ {id:'attack',name:'Saldırı Komutanı',icon:'⚔️',description:'Tüm kahramanların saldırısını güçlendirir',specialty:'attack'},
+ {id:'defense',name:'Savunma Komutanı',icon:'🛡️',description:'Tüm kahramanların savunmasını güçlendirir',specialty:'defense'},
+ {id:'magic',name:'Büyücü Komutanı',icon:'🔮',description:'Enerji kahramanlarının saldırısını güçlendirir',specialty:'magic'},
+ {id:'support',name:'Destek Komutanı',icon:'💚',description:'Tüm kahramanların maksimum canını güçlendirir',specialty:'support'}
 ]);
 export function resolveCommander(id){return COMMANDERS.find(c=>c.id===id)||null;}
 export function createCommanderProfile(commanderId){
  if(!resolveCommander(commanderId))throw Error('Geçersiz komutan');
- return {commanderId,levels:{attack:0,defense:0,maxHp:0,speed:0}};
+ return {commanderId,levels:{attack:0,defense:0,magic:0,support:0}};
 }
 export function validateCommanderProfile(profile){
  if(!profile||!resolveCommander(profile.commanderId))throw Error('Geçersiz komutan profili');
@@ -32,20 +32,20 @@ export function previewCommanderUpgrade(profile,stat,gold){
 export function commanderStatBonus(profile,stat){
  validateCommanderProfile(profile);
  if(!COMMANDER_STATS.includes(stat))throw Error('Geçersiz geliştirme alanı');
- const commander=resolveCommander(profile.commanderId);
- return (commander.specialty===stat?.05:0)+profile.levels[stat]*.01;
+ return (resolveCommander(profile.commanderId).specialty===stat?.05:0)+profile.levels[stat]*.01;
 }
 export function applyCommanderSupport(team,commanderOrProfile){
+ if(!commanderOrProfile)return team;
  const profile=typeof commanderOrProfile==='string'?createCommanderProfile(commanderOrProfile):commanderOrProfile;
- if(!profile)return team;
  validateCommanderProfile(profile);
  for(const hero of team){
-  for(const stat of COMMANDER_STATS){
-   const bonus=commanderStatBonus(profile,stat);
-   if(!bonus)continue;
-   hero[stat]=Math.max(1,Math.round(hero[stat]*(1+bonus)));
-   if(stat==='maxHp')hero.hp=hero.maxHp;
-  }
+  const attack=commanderStatBonus(profile,'attack');
+  const defense=commanderStatBonus(profile,'defense');
+  const magic=hero.role==='energy'?commanderStatBonus(profile,'magic'):0;
+  const support=commanderStatBonus(profile,'support');
+  if(attack||magic)hero.attack=Math.max(1,Math.round(hero.attack*(1+attack+magic)));
+  if(defense)hero.defense=Math.max(1,Math.round(hero.defense*(1+defense)));
+  if(support){hero.maxHp=Math.max(1,Math.round(hero.maxHp*(1+support)));hero.hp=hero.maxHp}
  }
  return team;
 }
