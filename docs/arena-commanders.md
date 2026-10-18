@@ -45,3 +45,11 @@ Bu çalışma yalnızca `feature/arena-commanders` dalındadır. Ana dal ve canl
 - Destek dalı yalnız destek kahramanların maksimum canını güçlendirir.
 - Bonuslar tüm takıma uygulanmaz; komutanın kimliği hangi dalın %10'a çıkabileceğini belirler.
 - Önceki +%5 ücretsiz başlangıç bonusu kaldırıldı.
+
+## Güncel yükseltme ekonomisi (18 Ekim 2026)
+- Her geliştirme seviyesi yalnız ilgili sınıfa +%0,5 bonus verir.
+- Ana uzmanlık 20 seviye / en fazla %10; diğer üç dal ayrı ayrı 8 seviye / en fazla %4.
+- Altın maliyeti her dal için 200 × (mevcut seviye + 1): 200, 400, 600…
+- Gelecekteki elmas maliyeti her dal için 10 × (mevcut seviye + 1): 10, 20, 30…
+- Elmasla yükseltme henüz aktif değildir; yalnız fiyat hesabı hazırdır.
+- Eski 100 altın ve +%1 seviye sistemi geçersizdir. Yukarıdaki kurallar önceki prototip notlarının yerine geçer.
