@@ -161,3 +161,10 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 
 .arena-music-toggle{background:#164f76;border:1px solid #42b9e6;border-radius:9px;color:#e8faff;padding:8px 12px;font-size:12px;min-height:36px;white-space:nowrap}
 .arena-music-toggle[aria-pressed=false]{background:#283247;border-color:#64748b;color:#b8c5d7}
+
+/* iPhone Safari: allow native left-right swipes on the hero roster. */
+@media(max-width:700px){
+ #role-pickers.role-pickers{display:flex;flex-wrap:nowrap;overflow-x:scroll;overflow-y:hidden;width:100%;max-width:100%;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;scroll-snap-type:x proximity;overscroll-behavior-x:contain;}
+ #role-pickers .formation-card{flex:0 0 min(43vw,165px);min-width:0;touch-action:pan-x pan-y;}
+ #role-pickers .formation-select{touch-action:manipulation;}
+}
