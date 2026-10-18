@@ -31,7 +31,7 @@ function renderCommanderStrip(){
  const commander=commanderChoices.find(c=>c.id===selectedCommanderId);
  $('arena-commander-a').textContent=commander.icon+' SENİN KOMUTANIN · '+commander.name;
  $('arena-commander-b').textContent='♛ RAKİP KOMUTANI · Henüz seçilmedi';
- root.hidden=false;
+ root.hidden=!arenaMode;
 }
 const roleNames={tank:'TANK',fighter:'SAVAŞÇI',energy:'ENERJİ / MESAFELİ',assassin:'SUİKASTÇI',support:'DESTEK'};
 let states=[],events=[],cursor=0,timer=null;
