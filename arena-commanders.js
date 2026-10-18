@@ -20,7 +20,7 @@ export function createCommanderProfile(commanderId){
 }
 export function validateCommanderProfile(profile){
  if(!profile||!resolveCommander(profile.commanderId))throw Error('Geçersiz komutan profili');
- if(!profile.levels||COMMANDER_STATS.some(stat=>!Number.isInteger(profile.levels[stat])||profile.levels[stat]<0||profile.levels[stat]>commanderLevelCap(profile.commanderId,stat)))throw Error('Geçersiz komutan seviyesi');
+ if(!profile.levels||COMMANDER_STATS.some(stat=>!Number.isInteger(profile.levels[stat])||profile.levels[stat]<0||profile.levels[stat]>COMMANDER_SPECIALTY_MAX_LEVEL))throw Error('Geçersiz komutan seviyesi');
  return profile;
 }
 export function commanderUpgradeCost(currentLevel){
@@ -44,7 +44,7 @@ export function previewCommanderUpgrade(profile,stat,gold){
 export function commanderStatBonus(profile,stat){
  validateCommanderProfile(profile);
  if(!COMMANDER_STATS.includes(stat))throw Error('Geçersiz geliştirme alanı');
- return profile.levels[stat]*.005;
+ return Math.min(profile.levels[stat],commanderLevelCap(profile.commanderId,stat))*.005;
 }
 export function applyCommanderSupport(team,commanderOrProfile){
  if(!commanderOrProfile)return team;
