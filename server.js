@@ -407,12 +407,27 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
  sync.ready[seat]={positions:body.positions,lanes:body.lanes,roles:body.roles};
  if(sync.ready.every(Boolean)){
  const ordered=teams.map((team,i)=>sync.ready[i].positions.map((index,slot)=>({...team[index],lane:sync.ready[i].lanes[slot],role:sync.ready[i].roles[slot]})));
- const result=simulateRosterBattle(ordered[0],ordered[1],{seed:'auction-battle-'+room.code+'-'+matchKey,remainingCredits:[state.remainingCreditsA,state.remainingCreditsB]});
- sync.result={winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log};
+ // Read both commanders from authenticated room account IDs, never from client payloads.
+ // Snapshot profiles when both formations are ready so subsequent upgrades cannot alter this battle.
+ const commanderProfiles=[null,null];
+ if(database&&databaseReady){
+  const accountIds=room.players.map(player=>player?.accountId||null);
+  const ids=accountIds.filter(Boolean);
+  if(ids.length){
+   const records=await database.query('SELECT account_id,profile FROM hero_auction_commanders WHERE account_id=ANY($1::text[])',[ids]);
+   const byId=new Map(records.rows.map(row=>[row.account_id,row.profile]));
+   for(let i=0;i<2;i++){
+    const profile=byId.get(accountIds[i]);
+    if(profile)commanderProfiles[i]=validateCommanderProfile(profile);
+   }
+  }
+ }
+ const result=simulateRosterBattle(ordered[0],ordered[1],{seed:'auction-battle-'+room.code+'-'+matchKey,remainingCredits:[state.remainingCreditsA,state.remainingCreditsB],commanders:commanderProfiles});
+ sync.result={winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log,commanders:commanderProfiles.map(profile=>profile?{commanderId:profile.commanderId,levels:{...profile.levels}}:null)};
  if(room.battleSettlementPending&&!room.matchSettled){settleFinishedMatch(room,result.winner);room.battleSettlementPending=false;}
  }markRoom(room);
  }
- return send(200,{ready:sync.ready.map(Boolean),started:Boolean(sync.result),result:sync.result?{...sync.result,winner:sync.result.winner===null?null:sync.result.winner===seat?0:1,teams:seat===0?sync.result.teams:[...sync.result.teams].reverse(),log:seat===0?sync.result.log:sync.result.log.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side}))}:null});
+ return send(200,{ready:sync.ready.map(Boolean),started:Boolean(sync.result),result:sync.result?{...sync.result,winner:sync.result.winner===null?null:sync.result.winner===seat?0:1,teams:seat===0?sync.result.teams:[...sync.result.teams].reverse(),commanders:seat===0?sync.result.commanders:[...sync.result.commanders].reverse(),log:seat===0?sync.result.log:sync.result.log.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side}))}:null});
  }catch(e){return send(422,{error:e.message})}
 }
 if(req.method==='GET'&&url.pathname==='/api/battle-auction-team'){
