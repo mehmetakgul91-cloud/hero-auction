@@ -429,3 +429,13 @@ header{gap:14px;flex-wrap:wrap}
 .account-bar .account-identity:not([hidden]):after{content:' ▾';color:#8fe5ff}
 .account-bar #google-logout:not([hidden]){border-color:#c58d9c;color:#ffe2e8}
 .account-bar [hidden]{display:none!important}
+
+
+/* Distinct auction actions: bright cyan offer vs warm red pass. */
+#bidbutton{background:linear-gradient(135deg,#00d4ef,#2371f5)!important;color:#061629!important;border:1px solid #78f5ff!important;box-shadow:0 5px 22px rgba(0,191,255,.27);font-weight:850}
+#passbutton{background:linear-gradient(135deg,#8e2945,#e35b56)!important;color:#fff!important;border:1px solid #ff9b9b!important;box-shadow:0 5px 18px rgba(225,63,91,.20);font-weight:850}
+#bidbutton:active,#passbutton:active{transform:scale(.97)}
+.auction-card-flight{overflow:hidden;border-radius:16px;box-shadow:0 0 24px rgba(77,221,255,.55)}
+.side-hero.auction-card-arrived{animation:auctionCardArrival .8s ease-out}
+@keyframes auctionCardArrival{0%{transform:scale(.88);box-shadow:0 0 0 rgba(59,241,206,0)}45%{transform:scale(1.045);box-shadow:0 0 22px rgba(59,241,206,.75)}100%{transform:scale(1);box-shadow:0 0 0 rgba(59,241,206,0)}}
+@media(prefers-reduced-motion:reduce){.side-hero.auction-card-arrived{animation:none}}
