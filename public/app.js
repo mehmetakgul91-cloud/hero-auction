@@ -2,6 +2,30 @@ const $=id=>document.getElementById(id);
 let session=null,room=null,stream=null;
 const world='mixed';
 let lastCardKey=null;
+let auctionSfxContext=null;
+function playAuctionActionSound(action){
+ try{
+  const Ctx=window.AudioContext||window.webkitAudioContext;
+  if(!Ctx)return;
+  if(!auctionSfxContext)auctionSfxContext=new Ctx();
+  const ctx=auctionSfxContext;
+  if(ctx.state==='suspended')void ctx.resume().catch(()=>{});
+  const now=ctx.currentTime+.012;
+  const notes=action==='bid'?[[520,720,.13,'sine'],[780,1080,.16,'triangle']]:[[310,230,.16,'triangle'],[210,155,.21,'sine']];
+  for(let i=0;i<notes.length;i++){
+   const [start,end,duration,wave]=notes[i],at=now+i*.085;
+   const osc=ctx.createOscillator(),gain=ctx.createGain();
+   osc.type=wave;osc.frequency.setValueAtTime(start,at);
+   osc.frequency.exponentialRampToValueAtTime(end,at+duration);
+   gain.gain.setValueAtTime(.0001,at);
+   gain.gain.exponentialRampToValueAtTime(.055,at+.012);
+   gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
+   osc.connect(gain);gain.connect(ctx.destination);
+   osc.start(at);osc.stop(at+duration+.02);
+  }
+ }catch(e){/* Sound must never interrupt auction actions. */}
+}
+
 const googleClientId='742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
 let login=null;try{login=JSON.parse(localStorage.getItem('hero-auction-login')||'null')}catch{}
 const signedIn=()=>!!login?.authToken;
@@ -135,7 +159,7 @@ const card=r.card;const canBid=r.turn===r.me;const min=r.topBid+1;const max=r.pl
 const timer=`<p class="status" id="turntimer">⏱ ${Math.max(0,Math.ceil((r.deadline-Date.now())/1000))} saniye</p>`;const status=r.topBid?`En yüksek teklif: <b>${r.topBid} kredi</b> · ${esc(r.players[r.topSeat].name)}`:'Henüz teklif yok';
 stage.innerHTML=`<div class="auction-main"><div class="auction-hero"><div class="eyebrow">KART ${r.round+1} / 10</div><div class="card-art rarity-frame rarity-frame-${esc(card.rarity||'common')} ${isNewCard?'card-reveal':''}">${art}</div><div class="card-name">${esc(card.name)}</div><span class="tag">${worldNames[card.universe]} · 🔒 GÜÇ GİZLİ</span><span class="rarity rarity-${esc(card.rarity||'common')} rarity-feature">✦ ${rarityLabel(card.rarity)}</span><span class="tag">${esc(specialtyLabel(card))} · ${esc(laneLabel(card))}</span><p class="status hero-description" id="hero-description">${esc(card.description||"Karakter bilgisi yükleniyor…")}</p></div><div class="auction-action"><p class="status">${status}</p>${timer}${canBid&&max>=min?`<div class="bid-stepper"><button id="minusbid" type="button" aria-label="Teklifi azalt">−</button><div class="big-bid" id="bidview">${min} KREDİ</div><button id="plusbid" type="button" aria-label="Teklifi artır">+</button></div><input id="bidrange" class="range" type="range" min="${min}" max="${max}" value="${min}" step="1"><div class="controls"><button class="primary" id="bidbutton">${r.topBid?'TEKLİFİ ARTIR':'AÇILIŞ TEKLİFİ VER'} →</button><button class="danger" id="passbutton">PAS</button></div>`:canBid?'<p class="status">Bütçen artırmaya yetmiyor. İhale otomatik kapanıyor.</p>':`<p class="status">⏳ Teklif sırası: <b>${esc(r.players[r.turn].name)}</b><br>Rakibin kararını bekle.</p>`}</div></div>`;
 loadHeroInfo(card);
-if(canBid&&max>=min){$('bidrange').oninput=e=>$('bidview').textContent=e.target.value+' KREDİ';$('bidbutton').onclick=()=>act('/api/bid',{amount:Number($('bidrange').value)});$('minusbid').onclick=()=>{const el=$('bidrange');el.value=Math.max(min,Number(el.value)-1);el.oninput({target:el})};$('plusbid').onclick=()=>{const el=$('bidrange');el.value=Math.min(max,Number(el.value)+1);el.oninput({target:el})};$('passbutton').onclick=()=>act('/api/pass',{})}
+if(canBid&&max>=min){$('bidrange').oninput=e=>$('bidview').textContent=e.target.value+' KREDİ';$('bidbutton').onclick=()=>{playAuctionActionSound('bid');void act('/api/bid',{amount:Number($('bidrange').value)})};$('minusbid').onclick=()=>{const el=$('bidrange');el.value=Math.max(min,Number(el.value)-1);el.oninput({target:el})};$('plusbid').onclick=()=>{const el=$('bidrange');el.value=Math.min(max,Number(el.value)+1);el.oninput({target:el})};$('passbutton').onclick=()=>{playAuctionActionSound('pass');void act('/api/pass',{})}}
 }
 function renderChat(r){const panel=$('chat-panel');if(!panel)return;panel.hidden=r.mode==='bot';if(panel.hidden)return;const list=$('chat-messages');const oldCount=Number(list.dataset.count||0);const messages=r.chat||[];if(oldCount!==messages.length||list.dataset.room!==r.code){const nearBottom=list.scrollHeight-list.scrollTop-list.clientHeight<80;list.innerHTML=messages.map(m=>`<div class="chat-line ${m.seat===r.me?'chat-mine':''}"><span class="chat-author">${esc(m.name)} · ${new Date(m.time).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</span><span class="chat-text">${esc(m.message)}</span></div>`).join('')||'<p class="status">Henüz mesaj yok. Rakibine merhaba de!</p>';list.dataset.count=String(messages.length);list.dataset.room=r.code;if(nearBottom||!oldCount)list.scrollTop=list.scrollHeight;}}
 let chatSending=false;
