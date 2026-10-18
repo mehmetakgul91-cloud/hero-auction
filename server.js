@@ -209,6 +209,26 @@ if(url==='/api/commander/select'){
  if(!result.rows.length)error('Komutanın zaten seçilmiş. Değiştirilemez.',409);
  return{profile:result.rows[0].profile,gold:await goldBalance(user.sub)};
 }
+if(url==='/api/commander/change'){
+ const user=readLogin(b.authToken);
+ if(!database||!databaseReady)error('Komutan sistemi geçici olarak kullanılamıyor.',503);
+ const newCommanderId=String(b.commanderId||'');
+ if(!resolveCommander(newCommanderId))error('Geçersiz komutan.',400);
+ const client=await database.connect();
+ try{
+  await client.query('BEGIN');
+  const existing=await client.query('SELECT profile FROM hero_auction_commanders WHERE account_id=$1 FOR UPDATE',[user.sub]);
+  if(!existing.rows.length)error('Önce bir komutan seçmelisin.',409);
+  const profile=validateCommanderProfile(existing.rows[0].profile);
+  if(profile.commanderId===newCommanderId)error('Bu komutan zaten seçili.',409);
+  const wallet=await client.query('UPDATE hero_auction_wallets SET gold=gold-5000 WHERE account_id=$1 AND gold>=5000 RETURNING gold',[user.sub]);
+  if(!wallet.rows.length)error('Komutan değiştirmek için 5.000 altın gerekiyor.',409);
+  const changed={commanderId:newCommanderId,levels:{...profile.levels}};
+  await client.query('UPDATE hero_auction_commanders SET profile=$2::jsonb,updated_at=NOW() WHERE account_id=$1',[user.sub,JSON.stringify(changed)]);
+  await client.query('COMMIT');
+  return{profile:changed,gold:Number(wallet.rows[0].gold),cost:5000};
+ }catch(e){await client.query('ROLLBACK');throw e}finally{client.release()}
+}
 if(url==='/api/commander/upgrade'){
  const user=readLogin(b.authToken);
  if(!database||!databaseReady)error('Komutan sistemi geçici olarak kullanılamıyor.',503);
