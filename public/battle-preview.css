@@ -168,3 +168,24 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
  #role-pickers .formation-card{flex:0 0 min(43vw,165px);min-width:0;touch-action:pan-x pan-y;}
  #role-pickers .formation-select{touch-action:manipulation;}
 }
+
+/* Cinematic, lightweight victory reveal — CSS only, no generated artwork. */
+.arena-victory-reveal[hidden]{display:none!important}
+.arena-victory-reveal{position:fixed;inset:0;z-index:12000;display:grid;place-items:center;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#17395c 0%,#071321 66%,#030812 100%);isolation:isolate;text-align:center;color:#fff}
+.arena-victory-reveal[data-winner="red"]{background:radial-gradient(ellipse at 50% 45%,#592037 0%,#1d0b1a 66%,#09050c 100%)}
+.arena-victory-reveal[data-winner="draw"]{background:radial-gradient(ellipse at 50% 45%,#39335c 0%,#111324 66%,#080914 100%)}
+.arena-victory-glow{position:absolute;width:min(110vw,780px);aspect-ratio:1;border:2px solid #6deaff44;border-radius:50%;box-shadow:0 0 100px #32cfff44,inset 0 0 110px #32cfff22;animation:victory-halo 3.4s ease-out both;pointer-events:none}
+[data-winner="red"] .arena-victory-glow{border-color:#ff5f8a55;box-shadow:0 0 100px #ff416a55,inset 0 0 110px #ff416a22}
+.arena-victory-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:9px;width:100%;padding:24px;animation:victory-arrive .65s cubic-bezier(.2,.8,.2,1) both}
+.arena-victory-eyebrow{font-size:clamp(12px,3vw,17px);font-weight:900;letter-spacing:.28em;color:#b6d9ef}
+.arena-victory-emblem{font-size:clamp(90px,23vw,155px);line-height:1;color:#ffe69b;text-shadow:0 0 35px #ffcc56,0 0 85px #fbbf2455;animation:victory-pulse 1.2s ease-in-out infinite alternate}
+.arena-victory-name{font-size:clamp(35px,10vw,86px);font-weight:1000;line-height:1.08;letter-spacing:.055em;color:#ecfbff;text-shadow:0 0 25px #28c9ff,0 5px 0 #073957}
+[data-winner="red"] .arena-victory-name{text-shadow:0 0 28px #ff436e,0 5px 0 #66142c}
+.arena-victory-line{font-size:clamp(24px,7vw,54px);font-weight:1000;letter-spacing:.25em;color:#ffe9a6;text-shadow:0 0 26px #ffbf47}
+[data-winner="draw"] .arena-victory-line{display:none}
+#arena-victory-continue{margin-top:23px;min-height:48px;padding:12px 25px;border:1px solid #8adfff;border-radius:13px;background:#123e63;color:#fff;font-weight:900;font-size:15px;cursor:pointer;touch-action:manipulation;box-shadow:0 5px 24px #0008}
+#arena-victory-continue:focus-visible{outline:3px solid #fff;outline-offset:3px}
+@keyframes victory-arrive{from{opacity:0;transform:translateY(45px) scale(.83)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes victory-halo{from{opacity:0;transform:scale(.35) rotate(-15deg)}to{opacity:1;transform:scale(1.25) rotate(10deg)}}
+@keyframes victory-pulse{from{transform:scale(.95);filter:brightness(.95)}to{transform:scale(1.08);filter:brightness(1.2)}}
+@media(prefers-reduced-motion:reduce){.arena-victory-reveal *{animation:none!important}}
