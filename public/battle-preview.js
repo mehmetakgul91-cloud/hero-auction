@@ -92,7 +92,7 @@ async function loadHeroArt(i){if(heroArtCache.has(i))return heroArtCache.get(i);
 function heroPortrait(i,container){const img=document.createElement('img');img.className='slot-portrait';img.alt=demoA[i][0];img.loading='lazy';const fallback=document.createElement('span');fallback.className='portrait-fallback';fallback.textContent=demoA[i][0].slice(0,1);container.append(fallback);void loadHeroArt(i).then(url=>{if(!url||!container.isConnected)return;img.src=url;img.onload=()=>{if(container.isConnected){fallback.remove();container.append(img)}};img.onerror=()=>img.remove()})}
 
 const query=new URLSearchParams(location.search);
-const arenaMode=query.get('room')==='arena';
+let arenaMode=query.get('room')==='arena';
 const auctionCode=query.get('auctionCode');
 const auctionToken=query.get('auctionToken');
 const auctionMode=Boolean(auctionCode&&auctionToken);
@@ -138,7 +138,36 @@ function attachDrag(card,i){card.classList.add('draggable-hero');card.draggable=
 function clearDrag(){clearNativeDragAvatar();clearHover();dragOrigin=null;if(dragGhost){dragGhost.remove();dragGhost=null}document.body.classList.remove('dragging-formation');document.querySelectorAll('.board-slot').forEach(x=>x.classList.remove('drop-target'))}
 document.addEventListener('dragover',e=>{const slot=e.target.closest('.board-slot');if(slot){e.preventDefault();if(dragHero!==null)previewHover(dragHero,Number(slot.dataset.slot))}else clearHover()});document.addEventListener('drop',e=>{const slot=e.target.closest('.board-slot');if(!slot||prepDone)return;e.preventDefault();const i=Number(e.dataTransfer.getData('text/plain'));if(Number.isInteger(i)&&i>=0&&i<5)placeHero(i,Number(slot.dataset.slot))});
 let prepTimer=null,prepDeadline=0,prepDone=false,auctionLoaded=false;
-function lockFormation(){if(prepDone||auctionMode&&!auctionLoaded)return;clearHover();completeSlots();if(!arenaMode){try{sessionStorage.setItem('hero-auction-arena-music','1')}catch{};sessionStorage.setItem('hero-auction-formation',JSON.stringify(positions));sessionStorage.setItem('hero-auction-lanes',JSON.stringify(lanes));if(multiplayerCode&&multiplayerToken){void fetch('/api/battle-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ready',code:multiplayerCode,token:multiplayerToken,positions,lanes,roles:positions.map((_,slot)=>roleAt(slot))})}).then(async r=>{const v=await r.json();if(!r.ok)throw Error(v.error);location.href='/battle-preview.html?room=arena&code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken)}).catch(e=>{$('prep-note').textContent='⚠ '+e.message});return}if(auctionMode){void fetch('/api/battle-auction-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,positions,lanes,roles:positions.map((_,slot)=>roleAt(slot))})}).then(async response=>{const data=await response.json();if(!response.ok)throw Error(data.error||'Diziliş gönderilemedi');location.href='/battle-preview.html?room=arena&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken)}).catch(e=>{$('prep-note').textContent='⚠ '+e.message});return}location.href='/battle-preview.html?room=arena'+(auctionCode&&auctionToken?'&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken):'');return}prepDone=true;document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;$('arena-3d').hidden=true;if(prepTimer!==null){clearInterval(prepTimer);prepTimer=null}document.querySelectorAll('.formation-choices button,.board-slot,.formation-select').forEach(b=>b.disabled=true);$('apply-roles').disabled=true;$('apply-roles').textContent='✓ HAZIR';$('ready-a').textContent='🔵 Sen: Hazır';$('prep-note').textContent='İki taraf hazır. Savaş başlıyor!';stop();$('events').replaceChildren();$('play').textContent='▶ SAVAŞI OYNAT';void build().then(()=>{if(events.length)$('play').click()})}
+function enterArenaWithoutReload(url){
+ // Preserve the user-unlocked HTMLAudioElement across the formation-to-arena transition.
+ history.replaceState(null,'',url);
+ arenaMode=true;
+ document.body.classList.add('arena-room');
+ document.querySelector('.formation').hidden=true;
+ $('battle-lobby').hidden=true;
+ $('battle-arena').hidden=false;
+ $('arena-3d').hidden=true;
+ $('play').textContent='▶ SAVAŞI BAŞLAT';
+ $('play').disabled=true;
+ if(prepTimer!==null){clearInterval(prepTimer);prepTimer=null}
+ $('message').textContent='Rakibin hazırlanması bekleniyor…';
+ if(auctionMode&&auctionCode&&auctionToken){
+  const check=async()=>{
+   try{
+    const response=await fetch('/api/battle-auction-preview?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});
+    const data=await response.json();
+    if(!response.ok)throw Error(data.error||'Savaş durumu alınamadı');
+    if(data.started){
+     if(battlePoll!==null){clearInterval(battlePoll);battlePoll=null}
+     await build(data.result);
+     if(events.length)startReplay();
+    }else $('message').textContent='Rakibin dizilişi bekleniyor… '+data.ready.filter(Boolean).length+'/2 hazır';
+   }catch(e){$('message').textContent='⚠ '+e.message}
+  };
+  void check();if(battlePoll===null)battlePoll=setInterval(check,1800);
+ }else if(!multiplayerCode){void build().then(()=>{if(events.length)startReplay()})}
+}
+function lockFormation(){if(prepDone||auctionMode&&!auctionLoaded)return;if(!arenaMode&&arenaMusicEnabled){void arenaTrack.play().catch(()=>startProceduralArenaMusic())}clearHover();completeSlots();if(!arenaMode){try{sessionStorage.setItem('hero-auction-arena-music','1')}catch{};sessionStorage.setItem('hero-auction-formation',JSON.stringify(positions));sessionStorage.setItem('hero-auction-lanes',JSON.stringify(lanes));if(multiplayerCode&&multiplayerToken){void fetch('/api/battle-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ready',code:multiplayerCode,token:multiplayerToken,positions,lanes,roles:positions.map((_,slot)=>roleAt(slot))})}).then(async r=>{const v=await r.json();if(!r.ok)throw Error(v.error);enterArenaWithoutReload('/battle-preview.html?room=arena&code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken))}).catch(e=>{$('prep-note').textContent='⚠ '+e.message});return}if(auctionMode){void fetch('/api/battle-auction-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,positions,lanes,roles:positions.map((_,slot)=>roleAt(slot))})}).then(async response=>{const data=await response.json();if(!response.ok)throw Error(data.error||'Diziliş gönderilemedi');enterArenaWithoutReload('/battle-preview.html?room=arena&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken))}).catch(e=>{$('prep-note').textContent='⚠ '+e.message});return}enterArenaWithoutReload('/battle-preview.html?room=arena'+(auctionCode&&auctionToken?'&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken):''));return}prepDone=true;document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;$('arena-3d').hidden=true;if(prepTimer!==null){clearInterval(prepTimer);prepTimer=null}document.querySelectorAll('.formation-choices button,.board-slot,.formation-select').forEach(b=>b.disabled=true);$('apply-roles').disabled=true;$('apply-roles').textContent='✓ HAZIR';$('ready-a').textContent='🔵 Sen: Hazır';$('prep-note').textContent='İki taraf hazır. Savaş başlıyor!';stop();$('events').replaceChildren();$('play').textContent='▶ SAVAŞI OYNAT';void build().then(()=>{if(events.length)$('play').click()})}
 function startPreparation(){if(prepTimer!==null)clearInterval(prepTimer);prepDone=false;prepDeadline=Date.now()+60000;const tick=()=>{const remaining=Math.max(0,Math.ceil((prepDeadline-Date.now())/1000));$('prep-clock').textContent=String(Math.floor(remaining/60)).padStart(2,'0')+':'+String(remaining%60).padStart(2,'0');if(!remaining)lockFormation()};tick();prepTimer=setInterval(tick,200)}
 const roleIcons={tank:'🛡️',fighter:'⚔️',energy:'⚡',assassin:'🗡️',support:'💚'};
 const modifiers={tank:[-12,22,30,-8],fighter:[6,7,8,0],energy:[15,-10,-12,2],assassin:[17,-14,-15,17],support:[-7,0,4,9]};
