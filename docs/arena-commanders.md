@@ -7,7 +7,8 @@ Bu çalışma yalnızca `feature/arena-commanders` dalındadır. Ana dal ve canl
 - Komutan, beş kahramanlık takımın **dışında** yer alır; 5'e 5 kahraman sınırı değişmez.
 - Kahramanlar ön veya arka safa serbestçe yerleştirilmeye devam eder.
 - Komutan, savaş sahnesinde takımının yanında görünür. Mevcut kahraman çizimleri ve oyun hesaplamaları ilk aşamada korunur.
-- Komutanların yetenekleri, güç bonusları, seçim/kazanım yöntemi ve savaşta hedef alınıp alınamayacağı henüz kararlaştırılmadı; onaylanmadan oyun dengesine etkili değişiklik yapılmaz.
+- Destek komutanı modeli seçildi: komutanlar hedef alınmaz ve saldırmaz. Ayrı dal prototipinde Muhafız (+%5 savunma), Stratejist (+%5 saldırı), Şifacı (+%5 maksimum can), Öncü (+%5 hız) vardır. Bu oranlar henüz oyun dengesi için kesinleştirilmemiştir.
+- Komutan seçimi, oyuncu hesabında saklama ve gerçek maç sunucusuna entegrasyon henüz yapılmadı.
 
 ## Aşamalı geliştirme
 1. Komutan veri modeli ve her oyuncuya ait komutan kimliği.
@@ -21,3 +22,9 @@ Bu çalışma yalnızca `feature/arena-commanders` dalındadır. Ana dal ve canl
 - Komutan alanı mobilde savaş kontrollerini veya can barlarını kapatmaz.
 - Komutan yetenekleri devre dışıyken mevcut savaşın sonucu aynı tohum ve takımlarla değişmez.
 - Canlı oyuna otomatik dağıtım yapılmaz.
+
+## İlk prototipin durumu
+- `arena-commanders.js`: destek komutanı tanımları ve stat bonusu.
+- `battle-engine.js`: isteğe bağlı `commanders: [idA,idB]` parametresi; varsayılan `[null,null]`.
+- `tests/arena-commanders.test.js`: komutansız geriye uyumluluk ve bonus testleri (henüz CI/Node ile çalıştırılmadı).
+- Sonraki iş: oyuncu bazlı komutan seçimi, hazırlık/arena görselleri, gerçek maç veri akışı ve simülasyon testleri.
