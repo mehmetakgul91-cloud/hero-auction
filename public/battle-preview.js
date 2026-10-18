@@ -320,6 +320,22 @@ function animateMove(e){
  if(!splash)setTimeout(()=>{actor.classList.remove('attack-melee','attack-energy','special-cast');effectTarget.classList.remove('healing-aura','shield-aura')},700);
 }
 
+const commanderDisplay={attack:['⚔️','Saldırı'],defense:['🛡️','Savunma'],magic:['🔮','Büyücü'],support:['💚','Destek']};
+function renderArenaCommanderMatchup(profiles){
+ const panel=$('arena-commander-matchup');if(!panel)return;
+ panel.hidden=!Array.isArray(profiles)||!profiles.some(Boolean);
+ if(panel.hidden)return;
+ for(let side=0;side<2;side++){
+  const target=$(side===0?'arena-commander-left':'arena-commander-right');
+  target.replaceChildren();
+  const profile=profiles[side],info=commanderDisplay[profile?.commanderId];
+  const name=document.createElement('strong');
+  name.textContent=info?(info[0]+' '+info[1]+' Komutanı'):'Komutan seçilmedi';
+  const levels=document.createElement('small');
+  levels.textContent=profile?.levels?Object.entries(profile.levels).filter(([,level])=>level>0).map(([stat,level])=>(commanderDisplay[stat]?.[1]||stat)+' +%'+(level*.5).toLocaleString('tr-TR')).join(' · ')||'Geliştirme yok':'Bonus yok';
+  target.append(name,levels);
+ }
+}
 async function build(overrideResult){
  stop();resetArenaClock();cursor=0;events=[];$('arena-counter-round').textContent='0';$('arena-counter-move').textContent='0 / 0';$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;victoryRevealDone=false;if(victoryRevealTimer!==null){clearTimeout(victoryRevealTimer);victoryRevealTimer=null}if($('arena-victory-reveal'))$('arena-victory-reveal').hidden=true;$('next').disabled=true;$('play').disabled=true;
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
@@ -327,6 +343,7 @@ async function build(overrideResult){
   let result=overrideResult;
   if(!result&&auctionMode){const response=await fetch('/api/battle-auction-preview?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});const data=await response.json();if(!response.ok)throw Error(data.error||'Savaş alınamadı');if(!data.started){$('message').textContent='Rakibin dizilişi bekleniyor… '+data.ready.filter(Boolean).length+'/2 hazır';return}result=data.result}
   if(!result){const response=await fetch('/api/battle-preview?roles='+encodeURIComponent(positions.map((i,slot)=>roleAt(slot)).join(','))+'&positions='+encodeURIComponent(positions.join(','))+'&lanes='+encodeURIComponent(lanes.join(',')),{cache:'no-store'});if(!response.ok)throw Error('Savaş verisi alınamadı ('+response.status+')');result=await response.json()}
+  renderArenaCommanderMatchup(result.commanders);
   states=result.teams.map(team=>team.map(u=>({...u,hp:u.maxHp,shield:0})));
   const lookup=new Map(states.flat().map(u=>[u.id,u.name]));
   const health=states.map(team=>team.map(u=>u.maxHp));
