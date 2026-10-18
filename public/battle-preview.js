@@ -10,7 +10,7 @@ const roleNames={tank:'TANK',fighter:'SAVAŞÇI',energy:'ENERJİ / MESAFELİ',as
 let states=[],events=[],cursor=0,timer=null;
 // Original procedural arena soundtrack; no external copyrighted audio assets.
 let arenaAudio=null,arenaMusicInterval=null,arenaMusicStep=0,arenaMusicEnabled=true;
-function updateMusicButton(){const b=$('arena-music-toggle');if(b){b.textContent=arenaMusicEnabled?'♫ Müzik: Açık':'♪ Müzik: Kapalı';b.setAttribute('aria-pressed',String(arenaMusicEnabled));b.setAttribute('aria-label',arenaMusicEnabled?'Arena müziğini kapat':'Arena müziğini aç')}}
+function updateMusicButton(){const b=$('arena-music-toggle');if(b){b.textContent=arenaMusicEnabled?'🔊':'🔇';b.setAttribute('aria-pressed',String(arenaMusicEnabled));b.setAttribute('aria-label',arenaMusicEnabled?'Arena sesini kapat':'Arena sesini aç');b.setAttribute('title',arenaMusicEnabled?'Sesi kapat':'Sesi aç')}}
 function arenaTone(freq,start,length,type='sawtooth',volume=.025){
  if(!arenaAudio)return;
  const oscillator=arenaAudio.createOscillator(),gain=arenaAudio.createGain();
