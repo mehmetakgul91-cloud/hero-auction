@@ -439,3 +439,34 @@ header{gap:14px;flex-wrap:wrap}
 .side-hero.auction-card-arrived{animation:auctionCardArrival .8s ease-out}
 @keyframes auctionCardArrival{0%{transform:scale(.88);box-shadow:0 0 0 rgba(59,241,206,0)}45%{transform:scale(1.045);box-shadow:0 0 22px rgba(59,241,206,.75)}100%{transform:scale(1);box-shadow:0 0 0 rgba(59,241,206,0)}}
 @media(prefers-reduced-motion:reduce){.side-hero.auction-card-arrived{animation:none}}
+
+
+/* Light cinematic login: isolated from lobby, auction and battle screens. */
+#login-gate.login-landing{color:#24314f;background:radial-gradient(ellipse at 10% 5%,#d7e9ff 0%,transparent 50%),radial-gradient(ellipse at 95% 90%,#e8dcff 0%,transparent 48%),linear-gradient(145deg,#f7fbff,#edf2ff 60%,#f8f4ff);border:1px solid #d0dcf3;box-shadow:0 22px 70px rgba(16,42,92,.18)}
+#login-gate .ambient-one{background:#a6caff;opacity:.24}
+#login-gate .ambient-two{background:#d2b4ff;opacity:.23}
+#login-gate .landing-kicker{color:#51648e}
+#login-gate .landing-story h1{color:#203153;text-shadow:none}
+#login-gate .landing-story h1 span{color:#5a61d9}
+#login-gate .landing-story>p{color:#4c5d7c}
+#login-gate .landing-stats>div{border-color:#6b82e4}
+#login-gate .landing-stats strong{color:#27395c}
+#login-gate .landing-stats small{color:#637391}
+#login-gate .landing-howto{background:rgba(255,255,255,.82);border-color:#d6e0f3;box-shadow:0 8px 26px rgba(68,95,147,.07)}
+#login-gate .howto-heading span{color:#6561cb}
+#login-gate .howto-heading strong,#login-gate .howto-step strong{color:#25365a}
+#login-gate .howto-step p{color:#5b6b87}
+#login-gate .step-number{background:#e8edff;color:#5262bd;border-color:#d5defc}
+#login-gate .howto-note{background:#fff3d9;color:#71512b}
+#login-gate .landing-entry{background:linear-gradient(155deg,#fff,#f4f7ff);border:1px solid #d5def1;box-shadow:0 18px 48px rgba(58,82,140,.16);color:#273856}
+#login-gate .entry-emblem{background:linear-gradient(140deg,#6488ee,#8a70df)}
+#login-gate .entry-eyebrow{color:#646cbb}
+#login-gate .landing-entry h2{color:#24365b}
+#login-gate .landing-entry>p,#login-gate .entry-footnote{color:#5c6d8a}
+#login-gate .login-options label{color:#43577b}
+#login-gate .login-options input{background:#fff!important;color:#223454!important;border:1px solid #c6d2e9!important}
+#login-gate .login-options input::placeholder{color:#8493ae}
+#login-gate #guest-login{background:linear-gradient(105deg,#4b76e8,#7764df);color:white;border-color:#8194ed;box-shadow:0 8px 22px #5267d334}
+#login-gate .landing-divider,#login-gate .entry-privacy{color:#53658a}
+#login-gate .landing-card{box-shadow:0 12px 26px #4b629329}
+@media(max-width:600px){#login-gate.login-landing{border-radius:18px}#login-gate .landing-layout{gap:18px}#login-gate .landing-howto{margin-top:16px}}
