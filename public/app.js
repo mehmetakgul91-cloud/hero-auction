@@ -48,7 +48,7 @@ function renderCommanderOnboarding(){
  const root=$('commander-onboarding-options');root.replaceChildren();
  for(const c of commanderOptions){
   const b=document.createElement('button');b.type='button';b.className='commander-option'+(commanderPending===c.id?' chosen':'');
-  const img=document.createElement('img');img.src='/images/commander-'+c.id+'.svg';img.alt='';img.loading='lazy';const label=document.createElement('span');label.textContent=c.name+' · '+c.detail;b.append(img,label);
+  const img=document.createElement('img');img.src='/images/commander-'+c.id+'.svg?v=commander-art-20261019';img.alt='';img.loading='lazy';const label=document.createElement('span');label.textContent=c.name+' · '+c.detail;b.append(img,label);
   b.setAttribute('aria-pressed',String(commanderPending===c.id));
   b.onclick=()=>{commanderPending=c.id;renderCommanderOnboarding()};
   root.append(b);
@@ -64,7 +64,7 @@ function renderCommanderRoster(){
   button.className='commander-roster-card'+(active?' active':'')+(selected?' chosen':'');
   button.setAttribute('aria-pressed',String(selected||active));
   button.disabled=commanderBusy;
-  const img=document.createElement('img');img.src='/images/commander-'+c.id+'.svg';img.alt='';img.loading='lazy';
+  const img=document.createElement('img');img.src='/images/commander-'+c.id+'.svg?v=commander-art-20261019';img.alt='';img.loading='lazy';
   const info=document.createElement('span');const title=document.createElement('strong');title.textContent=c.name;
   const detail=document.createElement('small');detail.textContent=active?'✓ AKTİF KOMUTAN':c.detail;
   info.append(title,detail);button.append(img,info);
@@ -101,7 +101,7 @@ function renderCommanderProfile(){
  const emblem=document.createElement('span');emblem.className='commander-fishbone-emblem';emblem.textContent=chosen?.icon||'♛';
  const heading=document.createElement('strong');heading.textContent=chosen?.name||'Komutan';
  const sub=document.createElement('small');sub.textContent='UZMANLIK AĞACI · 4 GELİŞİM DALI';
- const portrait=document.createElement('img');portrait.className='commander-hub-portrait';portrait.src='/images/commander-'+commanderProfile.commanderId+'.svg';portrait.alt=chosen?.name||'Komutan';hub.append(portrait,emblem,heading,sub);root.append(spine,hub);
+ const portrait=document.createElement('img');portrait.className='commander-hub-portrait';portrait.src='/images/commander-'+commanderProfile.commanderId+'.svg?v=commander-art-20261019';portrait.alt=chosen?.name||'Komutan';hub.append(portrait,emblem,heading,sub);root.append(spine,hub);
  for(const c of commanderOptions){
   const level=commanderProfile.levels[c.id],max=c.id===commanderProfile.commanderId?40:20,cost=200*(level+1);
   const card=document.createElement('div');card.className='commander-upgrade-card commander-fishbone-branch'+(max===40?' specialty':'');
