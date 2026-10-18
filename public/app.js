@@ -61,9 +61,16 @@ function renderCommanderProfile(){
  $('commander-profile-name').textContent=(chosen?.icon||'♛')+' '+(chosen?.name||'Komutan');
  $('commander-profile-gold').textContent='🪙 '+walletGold.toLocaleString('tr-TR');
  const root=$('commander-upgrades');root.replaceChildren();
+ root.classList.add('commander-fishbone');
+ const spine=document.createElement('div');spine.className='commander-fishbone-spine';spine.setAttribute('aria-hidden','true');
+ const hub=document.createElement('div');hub.className='commander-fishbone-hub';
+ const emblem=document.createElement('span');emblem.className='commander-fishbone-emblem';emblem.textContent=chosen?.icon||'♛';
+ const heading=document.createElement('strong');heading.textContent=chosen?.name||'Komutan';
+ const sub=document.createElement('small');sub.textContent='UZMANLIK AĞACI · 4 GELİŞİM DALI';
+ hub.append(emblem,heading,sub);root.append(spine,hub);
  for(const c of commanderOptions){
   const level=commanderProfile.levels[c.id],max=c.id===commanderProfile.commanderId?20:8,cost=200*(level+1);
-  const card=document.createElement('div');card.className='commander-upgrade-card';
+  const card=document.createElement('div');card.className='commander-upgrade-card commander-fishbone-branch'+(max===20?' specialty':'');
   const title=document.createElement('strong');title.textContent=c.icon+' '+c.name+(max===20?' · ANA UZMANLIK':'');
   const details=document.createElement('span');details.textContent='Seviye '+level+'/'+max+' · Bonus %'+(level*.5).toLocaleString('tr-TR');
   const bar=document.createElement('div');bar.className='commander-upgrade-bar';
@@ -71,7 +78,7 @@ function renderCommanderProfile(){
   const button=document.createElement('button');button.type='button';button.className='primary';button.textContent=level>=max?'MAKSİMUM':'🪙 '+cost.toLocaleString('tr-TR')+' · GELİŞTİR';
   button.disabled=commanderBusy||level>=max||walletGold<cost;
   button.onclick=()=>void upgradeCommander(c.id);
-  card.append(title,details,bar,button);root.append(card);
+  const node=document.createElement('span');node.className='commander-branch-node';node.textContent=c.icon;node.setAttribute('aria-hidden','true');card.append(node,title,details,bar,button);root.append(card);
  }
 }
 async function loadCommander(){
