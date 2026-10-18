@@ -470,3 +470,36 @@ header{gap:14px;flex-wrap:wrap}
 #login-gate .landing-divider,#login-gate .entry-privacy{color:#53658a}
 #login-gate .landing-card{box-shadow:0 12px 26px #4b629329}
 @media(max-width:600px){#login-gate.login-landing{border-radius:18px}#login-gate .landing-layout{gap:18px}#login-gate .landing-howto{margin-top:16px}}
+
+
+/* Three-stage landing showcase; existing in-game character artwork, no external media. */
+#login-gate .landing-showcase{margin:20px 0 12px;border:1px solid #d2ddf2;border-radius:18px;background:#ffffffd9;padding:15px;box-shadow:0 12px 32px #47639a16}
+#login-gate .showcase-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;color:#293b61;font-size:11px}
+#login-gate .showcase-heading span{font-size:9px;color:#697a9a;letter-spacing:.04em}
+#login-gate .showcase-frames{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#login-gate .showcase-frame{position:relative;min-width:0;height:175px;overflow:hidden;border-radius:13px;background:linear-gradient(155deg,#203963,#141c37);color:#fff;padding:9px 6px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;border:1px solid #7289b4}
+#login-gate .showcase-tag{font-size:8px;font-weight:900;letter-spacing:.02em;white-space:nowrap}
+#login-gate .showcase-hero{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+#login-gate .showcase-hero img{width:58px;height:70px;object-fit:contain;animation:showcaseFloat 3s ease-in-out infinite}
+#login-gate .showcase-hero b{display:block;font-size:8px}
+#login-gate .showcase-hero small{display:block;font-size:7px;color:#bed8ff}
+#login-gate .showcase-chip{font-size:8px;color:#b8f4ff;font-weight:850}
+#login-gate .showcase-lineup{background:linear-gradient(155deg,#303e70,#161d39)}
+#login-gate .showcase-team{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%}
+#login-gate .showcase-team>span{font-size:7px;color:#b4c7ff}
+#login-gate .showcase-team>div{display:flex;justify-content:center;gap:2px;width:100%}
+#login-gate .showcase-team img{width:29%;max-width:35px;height:43px;object-fit:contain;filter:drop-shadow(0 3px 4px #0008)}
+#login-gate .showcase-team>div:first-of-type img{animation:showcaseFloat 3.4s ease-in-out infinite}
+#login-gate .showcase-battle{background:radial-gradient(circle at 50% 50%,#653d8e,#172340 78%)}
+#login-gate .showcase-versus{display:flex;align-items:center;justify-content:center;width:100%;gap:2px}
+#login-gate .showcase-versus img{width:38%;height:85px;object-fit:contain;animation:showcaseBattle 2.7s ease-in-out infinite}
+#login-gate .showcase-versus img:last-child{animation-delay:-1.35s;transform:scaleX(-1)}
+#login-gate .showcase-versus strong{font-size:16px;color:#ffe3a0;text-shadow:0 0 12px #ffb85e}
+#login-gate .showcase-health{width:92%;display:flex;gap:5px}
+#login-gate .showcase-health i{height:5px;flex:1;border-radius:9px;background:linear-gradient(90deg,#46e4a1 75%,#5d6689 75%)}
+#login-gate .showcase-health i:last-child{background:linear-gradient(90deg,#ff6b8a 57%,#5d6689 57%)}
+#login-gate .showcase-caption{font-size:9px;color:#667797;margin:9px 0 0}
+@keyframes showcaseFloat{0%,100%{transform:translateY(2px)}50%{transform:translateY(-6px)}}
+@keyframes showcaseBattle{0%,100%{translate:0 0;filter:drop-shadow(0 0 2px #84b8ff)}50%{translate:5px -3px;filter:drop-shadow(0 0 10px #a7c8ff)}}
+@media(max-width:480px){#login-gate .landing-showcase{padding:10px}#login-gate .showcase-frames{gap:4px}#login-gate .showcase-frame{height:155px;padding:7px 3px}#login-gate .showcase-tag{font-size:7px}#login-gate .showcase-hero img{width:48px;height:60px}#login-gate .showcase-team img{height:36px}#login-gate .showcase-versus img{height:66px}}
+@media(prefers-reduced-motion:reduce){#login-gate .showcase-hero img,#login-gate .showcase-team img,#login-gate .showcase-versus img{animation:none}}
