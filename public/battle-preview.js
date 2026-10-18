@@ -460,16 +460,16 @@ function step(){
 // Mobile browsers throttle or suspend intervals when the tab is in the background.
 let replayDueAt=0;
 // Keep the display awake while an arena replay is actively playing (where supported).
-let arenaWakeLock=null,arenaWakeRequestPending=false;
+let arenaWakeLock=null,arenaWakeRequestPending=false,arenaWakeRetryAt=0;
 async function requestArenaWakeLock(){
- if(timer===null||document.hidden||!('wakeLock' in navigator)||arenaWakeLock||arenaWakeRequestPending)return;
+ if(timer===null||document.hidden||!('wakeLock' in navigator)||arenaWakeLock||arenaWakeRequestPending||Date.now()<arenaWakeRetryAt)return;
  arenaWakeRequestPending=true;
  try{
   const lock=await navigator.wakeLock.request('screen');
   if(timer===null||document.hidden){await lock.release();return}
   arenaWakeLock=lock;
-  lock.addEventListener('release',()=>{if(arenaWakeLock===lock)arenaWakeLock=null},{once:true});
- }catch(e){/* Unsupported, denied or temporarily unavailable: replay still works. */}
+  lock.addEventListener('release',()=>{if(arenaWakeLock===lock){arenaWakeLock=null;arenaWakeRetryAt=Date.now()+1200}},{once:true});
+ }catch(e){arenaWakeRetryAt=Date.now()+5000;/* iOS Safari may deny wake lock; retry while playing. */}
  finally{arenaWakeRequestPending=false}
 }
 function releaseArenaWakeLock(){
@@ -479,6 +479,7 @@ function releaseArenaWakeLock(){
 function stop(){if(timer!==null){clearInterval(timer);timer=null}replayDueAt=0;pauseArenaClock();if(!arenaMode)stopArenaMusic();releaseArenaWakeLock()}
 function advanceReplay(){
  if(timer===null||!replayDueAt)return;
+ if(!document.hidden&&!arenaWakeLock)void requestArenaWakeLock();
  const interval=Math.max(50,duration());
  const now=Date.now();
  // Skip animations for overdue moves; preserve the server-calculated event order/result.
@@ -491,7 +492,7 @@ function advanceReplay(){
   steps++;
  }
  document.body.classList.remove('arena-catching-up');
- if(cursor>=events.length&&events.length){stop();$('play').textContent='✓ SAVAŞ TAMAMLANDI';showBattleSummary()}
+ if(cursor>=events.length&&events.length){stop();$('play').textContent='✓ SAVAŞ TAMAMLANDI';showVictoryReveal()}
 }
 function startReplay(){
  if(timer!==null)return;
