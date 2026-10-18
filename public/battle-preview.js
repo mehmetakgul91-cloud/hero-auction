@@ -10,7 +10,7 @@ const roleNames={tank:'TANK',fighter:'SAVAŞÇI',energy:'ENERJİ / MESAFELİ',as
 let states=[],events=[],cursor=0,timer=null;
 // Original procedural arena soundtrack; no external copyrighted audio assets.
 let arenaAudio=null,arenaMusicInterval=null,arenaMusicStep=0,arenaMusicEnabled=true;
-function updateMusicButton(){const b=$('arena-music-toggle');if(b){b.textContent=arenaMusicEnabled?'♫ Müzik: Açık':'♪ Müzik: Kapalı';b.setAttribute('aria-pressed',String(arenaMusicEnabled))}}
+function updateMusicButton(){const b=$('arena-music-toggle');if(b){b.textContent=arenaMusicEnabled?'♫ Müzik: Açık':'♪ Müzik: Kapalı';b.setAttribute('aria-pressed',String(arenaMusicEnabled));b.setAttribute('aria-label',arenaMusicEnabled?'Arena müziğini kapat':'Arena müziğini aç')}}
 function arenaTone(freq,start,length,type='sawtooth',volume=.025){
  if(!arenaAudio)return;
  const oscillator=arenaAudio.createOscillator(),gain=arenaAudio.createGain();
@@ -36,41 +36,42 @@ arenaTrack.preload='none';
 arenaTrack.volume=.60;
 let arenaTrackAvailable=null;
 let arenaMusicSession=0;
-async function startArenaMusic(){
- if(!arenaMusicEnabled||timer===null)return;
- const session=++arenaMusicSession;
- if(arenaTrackAvailable!==false){
-  try{
-   // Detect missing assets without replacing the existing playable soundtrack.
-   if(arenaTrackAvailable===null){
-    const response=await fetch(arenaTrack.src,{method:'HEAD',cache:'no-store'});
-    if(!response.ok||!(response.headers.get('content-type')||'').includes('audio/'))throw Error('MP3 unavailable');
-    arenaTrackAvailable=true;
-   }
-   if(session!==arenaMusicSession||!arenaMusicEnabled||timer===null)return;
-   await arenaTrack.play();
-   return;
-  }catch(e){
-   if(session!==arenaMusicSession)return;
-   arenaTrackAvailable=false;
-   arenaTrack.pause();
-  }
- }
+function startProceduralArenaMusic(){
  if(!arenaMusicEnabled||arenaMusicInterval!==null||timer===null)return;
  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
  if(!AudioContextClass)return;
  try{
   if(!arenaAudio)arenaAudio=new AudioContextClass();
-  if(arenaAudio.state!=='running')await arenaAudio.resume();
-  if(session!==arenaMusicSession||!arenaMusicEnabled||arenaMusicInterval!==null||timer===null)return;
-  arenaMusicStep=0;arenaMusicBeat();arenaMusicInterval=setInterval(arenaMusicBeat,190);
- }catch(e){/* iOS may require a user gesture to start sound. */}
+  const resume=arenaAudio.state==='running'?Promise.resolve():arenaAudio.resume();
+  void resume.then(()=>{
+   if(!arenaMusicEnabled||arenaMusicInterval!==null||timer===null||!arenaTrack.paused)return;
+   arenaMusicStep=0;arenaMusicBeat();arenaMusicInterval=setInterval(arenaMusicBeat,190);
+  }).catch(()=>{});
+ }catch(e){}
+}
+function stopProceduralArenaMusic(){
+ if(arenaMusicInterval!==null){clearInterval(arenaMusicInterval);arenaMusicInterval=null}
+ if(arenaAudio&&arenaAudio.state==='running')void arenaAudio.suspend().catch(()=>{});
+}
+async function startArenaMusic(){
+ if(!arenaMusicEnabled||timer===null)return;
+ const session=++arenaMusicSession;
+ // Begin audio directly in the user's tap event; Safari blocks play after awaited network checks.
+ try{
+  await arenaTrack.play();
+  if(session!==arenaMusicSession||!arenaMusicEnabled||timer===null){arenaTrack.pause();return}
+  arenaTrackAvailable=true;
+  stopProceduralArenaMusic();
+ }catch(e){
+  if(session!==arenaMusicSession)return;
+  arenaTrackAvailable=false;
+  startProceduralArenaMusic();
+ }
 }
 function stopArenaMusic(){
  ++arenaMusicSession;
  arenaTrack.pause();
- if(arenaMusicInterval!==null){clearInterval(arenaMusicInterval);arenaMusicInterval=null}
- if(arenaAudio&&arenaAudio.state==='running')void arenaAudio.suspend().catch(()=>{});
+ stopProceduralArenaMusic();
 }
 
 let arenaElapsedMs=0,arenaClockStartedAt=0,arenaClockTicker=null;
