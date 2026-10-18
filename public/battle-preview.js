@@ -307,7 +307,7 @@ function animateMove(e){
 }
 
 async function build(overrideResult){
- stop();resetArenaClock();cursor=0;events=[];$('arena-counter-round').textContent='0';$('arena-counter-move').textContent='0 / 0';$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;$('next').disabled=true;$('play').disabled=true;
+ stop();resetArenaClock();cursor=0;events=[];$('arena-counter-round').textContent='0';$('arena-counter-move').textContent='0 / 0';$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;victoryRevealDone=false;if(victoryRevealTimer!==null){clearTimeout(victoryRevealTimer);victoryRevealTimer=null}if($('arena-victory-reveal'))$('arena-victory-reveal').hidden=true;$('next').disabled=true;$('play').disabled=true;
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
  try{
   let result=overrideResult;
@@ -368,10 +368,26 @@ function render(flash){
  $('next').disabled=cursor>=events.length;
  $('play').disabled=cursor>=events.length;
  if(cursor===events.length){
-  showBattleSummary();
+  showVictoryReveal();
   if(auctionMode)void showAuctionRematch();
   $('message').textContent=finalResult?.winner===null?'🤝 Beraberlik':finalResult?.winner===0?'🏆 Mavi takım kazandı!':'🏆 Kırmızı takım kazandı!';
  }
+}
+let victoryRevealDone=false,victoryRevealTimer=null;
+function showVictoryReveal(){
+ if(victoryRevealDone||!finalResult)return;
+ victoryRevealDone=true;
+ const overlay=$('arena-victory-reveal');
+ if(!overlay){showBattleSummary();return}
+ const winner=finalResult.winner;
+ overlay.dataset.winner=winner===null?'draw':winner===0?'blue':'red';
+ $('arena-victory-label').textContent=winner===null?'BERABERLİK':winner===0?'MAVİ TAKIM':'KIRMIZI TAKIM';
+ $('arena-victory-subtitle').textContent=winner===null?'İKİ TAKIM DA SONUNA KADAR SAVAŞTI':'ARENANIN GALİBİ';
+ $('arena-victory-symbol').textContent=winner===null?'⚔':'✦';
+ overlay.hidden=false;
+ const finish=()=>{if(overlay.hidden)return;overlay.hidden=true;if(victoryRevealTimer!==null){clearTimeout(victoryRevealTimer);victoryRevealTimer=null}showBattleSummary()};
+ $('arena-victory-continue').onclick=finish;
+ victoryRevealTimer=setTimeout(finish,3400);
 }
 function showBattleSummary(){
  const panel=$('battle-summary');if(!panel||!finalResult)return;
@@ -407,7 +423,7 @@ function showBattleSummary(){
  panel.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function step(){
- if(cursor>=events.length){stop();if(events.length)showBattleSummary();return}
+ if(cursor>=events.length){stop();if(events.length)showVictoryReveal();return}
  // The engine logs splash hits before the primary hit. Show all hits from one cast
  // in the same animation frame, without changing any damage or the server result.
  const first=events[cursor];
