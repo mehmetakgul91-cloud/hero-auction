@@ -568,3 +568,21 @@ header{gap:14px;flex-wrap:wrap}
 .commander-upgrade-bar span{display:block;height:100%;background:#7ee3ba}
 .commander-home-button{margin:12px 16px;padding:11px 15px;min-height:44px;border:1px solid #d6ba6b;border-radius:12px;background:#2c3049;color:#ffe6a6;font-weight:900}
 @media(max-width:520px){.commander-onboarding,.commander-profile{margin:10px;padding:14px}.commander-options,.commander-upgrades{grid-template-columns:1fr}.commander-option{min-height:56px}}
+
+/* Interactive commander fishbone skill tree: cards remain real accessible upgrade buttons. */
+.commander-upgrades.commander-fishbone{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:64px;row-gap:24px;padding:98px 0 18px;isolation:isolate}
+.commander-fishbone-spine{position:absolute;z-index:-1;top:98px;bottom:14px;left:50%;width:5px;transform:translateX(-50%);border-radius:6px;background:linear-gradient(#efce81,#56b5e4,#8b76e4);box-shadow:0 0 18px #55b6ed55}
+.commander-fishbone-hub{position:absolute;top:0;left:50%;transform:translateX(-50%);width:min(92%,300px);min-height:78px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:2px solid #ebcc78;border-radius:20px;background:radial-gradient(circle at top,#3a426c,#14213d);box-shadow:0 0 22px #e8bd6844;text-align:center;color:#fff}
+.commander-fishbone-emblem{font-size:27px;line-height:1}
+.commander-fishbone-hub small{font-size:9px;letter-spacing:.12em;color:#b9d9f1}
+.commander-fishbone-branch{position:relative;z-index:1;border:1px solid #5879a8;background:linear-gradient(145deg,#1b3256,#101c34);box-shadow:0 6px 20px #0004;min-width:0}
+.commander-fishbone-branch.specialty{border:2px solid #f0cb74;box-shadow:0 0 20px #d3aa4540}
+.commander-fishbone-branch:before{content:"";position:absolute;z-index:-1;top:50%;width:37px;height:3px;background:#7db8dd;box-shadow:0 0 9px #67b7e8aa}
+.commander-fishbone-branch:nth-child(odd):before{right:-38px;transform:rotate(-18deg);transform-origin:right center}
+.commander-fishbone-branch:nth-child(even):before{left:-38px;transform:rotate(18deg);transform-origin:left center}
+.commander-branch-node{position:absolute;top:-14px;left:12px;width:31px;height:31px;display:grid;place-items:center;border:1px solid #e2cb88;border-radius:50%;background:#233e65;box-shadow:0 0 10px #f2d18b66;font-size:17px}
+.commander-fishbone-branch>strong{margin-top:10px}
+.commander-fishbone-branch button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+@media(max-width:580px){.commander-upgrades.commander-fishbone{column-gap:26px;row-gap:25px;padding-top:102px}.commander-fishbone-branch{padding:10px 8px}.commander-fishbone-branch>strong{font-size:12px}.commander-fishbone-branch>span:not(.commander-branch-node){font-size:11px}.commander-fishbone-branch:before{width:17px}.commander-fishbone-branch:nth-child(odd):before{right:-18px}.commander-fishbone-branch:nth-child(even):before{left:-18px}.commander-fishbone-branch button{font-size:11px;padding:7px 4px}}
+@media(max-width:340px){.commander-upgrades.commander-fishbone{column-gap:16px}.commander-fishbone-branch:before{width:12px}.commander-fishbone-branch:nth-child(odd):before{right:-13px}.commander-fishbone-branch:nth-child(even):before{left:-13px}}
+@media(prefers-reduced-motion:no-preference){.commander-fishbone-hub{animation:commander-hub-glow 3s ease-in-out infinite alternate}@keyframes commander-hub-glow{to{box-shadow:0 0 32px #e8bd6877}}}
