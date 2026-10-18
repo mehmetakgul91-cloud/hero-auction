@@ -536,3 +536,17 @@ header{gap:14px;flex-wrap:wrap}
 #login-gate .landing-divider,#login-gate .entry-privacy{color:#e1c58e}
 #login-gate .landing-card{box-shadow:0 12px 26px #0006}
 #login-gate .showcase-frame{border-color:#a98a53}
+
+
+/* Honest screenshot placeholders: no unrelated Pokemon artwork. */
+#login-gate .showcase-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;flex:1}
+#login-gate .showcase-symbol{font-size:46px;color:#e7bd70;animation:showcaseFloat 3s ease-in-out infinite}
+#login-gate .showcase-placeholder b{font-size:8px}
+#login-gate .showcase-placeholder small{font-size:7px;color:#c2d5ee}
+#login-gate .showcase-mini-board{width:100%;display:flex;flex-direction:column;align-items:center;gap:4px;justify-content:center;flex:1}
+#login-gate .showcase-mini-board small{font-size:7px;color:#c1d3ec}
+#login-gate .showcase-mini-board>div{display:flex;gap:4px;justify-content:center;width:100%}
+#login-gate .showcase-mini-board i{display:grid;place-items:center;font-size:10px;font-weight:800;font-style:normal;color:#f7dfad;background:linear-gradient(155deg,#506d9b,#273752);border:1px solid #c6a466;border-radius:5px;width:25px;height:33px}
+#login-gate .showcase-versus-icons span{font-size:28px;color:#e8c17b;animation:showcaseFloat 2.7s ease-in-out infinite}
+#login-gate .showcase-versus-icons span:last-child{animation-delay:-1.35s}
+@media(prefers-reduced-motion:reduce){#login-gate .showcase-symbol,#login-gate .showcase-versus-icons span{animation:none}}
