@@ -1,6 +1,7 @@
 // Hero Auction 2.0 - isolated, deterministic automatic battle prototype.
 // Not connected to live matchmaking or wallet payouts.
 import crypto from 'node:crypto';
+import {applyCommanderSupport} from './arena-commanders.js';
 
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const roles=['tank','fighter','energy','assassin','support'];
@@ -28,7 +29,7 @@ function targetOf(enemies,attacker,round){
   const pool=attacker.role==='assassin'&&round%3===0?alive:(frontline.length?frontline:alive);
   return [...pool].sort((a,b)=>a.position-b.position||a.id.localeCompare(b.id))[(round+attacker.position)%pool.length];
 }
-export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,remainingCredits=[0,0]}={}){
+export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,remainingCredits=[0,0],commanders=[null,null]}={}){
   if(!Array.isArray(remainingCredits)||remainingCredits.length!==2||remainingCredits.some(v=>!Number.isSafeInteger(v)||v< -10000||v>10000))throw Error('Invalid auction remaining credits');
   if(!Array.isArray(cardsA)||!Array.isArray(cardsB)||cardsA.length!==5||cardsB.length!==5)throw Error('Each team must contain exactly five cards.');
   if(!Number.isInteger(maxRounds)||maxRounds<1||maxRounds>100)throw Error('Invalid round limit.');
@@ -63,6 +64,8 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       u.speed=Math.round(u.speed*creditMultiplier);
     }
   }
+  // Commander support is applied only when explicitly selected; null preserves legacy outcomes.
+  for(let side=0;side<2;side++)applyCommanderSupport(teams[side],Array.isArray(commanders)?commanders[side]:null);
   const log=[];
   // Passive effects are applied before the first round and each round's actions.
   for(const team of teams)for(const u of team){
@@ -130,5 +133,5 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
   else if(Math.abs(hpRatio[0]-hpRatio[1])>1e-9)winner=hpRatio[0]>hpRatio[1]?0:1;
   else if(damage[0]!==damage[1])winner=damage[0]>damage[1]?0:1;
   else if(survivors[0]!==survivors[1])winner=survivors[0]>survivors[1]?0:1;
-  return {version:3,remainingCredits:[...remainingCredits],seed:String(seed),winner,rounds:Math.max(0,...log.map(x=>x.round)),teams,damage,survivors,log};
+  return {version:3,commanders:Array.isArray(commanders)?commanders.slice(0,2):[null,null],remainingCredits:[...remainingCredits],seed:String(seed),winner,rounds:Math.max(0,...log.map(x=>x.round)),teams,damage,survivors,log};
 }
