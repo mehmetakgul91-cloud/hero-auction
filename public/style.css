@@ -550,3 +550,21 @@ header{gap:14px;flex-wrap:wrap}
 #login-gate .showcase-versus-icons span{font-size:28px;color:#e8c17b;animation:showcaseFloat 2.7s ease-in-out infinite}
 #login-gate .showcase-versus-icons span:last-child{animation-delay:-1.35s}
 @media(prefers-reduced-motion:reduce){#login-gate .showcase-symbol,#login-gate .showcase-versus-icons span{animation:none}}
+
+/* Account-bound commander selection and progression */
+.commander-onboarding,.commander-profile{max-width:720px;margin:22px auto;padding:20px;border:1px solid #4c7198;border-radius:20px;background:linear-gradient(145deg,#101f39,#12142d);color:#edf6ff;box-shadow:0 12px 40px #0005}
+.commander-onboarding[hidden],.commander-profile[hidden],.commander-home-button[hidden]{display:none!important}
+.commander-onboarding h2,.commander-profile h2{margin:0 0 8px;color:#f1d78e}
+.commander-onboarding p,.commander-profile p{color:#b6cbe4;font-size:13px;line-height:1.5}
+.commander-options,.commander-upgrades{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}
+.commander-option{min-height:72px;border:1px solid #54769a;border-radius:12px;background:#172c48;color:#f4f7ff;font-weight:800;font-size:13px;text-align:left;padding:13px;cursor:pointer;touch-action:manipulation}
+.commander-option.chosen{border:2px solid #f2d17e;background:#344064;box-shadow:0 0 0 2px #f2d17e33}
+.commander-profile-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#commander-profile-gold{font-weight:900;color:#f5d486}
+.commander-upgrade-card{display:flex;flex-direction:column;gap:10px;border:1px solid #45627f;border-radius:12px;padding:13px;background:#162840}
+.commander-upgrade-card>span{font-size:13px;color:#d0e2f6}
+.commander-upgrade-card button{min-height:44px}
+.commander-upgrade-bar{height:8px;border-radius:8px;background:#344258;overflow:hidden}
+.commander-upgrade-bar span{display:block;height:100%;background:#7ee3ba}
+.commander-home-button{margin:12px 16px;padding:11px 15px;min-height:44px;border:1px solid #d6ba6b;border-radius:12px;background:#2c3049;color:#ffe6a6;font-weight:900}
+@media(max-width:520px){.commander-onboarding,.commander-profile{margin:10px;padding:14px}.commander-options,.commander-upgrades{grid-template-columns:1fr}.commander-option{min-height:56px}}
