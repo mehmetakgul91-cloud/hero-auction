@@ -37,14 +37,14 @@ arenaTrack.volume=.60;
 let arenaTrackAvailable=null;
 let arenaMusicSession=0;
 function startProceduralArenaMusic(){
- if(!arenaMusicEnabled||arenaMusicInterval!==null||timer===null)return;
+ if(!arenaMusicEnabled||arenaMusicInterval!==null||(!arenaMode&&timer===null))return;
  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
  if(!AudioContextClass)return;
  try{
   if(!arenaAudio)arenaAudio=new AudioContextClass();
   const resume=arenaAudio.state==='running'?Promise.resolve():arenaAudio.resume();
   void resume.then(()=>{
-   if(!arenaMusicEnabled||arenaMusicInterval!==null||timer===null||!arenaTrack.paused)return;
+   if(!arenaMusicEnabled||arenaMusicInterval!==null||(!arenaMode&&timer===null)||!arenaTrack.paused)return;
    arenaMusicStep=0;arenaMusicBeat();arenaMusicInterval=setInterval(arenaMusicBeat,190);
   }).catch(()=>{});
  }catch(e){}
@@ -54,12 +54,12 @@ function stopProceduralArenaMusic(){
  if(arenaAudio&&arenaAudio.state==='running')void arenaAudio.suspend().catch(()=>{});
 }
 async function startArenaMusic(){
- if(!arenaMusicEnabled||timer===null)return;
+ if(!arenaMusicEnabled||(!arenaMode&&timer===null))return;
  const session=++arenaMusicSession;
  // Begin audio directly in the user's tap event; Safari blocks play after awaited network checks.
  try{
   await arenaTrack.play();
-  if(session!==arenaMusicSession||!arenaMusicEnabled||timer===null){arenaTrack.pause();return}
+  if(session!==arenaMusicSession||!arenaMusicEnabled||(!arenaMode&&timer===null)){arenaTrack.pause();return}
   arenaTrackAvailable=true;
   stopProceduralArenaMusic();
  }catch(e){
@@ -138,7 +138,7 @@ function attachDrag(card,i){card.classList.add('draggable-hero');card.draggable=
 function clearDrag(){clearNativeDragAvatar();clearHover();dragOrigin=null;if(dragGhost){dragGhost.remove();dragGhost=null}document.body.classList.remove('dragging-formation');document.querySelectorAll('.board-slot').forEach(x=>x.classList.remove('drop-target'))}
 document.addEventListener('dragover',e=>{const slot=e.target.closest('.board-slot');if(slot){e.preventDefault();if(dragHero!==null)previewHover(dragHero,Number(slot.dataset.slot))}else clearHover()});document.addEventListener('drop',e=>{const slot=e.target.closest('.board-slot');if(!slot||prepDone)return;e.preventDefault();const i=Number(e.dataTransfer.getData('text/plain'));if(Number.isInteger(i)&&i>=0&&i<5)placeHero(i,Number(slot.dataset.slot))});
 let prepTimer=null,prepDeadline=0,prepDone=false,auctionLoaded=false;
-function lockFormation(){if(prepDone||auctionMode&&!auctionLoaded)return;clearHover();completeSlots();if(!arenaMode){sessionStorage.setItem('hero-auction-formation',JSON.stringify(positions));sessionStorage.setItem('hero-auction-lanes',JSON.stringify(lanes));if(multiplayerCode&&multiplayerToken){void fetch('/api/battle-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ready',code:multiplayerCode,token:multiplayerToken,positions,lanes,roles:positions.map((_,slot)=>roleAt(slot))})}).then(async r=>{const v=await r.json();if(!r.ok)throw Error(v.error);location.href='/battle-preview.html?room=arena&code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken)}).catch(e=>{$('prep-note').textContent='⚠ '+e.message});return}if(auctionMode){void fetch('/api/battle-auction-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,positions,lanes,roles:positions.map((_,slot)=>roleAt(slot))})}).then(async response=>{const data=await response.json();if(!response.ok)throw Error(data.error||'Diziliş gönderilemedi');location.href='/battle-preview.html?room=arena&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken)}).catch(e=>{$('prep-note').textContent='⚠ '+e.message});return}location.href='/battle-preview.html?room=arena'+(auctionCode&&auctionToken?'&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken):'');return}prepDone=true;document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;$('arena-3d').hidden=true;if(prepTimer!==null){clearInterval(prepTimer);prepTimer=null}document.querySelectorAll('.formation-choices button,.board-slot,.formation-select').forEach(b=>b.disabled=true);$('apply-roles').disabled=true;$('apply-roles').textContent='✓ HAZIR';$('ready-a').textContent='🔵 Sen: Hazır';$('prep-note').textContent='İki taraf hazır. Savaş başlıyor!';stop();$('events').replaceChildren();$('play').textContent='▶ SAVAŞI OYNAT';void build().then(()=>{if(events.length)$('play').click()})}
+function lockFormation(){if(prepDone||auctionMode&&!auctionLoaded)return;clearHover();completeSlots();if(!arenaMode){try{sessionStorage.setItem('hero-auction-arena-music','1')}catch{};sessionStorage.setItem('hero-auction-formation',JSON.stringify(positions));sessionStorage.setItem('hero-auction-lanes',JSON.stringify(lanes));if(multiplayerCode&&multiplayerToken){void fetch('/api/battle-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ready',code:multiplayerCode,token:multiplayerToken,positions,lanes,roles:positions.map((_,slot)=>roleAt(slot))})}).then(async r=>{const v=await r.json();if(!r.ok)throw Error(v.error);location.href='/battle-preview.html?room=arena&code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken)}).catch(e=>{$('prep-note').textContent='⚠ '+e.message});return}if(auctionMode){void fetch('/api/battle-auction-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,positions,lanes,roles:positions.map((_,slot)=>roleAt(slot))})}).then(async response=>{const data=await response.json();if(!response.ok)throw Error(data.error||'Diziliş gönderilemedi');location.href='/battle-preview.html?room=arena&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken)}).catch(e=>{$('prep-note').textContent='⚠ '+e.message});return}location.href='/battle-preview.html?room=arena'+(auctionCode&&auctionToken?'&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken):'');return}prepDone=true;document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;$('arena-3d').hidden=true;if(prepTimer!==null){clearInterval(prepTimer);prepTimer=null}document.querySelectorAll('.formation-choices button,.board-slot,.formation-select').forEach(b=>b.disabled=true);$('apply-roles').disabled=true;$('apply-roles').textContent='✓ HAZIR';$('ready-a').textContent='🔵 Sen: Hazır';$('prep-note').textContent='İki taraf hazır. Savaş başlıyor!';stop();$('events').replaceChildren();$('play').textContent='▶ SAVAŞI OYNAT';void build().then(()=>{if(events.length)$('play').click()})}
 function startPreparation(){if(prepTimer!==null)clearInterval(prepTimer);prepDone=false;prepDeadline=Date.now()+60000;const tick=()=>{const remaining=Math.max(0,Math.ceil((prepDeadline-Date.now())/1000));$('prep-clock').textContent=String(Math.floor(remaining/60)).padStart(2,'0')+':'+String(remaining%60).padStart(2,'0');if(!remaining)lockFormation()};tick();prepTimer=setInterval(tick,200)}
 const roleIcons={tank:'🛡️',fighter:'⚔️',energy:'⚡',assassin:'🗡️',support:'💚'};
 const modifiers={tank:[-12,22,30,-8],fighter:[6,7,8,0],energy:[15,-10,-12,2],assassin:[17,-14,-15,17],support:[-7,0,4,9]};
@@ -377,7 +377,7 @@ function releaseArenaWakeLock(){
  const lock=arenaWakeLock;arenaWakeLock=null;
  if(lock)void lock.release().catch(()=>{});
 }
-function stop(){if(timer!==null){clearInterval(timer);timer=null}replayDueAt=0;pauseArenaClock();stopArenaMusic();releaseArenaWakeLock()}
+function stop(){if(timer!==null){clearInterval(timer);timer=null}replayDueAt=0;pauseArenaClock();if(!arenaMode)stopArenaMusic();releaseArenaWakeLock()}
 function advanceReplay(){
  if(timer===null||!replayDueAt)return;
  const interval=Math.max(50,duration());
@@ -399,7 +399,6 @@ function startReplay(){
  startArenaClock();
  replayDueAt=Date.now()+Math.max(50,duration());
  timer=setInterval(advanceReplay,Math.min(200,Math.max(50,duration())));
- void startArenaMusic();
  void requestArenaWakeLock();
  $('play').textContent='⏸ DURDUR';
 }
@@ -408,10 +407,16 @@ $('speed').onchange=()=>{if(timer!==null){clearInterval(timer);timer=null;replay
 document.addEventListener('visibilitychange',()=>{if(document.hidden){releaseArenaWakeLock()}else{advanceReplay();void requestArenaWakeLock()}});
 window.addEventListener('focus',advanceReplay);
 window.addEventListener('pageshow',()=>{advanceReplay();void requestArenaWakeLock()});
-$('arena-music-toggle').onclick=()=>{arenaMusicEnabled=!arenaMusicEnabled;updateMusicButton();if(arenaMusicEnabled&&timer!==null)void startArenaMusic();else stopArenaMusic()};updateMusicButton();
+// Entering the arena, rather than pressing Play, triggers the soundtrack.
+if(arenaMode){
+ try{if(sessionStorage.getItem('hero-auction-arena-music')==='1')sessionStorage.removeItem('hero-auction-arena-music')}catch{}
+ // Browsers permitting autoplay begin immediately; iOS users can use the always-visible toggle.
+ void startArenaMusic();
+}
+$('arena-music-toggle').onclick=()=>{arenaMusicEnabled=!arenaMusicEnabled;updateMusicButton();if(arenaMusicEnabled&&(arenaMode||timer!==null))void startArenaMusic();else stopArenaMusic()};updateMusicButton();
 $('next').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';step()};
 $('reset').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';$('events').replaceChildren();$('message').textContent='Başlamak için savaşı oynat.';build()};
-if(multiplayerCode&&multiplayerToken){const check=async()=>{try{const response=await fetch('/api/battle-room?code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken),{cache:'no-store'});const v=await response.json();if(!response.ok)throw Error(v.error);if(v.started){clearInterval(battlePoll);battlePoll=null;document.body.classList.add('online-battle');if(!arenaMode){location.href='/battle-preview.html?room=arena&code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken);return}await build(v.result);if(events.length)$('play').click()}else{$('message').textContent='Rakibin hazırlanması bekleniyor… '+v.ready.filter(Boolean).length+'/2 hazır';if(arenaMode)$('play').disabled=true}}catch(e){$('message').textContent='⚠ '+e.message}};void check();battlePoll=setInterval(check,1800)}else if(arenaMode&&!auctionCode){void build().then(()=>{if(events.length)$('play').click()})}
+if(multiplayerCode&&multiplayerToken){const check=async()=>{try{const response=await fetch('/api/battle-room?code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken),{cache:'no-store'});const v=await response.json();if(!response.ok)throw Error(v.error);if(v.started){clearInterval(battlePoll);battlePoll=null;document.body.classList.add('online-battle');if(!arenaMode){try{sessionStorage.setItem('hero-auction-arena-music','1')}catch{};location.href='/battle-preview.html?room=arena&code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken);return}await build(v.result);if(events.length)$('play').click()}else{$('message').textContent='Rakibin hazırlanması bekleniyor… '+v.ready.filter(Boolean).length+'/2 hazır';if(arenaMode)$('play').disabled=true}}catch(e){$('message').textContent='⚠ '+e.message}};void check();battlePoll=setInterval(check,1800)}else if(arenaMode&&!auctionCode){void build().then(()=>{if(events.length)$('play').click()})}
 
 if(auctionCode&&auctionToken){void (async()=>{try{
  const response=await fetch('/api/battle-auction-team?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});
