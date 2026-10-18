@@ -345,7 +345,24 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
  const sync=room.battleSync;
  // Computer opponent uses an automatic, server-owned formation.
  if(room.mode==='bot'&&!sync.ready[1]){
-  sync.ready[1]={positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:[0,1,2,3,4].map(index=>battleRoster.find(hero=>hero.id===teams[1][index].id)?.role||'fighter')};
+  const botCards=teams[1].map((card,index)=>({...card,index,hero:battleRoster.find(hero=>hero.id===card.id)}));
+  const hard=room.difficulty==='hard';
+  const score=(card,lane)=>{
+   const role=card.hero?.role||'fighter',power=Number(card.power)||0;
+   const modifier=Number(card.hero?.laneModifiers?.[lane]);
+   const bonus=Number.isFinite(modifier)?Math.max(-.10,Math.min(.10,modifier)):0;
+   const survival=lane==='front'?(role==='tank'?18:role==='fighter'?7:role==='support'?-9:role==='energy'?-12:-5):0;
+   return power*(1+bonus)+survival;
+  };
+  let frontIndices=[];
+  if(hard){
+   // Choose a resilient front line while respecting each hero's own lane modifiers.
+   const ranked=botCards.map(c=>({index:c.index,advantage:score(c,'front')-score(c,'back')})).sort((a,b)=>b.advantage-a.advantage);
+   const count=ranked[1]?.advantage>0?2:ranked[0]?.advantage>0?1:1;
+   frontIndices=ranked.slice(0,count).map(c=>c.index);
+  }else frontIndices=[0,1];
+  const order=[...frontIndices,...botCards.map(c=>c.index).filter(i=>!frontIndices.includes(i))];
+  sync.ready[1]={positions:order,lanes:order.map(i=>frontIndices.includes(i)?'front':'back'),roles:order.map(i=>botCards[i].hero?.role||'fighter')};
  }
  if(req.method==='POST'){
  if(sync.ready[seat])return send(409,{error:'Diziliş zaten onaylandı'});
@@ -452,8 +469,10 @@ if(r.mode==='bot'&&r.turn===1){
    // opponent strength, credit reserve and the current auction price.
    const strongCard=power>=Math.max(65,replacementPower-3);
    const denyStrongOpponent=human.team.length<5&&power>=83&&human.credits<=offer+2;
-   const cap=denyStrongOpponent?Math.min(bot.credits,hardCap+2):hardCap;
-   willBid=(scarcity||strongCard||denyStrongOpponent)&&offer<=cap;
+   const qualityPremium=power>=90?3:power>=82?2:power>=74?1:0;
+   const needed=slots>=3&&cardsLeft<=slots+3;
+   const cap=Math.min(bot.credits,Math.max(1,hardCap+qualityPremium+(denyStrongOpponent?2:0)));
+   willBid=(scarcity||strongCard||denyStrongOpponent||needed)&&offer<=cap;
   }else{
    willBid=offer<=2||Math.random()<.45;
   }
