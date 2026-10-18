@@ -503,3 +503,36 @@ header{gap:14px;flex-wrap:wrap}
 @keyframes showcaseBattle{0%,100%{translate:0 0;filter:drop-shadow(0 0 2px #84b8ff)}50%{translate:5px -3px;filter:drop-shadow(0 0 10px #a7c8ff)}}
 @media(max-width:480px){#login-gate .landing-showcase{padding:10px}#login-gate .showcase-frames{gap:4px}#login-gate .showcase-frame{height:155px;padding:7px 3px}#login-gate .showcase-tag{font-size:7px}#login-gate .showcase-hero img{width:48px;height:60px}#login-gate .showcase-team img{height:36px}#login-gate .showcase-versus img{height:66px}}
 @media(prefers-reduced-motion:reduce){#login-gate .showcase-hero img,#login-gate .showcase-team img,#login-gate .showcase-versus img{animation:none}}
+
+
+/* Navy & Gold landing theme — selected by player; login only. */
+#login-gate.login-landing{color:#f4e8ce;background:radial-gradient(ellipse at 18% 9%,rgba(48,83,130,.48),transparent 55%),radial-gradient(ellipse at 92% 90%,rgba(165,115,39,.22),transparent 50%),linear-gradient(145deg,#0c172a,#14243d 58%,#0d182a);border-color:#8e734a;box-shadow:0 28px 80px rgba(0,0,0,.4)}
+#login-gate .ambient-one{background:#2e6eaa;opacity:.2}
+#login-gate .ambient-two{background:#b38a42;opacity:.2}
+#login-gate .landing-kicker{color:#e6c985}
+#login-gate .landing-story h1{color:#f8f3e9;text-shadow:0 7px 26px #0007}
+#login-gate .landing-story h1 span{color:#e6b85e}
+#login-gate .landing-story>p{color:#c6d3e5}
+#login-gate .landing-stats>div{border-color:#cda354}
+#login-gate .landing-stats strong{color:#f6e4b7}
+#login-gate .landing-stats small{color:#b4c5df}
+#login-gate .landing-howto,#login-gate .landing-showcase{background:rgba(18,32,54,.9);border-color:#746447;box-shadow:0 10px 32px #0003}
+#login-gate .howto-heading span,#login-gate .showcase-heading strong{color:#e3b968}
+#login-gate .howto-heading strong,#login-gate .howto-step strong{color:#f5ebd8}
+#login-gate .howto-step p{color:#bac8dc}
+#login-gate .step-number{background:#34334a;color:#f2cf8a;border-color:#826b47}
+#login-gate .howto-note{background:#40331e;color:#f6d9a0}
+#login-gate .showcase-heading{color:#f3dfb7}
+#login-gate .showcase-heading span,#login-gate .showcase-caption{color:#bdcbe0}
+#login-gate .landing-entry{background:linear-gradient(150deg,#20324d,#111e34);border:1px solid #a4834d;box-shadow:0 20px 50px #0007;color:#f5e8d1}
+#login-gate .entry-emblem{background:linear-gradient(140deg,#d8ac57,#90632b);color:#101b2d;box-shadow:0 9px 28px #b48b4744}
+#login-gate .entry-eyebrow{color:#e1bc75}
+#login-gate .landing-entry h2{color:#fff1d3}
+#login-gate .landing-entry>p,#login-gate .entry-footnote{color:#c2d0e3}
+#login-gate .login-options label{color:#f1dba9}
+#login-gate .login-options input{background:#f8f5ec!important;color:#1d2a3f!important;border:1px solid #c4a26b!important}
+#login-gate .login-options input::placeholder{color:#788396}
+#login-gate #guest-login{background:linear-gradient(110deg,#f0ca7b,#bf8a3d);color:#1c2637;border-color:#ffe0a2;box-shadow:0 8px 25px #d5a45035;font-weight:900}
+#login-gate .landing-divider,#login-gate .entry-privacy{color:#e1c58e}
+#login-gate .landing-card{box-shadow:0 12px 26px #0006}
+#login-gate .showcase-frame{border-color:#a98a53}
