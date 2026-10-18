@@ -461,6 +461,35 @@ function step(){
 let replayDueAt=0;
 // Keep the display awake while an arena replay is actively playing (where supported).
 let arenaWakeLock=null,arenaWakeRequestPending=false,arenaWakeRetryAt=0;
+let arenaKeepAwakeVideo=null;
+function startArenaVideoKeepAwake(){
+ if(timer===null||document.hidden||arenaKeepAwakeVideo)return;
+ // iOS Safari fallback: a tiny muted inline video; no audio or visible UI.
+ try{
+  const canvas=document.createElement('canvas');canvas.width=2;canvas.height=2;
+  const stream=canvas.captureStream?.(1);
+  if(!stream)return;
+  const video=document.createElement('video');
+  video.muted=true;video.defaultMuted=true;video.playsInline=true;
+  video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');
+  video.setAttribute('aria-hidden','true');
+  video.style.cssText='position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1';
+  video.srcObject=stream;document.body.append(video);
+  arenaKeepAwakeVideo=video;
+  const ctx=canvas.getContext('2d');let tick=0;
+  const draw=()=>{if(arenaKeepAwakeVideo!==video)return;ctx.fillStyle=(tick++%2)?'#000':'#010101';ctx.fillRect(0,0,2,2)};
+  draw();
+  video._arenaDrawTimer=setInterval(draw,900);
+  void video.play().catch(()=>{stopArenaVideoKeepAwake()});
+ }catch(e){stopArenaVideoKeepAwake()}
+}
+function stopArenaVideoKeepAwake(){
+ const video=arenaKeepAwakeVideo;arenaKeepAwakeVideo=null;
+ if(!video)return;
+ if(video._arenaDrawTimer)clearInterval(video._arenaDrawTimer);
+ try{video.pause();video.srcObject?.getTracks().forEach(track=>track.stop());video.srcObject=null;video.remove()}catch(e){}
+}
+
 async function requestArenaWakeLock(){
  if(timer===null||document.hidden||!('wakeLock' in navigator)||arenaWakeLock||arenaWakeRequestPending||Date.now()<arenaWakeRetryAt)return;
  arenaWakeRequestPending=true;
@@ -476,7 +505,7 @@ function releaseArenaWakeLock(){
  const lock=arenaWakeLock;arenaWakeLock=null;
  if(lock)void lock.release().catch(()=>{});
 }
-function stop(){if(timer!==null){clearInterval(timer);timer=null}replayDueAt=0;pauseArenaClock();if(!arenaMode)stopArenaMusic();releaseArenaWakeLock()}
+function stop(){if(timer!==null){clearInterval(timer);timer=null}replayDueAt=0;pauseArenaClock();if(!arenaMode)stopArenaMusic();releaseArenaWakeLock();stopArenaVideoKeepAwake()}
 function advanceReplay(){
  if(timer===null||!replayDueAt)return;
  if(!document.hidden&&!arenaWakeLock)void requestArenaWakeLock();
@@ -500,6 +529,7 @@ function startReplay(){
  replayDueAt=Date.now()+Math.max(50,duration());
  timer=setInterval(advanceReplay,Math.min(200,Math.max(50,duration())));
  void requestArenaWakeLock();
+ startArenaVideoKeepAwake();
  $('play').textContent='⏸ DURDUR';
 }
 $('play').onclick=()=>{if(timer!==null){stop();$('play').textContent='▶ DEVAM ET';return}startReplay()};
@@ -509,7 +539,7 @@ function syncArenaAudioVisibility(){
  if(document.hidden||document.visibilityState==='hidden'){
   arenaAudioSuspendedByBackground=true;
   stopArenaMusic();
-  releaseArenaWakeLock();
+  releaseArenaWakeLock();stopArenaVideoKeepAwake();
   return;
  }
  if(arenaAudioSuspendedByBackground){
@@ -518,9 +548,10 @@ function syncArenaAudioVisibility(){
  }
  advanceReplay();
  void requestArenaWakeLock();
+ if(timer!==null)startArenaVideoKeepAwake();
 }
 document.addEventListener('visibilitychange',syncArenaAudioVisibility);
-window.addEventListener('pagehide',()=>{arenaAudioSuspendedByBackground=true;stopArenaMusic();releaseArenaWakeLock()});
+window.addEventListener('pagehide',()=>{arenaAudioSuspendedByBackground=true;stopArenaMusic();releaseArenaWakeLock();stopArenaVideoKeepAwake()});
 window.addEventListener('focus',advanceReplay);
 window.addEventListener('pageshow',syncArenaAudioVisibility);
 // Entering the arena, rather than pressing Play, triggers the soundtrack.
