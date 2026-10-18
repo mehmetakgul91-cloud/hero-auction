@@ -633,3 +633,56 @@ header{gap:14px;flex-wrap:wrap}
 .commander-fishbone-branch{box-shadow:0 10px 26px #0008,inset 0 1px #ffffff17}
 .commander-fishbone-branch.specialty{border-color:#f0bb5a;box-shadow:0 0 26px #ef9e3938,0 12px 25px #0009}
 @media(max-width:600px){.commander-option img{max-width:none;aspect-ratio:1/1}.commander-roster-card img{width:74px;height:82px}}
+
+/* Commander v2: single selected commander and a cinematic skill console */
+.commander-profile-v2{display:grid;grid-template-columns:minmax(265px,40%) minmax(0,1fr);align-items:stretch;gap:15px}
+.commander-active-panel{padding:0;overflow:hidden;background:#070e1e;border:1px solid #b38b49;box-shadow:0 14px 38px #0009}
+.commander-active-art{position:relative;min-height:460px;overflow:hidden;background:radial-gradient(ellipse at center,#452418,#080d1b 76%)}
+.commander-active-art img{display:block;width:100%;height:480px;object-fit:cover;object-position:center 19%;filter:contrast(1.15) saturate(1.28);transform:scale(1.035)}
+.commander-active-art[data-type=defense]{background:radial-gradient(ellipse,#173e65,#07101e)}
+.commander-active-art[data-type=magic]{background:radial-gradient(ellipse,#412261,#080c1d)}
+.commander-active-art[data-type=support]{background:radial-gradient(ellipse,#1c593c,#07161a)}
+.commander-active-art-shade{position:absolute;inset:0;background:linear-gradient(0deg,#060c1c 0%,#0711229e 17%,transparent 58%),linear-gradient(90deg,#060a1850,transparent 30%,transparent 70%,#0509164f);pointer-events:none}
+.commander-active-title{position:absolute;bottom:17px;left:20px;right:20px;display:flex;flex-direction:column;gap:5px;text-shadow:0 3px 9px #000}
+.commander-active-title>span{font-size:11px;letter-spacing:.18em;color:#f4d38a;font-weight:800}
+.commander-active-title>strong{font:800 clamp(22px,3vw,34px) Georgia,serif;color:#fff0c7}
+.commander-active-title>small{font-size:13px;color:#dce8f7}
+.commander-active-stats{padding:16px 18px;border-top:1px solid #a17c40;background:linear-gradient(145deg,#101b2d,#08101f)}
+.commander-active-stats>div:first-child{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.commander-active-stats small{color:#d4a95f;letter-spacing:.08em;font-size:11px}
+.commander-active-stats strong{color:#f9e1a9;font-size:14px}
+.commander-active-stats p{margin:10px 0 0;font-size:12px;color:#c6d5e7}
+.commander-active-progress{height:10px;margin-top:10px;background:#121e30;border:1px solid #856b43;border-radius:20px;overflow:hidden}
+.commander-active-progress span{display:block;height:100%;background:linear-gradient(90deg,#bd6b25,#ffcc72,#fff3bc);box-shadow:0 0 14px #ffb657}
+.commander-switch-button{display:flex;align-items:center;justify-content:space-between;gap:10px;width:calc(100% - 32px);margin:15px 16px;padding:14px 13px;border:1px solid #d8b46b;border-radius:10px;background:linear-gradient(110deg,#4b321e,#b27b30);color:#fff0c6;font-weight:900;cursor:pointer;box-shadow:0 5px 18px #0007}
+.commander-switch-button small{font-size:11px;color:#fff1bb}
+.commander-change-panel{margin:0 15px 16px;padding:12px;border:1px solid #8d7045;border-radius:10px;background:#0b172b}
+.commander-change-panel[hidden]{display:none!important}
+.commander-change-head{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#f8d48d}
+.commander-change-head button{min-width:36px;min-height:36px;padding:5px}
+.commander-change-panel p{font-size:12px;color:#b8cde4}
+.commander-change-panel .commander-roster-options{display:grid;grid-template-columns:1fr}
+.commander-change-panel .commander-roster-card{min-height:74px}
+.commander-change-panel .commander-roster-card img{height:68px;width:68px}
+.commander-development{background:radial-gradient(ellipse at 50% 25%,#162943,#070d1d 80%);border:1px solid #b28a4a}
+.commander-development-heading{text-align:center;padding:8px 5px 18px;border-bottom:1px solid #705b3c;margin-bottom:10px}
+.commander-development-heading h3{margin:0 0 8px;font:800 clamp(20px,2.5vw,29px) Georgia,serif;color:#ffe4a4}
+.commander-development-heading p{margin:0;font-size:12px;color:#c2d1e5}
+.commander-profile-v2 .commander-upgrades.commander-fishbone{padding-top:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;position:relative}
+.commander-profile-v2 .commander-fishbone-hub,.commander-profile-v2 .commander-fishbone-spine{display:none}
+.commander-profile-v2 .commander-fishbone-branch{position:relative!important;inset:auto!important;transform:none!important;width:auto!important;min-width:0;min-height:190px;padding:18px 14px 14px;display:flex;flex-direction:column;justify-content:flex-end;gap:13px;border:1px solid #6d89b7;border-radius:13px;background:radial-gradient(circle at 50% 12%,#294d7b,#0c1a31 64%);box-shadow:inset 0 0 28px #17487936,0 8px 22px #0008}
+.commander-profile-v2 .commander-fishbone-branch:nth-child(3){border-color:#ed6956;background:radial-gradient(circle at 50% 12%,#6a2428,#200d1a 64%);box-shadow:inset 0 0 28px #d839353b,0 8px 22px #0008}
+.commander-profile-v2 .commander-fishbone-branch:nth-child(4){border-color:#60bbfc;background:radial-gradient(circle at 50% 12%,#163c74,#08152b 64%)}
+.commander-profile-v2 .commander-fishbone-branch:nth-child(5){border-color:#c181f9;background:radial-gradient(circle at 50% 12%,#47216e,#170e2f 64%)}
+.commander-profile-v2 .commander-fishbone-branch:nth-child(6){border-color:#54d79d;background:radial-gradient(circle at 50% 12%,#125a40,#081f1d 64%)}
+.commander-profile-v2 .commander-fishbone-branch>strong{font:800 16px Georgia,serif;text-align:center;color:#fff1c9}
+.commander-profile-v2 .commander-fishbone-branch>span:not(.commander-branch-node){text-align:center;color:#f2d79c;font-size:13px}
+.commander-profile-v2 .commander-branch-node{position:relative!important;inset:auto!important;transform:none!important;display:grid;place-items:center;margin:0 auto 5px;width:66px;height:66px;border-radius:50%;border:2px solid currentColor;background:#091324b5;box-shadow:0 0 0 7px #ffffff09,0 0 25px currentColor;font-size:32px;color:#ffb96d}
+.commander-profile-v2 .commander-fishbone-branch:nth-child(4) .commander-branch-node{color:#6fcfff}
+.commander-profile-v2 .commander-fishbone-branch:nth-child(5) .commander-branch-node{color:#cc8aff}
+.commander-profile-v2 .commander-fishbone-branch:nth-child(6) .commander-branch-node{color:#6cf6b0}
+.commander-profile-v2 .commander-upgrade-bar{height:9px;background:#0a1323;border-radius:12px;border:1px solid #ffffff27;overflow:hidden}
+.commander-profile-v2 .commander-upgrade-bar span{display:block;height:100%;background:linear-gradient(90deg,#b37a34,#ffdc87);box-shadow:0 0 15px #ffc05d}
+.commander-profile-v2 .commander-fishbone-branch button{min-height:44px;border-radius:8px;font-size:12px;white-space:normal}
+@media(max-width:900px){.commander-profile-v2{grid-template-columns:1fr}.commander-active-art{min-height:330px}.commander-active-art img{height:390px;object-position:center 20%}.commander-active-panel{max-width:none}}
+@media(max-width:500px){.commander-profile-v2 .commander-upgrades.commander-fishbone{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.commander-profile-v2 .commander-fishbone-branch{padding:10px 7px;gap:10px;min-height:190px}.commander-profile-v2 .commander-fishbone-branch>strong{font-size:12px}.commander-profile-v2 .commander-fishbone-branch>span:not(.commander-branch-node){font-size:11px}.commander-profile-v2 .commander-branch-node{width:49px;height:49px;font-size:25px}.commander-active-art img{height:355px}}
