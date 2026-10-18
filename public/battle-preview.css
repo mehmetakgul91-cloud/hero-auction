@@ -189,3 +189,17 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 @keyframes victory-halo{from{opacity:0;transform:scale(.35) rotate(-15deg)}to{opacity:1;transform:scale(1.25) rotate(10deg)}}
 @keyframes victory-pulse{from{transform:scale(.95);filter:brightness(.95)}to{transform:scale(1.08);filter:brightness(1.2)}}
 @media(prefers-reduced-motion:reduce){.arena-victory-reveal *{animation:none!important}}
+
+/* Commander prototype — mobile first, separate feature branch. */
+.commander-picker{margin:12px 0 18px;padding:13px;border:1px solid #597ab6;border-radius:15px;background:linear-gradient(140deg,#12243d,#15182f)}
+.commander-picker-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:12px;color:#e9f8ff}
+.commander-picker-head small{font-size:11px;color:#afc5e5}
+.commander-picker-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.commander-choice{min-height:56px;padding:9px 10px;border:1px solid #426184;border-radius:10px;background:#101d31;color:#d7e9ff;font-size:12px;font-weight:800;text-align:left;cursor:pointer;touch-action:manipulation}
+.commander-choice.selected{border-color:#e8d082;background:#3a3352;box-shadow:0 0 0 2px #e8d08244,inset 0 0 15px #d7b75b22;color:#fff}
+.commander-choice:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.commander-picker-note{font-size:11px;color:#b2c6de;line-height:1.5;margin:10px 0 0}
+.arena-commander-strip[hidden]{display:none!important}
+.arena-commander-strip{display:grid;grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr);align-items:center;gap:6px;margin:8px 0;padding:9px 10px;border:1px solid #6d719f;border-radius:12px;background:#0b1830;color:#e9f5ff;font-size:clamp(10px,2.4vw,13px);font-weight:850;text-align:center}
+.arena-commander-strip>div{min-width:0;overflow-wrap:anywhere}
+@media(max-width:360px){.commander-picker-grid{grid-template-columns:1fr}.commander-choice{min-height:44px}}
