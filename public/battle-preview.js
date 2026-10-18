@@ -37,14 +37,14 @@ arenaTrack.volume=.60;
 let arenaTrackAvailable=null;
 let arenaMusicSession=0;
 function startProceduralArenaMusic(){
- if(!arenaMusicEnabled||arenaMusicInterval!==null||(!arenaMode&&timer===null))return;
+ if(!arenaMusicEnabled||document.hidden||arenaMusicInterval!==null||(!arenaMode&&timer===null))return;
  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
  if(!AudioContextClass)return;
  try{
   if(!arenaAudio)arenaAudio=new AudioContextClass();
   const resume=arenaAudio.state==='running'?Promise.resolve():arenaAudio.resume();
   void resume.then(()=>{
-   if(!arenaMusicEnabled||arenaMusicInterval!==null||(!arenaMode&&timer===null)||!arenaTrack.paused)return;
+   if(!arenaMusicEnabled||document.hidden||arenaMusicInterval!==null||(!arenaMode&&timer===null)||!arenaTrack.paused)return;
    arenaMusicStep=0;arenaMusicBeat();arenaMusicInterval=setInterval(arenaMusicBeat,190);
   }).catch(()=>{});
  }catch(e){}
@@ -54,12 +54,12 @@ function stopProceduralArenaMusic(){
  if(arenaAudio&&arenaAudio.state==='running')void arenaAudio.suspend().catch(()=>{});
 }
 async function startArenaMusic(){
- if(!arenaMusicEnabled||(!arenaMode&&timer===null))return;
+ if(!arenaMusicEnabled||document.hidden||(!arenaMode&&timer===null))return;
  const session=++arenaMusicSession;
  // Begin audio directly in the user's tap event; Safari blocks play after awaited network checks.
  try{
   await arenaTrack.play();
-  if(session!==arenaMusicSession||!arenaMusicEnabled||(!arenaMode&&timer===null)){arenaTrack.pause();return}
+  if(session!==arenaMusicSession||!arenaMusicEnabled||document.hidden||(!arenaMode&&timer===null)){arenaTrack.pause();return}
   arenaTrackAvailable=true;
   stopProceduralArenaMusic();
  }catch(e){
@@ -189,7 +189,7 @@ document.addEventListener('touchstart',e=>{
 },{capture:true,passive:true});
 function revealArenaAudio(){
  arenaTrack.volume=.60;
- if(arenaMusicEnabled&&arenaTrack.paused)void startArenaMusic();
+ if(arenaMusicEnabled&&!document.hidden&&arenaTrack.paused)void startArenaMusic();
 }
 function enterArenaWithoutReload(url){
  // Preserve the user-unlocked HTMLAudioElement across the formation-to-arena transition.
@@ -487,9 +487,25 @@ function startReplay(){
 }
 $('play').onclick=()=>{if(timer!==null){stop();$('play').textContent='▶ DEVAM ET';return}startReplay()};
 $('speed').onchange=()=>{if(timer!==null){clearInterval(timer);timer=null;replayDueAt=0;startReplay()}};
-document.addEventListener('visibilitychange',()=>{if(document.hidden){releaseArenaWakeLock()}else{advanceReplay();void requestArenaWakeLock()}});
+let arenaAudioSuspendedByBackground=false;
+function syncArenaAudioVisibility(){
+ if(document.hidden||document.visibilityState==='hidden'){
+  arenaAudioSuspendedByBackground=true;
+  stopArenaMusic();
+  releaseArenaWakeLock();
+  return;
+ }
+ if(arenaAudioSuspendedByBackground){
+  arenaAudioSuspendedByBackground=false;
+  if(arenaMusicEnabled&&(arenaMode||timer!==null))void startArenaMusic();
+ }
+ advanceReplay();
+ void requestArenaWakeLock();
+}
+document.addEventListener('visibilitychange',syncArenaAudioVisibility);
+window.addEventListener('pagehide',()=>{arenaAudioSuspendedByBackground=true;stopArenaMusic();releaseArenaWakeLock()});
 window.addEventListener('focus',advanceReplay);
-window.addEventListener('pageshow',()=>{advanceReplay();void requestArenaWakeLock()});
+window.addEventListener('pageshow',syncArenaAudioVisibility);
 // Entering the arena, rather than pressing Play, triggers the soundtrack.
 if(arenaMode){
  try{if(sessionStorage.getItem('hero-auction-arena-music')==='1')sessionStorage.removeItem('hero-auction-arena-music')}catch{}
