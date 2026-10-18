@@ -8,10 +8,10 @@ const effectivePower=power=>Math.round(power*(1+creditBonus(previewCredits))*10)
 let demoB=[['Superman','fighter',92],['Wonder Woman','fighter',85],['Doomsday','tank',84],['The Flash','assassin',81],['Doctor Fate','energy',87]];
 // Commander UI prototype: intentionally not submitted to multiplayer APIs yet.
 const commanderChoices=[
- {id:'attack',name:'Saldırı',icon:'⚔️',bonus:'Tüm kahramanlara saldırı +%5'},
- {id:'defense',name:'Savunma',icon:'🛡️',bonus:'Tüm kahramanlara savunma +%5'},
- {id:'magic',name:'Büyücü',icon:'🔮',bonus:'Enerji kahramanlarına saldırı +%5'},
- {id:'support',name:'Destek',icon:'💚',bonus:'Tüm kahramanlara can +%5'}
+ {id:'attack',name:'Saldırı',icon:'⚔️',bonus:'Savaşçı / Suikastçı · en fazla %10'},
+ {id:'defense',name:'Savunma',icon:'🛡️',bonus:'Tank · en fazla %10'},
+ {id:'magic',name:'Büyücü',icon:'🔮',bonus:'Enerji · en fazla %10'},
+ {id:'support',name:'Destek',icon:'💚',bonus:'Destek · en fazla %10'}
 ];
 let selectedCommanderId='attack';
 function renderCommanderPicker(){
