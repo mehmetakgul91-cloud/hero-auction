@@ -7,7 +7,7 @@ Bu çalışma yalnızca `feature/arena-commanders` dalındadır. Ana dal ve canl
 - Komutan, beş kahramanlık takımın **dışında** yer alır; 5'e 5 kahraman sınırı değişmez.
 - Kahramanlar ön veya arka safa serbestçe yerleştirilmeye devam eder.
 - Komutan, savaş sahnesinde takımının yanında görünür. Mevcut kahraman çizimleri ve oyun hesaplamaları ilk aşamada korunur.
-- Destek komutanı modeli seçildi: komutanlar hedef alınmaz ve saldırmaz. Ayrı dal prototipinde Muhafız (+%5 savunma), Stratejist (+%5 saldırı), Şifacı (+%5 maksimum can), Öncü (+%5 hız) vardır. Bu oranlar henüz oyun dengesi için kesinleştirilmemiştir.
+- Komutan sınıfları: Saldırı (+%5 tüm kahramanların saldırısı), Savunma (+%5 tüm kahramanların savunması), Büyücü (+%5 yalnız enerji kahramanlarının saldırısı), Destek (+%5 tüm kahramanların maksimum canı). Hız komutanı kaldırıldı.
 - Komutan seçimi, oyuncu hesabında saklama ve gerçek maç sunucusuna entegrasyon henüz yapılmadı.
 
 ## Aşamalı geliştirme
@@ -28,3 +28,10 @@ Bu çalışma yalnızca `feature/arena-commanders` dalındadır. Ana dal ve canl
 - `battle-engine.js`: isteğe bağlı `commanders: [idA,idB]` parametresi; varsayılan `[null,null]`.
 - `tests/arena-commanders.test.js`: komutansız geriye uyumluluk ve bonus testleri (henüz CI/Node ile çalıştırılmadı).
 - Sonraki iş: oyuncu bazlı komutan seçimi, hazırlık/arena görselleri, gerçek maç veri akışı ve simülasyon testleri.
+
+## Altınla gelişim (prototip)
+- Üyelikte bir komutan seçilir; gerçek hesap kaydı henüz entegre edilmedi.
+- Geliştirme alanları: saldırı, savunma, büyü ve destek. Her biri 0–10 seviye.
+- Bir sonraki seviye 100 × (mevcut seviye + 1) altın; seviye başına +%1 ilgili etki.
+- Komutan uzmanlığında başlangıç +%5. Büyü etkisi enerji sınıfındaki kahramanların saldırısına uygulanır.
+- Altın harcaması yalnızca güvenli sunucu işlemi ve kalıcı hesap kaydı tamamlandığında etkinleştirilecek.
