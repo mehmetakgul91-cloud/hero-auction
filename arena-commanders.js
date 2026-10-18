@@ -1,7 +1,7 @@
 // Commander progression prototype. Gold spending must be validated and persisted server-side.
 export const COMMANDER_STATS=Object.freeze(['attack','defense','magic','support']);
-export const COMMANDER_SPECIALTY_MAX_LEVEL=20;
-export const COMMANDER_OTHER_MAX_LEVEL=8;
+export const COMMANDER_SPECIALTY_MAX_LEVEL=40;
+export const COMMANDER_OTHER_MAX_LEVEL=20;
 export const COMMANDERS=Object.freeze([
  {id:'attack',name:'Saldırı Komutanı',icon:'⚔️',description:'Savaşçı ve suikastçı kahramanlarını güçlendirir',specialty:'attack'},
  {id:'defense',name:'Savunma Komutanı',icon:'🛡️',description:'Tank kahramanlarını güçlendirir',specialty:'defense'},
