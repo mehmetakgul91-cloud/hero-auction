@@ -203,3 +203,11 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 .arena-commander-strip{display:grid;grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr);align-items:center;gap:6px;margin:8px 0;padding:9px 10px;border:1px solid #6d719f;border-radius:12px;background:#0b1830;color:#e9f5ff;font-size:clamp(10px,2.4vw,13px);font-weight:850;text-align:center}
 .arena-commander-strip>div{min-width:0;overflow-wrap:anywhere}
 @media(max-width:360px){.commander-picker-grid{grid-template-columns:1fr}.commander-choice{min-height:44px}}
+
+.formation-power-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0;padding:9px;border:1px solid #4a84b7;border-radius:13px;background:#0b1c32}
+.formation-power-summary>div{min-width:0;display:flex;flex-direction:column;gap:5px;padding:9px;border-radius:9px;background:#172b45}
+.formation-power-summary small{font-size:10px;font-weight:800;letter-spacing:.04em;color:#b4cde7}
+.formation-power-summary strong{font-size:clamp(17px,4.6vw,24px);font-weight:950;color:#aaf1e2;font-variant-numeric:tabular-nums}
+.formation-power-summary .negative{color:#ff9a9a}
+.formation-power-explanation{font-size:11px;color:#b9cce3;line-height:1.5;margin:4px 0 12px}
+@media(min-width:700px){.formation-power-summary{grid-template-columns:repeat(4,minmax(0,1fr))}}
