@@ -36,7 +36,7 @@ const commanderOptions=[
  {id:'magic',icon:'🔮',name:'Büyücü Komutanı',detail:'Enerji'},
  {id:'support',icon:'💚',name:'Destek Komutanı',detail:'Destek'}
 ];
-let commanderProfile=null,commanderLoaded=false,commanderPending=null,commanderProfileOpen=false,commanderBusy=false,commanderLoading=false;
+let commanderProfile=null,commanderLoaded=false,commanderPending=null,commanderChangePending=null,commanderProfileOpen=false,commanderBusy=false,commanderLoading=false;
 function commanderVisibility(){
  const logged=signedIn(),needSelection=logged&&commanderLoaded&&!commanderProfile;
  $('commander-onboarding').hidden=!needSelection;
@@ -48,18 +48,52 @@ function renderCommanderOnboarding(){
  const root=$('commander-onboarding-options');root.replaceChildren();
  for(const c of commanderOptions){
   const b=document.createElement('button');b.type='button';b.className='commander-option'+(commanderPending===c.id?' chosen':'');
-  b.textContent=c.icon+' '+c.name+' · '+c.detail;
+  const img=document.createElement('img');img.src='/images/commander-'+c.id+'.svg';img.alt='';img.loading='lazy';const label=document.createElement('span');label.textContent=c.name+' · '+c.detail;b.append(img,label);
   b.setAttribute('aria-pressed',String(commanderPending===c.id));
   b.onclick=()=>{commanderPending=c.id;renderCommanderOnboarding()};
   root.append(b);
  }
  $('commander-select-confirm').disabled=!commanderPending||commanderBusy;
 }
+function renderCommanderRoster(){
+ const root=$('commander-roster-options');if(!root||!commanderProfile)return;
+ root.replaceChildren();
+ for(const c of commanderOptions){
+  const active=c.id===commanderProfile.commanderId,selected=c.id===commanderChangePending;
+  const button=document.createElement('button');button.type='button';
+  button.className='commander-roster-card'+(active?' active':'')+(selected?' chosen':'');
+  button.setAttribute('aria-pressed',String(selected||active));
+  button.disabled=commanderBusy;
+  const img=document.createElement('img');img.src='/images/commander-'+c.id+'.svg';img.alt='';img.loading='lazy';
+  const info=document.createElement('span');const title=document.createElement('strong');title.textContent=c.name;
+  const detail=document.createElement('small');detail.textContent=active?'✓ AKTİF KOMUTAN':c.detail;
+  info.append(title,detail);button.append(img,info);
+  button.onclick=()=>{commanderChangePending=active?null:c.id;renderCommanderRoster()};
+  root.append(button);
+ }
+ const confirm=$('commander-change-confirm');
+ confirm.disabled=commanderBusy||!commanderChangePending||walletGold<5000;
+ confirm.textContent=commanderChangePending?'🪙 5.000 · '+commanderOptions.find(c=>c.id===commanderChangePending).name.toLocaleUpperCase('tr-TR')+' SEÇ':'🪙 5.000 · KOMUTAN DEĞİŞTİR';
+}
+async function changeCommander(){
+ if(commanderBusy||!commanderChangePending||!commanderProfile||walletGold<5000)return;
+ const target=commanderOptions.find(c=>c.id===commanderChangePending);
+ if(!target||!window.confirm(target.name+' komutanına geçmek için 5.000 altın harcamak istiyor musun? Gelişim seviyelerin korunacak.'))return;
+ commanderBusy=true;renderCommanderRoster();
+ try{
+  const result=await post('/api/commander/change',{commanderId:target.id});
+  commanderProfile=result.profile;commanderChangePending=null;showGold(result.gold);
+  $('commander-upgrade-message').textContent='✓ Komutan değiştirildi. 5.000 altın harcandı.';
+ }catch(e){$('commander-upgrade-message').textContent='⚠ '+e.message}
+ finally{commanderBusy=false;renderCommanderProfile()}
+}
+$('commander-change-confirm').onclick=()=>void changeCommander();
 function renderCommanderProfile(){
  if(!commanderProfile)return;
  const chosen=commanderOptions.find(c=>c.id===commanderProfile.commanderId);
  $('commander-profile-name').textContent=(chosen?.icon||'♛')+' '+(chosen?.name||'Komutan');
  $('commander-profile-gold').textContent='🪙 '+walletGold.toLocaleString('tr-TR');
+ renderCommanderRoster();
  const root=$('commander-upgrades');root.replaceChildren();
  root.classList.add('commander-fishbone');
  const spine=document.createElement('div');spine.className='commander-fishbone-spine';spine.setAttribute('aria-hidden','true');
@@ -67,7 +101,7 @@ function renderCommanderProfile(){
  const emblem=document.createElement('span');emblem.className='commander-fishbone-emblem';emblem.textContent=chosen?.icon||'♛';
  const heading=document.createElement('strong');heading.textContent=chosen?.name||'Komutan';
  const sub=document.createElement('small');sub.textContent='UZMANLIK AĞACI · 4 GELİŞİM DALI';
- hub.append(emblem,heading,sub);root.append(spine,hub);
+ const portrait=document.createElement('img');portrait.className='commander-hub-portrait';portrait.src='/images/commander-'+commanderProfile.commanderId+'.svg';portrait.alt=chosen?.name||'Komutan';hub.append(portrait,emblem,heading,sub);root.append(spine,hub);
  for(const c of commanderOptions){
   const level=commanderProfile.levels[c.id],max=c.id===commanderProfile.commanderId?20:8,cost=200*(level+1);
   const card=document.createElement('div');card.className='commander-upgrade-card commander-fishbone-branch'+(max===20?' specialty':'');
