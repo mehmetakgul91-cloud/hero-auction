@@ -36,12 +36,12 @@ const commanderOptions=[
  {id:'magic',icon:'🔮',name:'Büyücü Komutanı',detail:'Enerji'},
  {id:'support',icon:'💚',name:'Destek Komutanı',detail:'Destek'}
 ];
-let commanderProfile=null,commanderLoaded=false,commanderPending=null,commanderProfileOpen=false,commanderBusy=false;
+let commanderProfile=null,commanderLoaded=false,commanderPending=null,commanderProfileOpen=false,commanderBusy=false,commanderLoading=false;
 function commanderVisibility(){
  const logged=signedIn(),needSelection=logged&&commanderLoaded&&!commanderProfile;
  $('commander-onboarding').hidden=!needSelection;
  $('commander-profile').hidden=!logged||!commanderProfileOpen||!commanderProfile;
- $('home').hidden=!logged||!!room||needSelection||commanderProfileOpen;
+ $('home').hidden=!logged||!!room||!commanderLoaded||needSelection||commanderProfileOpen;
  $('commander-open-profile').hidden=!commanderProfile;
 }
 function renderCommanderOnboarding(){
@@ -75,14 +75,16 @@ function renderCommanderProfile(){
  }
 }
 async function loadCommander(){
- if(!signedIn())return;
- commanderLoaded=false;commanderProfile=null;commanderProfileOpen=false;
+ if(!signedIn()||commanderLoading)return;
+ commanderLoading=true;const authToken=login.authToken;
+ commanderLoaded=false;commanderProfile=null;commanderProfileOpen=false;commanderVisibility();
  try{
   const result=await post('/api/commander/get',{});
-  if(!signedIn())return;
+  if(!signedIn()||login.authToken!==authToken)return;
   commanderProfile=result.profile;commanderLoaded=true;showGold(result.gold);
   renderCommanderOnboarding();renderCommanderProfile();commanderVisibility();
  }catch(e){notify('Komutan profili yüklenemedi: '+e.message)}
+ finally{commanderLoading=false}
 }
 async function selectCommander(){
  if(!commanderPending||commanderBusy)return;
