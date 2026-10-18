@@ -359,7 +359,24 @@ function step(){
 // Advance the replay by elapsed wall-clock time, not by the number of browser timer ticks.
 // Mobile browsers throttle or suspend intervals when the tab is in the background.
 let replayDueAt=0;
-function stop(){if(timer!==null){clearInterval(timer);timer=null}replayDueAt=0;pauseArenaClock();stopArenaMusic()}
+// Keep the display awake while an arena replay is actively playing (where supported).
+let arenaWakeLock=null,arenaWakeRequestPending=false;
+async function requestArenaWakeLock(){
+ if(timer===null||document.hidden||!('wakeLock' in navigator)||arenaWakeLock||arenaWakeRequestPending)return;
+ arenaWakeRequestPending=true;
+ try{
+  const lock=await navigator.wakeLock.request('screen');
+  if(timer===null||document.hidden){await lock.release();return}
+  arenaWakeLock=lock;
+  lock.addEventListener('release',()=>{if(arenaWakeLock===lock)arenaWakeLock=null},{once:true});
+ }catch(e){/* Unsupported, denied or temporarily unavailable: replay still works. */}
+ finally{arenaWakeRequestPending=false}
+}
+function releaseArenaWakeLock(){
+ const lock=arenaWakeLock;arenaWakeLock=null;
+ if(lock)void lock.release().catch(()=>{});
+}
+function stop(){if(timer!==null){clearInterval(timer);timer=null}replayDueAt=0;pauseArenaClock();stopArenaMusic();releaseArenaWakeLock()}
 function advanceReplay(){
  if(timer===null||!replayDueAt)return;
  const interval=Math.max(50,duration());
@@ -382,13 +399,14 @@ function startReplay(){
  replayDueAt=Date.now()+Math.max(50,duration());
  timer=setInterval(advanceReplay,Math.min(200,Math.max(50,duration())));
  void startArenaMusic();
+ void requestArenaWakeLock();
  $('play').textContent='⏸ DURDUR';
 }
 $('play').onclick=()=>{if(timer!==null){stop();$('play').textContent='▶ DEVAM ET';return}startReplay()};
 $('speed').onchange=()=>{if(timer!==null){clearInterval(timer);timer=null;replayDueAt=0;startReplay()}};
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)advanceReplay()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){releaseArenaWakeLock()}else{advanceReplay();void requestArenaWakeLock()}});
 window.addEventListener('focus',advanceReplay);
-window.addEventListener('pageshow',advanceReplay);
+window.addEventListener('pageshow',()=>{advanceReplay();void requestArenaWakeLock()});
 $('arena-music-toggle').onclick=()=>{arenaMusicEnabled=!arenaMusicEnabled;updateMusicButton();if(arenaMusicEnabled&&timer!==null)void startArenaMusic();else stopArenaMusic()};updateMusicButton();
 $('next').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';step()};
 $('reset').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';$('events').replaceChildren();$('message').textContent='Başlamak için savaşı oynat.';build()};
