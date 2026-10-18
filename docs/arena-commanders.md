@@ -35,3 +35,13 @@ Bu çalışma yalnızca `feature/arena-commanders` dalındadır. Ana dal ve canl
 - Bir sonraki seviye 100 × (mevcut seviye + 1) altın; seviye başına +%1 ilgili etki.
 - Komutan uzmanlığında başlangıç +%5. Büyü etkisi enerji sınıfındaki kahramanların saldırısına uygulanır.
 - Altın harcaması yalnızca güvenli sunucu işlemi ve kalıcı hesap kaydı tamamlandığında etkinleştirilecek.
+
+## Güncel uzmanlık ve sınıf kuralları
+- Başlangıç bonusu %0; yalnız altınla kazanılan seviyeler etki eder.
+- Ana uzmanlık 10 seviye / en fazla %10; diğer üç dal ayrı ayrı 4 seviye / en fazla %4.
+- Saldırı dalı yalnız savaşçı ve suikastçı kahramanların saldırısını güçlendirir.
+- Savunma dalı yalnız tank kahramanların savunmasını güçlendirir.
+- Büyü dalı yalnız enerji kahramanların saldırısını güçlendirir.
+- Destek dalı yalnız destek kahramanların maksimum canını güçlendirir.
+- Bonuslar tüm takıma uygulanmaz; komutanın kimliği hangi dalın %10'a çıkabileceğini belirler.
+- Önceki +%5 ücretsiz başlangıç bonusu kaldırıldı.
