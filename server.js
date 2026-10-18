@@ -106,7 +106,7 @@ const rand=n=>crypto.randomInt(n);
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
 const code=()=>String(crypto.randomInt(100,1000));
 const token=()=>crypto.randomBytes(24).toString('hex');
-const publicRoom=(r,seat)=>({code:r.code,universe:r.universe,phase:r.phase,round:r.round,turn:r.turn,deadline:r.deadline||null,series:r.series||[0,0],rematch:r.rematch||[false,false],mode:r.mode||"friend",rankChange:r.phase==='finished'?(r.rankChange||[0,0]):null,rankBefore:r.phase==='finished'?(r.rankBefore||[null,null]):null,topBid:r.topBid,topSeat:r.topSeat,history:r.history,chat:r.chat||[],players:r.players.map((p,i)=>p?{name:p.name,credits:p.credits,team:p.team.map(x=>({name:x.name,universe:x.universe,cost:x.cost,rarity:rarityForPower(x.power)})),connected:true,seat:i}:null),card:r.phase==='auction'?{name:r.cards[r.round].name,universe:r.cards[r.round].universe,rarity:rarityForPower(r.cards[r.round].power)}:null,final:r.phase==='finished'?r.players.map(p=>({name:p.name,score:Math.round(p.team.reduce((a,c)=>a+c.power,0)*(1+p.credits*0.01)*100)/100,credits:p.credits,team:p.team.map(c=>({name:c.name,universe:c.universe,cost:c.cost,power:c.power,rarity:rarityForPower(c.power)}))})):null,me:seat,catalogueCount:catalogue.size});
+const publicRoom=(r,seat)=>({code:r.code,universe:r.universe,phase:r.phase,round:r.round,turn:r.turn,deadline:r.deadline||null,series:r.series||[0,0],rematch:r.rematch||[false,false],mode:r.mode||"friend",difficulty:r.mode==='bot'?(r.difficulty||'medium'):null,rankChange:r.phase==='finished'?(r.rankChange||[0,0]):null,rankBefore:r.phase==='finished'?(r.rankBefore||[null,null]):null,topBid:r.topBid,topSeat:r.topSeat,history:r.history,chat:r.chat||[],players:r.players.map((p,i)=>p?{name:p.name,credits:p.credits,team:p.team.map(x=>({name:x.name,universe:x.universe,cost:x.cost,rarity:rarityForPower(x.power)})),connected:true,seat:i}:null),card:r.phase==='auction'?{name:r.cards[r.round].name,universe:r.cards[r.round].universe,rarity:rarityForPower(r.cards[r.round].power)}:null,final:r.phase==='finished'?r.players.map(p=>({name:p.name,score:Math.round(p.team.reduce((a,c)=>a+c.power,0)*(1+p.credits*0.01)*100)/100,credits:p.credits,team:p.team.map(c=>({name:c.name,universe:c.universe,cost:c.cost,power:c.power,rarity:rarityForPower(c.power)}))})):null,me:seat,catalogueCount:catalogue.size});
 function publish(r){markRoom(r);for(const client of listeners.get(r.code)||[]){try{client.res.write(`data: ${JSON.stringify(publicRoom(r,client.seat))}\n\n`)}catch{}}}
 function log(r,msg){r.history.push(msg);if(r.history.length>30)r.history.shift();}
 function forcedCardCost(card){return ({common:2,advanced:3,rare:4,legendary:5})[rarityForPower(card.power)]||2}
@@ -208,7 +208,7 @@ if(url==='/api/auth/google'){const credential=String(b.credential||'');if(creden
 if(url==='/api/create'){const name=chosenName(b,'Oyuncu 1');const universe=['marvel','dc','mixed'].includes(b.universe)?b.universe:'mixed';const pool=shuffle([...catalogue.values()].filter(x=>universe==='mixed'||x.universe===universe));if(pool.length<10)error('Bu evrende yeterli karakter yok.');const cards=pool.slice(0,10).map(x=>({...x,power:stablePower(x.id)}));let id;do{id=code()}while(rooms.has(id));const t=token();const accountId=readLogin(b.authToken).sub;const r={code:id,universe,cards,round:0,phase:'waiting',turn:0,topBid:0,topSeat:null,players:[{name,token:t,accountId,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],deadline:null,mode:'friend'};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/join'){const r=rooms.get(String(b.code||'').toUpperCase());if(!r)error('Oda bulunamadı.',404);if(r.players[1])error('Oda dolu.');await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name:chosenName(b,'Oyuncu 2'),token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;log(r,`Oyun başladı. 1. kart için açılış: ${r.players[0].name}`);publish(r);return{token:t,room:publicRoom(r,1)}}
 if(url==='/api/rematch'){const{r,seat}=authorize(b);if(r.battleSettlementPending&&!r.matchSettled)error('Savaş sonucu henüz kesinleşmedi.');if(r.players.every(p=>p?.team?.length===5)&&r.battleSync?.result&&!r.battleCompleted?.[seat])error('Önce 2.0 savaşını tamamlamalısın.');if(r.phase!=='finished')error('Maç henüz bitmedi.');r.rematch[seat]=true;if(r.mode==='bot')r.rematch[1]=true;if(r.rematch.every(Boolean)){if(r.mode!=='bot'){try{await chargeEntry(r.players.map(p=>p.accountId),r.code);}catch(e){r.rematch=[false,false];throw e}}r.entryPaid=r.mode!=='bot';r.goldRefunds=null;r.matchNumber=(r.matchNumber||1)+1;r.goldAward=null;r.rankChange=null;r.rankBefore=null;r.cards=newCards(r.universe);r.round=0;r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.topBid=0;r.topSeat=null;r.history=[];r.openingPassSeat=null;r.rematch=[false,false];r.battleCompleted=[false,false];r.matchSettled=false;r.battleSettlementPending=false;r.battleSync=null;r.created=Date.now();r.lastActivity=Date.now();for(const p of r.players){p.credits=20;p.team=[];}log(r,'Rövanş başladı!');}publish(r);return{room:publicRoom(r,seat)}}
-if(url==='/api/bot'){const universe=['marvel','dc','mixed'].includes(b.universe)?b.universe:'mixed';const name=chosenName(b,'Oyuncu');let id;do{id=code()}while(rooms.has(id));const t=token();const r={entryPaid:false,code:id,universe,cards:newCards(universe),round:0,phase:'auction',turn:0,deadline:Date.now()+20000,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},{name:'Bilgisayar',token:token(),credits:20,team:[]}],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'bot'};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
+if(url==='/api/bot'){const difficulty=['easy','medium','hard'].includes(b.difficulty)?b.difficulty:'medium';const universe=['marvel','dc','mixed'].includes(b.universe)?b.universe:'mixed';const name=chosenName(b,'Oyuncu');let id;do{id=code()}while(rooms.has(id));const t=token();const r={entryPaid:false,code:id,universe,cards:newCards(universe),round:0,phase:'auction',turn:0,deadline:Date.now()+20000,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},{name:'Bilgisayar',token:token(),credits:20,team:[]}],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'bot',difficulty};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/match'){const universe=['marvel','dc','mixed'].includes(b.universe)?b.universe:'mixed';const name=chosenName(b,'Oyuncu');for(const [key,item] of waiting){if(item.universe!==universe||Date.now()-item.created>60000)continue;const r=rooms.get(item.code);if(!r||r.players[1]){waiting.delete(key);continue;}await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.mode='random';waiting.delete(key);publish(r);return{token:t,room:publicRoom(r,1)}}let id;do{id=code()}while(rooms.has(id));const t=token();const r={code:id,universe,cards:newCards(universe),round:0,phase:'matching',turn:0,deadline:null,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'random'};rooms.set(id,r);markRoom(r);waiting.set(id,{code:id,universe,created:Date.now()});return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/chat'){const{r,seat}=authorize(b);if(r.mode==='bot')error('Sohbet yalnızca gerçek oyuncularla kullanılabilir.');const message=String(b.message||'').trim().replace(/[\u0000-\u001f\u007f]/g,' ');if(!message||message.length>240)error('Mesaj 1–240 karakter olmalı.');if(Date.now()-(r.lastChatAt?.[seat]||0)<1000)error('Yeni mesaj için bir saniye bekle.');r.lastChatAt??=[0,0];r.lastChatAt[seat]=Date.now();r.chat??=[];r.chat.push({seat,name:r.players[seat].name,message,time:Date.now()});if(r.chat.length>60)r.chat.shift();r.lastActivity=Date.now();publish(r);return{room:publicRoom(r,seat)}}
 if(url==='/api/state'){const{r,seat}=authorize(b);r.lastActivity=Date.now();return{room:publicRoom(r,seat)}}
@@ -424,7 +424,46 @@ if(r.phase!=='auction')continue;
 // A new round must start with a fresh timer and must never be deleted mid-match.
 if(!r.deadline)r.deadline=Date.now()+20000;
 if(r.players[r.turn].credits<=r.topBid&&r.topSeat!==null){finishAuction(r);publish(r);continue;}
-if(r.mode==='bot'&&r.turn===1){const card=r.cards[r.round];const max=r.players[1].credits;const offer=r.topBid+1;const willBid=offer<=max && (offer<=2||Math.random()<0.45);if(willBid){r.topBid=offer;r.topSeat=1;r.openingPassSeat=null;log(r,`Bilgisayar ${offer} kredi teklif etti.`);if(r.players[0].credits<=offer)finishAuction(r);else{r.turn=0;r.deadline=Date.now()+20000;}}else if(r.topSeat!==null){log(r,'Bilgisayar pas geçti.');finishAuction(r);}else if(r.openingPassSeat===0){log(r,'İki oyuncu da pas geçti. Kart atlandı.');r.round++;advanceRound(r);}else{r.openingPassSeat=1;r.turn=0;r.deadline=Date.now()+20000;log(r,'Bilgisayar pas geçti. Sıra sende.');}r.lastActivity=Date.now();publish(r);continue;}
+if(r.mode==='bot'&&r.turn===1){
+ const card=r.cards[r.round],bot=r.players[1],human=r.players[0];
+ const offer=r.topBid+1,difficulty=r.difficulty||'medium';
+ const slots=Math.max(0,5-bot.team.length),cardsLeft=r.cards.length-r.round;
+ const future=r.cards.slice(r.round+1);
+ const power=Number(card.power)||0;
+ const futurePowers=future.map(c=>Number(c.power)||0).sort((x,y)=>y-x);
+ const replacementPower=futurePowers[Math.min(Math.max(0,slots-1),futurePowers.length-1)]||0;
+ const humanPower=human.team.reduce((n,c)=>n+(Number(c.power)||0),0);
+ const botPower=bot.team.reduce((n,c)=>n+(Number(c.power)||0),0);
+ // Preserve credits for future forced purchases and prioritize valuable cards.
+ const reserve=Math.max(0,(slots-1)*3);
+ const freeCredits=Math.max(0,bot.credits-reserve);
+ const scarcity=cardsLeft<=slots;
+ const advantage=Math.max(-15,Math.min(15,(humanPower-botPower)/Math.max(1,5-slots)));
+ const strategicValue=power-replacementPower+advantage*.30;
+ const idealPrice=Math.max(1,Math.min(bot.credits,
+   Math.round(3+(power-55)*.14+Math.max(0,strategicValue)*.15)));
+ const hardCap=scarcity?bot.credits:Math.max(1,Math.min(bot.credits,freeCredits,idealPrice));
+ let willBid=false;
+ if(offer<=bot.credits&&slots>0){
+  if(difficulty==='easy'){
+   willBid=(offer<=1&&Math.random()<.6)||(offer<=3&&Math.random()<.18);
+  }else if(difficulty==='hard'){
+   // Hard mode is deterministic: evaluate card quality, remaining opportunities,
+   // opponent strength, credit reserve and the current auction price.
+   const strongCard=power>=Math.max(65,replacementPower-3);
+   const denyStrongOpponent=human.team.length<5&&power>=83&&human.credits<=offer+2;
+   const cap=denyStrongOpponent?Math.min(bot.credits,hardCap+2):hardCap;
+   willBid=(scarcity||strongCard||denyStrongOpponent)&&offer<=cap;
+  }else{
+   willBid=offer<=2||Math.random()<.45;
+  }
+ }
+ if(willBid){r.topBid=offer;r.topSeat=1;r.openingPassSeat=null;log(r,`Bilgisayar ${offer} kredi teklif etti.`);if(human.credits<=offer)finishAuction(r);else{r.turn=0;r.deadline=Date.now()+20000;}}
+ else if(r.topSeat!==null){log(r,'Bilgisayar pas geçti.');finishAuction(r);}
+ else if(r.openingPassSeat===0){log(r,'İki oyuncu da pas geçti. Kart atlandı.');r.round++;advanceRound(r);}
+ else{r.openingPassSeat=1;r.turn=0;r.deadline=Date.now()+20000;log(r,'Bilgisayar pas geçti. Sıra sende.');}
+ r.lastActivity=Date.now();publish(r);continue;
+}
 if(r.deadline&&Date.now()>=r.deadline){const expiredSeat=r.turn;log(r,`${r.players[expiredSeat].name} süresi dolduğu için otomatik pas geçti.`);if(r.topSeat!==null){finishAuction(r);}else if(r.openingPassSeat===1-expiredSeat){log(r,'İki oyuncu da pas geçti. Kart atlandı.');r.round++;advanceRound(r);}else{r.openingPassSeat=expiredSeat;r.turn=1-expiredSeat;r.deadline=Date.now()+20000;log(r,`Sıra ${r.players[r.turn].name} oyuncusuna geçti.`);}r.lastActivity=Date.now();publish(r);}
 }for(const [id,r]of rooms){const age=Date.now()-(r.lastActivity||r.created);const expiry=r.phase==='finished'?24*3600_000:r.phase==='waiting'?2*3600_000:r.phase==='matching'?5*60_000:r.phase==='auction'?6*3600_000:24*3600_000;if(age>expiry){rooms.delete(id);dirtyRooms.add(id);waiting.delete(id);const clients=listeners.get(id);if(clients){for(const c of clients){try{c.res.end()}catch{}}listeners.delete(id)}}}for(const [id,w]of waiting)if(!rooms.has(w.code)||Date.now()-w.created>60000)waiting.delete(id)},500).unref();
 setInterval(()=>{flushRooms().catch(e=>console.error('Database flush:',e.message));flushGold().catch(e=>console.error('Gold flush:',e.message))},1000).unref();
