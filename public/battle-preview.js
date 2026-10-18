@@ -6,6 +6,33 @@ let previewCredits=0;
 const creditBonus=credits=>Math.max(-0.99,credits*0.01);
 const effectivePower=power=>Math.round(power*(1+creditBonus(previewCredits))*10)/10;
 let demoB=[['Superman','fighter',92],['Wonder Woman','fighter',85],['Doomsday','tank',84],['The Flash','assassin',81],['Doctor Fate','energy',87]];
+// Commander UI prototype: intentionally not submitted to multiplayer APIs yet.
+const commanderChoices=[
+ {id:'guardian',name:'Muhafız',icon:'🛡️',bonus:'Savunma +%5'},
+ {id:'strategist',name:'Stratejist',icon:'🎯',bonus:'Saldırı +%5'},
+ {id:'medic',name:'Şifacı',icon:'💚',bonus:'Maksimum can +%5'},
+ {id:'scout',name:'Öncü',icon:'⚡',bonus:'Hız +%5'}
+];
+let selectedCommanderId='guardian';
+function renderCommanderPicker(){
+ const root=$('commander-picker-grid');if(!root)return;
+ root.replaceChildren();
+ for(const commander of commanderChoices){
+  const button=document.createElement('button');button.type='button';button.className='commander-choice';
+  const selected=commander.id===selectedCommanderId;
+  button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));
+  button.textContent=commander.icon+' '+commander.name+' · '+commander.bonus;
+  button.onclick=()=>{selectedCommanderId=commander.id;renderCommanderPicker();renderCommanderStrip()};
+  root.append(button);
+ }
+}
+function renderCommanderStrip(){
+ const root=$('arena-commander-strip');if(!root)return;
+ const commander=commanderChoices.find(c=>c.id===selectedCommanderId);
+ $('arena-commander-a').textContent=commander.icon+' SENİN KOMUTANIN · '+commander.name;
+ $('arena-commander-b').textContent='♛ RAKİP KOMUTANI · Henüz seçilmedi';
+ root.hidden=false;
+}
 const roleNames={tank:'TANK',fighter:'SAVAŞÇI',energy:'ENERJİ / MESAFELİ',assassin:'SUİKASTÇI',support:'DESTEK'};
 let states=[],events=[],cursor=0,timer=null;
 // Original procedural arena soundtrack; no external copyrighted audio assets.
@@ -554,3 +581,6 @@ async function showAuctionRematch(){
  button.onclick=async()=>{button.disabled=true;try{const auth=JSON.parse(localStorage.getItem('hero-auction-login')||'null');const response=await fetch('/api/rematch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,authToken:auth?.authToken})});const result=await response.json();if(!response.ok)throw Error(result.error||'Rövanş gönderilemedi');button.textContent='✓ RÖVANŞ İSTEĞİ GÖNDERİLDİ';const watch=setInterval(async()=>{try{const response=await fetch('/api/battle-auction-team?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});if(response.status===409){clearInterval(watch);location.replace('/')} }catch{}},2500);}catch(e){button.disabled=false;$('message').textContent='⚠ '+e.message}};
  }catch(e){battleRematchShown=false;$('message').textContent='⚠ '+e.message}
 }
+
+renderCommanderPicker();
+renderCommanderStrip();
