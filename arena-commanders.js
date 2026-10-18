@@ -1,7 +1,7 @@
 // Commander progression prototype. Gold spending must be validated and persisted server-side.
 export const COMMANDER_STATS=Object.freeze(['attack','defense','magic','support']);
-export const COMMANDER_SPECIALTY_MAX_LEVEL=10;
-export const COMMANDER_OTHER_MAX_LEVEL=4;
+export const COMMANDER_SPECIALTY_MAX_LEVEL=20;
+export const COMMANDER_OTHER_MAX_LEVEL=8;
 export const COMMANDERS=Object.freeze([
  {id:'attack',name:'Saldırı Komutanı',icon:'⚔️',description:'Savaşçı ve suikastçı kahramanlarını güçlendirir',specialty:'attack'},
  {id:'defense',name:'Savunma Komutanı',icon:'🛡️',description:'Tank kahramanlarını güçlendirir',specialty:'defense'},
@@ -25,7 +25,12 @@ export function validateCommanderProfile(profile){
 }
 export function commanderUpgradeCost(currentLevel){
  if(!Number.isInteger(currentLevel)||currentLevel<0||currentLevel>=COMMANDER_SPECIALTY_MAX_LEVEL)throw Error('Geliştirme sınırı');
- return 100*(currentLevel+1);
+ return 200*(currentLevel+1);
+}
+// Reserved for a future diamond wallet; diamonds cannot be spent yet.
+export function commanderDiamondUpgradeCost(currentLevel){
+ if(!Number.isInteger(currentLevel)||currentLevel<0||currentLevel>=COMMANDER_SPECIALTY_MAX_LEVEL)throw Error('Geliştirme sınırı');
+ return 10*(currentLevel+1);
 }
 export function previewCommanderUpgrade(profile,stat,gold){
  validateCommanderProfile(profile);
@@ -39,7 +44,7 @@ export function previewCommanderUpgrade(profile,stat,gold){
 export function commanderStatBonus(profile,stat){
  validateCommanderProfile(profile);
  if(!COMMANDER_STATS.includes(stat))throw Error('Geçersiz geliştirme alanı');
- return profile.levels[stat]*.01;
+ return profile.levels[stat]*.005;
 }
 export function applyCommanderSupport(team,commanderOrProfile){
  if(!commanderOrProfile)return team;
