@@ -11,14 +11,14 @@ function playAuctionActionSound(action){
   const ctx=auctionSfxContext;
   if(ctx.state==='suspended')void ctx.resume().catch(()=>{});
   const now=ctx.currentTime+.012;
-  const notes=action==='bid'?[[520,720,.13,'sine'],[780,1080,.16,'triangle']]:[[310,230,.16,'triangle'],[210,155,.21,'sine']];
+  const notes=action==='bid'?[[450,850,.17,'sine'],[720,1450,.21,'triangle']]:[[390,210,.19,'triangle'],[260,110,.27,'sine']];
   for(let i=0;i<notes.length;i++){
-   const [start,end,duration,wave]=notes[i],at=now+i*.085;
+   const [start,end,duration,wave]=notes[i],at=now+i*.095;
    const osc=ctx.createOscillator(),gain=ctx.createGain();
    osc.type=wave;osc.frequency.setValueAtTime(start,at);
    osc.frequency.exponentialRampToValueAtTime(end,at+duration);
    gain.gain.setValueAtTime(.0001,at);
-   gain.gain.exponentialRampToValueAtTime(.055,at+.012);
+   gain.gain.exponentialRampToValueAtTime(.075,at+.018);
    gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
    osc.connect(gain);gain.connect(ctx.destination);
    osc.start(at);osc.stop(at+duration+.02);
