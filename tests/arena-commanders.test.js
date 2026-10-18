@@ -18,7 +18,7 @@ test('no commander preserves deterministic battle result',()=>{
  }
 });
 test('commander profile keeps 5 versus 5 and maximum 15 rounds',()=>{
- const profile={commanderId:'magic',levels:{attack:1,defense:1,magic:10,support:1}};
+ const profile={commanderId:'magic',levels:{attack:1,defense:1,magic:20,support:1}};
  const result=simulateBattle(team('A'),team('B'),{seed:'commander-classes',commanders:[profile,null]});
  assert.equal(result.teams[0].length,5);assert.equal(result.teams[1].length,5);
  assert.ok(result.rounds<=15);
