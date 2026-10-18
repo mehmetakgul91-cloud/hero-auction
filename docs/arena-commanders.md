@@ -53,3 +53,12 @@ Bu çalışma yalnızca `feature/arena-commanders` dalındadır. Ana dal ve canl
 - Gelecekteki elmas maliyeti her dal için 10 × (mevcut seviye + 1): 10, 20, 30…
 - Elmasla yükseltme henüz aktif değildir; yalnız fiyat hesabı hazırdır.
 - Eski 100 altın ve +%1 seviye sistemi geçersizdir. Yukarıdaki kurallar önceki prototip notlarının yerine geçer.
+
+## Hesap entegrasyonu (prototip dalı)
+- Google ve misafir oturumlarında hesap kimliğine bağlı ilk komutan seçimi; seçildikten sonra yeniden seçime izin verilmez.
+- PostgreSQL hero_auction_commanders tablosunda komutan profili ve dört seviye saklanır.
+- /api/commander/get, /select ve /upgrade uç noktaları eklendi.
+- /upgrade, veritabanı işlemi içinde komutan satırını kilitler, yeterli altın varsa cüzdanı düşürür ve profili günceller; hata durumunda geri alır.
+- Ana ekranda Komutanım düğmesi, üyelik seçim paneli ve altınla geliştirme kartları bulunur.
+- Elmas ödemesi kapalıdır. Gerçek arena eşleştirmesinde komutan profillerinin sunucudan alınması ve savaşa uygulanması sonraki aşamadır.
+- Henüz uçtan uca test edilmedi ve ana dala birleştirilmedi.
