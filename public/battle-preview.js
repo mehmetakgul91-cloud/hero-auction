@@ -356,9 +356,38 @@ function step(){
  window.dispatchEvent(new CustomEvent('heroarena:move',{detail:{event:primary,events:batch,teams:window.heroArenaTeams}}));
  if(cursor>=events.length){stop();showBattleSummary()}
 }
-function stop(){if(timer!==null){clearInterval(timer);timer=null}pauseArenaClock();stopArenaMusic()}
-$('play').onclick=()=>{if(timer!==null){stop();$('play').textContent='▶ DEVAM ET';return}startArenaClock();timer=setInterval(step,duration());void startArenaMusic();$('play').textContent='⏸ DURDUR'};
-$('speed').onchange=()=>{if(timer!==null){stop();startArenaClock();timer=setInterval(step,duration());void startArenaMusic()}};
+// Advance the replay by elapsed wall-clock time, not by the number of browser timer ticks.
+// Mobile browsers throttle or suspend intervals when the tab is in the background.
+let replayDueAt=0;
+function stop(){if(timer!==null){clearInterval(timer);timer=null}replayDueAt=0;pauseArenaClock();stopArenaMusic()}
+function advanceReplay(){
+ if(timer===null||!replayDueAt)return;
+ const interval=Math.max(50,duration());
+ const now=Date.now();
+ // Skip animations for overdue moves; preserve the server-calculated event order/result.
+ let steps=0;
+ while(timer!==null&&cursor<events.length&&Date.now()>=replayDueAt&&steps<events.length+1){
+  const overdue=now-replayDueAt>=interval;
+  if(overdue)document.body.classList.add('arena-catching-up');
+  step();
+  replayDueAt+=interval;
+  steps++;
+ }
+ document.body.classList.remove('arena-catching-up');
+}
+function startReplay(){
+ if(timer!==null)return;
+ startArenaClock();
+ replayDueAt=Date.now()+Math.max(50,duration());
+ timer=setInterval(advanceReplay,Math.min(200,Math.max(50,duration())));
+ void startArenaMusic();
+ $('play').textContent='⏸ DURDUR';
+}
+$('play').onclick=()=>{if(timer!==null){stop();$('play').textContent='▶ DEVAM ET';return}startReplay()};
+$('speed').onchange=()=>{if(timer!==null){clearInterval(timer);timer=null;replayDueAt=0;startReplay()}};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)advanceReplay()});
+window.addEventListener('focus',advanceReplay);
+window.addEventListener('pageshow',advanceReplay);
 $('arena-music-toggle').onclick=()=>{arenaMusicEnabled=!arenaMusicEnabled;updateMusicButton();if(arenaMusicEnabled&&timer!==null)void startArenaMusic();else stopArenaMusic()};updateMusicButton();
 $('next').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';step()};
 $('reset').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';$('events').replaceChildren();$('message').textContent='Başlamak için savaşı oynat.';build()};
