@@ -81,6 +81,25 @@ function pauseArenaClock(){if(arenaClockStartedAt){arenaElapsedMs+=Date.now()-ar
 function resetArenaClock(){pauseArenaClock();arenaElapsedMs=0;updateArenaClock()}
 const roleOptions=['tank','fighter','energy'];
 let auctionLaneModifiers=[];
+let arenaCommanderProfile=null;
+function commanderBonusForRole(role){
+ const p=arenaCommanderProfile;if(!p?.levels)return 0;
+ const stat=role==='tank'?'defense':role==='fighter'||role==='assassin'?'attack':role==='energy'?'magic':role==='support'?'support':null;
+ if(!stat)return 0;
+ const level=Number(p.levels[stat])||0;
+ return Math.min(Math.max(0,level),p.commanderId===stat?40:20)*.005;
+}
+async function loadArenaCommander(){
+ try{
+  const login=JSON.parse(localStorage.getItem('hero-auction-login')||'null');
+  if(!login?.authToken)return;
+  const response=await fetch('/api/commander/get',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({authToken:login.authToken})});
+  if(!response.ok)return;
+  const data=await response.json();arenaCommanderProfile=data.profile||null;
+  if(!prepDone){renderBoard();renderRolePickers()}
+ }catch(error){console.warn('Komutan önizlemesi yüklenemedi:',error)}
+}
+
 let assignedRoles=demoA.map(x=>roleNames[x[1]]?x[1]:'fighter');
 const slotRoles=['tank','fighter','energy','energy','energy'];
 const lanes=['front','front','back','back','back'];
@@ -143,7 +162,11 @@ function displayedLanePower(heroIndex,lane){
  const duplicatePenalty=Math.max(0,roleCount-3)*.075;
  const laneBonus=Number.isFinite(modifier)?Math.max(-.10,Math.min(.10,modifier)):0;
  const multiplier=Math.max(.90,Math.min(1.10,1+roleBonus-duplicatePenalty+laneBonus));
- return {base,bonus:laneBonus,power:Math.round(base*multiplier*(1+credit)*100)/100};
+ const tacticalPower=base*multiplier*(1+credit);
+ const commanderBonus=commanderBonusForRole(role);
+ // Commander upgrades are applied AFTER the bounded tactical multiplier in the battle engine.
+ // This is the strongest boosted combat stat expressed on the card-power scale.
+ return {base,bonus:laneBonus,commanderBonus,power:Math.round(tacticalPower*(1+commanderBonus)*100)/100};
 }
 function updateFormationPowerSummary(){
  const placed=positions.map((heroIndex,slot)=>({heroIndex,slot})).filter(item=>Number.isInteger(item.heroIndex));
@@ -159,7 +182,7 @@ function updateFormationPowerSummary(){
   el.classList.toggle('negative',delta<0);
  }
 }
-function renderBoard(){for(const [container,indices] of [['front-slots',[0,1,2,3,4].filter(i=>lanes[i]==='front')],['back-slots',[0,1,2,3,4].filter(i=>lanes[i]==='back')]]){const root=$(container);root.replaceChildren();for(const slot of indices){const heroIndex=positions[slot];const wrap=document.createElement('div');wrap.className='slot-wrap';const label=document.createElement('span');label.className='slot-role';label.textContent=heroIndex===null?'BOŞ KONUM':(roleIcons[roleAt(slot)]+' '+roleNames[roleAt(slot)]);const btn=document.createElement('button');btn.type='button';btn.className='board-slot circle-slot'+(heroIndex===null?' empty':' filled');btn.dataset.slot=slot;btn.disabled=prepDone;const name=document.createElement('strong');if(heroIndex===null){name.textContent='+';btn.append(name)}else {heroPortrait(heroIndex,btn);const powerBadge=document.createElement('span');powerBadge.className='board-power';powerBadge.textContent='GÜÇ '+displayedLanePower(heroIndex,lanes[slot]).power.toFixed(2);btn.append(powerBadge);if(auctionMode){const bonus=Number(auctionLaneModifiers[heroIndex]?.[lanes[slot]]);if(Number.isFinite(bonus)){const bonusBadge=document.createElement('span');bonusBadge.className='board-lane-bonus';bonusBadge.textContent=(lanes[slot]==='front'?'ÖN ':'ARKA ')+(bonus>=0?'+':'')+Math.round(bonus*100)+'%';bonusBadge.style.cssText='display:block;font-size:11px;font-weight:800;color:'+(bonus>=0?'#83f4b6':'#ff9a9a');btn.append(bonusBadge)}}};btn.setAttribute('aria-label',roleNames[roleAt(slot)]+' bölgesi: '+(heroIndex===null?'Boş':demoA[heroIndex][0]));btn.onclick=()=>{if(selectedHero!==null)placeHero(selectedHero,slot);else if(heroIndex!==null){selectedHero=heroIndex;renderBoard();renderRolePickers()}};const identity=document.createElement('div');identity.className='board-hero-identity';if(heroIndex!==null){const heroName=document.createElement('strong');heroName.className='board-hero-name';heroName.textContent=demoA[heroIndex][0];const heroPower=document.createElement('span');heroPower.className='board-hero-power';heroPower.textContent='⚡ GÜÇ '+displayedLanePower(heroIndex,lanes[slot]).power.toFixed(2);heroPower.style.color=displayedLanePower(heroIndex,lanes[slot]).power>=displayedLanePower(heroIndex,lanes[slot]).base?'#83f4b6':'#ff9a9a';identity.append(heroName,heroPower)}const move=document.createElement('button');move.type='button';move.className='lane-switch';move.textContent=lanes[slot]==='front'?'↓ Arka safa':'↑ Ön safa';move.disabled=prepDone;move.onclick=()=>setLane(slot,lanes[slot]==='front'?'back':'front');wrap.append(label,btn,identity,move);root.append(wrap)}}updateFormationPowerSummary()}
+function renderBoard(){for(const [container,indices] of [['front-slots',[0,1,2,3,4].filter(i=>lanes[i]==='front')],['back-slots',[0,1,2,3,4].filter(i=>lanes[i]==='back')]]){const root=$(container);root.replaceChildren();for(const slot of indices){const heroIndex=positions[slot];const wrap=document.createElement('div');wrap.className='slot-wrap';const label=document.createElement('span');label.className='slot-role';label.textContent=heroIndex===null?'BOŞ KONUM':(roleIcons[roleAt(slot)]+' '+roleNames[roleAt(slot)]);const btn=document.createElement('button');btn.type='button';btn.className='board-slot circle-slot'+(heroIndex===null?' empty':' filled');btn.dataset.slot=slot;btn.disabled=prepDone;const name=document.createElement('strong');if(heroIndex===null){name.textContent='+';btn.append(name)}else {heroPortrait(heroIndex,btn);const powerBadge=document.createElement('span');powerBadge.className='board-power';powerBadge.textContent='GÜÇ '+displayedLanePower(heroIndex,lanes[slot]).power.toFixed(2);btn.append(powerBadge);if(auctionMode){const bonus=Number(auctionLaneModifiers[heroIndex]?.[lanes[slot]]);if(Number.isFinite(bonus)){const bonusBadge=document.createElement('span');bonusBadge.className='board-lane-bonus';bonusBadge.textContent=(lanes[slot]==='front'?'ÖN ':'ARKA ')+(bonus>=0?'+':'')+Math.round(bonus*100)+'%';bonusBadge.style.cssText='display:block;font-size:11px;font-weight:800;color:'+(bonus>=0?'#83f4b6':'#ff9a9a');btn.append(bonusBadge)}}const commanderBonus=commanderBonusForRole(roleAt(slot));if(commanderBonus>0){const commanderBadge=document.createElement('span');commanderBadge.className='board-lane-bonus';commanderBadge.textContent='♛ KOMUTAN +'+(commanderBonus*100).toFixed(1)+'%';commanderBadge.style.cssText='display:block;font-size:11px;font-weight:800;color:#ffd778';btn.append(commanderBadge)}};btn.setAttribute('aria-label',roleNames[roleAt(slot)]+' bölgesi: '+(heroIndex===null?'Boş':demoA[heroIndex][0]));btn.onclick=()=>{if(selectedHero!==null)placeHero(selectedHero,slot);else if(heroIndex!==null){selectedHero=heroIndex;renderBoard();renderRolePickers()}};const identity=document.createElement('div');identity.className='board-hero-identity';if(heroIndex!==null){const heroName=document.createElement('strong');heroName.className='board-hero-name';heroName.textContent=demoA[heroIndex][0];const heroPower=document.createElement('span');heroPower.className='board-hero-power';heroPower.textContent='⚡ GÜÇ '+displayedLanePower(heroIndex,lanes[slot]).power.toFixed(2);heroPower.style.color=displayedLanePower(heroIndex,lanes[slot]).power>=displayedLanePower(heroIndex,lanes[slot]).base?'#83f4b6':'#ff9a9a';identity.append(heroName,heroPower)}const move=document.createElement('button');move.type='button';move.className='lane-switch';move.textContent=lanes[slot]==='front'?'↓ Arka safa':'↑ Ön safa';move.disabled=prepDone;move.onclick=()=>setLane(slot,lanes[slot]==='front'?'back':'front');wrap.append(label,btn,identity,move);root.append(wrap)}}updateFormationPowerSummary()}
 function completeSlots(){const used=new Set(positions.filter(x=>x!==null));const remaining=[0,1,2,3,4].filter(x=>!used.has(x));for(let i=0;i<5;i++)if(positions[i]===null)positions[i]=remaining.shift();renderBoard()}
 function attachDrag(card,i){
  card.classList.add('draggable-hero');
@@ -603,7 +626,7 @@ if(auctionCode&&auctionToken){void (async()=>{try{
  if(!Array.isArray(own)||own.length!==5||!Array.isArray(rival)||rival.length!==5)throw Error('Her oyuncunun beş kahramanı olmalı');
  if(own.some(c=>!c.id||!c.name)||rival.some(c=>!c.id||!c.name))throw Error('Açık artırma kahramanları doğrulanamadı');
  demoA=own.map(c=>[c.name,c.role||'fighter',c.power,c.universe]);demoB=rival.map(c=>[c.name,c.role||'fighter',c.power,c.universe]);
- previewCredits=data.credits[data.seat];assignedRoles=demoA.map(c=>c[1]);auctionLaneModifiers=own.map(c=>c.laneModifiers||{});heroArtCache.clear();
+ previewCredits=data.credits[data.seat];assignedRoles=demoA.map(c=>c[1]);auctionLaneModifiers=own.map(c=>c.laneModifiers||{});heroArtCache.clear();void loadArenaCommander();
  $('battle-lobby-status').textContent='Açık artırma kartların yüklendi · Kalan kredi: '+previewCredits+' · Bonus: %'+(creditBonus(previewCredits)*100).toFixed(1);
  if(!arenaMode){auctionLoaded=true;renderBoard();renderRolePickers();$('apply-roles').disabled=false;startPreparation();$('prep-note').textContent='Kartlar doğrulandı. Diziliş için 60 saniyen var.'}else{const check=async()=>{try{const response=await fetch('/api/battle-auction-preview?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});const data=await response.json();if(!response.ok)throw Error(data.error||'Savaş durumu alınamadı');if(data.started){if(battlePoll)clearInterval(battlePoll);battlePoll=-1;await build(data.result);if(events.length)$('play').click()}else $('message').textContent='Rakibin dizilişi bekleniyor… '+data.ready.filter(Boolean).length+'/2 hazır'}catch(e){$('message').textContent='⚠ '+e.message}};await check();if(battlePoll===null)battlePoll=setInterval(check,1800)}
  }catch(e){$('prep-note').textContent='⚠ '+e.message;$('message').textContent='⚠ '+e.message;$('battle-lobby-status').textContent='⚠ Açık artırmada seçilen kahramanlar yüklenemedi: '+e.message;$('apply-roles').disabled=true;$('play').disabled=true}})()}
