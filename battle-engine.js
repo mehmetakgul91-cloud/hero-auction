@@ -95,6 +95,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       if(!target)break;
       const special=round%3===0;
       const skill=special?unit.active:null;
+      if(skill?.effect==='heal'&&unit.hp<unit.maxHp){const healed=Math.min(unit.maxHp-unit.hp,Math.max(1,Math.round(unit.attack*.52)));unit.hp+=healed;unit.healing+=healed;log.push({round,side,actor:unit.id,action:'heal',target:unit.id,value:healed});continue;}
       const multiplier=skill?.power??(special?1.15:1);
       const critical=random()<.08;
       // Tanks shield their allies by holding the frontline. Rear units take reduced
@@ -110,7 +111,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       const damage=Math.min(target.hp,raw-absorbed);
       target.hp-=damage;unit.damage+=damage;
       if(target.hp===0)unit.kills++;
-      if(skill?.effect==='drain'||skill?.effect==='heal'){const healed=Math.min(unit.maxHp-unit.hp,Math.floor(damage*.35));unit.hp+=healed;unit.healing+=healed;if(healed)log.push({round,side,actor:unit.id,action:'heal',target:unit.id,value:healed});}
+      if(skill?.effect==='drain'){const healed=Math.min(unit.maxHp-unit.hp,Math.floor(damage*.15));unit.hp+=healed;unit.healing+=healed;if(healed)log.push({round,side,actor:unit.id,action:'heal',target:unit.id,value:healed});}
       if(skill?.effect==='shield'){const amount=Math.round(unit.defense*.4);unit.shield+=amount;log.push({round,side,actor:unit.id,action:'shield',target:unit.id,value:amount});}
       // Tanks reinforce their whole front line during their special turns.
       if(unit.role==='tank'&&special)for(const ally of allies.filter(x=>x.hp>0&&isFront(x)))ally.shield+=Math.max(1,Math.round(unit.defense*.16));
