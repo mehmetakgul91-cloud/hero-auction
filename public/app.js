@@ -36,6 +36,8 @@ const commanderOptions=[
  {id:'magic',icon:'🔮',name:'Büyücü Komutanı',detail:'Enerji'},
  {id:'support',icon:'💚',name:'Destek Komutanı',detail:'Destek'}
 ];
+const commanderPortraits={"attack":"/images/Ate%C5%9Fler%20%C4%B0%C3%A7inde%20Sava%C5%9F%C3%A7%C4%B1%20Komutan.png","defense":"/images/Alt%C4%B1n%20Aslan%C4%B1n%20Kale%20Muhaf%C4%B1z%C4%B1.png","magic":"/images/Kozmik%20R%C3%BCnlerin%20B%C3%BCy%C3%BCc%C3%BC%20Komutan%C4%B1.png","support":"/images/Z%C3%BCmr%C3%BCt%20I%C5%9F%C4%B1%C4%9F%C4%B1n%20%C5%9Eifac%C4%B1%20Krali%C3%A7esi.png"};
+function commanderPortrait(id){return commanderPortraits[id]||'/images/commander-attack.svg';}
 let commanderProfile=null,commanderLoaded=false,commanderPending=null,commanderChangePending=null,commanderProfileOpen=false,commanderBusy=false,commanderLoading=false,commanderChangeOpen=false;
 function commanderVisibility(){
  const logged=signedIn(),needSelection=logged&&commanderLoaded&&!commanderProfile;
@@ -48,7 +50,7 @@ function renderCommanderOnboarding(){
  const root=$('commander-onboarding-options');root.replaceChildren();
  for(const c of commanderOptions){
   const b=document.createElement('button');b.type='button';b.className='commander-option'+(commanderPending===c.id?' chosen':'');
-  const img=document.createElement('img');img.src='/images/commander-'+c.id+'.svg?v=commander-art-20261019';img.alt='';img.loading='lazy';const label=document.createElement('span');label.textContent=c.name+' · '+c.detail;b.append(img,label);
+  const img=document.createElement('img');img.src=commanderPortrait(c.id);img.alt='';img.loading='lazy';const label=document.createElement('span');label.textContent=c.name+' · '+c.detail;b.append(img,label);
   b.setAttribute('aria-pressed',String(commanderPending===c.id));
   b.onclick=()=>{commanderPending=c.id;renderCommanderOnboarding()};
   root.append(b);
@@ -65,7 +67,7 @@ function renderCommanderRoster(){
   button.className='commander-roster-card'+(active?' active':'')+(selected?' chosen':'');
   button.setAttribute('aria-pressed',String(selected||active));
   button.disabled=commanderBusy;
-  const img=document.createElement('img');img.src='/images/commander-'+c.id+'.svg?v=commander-art-20261019';img.alt='';img.loading='lazy';
+  const img=document.createElement('img');img.src=commanderPortrait(c.id);img.alt='';img.loading='lazy';
   const info=document.createElement('span');const title=document.createElement('strong');title.textContent=c.name;
   const detail=document.createElement('small');detail.textContent=active?'✓ AKTİF KOMUTAN':c.detail;
   info.append(title,detail);button.append(img,info);
@@ -97,7 +99,7 @@ function renderCommanderProfile(){
  $('commander-profile-name').textContent=(chosen?.icon||'♛')+' '+(chosen?.name||'Komutan');
  $('commander-profile-gold').textContent='🪙 '+walletGold.toLocaleString('tr-TR');
  const activeLevel=commanderProfile.levels[commanderProfile.commanderId]||0;
- const activeImg=$('commander-active-portrait');activeImg.src='/images/commander-'+commanderProfile.commanderId+'.svg?v=commander-v2-20261019';activeImg.alt=chosen?.name||'Komutan';
+ const activeImg=$('commander-active-portrait');activeImg.src=commanderPortrait(commanderProfile.commanderId);activeImg.alt=chosen?.name||'Komutan';
  $('commander-active-art').dataset.type=commanderProfile.commanderId;
  $('commander-active-name').textContent=chosen?.name||'Komutan';
  $('commander-active-role').textContent=chosen?.detail||'';
@@ -113,7 +115,7 @@ function renderCommanderProfile(){
  const emblem=document.createElement('span');emblem.className='commander-fishbone-emblem';emblem.textContent=chosen?.icon||'♛';
  const heading=document.createElement('strong');heading.textContent=chosen?.name||'Komutan';
  const sub=document.createElement('small');sub.textContent='UZMANLIK AĞACI · 4 GELİŞİM DALI';
- const portrait=document.createElement('img');portrait.className='commander-hub-portrait';portrait.src='/images/commander-'+commanderProfile.commanderId+'.svg?v=commander-v2-20261019';portrait.alt=chosen?.name||'Komutan';hub.append(portrait,emblem,heading,sub);root.append(spine,hub);
+ const portrait=document.createElement('img');portrait.className='commander-hub-portrait';portrait.src=commanderPortrait(commanderProfile.commanderId);portrait.alt=chosen?.name||'Komutan';hub.append(portrait,emblem,heading,sub);root.append(spine,hub);
  for(const c of commanderOptions){
   const level=commanderProfile.levels[c.id],max=c.id===commanderProfile.commanderId?40:20,cost=200*(level+1);
   const card=document.createElement('div');card.className='commander-upgrade-card commander-fishbone-branch'+(max===40?' specialty':'');
