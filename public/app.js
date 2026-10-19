@@ -208,7 +208,7 @@ setInterval(refreshGold,20000);
 
 const artMemo=new Map();
 const infoMemo=new Map();
-const emojis={pokemon:'⚡',marvel:'🦸',dc:'🦇',lotr:'💍'};
+const emojis={pokemon:'⚡',marvel:'🦸',dc:'🦇',lotr:'💍',original:'⚔️'};
 const rarityNames={common:'SIRADAN',advanced:'GELİŞMİŞ',rare:'NADİR',legendary:'EFSANEVİ'};
 const rarityLabel=r=>rarityNames[r]||'SIRADAN';
 const specialtyGroups={
