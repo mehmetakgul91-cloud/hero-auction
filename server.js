@@ -451,7 +451,7 @@ const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.w
  if(room.phase!=='finished')return send(409,{error:'Açık artırma bitmedi'});
  try{prepareBattleTeams(auctionRoomToBattleState(room))}catch(e){return send(422,{error:e.message})}
  if(!room.battleSync?.result)return send(409,{error:'Savaş henüz başlamadı'});
- room.battleCompleted??=[false,false];room.battleCompleted[seat]=true;markRoom(room);return send(200,{ok:true,completed:room.battleCompleted});
+ room.battleCompleted??=[false,false];room.battleCompleted[seat]=true;markRoom(room);return send(200,{ok:true,completed:room.battleCompleted,series:room.series||[0,0],seat,players:room.players.map(p=>({name:p?.name||'Oyuncu'}))});
 }
 if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.method==='GET')){
  let body={};if(req.method==='POST'){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>4000)return send(413,{error:'İstek çok büyük'})}try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz JSON'})}}
