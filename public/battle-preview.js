@@ -637,6 +637,10 @@ async function showAuctionRematch(){
  try{const response=await fetch('/api/battle-auction-complete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken})});const data=await response.json();if(!response.ok)throw Error(data.error||'Savaş tamamlanamadı');
  const controls=document.querySelector('.controls .buttons');if(!controls)return;
  const button=document.createElement('button');button.type='button';button.textContent='⚔ RÖVANŞ İSTE';button.className='primary';controls.append(button);
+ const series=document.createElement('div');series.id='arena-rematch-series';series.setAttribute('role','status');series.style.cssText='display:block;width:100%;box-sizing:border-box;margin:12px 0;padding:16px;border:2px solid #58dfff;border-radius:12px;background:#11233b;color:#fff;text-align:center;font-weight:700';
+ const seat=Number(data.seat),scores=Array.isArray(data.series)?data.series:[0,0],players=Array.isArray(data.players)?data.players:[];
+ series.textContent='🏆 RÖVANŞ SERİSİ · '+(players[seat]?.name||'SEN')+' '+(Number(scores[seat])||0)+' – '+(Number(scores[1-seat])||0)+' '+(players[1-seat]?.name||'RAKİP');
+ controls.after(series);
  button.onclick=async()=>{button.disabled=true;try{const auth=JSON.parse(localStorage.getItem('hero-auction-login')||'null');const response=await fetch('/api/rematch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,authToken:auth?.authToken})});const result=await response.json();if(!response.ok)throw Error(result.error||'Rövanş gönderilemedi');button.textContent='✓ RÖVANŞ İSTEĞİ GÖNDERİLDİ';const watch=setInterval(async()=>{try{const response=await fetch('/api/battle-auction-team?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});if(response.status===409){clearInterval(watch);location.replace('/')} }catch{}},2500);}catch(e){button.disabled=false;$('message').textContent='⚠ '+e.message}};
  }catch(e){battleRematchShown=false;$('message').textContent='⚠ '+e.message}
 }
