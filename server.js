@@ -202,7 +202,7 @@ async function adminApi(url,b){
  if(url==='/api/admin/list'){
   const search=String(b.search||'').slice(0,100);
   const rows=await database.query("SELECT w.account_id,COALESCE(p.display_name,w.account_id) AS display_name,w.gold,COALESCE(a.banned,false) AS banned FROM hero_auction_wallets w LEFT JOIN hero_auction_admin_accounts a ON a.account_id=w.account_id LEFT JOIN hero_auction_user_profiles p ON p.account_id=w.account_id WHERE ($1='' OR w.account_id ILIKE '%'||$1||'%' OR p.display_name ILIKE '%'||$1||'%') ORDER BY p.display_name NULLS LAST,w.account_id LIMIT 200",[search]);
-  return {accounts:rows.rows};
+  const accounts=rows.rows.map(row=>{const known=ratings.get(row.account_id)?.name;return {...row,display_name:row.display_name===row.account_id&&known&&known!=='Oyuncu'?known:row.display_name}});return {accounts};
  }
  if(url==='/api/admin/history'){
   const rows=await database.query('SELECT account_id,action,old_gold,new_gold,created_at FROM hero_auction_admin_audit ORDER BY id DESC LIMIT 100');
@@ -235,7 +235,7 @@ async function adminApi(url,b){
  }
  error('Bilinmeyen işlem.',404);
 }
-async function api(url,b){if(url.startsWith('/api/admin/'))return adminApi(url,b);if(url==='/api/auth/check'){const user=readLogin(b.authToken);if(!user)error('Oturumun sona erdi. Yeniden giriş yap.',401);return{user:{name:user.name},gold:await goldBalance(user.sub)}}if(url==='/api/auth/guest'){const name=String(b.name||'Oyuncu').trim().slice(0,24)||'Oyuncu';const user={sub:'guest:'+crypto.randomUUID(),name};await rememberDisplayName(user);return{user:{name},authToken:signLogin(user),gold:await goldBalance(user.sub)}}
+async function api(url,b){if(url.startsWith('/api/admin/'))return adminApi(url,b);if(url==='/api/auth/check'){const user=readLogin(b.authToken);if(!user)error('Oturumun sona erdi. Yeniden giriş yap.',401);await rememberDisplayName(user);return{user:{name:user.name},gold:await goldBalance(user.sub)}}if(url==='/api/auth/guest'){const name=String(b.name||'Oyuncu').trim().slice(0,24)||'Oyuncu';const user={sub:'guest:'+crypto.randomUUID(),name};await rememberDisplayName(user);return{user:{name},authToken:signLogin(user),gold:await goldBalance(user.sub)}}
 if(!url.startsWith('/api/auth/')){const user=readLogin(b.authToken);if(!user)error('Odaya erişmek için giriş yapmalısın.',401);if(databaseReady){const block=await database.query('SELECT banned FROM hero_auction_admin_accounts WHERE account_id=$1',[user.sub]);if(block.rows[0]?.banned)error('Hesap askıya alınmıştır.',403)}}
 if(url==='/api/commander/get'){
  const user=readLogin(b.authToken);
