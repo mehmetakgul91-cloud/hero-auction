@@ -29,7 +29,8 @@ function targetOf(enemies,attacker,round){
   const pool=attacker.role==='assassin'&&round%3===0?alive:(frontline.length?frontline:alive);
   return [...pool].sort((a,b)=>a.position-b.position||a.id.localeCompare(b.id))[(round+attacker.position)%pool.length];
 }
-export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,remainingCredits=[0,0],commanders=[null,null]}={}){
+// Manual commander commands are validated against actual round energy; no command means no active ability.
+export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,remainingCredits=[0,0],commanders=[null,null],commanderActions=[]}={}){
   if(!Array.isArray(remainingCredits)||remainingCredits.length!==2||remainingCredits.some(v=>!Number.isSafeInteger(v)||v< -10000||v>10000))throw Error('Invalid auction remaining credits');
   if(!Array.isArray(cardsA)||!Array.isArray(cardsB)||cardsA.length!==5||cardsB.length!==5)throw Error('Each team must contain exactly five cards.');
   if(!Number.isInteger(maxRounds)||maxRounds<1||maxRounds>100)throw Error('Invalid round limit.');
@@ -73,7 +74,51 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
     if(p.effect==='focus')u.attack=Math.round(u.attack*(1+p.value));
     if(p.effect==='evasion'||p.effect==='momentum')u.speed=Math.round(u.speed*(1+p.value));
   }
+  const commanderEnergy=[0,0];
+  if(!Array.isArray(commanderActions)||commanderActions.length>200)throw Error('Invalid commander actions');
+  const actions=new Map();
+  for(const action of commanderActions){
+    if(!action||!Number.isInteger(action.round)||action.round<1||action.round>maxRounds||![0,1].includes(action.side)||!['normal','ultimate'].includes(action.ability))throw Error('Invalid commander action');
+    const key=action.round+':'+action.side;
+    if(actions.has(key))throw Error('Only one commander action per side per round');
+    actions.set(key,action.ability);
+  }
+  const applyCommanderAction=(round,side,ability)=>{
+    const commander=commanders?.[side];const id=commander?.commanderId;
+    if(!roles.includes(id)&&!['attack','defense','magic','support'].includes(id))throw Error('Commander must be selected for manual ability');
+    const cost=ability==='ultimate'?100:40;
+    if(commanderEnergy[side]<cost)throw Error('Insufficient commander energy at round '+round);
+    commanderEnergy[side]-=cost;
+    const allies=teams[side].filter(u=>u.hp>0),enemies=teams[1-side].filter(u=>u.hp>0);
+    if(!allies.length||!enemies.length)return;
+    const totalAttack=allies.reduce((n,u)=>n+u.attack,0);
+    const totalMaxHp=allies.reduce((n,u)=>n+u.maxHp,0);
+    let value=0;
+    if(id==='attack'){
+      const total=Math.max(1,Math.round(totalAttack*(ability==='ultimate'?.30:.12)));
+      const each=Math.max(1,Math.floor(total/enemies.length));
+      for(const target of enemies){const raw=each,absorbed=Math.min(target.shield,raw);target.shield-=absorbed;const damage=Math.min(target.hp,raw-absorbed);target.hp-=damage;value+=damage;}
+    }else if(id==='defense'){
+      const total=Math.max(1,Math.round(totalMaxHp*(ability==='ultimate'?.20:.08)));
+      const each=Math.max(1,Math.floor(total/allies.length));
+      for(const ally of allies){ally.shield+=each;value+=each;}
+    }else if(id==='support'){
+      const missing=allies.reduce((n,u)=>n+u.maxHp-u.hp,0);
+      let budget=Math.round(missing*(ability==='ultimate'?.30:.12));
+      for(const ally of [...allies].sort((a,b)=>(b.maxHp-b.hp)-(a.maxHp-a.hp))){const healed=Math.min(budget,ally.maxHp-ally.hp);ally.hp+=healed;budget-=healed;value+=healed;}
+    }else if(id==='magic'){
+      const targets=[...enemies].sort((a,b)=>b.attack-a.attack).slice(0,ability==='ultimate'?2:1);
+      for(const target of targets){target.commanderWeaken=Math.max(target.commanderWeaken||0,ability==='ultimate'?.40:.30);value++;}
+    }
+    log.push({round,side,actor:'commander:'+side,action:'commander-'+id+'-'+ability,value,energy:commanderEnergy[side]});
+  };
+  const previousAlive=teams.map(team=>team.filter(u=>u.hp>0).length);
   for(let round=1;round<=maxRounds;round++){
+    for(let side=0;side<2;side++){
+      commanderEnergy[side]=Math.min(100,commanderEnergy[side]+12);
+      const ability=actions.get(round+':'+side);
+      if(ability)applyCommanderAction(round,side,ability);
+    }
     for(const team of teams)for(const u of team){
       if(u.hp<=0||!u.passive)continue;
       const {effect,value}=u.passive;
@@ -104,7 +149,9 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       const roleMultiplier=(guarded?0.85:1)*(unit.role==='energy'?0.97:unit.role==='support'?1.03:1);
       // Exposed all-ranged squads lose protection; mixed frontlines intercept fire.
       
-      const raw=skill?.effect==='headshot'?target.hp+target.shield:Math.max(1,Math.floor(unit.attack*multiplier*roleMultiplier*0.7*100/(100+defense)*(critical?1.3:1)));
+      const weakened=unit.commanderWeaken||0;
+      unit.commanderWeaken=0;
+      const raw=skill?.effect==='headshot'?target.hp+target.shield:Math.max(1,Math.floor(unit.attack*(1-weakened)*multiplier*roleMultiplier*0.7*100/(100+defense)*(critical?1.3:1)));
       const absorbed=Math.min(target.shield,raw);
       target.shield-=absorbed;
       const damage=Math.min(target.hp,raw-absorbed);
@@ -123,6 +170,11 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       log.push({round,side,actor:unit.id,action:skill?.name|| (special?'special':'attack'),target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:special?'special':'normal'});
       if(unit.role==='tank'&&special)unit.shield+=Math.round(unit.defense*.2);
     }
+    for(let side=0;side<2;side++){
+      const alive=teams[side].filter(u=>u.hp>0).length;
+      commanderEnergy[side]=Math.min(100,commanderEnergy[side]+Math.max(0,previousAlive[side]-alive)*10);
+      previousAlive[side]=alive;
+    }
     if(teams.some(team=>team.every(x=>x.hp<=0)))break;
   }
   const hpRatio=teams.map(team=>team.reduce((n,x)=>n+x.hp/x.maxHp,0));
@@ -133,5 +185,5 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
   else if(Math.abs(hpRatio[0]-hpRatio[1])>1e-9)winner=hpRatio[0]>hpRatio[1]?0:1;
   else if(damage[0]!==damage[1])winner=damage[0]>damage[1]?0:1;
   else if(survivors[0]!==survivors[1])winner=survivors[0]>survivors[1]?0:1;
-  return {version:3,commanders:Array.isArray(commanders)?commanders.slice(0,2):[null,null],remainingCredits:[...remainingCredits],seed:String(seed),winner,rounds:Math.max(0,...log.map(x=>x.round)),teams,damage,survivors,log};
+  return {version:4,commanderEnergy,commanders:Array.isArray(commanders)?commanders.slice(0,2):[null,null],remainingCredits:[...remainingCredits],seed:String(seed),winner,rounds:Math.max(0,...log.map(x=>x.round)),teams,damage,survivors,log};
 }
