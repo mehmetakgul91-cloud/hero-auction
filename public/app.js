@@ -116,17 +116,29 @@ function renderCommanderProfile(){
  const heading=document.createElement('strong');heading.textContent=chosen?.name||'Komutan';
  const sub=document.createElement('small');sub.textContent='UZMANLIK AĞACI · 4 GELİŞİM DALI';
  const portrait=document.createElement('img');portrait.className='commander-hub-portrait';portrait.src=commanderPortrait(commanderProfile.commanderId);portrait.alt=chosen?.name||'Komutan';hub.append(portrait,emblem,heading,sub);root.append(spine,hub);
+ const abilityNames={attack:'Savaş Ustalığı',defense:'Çelik İrade',magic:'Arkane Güç',support:'Yaşam Enerjisi'};
+ const abilityDescriptions={attack:'Savaşçı ve suikastçı sınıfı',defense:'Tank sınıfı',magic:'Enerji sınıfı',support:'Destek sınıfı'};
  for(const c of commanderOptions){
-  const level=commanderProfile.levels[c.id],max=c.id===commanderProfile.commanderId?40:20,cost=200*(level+1);
-  const card=document.createElement('div');card.className='commander-upgrade-card commander-fishbone-branch'+(max===40?' specialty':'');
-  const title=document.createElement('strong');title.textContent=c.icon+' '+c.name+(max===40?' · ANA UZMANLIK':'');
-  const details=document.createElement('span');details.textContent='Seviye '+level+'/'+max+' · Bonus %'+(level*.5).toLocaleString('tr-TR');
-  const bar=document.createElement('div');bar.className='commander-upgrade-bar';
+  const level=Number(commanderProfile.levels[c.id]||0),max=c.id===commanderProfile.commanderId?40:20,cost=200*(level+1),isMax=level>=max,canAfford=walletGold>=cost;
+  const card=document.createElement('article');card.className='commander-upgrade-card commander-fishbone-branch ability-card ability-'+c.id+(max===40?' specialty':'')+(isMax?' maxed':'');
+  const art=document.createElement('div');art.className='ability-art';art.style.backgroundImage='linear-gradient(0deg,rgba(5,12,28,.96),rgba(5,12,28,.04) 76%),url("'+commanderPortrait(c.id)+'")';
+  const tag=document.createElement('span');tag.className='ability-type-tag';tag.textContent=max===40?'★ ANA YETENEK':'YAN YETENEK';
+  const node=document.createElement('span');node.className='commander-branch-node';node.textContent=c.icon;node.setAttribute('aria-hidden','true');
+  art.append(tag,node);
+  const info=document.createElement('div');info.className='ability-info';
+  const title=document.createElement('strong');title.className='ability-title';title.textContent=abilityNames[c.id];
+  const desc=document.createElement('small');desc.className='ability-desc';desc.textContent=abilityDescriptions[c.id];
+  const values=document.createElement('div');values.className='ability-values';
+  const bonus=document.createElement('span');bonus.innerHTML='<small>MEVCUT BONUS</small><b>+%'+(level*.5).toLocaleString('tr-TR')+'</b>';
+  const next=document.createElement('span');next.innerHTML='<small>'+(isMax?'DURUM':'SONRAKİ SEVİYE')+'</small><b>'+(isMax?'MAKSİMUM':'+%'+((level+1)*.5).toLocaleString('tr-TR'))+'</b>';
+  values.append(bonus,next);
+  const progress=document.createElement('div');progress.className='ability-progress-label';progress.textContent='SEVİYE '+level+' / '+max;
+  const bar=document.createElement('div');bar.className='commander-upgrade-bar';bar.setAttribute('role','progressbar');bar.setAttribute('aria-label',abilityNames[c.id]+' gelişimi');bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax',String(max));bar.setAttribute('aria-valuenow',String(level));
   const fill=document.createElement('span');fill.style.width=(100*level/max)+'%';bar.append(fill);
-  const button=document.createElement('button');button.type='button';button.className='primary';button.textContent=level>=max?'MAKSİMUM':'🪙 '+cost.toLocaleString('tr-TR')+' · GELİŞTİR';
-  button.disabled=commanderBusy||level>=max||walletGold<cost;
+  const button=document.createElement('button');button.type='button';button.className='primary ability-upgrade-button';button.textContent=isMax?'✓ TAMAMLANDI':!canAfford?'🪙 '+cost.toLocaleString('tr-TR')+' · ALTIN YETERSİZ':'🪙 '+cost.toLocaleString('tr-TR')+' · GELİŞTİR';
+  button.disabled=commanderBusy||isMax||!canAfford;
   button.onclick=()=>void upgradeCommander(c.id);
-  const node=document.createElement('span');node.className='commander-branch-node';node.textContent=c.icon;node.setAttribute('aria-hidden','true');card.append(node,title,details,bar,button);root.append(card);
+  info.append(title,desc,values,progress,bar,button);card.append(art,info);root.append(card);
  }
 }
 async function loadCommander(){
