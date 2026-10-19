@@ -696,3 +696,11 @@ header{gap:14px;flex-wrap:wrap}
 #home .quick-nav-item:hover,#home .quick-nav-item:focus-visible{background:#203f69;border-color:#6fe1ff;transform:translateY(-2px)}
 #home .quick-nav-icon{font-size:23px;line-height:1;color:#90dcff}
 @media(max-width:550px){#home .home-quick-nav{gap:6px;margin-bottom:12px}#home .quick-nav-item{flex-direction:column;gap:7px;padding:11px 3px;min-height:74px;font-size:10px;letter-spacing:0}#home .quick-nav-icon{font-size:23px}}
+
+/* Oyna tab: show matchmaking only when opened */
+#home #home-play-panel[hidden]{display:none!important}
+#home .home-quick-nav{grid-template-columns:repeat(4,minmax(0,1fr))}
+#home .quick-nav-play{border-color:#65d4ff;background:linear-gradient(135deg,#125178,#17345c)}
+#home .quick-nav-play.selected{box-shadow:0 0 22px #46d6ff55;outline:1px solid #83e8ff}
+#home #home-play-panel{position:relative;z-index:1;scroll-margin-top:16px}
+@media(max-width:550px){#home .quick-nav-item{font-size:9px;min-height:70px}}
