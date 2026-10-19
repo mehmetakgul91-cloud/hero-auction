@@ -1,0 +1,19 @@
+name: Commander battle tests
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'battle-engine.js'
+      - 'arena-commanders.js'
+      - 'tools/test-commander-battle.mjs'
+      - '.github/workflows/commander-tests.yml'
+  workflow_dispatch:
+jobs:
+  commander-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tools/test-commander-battle.mjs
