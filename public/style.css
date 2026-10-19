@@ -735,3 +735,27 @@ header{gap:14px;flex-wrap:wrap}
 #home .home-guide-cta{display:flex;align-items:center;justify-content:center;gap:16px;width:100%;padding:16px;border:1px solid #76dcff;border-radius:13px;background:linear-gradient(105deg,#126a9a,#21437d);color:#fff;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 8px 25px #008bd944}
 #home .home-guide-cta:hover,#home .home-guide-cta:focus-visible{filter:brightness(1.16)}
 @media(max-width:550px){#home .home-guide{padding:14px 12px}#home .home-guide-grid{grid-template-columns:1fr;gap:9px}#home .home-guide-card{padding:15px}#home .home-guide-symbol{margin:6px 0;font-size:27px}#home .home-guide-stats{gap:5px}#home .home-guide-stats>div{padding:11px 3px}#home .home-guide-stats span{font-size:9px}#home .home-guide-card h3{font-size:15px}}
+
+/* Illustrated ability development cards */
+.commander-profile-v2 .commander-upgrades.commander-fishbone{align-items:stretch;gap:14px}
+.commander-profile-v2 .ability-card.commander-fishbone-branch{display:flex!important;flex-direction:column!important;justify-content:flex-start!important;gap:0!important;padding:0!important;min-height:0!important;overflow:hidden!important;border-radius:17px!important;isolation:isolate;transition:transform .2s ease,box-shadow .2s ease}
+.commander-profile-v2 .ability-card:hover{transform:translateY(-3px);box-shadow:0 14px 30px #0009,0 0 19px #62d6ff35}
+.commander-profile-v2 .ability-art{position:relative;min-height:150px;background-size:cover;background-position:center 22%;border-bottom:1px solid #ffffff35}
+.commander-profile-v2 .ability-type-tag{position:absolute;top:10px;left:10px;padding:6px 9px;border:1px solid #f3d28a88;border-radius:6px;background:#071226d9;color:#f6d992;font-size:10px;font-weight:900;letter-spacing:.7px}
+.commander-profile-v2 .ability-card .commander-branch-node{position:absolute!important;bottom:9px;right:12px;margin:0!important;width:46px;height:46px;font-size:23px;box-shadow:0 0 15px #000b,0 0 18px currentColor}
+.commander-profile-v2 .ability-info{display:flex;flex:1;flex-direction:column;gap:10px;padding:14px 13px 15px}
+.commander-profile-v2 .ability-info .ability-title{font:800 19px Georgia,serif;color:#fff0c9;text-align:left}
+.commander-profile-v2 .ability-desc{color:#b9cde3;font-size:12px;min-height:26px}
+.commander-profile-v2 .ability-values{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.commander-profile-v2 .ability-values>span{display:flex;flex-direction:column;gap:5px;padding:9px;border:1px solid #ffffff26;border-radius:9px;background:#081629a8}
+.commander-profile-v2 .ability-values small{color:#a9c5df;font-size:9px;letter-spacing:.4px}
+.commander-profile-v2 .ability-values b{color:#8fffd2;font-size:20px}
+.commander-profile-v2 .ability-progress-label{font-size:11px;color:#e4d3a5;font-weight:800;letter-spacing:1px}
+.commander-profile-v2 .ability-info .commander-upgrade-bar{height:11px}
+.commander-profile-v2 .ability-info .ability-upgrade-button{margin-top:auto;min-height:47px;font-weight:900}
+.commander-profile-v2 .ability-card.maxed .ability-upgrade-button{background:#204a3d;color:#b8f4d4}
+.commander-profile-v2 .ability-card.ability-attack .ability-info .commander-upgrade-bar span{background:linear-gradient(90deg,#ae3329,#ffab70)}
+.commander-profile-v2 .ability-card.ability-defense .ability-info .commander-upgrade-bar span{background:linear-gradient(90deg,#205db3,#80ddff)}
+.commander-profile-v2 .ability-card.ability-magic .ability-info .commander-upgrade-bar span{background:linear-gradient(90deg,#6839b6,#e0a0ff)}
+.commander-profile-v2 .ability-card.ability-support .ability-info .commander-upgrade-bar span{background:linear-gradient(90deg,#158453,#9dffd0)}
+@media(max-width:520px){.commander-profile-v2 .commander-upgrades.commander-fishbone{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.commander-profile-v2 .ability-art{min-height:120px}.commander-profile-v2 .ability-info{padding:11px 9px;gap:8px}.commander-profile-v2 .ability-info .ability-title{font-size:15px}.commander-profile-v2 .ability-desc{font-size:10px;min-height:28px}.commander-profile-v2 .ability-values{gap:4px}.commander-profile-v2 .ability-values>span{padding:6px 4px}.commander-profile-v2 .ability-values small{font-size:8px}.commander-profile-v2 .ability-values b{font-size:16px}.commander-profile-v2 .ability-type-tag{font-size:8px;padding:5px}.commander-profile-v2 .ability-info .ability-upgrade-button{font-size:10px}}
