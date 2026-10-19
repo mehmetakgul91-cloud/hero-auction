@@ -704,3 +704,7 @@ header{gap:14px;flex-wrap:wrap}
 #home .quick-nav-play.selected{box-shadow:0 0 22px #46d6ff55;outline:1px solid #83e8ff}
 #home #home-play-panel{position:relative;z-index:1;scroll-margin-top:16px}
 @media(max-width:550px){#home .quick-nav-item{font-size:9px;min-height:70px}}
+
+/* Five navigation tabs: mobile-friendly two-row layout */
+#home .home-quick-nav{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:550px){#home .home-quick-nav{grid-template-columns:repeat(3,minmax(0,1fr))}#home .quick-nav-item{font-size:10px;min-height:68px}}
