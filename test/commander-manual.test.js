@@ -10,8 +10,9 @@ test('normal ability at round 4 changes real damage and logs action',()=>{
  const opts={seed:'manual-test',maxRounds:4,commanders};
  const baseline=simulateBattle(team('a'),team('b'),opts);
  const powered=simulateBattle(team('a'),team('b'),{...opts,commanderActions:[{side:0,round:4,ability:'normal'}]});
- assert.ok(powered.log.some(e=>e.action==='commander-attack-normal'&&e.round===4&&e.value>0));
- assert.ok(powered.log.find(e=>e.action==='commander-attack-normal').value>0,'Commander damage must be applied to actual enemy HP');
+ assert.ok(powered.log.some(e=>e.action==='commander-attack-normal'&&e.round===4),'Normal ability must be recorded');
+ assert.ok(powered.log.some(e=>e.action==='commander-hit'&&e.round===4&&e.value+e.absorbed>0),'Commander attack must reduce enemy HP or shield');
+ assert.ok(powered.log.filter(e=>e.action==='commander-hit'&&e.round===4).every(e=>e.rawDamage>=e.value+e.absorbed),'Commander damage accounting must respect shields');
  assert.notDeepEqual(powered.log,baseline.log,'Commander action must change authoritative combat log');
 });
 test('ultimate requires 100 energy and is available by round 9',()=>{
