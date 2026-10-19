@@ -210,7 +210,7 @@ async function adminApi(url,b){
  }
  if(url==='/api/admin/gold'||url==='/api/admin/ban'){
   const id=String(b.accountId||'').trim();
-  if(!id||id.length>150||id===user.sub)error('Geçersiz hesap.',400);
+  if(!id||id.length>150)error('Geçersiz hesap.',400);if(url==='/api/admin/ban'&&id===user.sub)error('Yönetici kendi hesabını askıya alamaz.',400);
   const client=await database.connect();
   try{
    await client.query('BEGIN');
