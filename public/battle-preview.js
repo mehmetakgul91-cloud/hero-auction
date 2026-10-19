@@ -155,13 +155,12 @@ function displayedLanePower(heroIndex,lane){
  const base=Number(demoA[heroIndex]?.[2])||0;
  const credit=auctionMode?creditBonus(previewCredits):0;
  const modifier=Number(auctionLaneModifiers[heroIndex]?.[lane]);
- // Same bounded composition calculation as battle-engine.js, including role and duplicates.
+ // Same bounded composition calculation as battle-engine.js, including lane and duplicate penalty.
  const role=assignedRoles[heroIndex]||'fighter';
- const roleBonus={tank:.06,fighter:.04,energy:.06,support:.06,assassin:.05}[role]||0;
  const roleCount=assignedRoles.filter(r=>r===role).length;
  const duplicatePenalty=Math.max(0,roleCount-3)*.075;
  const laneBonus=Number.isFinite(modifier)?Math.max(-.10,Math.min(.10,modifier)):0;
- const multiplier=Math.max(.90,Math.min(1.10,1+roleBonus-duplicatePenalty+laneBonus));
+ const multiplier=Math.max(.90,Math.min(1.10,1-duplicatePenalty+laneBonus));
  const tacticalPower=base*multiplier*(1+credit);
  const commanderBonus=commanderBonusForRole(role);
  // Commander upgrades are applied AFTER the bounded tactical multiplier in the battle engine.
