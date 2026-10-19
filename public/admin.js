@@ -9,7 +9,7 @@ async function load(){
   const tbody=$('accounts');tbody.replaceChildren();
   for(const a of d.accounts){
    const tr=document.createElement('tr');
-   for(const value of [a.account_id,String(a.gold),a.banned?'Askıda':'Aktif']){const td=document.createElement('td');td.textContent=value;tr.append(td)}
+   for(const value of [a.display_name,a.account_id,String(a.gold),a.banned?'Askıda':'Aktif']){const td=document.createElement('td');td.textContent=value;tr.append(td)}
    const td=document.createElement('td');
    const gold=document.createElement('button');gold.textContent='Altın düzenle';gold.onclick=async()=>{const value=prompt('Yeni altın miktarı (0–100000000)',String(a.gold));if(value===null)return;const n=Number(value);if(!/^\d+$/.test(value)||!Number.isSafeInteger(n)||n>100000000){alert('Geçersiz miktar');return}if(!confirm('Altın bakiyesi '+n+' olarak ayarlansın mı?'))return;await act('gold',{accountId:a.account_id,gold:n})};
    const ban=document.createElement('button');ban.textContent=a.banned?'Etkinleştir':'Askıya al';ban.onclick=async()=>{if(!confirm(a.account_id+' için üyelik durumu değiştirilsin mi?'))return;await act('ban',{accountId:a.account_id,banned:!a.banned})};
