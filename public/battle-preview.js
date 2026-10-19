@@ -165,8 +165,8 @@ function displayedLanePower(heroIndex,lane){
  const tacticalPower=base*multiplier*(1+credit);
  const commanderBonus=commanderBonusForRole(role);
  // Commander upgrades are applied AFTER the bounded tactical multiplier in the battle engine.
- // This is the strongest boosted combat stat expressed on the card-power scale.
- return {base,bonus:laneBonus,commanderBonus,power:Math.round(tacticalPower*(1+commanderBonus)*100)/100};
+ // Display the boosted role-specific stat on the card-power scale; commander bonus is based on original power.
+ return {base,bonus:laneBonus,commanderBonus,power:Math.round((tacticalPower+base*commanderBonus)*100)/100};
 }
 function updateFormationPowerSummary(){
  const placed=positions.map((heroIndex,slot)=>({heroIndex,slot})).filter(item=>Number.isInteger(item.heroIndex));
