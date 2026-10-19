@@ -1,8 +1,8 @@
 {
   "version": 2,
   "mode": "auto-battle",
-  "rosterSize": 50,
-  "description": "50 hero prototype roster with unique named active/passive skills and initial balance coefficients.",
+  "rosterSize": 65,
+  "description": "Original 50 battle heroes plus 15 original Hero Auction heroes",
   "characters": [
     {
       "id": "marvel:hulk",
@@ -1052,6 +1052,546 @@
       "laneModifiers": {
         "front": -0.06,
         "back": 0.08
+      }
+    },
+    {
+      "id": "original:01",
+      "name": "Obsidyen Muhafız",
+      "universe": "original",
+      "role": "tank",
+      "displayRole": "tank",
+      "rarity": "efsanevi",
+      "stats": {
+        "attack": 72,
+        "defense": 98,
+        "ability": 77,
+        "control": 72,
+        "mobility": 35
+      },
+      "abilities": [
+        "obsidyen-kalkan",
+        "hasar-azaltma"
+      ],
+      "portrait": "/images/original/hero-01.png",
+      "proposedPower": 84,
+      "active": {
+        "name": "obsidyen-kalkan",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "hasar-azaltma",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "tank",
+      "laneModifiers": {
+        "front": 0.05,
+        "back": -0.04
+      }
+    },
+    {
+      "id": "original:02",
+      "name": "Demir Sur",
+      "universe": "original",
+      "role": "tank",
+      "displayRole": "tank",
+      "rarity": "gelismis",
+      "stats": {
+        "attack": 66,
+        "defense": 91,
+        "ability": 58,
+        "control": 60,
+        "mobility": 40
+      },
+      "abilities": [
+        "celik-siper",
+        "takim-koruma"
+      ],
+      "portrait": "/images/original/hero-02.png",
+      "proposedPower": 69,
+      "active": {
+        "name": "celik-siper",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "takim-koruma",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "tank",
+      "laneModifiers": {
+        "front": 0.05,
+        "back": -0.04
+      }
+    },
+    {
+      "id": "original:03",
+      "name": "Kaya Titanı",
+      "universe": "original",
+      "role": "tank",
+      "displayRole": "tank",
+      "rarity": "nadir",
+      "stats": {
+        "attack": 80,
+        "defense": 96,
+        "ability": 65,
+        "control": 76,
+        "mobility": 27
+      },
+      "abilities": [
+        "yer-sarsintisi",
+        "alan-kontrol"
+      ],
+      "portrait": "/images/original/hero-03.png",
+      "proposedPower": 80,
+      "active": {
+        "name": "yer-sarsintisi",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "alan-kontrol",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "tank",
+      "laneModifiers": {
+        "front": 0.05,
+        "back": -0.04
+      }
+    },
+    {
+      "id": "original:04",
+      "name": "Buz Kalesi",
+      "universe": "original",
+      "role": "tank",
+      "displayRole": "tank",
+      "rarity": "nadir",
+      "stats": {
+        "attack": 73,
+        "defense": 94,
+        "ability": 82,
+        "control": 88,
+        "mobility": 29
+      },
+      "abilities": [
+        "donma",
+        "buz-kalkani"
+      ],
+      "portrait": "/images/original/hero-04.png",
+      "proposedPower": 83,
+      "active": {
+        "name": "donma",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "buz-kalkani",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "tank",
+      "laneModifiers": {
+        "front": 0.05,
+        "back": -0.04
+      }
+    },
+    {
+      "id": "original:05",
+      "name": "Gölge Suikastçı",
+      "universe": "original",
+      "role": "assassin",
+      "displayRole": "assassin",
+      "rarity": "nadir",
+      "stats": {
+        "attack": 94,
+        "defense": 38,
+        "ability": 76,
+        "control": 52,
+        "mobility": 97
+      },
+      "abilities": [
+        "gorunmezlik",
+        "kritik-darbe"
+      ],
+      "portrait": "/images/original/hero-05.png",
+      "proposedPower": 77,
+      "active": {
+        "name": "gorunmezlik",
+        "effect": "pierce",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "kritik-darbe",
+        "effect": "evasion",
+        "value": 0.06
+      },
+      "specialty": "assassin",
+      "laneModifiers": {
+        "front": -0.04,
+        "back": 0.05
+      }
+    },
+    {
+      "id": "original:06",
+      "name": "Altın Muhafız",
+      "universe": "original",
+      "role": "tank",
+      "displayRole": "tank",
+      "rarity": "efsanevi",
+      "stats": {
+        "attack": 82,
+        "defense": 91,
+        "ability": 88,
+        "control": 75,
+        "mobility": 59
+      },
+      "abilities": [
+        "kutsal-kalkan",
+        "takim-koruma"
+      ],
+      "portrait": "/images/original/hero-06.png",
+      "proposedPower": 91,
+      "active": {
+        "name": "kutsal-kalkan",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "takim-koruma",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "tank",
+      "laneModifiers": {
+        "front": 0.05,
+        "back": -0.04
+      }
+    },
+    {
+      "id": "original:07",
+      "name": "Alev Zırhı",
+      "universe": "original",
+      "role": "fighter",
+      "displayRole": "fighter",
+      "rarity": "nadir",
+      "stats": {
+        "attack": 92,
+        "defense": 77,
+        "ability": 85,
+        "control": 57,
+        "mobility": 60
+      },
+      "abilities": [
+        "yakma",
+        "alev-kilici"
+      ],
+      "portrait": "/images/original/hero-07.png",
+      "proposedPower": 84,
+      "active": {
+        "name": "yakma",
+        "effect": "burst",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "alev-kilici",
+        "effect": "rage",
+        "value": 0.06
+      },
+      "specialty": "fighter",
+      "laneModifiers": {
+        "front": 0.05,
+        "back": -0.04
+      }
+    },
+    {
+      "id": "original:08",
+      "name": "Kadim Koruyucu",
+      "universe": "original",
+      "role": "energy",
+      "displayRole": "marksman",
+      "rarity": "gelismis",
+      "stats": {
+        "attack": 84,
+        "defense": 42,
+        "ability": 72,
+        "control": 61,
+        "mobility": 88
+      },
+      "abilities": [
+        "uzun-menzil",
+        "dogal-yavaslatma"
+      ],
+      "portrait": "/images/original/hero-08.png",
+      "proposedPower": 72,
+      "active": {
+        "name": "uzun-menzil",
+        "effect": "sunder",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "dogal-yavaslatma",
+        "effect": "focus",
+        "value": 0.06
+      },
+      "specialty": "energy",
+      "laneModifiers": {
+        "front": -0.04,
+        "back": 0.05
+      }
+    },
+    {
+      "id": "original:09",
+      "name": "Zareth",
+      "universe": "original",
+      "role": "energy",
+      "displayRole": "mage",
+      "rarity": "efsanevi",
+      "stats": {
+        "attack": 88,
+        "defense": 48,
+        "ability": 97,
+        "control": 80,
+        "mobility": 62
+      },
+      "abilities": [
+        "alan-hasari",
+        "yakma"
+      ],
+      "portrait": "/images/original/hero-09.png",
+      "proposedPower": 85,
+      "active": {
+        "name": "alan-hasari",
+        "effect": "splash",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "yakma",
+        "effect": "focus",
+        "value": 0.06
+      },
+      "specialty": "energy",
+      "laneModifiers": {
+        "front": -0.04,
+        "back": 0.05
+      }
+    },
+    {
+      "id": "original:10",
+      "name": "Brunn",
+      "universe": "original",
+      "role": "energy",
+      "displayRole": "marksman",
+      "rarity": "gelismis",
+      "stats": {
+        "attack": 89,
+        "defense": 64,
+        "ability": 77,
+        "control": 66,
+        "mobility": 48
+      },
+      "abilities": [
+        "taret",
+        "surekli-hasar"
+      ],
+      "portrait": "/images/original/hero-10.png",
+      "proposedPower": 75,
+      "active": {
+        "name": "taret",
+        "effect": "sunder",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "surekli-hasar",
+        "effect": "focus",
+        "value": 0.06
+      },
+      "specialty": "energy",
+      "laneModifiers": {
+        "front": -0.04,
+        "back": 0.05
+      }
+    },
+    {
+      "id": "original:11",
+      "name": "Drogar",
+      "universe": "original",
+      "role": "tank",
+      "displayRole": "tank",
+      "rarity": "efsanevi",
+      "stats": {
+        "attack": 78,
+        "defense": 99,
+        "ability": 81,
+        "control": 90,
+        "mobility": 24
+      },
+      "abilities": [
+        "buz-alan-hasari",
+        "yavaslatma"
+      ],
+      "portrait": "/images/original/hero-11.png",
+      "proposedPower": 88,
+      "active": {
+        "name": "buz-alan-hasari",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "yavaslatma",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "tank",
+      "laneModifiers": {
+        "front": 0.05,
+        "back": -0.04
+      }
+    },
+    {
+      "id": "original:12",
+      "name": "Vandra",
+      "universe": "original",
+      "role": "assassin",
+      "displayRole": "assassin",
+      "rarity": "nadir",
+      "stats": {
+        "attack": 91,
+        "defense": 38,
+        "ability": 76,
+        "control": 47,
+        "mobility": 96
+      },
+      "abilities": [
+        "can-calma",
+        "kacis"
+      ],
+      "portrait": "/images/original/hero-12.png",
+      "proposedPower": 75,
+      "active": {
+        "name": "can-calma",
+        "effect": "pierce",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "kacis",
+        "effect": "evasion",
+        "value": 0.06
+      },
+      "specialty": "assassin",
+      "laneModifiers": {
+        "front": -0.04,
+        "back": 0.05
+      }
+    },
+    {
+      "id": "original:13",
+      "name": "Eloren",
+      "universe": "original",
+      "role": "energy",
+      "displayRole": "marksman",
+      "rarity": "gelismis",
+      "stats": {
+        "attack": 88,
+        "defense": 30,
+        "ability": 72,
+        "control": 55,
+        "mobility": 95
+      },
+      "abilities": [
+        "kritik-ok",
+        "hareket"
+      ],
+      "portrait": "/images/original/hero-13.png",
+      "proposedPower": 70,
+      "active": {
+        "name": "kritik-ok",
+        "effect": "sunder",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "hareket",
+        "effect": "focus",
+        "value": 0.06
+      },
+      "specialty": "energy",
+      "laneModifiers": {
+        "front": -0.04,
+        "back": 0.05
+      }
+    },
+    {
+      "id": "original:14",
+      "name": "Kael",
+      "universe": "original",
+      "role": "fighter",
+      "displayRole": "fighter",
+      "rarity": "nadir",
+      "stats": {
+        "attack": 93,
+        "defense": 76,
+        "ability": 75,
+        "control": 73,
+        "mobility": 82
+      },
+      "abilities": [
+        "sersemletme",
+        "yildirim"
+      ],
+      "portrait": "/images/original/hero-14.png",
+      "proposedPower": 87,
+      "active": {
+        "name": "sersemletme",
+        "effect": "burst",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "yildirim",
+        "effect": "rage",
+        "value": 0.06
+      },
+      "specialty": "fighter",
+      "laneModifiers": {
+        "front": 0.05,
+        "back": -0.04
+      }
+    },
+    {
+      "id": "original:15",
+      "name": "Seraphine",
+      "universe": "original",
+      "role": "energy",
+      "displayRole": "mage",
+      "rarity": "nadir",
+      "stats": {
+        "attack": 84,
+        "defense": 78,
+        "ability": 96,
+        "control": 88,
+        "mobility": 82
+      },
+      "abilities": [
+        "buz-firtinasi",
+        "ejderha-kalkani"
+      ],
+      "portrait": "/images/original/hero-15.png",
+      "proposedPower": 92,
+      "active": {
+        "name": "buz-firtinasi",
+        "effect": "splash",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "ejderha-kalkani",
+        "effect": "focus",
+        "value": 0.06
+      },
+      "specialty": "energy",
+      "laneModifiers": {
+        "front": -0.04,
+        "back": 0.05
       }
     }
   ]
