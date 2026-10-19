@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://heroauction.com.tr/sitemap.xml
