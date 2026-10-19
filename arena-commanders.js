@@ -50,20 +50,21 @@ export function applyCommanderSupport(team,commanderOrProfile){
  if(!commanderOrProfile)return team;
  const profile=typeof commanderOrProfile==='string'?createCommanderProfile(commanderOrProfile):commanderOrProfile;
  validateCommanderProfile(profile);
+ // Add the bonus from the card's original power, independently of the capped formation multiplier.
  for(const hero of team){
   const role=hero.role;
   if(role==='fighter'||role==='assassin'){
    const bonus=commanderStatBonus(profile,'attack');
-   if(bonus)hero.attack=Math.max(1,Math.round(hero.attack*(1+bonus)));
+   if(bonus)hero.attack=Math.max(1,hero.attack+Math.round(hero.power*bonus));
   }else if(role==='tank'){
    const bonus=commanderStatBonus(profile,'defense');
-   if(bonus)hero.defense=Math.max(1,Math.round(hero.defense*(1+bonus)));
+   if(bonus)hero.defense=Math.max(1,hero.defense+Math.round(hero.power*bonus));
   }else if(role==='energy'){
    const bonus=commanderStatBonus(profile,'magic');
    if(bonus)hero.attack=Math.max(1,Math.round(hero.attack*(1+bonus)));
   }else if(role==='support'){
    const bonus=commanderStatBonus(profile,'support');
-   if(bonus){hero.maxHp=Math.max(1,Math.round(hero.maxHp*(1+bonus)));hero.hp=hero.maxHp}
+   if(bonus){hero.maxHp=Math.max(1,hero.maxHp+Math.round(hero.power*2*bonus));hero.hp=hero.maxHp}
   }
  }
  return team;
