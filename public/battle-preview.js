@@ -492,6 +492,21 @@ function showBattleSummary(){
  $('battle-arena').hidden=true;$('arena-3d').hidden=true;
  panel.scrollIntoView({behavior:'smooth',block:'start'});
 }
+let arenaFinaleTimer=null,arenaFinaleActive=false;
+function showFinalKnockout(loser,attacker){
+ const old=document.getElementById('arena-final-knockout');if(old)old.remove();
+ const overlay=document.createElement('div');overlay.id='arena-final-knockout';overlay.className='arena-final-knockout';overlay.setAttribute('role','status');overlay.setAttribute('aria-live','polite');
+ const content=document.createElement('div');content.className='arena-final-knockout-content';
+ const eyebrow=document.createElement('div');eyebrow.className='arena-final-knockout-eyebrow';eyebrow.textContent='⚡ SON DARBE ⚡';
+ const hero=document.createElement('div');hero.className='arena-final-knockout-hero';hero.textContent=loser.name;
+ const sub=document.createElement('div');sub.className='arena-final-knockout-sub';sub.textContent='ARENADAN ELENDİ';
+ const victor=document.createElement('div');victor.className='arena-final-knockout-victor';victor.textContent=attacker?'SON VURUŞ · '+attacker:'SAVAŞ SONA ERDİ';
+ content.append(eyebrow,hero,sub,victor);overlay.append(content);document.body.append(overlay);
+ requestAnimationFrame(()=>overlay.classList.add('visible'));
+ arenaFinaleActive=true;
+ if(arenaFinaleTimer)clearTimeout(arenaFinaleTimer);
+ arenaFinaleTimer=setTimeout(()=>{overlay.remove();arenaFinaleActive=false;arenaFinaleTimer=null;showVictoryReveal()},2600);
+}
 function step(){
  if(cursor>=events.length){stop();if(events.length)showVictoryReveal();return}
  // The engine logs splash hits before the primary hit. Show all hits from one cast
@@ -508,7 +523,10 @@ function step(){
  }
  if(!batch.length){batch.push(events[cursor++])}
  const last=batch[batch.length-1];
+ const previous=states.map(team=>team.map(unit=>unit.hp));
  states.forEach((t,side)=>t.forEach((u,i)=>u.hp=last.snapshot[side][i]));
+ const defeatedSide=states.findIndex((team,side)=>previous[side].some(hp=>hp>0)&&team.every(u=>u.hp<=0));
+ const lastFallen=defeatedSide<0?null:states[defeatedSide].find((u,i)=>previous[defeatedSide][i]>0&&u.hp<=0);
  for(const e of batch){
   const li=document.createElement('li');
   const hitInfo=e.absorbed>0?' · Kalkan '+e.absorbed+' engelledi':'';
@@ -524,7 +542,7 @@ function step(){
  for(const e of batch){if(e!==primary)animateMove(e)}
  window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position})));
  window.dispatchEvent(new CustomEvent('heroarena:move',{detail:{event:primary,events:batch,teams:window.heroArenaTeams}}));
- if(cursor>=events.length){stop();$('play').textContent='✓ SAVAŞ TAMAMLANDI';showBattleSummary()}
+ if(cursor>=events.length){stop();$('play').textContent='✓ SAVAŞ TAMAMLANDI';if(lastFallen)showFinalKnockout(lastFallen,primary.actor);else showVictoryReveal()}
 }
 // Advance the replay by elapsed wall-clock time, not by the number of browser timer ticks.
 // Mobile browsers throttle or suspend intervals when the tab is in the background.
@@ -591,7 +609,7 @@ function advanceReplay(){
   steps++;
  }
  document.body.classList.remove('arena-catching-up');
- if(cursor>=events.length&&events.length){stop();$('play').textContent='✓ SAVAŞ TAMAMLANDI';showVictoryReveal()}
+ if(cursor>=events.length&&events.length&&!arenaFinaleActive){stop();$('play').textContent='✓ SAVAŞ TAMAMLANDI';showVictoryReveal()}
 }
 function startReplay(){
  if(timer!==null)return;
