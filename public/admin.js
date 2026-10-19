@@ -24,3 +24,7 @@ async function act(path,data){try{await api(path,data);await load()}catch(e){ale
 $('login').onclick=()=>{if(!login?.authToken){status('Önce ana sayfada yetkili Google hesabıyla giriş yapın.');return}load()};
 $('refresh').onclick=load;$('find').onclick=load;
 if(login?.authToken)load();else status('Önce oyuna yönetici Google hesabınızla giriş yapın.');
+const googleClientId='742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
+window.heroAdminGoogleCallback=async response=>{try{const r=await fetch('/api/auth/google',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({credential:response.credential})});const data=await r.json();if(!r.ok)throw Error(data.error||'Google oturumu açılamadı');login={type:'google',user:data.user,authToken:data.authToken};localStorage.setItem('hero-auction-login',JSON.stringify(login));await load()}catch(e){status(e.message)}};
+function initAdminGoogle(attempt=0){if(!window.google?.accounts?.id){if(attempt<40)setTimeout(()=>initAdminGoogle(attempt+1),500);else status('Google giriş hizmeti yüklenemedi.');return}window.google.accounts.id.initialize({client_id:googleClientId,callback:window.heroAdminGoogleCallback});window.google.accounts.id.renderButton($('google-login'),{theme:'filled_black',size:'large',text:'continue_with',width:260})}
+initAdminGoogle();
