@@ -1,0 +1,345 @@
+{
+  "version": 1,
+  "status": "design-draft-not-live",
+  "description": "First 15 original heroes, based on individual artwork. Power is a provisional weighted rating, not battle simulation output. Existing live battle logic, gold and auction are unchanged.",
+  "rarityLevels": [
+    "siradan",
+    "gelismis",
+    "nadir",
+    "efsanevi"
+  ],
+  "powerFormula": {
+    "weights": {
+      "attack": 0.28,
+      "defense": 0.24,
+      "ability": 0.22,
+      "control": 0.14,
+      "mobility": 0.12
+    },
+    "rarityBonus": {
+      "siradan": 0,
+      "gelismis": 3,
+      "nadir": 6,
+      "efsanevi": 9
+    },
+    "rounding": "nearest integer",
+    "cap": 100
+  },
+  "characters": [
+    {
+      "number": 1,
+      "id": "original:01",
+      "name": "Obsidyen Muhafız",
+      "role": "tank",
+      "rarity": "efsanevi",
+      "stats": {
+        "attack": 72,
+        "defense": 98,
+        "ability": 77,
+        "control": 72,
+        "mobility": 35
+      },
+      "abilities": [
+        "obsidyen-kalkan",
+        "hasar-azaltma"
+      ],
+      "proposedPower": 84,
+      "portrait": "/images/original/hero-01.png",
+      "status": "design-draft"
+    },
+    {
+      "number": 2,
+      "id": "original:02",
+      "name": "Demir Sur",
+      "role": "tank",
+      "rarity": "gelismis",
+      "stats": {
+        "attack": 66,
+        "defense": 91,
+        "ability": 58,
+        "control": 60,
+        "mobility": 40
+      },
+      "abilities": [
+        "celik-siper",
+        "takim-koruma"
+      ],
+      "proposedPower": 69,
+      "portrait": "/images/original/hero-02.png",
+      "status": "design-draft"
+    },
+    {
+      "number": 3,
+      "id": "original:03",
+      "name": "Kaya Titanı",
+      "role": "tank",
+      "rarity": "nadir",
+      "stats": {
+        "attack": 80,
+        "defense": 96,
+        "ability": 65,
+        "control": 76,
+        "mobility": 27
+      },
+      "abilities": [
+        "yer-sarsintisi",
+        "alan-kontrol"
+      ],
+      "proposedPower": 80,
+      "portrait": "/images/original/hero-03.png",
+      "status": "design-draft"
+    },
+    {
+      "number": 4,
+      "id": "original:04",
+      "name": "Buz Kalesi",
+      "role": "tank",
+      "rarity": "nadir",
+      "stats": {
+        "attack": 73,
+        "defense": 94,
+        "ability": 82,
+        "control": 88,
+        "mobility": 29
+      },
+      "abilities": [
+        "donma",
+        "buz-kalkani"
+      ],
+      "proposedPower": 83,
+      "portrait": "/images/original/hero-04.png",
+      "status": "design-draft"
+    },
+    {
+      "number": 5,
+      "id": "original:05",
+      "name": "Gölge Suikastçı",
+      "role": "assassin",
+      "rarity": "nadir",
+      "stats": {
+        "attack": 94,
+        "defense": 38,
+        "ability": 76,
+        "control": 52,
+        "mobility": 97
+      },
+      "abilities": [
+        "gorunmezlik",
+        "kritik-darbe"
+      ],
+      "proposedPower": 77,
+      "portrait": "/images/original/hero-05.png",
+      "status": "design-draft"
+    },
+    {
+      "number": 6,
+      "id": "original:06",
+      "name": "Altın Muhafız",
+      "role": "tank",
+      "rarity": "efsanevi",
+      "stats": {
+        "attack": 82,
+        "defense": 91,
+        "ability": 88,
+        "control": 75,
+        "mobility": 59
+      },
+      "abilities": [
+        "kutsal-kalkan",
+        "takim-koruma"
+      ],
+      "proposedPower": 91,
+      "portrait": "/images/original/hero-06.png",
+      "status": "design-draft"
+    },
+    {
+      "number": 7,
+      "id": "original:07",
+      "name": "Alev Zırhı",
+      "role": "fighter",
+      "rarity": "nadir",
+      "stats": {
+        "attack": 92,
+        "defense": 77,
+        "ability": 85,
+        "control": 57,
+        "mobility": 60
+      },
+      "abilities": [
+        "yakma",
+        "alev-kilici"
+      ],
+      "proposedPower": 84,
+      "portrait": "/images/original/hero-07.png",
+      "status": "design-draft"
+    },
+    {
+      "number": 8,
+      "id": "original:08",
+      "name": "Kadim Koruyucu",
+      "role": "marksman",
+      "rarity": "gelismis",
+      "stats": {
+        "attack": 84,
+        "defense": 42,
+        "ability": 72,
+        "control": 61,
+        "mobility": 88
+      },
+      "abilities": [
+        "uzun-menzil",
+        "dogal-yavaslatma"
+      ],
+      "proposedPower": 72,
+      "portrait": "/images/original/hero-08.png",
+      "status": "design-draft"
+    },
+    {
+      "number": 9,
+      "id": "original:09",
+      "name": "Zareth",
+      "role": "mage",
+      "rarity": "efsanevi",
+      "stats": {
+        "attack": 88,
+        "defense": 48,
+        "ability": 97,
+        "control": 80,
+        "mobility": 62
+      },
+      "abilities": [
+        "alan-hasari",
+        "yakma"
+      ],
+      "proposedPower": 85,
+      "portrait": "/images/original/hero-09.png",
+      "status": "design-draft"
+    },
+    {
+      "number": 10,
+      "id": "original:10",
+      "name": "Brunn",
+      "role": "marksman",
+      "rarity": "gelismis",
+      "stats": {
+        "attack": 89,
+        "defense": 64,
+        "ability": 77,
+        "control": 66,
+        "mobility": 48
+      },
+      "abilities": [
+        "taret",
+        "surekli-hasar"
+      ],
+      "proposedPower": 75,
+      "portrait": "/images/original/hero-10.png",
+      "status": "design-draft"
+    },
+    {
+      "number": 11,
+      "id": "original:11",
+      "name": "Drogar",
+      "role": "tank",
+      "rarity": "efsanevi",
+      "stats": {
+        "attack": 78,
+        "defense": 99,
+        "ability": 81,
+        "control": 90,
+        "mobility": 24
+      },
+      "abilities": [
+        "buz-alan-hasari",
+        "yavaslatma"
+      ],
+      "proposedPower": 88,
+      "portrait": "/images/original/hero-11.png",
+      "status": "design-draft"
+    },
+    {
+      "number": 12,
+      "id": "original:12",
+      "name": "Vandra",
+      "role": "assassin",
+      "rarity": "nadir",
+      "stats": {
+        "attack": 91,
+        "defense": 38,
+        "ability": 76,
+        "control": 47,
+        "mobility": 96
+      },
+      "abilities": [
+        "can-calma",
+        "kacis"
+      ],
+      "proposedPower": 75,
+      "portrait": "/images/original/hero-12.png",
+      "status": "design-draft"
+    },
+    {
+      "number": 13,
+      "id": "original:13",
+      "name": "Eloren",
+      "role": "marksman",
+      "rarity": "gelismis",
+      "stats": {
+        "attack": 88,
+        "defense": 30,
+        "ability": 72,
+        "control": 55,
+        "mobility": 95
+      },
+      "abilities": [
+        "kritik-ok",
+        "hareket"
+      ],
+      "proposedPower": 70,
+      "portrait": "/images/original/hero-13.png",
+      "status": "design-draft"
+    },
+    {
+      "number": 14,
+      "id": "original:14",
+      "name": "Kael",
+      "role": "fighter",
+      "rarity": "nadir",
+      "stats": {
+        "attack": 93,
+        "defense": 76,
+        "ability": 75,
+        "control": 73,
+        "mobility": 82
+      },
+      "abilities": [
+        "sersemletme",
+        "yildirim"
+      ],
+      "proposedPower": 87,
+      "portrait": "/images/original/hero-14.png",
+      "status": "design-draft"
+    },
+    {
+      "number": 15,
+      "id": "original:15",
+      "name": "Seraphine",
+      "role": "mage",
+      "rarity": "nadir",
+      "stats": {
+        "attack": 84,
+        "defense": 78,
+        "ability": 96,
+        "control": 88,
+        "mobility": 82
+      },
+      "abilities": [
+        "buz-firtinasi",
+        "ejderha-kalkani"
+      ],
+      "proposedPower": 92,
+      "portrait": "/images/original/hero-15.png",
+      "status": "design-draft"
+    }
+  ]
+}
