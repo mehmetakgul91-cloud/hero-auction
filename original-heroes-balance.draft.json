@@ -197,7 +197,7 @@
     {
       "number": 9,
       "id": "original:09",
-      "name": "Zareth",
+      "name": "Morvan",
       "role": "mage",
       "rarity": "efsanevi",
       "stats": {
@@ -208,8 +208,8 @@
         "mobility": 62
       },
       "abilities": [
-        "alan-hasari",
-        "yakma"
+        "ruh-cagirma",
+        "can-emme"
       ],
       "proposedPower": 85,
       "portrait": "/images/original/hero-09.png",
