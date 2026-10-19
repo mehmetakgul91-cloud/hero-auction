@@ -363,7 +363,7 @@ const verifiedRemoteArt={
 async function lookupCharacterInfo(universe,name){
  const key=universe+':'+name.toLowerCase();
  const local=cardDetails[key];
- const originalHero=universe==='original'?battleRoster.find(hero=>hero.id===key):null;
+ const originalHero=universe==='original'?battleRoster.find(hero=>hero.universe==='original'&&hero.name.toLocaleLowerCase('tr-TR')===name.toLocaleLowerCase('tr-TR')):null;
  if(originalHero?.portrait&&fs.existsSync(path.join(root,'public',originalHero.portrait.slice(1))))return {url:originalHero.portrait,source:null,description:originalHero.name+' · '+(originalHero.displayRole||originalHero.role)};
  if(verifiedRemoteArt[key])return {...verifiedRemoteArt[key],description:local?.description||knownDescriptions[key]||null};
  if(auditedArt[key]?.url)return {...auditedArt[key],description:local?.description||knownDescriptions[key]||null};
@@ -531,7 +531,7 @@ if(req.method==='GET'&&url.pathname==='/api/events'){const r=rooms.get((url.sear
 if(req.method==='GET'&&url.pathname==='/api/art'){
  const universe=url.searchParams.get('universe')||'';
  const name=url.searchParams.get('name')||'';
- if(!['marvel','dc','lotr','pokemon','original'].includes(universe)||name.length>100||!catalogue.has(`${universe}:${name.toLowerCase()}`))return send(400,{error:'Geçersiz karakter'});
+ if(!['marvel','dc','lotr','pokemon','original'].includes(universe)||name.length>100||!(catalogue.has(`${universe}:${name.toLowerCase()}`)||(universe==='original'&&battleRoster.some(hero=>hero.universe==='original'&&hero.name.toLocaleLowerCase('tr-TR')===name.toLocaleLowerCase('tr-TR')))))return send(400,{error:'Geçersiz karakter'});
  const key=universe+':'+name.toLowerCase();
  if(!artCache.has(key)){
   const result=await lookupCharacterInfo(universe,name);
