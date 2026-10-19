@@ -221,3 +221,28 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 @keyframes arena-final-pulse{0%{transform:scale(.9);opacity:1}100%{transform:scale(1.06);opacity:0}}
 @keyframes arena-final-rise{from{opacity:0;transform:translateY(45px) scale(.8)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(prefers-reduced-motion:reduce){.arena-final-knockout,.arena-final-knockout.visible,.arena-final-knockout::before,.arena-final-knockout::after,.arena-final-knockout-content{animation:none;transition:none;transform:none}}
+
+/* Champions podium: commander centered in front of the five winning heroes */
+.arena-victory-reveal{overflow-y:auto}
+.arena-victory-content{max-width:1050px;margin:auto;padding:16px 12px;gap:5px}
+.arena-victory-emblem{font-size:clamp(38px,9vw,66px);animation:none}
+.arena-victory-name{font-size:clamp(27px,6vw,50px)}
+.arena-victory-line{font-size:clamp(18px,4vw,30px)}
+.arena-victory-podium{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:clamp(3px,1vw,12px);align-items:end;width:100%;max-width:850px;margin:0 auto}
+.victory-podium-hero{min-width:0;display:flex;flex-direction:column;align-items:center;opacity:0;animation:champion-rise .65s ease-out forwards;animation-delay:calc(var(--podium-order)*.16s)}
+.victory-podium-art{width:100%;max-width:130px;aspect-ratio:3/4;border:2px solid #8edbff;border-radius:12px 12px 4px 4px;overflow:hidden;background:#192e4d;box-shadow:0 0 18px #40bfff55}
+.victory-podium-art img{width:100%;height:100%;object-fit:cover;display:block}
+.victory-podium-fallback{height:100%;display:grid;place-items:center;font-size:35px;font-weight:900}
+.victory-podium-name{font-size:clamp(9px,1.6vw,13px);min-height:2.3em;margin-top:5px;overflow-wrap:anywhere}
+.victory-podium-status{font-size:clamp(8px,1.3vw,11px);font-weight:900;color:#8df8ce}
+.victory-podium-fallen .victory-podium-art{filter:grayscale(1) brightness(.48);border-color:#73798c;box-shadow:none}
+.victory-podium-fallen .victory-podium-status{color:#ff9aaa}
+.victory-podium-base{width:100%;height:clamp(25px,6vw,55px);display:grid;place-items:center;background:linear-gradient(#55799e,#1d304d);border:1px solid #6fa9d7;font-weight:900}
+.victory-podium-hero:nth-child(1) .victory-podium-base{height:clamp(45px,10vw,95px);background:linear-gradient(#bd9c58,#5c4628)}
+.victory-podium-hero:nth-child(2) .victory-podium-base,.victory-podium-hero:nth-child(3) .victory-podium-base{height:clamp(35px,8vw,72px)}
+.victory-commander{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:4px;margin:5px auto -9px;padding:7px 20px;border:1px solid #e6c57d;border-radius:14px;background:linear-gradient(145deg,#40351c,#152c47);box-shadow:0 8px 28px #0009,0 0 20px #f2c55a33;animation:champion-rise .6s ease-out both}
+.victory-commander-image{height:clamp(72px,15vh,135px);max-width:160px;object-fit:contain;filter:drop-shadow(0 0 12px #ffde8a66)}
+.victory-commander strong{font-size:clamp(13px,3vw,21px);color:#ffe6a3}
+.victory-commander span{font-size:clamp(9px,2vw,12px);color:#d3e9ff}
+@keyframes champion-rise{from{opacity:0;transform:translateY(35px) scale(.92)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(prefers-reduced-motion:reduce){.victory-podium-hero,.victory-commander{animation:none;opacity:1}}
