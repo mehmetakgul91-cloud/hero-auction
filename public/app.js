@@ -191,6 +191,7 @@ function initGoogle(attempt=0){
 function gameIdentity(){return signedIn()?{authToken:login.authToken}:{}}
 async function restoreGame(){if(!signedIn()||!await validateLogin())return;try{session=JSON.parse(localStorage.getItem('hero-auction-session'));if(session){const j=await post('/api/state',{...session,...gameIdentity()});show(j.room);connect()}}catch(e){if(e.message.includes('giriş yap')||e.message.includes('Oturumun sona erdi')){login=null;localStorage.removeItem('hero-auction-login');localStorage.removeItem('hero-auction-session');session=null;room=null;applyLogin();notify('Oturum süren doldu. Yeniden giriş yap.')}else if(e.message==='Oda bulunamadı.'||e.message==='Oyuncu yetkisi geçersiz.'){localStorage.removeItem('hero-auction-session');session=null;room=null;applyLogin();notify('Önceki oda artık mevcut değil. Yeni bir maç oluşturabilirsin.')}else{notify('Bağlantı kurulamadı. Biraz sonra tekrar dene.')}}}
 const homePlayTab=$('home-play-tab'),homePlayPanel=$('home-play-panel');
+const homeGuidePlay=$('home-guide-play');if(homeGuidePlay)homeGuidePlay.onclick=()=>{if(homePlayPanel.hidden)homePlayTab.click();else homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'});};
 if(homePlayTab&&homePlayPanel){homePlayTab.onclick=()=>{const open=homePlayPanel.hidden;homePlayPanel.hidden=!open;homePlayTab.setAttribute('aria-expanded',String(open));homePlayTab.classList.toggle('selected',open);if(open)homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'})};}
 applyLogin();initGoogle();
 
