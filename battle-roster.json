@@ -59,7 +59,7 @@
       "passive": {
         "name": "Organik Çelik",
         "effect": "regen",
-        "value": 0.12
+        "value": 0.05
       },
       "specialty": "tank",
       "laneModifiers": {
@@ -227,7 +227,7 @@
       "passive": {
         "name": "Asgard Dayanıklılığı",
         "effect": "regen",
-        "value": 0.09
+        "value": 0.04
       },
       "specialty": "lightning",
       "laneModifiers": {
@@ -395,7 +395,7 @@
       "passive": {
         "name": "Güneş Enerjisi",
         "effect": "regen",
-        "value": 0.06
+        "value": 0.03
       },
       "specialty": "bruiser",
       "laneModifiers": {
@@ -563,7 +563,7 @@
       "passive": {
         "name": "Mistik Kalkan",
         "effect": "regen",
-        "value": 0.12
+        "value": 0.05
       },
       "specialty": "mage",
       "laneModifiers": {
@@ -731,7 +731,7 @@
       "passive": {
         "name": "Empatik Direnç",
         "effect": "regen",
-        "value": 0.09
+        "value": 0.04
       },
       "specialty": "mage",
       "laneModifiers": {
@@ -899,7 +899,7 @@
       "passive": {
         "name": "Hız Gücü",
         "effect": "regen",
-        "value": 0.06
+        "value": 0.03
       },
       "specialty": "speed",
       "laneModifiers": {
@@ -1370,7 +1370,7 @@
       "passive": {
         "name": "Ölülerin Gücü",
         "effect": "regen",
-        "value": 0.06
+        "value": 0.03
       },
       "specialty": "energy",
       "laneModifiers": {
