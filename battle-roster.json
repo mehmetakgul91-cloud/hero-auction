@@ -1,8 +1,8 @@
 {
   "version": 2,
   "mode": "auto-battle",
-  "rosterSize": 65,
-  "description": "Original 50 battle heroes plus 15 original Hero Auction heroes",
+  "rosterSize": 67,
+  "description": "50 classic battle heroes and 17 original Hero Auction heroes",
   "characters": [
     {
       "id": "marvel:hulk",
@@ -1589,6 +1589,67 @@
         "value": 0.06
       },
       "specialty": "energy",
+      "laneModifiers": {
+        "front": -0.04,
+        "back": 0.07
+      }
+    },
+    {
+      "id": "original:mehmet-akgul",
+      "name": "Mehmet Akgül",
+      "universe": "original",
+      "role": "fighter",
+      "rarity": "legendary",
+      "stats": {
+        "attack": 100,
+        "defense": 100,
+        "ability": 100,
+        "control": 100,
+        "mobility": 100
+      },
+      "proposedPower": 100,
+      "active": {
+        "name": "Sarsılmaz İrade",
+        "effect": "shield",
+        "power": 1.1
+      },
+      "passive": {
+        "name": "Altın Zırh",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "fighter",
+      "laneModifiers": {
+        "front": 0.06,
+        "back": -0.04
+      },
+      "portrait": "/images/original/hero-01.png"
+    },
+    {
+      "id": "original:hakan-artun",
+      "name": "Hakan Artun",
+      "universe": "original",
+      "role": "assassin",
+      "rarity": "common",
+      "stats": {
+        "attack": 30,
+        "defense": 20,
+        "ability": 35,
+        "control": 30,
+        "mobility": 45
+      },
+      "proposedPower": 35,
+      "active": {
+        "name": "Sinsi Darbe",
+        "effect": "pierce",
+        "power": 1.1
+      },
+      "passive": {
+        "name": "Çeviklik",
+        "effect": "evasion",
+        "value": 0.06
+      },
+      "specialty": "assassin",
       "laneModifiers": {
         "front": -0.04,
         "back": 0.07

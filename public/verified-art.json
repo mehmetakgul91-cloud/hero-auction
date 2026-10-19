@@ -698,5 +698,13 @@
   "lotr:old man willow": {
     "url": "https://thumb.wikimedia.org/wikipedia/en/thumb/c/c9/Old_Man_Willow.jpg/330px-Old_Man_Willow.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
     "source": "https://en.wikipedia.org/wiki/Old_Man_Willow"
+  },
+  "original:hakan-artun": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4a/Gollum_at_Wellington_Airport.jpg/330px-Gollum_at_Wellington_Airport.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "source": "https://en.wikipedia.org/wiki/Gollum"
+  },
+  "original:hakan artun": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4a/Gollum_at_Wellington_Airport.jpg/330px-Gollum_at_Wellington_Airport.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "source": "https://en.wikipedia.org/wiki/Gollum"
   }
 }
