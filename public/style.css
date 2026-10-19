@@ -708,3 +708,7 @@ header{gap:14px;flex-wrap:wrap}
 /* Five navigation tabs: mobile-friendly two-row layout */
 #home .home-quick-nav{grid-template-columns:repeat(5,minmax(0,1fr))}
 @media(max-width:550px){#home .home-quick-nav{grid-template-columns:repeat(3,minmax(0,1fr))}#home .quick-nav-item{font-size:10px;min-height:68px}}
+
+/* Consistent top-left back navigation inside game tabs */
+#home .section-back-top,#commander-profile .section-back-top{position:relative;z-index:5;display:inline-flex;align-items:center;justify-content:center;min-height:42px;margin:10px 0 16px;padding:10px 16px;border:1px solid #69c8f1;border-radius:12px;background:#162c4c;color:#e5f7ff;font-size:13px;font-weight:900;letter-spacing:.4px;cursor:pointer}
+#home .section-back-top:hover,#commander-profile .section-back-top:hover{background:#24537a}
