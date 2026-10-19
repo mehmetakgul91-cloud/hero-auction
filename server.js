@@ -360,11 +360,28 @@ const verifiedRemoteArt={
   credit:'Abzeronow · CC BY 4.0'
  }
 };
+const originalHeroDescriptions={
+  "original:01": "Ön safta darbeleri karşılayan, obsidyen kalkanıyla takımına zaman kazandıran dayanıklı muhafız.",
+  "original:02": "Çelik siperini kurarak takım arkadaşlarını koruyan ağır zırhlı savunmacı.",
+  "original:03": "Yer sarsıntılarıyla rakip düzenini bozan, güçlü ve dayanıklı kaya devi.",
+  "original:04": "Buzdan kalkanı ve dondurucu etkileriyle ön hattı tutan savunma uzmanı.",
+  "original:05": "Görünmezlik ve kritik darbelerle rakiplerini hazırlıksız yakalayan çevik suikastçı.",
+  "original:06": "Kutsal kalkanıyla müttefiklerini koruyan, savunma odaklı ön saf savaşçısı.",
+  "original:07": "Alevli kılıcıyla yakın dövüşte baskı kuran, yakıcı saldırılar kullanan savaşçı.",
+  "original:08": "Uzun menzilli atışlarıyla rakiplerini yavaşlatan kadim nişancı.",
+  "original:09": "Ruh çağırma yeteneğiyle savaş alanını etkileyen karanlık büyücü.",
+  "original:10": "Taret kurarak uzaktan sürekli hasar veren teknik nişancı.",
+  "original:11": "Buz alanı saldırılarıyla rakiplerini yavaşlatan ağır ön saf tankı.",
+  "original:12": "Can çalma ve kaçış becerileriyle hayatta kalan hızlı suikastçı.",
+  "original:13": "Kritik okları ve hareket kabiliyetiyle uzaktan yüksek baskı kuran okçu.",
+  "original:14": "Yıldırım ve sersemletme etkileriyle yakın dövüşte rakiplerini durduran savaşçı.",
+  "original:15": "Buz fırtınası ve ejderha kalkanıyla alan kontrolü sağlayan büyücü."
+};
 async function lookupCharacterInfo(universe,name){
  const key=universe+':'+name.toLowerCase();
  const local=cardDetails[key];
  const originalHero=universe==='original'?battleRoster.find(hero=>hero.universe==='original'&&hero.name.toLocaleLowerCase('tr-TR')===name.toLocaleLowerCase('tr-TR')):null;
- if(originalHero?.portrait&&fs.existsSync(path.join(root,'public',originalHero.portrait.slice(1))))return {url:originalHero.portrait,source:null,description:originalHero.name+' · '+(originalHero.displayRole||originalHero.role)};
+ if(originalHero?.portrait&&fs.existsSync(path.join(root,'public',originalHero.portrait.slice(1))))return {url:originalHero.portrait,source:null,description:originalHeroDescriptions[originalHero.id]||originalHero.name,role:originalHero.role,laneModifiers:originalHero.laneModifiers};
  if(verifiedRemoteArt[key])return {...verifiedRemoteArt[key],description:local?.description||knownDescriptions[key]||null};
  if(auditedArt[key]?.url)return {...auditedArt[key],description:local?.description||knownDescriptions[key]||null};
  if(local?.image&&/^\/images\/[\w/-]+\.png$/i.test(local.image)&&fs.existsSync(path.join(root,'public',local.image.slice(1))))return {url:local.image,source:null,description:local.description||null};
