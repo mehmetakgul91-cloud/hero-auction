@@ -602,13 +602,13 @@ function startArenaVideoKeepAwake(){
   video.muted=true;video.defaultMuted=true;video.playsInline=true;
   video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');
   video.setAttribute('aria-hidden','true');
-  video.style.cssText='position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1';
+  video.style.cssText='position:fixed;width:2px;height:2px;opacity:0.01;pointer-events:none;z-index:0';
   video.srcObject=stream;document.body.append(video);
   arenaKeepAwakeVideo=video;
   const ctx=canvas.getContext('2d');let tick=0;
   const draw=()=>{if(arenaKeepAwakeVideo!==video)return;ctx.fillStyle=(tick++%2)?'#000':'#010101';ctx.fillRect(0,0,2,2)};
   draw();
-  video._arenaDrawTimer=setInterval(draw,900);
+  video._arenaDrawTimer=setInterval(draw,250);
   void video.play().catch(()=>{stopArenaVideoKeepAwake()});
  }catch(e){stopArenaVideoKeepAwake()}
 }
@@ -681,7 +681,8 @@ function syncArenaAudioVisibility(){
 }
 document.addEventListener('visibilitychange',syncArenaAudioVisibility);
 window.addEventListener('pagehide',()=>{arenaAudioSuspendedByBackground=true;stopArenaMusic();releaseArenaWakeLock();stopArenaVideoKeepAwake()});
-window.addEventListener('focus',advanceReplay);
+window.addEventListener('focus',syncArenaAudioVisibility);
+document.addEventListener('pointerdown',()=>{if(timer!==null&&!document.hidden){void requestArenaWakeLock();startArenaVideoKeepAwake()}},{passive:true});
 window.addEventListener('pageshow',syncArenaAudioVisibility);
 // Entering the arena, rather than pressing Play, triggers the soundtrack.
 if(arenaMode){
