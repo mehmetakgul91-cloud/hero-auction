@@ -194,7 +194,47 @@ function finishAuction(r){
 }
 function error(message,status=400){const e=new Error(message);e.status=status;throw e}
 function authorize(body){const r=rooms.get(String(body.code||'').toUpperCase());if(!r)error('Oda bulunamadı.',404);const seat=r.players.findIndex(p=>p&&p.token===body.token);if(seat<0)error('Oyuncu yetkisi geçersiz.',403);return{r,seat}}
-async function api(url,b){if(url==='/api/auth/check'){const user=readLogin(b.authToken);if(!user)error('Oturumun sona erdi. Yeniden giriş yap.',401);return{user:{name:user.name},gold:await goldBalance(user.sub)}}if(url==='/api/auth/guest'){const name=String(b.name||'Oyuncu').trim().slice(0,24)||'Oyuncu';const user={sub:'guest:'+crypto.randomUUID(),name};return{user:{name},authToken:signLogin(user),gold:await goldBalance(user.sub)}}
+async function adminApi(url,b){
+ const user=readLogin(b.authToken);
+ if(!user||!ADMIN_GOOGLE_EMAIL||user.email!==ADMIN_GOOGLE_EMAIL||user.sub.startsWith('guest:'))error('Yönetici yetkisi gerekli.',403);
+ if(!database||!databaseReady)error('Veritabanı kullanılamıyor.',503);
+ if(url==='/api/admin/list'){
+  const search=String(b.search||'').slice(0,100);
+  const rows=await database.query("SELECT w.account_id,w.gold,COALESCE(a.banned,false) AS banned FROM hero_auction_wallets w LEFT JOIN hero_auction_admin_accounts a ON a.account_id=w.account_id WHERE ($1='' OR w.account_id ILIKE '%'||$1||'%') ORDER BY w.account_id LIMIT 200",[search]);
+  return {accounts:rows.rows};
+ }
+ if(url==='/api/admin/history'){
+  const rows=await database.query('SELECT account_id,action,old_gold,new_gold,created_at FROM hero_auction_admin_audit ORDER BY id DESC LIMIT 100');
+  return {history:rows.rows};
+ }
+ if(url==='/api/admin/gold'||url==='/api/admin/ban'){
+  const id=String(b.accountId||'').trim();
+  if(!id||id.length>150||id===user.sub)error('Geçersiz hesap.',400);
+  const client=await database.connect();
+  try{
+   await client.query('BEGIN');
+   const old=await client.query('SELECT gold FROM hero_auction_wallets WHERE account_id=$1 FOR UPDATE',[id]);
+   if(!old.rowCount)error('Hesap bulunamadı.',404);
+   const oldGold=Number(old.rows[0].gold);
+   let gold=oldGold,action='';
+   if(url==='/api/admin/gold'){
+    gold=b.gold;
+    if(!Number.isSafeInteger(gold)||gold<0||gold>100000000)error('Geçersiz altın miktarı.',400);
+    await client.query('UPDATE hero_auction_wallets SET gold=$2 WHERE account_id=$1',[id,gold]);
+    action='gold';
+   }else{
+    if(typeof b.banned!=='boolean')error('Geçersiz işlem.',400);
+    await client.query('INSERT INTO hero_auction_admin_accounts(account_id,banned) VALUES($1,$2) ON CONFLICT(account_id) DO UPDATE SET banned=$2',[id,b.banned]);
+    action=b.banned?'ban':'unban';
+   }
+   await client.query('INSERT INTO hero_auction_admin_audit(account_id,actor_id,action,old_gold,new_gold) VALUES($1,$2,$3,$4,$5)',[id,user.sub,action,oldGold,gold]);
+   await client.query('COMMIT');
+   return {ok:true,gold,action};
+  }catch(e){await client.query('ROLLBACK').catch(()=>{});throw e}finally{client.release()}
+ }
+ error('Bilinmeyen işlem.',404);
+}
+async function api(url,b){if(url.startsWith('/api/admin/'))return adminApi(url,b);if(url==='/api/auth/check'){const user=readLogin(b.authToken);if(!user)error('Oturumun sona erdi. Yeniden giriş yap.',401);return{user:{name:user.name},gold:await goldBalance(user.sub)}}if(url==='/api/auth/guest'){const name=String(b.name||'Oyuncu').trim().slice(0,24)||'Oyuncu';const user={sub:'guest:'+crypto.randomUUID(),name};return{user:{name},authToken:signLogin(user),gold:await goldBalance(user.sub)}}
 if(!url.startsWith('/api/auth/')){const user=readLogin(b.authToken);if(!user)error('Odaya erişmek için giriş yapmalısın.',401);if(databaseReady){const block=await database.query('SELECT banned FROM hero_auction_admin_accounts WHERE account_id=$1',[user.sub]);if(block.rows[0]?.banned)error('Hesap askıya alınmıştır.',403)}}
 if(url==='/api/commander/get'){
  const user=readLogin(b.authToken);
