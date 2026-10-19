@@ -239,7 +239,7 @@ const specialtyLaneBonuses={
 const laneLabel=hero=>{const [front,back]=specialtyLaneBonuses[specialtyLabel(hero)]||[0,0];const fmt=n=>(n>0?'+':'')+n+'%';return 'Ön '+fmt(front)+' · Arka '+fmt(back)};
 
 
-const worldNames={pokemon:'POKÉMON',marvel:'MARVEL',dc:'DC',lotr:'YÜZÜKLERİN EFENDİSİ',mixed:'KARMA EVREN'};
+const worldNames={original:'HERO AUCTION',pokemon:'POKÉMON',marvel:'MARVEL',dc:'DC',lotr:'YÜZÜKLERİN EFENDİSİ',mixed:'KARMA EVREN'};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const notify=msg=>{const t=$('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3300)};
 async function post(url,data){const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...gameIdentity(),...data})});const j=await res.json();if(!res.ok)throw Error(j.error||'İşlem başarısız');return j}
@@ -347,6 +347,10 @@ async function loadHeroInfo(card){
  const data=infoMemo.get(key);
  const desc=document.getElementById('hero-description');
  if(desc)desc.textContent=data?.description||card.description||card.name+' hakkında doğrulanmış kısa açıklama henüz eklenmedi.';
+ if(card.universe==='original'&&data?.laneModifiers){
+  const tag=document.querySelector('#stage .auction-hero .tag:last-of-type');
+  if(tag){const fmt=n=>(n>=0?'+':'')+(Number(n)*100).toFixed(0)+'%';tag.textContent=(data.role==='tank'?'🛡️ TANK':data.role==='assassin'?'🥷 SUİKASTÇI':data.role==='energy'?'🔮 ENERJİ':'⚔️ SAVAŞÇI')+' · ÖN '+fmt(data.laneModifiers.front)+' · ARKA '+fmt(data.laneModifiers.back)}
+ }
  const target=document.querySelector('#stage .card-art');if(!target)return;
  if(data?.url){
   target.innerHTML='';const img=document.createElement('img');img.src=data.url;img.alt=card.name;
