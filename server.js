@@ -195,7 +195,7 @@ function finishAuction(r){
 function error(message,status=400){const e=new Error(message);e.status=status;throw e}
 function authorize(body){const r=rooms.get(String(body.code||'').toUpperCase());if(!r)error('Oda bulunamadı.',404);const seat=r.players.findIndex(p=>p&&p.token===body.token);if(seat<0)error('Oyuncu yetkisi geçersiz.',403);return{r,seat}}
 async function api(url,b){if(url==='/api/auth/check'){const user=readLogin(b.authToken);if(!user)error('Oturumun sona erdi. Yeniden giriş yap.',401);return{user:{name:user.name},gold:await goldBalance(user.sub)}}if(url==='/api/auth/guest'){const name=String(b.name||'Oyuncu').trim().slice(0,24)||'Oyuncu';const user={sub:'guest:'+crypto.randomUUID(),name};return{user:{name},authToken:signLogin(user),gold:await goldBalance(user.sub)}}
-if(!url.startsWith('/api/auth/')){if(!readLogin(b.authToken))error('Odaya erişmek için giriş yapmalısın.',401)}
+if(!url.startsWith('/api/auth/')){const user=readLogin(b.authToken);if(!user)error('Odaya erişmek için giriş yapmalısın.',401);if(databaseReady){const block=await database.query('SELECT banned FROM hero_auction_admin_accounts WHERE account_id=$1',[user.sub]);if(block.rows[0]?.banned)error('Hesap askıya alınmıştır.',403)}}
 if(url==='/api/commander/get'){
  const user=readLogin(b.authToken);
  if(!database||!databaseReady)error('Komutan sistemi geçici olarak kullanılamıyor.',503);
