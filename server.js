@@ -363,6 +363,8 @@ const verifiedRemoteArt={
 async function lookupCharacterInfo(universe,name){
  const key=universe+':'+name.toLowerCase();
  const local=cardDetails[key];
+ const originalHero=universe==='original'?battleRoster.find(hero=>hero.id===key):null;
+ if(originalHero?.portrait&&fs.existsSync(path.join(root,'public',originalHero.portrait.slice(1))))return {url:originalHero.portrait,source:null,description:originalHero.name+' · '+(originalHero.displayRole||originalHero.role)};
  if(verifiedRemoteArt[key])return {...verifiedRemoteArt[key],description:local?.description||knownDescriptions[key]||null};
  if(auditedArt[key]?.url)return {...auditedArt[key],description:local?.description||knownDescriptions[key]||null};
  if(local?.image&&/^\/images\/[\w/-]+\.png$/i.test(local.image)&&fs.existsSync(path.join(root,'public',local.image.slice(1))))return {url:local.image,source:null,description:local.description||null};
