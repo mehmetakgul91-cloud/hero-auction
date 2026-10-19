@@ -93,11 +93,11 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
     if(!allies.length||!enemies.length)return;
     const totalAttack=allies.reduce((n,u)=>n+u.attack,0);
     const totalMaxHp=allies.reduce((n,u)=>n+u.maxHp,0);
-    let value=0;
+    let value=0,absorbedTotal=0;
     if(id==='attack'){
       const total=Math.max(1,Math.round(totalAttack*(ability==='ultimate'?.30:.12)));
       const each=Math.max(1,Math.floor(total/enemies.length));
-      for(const target of enemies){const raw=each,absorbed=Math.min(target.shield,raw);target.shield-=absorbed;const damage=Math.min(target.hp,raw-absorbed);target.hp-=damage;value+=damage;}
+      for(const target of enemies){const raw=each,absorbed=Math.min(target.shield,raw);target.shield-=absorbed;const damage=Math.min(target.hp,raw-absorbed);target.hp-=damage;value+=damage;absorbedTotal+=absorbed;log.push({round,side,actor:'commander:'+side,action:'commander-hit',target:target.id,value:damage,absorbed,rawDamage:raw,damageType:'commander'}); }
     }else if(id==='defense'){
       const total=Math.max(1,Math.round(totalMaxHp*(ability==='ultimate'?.20:.08)));
       const each=Math.max(1,Math.floor(total/allies.length));
@@ -110,7 +110,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       const targets=[...enemies].sort((a,b)=>b.attack-a.attack).slice(0,ability==='ultimate'?2:1);
       for(const target of targets){target.commanderWeaken=Math.max(target.commanderWeaken||0,ability==='ultimate'?.40:.30);value++;}
     }
-    log.push({round,side,actor:'commander:'+side,action:'commander-'+id+'-'+ability,value,energy:commanderEnergy[side]});
+    log.push({round,side,actor:'commander:'+side,action:'commander-'+id+'-'+ability,value,absorbed:absorbedTotal,energy:commanderEnergy[side]});
   };
   const previousAlive=teams.map(team=>team.filter(u=>u.hp>0).length);
   for(let round=1;round<=maxRounds;round++){
