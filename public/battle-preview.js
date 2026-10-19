@@ -462,6 +462,19 @@ function showVictoryReveal(){
  $('arena-victory-symbol').textContent=winner===null?'⚔':'🏆';
  const podium=$('arena-victory-podium');
  podium.replaceChildren();
+ if(winner!==null){
+  const commander=finalResult.commanders?.[winner];
+  const id=commander?.commanderId;
+  const info=commanderDisplay[id];
+  const leader=document.createElement('div');leader.className='victory-commander';
+  const portrait=document.createElement('img');portrait.className='victory-commander-image';portrait.alt=info?info[1]+' Komutanı':'Komutan';
+  if(info){portrait.src='/images/commander-'+encodeURIComponent(id)+'.svg';portrait.onerror=()=>{portrait.hidden=true}}
+  else portrait.hidden=true;
+  const title=document.createElement('strong');title.textContent=info?info[1].toUpperCase()+' KOMUTANI':'TAKIM KOMUTANI';
+  const caption=document.createElement('span');caption.textContent='♛ ŞAMPİYON TAKIMIN LİDERİ';
+  leader.append(portrait,title,caption);podium.before(leader);
+  const old=overlay.querySelectorAll('.victory-commander');for(const node of old)if(node!==leader)node.remove();
+ }else{overlay.querySelectorAll('.victory-commander').forEach(node=>node.remove())}
  const side=winner===null?null:winner;
  if(side!==null&&states[side]){
   // Center stage is highest; the other four podium places flank the champion.
