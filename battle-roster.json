@@ -1344,7 +1344,7 @@
     },
     {
       "id": "original:09",
-      "name": "Zareth",
+      "name": "Morvan",
       "universe": "original",
       "role": "energy",
       "displayRole": "mage",
@@ -1357,19 +1357,19 @@
         "mobility": 62
       },
       "abilities": [
-        "alan-hasari",
-        "yakma"
+        "ruh-cagirma",
+        "can-emme"
       ],
       "portrait": "/images/original/hero-09.png",
       "proposedPower": 85,
       "active": {
-        "name": "alan-hasari",
+        "name": "Ruh Çağırma",
         "effect": "splash",
         "power": 1.12
       },
       "passive": {
-        "name": "yakma",
-        "effect": "focus",
+        "name": "Ölülerin Gücü",
+        "effect": "regen",
         "value": 0.06
       },
       "specialty": "energy",
