@@ -1632,13 +1632,13 @@
       "role": "assassin",
       "rarity": "common",
       "stats": {
-        "attack": 30,
-        "defense": 20,
-        "ability": 35,
-        "control": 30,
-        "mobility": 45
+        "attack": 49,
+        "defense": 49,
+        "ability": 49,
+        "control": 49,
+        "mobility": 49
       },
-      "proposedPower": 35,
+      "proposedPower": 49,
       "active": {
         "name": "Sinsi Darbe",
         "effect": "pierce",
