@@ -686,3 +686,6 @@ header{gap:14px;flex-wrap:wrap}
 .commander-profile-v2 .commander-fishbone-branch button{min-height:44px;border-radius:8px;font-size:12px;white-space:normal}
 @media(max-width:900px){.commander-profile-v2{grid-template-columns:1fr}.commander-active-art{min-height:330px}.commander-active-art img{height:390px;object-position:center 20%}.commander-active-panel{max-width:none}}
 @media(max-width:500px){.commander-profile-v2 .commander-upgrades.commander-fishbone{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.commander-profile-v2 .commander-fishbone-branch{padding:10px 7px;gap:10px;min-height:190px}.commander-profile-v2 .commander-fishbone-branch>strong{font-size:12px}.commander-profile-v2 .commander-fishbone-branch>span:not(.commander-branch-node){font-size:11px}.commander-profile-v2 .commander-branch-node{width:49px;height:49px;font-size:25px}.commander-active-art img{height:355px}}
+
+/* Hero collection entry on the signed-in home screen */
+#home .heroes-entry{display:block;position:relative;z-index:2;text-align:center;margin:8px 0 18px;padding:15px;border-radius:14px;background:linear-gradient(100deg,#163c6e,#285d80);border:1px solid #66d9ff;color:white;text-decoration:none;font-size:14px;font-weight:900;box-shadow:0 0 25px #40cfff33}
