@@ -380,7 +380,8 @@ const originalHeroDescriptions={
 async function lookupCharacterInfo(universe,name){
  const key=universe+':'+name.toLowerCase();
  const local=cardDetails[key];
- const originalHero=universe==='original'?battleRoster.find(hero=>hero.universe==='original'&&hero.name.toLocaleLowerCase('tr-TR')===name.toLocaleLowerCase('tr-TR')):null;
+ const rosterHero=battleRoster.find(hero=>hero.universe===universe&&hero.name.toLocaleLowerCase('tr-TR')===name.toLocaleLowerCase('tr-TR'));
+ const originalHero=universe==='original'?rosterHero:null;
  if(originalHero?.portrait&&fs.existsSync(path.join(root,'public',originalHero.portrait.slice(1))))return {url:originalHero.portrait,source:null,description:originalHeroDescriptions[originalHero.id]||originalHero.name,role:originalHero.role,laneModifiers:originalHero.laneModifiers};
  if(verifiedRemoteArt[key])return {...verifiedRemoteArt[key],description:local?.description||knownDescriptions[key]||null};
  if(auditedArt[key]?.url)return {...auditedArt[key],description:local?.description||knownDescriptions[key]||null};
@@ -554,7 +555,9 @@ if(req.method==='GET'&&url.pathname==='/api/art'){
   const result=await lookupCharacterInfo(universe,name);
   artCache.set(key,result);
  }
- return send(200,artCache.get(key));
+ const art=artCache.get(key);
+ const hero=battleRoster.find(h=>h.universe===universe&&h.name.toLocaleLowerCase('tr-TR')===name.toLocaleLowerCase('tr-TR'));
+ return send(200,hero?{...art,role:hero.role,laneModifiers:hero.laneModifiers||null}:art);
 }
 if(req.method==='GET'&&url.pathname==='/api/online'){
  const id=url.searchParams.get('visitor')||'';
