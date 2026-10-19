@@ -359,6 +359,7 @@ function animateMove(e){
  if(!splash)setTimeout(()=>{actor.classList.remove('attack-melee','attack-energy','special-cast');effectTarget.classList.remove('healing-aura','shield-aura')},700);
 }
 
+const commanderPortraits={attack:'/images/Ate%C5%9Fler%20%C4%B0%C3%A7inde%20Sava%C5%9F%C3%A7%C4%B1%20Komutan.png',defense:'/images/Alt%C4%B1n%20Aslan%C4%B1n%20Kale%20Muhaf%C4%B1z%C4%B1.png',magic:'/images/Kozmik%20R%C3%BCnlerin%20B%C3%BCy%C3%BCc%C3%BC%20Komutan%C4%B1.png',support:'/images/Z%C3%BCmr%C3%BCt%20I%C5%9F%C4%B1%C4%9F%C4%B1n%20%C5%9Eifac%C4%B1%20Krali%C3%A7esi.png'};
 const commanderDisplay={attack:['⚔️','Saldırı'],defense:['🛡️','Savunma'],magic:['🔮','Büyücü'],support:['💚','Destek']};
 function renderArenaCommanderMatchup(profiles){
  const panel=$('arena-commander-matchup');if(!panel)return;
@@ -468,7 +469,7 @@ function showVictoryReveal(){
   const info=commanderDisplay[id];
   const leader=document.createElement('div');leader.className='victory-commander';
   const portrait=document.createElement('img');portrait.className='victory-commander-image';portrait.alt=info?info[1]+' Komutanı':'Komutan';
-  if(info){portrait.src='/images/commander-'+encodeURIComponent(id)+'.svg';portrait.onerror=()=>{portrait.hidden=true}}
+  if(info&&commanderPortraits[id]){portrait.src=commanderPortraits[id];portrait.onerror=()=>{portrait.hidden=true}}
   else portrait.hidden=true;
   const title=document.createElement('strong');title.textContent=info?info[1].toUpperCase()+' KOMUTANI':'TAKIM KOMUTANI';
   const caption=document.createElement('span');caption.textContent='♛ ŞAMPİYON TAKIMIN LİDERİ';
