@@ -88,7 +88,7 @@ function onlineStats(){
 }
 
 const curated={"marvel:thanos":95,"marvel:galactus":99,"marvel:odin":95,"marvel:sentry":94,"marvel:silver surfer":93,"marvel:thor":88,"marvel:hulk":87,"marvel:scarlet witch":94,"marvel:doctor strange":91,"marvel:iron man":75,"marvel:spider-man":70,"marvel:captain america":61,"dc:the spectre":100,"dc:anti-monitor":99,"dc:doctor manhattan":99,"dc:darkseid":97,"dc:superman":92,"dc:batman":65,"dc:wonder woman":88,"dc:the flash":90,"lotr:eru ilúvatar":100,"lotr:morgoth":99,"lotr:sauron":95,"lotr:gandalf":87,"lotr:aragorn":70,"pokemon:arceus":100,"pokemon:mewtwo":94,"pokemon:rayquaza":94,"pokemon:pikachu":65};
-const stablePower=(id)=>{if(Number.isInteger(cardDetails[id]?.power))return cardDetails[id].power;if(curated[id]!=null)return curated[id];const h=crypto.createHash("sha256").update("hero-auction-v3:"+id).digest();return 15+(h.readUInt32BE(0)%86)};
+const stablePower=(id)=>{if(Number.isInteger(cardDetails[id]?.power))return cardDetails[id].power;const original=battleRoster.find(hero=>hero.id===id);if(original?.universe==='original')return original.proposedPower;if(curated[id]!=null)return curated[id];const h=crypto.createHash("sha256").update("hero-auction-v3:"+id).digest();return 15+(h.readUInt32BE(0)%86)};
 const rarityForPower=(power)=>power>=90?'legendary':power>=70?'rare':power>=50?'advanced':'common';
 const liveBattleIds=new Set(battleRoster.map(x=>x.id));
 const newCards=(universe)=>shuffle([...catalogue.values()].filter(x=>liveBattleIds.has(x.id)&&(universe==="mixed"||x.universe===universe))).slice(0,10).map(x=>({...x,power:stablePower(x.id)}));
@@ -101,6 +101,8 @@ const fallbackPokemon='Pikachu,Raichu,Bulbasaur,Ivysaur,Venusaur,Charmander,Char
 const catalogue=new Map();
 function add(universe,names){for(const name of names){const n=name.trim();if(n)catalogue.set(`${universe}:${n.toLowerCase()}`,{id:`${universe}:${n.toLowerCase()}`,name:n,universe});}}
 for(const [k,v] of Object.entries(words))add(k,v.split(','));add('pokemon',fallbackPokemon.split(','));
+// Original Hero Auction characters are additive: preserve all existing catalogue entries.
+for(const hero of battleRoster.filter(hero=>hero.universe==='original'))catalogue.set(hero.id,{id:hero.id,name:hero.name,universe:hero.universe,role:hero.role,rarity:hero.rarity,portrait:hero.portrait});
 for(const [key,value] of Object.entries(cardDetails)){if(key.startsWith('pokemon:')&&value.pokedex&&value.name)add('pokemon',[value.name]);}
 async function loadPokemon(){try{const r=await fetch('https://pokeapi.co/api/v2/pokemon-species?limit=1025',{signal:AbortSignal.timeout(9000)});if(!r.ok)throw Error('API status '+r.status);const j=await r.json();for(const x of j.results)add('pokemon',[x.name.split('-').map(y=>y[0].toUpperCase()+y.slice(1)).join(' ')]);console.log('Loaded Pokemon species:',j.results.length);}catch(e){console.warn('PokeAPI unavailable; using bundled Kanto fallback:',e.message)}}
 await loadPokemon();
@@ -527,7 +529,7 @@ if(req.method==='GET'&&url.pathname==='/api/events'){const r=rooms.get((url.sear
 if(req.method==='GET'&&url.pathname==='/api/art'){
  const universe=url.searchParams.get('universe')||'';
  const name=url.searchParams.get('name')||'';
- if(!['marvel','dc','lotr','pokemon'].includes(universe)||name.length>100||!catalogue.has(`${universe}:${name.toLowerCase()}`))return send(400,{error:'Geçersiz karakter'});
+ if(!['marvel','dc','lotr','pokemon','original'].includes(universe)||name.length>100||!catalogue.has(`${universe}:${name.toLowerCase()}`))return send(400,{error:'Geçersiz karakter'});
  const key=universe+':'+name.toLowerCase();
  if(!artCache.has(key)){
   const result=await lookupCharacterInfo(universe,name);
@@ -545,7 +547,7 @@ if(req.method==='GET'&&url.pathname==='/api/online'){
  onlineVisitors.set(id,{seen:Date.now(),code:belongs?code:null});
  return send(200,onlineStats());
 }
-if(req.method==='GET'&&url.pathname==='/api/info')return send(200,{catalogueCount:catalogue.size,counts:Object.fromEntries(['pokemon','marvel','dc','lotr'].map(k=>[k,[...catalogue.values()].filter(x=>x.universe===k).length]))});
+if(req.method==='GET'&&url.pathname==='/api/info')return send(200,{catalogueCount:catalogue.size,counts:Object.fromEntries(['pokemon','marvel','dc','lotr','original'].map(k=>[k,[...catalogue.values()].filter(x=>x.universe===k).length]))});
 if(req.method==='POST'&&url.pathname.startsWith('/api/')){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>12000)error('İstek çok büyük.')}let body;try{body=JSON.parse(raw)}catch{error('Geçersiz JSON')}return send(200,await api(url.pathname,body))}
 if(req.method==='GET'){const file=path.join(root,'public',url.pathname==='/'?'index.html':url.pathname==='/privacy'?'privacy.html':url.pathname==='/admin'?'admin.html':url.pathname);if(!file.startsWith(path.join(root,'public')+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile())return send(404,{error:'Bulunamadı'});res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});fs.createReadStream(file).pipe(res);return}send(405,{error:'İzin verilmeyen yöntem'});}catch(e){send(e.status||500,{error:e.status?e.message:'Sunucu hatası'})}});
 setInterval(()=>{for(const r of rooms.values()){
