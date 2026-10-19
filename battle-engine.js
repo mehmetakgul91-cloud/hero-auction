@@ -35,16 +35,15 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
   if(!Number.isInteger(maxRounds)||maxRounds<1||maxRounds>100)throw Error('Invalid round limit.');
   const random=seedRandom(seed);
   const teams=[cardsA,cardsB].map(cards=>cards.map((c,i)=>fighterFromCard(c,i)));
-  // One bounded tactical multiplier: role + formation + duplicate penalty.
+  // One bounded tactical multiplier: formation + duplicate penalty.
   // No stacking of independent bonuses beyond the 0.90–1.10 interval.
   for(const team of teams){
     const counts=Object.fromEntries(roles.map(role=>[role,0]));for(const u of team)counts[u.role]++;
     for(const u of team){
-      const roleBonus=u.role==='tank'?0.06:u.role==='fighter'?0.04:u.role==='energy'?0.06:u.role==='support'?0.06:0.05;
       const duplicates=Math.max(0,counts[u.role]-3)*0.075;
       const laneBonus=Number(u.laneModifiers?.[u.lane]);
       const specialtyBonus=Number.isFinite(laneBonus)?clamp(laneBonus,-0.10,0.10):0;
-      const multiplier=clamp(1+roleBonus-duplicates+specialtyBonus,0.90,1.10);
+      const multiplier=clamp(1-duplicates+specialtyBonus,0.90,1.10);
       u.compositionMultiplier=multiplier;
       u.attack=Math.round(u.attack*multiplier);
       u.defense=Math.round(u.defense*multiplier);
