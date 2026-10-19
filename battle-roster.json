@@ -1632,17 +1632,17 @@
       "role": "assassin",
       "rarity": "common",
       "stats": {
-        "attack": 49,
-        "defense": 49,
-        "ability": 49,
-        "control": 49,
-        "mobility": 49
+        "attack": 100,
+        "defense": 100,
+        "ability": 100,
+        "control": 100,
+        "mobility": 100
       },
-      "proposedPower": 49,
+      "proposedPower": 100,
       "active": {
-        "name": "Sinsi Darbe",
-        "effect": "pierce",
-        "power": 1.1
+        "name": "Headshot",
+        "effect": "headshot",
+        "power": 1
       },
       "passive": {
         "name": "Çeviklik",
