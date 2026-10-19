@@ -444,6 +444,12 @@ function render(flash){
  }
 }
 let victoryRevealDone=false,victoryRevealTimer=null;
+function podiumPortrait(hero,side){
+ const universe=String(hero.id||'').split(':')[0]||(side?'dc':'marvel');
+ const key=universe+':'+hero.name;
+ if(!arenaArtCache.has(key))arenaArtCache.set(key,fetch('/api/art?universe='+encodeURIComponent(universe)+'&name='+encodeURIComponent(hero.name)).then(r=>r.ok?r.json():null).then(data=>data?.url||null).catch(()=>null));
+ return arenaArtCache.get(key);
+}
 function showVictoryReveal(){
  if(victoryRevealDone||!finalResult)return;
  victoryRevealDone=true;
@@ -452,12 +458,34 @@ function showVictoryReveal(){
  const winner=finalResult.winner;
  overlay.dataset.winner=winner===null?'draw':winner===0?'blue':'red';
  $('arena-victory-label').textContent=winner===null?'BERABERLİK':winner===0?'MAVİ TAKIM':'KIRMIZI TAKIM';
- $('arena-victory-subtitle').textContent=winner===null?'İKİ TAKIM DA SONUNA KADAR SAVAŞTI':'ARENANIN GALİBİ';
- $('arena-victory-symbol').textContent=winner===null?'⚔':'✦';
+ $('arena-victory-subtitle').textContent=winner===null?'ONURLU MÜCADELE':'ŞAMPİYONLAR PODYUMU';
+ $('arena-victory-symbol').textContent=winner===null?'⚔':'🏆';
+ const podium=$('arena-victory-podium');
+ podium.replaceChildren();
+ const side=winner===null?null:winner;
+ if(side!==null&&states[side]){
+  // Center stage is highest; the other four podium places flank the champion.
+  const order=[2,0,1,3,4];
+  for(const [slot,index] of order.entries()){
+   const hero=states[side][index];if(!hero)continue;
+   const standing=hero.hp>0;
+   const figure=document.createElement('div');figure.className='victory-podium-hero'+(standing?'':' victory-podium-fallen');
+   figure.style.setProperty('--podium-order',String(slot));
+   const art=document.createElement('div');art.className='victory-podium-art';
+   const fallback=document.createElement('span');fallback.className='victory-podium-fallback';fallback.textContent=hero.name.slice(0,1);art.append(fallback);
+   void podiumPortrait(hero,side).then(url=>{if(!url||!art.isConnected)return;const img=document.createElement('img');img.alt=hero.name;img.loading='eager';img.onload=()=>{if(art.isConnected){fallback.remove();art.append(img)}};img.src=url});
+   const name=document.createElement('strong');name.className='victory-podium-name';name.textContent=hero.name;
+   const status=document.createElement('span');status.className='victory-podium-status';status.textContent=standing?'AYAKTA':'ELENDİ';
+   const base=document.createElement('div');base.className='victory-podium-base';base.textContent=String(slot+1).padStart(2,'0');
+   figure.append(art,name,status,base);podium.append(figure);
+  }
+ }else{
+  const draw=document.createElement('p');draw.className='victory-podium-draw';draw.textContent='İki takım da sonuna kadar mücadele etti.';podium.append(draw);
+ }
  overlay.hidden=false;
  const finish=()=>{if(overlay.hidden)return;overlay.hidden=true;if(victoryRevealTimer!==null){clearTimeout(victoryRevealTimer);victoryRevealTimer=null}showBattleSummary()};
  $('arena-victory-continue').onclick=finish;
- victoryRevealTimer=setTimeout(finish,3400);
+ victoryRevealTimer=setTimeout(finish,6500);
 }
 function showBattleSummary(){
  const panel=$('battle-summary');if(!panel||!finalResult)return;
