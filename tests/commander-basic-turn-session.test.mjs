@@ -101,3 +101,26 @@ test('energy splash is inactive on ordinary rounds',()=>{
  const {result}=stepBasicTurn(s);
  assert.equal(result.event.action,'attack');
 });
+
+test('scheduled shield special applies only on third round',()=>{
+ const c=make();c.round=3;c.teams[0][0].active={effect:'shield',name:'Guard'};
+ const s=createBasicTurnSession(c,{parity:true,shieldDrain:true});
+ const {result}=stepBasicTurn(s);
+ assert.equal(result.events.some(e=>e.action==='shield'),true);
+ assert.equal(c.teams[0][0].shield,Math.round(c.teams[0][0].defense*.4));
+ assert.equal(peekBasicTurn(s).actorId,'b');
+});
+test('scheduled drain special heals based on actual damage',()=>{
+ const c=make();c.round=3;c.teams[0][0].active={effect:'drain',name:'Drain'};c.teams[0][0].hp=70;
+ const s=createBasicTurnSession(c,{parity:true,shieldDrain:true});
+ const {result}=stepBasicTurn(s);
+ assert.equal(result.events.some(e=>e.action==='heal'),true);
+ assert.ok(c.teams[0][0].hp>70);
+});
+test('shield skill attacks normally outside special rounds',()=>{
+ const c=make();c.teams[0][0].active={effect:'shield'};
+ const s=createBasicTurnSession(c,{parity:true,shieldDrain:true});
+ const {result}=stepBasicTurn(s);
+ assert.equal(result.event.action,'attack');
+ assert.equal(c.teams[0][0].shield,0);
+});
