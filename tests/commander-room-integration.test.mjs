@@ -95,3 +95,20 @@ test('rematch starts at round one with fresh energy and no previous result',()=>
  assert.deepEqual(fresh.submitted,[false,false]);
  assert.throws(()=>viewRoomCommanderSession(room,bound,'player-a'),/expired/);
 });
+
+test('both players receive the same completed round events only after both submit',()=>{
+ const {room,bound}=setup();
+ const initial=viewRoomCommanderSession(room,bound,'player-a');
+ assert.equal(initial.completedRound,0);
+ assert.deepEqual(initial.roundEvents,[]);
+ submitRoomCommanderTurn(room,bound,{token:'player-a',round:1,command:'pass'});
+ assert.equal(viewRoomCommanderSession(room,bound,'player-b').completedRound,0);
+ assert.deepEqual(viewRoomCommanderSession(room,bound,'player-b').roundEvents,[]);
+ submitRoomCommanderTurn(room,bound,{token:'player-b',round:1,command:'pass'});
+ const a=viewRoomCommanderSession(room,bound,'player-a');
+ const b=viewRoomCommanderSession(room,bound,'player-b');
+ assert.equal(a.completedRound,1);
+ assert.equal(b.completedRound,1);
+ assert.deepEqual(a.roundEvents,b.roundEvents);
+ assert.ok(a.roundEvents.every(event=>event.round===1));
+});
