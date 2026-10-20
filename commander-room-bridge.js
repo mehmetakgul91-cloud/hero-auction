@@ -31,7 +31,9 @@ export function viewRoomCommanderSession(room,bound,token){
  if(side<0)throw Error('Unauthorized commander player');
  const session=bound.session;
  const energy=session.finished?(session.result?.commanderEnergy?.[side]??0):Math.min(100,(session.result?.commanderEnergy?.[side]??0)+12);
- return {round:session.round,finished:session.finished,
+ const completedRound=session.turns.length;
+ const roundEvents=Array.isArray(session.result?.log)?session.result.log.filter(event=>event.round===completedRound):[];
+ return {round:session.round,completedRound,roundEvents,finished:session.finished,
   submitted:session.pending.map(x=>x!==undefined),
   yourSide:side,
   yourCommand:session.pending[side]?.command??null,
