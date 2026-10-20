@@ -475,7 +475,14 @@ if(url.pathname==='/api/experimental/commander-live'&&(req.method==='GET'||req.m
   liveCommanderAbilitySessions.set(matchKey,session);
  }
  try{
-  if(req.method==='POST')return send(409,{error:'Anlık yetenek savaş motoruna bağlanana kadar kullanılamaz; enerji harcanmadı'});
+  if(req.method==='POST'){
+   // Fail closed: validating the cast request never deducts energy or starts cooldown.
+   // The authoritative incremental hero battle is not yet integrated.
+   if(!['normal','ultimate'].includes(body?.ability))return send(422,{error:'Geçersiz komutan yeteneği'});
+   if(typeof body?.requestId!=='string'||!/^[-a-zA-Z0-9_]{8,80}$/.test(body.requestId))return send(422,{error:'Geçersiz yetenek istek kimliği'});
+   if(body?.targetIds!==undefined&&(!Array.isArray(body.targetIds)||body.targetIds.length>2||body.targetIds.some(id=>typeof id!=='string'||id.length>120)||new Set(body.targetIds).size!==body.targetIds.length))return send(422,{error:'Geçersiz büyü hedefleri'});
+   return send(409,{error:'Anlık yetenek henüz gerçek savaş motoruna bağlı değil; enerji harcanmadı',code:'LIVE_COMBAT_NOT_READY'});
+  }
   return send(200,{...viewLiveCommanderAbilities(session,side),mode:'preview',cooldownSeconds:5});
  }catch(e){return send(422,{error:e.message})}
 }
