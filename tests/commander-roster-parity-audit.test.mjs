@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {battleRoster} from '../battle-roster.js';
+import {commanderOriginalRoster} from '../commander-original-roster.js';
 import {auditIncrementalRoster} from '../commander-roster-parity-audit.js';
 import {createBasicTurnSession} from '../commander-basic-turn-session.js';
 test('full roster audit accounts for every character and reports unsupported abilities',()=>{
  const report=auditIncrementalRoster();
- assert.equal(report.total,battleRoster.length);
+ assert.equal(report.total,commanderOriginalRoster.length);
  assert.equal(report.ready+report.blocked,report.total);
  assert.ok(report.total>0);
  for(const row of report.rows)assert.equal(row.ready,row.issues.length===0);
