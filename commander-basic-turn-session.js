@@ -32,7 +32,7 @@ export function stepBasicTurn(session){
  const splash=session.energySplash&&next.round%3===0&&actor.role==='energy'&&!actor.active&&!actor.passive&&!heal;
  const special=session.shieldDrain&&next.round%3===0&&['shield','drain'].includes(actor.active?.effect)&&!actor.passive;
  const result=special?stepParityShieldDrain(session.combat,{side:next.side,actorId:next.actorId,round:next.round,critical:randomInt(100)<8}):splash?stepParityEnergySplash(session.combat,{side:next.side,actorId:next.actorId,round:next.round,critical:randomInt(100)<8}):heal?applyServerSpecialHeal(session.combat,{side:next.side,actorId:next.actorId,round:next.round}):
-  session.parity?stepParityBasicAttack(session.combat,{side:next.side,actorId:next.actorId,round:next.round,critical:randomInt(100)<8,allowHealActive:session.specialHealing}):
+  session.parity?stepParityBasicAttack(session.combat,{side:next.side,actorId:next.actorId,round:next.round,critical:randomInt(100)<8,allowHealActive:session.specialHealing,allowShieldDrainActive:session.shieldDrain}):
   stepBasicHeroCombat(session.combat,{side:next.side,actorId:next.actorId,round:next.round});
  session.cursor=session.order.findIndex((x,i)=>i>=session.cursor&&x.side===next.side&&x.id===next.actorId)+1;
  return {result,next:peekBasicTurn(session)};
