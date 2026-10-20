@@ -24,7 +24,14 @@ function check(combat){
 for(const hero of commanderOriginalRoster){
  test('original hero full 3-round combat: '+hero.id,()=>{
   const combat=combatFor(hero);
-  // Audit reports conservative compatibility candidates, not a runtime gate.\n  // The authoritative session is the source of truth for whether a combination can run.\n  let session;\n  try{session=createBasicTurnSession(combat,options)}catch(error){\n   assert.match(String(error.message),/Special hero mechanics/);\n   assert.equal(combat.version,0);\n   return;\n  }
+  // Audit reports conservative compatibility candidates, not a runtime gate.
+  // The authoritative session is the source of truth for whether a combination can run.
+  let session;
+  try{session=createBasicTurnSession(combat,options)}catch(error){
+   assert.match(String(error.message),/Special hero mechanics/);
+   assert.equal(combat.version,0);
+   return;
+  }
   for(let round=1;round<=3&&!combat.finished;round++){
    let actions=0;
    while(peekBasicTurn(session)&&!combat.finished){
