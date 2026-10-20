@@ -1,5 +1,5 @@
 const root=document.getElementById('hero-gallery'),status=document.getElementById('gallery-status'),filters=document.getElementById('hero-filters'),search=document.getElementById('hero-search');
-const categories=[['all','TÜMÜ'],['tank','🛡️ TANK'],['fighter','⚔️ SAVAŞÇI'],['assassin','🥷 SUİKASTÇI'],['energy','🔮 ENERJİ / BÜYÜCÜ'],['support','💚 DESTEK']];
+const categories=[['all','TÜMÜ'],['tank','🛡️ TANK'],['fighter','⚔️ SAVAŞÇI'],['assassin','🥷 SUİKASTÇI'],['energy','🔮 ENERJİ / BÜYÜCÜ'],['support','💚 DESTEK'],['legendary','🌟 EFSANEVİ'],['rare','💎 NADİR'],['advanced','🔷 GELİŞMİŞ'],['common','⚪ SIRADAN']];
 const worlds={marvel:'MARVEL',dc:'DC',original:'HERO AUCTION',lotr:'YÜZÜKLERİN EFENDİSİ',pokemon:'POKÉMON'};
 const roleNames={tank:'Tank',fighter:'Savaşçı',assassin:'Suikastçı',energy:'Enerji / Büyücü',support:'Destek'};
 const rarityNames={common:'SIRADAN',advanced:'GELİŞMİŞ',rare:'NADİR',legendary:'EFSANEVİ',siradan:'SIRADAN',gelismis:'GELİŞMİŞ',nadir:'NADİR',efsanevi:'EFSANEVİ'};
@@ -28,7 +28,7 @@ function makeCard(hero){
 }
 function render(){
  filters.replaceChildren();for(const [id,label] of categories){const b=document.createElement('button');b.type='button';b.className='gallery-filter'+(selected===id?' selected':'');b.textContent=label;b.setAttribute('aria-pressed',String(selected===id));b.onclick=()=>{selected=id;render()};filters.append(b)}
- const q=search.value.trim().toLocaleLowerCase('tr-TR');const visible=heroes.filter(h=>(selected==='all'||h.role===selected)&&h.name.toLocaleLowerCase('tr-TR').includes(q));
+ const q=search.value.trim().toLocaleLowerCase('tr-TR');const visible=heroes.filter(h=>(selected==='all'||h.role===selected||((rarityNames[selected]||'')&&(rarityNames[h.rarity]===rarityNames[selected])))&&h.name.toLocaleLowerCase('tr-TR').includes(q));
  root.replaceChildren();const fragment=document.createDocumentFragment();for(const h of visible)fragment.append(makeCard(h));root.append(fragment);
  status.textContent=visible.length+' kahraman gösteriliyor · Toplam '+heroes.length+' kart';if(!visible.length)status.textContent='Bu filtrede kahraman bulunamadı.'
 }
