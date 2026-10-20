@@ -912,3 +912,15 @@ header{gap:14px;flex-wrap:wrap}
  #home-play-panel .play-compact-secondary .play-compact-mode p{min-height:28px;display:flex;align-items:center;justify-content:center}
  #home-play-panel .play-compact-match .play-compact-action{justify-self:stretch}
 }
+
+/* Stronger separation and crisp edges between play choices. */
+#home-play-panel .play-compact-modes{gap:16px!important}
+#home-play-panel .play-compact-match{border:2px solid #66dfff;box-shadow:0 0 0 1px #0c385a,0 6px 18px #030d20a6,inset 0 1px 0 #b5efff55;background:linear-gradient(145deg,#145783,#092943)}
+#home-play-panel .play-compact-secondary{border:2px solid #a5b8d8;box-shadow:0 6px 18px #030d20a6;gap:3px;background:#071b31;overflow:hidden}
+#home-play-panel .play-compact-secondary .play-compact-friend{background:linear-gradient(150deg,#65441c,#342b2d)}
+#home-play-panel .play-compact-secondary .play-compact-bot{background:linear-gradient(150deg,#4a397e,#252340)}
+#home-play-panel .play-compact-secondary .play-compact-mode+.play-compact-mode{border-left:2px solid #a5b8d8}
+#home-play-panel .play-compact-secondary .play-compact-mode h3{color:#fff;text-shadow:0 1px 3px #0009}
+#home-play-panel .play-compact-secondary .play-compact-mode .play-compact-action{border-width:2px;box-shadow:0 3px 8px #0006}
+#home-play-panel .play-compact-match .play-compact-action{border-width:2px;box-shadow:0 3px 8px #0006}
+@media(max-width:680px){#home-play-panel .play-compact-modes{gap:12px!important}#home-play-panel .play-compact-secondary{gap:2px}}
