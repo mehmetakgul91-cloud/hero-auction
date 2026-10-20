@@ -39,3 +39,28 @@ test('both players see identical snapshots and incremental events',()=>{
  assert.equal(viewLiveCommanderCombat(combat,{sinceVersion:1}).events.every(e=>e.version===2),true);
  assert.deepEqual(viewLiveCommanderCombat(combat).teams,viewLiveCommanderCombat(combat,{sinceVersion:1}).teams);
 });
+
+test('magic requires one living enemy for normal, two distinct enemies for ultimate',()=>{
+ const combat=make();combat.commanders[0]={commanderId:'magic'};
+ const before=viewLiveCommanderCombat(combat);
+ for(const targets of [undefined,[],['0-0'],['1-0','1-1'],['1-0','1-0']]){
+  assert.throws(()=>castLiveCommanderCombat(combat,{side:0,ability:'normal',requestId:'bad_magic_001',matchKey:'room:1',now:2000,targetIds:targets}),/Invalid magic targets/);
+ }
+ assert.deepEqual(viewLiveCommanderCombat(combat),before);
+ assert.equal(combat.abilities.energy[0],100);
+ assert.equal(combat.abilities.cooldownUntil[0],1000);
+ const cast=castLiveCommanderCombat(combat,{side:0,ability:'ultimate',requestId:'magic_valid_001',matchKey:'room:1',now:2000,targetIds:['1-1','1-3']});
+ assert.equal(cast.version,1);
+ assert.equal(combat.teams[1][1].commanderWeaken,.4);
+ assert.equal(combat.teams[1][3].commanderWeaken,.4);
+ assert.equal(combat.teams[1][0].commanderWeaken,undefined);
+ assert.equal(combat.abilities.energy[0],0);
+ assert.throws(()=>castLiveCommanderCombat(combat,{side:0,ability:'ultimate',requestId:'magic_valid_001',matchKey:'room:1',now:2001,targetIds:['1-2','1-3']}),/conflict/);
+});
+test('magic cannot target dead enemy and rejected selection costs no energy',()=>{
+ const combat=make();combat.commanders[0]={commanderId:'magic'};
+ combat.teams[1][2].hp=0;
+ assert.throws(()=>castLiveCommanderCombat(combat,{side:0,ability:'normal',requestId:'dead_target_01',matchKey:'room:1',now:2000,targetIds:['1-2']}),/Invalid magic targets/);
+ assert.equal(combat.abilities.energy[0],100);
+ assert.equal(combat.version,0);
+});
