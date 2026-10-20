@@ -1,6 +1,7 @@
 // Hero Auction 2.0 - isolated, deterministic automatic battle prototype.
 // Not connected to live matchmaking or wallet payouts.
 import crypto from 'node:crypto';
+import {orderHeroActions} from './battle-action-scheduler.js';
 import {applyCommanderSupport} from './arena-commanders.js';
 
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
@@ -125,8 +126,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       if(effect==='regen'){const healed=Math.min(u.maxHp-u.hp,Math.max(1,Math.floor(u.maxHp*value)));u.hp+=healed;u.healing+=healed;if(healed)log.push({round,actor:u.id,action:'passive-heal',value:healed});}
       if(effect==='rage'&&u.hp/u.maxHp<.5&&!u.rageActivated){u.attack=Math.min(180,u.attack+Math.max(1,Math.floor(u.attack*value)));u.rageActivated=true;log.push({round,actor:u.id,action:'rage',value:u.attack});}
     }
-    const order=teams.flatMap((team,side)=>team.map(unit=>({unit,side})))
-      .sort((a,b)=>b.unit.speed-a.unit.speed||a.side-b.side||a.unit.position-b.unit.position);
+    const order=orderHeroActions(teams);
     for(const {unit,side} of order){
       if(unit.hp<=0)continue;
       const allies=teams[side],enemies=teams[1-side];
