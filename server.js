@@ -495,7 +495,8 @@ if(url.pathname==='/api/experimental/commander-live'&&(req.method==='GET'||req.m
  }else body={code:url.searchParams.get('code'),token:url.searchParams.get('token')};
  const room=rooms.get(String(body?.code||'').toUpperCase());
  const side=room?.players?.findIndex(p=>p?.token===body?.token)??-1;
- if(!room||side<0||room.mode==='bot')return send(403,{error:'Yetkisiz oda'});
+ if(!room||side<0)return send(403,{error:'Oda veya oyuncu oturumu geçersiz'});
+ if(room.mode==='bot')return send(409,{error:'Komutan enerjisi ve becerileri yalnızca iki gerçek oyunculu odalarda kullanılabilir'});
  if(room.phase!=='finished'||!room.battleSync?.result||!room.battleSync?.commanderInput)return send(409,{error:'Arena henüz hazır değil'});
  const matchKey=room.code+':'+String(room.matchNumber||1)+':'+String(room.created);
  const activeLiveKey=liveArenaMatchKeys.get(room.code);

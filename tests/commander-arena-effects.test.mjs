@@ -56,6 +56,12 @@ test('commander controls initialize after the single page arena route changes',(
  assert.match(controls,/panel\.hidden=false/);
 });
 
+test('arena omits training shortcut and reports unsupported bot rooms clearly',()=>{
+ const server=readFileSync(new URL('../server.js',import.meta.url),'utf8');
+ assert.doesNotMatch(html,/MANUEL KOMUTAN EĞİTİM ARENASI/);
+ assert.match(server,/Komutan enerjisi ve becerileri yalnızca iki gerçek oyunculu odalarda kullanılabilir/);
+});
+
 test('experimental committed round feeds commander visuals without altering replay',()=>{
  const client=readFileSync(new URL('../public/commander-experimental.js',import.meta.url),'utf8');
  const three=readFileSync(new URL('../public/arena-three.js',import.meta.url),'utf8');
