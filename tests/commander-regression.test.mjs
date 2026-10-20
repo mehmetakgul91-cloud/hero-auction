@@ -50,8 +50,17 @@ test('rejects commands with an invalid side',()=>{
 
 
 test('ultimate ability becomes available after nine rounds of charging',()=>{
- const result=run('attack',[{side:0,round:9,ability:'ultimate'}]);
- assert.ok(result.log.some(x=>x.action==='commander-attack-ultimate'));
+ // Use durable, low-power teams so combat cannot finish before round nine.
+ const durable=(prefix)=>Array.from({length:5},(_,i)=>({
+  id:prefix+i,name:prefix+i,power:1,role:'tank',lane:'front'
+ }));
+ const result=simulateBattle(durable('alpha'),durable('beta'),{
+  seed:'commander-ultimate-long-match',maxRounds:15,
+  commanders:[createCommanderProfile('attack'),createCommanderProfile('defense')],
+  commanderActions:[{side:0,round:9,ability:'ultimate'}]
+ });
+ assert.ok(result.log.some(x=>x.action==='commander-attack-ultimate'),
+  'Expected ultimate in round nine; battle ended at round '+result.rounds);
 });
 test('energy cannot be spent twice before recharging',()=>{
  assert.throws(()=>run('attack',[
