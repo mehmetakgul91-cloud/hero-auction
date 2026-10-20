@@ -7,12 +7,13 @@ import {randomInt} from 'node:crypto';
 import {applyServerSpecialHeal} from './commander-live-special-heal.js';
 import {stepParityEnergySplash} from './commander-parity-energy-splash.js';
 import {stepParityShieldDrain} from './commander-parity-shield-drain.js';
-export function createBasicTurnSession(combat,{parity=false,specialHealing=false,energySplash=false,shieldDrain=false}={}){
+import {stepParityStatSpecial} from './commander-parity-stat-special.js';
+export function createBasicTurnSession(combat,{parity=false,specialHealing=false,energySplash=false,shieldDrain=false,statSpecial=false}={}){
  if(!combat||combat.finished||!Array.isArray(combat.teams)||combat.teams.length!==2)throw Error('Invalid turn session');
- if(combat.teams.some(team=>team.some(hero=>hero.passive||(hero.active&&!((specialHealing&&hero.active.effect==='heal')||(shieldDrain&&['shield','drain'].includes(hero.active.effect)&&!['tank','energy'].includes(hero.role)))))))throw Error('Special hero mechanics require incremental engine integration');
- if((specialHealing||energySplash||shieldDrain)&&!parity)throw Error('Special healing requires parity mode');
+ if(combat.teams.some(team=>team.some(hero=>hero.passive||(hero.active&&!((specialHealing&&hero.active.effect==='heal')||(shieldDrain&&['shield','drain'].includes(hero.active.effect)&&!['tank','energy'].includes(hero.role))||(statSpecial&&['sunder','weaken','haste'].includes(hero.active.effect)&&!['tank','energy'].includes(hero.role)))))))throw Error('Special hero mechanics require incremental engine integration');
+ if((specialHealing||energySplash||shieldDrain||statSpecial)&&!parity)throw Error('Special healing requires parity mode');
  if(typeof parity!=='boolean')throw Error('Invalid parity mode');
- return {combat,parity,specialHealing,energySplash,shieldDrain,round:combat.round,order:orderHeroActions(combat.teams).map(x=>({side:x.side,id:x.unit.id})),cursor:0};
+ return {combat,parity,specialHealing,energySplash,shieldDrain,statSpecial,round:combat.round,order:orderHeroActions(combat.teams).map(x=>({side:x.side,id:x.unit.id})),cursor:0};
 }
 export function peekBasicTurn(session){
  if(!session||session.combat.finished||session.round!==session.combat.round) return null;
@@ -31,8 +32,9 @@ export function stepBasicTurn(session){
  const heal=session.specialHealing&&next.round%3===0&&(canSupportHeal||canSelfHeal);
  const splash=session.energySplash&&next.round%3===0&&actor.role==='energy'&&!actor.active&&!actor.passive&&!heal;
  const special=session.shieldDrain&&next.round%3===0&&['shield','drain'].includes(actor.active?.effect)&&!actor.passive;
- const result=special?stepParityShieldDrain(session.combat,{side:next.side,actorId:next.actorId,round:next.round,critical:randomInt(100)<8}):splash?stepParityEnergySplash(session.combat,{side:next.side,actorId:next.actorId,round:next.round,critical:randomInt(100)<8}):heal?applyServerSpecialHeal(session.combat,{side:next.side,actorId:next.actorId,round:next.round}):
-  session.parity?stepParityBasicAttack(session.combat,{side:next.side,actorId:next.actorId,round:next.round,critical:randomInt(100)<8,allowHealActive:session.specialHealing,allowShieldDrainActive:session.shieldDrain}):
+ const stat=session.statSpecial&&next.round%3===0&&['sunder','weaken','haste'].includes(actor.active?.effect)&&!actor.passive;
+ const result=stat?stepParityStatSpecial(session.combat,{side:next.side,actorId:next.actorId,round:next.round,critical:randomInt(100)<8}):special?stepParityShieldDrain(session.combat,{side:next.side,actorId:next.actorId,round:next.round,critical:randomInt(100)<8}):splash?stepParityEnergySplash(session.combat,{side:next.side,actorId:next.actorId,round:next.round,critical:randomInt(100)<8}):heal?applyServerSpecialHeal(session.combat,{side:next.side,actorId:next.actorId,round:next.round}):
+  session.parity?stepParityBasicAttack(session.combat,{side:next.side,actorId:next.actorId,round:next.round,critical:randomInt(100)<8,allowHealActive:session.specialHealing,allowShieldDrainActive:session.shieldDrain,allowStatActive:session.statSpecial}):
   stepBasicHeroCombat(session.combat,{side:next.side,actorId:next.actorId,round:next.round});
  session.cursor=session.order.findIndex((x,i)=>i>=session.cursor&&x.side===next.side&&x.id===next.actorId)+1;
  return {result,next:peekBasicTurn(session)};
