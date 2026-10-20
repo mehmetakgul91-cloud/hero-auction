@@ -324,7 +324,7 @@ function animateMove(e){
  const action=String(e.action||'');
  const heal=/heal|regen/i.test(action),shield=/shield|guard|resist/i.test(action);
  const special=!splash&&(/special|burst|pierce|magic|energy|ultimate/i.test(action)||e.damageType==='special');
- const ranged=special||splash||heal||shield||/thor|iron man|scarlet witch|doctor fate|storm|superman|vision|magneto/i.test(e.actorId);
+ const ranged=special||splash||heal||shield||actor.dataset.role==='energy'||actor.dataset.role==='support'||/thor|iron man|scarlet witch|doctor fate|storm|superman|vision|magneto/i.test(e.actorId);
  const style=heal?'heal':shield?'shield':/thor|lightning/i.test(e.actorId+' '+action)?'lightning':/witch|fate|magic/i.test(e.actorId+' '+action)?'magic':special?'special':'standard';
  const time=Math.max(320,Math.min(780,duration()*.72));
  if(target&&!heal&&!shield&&typeof target.animate==='function'){
@@ -362,6 +362,12 @@ function animateMove(e){
  }
  if(!splash)setTimeout(()=>{actor.classList.remove('attack-melee','attack-energy','special-cast');effectTarget.classList.remove('healing-aura','shield-aura')},700);
 }
+window.addEventListener('heroarena:experimental-move',event=>{
+ const move=event.detail?.event;
+ if(!move||typeof move.actor!=='string')return;
+ // Use the server-committed action in the visible 2D arena animations.
+ animateMove({...move,actorId:move.actor,targetId:move.target});
+});
 
 const commanderPortraits={attack:'/images/Ate%C5%9Fler%20%C4%B0%C3%A7inde%20Sava%C5%9F%C3%A7%C4%B1%20Komutan.png',defense:'/images/Alt%C4%B1n%20Aslan%C4%B1n%20Kale%20Muhaf%C4%B1z%C4%B1.png',magic:'/images/Kozmik%20R%C3%BCnlerin%20B%C3%BCy%C3%BCc%C3%BC%20Komutan%C4%B1.png',support:'/images/Z%C3%BCmr%C3%BCt%20I%C5%9F%C4%B1%C4%9F%C4%B1n%20%C5%9Eifac%C4%B1%20Krali%C3%A7esi.png'};
 const commanderDisplay={attack:['⚔️','Saldırı'],defense:['🛡️','Savunma'],magic:['🔮','Büyücü'],support:['💚','Destek']};
@@ -422,7 +428,7 @@ window.addEventListener('heroarena:experimental-round-end',e=>{
  }
  render();
  $('round').textContent=String(e.detail.round||0);$('arena-counter-round').textContent=$('round').textContent;$('message').textContent=e.detail.finished?'Canlı savaş tamamlandı':'Canlı savaş · Tur '+e.detail.round;
- if(liveArenaMode&&e.detail.finished){const alive=states.map(team=>team.filter(u=>u.hp>0).length);finalResult={winner:alive[0]===alive[1]?null:alive[0]>alive[1]?0:1,rounds:Number(e.detail.round)||0,teams:states};showVictoryReveal();}
+ if(liveArenaMode&&e.detail.finished){const alive=states.map(team=>team.filter(u=>u.hp>0).length);finalResult={...finalResult,winner:alive[0]===alive[1]?null:alive[0]>alive[1]?0:1,rounds:Number(e.detail.round)||0,teams:states,log:[...(finalResult?.log||[]),...(e.detail.events||[])]};showVictoryReveal();}
 });
 const arenaArtCache=new Map();
 let finalResult=null;
@@ -439,7 +445,7 @@ function render(flash){
    if(!arenaArtCache.has(artKey))arenaArtCache.set(artKey,fetch('/api/art?universe='+universe+'&name='+encodeURIComponent(u.name)).then(r=>r.ok?r.json():null).then(j=>j?.url||null).catch(()=>null));
    void arenaArtCache.get(artKey).then(url=>{if(!url||!portrait.isConnected)return;const img=document.createElement('img');img.className='arena-portrait-image';img.alt=u.name;img.src=url;img.onload=()=>{if(portrait.isConnected){fallback.remove();portrait.append(img)}}});
    const bar=document.createElement('div');bar.className='hp';bar.setAttribute('aria-label','Can '+u.hp+' / '+u.maxHp);const fill=document.createElement('span');fill.style.width=(100*u.hp/u.maxHp)+'%';bar.append(fill);
-   card.dataset.lane=u.lane==='front'?'front':'back';card.style.gridColumn=u.lane==='front'?(side?'1':'2'):(side?'2':'1');card.style.gridRow=String(laneRows[u.lane==='front'?'front':'back'][states[side].slice(0,unitIndex).filter(x=>(x.lane==='front')===(u.lane==='front')).length]);card.title=u.name+' · '+roleNames[u.role]+' · Can '+u.hp+'/'+u.maxHp;
+   card.dataset.lane=u.lane==='front'?'front':'back';card.dataset.role=u.role||'';card.style.gridColumn=u.lane==='front'?(side?'1':'2'):(side?'2':'1');card.style.gridRow=String(laneRows[u.lane==='front'?'front':'back'][states[side].slice(0,unitIndex).filter(x=>(x.lane==='front')===(u.lane==='front')).length]);card.title=u.name+' · '+roleNames[u.role]+' · Can '+u.hp+'/'+u.maxHp;
    const heroLabel=document.createElement('span');heroLabel.className='arena-hero-label';heroLabel.textContent=u.name;card.append(portrait,heroLabel,bar);parent.append(card);
   }
   $(side?'score-b':'score-a').textContent=states[side].filter(u=>u.hp>0).length+' / 5';
@@ -548,6 +554,7 @@ function showBattleSummary(){
  }
  panel.append(stats);
  panel.hidden=false;
+ if(auctionMode)void showAuctionRematch();
  $('battle-arena').hidden=true;$('arena-3d').hidden=true;
  panel.scrollIntoView({behavior:'smooth',block:'start'});
 }
