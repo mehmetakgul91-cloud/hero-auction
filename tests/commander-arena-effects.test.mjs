@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {runInNewContext} from 'node:vm';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const effect=readFileSync(new URL('../public/commander-arena-effects.js',import.meta.url),'utf8');
@@ -19,14 +20,31 @@ test('commander effect layer does not mutate combat health or winner',()=>{
 test('commander overlays skip background catch-up frames',()=>{
  assert.match(effect,/document\.hidden\|\|document\.body\.classList\.contains\('arena-catching-up'\)/);
 });
-test('repeated commander cues clear previous hero highlights',()=>{
- assert.match(effect,/function clearHeroEffects\(/);
- assert.match(effect,/clearHeroEffects\(\)/);
-});
 
-test('commander ability banner and squad highlights last two seconds',()=>{
- assert.match(effect,/activeEffects\.delete\(item\)\},2000\)/);
- assert.match(effect,/banner\.remove\(\);cleanupTimer=null\},2000\)/);
+function effectHarness(){
+ let now=0;const handlers=new Map(),timers=[],elements=[];
+ const window={addEventListener:(name,fn)=>handlers.set(name,fn),dispatchEvent:()=>{}};
+ const document={hidden:false,body:{classList:{contains:()=>false},append:el=>elements.push(el)},
+ createElement:()=>({children:[],setAttribute(){},append(...nodes){this.children.push(...nodes)},remove(){this.removed=true}})};
+ runInNewContext(effect,{window,document,Date:{now:()=>now},CustomEvent:class{constructor(type,options){this.type=type;this.detail=options?.detail}},setTimeout:(fn,delay)=>timers.push({fn,at:now+delay})});
+ return {window,elements,emit:entry=>handlers.get('heroarena:commander-round')({detail:{events:[entry]}}),
+ advance(time){now=time;for(const t of [...timers])if(!t.done&&t.at<=now){t.done=true;t.fn();}}};
+}
+test('duplicate cues do not replay and successive commander portraits never overlap',()=>{
+ const h=effectHarness(),first={action:'commander-attack-normal',side:0,sequence:1};
+ h.emit(first);h.emit(first);h.emit({action:'commander-defense-ultimate',side:1,sequence:2});
+ assert.equal(h.elements.length,1);
+ assert.match(h.elements[0].children[0].children[0].src,/Sava/);
+ h.advance(1999);assert.equal(h.elements[0].removed,undefined);
+ h.advance(2000);assert.equal(h.elements[0].removed,true);assert.equal(h.elements.length,2);
+ assert.match(h.elements[1].children[0].children[0].src,/Aslan/);
+ h.advance(4000);assert.equal(h.elements[1].removed,true);assert.equal(h.window.heroCommanderEffectUntil,0);
+});
+test('commander portrait holds the visual lock for exactly two seconds',()=>{
+ const h=effectHarness();h.emit({action:'commander-magic-normal',side:0,sequence:1});
+ assert.equal(h.window.heroCommanderEffectUntil,2000);
+ h.advance(1999);assert.equal(h.elements[0].removed,undefined);
+ h.advance(2000);assert.equal(h.elements[0].removed,true);assert.equal(h.window.heroCommanderEffectUntil,0);
 });
 
 test('commander matchup uses portraits and centered mobile ability area',()=>{
@@ -52,7 +70,7 @@ test('commander controls initialize after the single page arena route changes',(
  const cooldown=readFileSync(new URL('../public/commander-live-cooldown.js',import.meta.url),'utf8');
  assert.match(client,/history\.replaceState\(null,'',url\)[\s\S]{0,160}heroarena:route-change/);
  assert.match(controls,/window\.addEventListener\('heroarena:route-change',initializeCommanderControls\)/);
- assert.match(cooldown,/window\.addEventListener\('heroarena:route-change',initializeCommanderCooldown\)/);
+ assert.match(cooldown,/window\.addEventListener\('heroarena:commander-state'/);
  assert.match(controls,/panel\.hidden=false/);
 });
 
