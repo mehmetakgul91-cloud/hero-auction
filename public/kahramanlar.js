@@ -4,6 +4,8 @@ const worlds={marvel:'MARVEL',dc:'DC',original:'HERO AUCTION',lotr:'YÜZÜKLERİ
 const roleNames={tank:'Tank',fighter:'Savaşçı',assassin:'Suikastçı',energy:'Enerji / Büyücü',support:'Destek'};
 const rarityNames={common:'SIRADAN',advanced:'GELİŞMİŞ',rare:'NADİR',legendary:'EFSANEVİ',siradan:'SIRADAN',gelismis:'GELİŞMİŞ',nadir:'NADİR',efsanevi:'EFSANEVİ'};
 let heroes=[],selected='all';
+const shortDescriptions={tank:'Ön safta dayanıklılığıyla takımını korur.',fighter:'Yakın dövüşte güçlü saldırılarla rakibi zorlar.',assassin:'Hızlı ve delici saldırılarla kritik hedefleri avlar.',energy:'Büyü ve enerji yetenekleriyle uzaktan baskı kurar.',support:'Takımına destek sağlayarak savaşın gidişatını değiştirir.'};
+const prettySkill=name=>String(name||'').replace(/[-_]/g,' ').replace(/\\b\\p{L}/gu,c=>c.toLocaleUpperCase('tr-TR'));
 const fmt=n=>(n>=0?'+':'')+(n*100).toFixed(0)+'%';
 function line(label,value){const el=document.createElement('div');el.className='gallery-detail-line';const a=document.createElement('span'),b=document.createElement('strong');a.textContent=label;b.textContent=value;el.append(a,b);return el}
 function makeCard(hero){
@@ -16,13 +18,13 @@ function makeCard(hero){
  const world=document.createElement('span');world.className='gallery-world';world.textContent=worlds[hero.universe]||hero.universe;
  const title=document.createElement('h2');title.textContent=hero.name;
  const role=document.createElement('span');role.className='gallery-role';role.textContent=roleNames[hero.role]||hero.role;
- body.append(world,title,role);
+ body.append(world,title,role);\n const summary=document.createElement('p');summary.className='gallery-summary';summary.textContent=(shortDescriptions[hero.role]||'Arenada kendine özgü yetenekleriyle savaşır.')+(hero.active?.name?' Özel gücü: '+prettySkill(hero.active.name)+'.':'');body.append(summary);
  if(hero.rarity){const rarity=document.createElement('span');rarity.className='gallery-rarity';rarity.textContent='NADİRLİK: '+(rarityNames[hero.rarity]||hero.rarity.toLocaleUpperCase('tr-TR'));body.append(rarity)}
  const details=document.createElement('div');details.className='gallery-details';
  if(Number.isInteger(hero.power))details.append(line('Güç',hero.power+'/100'));
  if(hero.laneModifiers){details.append(line('🛡 Ön saf',fmt(Number(hero.laneModifiers.front)||0)),line('🎯 Arka saf',fmt(Number(hero.laneModifiers.back)||0)))}
- if(hero.active?.name)details.append(line('⚡ Aktif yetenek',hero.active.name));
- if(hero.passive?.name)details.append(line('✦ Pasif yetenek',hero.passive.name));
+ if(hero.active?.name)details.append(line('⚡ Aktif yetenek',prettySkill(hero.active.name)));
+ if(hero.passive?.name)details.append(line('✦ Pasif yetenek',prettySkill(hero.passive.name)));
  if(hero.stats){const labels={attack:'Saldırı',defense:'Savunma',ability:'Yetenek',control:'Kontrol',mobility:'Hareket'};const stats=document.createElement('div');stats.className='gallery-stat-grid';for(const [key,label] of Object.entries(labels)){if(hero.stats[key]===undefined)continue;const el=document.createElement('span');el.textContent=label+' '+hero.stats[key];stats.append(el)}details.append(stats)}
  body.append(details);card.append(art,body);return card
 }
