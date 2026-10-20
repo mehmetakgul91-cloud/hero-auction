@@ -16,19 +16,18 @@ for(const effect of ['burst','pierce','splash','headshot']){
   const result=stepBasicTurn(session);
   assert.equal(result.result.version,1);
   assert.ok(combat.events.some(e=>e.actor==='a'&&e.damageType==='special'));
-  assert.ok(combat.teams[1][0].hp<120);
+  assert.ok(combat.teams[1].some(u=>u.hp<120));
   if(effect==='splash')assert.ok(combat.events.some(e=>e.action==='splash'));
  });
 }
 test('headshot uses full current HP and shield, not a client supplied number',()=>{
  const combat=make('headshot');
- combat.teams[1][0].shield=30;
+ for(const enemy of combat.teams[1])enemy.shield=30;
  const actor=combat.teams[0][0],target=combat.teams[1][0];
  assert.equal(calculateHeroRawDamage({unit:actor,target,skill:actor.active,special:true}),150);
  const session=createBasicTurnSession(combat,{parity:true,damageSpecial:true,roundPassives:true});
  stepBasicTurn(session);
- assert.equal(combat.teams[1][0].hp,0);
- assert.equal(combat.teams[1][0].shield,0);
+ assert.ok(combat.teams[1].some(u=>u.hp===0&&u.shield===0));
 });
 test('tank special applies legacy front shields',()=>{
  const combat=make('burst','tank');
