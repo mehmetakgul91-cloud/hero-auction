@@ -178,3 +178,22 @@ test('thorns passive requires explicit opt-in',()=>{
  const c=make();c.teams[0][0].passive={effect:'thorns',value:.2};
  assert.throws(()=>createBasicTurnSession(c,{parity:true}),/Special hero mechanics/);
 });
+
+test('thorns combines with shield special exactly once',()=>{
+ const c=make();c.round=3;c.teams[0][0].active={effect:'shield',name:'Guard'};
+ c.teams[0][0].passive={effect:'thorns',value:.2};
+ const d=c.teams[0][0].defense;
+ const session=createBasicTurnSession(c,{parity:true,shieldDrain:true,thornsPassive:true});
+ const {result}=stepBasicTurn(session);
+ assert.equal(c.teams[0][0].shield,Math.round(d*.4)+Math.floor(d*.2));
+ assert.equal(result.events.filter(e=>e.action==='thorns-shield').length,1);
+});
+test('thorns combines with execute special exactly once',()=>{
+ const c=make();c.round=3;c.teams[0][0].active={effect:'execute',name:'Finisher'};
+ c.teams[0][0].passive={effect:'thorns',value:.2};
+ const expected=Math.floor(c.teams[0][0].defense*.2);
+ const session=createBasicTurnSession(c,{parity:true,executeSpecial:true,thornsPassive:true});
+ const {result}=stepBasicTurn(session);
+ assert.equal(result.event.thornsShield,expected);
+ assert.equal(c.teams[0][0].shield,expected);
+});
