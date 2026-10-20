@@ -383,8 +383,6 @@ const verifiedRemoteArt={
  }
 };
 const originalHeroDescriptions={
-  "original:mehmet-akgul": "Altın zırhlı efsanevi savaşçı Mehmet Akgül. Saldırı, savunma, yetenek, kontrol ve hareketlilik: 100. Sarsılmaz İrade ile kalkan kazanır.",
-  "original:hakan-artun": "Gollum görselli sıradan kahraman Hakan Artun. Sinsi darbeler ve çeviklikle savaşır.",
   "original:01": "Ön safta darbeleri karşılayan, obsidyen kalkanıyla takımına zaman kazandıran dayanıklı muhafız.",
   "original:02": "Çelik siperini kurarak takım arkadaşlarını koruyan ağır zırhlı savunmacı.",
   "original:03": "Yer sarsıntılarıyla rakip düzenini bozan, güçlü ve dayanıklı kaya devi.",
