@@ -22,12 +22,11 @@ const passiveEffects={
  momentum:'savaş temposu avantajı'
 };
 function heroCardSummary(hero){
- const roleText=roleIntro[hero.role]||'Arenada takımının stratejisine uygun bir görev üstlenir.';
- const activeText=hero.active?.name?'Aktif yeteneği '+prettySkill(hero.active.name)+' ile savaşta özel bir hamle yapar.':'Kendi rolüne uygun hamlelerle savaşın gidişatını etkiler.';
- const passive=hero.passive;
- const passiveText=passive?.name?'Pasif yeteneği '+prettySkill(passive.name)+', '+(passiveEffects[passive.effect]||'sürekli bir savaş avantajı')+' sağlar'+(Number.isFinite(Number(passive.value))&&Number(passive.value)>0?' ('+(Number(passive.value)*100).toFixed(0)+'%)':'')+'.':'Pasif yetenek bilgisi henüz tanımlanmamıştır.';
- return roleText+' '+activeText+' '+passiveText;
+ const active=hero.active?.name?prettySkill(hero.active.name):'Belirtilmemiş';
+ const passive=hero.passive?.name?prettySkill(hero.passive.name):'Belirtilmemiş';
+ return '⚡ Aktif: '+active+' · ✦ Pasif: '+passive;
 }
+
 const prettySkill=name=>String(name||'').replace(/[-_]/g,' ').replace(/\b\p{L}/gu,c=>c.toLocaleUpperCase('tr-TR'));
 const fmt=n=>(n>=0?'+':'')+(n*100).toFixed(0)+'%';
 function line(label,value){const el=document.createElement('div');el.className='gallery-detail-line';const a=document.createElement('span'),b=document.createElement('strong');a.textContent=label;b.textContent=value;el.append(a,b);return el}
