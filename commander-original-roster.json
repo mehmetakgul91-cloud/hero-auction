@@ -1,0 +1,1728 @@
+{
+  "version": 1,
+  "description": "Experimental original-only hero roster sourced from latest main battle-roster.json. Marvel and DC excluded. Does not modify production roster.",
+  "rosterSize": 52,
+  "characters": [
+    {
+      "id": "original:01",
+      "name": "Obsidyen Muhafız",
+      "universe": "original",
+      "role": "tank",
+      "displayRole": "tank",
+      "rarity": "legendary",
+      "stats": {
+        "attack": 72,
+        "defense": 98,
+        "ability": 77,
+        "control": 72,
+        "mobility": 35
+      },
+      "abilities": [
+        "obsidyen-kalkan",
+        "hasar-azaltma"
+      ],
+      "portrait": "/images/original/hero-01.png",
+      "proposedPower": 90,
+      "active": {
+        "name": "obsidyen-kalkan",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "hasar-azaltma",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "tank",
+      "laneModifiers": {
+        "front": 0.04,
+        "back": -0.07
+      }
+    },
+    {
+      "id": "original:02",
+      "name": "Demir Sur",
+      "universe": "original",
+      "role": "tank",
+      "displayRole": "tank",
+      "rarity": "advanced",
+      "stats": {
+        "attack": 66,
+        "defense": 91,
+        "ability": 58,
+        "control": 60,
+        "mobility": 40
+      },
+      "abilities": [
+        "celik-siper",
+        "takim-koruma"
+      ],
+      "portrait": "/images/original/hero-02.png",
+      "proposedPower": 69,
+      "active": {
+        "name": "celik-siper",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "takim-koruma",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "tank",
+      "laneModifiers": {
+        "front": 0.06,
+        "back": -0.06
+      }
+    },
+    {
+      "id": "original:03",
+      "name": "Kaya Titanı",
+      "universe": "original",
+      "role": "tank",
+      "displayRole": "tank",
+      "rarity": "rare",
+      "stats": {
+        "attack": 80,
+        "defense": 96,
+        "ability": 65,
+        "control": 76,
+        "mobility": 27
+      },
+      "abilities": [
+        "yer-sarsintisi",
+        "alan-kontrol"
+      ],
+      "portrait": "/images/original/hero-03.png",
+      "proposedPower": 80,
+      "active": {
+        "name": "yer-sarsintisi",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "alan-kontrol",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "tank",
+      "laneModifiers": {
+        "front": 0.07,
+        "back": -0.09
+      }
+    },
+    {
+      "id": "original:04",
+      "name": "Buz Kalesi",
+      "universe": "original",
+      "role": "tank",
+      "displayRole": "tank",
+      "rarity": "rare",
+      "stats": {
+        "attack": 73,
+        "defense": 94,
+        "ability": 82,
+        "control": 88,
+        "mobility": 29
+      },
+      "abilities": [
+        "donma",
+        "buz-kalkani"
+      ],
+      "portrait": "/images/original/hero-04.png",
+      "proposedPower": 83,
+      "active": {
+        "name": "donma",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "buz-kalkani",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "tank",
+      "laneModifiers": {
+        "front": 0.08,
+        "back": -0.08
+      }
+    },
+    {
+      "id": "original:05",
+      "name": "Gölge Suikastçı",
+      "universe": "original",
+      "role": "assassin",
+      "displayRole": "assassin",
+      "rarity": "legendary",
+      "stats": {
+        "attack": 94,
+        "defense": 38,
+        "ability": 76,
+        "control": 52,
+        "mobility": 97
+      },
+      "abilities": [
+        "gorunmezlik",
+        "kritik-darbe"
+      ],
+      "portrait": "/images/original/hero-05.png",
+      "proposedPower": 90,
+      "active": {
+        "name": "gorunmezlik",
+        "effect": "pierce",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "kritik-darbe",
+        "effect": "evasion",
+        "value": 0.06
+      },
+      "specialty": "assassin",
+      "laneModifiers": {
+        "front": -0.08,
+        "back": 0.07
+      }
+    },
+    {
+      "id": "original:06",
+      "name": "Altın Muhafız",
+      "universe": "original",
+      "role": "tank",
+      "displayRole": "tank",
+      "rarity": "legendary",
+      "stats": {
+        "attack": 82,
+        "defense": 91,
+        "ability": 88,
+        "control": 75,
+        "mobility": 59
+      },
+      "abilities": [
+        "kutsal-kalkan",
+        "takim-koruma"
+      ],
+      "portrait": "/images/original/hero-06.png",
+      "proposedPower": 91,
+      "active": {
+        "name": "kutsal-kalkan",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "takim-koruma",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "tank",
+      "laneModifiers": {
+        "front": 0.06,
+        "back": -0.05
+      }
+    },
+    {
+      "id": "original:07",
+      "name": "Alev Zırhı",
+      "universe": "original",
+      "role": "fighter",
+      "displayRole": "fighter",
+      "rarity": "rare",
+      "stats": {
+        "attack": 92,
+        "defense": 77,
+        "ability": 85,
+        "control": 57,
+        "mobility": 60
+      },
+      "abilities": [
+        "yakma",
+        "alev-kilici"
+      ],
+      "portrait": "/images/original/hero-07.png",
+      "proposedPower": 84,
+      "active": {
+        "name": "yakma",
+        "effect": "burst",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "alev-kilici",
+        "effect": "rage",
+        "value": 0.06
+      },
+      "specialty": "fighter",
+      "laneModifiers": {
+        "front": 0.05,
+        "back": -0.03
+      }
+    },
+    {
+      "id": "original:08",
+      "name": "Kadim Koruyucu",
+      "universe": "original",
+      "role": "fighter",
+      "displayRole": "marksman",
+      "rarity": "rare",
+      "stats": {
+        "attack": 84,
+        "defense": 42,
+        "ability": 72,
+        "control": 61,
+        "mobility": 88
+      },
+      "abilities": [
+        "uzun-menzil",
+        "dogal-yavaslatma"
+      ],
+      "portrait": "/images/original/hero-08.png",
+      "proposedPower": 72,
+      "active": {
+        "name": "uzun-menzil",
+        "effect": "sunder",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "dogal-yavaslatma",
+        "effect": "focus",
+        "value": 0.06
+      },
+      "specialty": "fighter",
+      "laneModifiers": {
+        "front": -0.04,
+        "back": 0.06
+      }
+    },
+    {
+      "id": "original:09",
+      "name": "Morvan",
+      "universe": "original",
+      "role": "energy",
+      "displayRole": "mage",
+      "rarity": "legendary",
+      "stats": {
+        "attack": 88,
+        "defense": 48,
+        "ability": 97,
+        "control": 80,
+        "mobility": 62
+      },
+      "abilities": [
+        "ruh-cagirma",
+        "can-emme"
+      ],
+      "portrait": "/images/original/hero-09.png",
+      "proposedPower": 90,
+      "active": {
+        "name": "Ruh Çağırma",
+        "effect": "splash",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Ölülerin Gücü",
+        "effect": "regen",
+        "value": 0.03
+      },
+      "specialty": "energy",
+      "laneModifiers": {
+        "front": -0.07,
+        "back": 0.08
+      }
+    },
+    {
+      "id": "original:10",
+      "name": "Brunn",
+      "universe": "original",
+      "role": "tank",
+      "displayRole": "tank",
+      "rarity": "rare",
+      "stats": {
+        "attack": 89,
+        "defense": 64,
+        "ability": 77,
+        "control": 66,
+        "mobility": 48
+      },
+      "abilities": [
+        "taret-siperi",
+        "mekanik-zirh"
+      ],
+      "portrait": "/images/original/hero-10.png",
+      "proposedPower": 75,
+      "active": {
+        "name": "Taret Siperi",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Mekanik Zırh",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "tank",
+      "laneModifiers": {
+        "front": 0.06,
+        "back": -0.04
+      }
+    },
+    {
+      "id": "original:11",
+      "name": "Drogar",
+      "universe": "original",
+      "role": "tank",
+      "displayRole": "tank",
+      "rarity": "legendary",
+      "stats": {
+        "attack": 78,
+        "defense": 99,
+        "ability": 81,
+        "control": 90,
+        "mobility": 24
+      },
+      "abilities": [
+        "buz-alan-hasari",
+        "yavaslatma"
+      ],
+      "portrait": "/images/original/hero-11.png",
+      "proposedPower": 92,
+      "active": {
+        "name": "buz-alan-hasari",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "yavaslatma",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "tank",
+      "laneModifiers": {
+        "front": 0.09,
+        "back": -0.09
+      }
+    },
+    {
+      "id": "original:12",
+      "name": "Vandra",
+      "universe": "original",
+      "role": "assassin",
+      "displayRole": "assassin",
+      "rarity": "legendary",
+      "stats": {
+        "attack": 91,
+        "defense": 38,
+        "ability": 76,
+        "control": 47,
+        "mobility": 96
+      },
+      "abilities": [
+        "can-calma",
+        "kacis"
+      ],
+      "portrait": "/images/original/hero-12.png",
+      "proposedPower": 91,
+      "active": {
+        "name": "can-calma",
+        "effect": "pierce",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "kacis",
+        "effect": "evasion",
+        "value": 0.06
+      },
+      "specialty": "assassin",
+      "laneModifiers": {
+        "front": -0.07,
+        "back": 0.09
+      }
+    },
+    {
+      "id": "original:13",
+      "name": "Eloren",
+      "universe": "original",
+      "role": "fighter",
+      "displayRole": "marksman",
+      "rarity": "rare",
+      "stats": {
+        "attack": 88,
+        "defense": 30,
+        "ability": 72,
+        "control": 55,
+        "mobility": 95
+      },
+      "abilities": [
+        "kritik-ok",
+        "hareket"
+      ],
+      "portrait": "/images/original/hero-13.png",
+      "proposedPower": 70,
+      "active": {
+        "name": "kritik-ok",
+        "effect": "sunder",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "hareket",
+        "effect": "focus",
+        "value": 0.06
+      },
+      "specialty": "fighter",
+      "laneModifiers": {
+        "front": -0.06,
+        "back": 0.08
+      }
+    },
+    {
+      "id": "original:14",
+      "name": "Kael",
+      "universe": "original",
+      "role": "fighter",
+      "displayRole": "fighter",
+      "rarity": "legendary",
+      "stats": {
+        "attack": 93,
+        "defense": 76,
+        "ability": 75,
+        "control": 73,
+        "mobility": 82
+      },
+      "abilities": [
+        "sersemletme",
+        "yildirim"
+      ],
+      "portrait": "/images/original/hero-14.png",
+      "proposedPower": 90,
+      "active": {
+        "name": "sersemletme",
+        "effect": "burst",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "yildirim",
+        "effect": "rage",
+        "value": 0.06
+      },
+      "specialty": "fighter",
+      "laneModifiers": {
+        "front": 0.06,
+        "back": -0.04
+      }
+    },
+    {
+      "id": "original:15",
+      "name": "Seraphine",
+      "universe": "original",
+      "role": "support",
+      "displayRole": "support",
+      "rarity": "legendary",
+      "stats": {
+        "attack": 84,
+        "defense": 78,
+        "ability": 96,
+        "control": 88,
+        "mobility": 82
+      },
+      "abilities": [
+        "ejderha-kalkani",
+        "buz-direnci"
+      ],
+      "portrait": "/images/original/hero-15.png",
+      "proposedPower": 92,
+      "active": {
+        "name": "Ejderha Kalkanı",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Buz Direnci",
+        "effect": "resist",
+        "value": 0.06
+      },
+      "specialty": "support",
+      "laneModifiers": {
+        "front": -0.03,
+        "back": 0.07
+      }
+    },
+    {
+      "id": "original:mehmet-akgul",
+      "name": "Mehmet Akgül",
+      "universe": "original",
+      "role": "fighter",
+      "rarity": "legendary",
+      "stats": {
+        "attack": 100,
+        "defense": 100,
+        "ability": 100,
+        "control": 100,
+        "mobility": 100
+      },
+      "proposedPower": 100,
+      "active": {
+        "name": "Sarsılmaz İrade",
+        "effect": "shield",
+        "power": 1.1
+      },
+      "passive": {
+        "name": "Altın Zırh",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "fighter",
+      "laneModifiers": {
+        "front": 0.06,
+        "back": -0.04
+      },
+      "portrait": "/images/original/hero-01.png"
+    },
+    {
+      "id": "original:hakan-artun",
+      "name": "Hakan Artun",
+      "universe": "original",
+      "role": "assassin",
+      "rarity": "common",
+      "stats": {
+        "attack": 100,
+        "defense": 100,
+        "ability": 100,
+        "control": 100,
+        "mobility": 100
+      },
+      "proposedPower": 100,
+      "active": {
+        "name": "Headshot",
+        "effect": "headshot",
+        "power": 1
+      },
+      "passive": {
+        "name": "Çeviklik",
+        "effect": "evasion",
+        "value": 0.06
+      },
+      "specialty": "assassin",
+      "laneModifiers": {
+        "front": -0.04,
+        "back": 0.07
+      }
+    },
+    {
+      "id": "original:expansion-01",
+      "name": "Yıldırım Hükümdarı",
+      "universe": "original",
+      "role": "energy",
+      "displayRole": "energy",
+      "rarity": "rare",
+      "stats": {
+        "attack": 83,
+        "defense": 55,
+        "ability": 94,
+        "control": 82,
+        "mobility": 68
+      },
+      "portrait": "/images/original/expansion-01.webp",
+      "proposedPower": 83,
+      "active": {
+        "name": "Yıldırım Fırtınası",
+        "effect": "splash",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Fırtına Odağı",
+        "effect": "focus",
+        "value": 0.06
+      },
+      "specialty": "energy",
+      "laneModifiers": {
+        "front": -0.06,
+        "back": 0.08
+      }
+    },
+    {
+      "id": "original:expansion-02",
+      "name": "Kum Hançeri",
+      "universe": "original",
+      "role": "assassin",
+      "displayRole": "assassin",
+      "rarity": "advanced",
+      "stats": {
+        "attack": 76,
+        "defense": 40,
+        "ability": 60,
+        "control": 52,
+        "mobility": 88
+      },
+      "portrait": "/images/original/expansion-02.webp",
+      "proposedPower": 65,
+      "active": {
+        "name": "Çöl Baskını",
+        "effect": "pierce",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Sessiz Adım",
+        "effect": "evasion",
+        "value": 0.06
+      },
+      "specialty": "assassin",
+      "laneModifiers": {
+        "front": 0.04,
+        "back": -0.03
+      }
+    },
+    {
+      "id": "original:expansion-03",
+      "name": "Kuzey Baltası",
+      "universe": "original",
+      "role": "fighter",
+      "displayRole": "fighter",
+      "rarity": "rare",
+      "stats": {
+        "attack": 88,
+        "defense": 70,
+        "ability": 57,
+        "control": 62,
+        "mobility": 57
+      },
+      "portrait": "/images/original/expansion-03.webp",
+      "proposedPower": 76,
+      "active": {
+        "name": "Balta Darbesi",
+        "effect": "sunder",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Savaş Öfkesi",
+        "effect": "rage",
+        "value": 0.06
+      },
+      "specialty": "fighter",
+      "laneModifiers": {
+        "front": 0.08,
+        "back": -0.06
+      }
+    },
+    {
+      "id": "original:expansion-04",
+      "name": "Kızıl Düellocu",
+      "universe": "original",
+      "role": "fighter",
+      "displayRole": "fighter",
+      "rarity": "rare",
+      "stats": {
+        "attack": 88,
+        "defense": 61,
+        "ability": 77,
+        "control": 68,
+        "mobility": 83
+      },
+      "portrait": "/images/original/expansion-04.webp",
+      "proposedPower": 82,
+      "active": {
+        "name": "Kızıl Kesik",
+        "effect": "drain",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Düello Ustalığı",
+        "effect": "focus",
+        "value": 0.06
+      },
+      "specialty": "fighter",
+      "laneModifiers": {
+        "front": 0.06,
+        "back": -0.02
+      }
+    },
+    {
+      "id": "original:expansion-05",
+      "name": "Fener Şifacısı",
+      "universe": "original",
+      "role": "support",
+      "displayRole": "support",
+      "rarity": "advanced",
+      "stats": {
+        "attack": 48,
+        "defense": 57,
+        "ability": 79,
+        "control": 71,
+        "mobility": 65
+      },
+      "portrait": "/images/original/expansion-05.webp",
+      "proposedPower": 65,
+      "active": {
+        "name": "Yaşam Işığı",
+        "effect": "heal",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Işık Direnci",
+        "effect": "resist",
+        "value": 0.06
+      },
+      "specialty": "support",
+      "laneModifiers": {
+        "front": -0.07,
+        "back": 0.08
+      }
+    },
+    {
+      "id": "original:expansion-06",
+      "name": "Çan Muhafızı",
+      "universe": "original",
+      "role": "tank",
+      "displayRole": "tank",
+      "rarity": "rare",
+      "stats": {
+        "attack": 65,
+        "defense": 77,
+        "ability": 83,
+        "control": 75,
+        "mobility": 38
+      },
+      "portrait": "/images/original/expansion-06.webp",
+      "proposedPower": 76,
+      "active": {
+        "name": "Kutsal Çan",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Sabır Zırhı",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "tank",
+      "laneModifiers": {
+        "front": 0.05,
+        "back": -0.03
+      }
+    },
+    {
+      "id": "original:expansion-07",
+      "name": "Şafak Azizesi",
+      "universe": "original",
+      "role": "support",
+      "displayRole": "support",
+      "rarity": "rare",
+      "stats": {
+        "attack": 53,
+        "defense": 66,
+        "ability": 93,
+        "control": 82,
+        "mobility": 57
+      },
+      "portrait": "/images/original/expansion-07.webp",
+      "proposedPower": 75,
+      "active": {
+        "name": "Şafak Duası",
+        "effect": "heal",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Kutsal Direnç",
+        "effect": "resist",
+        "value": 0.06
+      },
+      "specialty": "support",
+      "laneModifiers": {
+        "front": -0.08,
+        "back": 0.09
+      }
+    },
+    {
+      "id": "original:expansion-08",
+      "name": "Ay Cadısı",
+      "universe": "original",
+      "role": "energy",
+      "displayRole": "energy",
+      "rarity": "rare",
+      "stats": {
+        "attack": 67,
+        "defense": 44,
+        "ability": 83,
+        "control": 77,
+        "mobility": 70
+      },
+      "portrait": "/images/original/expansion-08.webp",
+      "proposedPower": 73,
+      "active": {
+        "name": "Ay Laneti",
+        "effect": "weaken",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Ay Odağı",
+        "effect": "focus",
+        "value": 0.06
+      },
+      "specialty": "energy",
+      "laneModifiers": {
+        "front": -0.06,
+        "back": 0.07
+      }
+    },
+    {
+      "id": "original:expansion-10",
+      "name": "Kara Siper",
+      "universe": "original",
+      "role": "tank",
+      "displayRole": "tank",
+      "rarity": "rare",
+      "stats": {
+        "attack": 70,
+        "defense": 94,
+        "ability": 66,
+        "control": 76,
+        "mobility": 29
+      },
+      "portrait": "/images/original/expansion-10.webp",
+      "proposedPower": 77,
+      "active": {
+        "name": "Kara Kalkan",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Çelik Direnç",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "tank",
+      "laneModifiers": {
+        "front": 0.09,
+        "back": -0.08
+      }
+    },
+    {
+      "id": "original:expansion-11",
+      "name": "Ruh Dokuyucu",
+      "universe": "original",
+      "role": "support",
+      "displayRole": "support",
+      "rarity": "legendary",
+      "stats": {
+        "attack": 61,
+        "defense": 65,
+        "ability": 94,
+        "control": 89,
+        "mobility": 62
+      },
+      "portrait": "/images/original/expansion-11.webp",
+      "proposedPower": 90,
+      "active": {
+        "name": "Ruh Şifası",
+        "effect": "heal",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Ruh Perdesi",
+        "effect": "resist",
+        "value": 0.06
+      },
+      "specialty": "support",
+      "laneModifiers": {
+        "front": -0.07,
+        "back": 0.09
+      }
+    },
+    {
+      "id": "original:expansion-12",
+      "name": "Kuzgun Hançer",
+      "universe": "original",
+      "role": "assassin",
+      "displayRole": "assassin",
+      "rarity": "rare",
+      "stats": {
+        "attack": 85,
+        "defense": 42,
+        "ability": 69,
+        "control": 59,
+        "mobility": 92
+      },
+      "portrait": "/images/original/expansion-12.webp",
+      "proposedPower": 74,
+      "active": {
+        "name": "Kuzgun Baskını",
+        "effect": "pierce",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Kuzgun Adımı",
+        "effect": "evasion",
+        "value": 0.06
+      },
+      "specialty": "assassin",
+      "laneModifiers": {
+        "front": 0.05,
+        "back": -0.04
+      }
+    },
+    {
+      "id": "original:expansion-13",
+      "name": "Astral Kâhin",
+      "universe": "original",
+      "role": "energy",
+      "displayRole": "energy",
+      "rarity": "rare",
+      "stats": {
+        "attack": 84,
+        "defense": 58,
+        "ability": 96,
+        "control": 92,
+        "mobility": 59
+      },
+      "portrait": "/images/original/expansion-13.webp",
+      "proposedPower": 85,
+      "active": {
+        "name": "Astral Dalga",
+        "effect": "splash",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Yıldız Odağı",
+        "effect": "focus",
+        "value": 0.06
+      },
+      "specialty": "energy",
+      "laneModifiers": {
+        "front": -0.07,
+        "back": 0.09
+      }
+    },
+    {
+      "id": "original:expansion-14",
+      "name": "Sis Bilgesi",
+      "universe": "original",
+      "role": "energy",
+      "displayRole": "energy",
+      "rarity": "advanced",
+      "stats": {
+        "attack": 60,
+        "defense": 54,
+        "ability": 81,
+        "control": 83,
+        "mobility": 48
+      },
+      "portrait": "/images/original/expansion-14.webp",
+      "proposedPower": 68,
+      "active": {
+        "name": "Sis Mührü",
+        "effect": "weaken",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Sis Perdesi",
+        "effect": "resist",
+        "value": 0.06
+      },
+      "specialty": "energy",
+      "laneModifiers": {
+        "front": -0.03,
+        "back": 0.06
+      }
+    },
+    {
+      "id": "original:expansion-15",
+      "name": "Kök Dervişi",
+      "universe": "original",
+      "role": "support",
+      "displayRole": "support",
+      "rarity": "rare",
+      "stats": {
+        "attack": 55,
+        "defense": 73,
+        "ability": 85,
+        "control": 81,
+        "mobility": 36
+      },
+      "portrait": "/images/original/expansion-15.webp",
+      "proposedPower": 73,
+      "active": {
+        "name": "Kök Şifası",
+        "effect": "heal",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Doğa Direnci",
+        "effect": "resist",
+        "value": 0.06
+      },
+      "specialty": "support",
+      "laneModifiers": {
+        "front": 0.04,
+        "back": -0.02
+      }
+    },
+    {
+      "id": "original:expansion-16",
+      "name": "Güneş Mızrağı",
+      "universe": "original",
+      "role": "fighter",
+      "displayRole": "fighter",
+      "rarity": "legendary",
+      "stats": {
+        "attack": 91,
+        "defense": 76,
+        "ability": 86,
+        "control": 77,
+        "mobility": 78
+      },
+      "portrait": "/images/original/expansion-16.webp",
+      "proposedPower": 92,
+      "active": {
+        "name": "Güneş Darbesi",
+        "effect": "pierce",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Şafak Azmi",
+        "effect": "focus",
+        "value": 0.06
+      },
+      "specialty": "fighter",
+      "laneModifiers": {
+        "front": 0.07,
+        "back": -0.05
+      }
+    },
+    {
+      "id": "original:expansion-17",
+      "name": "Işık Serafı",
+      "universe": "original",
+      "role": "support",
+      "displayRole": "support",
+      "rarity": "legendary",
+      "stats": {
+        "attack": 66,
+        "defense": 79,
+        "ability": 98,
+        "control": 90,
+        "mobility": 73
+      },
+      "portrait": "/images/original/expansion-17.webp",
+      "proposedPower": 93,
+      "active": {
+        "name": "Seraf Duası",
+        "effect": "heal",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Işık Zırhı",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "support",
+      "laneModifiers": {
+        "front": -0.03,
+        "back": 0.06
+      }
+    },
+    {
+      "id": "original:expansion-18",
+      "name": "Buz Gölgesi",
+      "universe": "original",
+      "role": "assassin",
+      "displayRole": "assassin",
+      "rarity": "rare",
+      "stats": {
+        "attack": 82,
+        "defense": 46,
+        "ability": 74,
+        "control": 73,
+        "mobility": 91
+      },
+      "portrait": "/images/original/expansion-18.webp",
+      "proposedPower": 77,
+      "active": {
+        "name": "Soğuk Baskın",
+        "effect": "weaken",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Buz Adımı",
+        "effect": "evasion",
+        "value": 0.06
+      },
+      "specialty": "assassin",
+      "laneModifiers": {
+        "front": 0.03,
+        "back": 0.05
+      }
+    },
+    {
+      "id": "original:expansion-19",
+      "name": "Gece Orağı",
+      "universe": "original",
+      "role": "assassin",
+      "displayRole": "assassin",
+      "rarity": "advanced",
+      "stats": {
+        "attack": 79,
+        "defense": 37,
+        "ability": 72,
+        "control": 57,
+        "mobility": 93
+      },
+      "portrait": "/images/original/expansion-19.webp",
+      "proposedPower": 69,
+      "active": {
+        "name": "Hilal Kesik",
+        "effect": "execute",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Gece Adımı",
+        "effect": "evasion",
+        "value": 0.06
+      },
+      "specialty": "assassin",
+      "laneModifiers": {
+        "front": 0.06,
+        "back": -0.05
+      }
+    },
+    {
+      "id": "original:expansion-20",
+      "name": "Zehir Sarmaşığı",
+      "universe": "original",
+      "role": "assassin",
+      "displayRole": "assassin",
+      "rarity": "rare",
+      "stats": {
+        "attack": 78,
+        "defense": 44,
+        "ability": 79,
+        "control": 82,
+        "mobility": 85
+      },
+      "portrait": "/images/original/expansion-20.webp",
+      "proposedPower": 77,
+      "active": {
+        "name": "Zehirli Bıçak",
+        "effect": "weaken",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Orman Çevikliği",
+        "effect": "evasion",
+        "value": 0.06
+      },
+      "specialty": "assassin",
+      "laneModifiers": {
+        "front": -0.03,
+        "back": 0.06
+      }
+    },
+    {
+      "id": "original:expansion-21",
+      "name": "Kristal Şifacı",
+      "universe": "original",
+      "role": "support",
+      "displayRole": "support",
+      "rarity": "rare",
+      "stats": {
+        "attack": 58,
+        "defense": 70,
+        "ability": 88,
+        "control": 83,
+        "mobility": 61
+      },
+      "portrait": "/images/original/expansion-21.webp",
+      "proposedPower": 77,
+      "active": {
+        "name": "Kristal Işık",
+        "effect": "heal",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Kristal Direnç",
+        "effect": "resist",
+        "value": 0.06
+      },
+      "specialty": "support",
+      "laneModifiers": {
+        "front": -0.05,
+        "back": 0.07
+      }
+    },
+    {
+      "id": "original:expansion-22",
+      "name": "Demir Düellocu",
+      "universe": "original",
+      "role": "fighter",
+      "displayRole": "fighter",
+      "rarity": "rare",
+      "stats": {
+        "attack": 75,
+        "defense": 72,
+        "ability": 54,
+        "control": 65,
+        "mobility": 63
+      },
+      "portrait": "/images/original/expansion-22.webp",
+      "proposedPower": 73,
+      "active": {
+        "name": "Çelik Kesik",
+        "effect": "sunder",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Dövüş Azmi",
+        "effect": "focus",
+        "value": 0.06
+      },
+      "specialty": "fighter",
+      "laneModifiers": {
+        "front": 0.07,
+        "back": -0.04
+      }
+    },
+    {
+      "id": "original:expansion-23",
+      "name": "Fırtına Çağıran",
+      "universe": "original",
+      "role": "energy",
+      "displayRole": "energy",
+      "rarity": "rare",
+      "stats": {
+        "attack": 82,
+        "defense": 51,
+        "ability": 91,
+        "control": 84,
+        "mobility": 75
+      },
+      "portrait": "/images/original/expansion-23.webp",
+      "proposedPower": 82,
+      "active": {
+        "name": "Fırtına Dalgası",
+        "effect": "splash",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Rüzgâr Adımı",
+        "effect": "momentum",
+        "value": 0.06
+      },
+      "specialty": "energy",
+      "laneModifiers": {
+        "front": -0.05,
+        "back": 0.08
+      }
+    },
+    {
+      "id": "original:expansion-24",
+      "name": "Altın Ozan",
+      "universe": "original",
+      "role": "support",
+      "displayRole": "support",
+      "rarity": "rare",
+      "stats": {
+        "attack": 54,
+        "defense": 62,
+        "ability": 85,
+        "control": 78,
+        "mobility": 61
+      },
+      "portrait": "/images/original/expansion-24.webp",
+      "proposedPower": 73,
+      "active": {
+        "name": "Zafer Ezgisi",
+        "effect": "heal",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Ezgili Direnç",
+        "effect": "resist",
+        "value": 0.06
+      },
+      "specialty": "support",
+      "laneModifiers": {
+        "front": -0.06,
+        "back": 0.07
+      }
+    },
+    {
+      "id": "original:expansion-25",
+      "name": "Kadim Meşe",
+      "universe": "original",
+      "role": "tank",
+      "displayRole": "tank",
+      "rarity": "rare",
+      "stats": {
+        "attack": 64,
+        "defense": 91,
+        "ability": 92,
+        "control": 87,
+        "mobility": 24
+      },
+      "portrait": "/images/original/expansion-25.webp",
+      "proposedPower": 81,
+      "active": {
+        "name": "Kadim Kabuk",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Kabuk Zırhı",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "tank",
+      "laneModifiers": {
+        "front": 0.07,
+        "back": -0.05
+      }
+    },
+    {
+      "id": "original:expansion-26",
+      "name": "Mor Hilal",
+      "universe": "original",
+      "role": "assassin",
+      "displayRole": "assassin",
+      "rarity": "legendary",
+      "stats": {
+        "attack": 90,
+        "defense": 44,
+        "ability": 86,
+        "control": 73,
+        "mobility": 95
+      },
+      "portrait": "/images/original/expansion-26.webp",
+      "proposedPower": 92,
+      "active": {
+        "name": "Hilal Baskını",
+        "effect": "pierce",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Gölge Çevikliği",
+        "effect": "evasion",
+        "value": 0.06
+      },
+      "specialty": "assassin",
+      "laneModifiers": {
+        "front": 0.06,
+        "back": -0.03
+      }
+    },
+    {
+      "id": "original:expansion-27",
+      "name": "Taş Yumruk",
+      "universe": "original",
+      "role": "fighter",
+      "displayRole": "fighter",
+      "rarity": "advanced",
+      "stats": {
+        "attack": 78,
+        "defense": 68,
+        "ability": 43,
+        "control": 55,
+        "mobility": 65
+      },
+      "portrait": "/images/original/expansion-27.webp",
+      "proposedPower": 66,
+      "active": {
+        "name": "Ezici Yumruk",
+        "effect": "sunder",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Mücadele Azmi",
+        "effect": "rage",
+        "value": 0.06
+      },
+      "specialty": "fighter",
+      "laneModifiers": {
+        "front": 0.08,
+        "back": -0.07
+      }
+    },
+    {
+      "id": "original:expansion-28",
+      "name": "Kış Kraliçesi",
+      "universe": "original",
+      "role": "energy",
+      "displayRole": "energy",
+      "rarity": "legendary",
+      "stats": {
+        "attack": 83,
+        "defense": 72,
+        "ability": 97,
+        "control": 94,
+        "mobility": 59
+      },
+      "portrait": "/images/original/expansion-28.webp",
+      "proposedPower": 91,
+      "active": {
+        "name": "Kış Fırtınası",
+        "effect": "splash",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Buz Direnci",
+        "effect": "resist",
+        "value": 0.06
+      },
+      "specialty": "energy",
+      "laneModifiers": {
+        "front": -0.04,
+        "back": 0.07
+      }
+    },
+    {
+      "id": "original:expansion-29",
+      "name": "Gök Çekici",
+      "universe": "original",
+      "role": "fighter",
+      "displayRole": "fighter",
+      "rarity": "legendary",
+      "stats": {
+        "attack": 90,
+        "defense": 84,
+        "ability": 88,
+        "control": 81,
+        "mobility": 48
+      },
+      "portrait": "/images/original/expansion-29.webp",
+      "proposedPower": 91,
+      "active": {
+        "name": "Yıldırım Çekici",
+        "effect": "sunder",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Fırtına Zırhı",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "fighter",
+      "laneModifiers": {
+        "front": 0.08,
+        "back": -0.06
+      }
+    },
+    {
+      "id": "original:expansion-30",
+      "name": "Mor Gölge",
+      "universe": "original",
+      "role": "assassin",
+      "displayRole": "assassin",
+      "rarity": "rare",
+      "stats": {
+        "attack": 86,
+        "defense": 45,
+        "ability": 88,
+        "control": 77,
+        "mobility": 91
+      },
+      "portrait": "/images/original/expansion-30.webp",
+      "proposedPower": 82,
+      "active": {
+        "name": "Gölgeli Kesik",
+        "effect": "drain",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Gölge Adımı",
+        "effect": "evasion",
+        "value": 0.06
+      },
+      "specialty": "assassin",
+      "laneModifiers": {
+        "front": 0.04,
+        "back": 0.02
+      }
+    },
+    {
+      "id": "original:expansion-31",
+      "name": "Sancak Bekçisi",
+      "universe": "original",
+      "role": "support",
+      "displayRole": "support",
+      "rarity": "rare",
+      "stats": {
+        "attack": 61,
+        "defense": 80,
+        "ability": 77,
+        "control": 84,
+        "mobility": 43
+      },
+      "portrait": "/images/original/expansion-31.webp",
+      "proposedPower": 76,
+      "active": {
+        "name": "Sancak Koruması",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Sancak Direnci",
+        "effect": "guard",
+        "value": 0.06
+      },
+      "specialty": "support",
+      "laneModifiers": {
+        "front": 0.06,
+        "back": -0.04
+      }
+    },
+    {
+      "id": "original:expansion-32",
+      "name": "Kül Bıçağı",
+      "universe": "original",
+      "role": "assassin",
+      "displayRole": "assassin",
+      "rarity": "advanced",
+      "stats": {
+        "attack": 72,
+        "defense": 38,
+        "ability": 57,
+        "control": 49,
+        "mobility": 86
+      },
+      "portrait": "/images/original/expansion-32.webp",
+      "proposedPower": 62,
+      "active": {
+        "name": "Kül Baskını",
+        "effect": "haste",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Hızlı Adım",
+        "effect": "evasion",
+        "value": 0.06
+      },
+      "specialty": "assassin",
+      "laneModifiers": {
+        "front": 0.05,
+        "back": -0.04
+      }
+    },
+    {
+      "id": "original:expansion-33",
+      "name": "Kan Büyücüsü",
+      "universe": "original",
+      "role": "energy",
+      "displayRole": "energy",
+      "rarity": "rare",
+      "stats": {
+        "attack": 85,
+        "defense": 48,
+        "ability": 93,
+        "control": 86,
+        "mobility": 64
+      },
+      "portrait": "/images/original/expansion-33.webp",
+      "proposedPower": 82,
+      "active": {
+        "name": "Kan Akışı",
+        "effect": "drain",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Kızıl Odak",
+        "effect": "focus",
+        "value": 0.06
+      },
+      "specialty": "energy",
+      "laneModifiers": {
+        "front": -0.06,
+        "back": 0.08
+      }
+    },
+    {
+      "id": "original:expansion-34",
+      "name": "Ay Rahibesi",
+      "universe": "original",
+      "role": "support",
+      "displayRole": "support",
+      "rarity": "rare",
+      "stats": {
+        "attack": 60,
+        "defense": 60,
+        "ability": 86,
+        "control": 82,
+        "mobility": 71
+      },
+      "portrait": "/images/original/expansion-34.webp",
+      "proposedPower": 76,
+      "active": {
+        "name": "Ay Duası",
+        "effect": "heal",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Ay Perdesi",
+        "effect": "resist",
+        "value": 0.06
+      },
+      "specialty": "support",
+      "laneModifiers": {
+        "front": -0.05,
+        "back": 0.07
+      }
+    },
+    {
+      "id": "original:expansion-35",
+      "name": "Yıldız Kraliçesi",
+      "universe": "original",
+      "role": "energy",
+      "displayRole": "energy",
+      "rarity": "legendary",
+      "stats": {
+        "attack": 88,
+        "defense": 71,
+        "ability": 99,
+        "control": 94,
+        "mobility": 72
+      },
+      "portrait": "/images/original/expansion-35.webp",
+      "proposedPower": 94,
+      "active": {
+        "name": "Yıldız Yağmuru",
+        "effect": "splash",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Kozmik Odak",
+        "effect": "focus",
+        "value": 0.06
+      },
+      "specialty": "energy",
+      "laneModifiers": {
+        "front": -0.05,
+        "back": 0.08
+      }
+    },
+    {
+      "id": "original:expansion-36",
+      "name": "Kristal Fırtına",
+      "universe": "original",
+      "role": "energy",
+      "displayRole": "energy",
+      "rarity": "rare",
+      "stats": {
+        "attack": 79,
+        "defense": 62,
+        "ability": 91,
+        "control": 87,
+        "mobility": 66
+      },
+      "portrait": "/images/original/expansion-36.webp",
+      "proposedPower": 83,
+      "active": {
+        "name": "Kristal Dalgası",
+        "effect": "splash",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Kristal Odak",
+        "effect": "focus",
+        "value": 0.06
+      },
+      "specialty": "energy",
+      "laneModifiers": {
+        "front": -0.04,
+        "back": 0.07
+      }
+    }
+  ]
+}
