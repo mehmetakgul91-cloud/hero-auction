@@ -8,6 +8,7 @@ import pg from 'pg';
 import {simulateRosterBattle,battleRoster} from './battle-roster.js';
 import {createCommanderProfile,validateCommanderProfile,resolveCommander,previewCommanderUpgrade,commanderLevelCap,commanderUpgradeCost,COMMANDER_STATS} from './arena-commanders.js';
 import {auctionRoomToBattleState,prepareBattleTeams} from './battle-match.js';
+import {createRoomCommanderSession,submitRoomCommanderTurn,viewRoomCommanderSession} from './commander-room-bridge.js';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
 const GOOGLE_CLIENT_ID=process.env.GOOGLE_CLIENT_ID||'742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
@@ -17,6 +18,9 @@ function signLogin(user){const data=Buffer.from(JSON.stringify({sub:user.sub,nam
 function readLogin(value){try{const [data,sig]=String(value||'').split('.');if(!data||!sig)return null;const expected=crypto.createHmac('sha256',authSecret).update(data).digest();const received=Buffer.from(sig,'base64url');if(expected.length!==received.length||!crypto.timingSafeEqual(expected,received))return null;const user=JSON.parse(Buffer.from(data,'base64url').toString());return user.expires>Date.now()?user:null}catch{return null}}
 function chosenName(body,fallback){return readLogin(body.authToken)?.name||String(body.name||fallback).trim().slice(0,24)}
 const rooms=new Map();
+// Experimental commander turn endpoint; disabled unless explicitly enabled in a test environment.
+const commanderTurnSessions=new Map();
+const commanderTurnApiEnabled=process.env.EXPERIMENTAL_COMMANDER_TURNS==='1';
 const artCache=new Map();
 const cardDetails=JSON.parse(fs.readFileSync(path.join(root,'public','cards.json'),'utf8'));
 const auditedArt=JSON.parse(fs.readFileSync(path.join(root,'public','verified-art.json'),'utf8'));
@@ -451,6 +455,34 @@ const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.w
  if(!room.battleSync?.result)return send(409,{error:'Savaş henüz başlamadı'});
  room.battleCompleted??=[false,false];room.battleCompleted[seat]=true;markRoom(room);return send(200,{ok:true,completed:room.battleCompleted,series:room.series||[0,0],seat,players:room.players.map(p=>({name:p?.name||'Oyuncu'}))});
 }
+if(url.pathname==='/api/experimental/commander-turn'&&(req.method==='GET'||req.method==='POST')){
+ if(!commanderTurnApiEnabled)return send(404,{error:'Experimental commander API disabled'});
+ let body={};
+ if(req.method==='POST'){
+  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>2000)return send(413,{error:'İstek çok büyük'})}
+  try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz JSON'})}
+ }else body={code:url.searchParams.get('code'),token:url.searchParams.get('token')};
+ const room=rooms.get(String(body?.code||'').toUpperCase());
+ if(!room||room.players?.findIndex(p=>p?.token===body.token)<0)return send(403,{error:'Yetkisiz oda'});
+ if(room.mode==='bot')return send(409,{error:'Bu deneysel mod yalnızca iki gerçek oyuncu içindir'});
+ if(room.phase!=='finished'||!room.battleSync?.result||!room.battleSync?.commanderInput)return send(409,{error:'Arena dizilişleri hazır değil'});
+ const matchKey=String(room.matchNumber||1)+':'+String(room.created);
+ const key=room.code+':'+matchKey;
+ try{
+  let bound=commanderTurnSessions.get(key);
+  if(!bound){
+   const input=room.battleSync.commanderInput;
+   if(input.commanders.some(c=>!c?.commanderId))return send(409,{error:'İki oyuncunun da komutanı seçili olmalı'});
+   bound=createRoomCommanderSession(room,{cardsA:input.cards[0],cardsB:input.cards[1],commanders:input.commanders,remainingCredits:input.remainingCredits});
+   commanderTurnSessions.set(key,bound);
+  }
+  if(req.method==='POST'){
+   const outcome=submitRoomCommanderTurn(room,bound,{token:body.token,round:body.round,command:body.command});
+   return send(200,{...viewRoomCommanderSession(room,bound,body.token),ready:outcome.ready});
+  }
+  return send(200,viewRoomCommanderSession(room,bound,body.token));
+ }catch(e){return send(422,{error:e.message})}
+}
 if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.method==='GET')){
  let body={};if(req.method==='POST'){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>4000)return send(413,{error:'İstek çok büyük'})}try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz JSON'})}}
  else body={code:url.searchParams.get('code'),token:url.searchParams.get('token')};
@@ -505,6 +537,7 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
   }
  }
  const result=simulateRosterBattle(ordered[0],ordered[1],{seed:'auction-battle-'+room.code+'-'+matchKey,remainingCredits:[state.remainingCreditsA,state.remainingCreditsB],commanders:commanderProfiles});
+ sync.commanderInput={cards:ordered,commanders:commanderProfiles,remainingCredits:[state.remainingCreditsA,state.remainingCreditsB]};
  sync.result={winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log,commanders:commanderProfiles.map(profile=>profile?{commanderId:profile.commanderId,levels:{...profile.levels}}:null)};
  if(room.battleSettlementPending&&!room.matchSettled){settleFinishedMatch(room,result.winner);room.battleSettlementPending=false;}
  }markRoom(room);
