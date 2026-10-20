@@ -22,7 +22,7 @@ export function castLiveCommanderCombat(combat,{side,ability,requestId,matchKey,
  const cast=castLiveCommanderAbility(combat.abilities,{side,ability,requestId,matchKey,now});
  combat.teams=effect.teams;
  combat.version++;
- const events=effect.log.map(entry=>({...entry,version:combat.version,sequence:cast.cast.sequence}));
+ const events=effect.log.map(entry=>({...entry,version:combat.version,sequence:cast.cast.sequence,at:now,effectUntil:cast.effectUntil}));
  combat.events.push(...events);
  combat.finished=effect.finished;
  combat.abilities.finished=effect.finished;
