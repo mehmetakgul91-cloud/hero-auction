@@ -266,7 +266,10 @@ function enterArenaWithoutReload(url){
     if(data.started){
      if(battlePoll!==null){clearInterval(battlePoll);battlePoll=null}
      await build(data.result);
-     if(events.length)startReplay();
+     if(data.result?.live){
+      $('play').textContent='⚡ CANLI SAVAŞ SÜRÜYOR';
+      await import('/commander-experimental.js?live='+encodeURIComponent(auctionCode));
+     }else if(events.length)startReplay();
     }else $('message').textContent='Rakibin dizilişi bekleniyor… '+data.ready.filter(Boolean).length+'/2 hazır';
    }catch(e){$('message').textContent='⚠ '+e.message}
   };

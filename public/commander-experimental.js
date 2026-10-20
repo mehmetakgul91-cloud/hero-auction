@@ -1,7 +1,8 @@
 // Authenticated two-seat controls for the server-owned live arena.
 const params=new URLSearchParams(location.search);
 const panel=document.getElementById('experimental-commander-controls');
-if(panel&&params.get('commanderTest')==='1'&&params.has('auctionCode')&&params.has('auctionToken')){
+if(panel&&params.get('commanderTest')==='1'&&params.has('auctionCode')&&params.has('auctionToken')&&!window.__heroArenaCommanderControlsInitialized){
+ window.__heroArenaCommanderControlsInitialized=true;
  const code=params.get('auctionCode'),token=params.get('auctionToken'),side=Number(params.get('seat')||0);
  const $=s=>panel.querySelector(s),normal=$('[data-command="normal"]'),ultimate=$('[data-command="ultimate"]'),pass=$('[data-command="pass"]');
  const energy=$('[data-energy]'),meter=$('[data-energy-meter]'),fill=$('[data-energy-fill]'),status=$('[data-status]');
