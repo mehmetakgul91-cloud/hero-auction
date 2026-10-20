@@ -50,9 +50,10 @@ test('rejects commands with an invalid side',()=>{
 
 
 test('ultimate ability becomes available after nine rounds of charging',()=>{
- // Use durable, low-power teams so combat cannot finish before round nine.
+ // High HP and full regeneration prevent early elimination before round nine.
  const durable=(prefix)=>Array.from({length:5},(_,i)=>({
-  id:prefix+i,name:prefix+i,power:1,role:'tank',lane:'front'
+  id:prefix+i,name:prefix+i,power:100,role:'tank',lane:'front',
+  passive:{effect:'regen',value:1}
  }));
  const result=simulateBattle(durable('alpha'),durable('beta'),{
   seed:'commander-ultimate-long-match',maxRounds:15,
