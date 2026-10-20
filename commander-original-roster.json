@@ -1,7 +1,7 @@
 {
   "version": 1,
   "description": "Experimental original-only hero roster sourced from latest main battle-roster.json. Marvel and DC excluded. Does not modify production roster.",
-  "rosterSize": 52,
+  "rosterSize": 50,
   "characters": [
     {
       "id": "original:01",
@@ -540,67 +540,6 @@
       "specialty": "support",
       "laneModifiers": {
         "front": -0.03,
-        "back": 0.07
-      }
-    },
-    {
-      "id": "original:mehmet-akgul",
-      "name": "Mehmet Akgül",
-      "universe": "original",
-      "role": "fighter",
-      "rarity": "legendary",
-      "stats": {
-        "attack": 100,
-        "defense": 100,
-        "ability": 100,
-        "control": 100,
-        "mobility": 100
-      },
-      "proposedPower": 100,
-      "active": {
-        "name": "Sarsılmaz İrade",
-        "effect": "shield",
-        "power": 1.1
-      },
-      "passive": {
-        "name": "Altın Zırh",
-        "effect": "guard",
-        "value": 0.06
-      },
-      "specialty": "fighter",
-      "laneModifiers": {
-        "front": 0.06,
-        "back": -0.04
-      },
-      "portrait": "/images/original/hero-01.png"
-    },
-    {
-      "id": "original:hakan-artun",
-      "name": "Hakan Artun",
-      "universe": "original",
-      "role": "assassin",
-      "rarity": "common",
-      "stats": {
-        "attack": 100,
-        "defense": 100,
-        "ability": 100,
-        "control": 100,
-        "mobility": 100
-      },
-      "proposedPower": 100,
-      "active": {
-        "name": "Headshot",
-        "effect": "headshot",
-        "power": 1
-      },
-      "passive": {
-        "name": "Çeviklik",
-        "effect": "evasion",
-        "value": 0.06
-      },
-      "specialty": "assassin",
-      "laneModifiers": {
-        "front": -0.04,
         "back": 0.07
       }
     },
