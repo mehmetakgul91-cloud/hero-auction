@@ -17,7 +17,7 @@ test('basic attack observes shield applied by intervening commander cast',()=>{
  const before=target.hp,shield=target.shield;
  assert.ok(shield>0);
  stepBasicHeroCombat(c,{side:1,actorId:'1-0'});
- assert.equal(target.hp,before-Math.max(0,30-shield));
+ assert.equal(c.teams[0].find(u=>u.id===target.id).hp,before-Math.max(0,30-shield));
  assert.equal(c.version,2);
 });
 test('basic target selection prefers surviving frontline',()=>{
@@ -54,14 +54,14 @@ test('magic weakens actual basic attack damage for exactly three rounds',()=>{
   const target=selectBattleTarget(c.teams[0],weakened,c.round);
   const before=target.hp;
   stepBasicHeroCombat(c,{side:1,actorId:weakened.id});
-  assert.equal(before-target.hp,21);
+  assert.equal(before-c.teams[0].find(u=>u.id===target.id).hp,21);
  }
  advanceBasicCombatRound(c);
  assert.equal(c.teams[1].find(u=>u.id===weakened.id).commanderWeaken,undefined);
  const target=selectBattleTarget(c.teams[0],weakened,c.round);
  const before=target.hp;
  stepBasicHeroCombat(c,{side:1,actorId:weakened.id});
- assert.equal(before-target.hp,30);
+ assert.equal(before-c.teams[0].find(u=>u.id===target.id).hp,30);
 });
 test('ultimate magic reduces basic attack by 40 percent',()=>{
  const c=make();
@@ -73,5 +73,5 @@ test('ultimate magic reduces basic attack by 40 percent',()=>{
  const target=selectBattleTarget(c.teams[0],weakened,c.round);
  const before=target.hp;
  stepBasicHeroCombat(c,{side:1,actorId:weakened.id});
- assert.equal(before-target.hp,18);
+ assert.equal(before-c.teams[0].find(u=>u.id===target.id).hp,18);
 });
