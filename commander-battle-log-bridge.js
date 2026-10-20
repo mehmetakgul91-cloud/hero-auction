@@ -6,8 +6,7 @@ import {applyServerHeroAction,beginServerCombatRound} from './commander-live-com
 
 export function applyBattleLogHeroEvent(combat,event){
  if(!combat||!event||!Number.isInteger(event.round)||event.round<1||event.round>15)throw Error('Invalid battle log event');
- if(event.round===combat.round+1)beginServerCombatRound(combat,event.round);
- if(event.round!==combat.round)throw Error('Out-of-order battle event');
+ if(event.round!==combat.round&&event.round!==combat.round+1)throw Error('Out-of-order battle event');
  if(![0,1].includes(event.side)||typeof event.actor!=='string'||typeof event.target!=='string')throw Error('Invalid battle actor or target');
  if(event.actor.startsWith('commander:'))throw Error('Commander log must not be replayed as hero action');
  const isHeal=event.action==='heal'||event.action==='passive-heal';
@@ -24,6 +23,8 @@ export function applyBattleLogHeroEvent(combat,event){
   const target=combat.teams[1-event.side]?.find(u=>u.id===event.target&&u.hp>0);
   if(!target||Math.min(target.shield||0,amount)!==absorbed||Math.min(target.hp,amount-absorbed)!==event.value)throw Error('Battle log diverged from authoritative state');
  }
+ // Do not grant next-round energy until all event validations have passed.
+ if(event.round===combat.round+1)beginServerCombatRound(combat,event.round);
  return applyServerHeroAction(combat,{side:event.side,actorId:event.actor,targetId:event.target,
   action:isHeal?'heal':isShield?'shield':'attack',value:amount,round:event.round});
 }
