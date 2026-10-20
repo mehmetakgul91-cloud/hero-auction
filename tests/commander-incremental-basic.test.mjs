@@ -43,7 +43,7 @@ test('magic weakens actual basic attack damage for exactly three rounds',()=>{
  const c=make();
  c.commanders[0]={commanderId:'magic'};
  c.abilities.energy[0]=100;
- castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'weaken_hit_01',matchKey:'step:1',now:2000});
+ castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'weaken_hit_01',targetIds:['1-0'],matchKey:'step:1',now:2000});
  const weakened=c.teams[1].find(u=>u.commanderWeaken>0);
  assert.ok(weakened);
  assert.equal(weakened.commanderWeaken,.30);
@@ -63,7 +63,7 @@ test('ultimate magic reduces basic attack by 40 percent',()=>{
  const c=make();
  c.commanders[0]={commanderId:'magic'};
  c.abilities.energy[0]=100;
- castLiveCommanderCombat(c,{side:0,ability:'ultimate',requestId:'weaken_ult_01',matchKey:'step:1',now:2000});
+ castLiveCommanderCombat(c,{side:0,ability:'ultimate',requestId:'weaken_ult_01',targetIds:['1-0','1-1'],matchKey:'step:1',now:2000});
  const weakened=c.teams[1].find(u=>u.commanderWeaken===.40);
  assert.ok(weakened);
  const before=c.teams[0][0].hp;
