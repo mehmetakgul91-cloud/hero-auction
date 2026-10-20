@@ -16,7 +16,7 @@ function highlightHeroes(kind,side,ability){
  for(const element of targets){
   element.classList.add(className);
   const item={element,className,timer:null};
-  item.timer=setTimeout(()=>{element.classList.remove(className);activeEffects.delete(item)},ability==='ultimate'?1900:1300);
+  item.timer=setTimeout(()=>{element.classList.remove(className);activeEffects.delete(item)},2000);
   activeEffects.add(item);
  }
 }
@@ -48,7 +48,7 @@ function showCommanderAbility(event){
  arena.append(banner);
  highlightHeroes(kind,commander.side,ability);
  requestAnimationFrame(()=>banner.classList.add('visible'));
- cleanupTimer=setTimeout(()=>{banner.remove();cleanupTimer=null},ability==='ultimate'?1900:1300);
+ cleanupTimer=setTimeout(()=>{banner.remove();cleanupTimer=null},2000);
 }
 window.addEventListener('heroarena:move',showCommanderAbility);
 window.addEventListener('heroarena:commander-round',showCommanderAbility);

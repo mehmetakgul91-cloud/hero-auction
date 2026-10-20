@@ -24,6 +24,18 @@ test('repeated commander cues clear previous hero highlights',()=>{
  assert.match(effect,/clearHeroEffects\(\)/);
 });
 
+test('commander ability banner and squad highlights last two seconds',()=>{
+ assert.match(effect,/activeEffects\.delete\(item\)\},2000\)/);
+ assert.match(effect,/banner\.remove\(\);cleanupTimer=null\},2000\)/);
+});
+
+test('commander matchup uses portraits and centered mobile ability area',()=>{
+ const client=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8');
+ assert.match(client,/arena-commander-portrait/);
+ assert.match(html,/\.commander-ability-flash\{[^}]*left:50%;top:50%/);
+ assert.match(html,/translate\(-50%,-50%\) scale\(1\)/);
+});
+
 test('experimental committed round feeds commander visuals without altering replay',()=>{
  const client=readFileSync(new URL('../public/commander-experimental.js',import.meta.url),'utf8');
  const three=readFileSync(new URL('../public/arena-three.js',import.meta.url),'utf8');

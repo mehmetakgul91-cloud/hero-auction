@@ -199,10 +199,14 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 @media(min-width:700px){.formation-power-summary{grid-template-columns:repeat(4,minmax(0,1fr))}}
 
 .arena-commander-matchup[hidden]{display:none!important}
-.arena-commander-matchup{display:grid;grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr);align-items:center;gap:8px;margin:10px 0;padding:12px;border:1px solid #cfad62;border-radius:14px;background:linear-gradient(115deg,#142b4a,#1d1c38,#402032);box-shadow:0 0 16px #d4af5a33;color:#f7f5ed;text-align:center}
-.arena-commander-matchup>div{display:flex;flex-direction:column;gap:5px;min-width:0;overflow-wrap:anywhere}
-.arena-commander-matchup strong{font-size:clamp(11px,2.8vw,15px)}
-.arena-commander-matchup small{font-size:clamp(9px,2.1vw,12px);line-height:1.4;color:#c3d7ed}
+.arena-commander-matchup{display:grid;grid-template-columns:minmax(0,1fr) 30px minmax(0,1fr);align-items:center;gap:6px;margin:8px 0;padding:8px;border:1px solid #cfad62;border-radius:14px;background:linear-gradient(115deg,#142b4a,#1d1c38,#402032);box-shadow:0 0 16px #d4af5a33;color:#f7f5ed;text-align:center}
+.arena-commander-matchup>div{display:flex;min-width:0;overflow-wrap:anywhere}
+.arena-commander-card{align-items:center;gap:8px;text-align:left}
+.arena-commander-card.red{flex-direction:row-reverse;text-align:right}
+.arena-commander-portrait{width:clamp(38px,11vw,56px);height:clamp(38px,11vw,56px);flex:0 0 auto;object-fit:cover;border:2px solid #ffd46b;border-radius:12px;background:#0b1627;box-shadow:0 0 14px #ffd46b55}
+.arena-commander-details{display:flex;min-width:0;flex-direction:column;gap:3px;overflow-wrap:anywhere}
+.arena-commander-matchup strong{font-size:clamp(10px,2.8vw,15px);line-height:1.2}
+.arena-commander-matchup small{font-size:clamp(8px,2vw,12px);line-height:1.25;color:#c3d7ed}
 .arena-commander-versus{font-weight:1000;color:#f2d17e;font-size:15px;text-shadow:0 0 8px #ffd37599}
 
 /* Cinematic elimination of the last standing hero */

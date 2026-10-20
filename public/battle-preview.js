@@ -378,12 +378,17 @@ function renderArenaCommanderMatchup(profiles){
  for(let side=0;side<2;side++){
   const target=$(side===0?'arena-commander-left':'arena-commander-right');
   target.replaceChildren();
+  target.className='arena-commander-card '+(side===0?'blue':'red');
   const profile=profiles[side],info=commanderDisplay[profile?.commanderId];
+  const portrait=document.createElement('img');portrait.className='arena-commander-portrait';portrait.alt=info?info[1]+' komutanı':'Komutan';
+  if(info&&commanderPortraits[profile.commanderId]){portrait.src=commanderPortraits[profile.commanderId];portrait.onerror=()=>{portrait.hidden=true}}
+  else portrait.hidden=true;
+  const details=document.createElement('span');details.className='arena-commander-details';
   const name=document.createElement('strong');
   name.textContent=info?(info[0]+' '+info[1]+' Komutanı'):'Komutan seçilmedi';
   const levels=document.createElement('small');
   levels.textContent=profile?.levels?Object.entries(profile.levels).filter(([,level])=>level>0).map(([stat,level])=>(commanderDisplay[stat]?.[1]||stat)+' +%'+(level*.5).toLocaleString('tr-TR')).join(' · ')||'Geliştirme yok':'Bonus yok';
-  target.append(name,levels);
+  details.append(name,levels);target.append(portrait,details);
  }
 }
 async function build(overrideResult){
