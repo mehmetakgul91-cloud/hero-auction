@@ -2,6 +2,7 @@ const root=document.getElementById('hero-gallery'),status=document.getElementByI
 const categories=[['all','TÜMÜ'],['tank','🛡️ TANK'],['fighter','⚔️ SAVAŞÇI'],['assassin','🥷 SUİKASTÇI'],['energy','🔮 ENERJİ / BÜYÜCÜ'],['support','💚 DESTEK']];
 const worlds={marvel:'MARVEL',dc:'DC',original:'HERO AUCTION',lotr:'YÜZÜKLERİN EFENDİSİ',pokemon:'POKÉMON'};
 const roleNames={tank:'Tank',fighter:'Savaşçı',assassin:'Suikastçı',energy:'Enerji / Büyücü',support:'Destek'};
+const rarityNames={common:'SIRADAN',advanced:'GELİŞMİŞ',rare:'NADİR',legendary:'EFSANEVİ',siradan:'SIRADAN',gelismis:'GELİŞMİŞ',nadir:'NADİR',efsanevi:'EFSANEVİ'};
 let heroes=[],selected='all';
 const fmt=n=>(n>=0?'+':'')+(n*100).toFixed(0)+'%';
 function line(label,value){const el=document.createElement('div');el.className='gallery-detail-line';const a=document.createElement('span'),b=document.createElement('strong');a.textContent=label;b.textContent=value;el.append(a,b);return el}
@@ -16,8 +17,9 @@ function makeCard(hero){
  const title=document.createElement('h2');title.textContent=hero.name;
  const role=document.createElement('span');role.className='gallery-role';role.textContent=roleNames[hero.role]||hero.role;
  body.append(world,title,role);
- if(hero.rarity){const rarity=document.createElement('span');rarity.className='gallery-rarity';rarity.textContent='NADİRLİK: '+hero.rarity.toLocaleUpperCase('tr-TR');body.append(rarity)}
+ if(hero.rarity){const rarity=document.createElement('span');rarity.className='gallery-rarity';rarity.textContent='NADİRLİK: '+(rarityNames[hero.rarity]||hero.rarity.toLocaleUpperCase('tr-TR'));body.append(rarity)}
  const details=document.createElement('div');details.className='gallery-details';
+ if(Number.isInteger(hero.power))details.append(line('Güç',hero.power+'/100'));
  if(hero.laneModifiers){details.append(line('🛡 Ön saf',fmt(Number(hero.laneModifiers.front)||0)),line('🎯 Arka saf',fmt(Number(hero.laneModifiers.back)||0)))}
  if(hero.active?.name)details.append(line('⚡ Aktif yetenek',hero.active.name));
  if(hero.passive?.name)details.append(line('✦ Pasif yetenek',hero.passive.name));
