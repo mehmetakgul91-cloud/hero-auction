@@ -2,6 +2,24 @@
 const names={attack:'SALDIRI',defense:'SAVUNMA',magic:'BÜYÜ',support:'DESTEK'};
 const symbols={attack:'⚔',defense:'🛡',magic:'✦',support:'✚'};
 let cleanupTimer;
+const activeEffects=new Set();
+function clearHeroEffects(){for(const item of activeEffects){clearTimeout(item.timer);item.element.classList.remove(item.className)}activeEffects.clear()}
+function highlightHeroes(kind,side,ability){
+ clearHeroEffects();
+ const targetSide=kind==='attack'||kind==='magic'?1-side:side;
+ const team=document.getElementById(targetSide===0?'team-a':'team-b');
+ if(!team)return;
+ const className='commander-hero-'+kind;
+ const cards=[...team.querySelectorAll('.arena-hero:not(.dead)')];
+ const targets=kind==='magic'?cards.slice(0,ability==='ultimate'?2:1):cards;
+ for(const element of targets){
+  element.classList.add(className);
+  const item={element,className,timer:null};
+  item.timer=setTimeout(()=>{element.classList.remove(className);activeEffects.delete(item)},ability==='ultimate'?1900:1300);
+  activeEffects.add(item);
+ }
+}
+
 window.addEventListener('heroarena:move',event=>{
  const entries=event.detail?.events||[event.detail?.event];
  const commander=entries.find(e=>/^commander-(attack|defense|magic|support)-(normal|ultimate)$/.test(e?.action||''));
@@ -25,6 +43,7 @@ window.addEventListener('heroarena:move',event=>{
  skill.textContent=ability==='ultimate'?'NİHAİ YETENEK':'NORMAL YETENEK';
  banner.append(symbol,label,skill);
  arena.append(banner);
+ highlightHeroes(kind,commander.side,ability);
  requestAnimationFrame(()=>banner.classList.add('visible'));
  cleanupTimer=setTimeout(()=>{banner.remove();cleanupTimer=null},ability==='ultimate'?1900:1300);
 });
