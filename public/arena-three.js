@@ -268,6 +268,8 @@ if(stage){
     window.addEventListener('heroarena:commander-round',commanderVisual);
     window.addEventListener('heroarena:ready',e=>sync(e.detail.teams));
     window.addEventListener('heroarena:move',move);
+    window.addEventListener('heroarena:experimental-move',move);
+    window.addEventListener('heroarena:experimental-round-end',e=>sync(e.detail.teams));
     if(Array.isArray(window.heroArenaTeams))sync(window.heroArenaTeams);
     if(heroShowcase){sync([[{id:'marvel:hulk',name:'Hulk',hp:100,maxHp:100,rarity:'legendary'},{id:'marvel:iron man',name:'Iron Man',hp:100,maxHp:100,rarity:'rare'},{id:'marvel:doctor strange',name:'Doctor Strange',hp:100,maxHp:100,rarity:'advanced'}],[]]);}
     const resize=new ResizeObserver(()=>{const w=stage.clientWidth,h=stage.clientHeight;if(w&&h){fitCamera();renderer.setSize(w,h,false)}});resize.observe(stage);
