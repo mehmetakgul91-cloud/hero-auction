@@ -3,7 +3,7 @@
 import {battleRoster} from './battle-roster.js';
 const START_PASSIVES=new Set(['guard','resist','focus','evasion','momentum','regen','rage']);
 const SUPPORTED_PASSIVES=new Set([...START_PASSIVES,'thorns']);
-const SUPPORTED_ACTIVE=new Set(['heal','shield','drain','sunder','weaken','haste','execute']);
+const SUPPORTED_ACTIVE=new Set(['heal','shield','drain','sunder','weaken','haste','execute','burst','pierce','splash','headshot']);
 export function auditIncrementalRoster(roster=battleRoster){
  if(!Array.isArray(roster))throw Error('Invalid hero roster');
  const rows=roster.map(hero=>{
@@ -17,7 +17,7 @@ export function auditIncrementalRoster(roster=battleRoster){
   if(hero.role==='tank'&&['sunder','weaken','haste','execute'].includes(active))issues.push('tank-special-combination');
   if(hero.role==='energy'&&['shield','drain'].includes(active))issues.push('energy-shield-drain-combination');
   if(active==='heal'&&hero.role==='support'&&passive==='thorns')issues.push('support-heal-thorns-combination');
-  // Burst, pierce, splash and headshot have no complete atomic parity path.
+  // Candidate adapters are not proof of complete legacy parity.
   return {id:hero.id,role:hero.role,active:active||null,passive:passive||null,ready:issues.length===0,issues};
  });
  const unsupported=rows.filter(x=>!x.ready);
