@@ -182,6 +182,7 @@ test('thorns passive requires explicit opt-in',()=>{
 test('thorns combines with shield special exactly once',()=>{
  const c=make();c.round=3;c.teams[0][0].active={effect:'shield',name:'Guard'};
  c.teams[0][0].passive={effect:'thorns',value:.2};
+ c.teams[0][0].defense=50;
  const d=c.teams[0][0].defense;
  const session=createBasicTurnSession(c,{parity:true,shieldDrain:true,thornsPassive:true});
  const {result}=stepBasicTurn(session);
