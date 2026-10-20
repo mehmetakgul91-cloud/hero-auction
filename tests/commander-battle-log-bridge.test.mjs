@@ -10,17 +10,17 @@ const setup=()=>createLiveCommanderCombat({
 });
 test('ordinary server hero hit updates shared HP and version',()=>{
  const c=setup();
- applyBattleLogHeroEvent(c,{round:1,side:0,actor:'0-0',target:'1-0',action:'attack',value:20,absorbed:0,damageType:'normal'});
+ applyBattleLogHeroEvent(c,{round:1,side:0,actor:'0-0',target:'1-0',action:'attack',value:20,absorbed:0,rawDamage:20,damageType:'normal'});
  assert.equal(c.teams[1][0].hp,80);
  assert.equal(c.version,1);
 });
 test('next-round hero event adds twelve energy automatically',()=>{
  const c=setup();
- applyBattleLogHeroEvent(c,{round:2,side:0,actor:'0-0',target:'1-0',action:'attack',value:10,absorbed:0,damageType:'normal'});
+ applyBattleLogHeroEvent(c,{round:2,side:0,actor:'0-0',target:'1-0',action:'attack',value:10,absorbed:0,rawDamage:10,damageType:'normal'});
  assert.deepEqual(c.abilities.energy,[12,12]);
  assert.equal(c.round,2);
 });
-test('unsupported shields, splash and commander events fail closed',()=>{
+test('unverifiable shielded logs and commander events fail closed',()=>{
  const c=setup();
  for(const event of [
   {round:1,side:0,actor:'0-0',target:'1-0',action:'attack',value:5,absorbed:3,damageType:'normal'},
@@ -31,7 +31,21 @@ test('unsupported shields, splash and commander events fail closed',()=>{
 });
 test('old round events cannot modify latest HP',()=>{
  const c=setup();
- applyBattleLogHeroEvent(c,{round:2,side:0,actor:'0-0',target:'1-0',action:'attack',value:5,damageType:'normal'});
- assert.throws(()=>applyBattleLogHeroEvent(c,{round:1,side:0,actor:'0-0',target:'1-0',action:'attack',value:50,damageType:'normal'}),/Out-of-order/);
+ applyBattleLogHeroEvent(c,{round:2,side:0,actor:'0-0',target:'1-0',action:'attack',value:5,rawDamage:5,damageType:'normal'});
+ assert.throws(()=>applyBattleLogHeroEvent(c,{round:1,side:0,actor:'0-0',target:'1-0',action:'attack',value:50,rawDamage:50,damageType:'normal'}),/Out-of-order/);
  assert.equal(c.teams[1][0].hp,95);
+});
+
+test('shield absorbs damage without double HP loss',()=>{
+ const c=setup();
+ applyBattleLogHeroEvent(c,{round:1,side:1,actor:'1-0',target:'1-1',action:'shield',value:20});
+ const result=applyBattleLogHeroEvent(c,{round:1,side:0,actor:'0-0',target:'1-1',action:'attack',value:10,absorbed:20,rawDamage:30,damageType:'normal'});
+ assert.equal(result.teams[1][1].shield,0);
+ assert.equal(result.teams[1][1].hp,90);
+});
+test('splash damage uses raw damage and validates absorption',()=>{
+ const c=setup();
+ applyBattleLogHeroEvent(c,{round:1,side:0,actor:'0-0',target:'1-0',action:'splash',value:15,absorbed:0,rawDamage:15,damageType:'splash'});
+ assert.equal(c.teams[1][0].hp,85);
+ assert.throws(()=>applyBattleLogHeroEvent(c,{round:1,side:0,actor:'0-0',target:'1-0',action:'attack',value:50,absorbed:0,rawDamage:10,damageType:'normal'}),/trustworthy/);
 });
