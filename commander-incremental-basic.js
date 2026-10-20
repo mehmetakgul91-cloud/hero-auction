@@ -17,7 +17,9 @@ export function stepBasicHeroCombat(combat,{side,actorId,round=combat?.round}={}
  const target=[...candidates].sort((a,b)=>(a.position??0)-(b.position??0)||String(a.id).localeCompare(String(b.id)))[0];
  // A deliberately bounded basic-attack formula, not a substitute for the
  // existing battle engine's crits, skills, defense, and other mechanics.
- const raw=Math.max(1,Math.round(actor.attack-Math.max(0,target.defense||0)*0.35));
+ const weaken=Number.isInteger(actor.commanderWeakenUntilRound)&&round<=actor.commanderWeakenUntilRound?Math.max(0,Math.min(1,Number(actor.commanderWeaken)||0)):0;
+ const effectiveAttack=Math.round(actor.attack*(1-weaken));
+ const raw=Math.max(1,Math.round(effectiveAttack-Math.max(0,target.defense||0)*0.35));
  return applyServerHeroAction(combat,{side,actorId,targetId:target.id,value:raw,round});
 }
 export function advanceBasicCombatRound(combat){
