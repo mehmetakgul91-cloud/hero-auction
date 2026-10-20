@@ -28,3 +28,16 @@ export function submitTurnCommand(state,{side,round,command,energy,commanderId})
  state.submissions[side]=action;
  return {ready:state.submissions.every(value=>value!==undefined),action};
 }
+
+export function resolveTurnSubmissions(state){
+ if(!state||!Array.isArray(state.submissions)||state.submissions.length!==2)throw Error('Invalid turn state');
+ if(!state.submissions.every(value=>value!==undefined))throw Error('Both players must submit before resolution');
+ return state.submissions.filter(Boolean).map(action=>({...action}));
+}
+export function calculateNextTurnEnergy(energy,action,{lostHeroes=0}={}){
+ if(!Number.isInteger(energy)||energy<0||energy>100)throw Error('Invalid commander energy');
+ if(!Number.isInteger(lostHeroes)||lostHeroes<0||lostHeroes>5)throw Error('Invalid hero loss count');
+ const cost=action===null?0:COMMANDER_TURN_COST[action?.ability];
+ if(cost===undefined||energy<cost)throw Error('Invalid or unaffordable commander action');
+ return Math.min(COMMANDER_MAX_ENERGY,energy-cost+lostHeroes*10+COMMANDER_TURN_ENERGY);
+}
