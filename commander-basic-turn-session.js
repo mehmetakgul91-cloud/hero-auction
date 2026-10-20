@@ -11,7 +11,7 @@ import {stepParityStatSpecial} from './commander-parity-stat-special.js';
 import {stepParityExecute} from './commander-parity-execute.js';
 export function createBasicTurnSession(combat,{parity=false,specialHealing=false,energySplash=false,shieldDrain=false,statSpecial=false,executeSpecial=false}={}){
  if(!combat||combat.finished||!Array.isArray(combat.teams)||combat.teams.length!==2)throw Error('Invalid turn session');
- if(combat.teams.some(team=>team.some(hero=>hero.passive||(hero.active&&!((specialHealing&&hero.active.effect==='heal')||(shieldDrain&&['shield','drain'].includes(hero.active.effect)&&hero.role!=='energy')||(statSpecial&&['sunder','weaken','haste'].includes(hero.active.effect)&&hero.role!=='energy')||(executeSpecial&&hero.active.effect==='execute'&&hero.role!=='energy'))))))throw Error('Special hero mechanics require incremental engine integration');
+ if(combat.teams.some(team=>team.some(hero=>hero.passive||(hero.active&&!((specialHealing&&hero.active.effect==='heal')||(shieldDrain&&['shield','drain'].includes(hero.active.effect)&&hero.role!=='energy')||(statSpecial&&['sunder','weaken','haste'].includes(hero.active.effect)&&!['tank','energy'].includes(hero.role))||(executeSpecial&&hero.active.effect==='execute'&&!['tank','energy'].includes(hero.role)))))))throw Error('Special hero mechanics require incremental engine integration');
  if((specialHealing||energySplash||shieldDrain||statSpecial||executeSpecial)&&!parity)throw Error('Special healing requires parity mode');
  if(typeof parity!=='boolean')throw Error('Invalid parity mode');
  return {combat,parity,specialHealing,energySplash,shieldDrain,statSpecial,executeSpecial,round:combat.round,order:orderHeroActions(combat.teams).map(x=>({side:x.side,id:x.unit.id})),cursor:0};
