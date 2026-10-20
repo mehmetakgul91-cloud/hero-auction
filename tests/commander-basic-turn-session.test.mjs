@@ -35,11 +35,14 @@ test('special heroes cannot enter basic-only scheduler',()=>{
 test('skipping defeated actors never repeats the next living hero',()=>{
  const c=make();
  c.teams[0].push({id:'a2',hp:100,maxHp:100,attack:30,defense:0,shield:0,lane:'front',speed:5,position:1});
+ c.teams[1].push({id:'b2',hp:100,maxHp:100,attack:30,defense:0,shield:0,lane:'front',speed:4,position:1});
  const session=createBasicTurnSession(c);
  assert.equal(peekBasicTurn(session).actorId,'a');
  stepBasicTurn(session);
  c.teams[1][0].hp=0;
  assert.equal(peekBasicTurn(session).actorId,'a2');
+ stepBasicTurn(session);
+ assert.equal(peekBasicTurn(session).actorId,'b2');
  stepBasicTurn(session);
  assert.equal(peekBasicTurn(session),null);
  assert.throws(()=>stepBasicTurn(session),/No scheduled hero action/);
