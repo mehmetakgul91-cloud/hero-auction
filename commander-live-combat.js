@@ -75,6 +75,7 @@ export function applyServerHeroAction(combat,{side,actorId,targetId,action='atta
 export function beginServerCombatRound(combat,round){
  if(!combat||combat.finished||!Number.isInteger(round)||round!==combat.round+1||round>15)throw Error('Invalid next combat round');
  combat.round=round;
+ for(const team of combat.teams)for(const unit of team){if(unit.commanderWeaken&&Number.isInteger(unit.commanderWeakenUntilRound)&&round>unit.commanderWeakenUntilRound){delete unit.commanderWeaken;delete unit.commanderWeakenUntilRound;}}
  for(let side=0;side<2;side++)grantLiveCommanderEnergy(combat.abilities,side,12);
  return {round,energy:[...combat.abilities.energy]};
 }
