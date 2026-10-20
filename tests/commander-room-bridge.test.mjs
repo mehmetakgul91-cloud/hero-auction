@@ -31,3 +31,22 @@ test('room view exposes only caller pending command',()=>{
  assert.deepEqual(bob.submitted,[true,false]);
  assert.equal(viewRoomCommanderSession(r,bound,'alice').yourCommand,'pass');
 });
+
+test('current turn energy and skill availability are server owned',()=>{
+ const r=room(),bound=make(r);
+ const initial=viewRoomCommanderSession(r,bound,'alice');
+ assert.equal(initial.energy,12);
+ assert.equal(initial.canUseNormal,false);
+ assert.equal(initial.canUseUltimate,false);
+ submitRoomCommanderTurn(r,bound,{token:'alice',round:1,command:'pass'});
+ submitRoomCommanderTurn(r,bound,{token:'bob',round:1,command:'pass'});
+ const second=viewRoomCommanderSession(r,bound,'alice');
+ assert.equal(second.energy,24);
+ assert.equal(second.canUseNormal,false);
+});
+test('unfinished battle view does not expose premature winner',()=>{
+ const r=room(),bound=make(r);
+ submitRoomCommanderTurn(r,bound,{token:'alice',round:1,command:'pass'});
+ submitRoomCommanderTurn(r,bound,{token:'bob',round:1,command:'pass'});
+ assert.equal(viewRoomCommanderSession(r,bound,'alice').result,null);
+});
