@@ -1,6 +1,6 @@
 // Experimental server-owned arena registry. Never exposes direct hero-action inputs.
 // Route activation must wait until all hero mechanics reach legacy parity.
-import {createLiveArenaSession,castDuringLiveArena,stepLiveArenaHero,viewLiveArenaSession} from './commander-live-arena-session.js';
+import {createLiveArenaSession,castDuringLiveArena,stepLiveArenaHero,advanceLiveArenaRound,viewLiveArenaSession} from './commander-live-arena-session.js';
 import {viewLiveCommanderAbilities} from './commander-live-abilities.js';
 export function createLiveArenaRegistry(){
  const matches=new Map();
@@ -30,6 +30,11 @@ export function createLiveArenaRegistry(){
    const entry=matches.get(matchKey);
    if(!entry)throw Error('Unknown live arena');
    return stepLiveArenaHero(entry.session);
+  },
+  advanceServerRound(matchKey){
+   const entry=matches.get(matchKey);
+   if(!entry)throw Error('Unknown live arena');
+   return advanceLiveArenaRound(entry.session);
   },
   remove(matchKey){return matches.delete(matchKey)}
  };
