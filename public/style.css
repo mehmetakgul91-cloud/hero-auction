@@ -943,3 +943,27 @@ header{gap:14px;flex-wrap:wrap}
  #home-play-panel .play-compact-secondary .play-compact-mode h3{font-size:11px!important;letter-spacing:0}
  #home-play-panel .play-compact-secondary .play-compact-mode .play-compact-action{font-size:10px!important}
 }
+
+/* Compact spacing for the finalized play lobby. */
+#home-play-panel{padding:12px!important}
+#home-play-panel .play-compact-heading{margin-bottom:8px!important}
+#home-play-panel .play-compact-heading h2{margin:1px 0!important}
+#home-play-panel .cinema-command{padding:12px!important}
+#home-play-panel .play-compact-name{margin-bottom:9px!important}
+#home-play-panel .play-compact-modes{gap:11px!important}
+#home-play-panel .play-compact-match{min-height:100px!important;padding:12px!important}
+#home-play-panel .play-compact-secondary{gap:9px!important;min-height:0!important}
+#home-play-panel .play-compact-secondary .play-compact-mode{padding:10px!important;gap:5px!important}
+#home-play-panel .play-compact-secondary .play-compact-icon{font-size:23px!important}
+#home-play-panel .play-compact-secondary .play-compact-mode p{min-height:0}
+#home-play-panel .play-compact-note{margin:8px 0 3px!important}
+@media(max-width:680px){
+ #home-play-panel{padding:9px!important}
+ #home-play-panel .cinema-command{padding:9px!important}
+ #home-play-panel .play-compact-modes{gap:10px!important}
+ #home-play-panel .play-compact-match{min-height:112px!important;padding:10px!important}
+ #home-play-panel .play-compact-secondary{gap:7px!important}
+ #home-play-panel .play-compact-secondary .play-compact-mode{padding:8px 5px!important;gap:4px!important}
+ #home-play-panel .play-compact-secondary .play-compact-mode h3{min-height:24px!important}
+ #home-play-panel .play-compact-secondary .play-compact-mode p{min-height:22px!important}
+}
