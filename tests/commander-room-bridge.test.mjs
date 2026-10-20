@@ -50,3 +50,16 @@ test('unfinished battle view does not expose premature winner',()=>{
  submitRoomCommanderTurn(r,bound,{token:'bob',round:1,command:'pass'});
  assert.equal(viewRoomCommanderSession(r,bound,'alice').result,null);
 });
+
+test('rejects duplicate or missing player tokens before starting a match',()=>{
+ const r=room();
+ r.players[1].token=r.players[0].token;
+ assert.throws(()=>make(r),/Two authenticated room players required/);
+ r.players[1].token='';
+ assert.throws(()=>make(r),/Two authenticated room players required/);
+});
+test('a caller cannot view a commander session without their room token',()=>{
+ const r=room(),bound=make(r);
+ assert.throws(()=>viewRoomCommanderSession(r,bound,'outsider'),/Unauthorized/);
+ assert.throws(()=>viewRoomCommanderSession(r,bound,''),/Unauthorized/);
+});
