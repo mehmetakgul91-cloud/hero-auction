@@ -20,8 +20,19 @@ test('drain heals from actual HP damage, capped at missing HP',()=>{
  assert.equal(c.teams[0][0].hp,60+Math.min(40,Math.floor(damage*.15)));
  assert.equal(r.events.at(-1).damageType,'special');
 });
-test('unsupported role rejects without changing combat',()=>{
+test('tank special shields living frontline allies and itself',()=>{
  const c=make('shield');c.teams[0][0].role='tank';
+ c.teams[0].push({id:'ally',hp:100,maxHp:100,attack:10,defense:10,shield:0,role:'fighter',lane:'front',position:1});
+ c.teams[0].push({id:'back',hp:100,maxHp:100,attack:10,defense:10,shield:0,role:'fighter',lane:'back',position:2});
+ const r=stepParityShieldDrain(c,{side:0,actorId:'a'});
+ assert.equal(c.teams[0][0].shield,38);
+ assert.equal(c.teams[0][1].shield,8);
+ assert.equal(c.teams[0][2].shield,0);
+ assert.equal(r.events.filter(e=>e.action==='tank-front-shield').length,2);
+ assert.equal(r.events.filter(e=>e.action==='tank-self-shield').length,1);
+});
+test('energy role still rejects without changing combat',()=>{
+ const c=make('shield');c.teams[0][0].role='energy';
  const before=structuredClone(c.teams);
  assert.throws(()=>stepParityShieldDrain(c,{side:0,actorId:'a'}),/Role special mechanics/);
  assert.deepEqual(c.teams,before);
