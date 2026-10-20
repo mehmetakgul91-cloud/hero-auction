@@ -192,6 +192,7 @@ test('thorns combines with shield special exactly once',()=>{
 test('thorns combines with execute special exactly once',()=>{
  const c=make();c.round=3;c.teams[0][0].active={effect:'execute',name:'Finisher'};
  c.teams[0][0].passive={effect:'thorns',value:.2};
+ c.teams[0][0].defense=50;
  const expected=Math.floor(c.teams[0][0].defense*.2);
  const session=createBasicTurnSession(c,{parity:true,executeSpecial:true,thornsPassive:true});
  const {result}=stepBasicTurn(session);
