@@ -406,6 +406,17 @@ async function build(overrideResult){
   render();window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position})));window.dispatchEvent(new CustomEvent('heroarena:ready',{detail:{teams:window.heroArenaTeams}}));
  }catch(e){$('message').textContent='⚠ '+e.message}
 }
+// Experimental round-end HP is server-owned. Do not interfere with manual replay.
+window.addEventListener('heroarena:experimental-round-end',e=>{
+ if(timer!==null||!Array.isArray(e.detail?.teams)||states.length!==2)return;
+ const snapshot=e.detail.teams;
+ for(let side=0;side<2;side++){
+  const hpById=new Map((snapshot[side]||[]).map(u=>[u.id,u.hp]));
+  for(const unit of states[side])if(hpById.has(unit.id))unit.hp=Math.max(0,Math.min(unit.maxHp,Number(hpById.get(unit.id))||0));
+ }
+ render();
+ $('message').textContent='Komutan savaşı · Tur '+e.detail.round+' tamamlandı';
+});
 const arenaArtCache=new Map();
 let finalResult=null;
 function centeredLaneRows(count){const layouts={0:[],1:[3],2:[2,4],3:[2,3,4],4:[1,2,4,5],5:[1,2,3,4,5]};return layouts[Math.max(0,Math.min(5,count))].slice()}
