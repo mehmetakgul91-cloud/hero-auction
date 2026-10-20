@@ -51,3 +51,47 @@ test('new rematch rejects old commands and creates isolated turn state',()=>{
  assert.equal(next.session.round,1);
  assert.notEqual(next.session.seed,bound.session.seed);
 });
+
+test('a completed battle rejects further commands without changing its result',()=>{
+ const {room,bound}=setup();
+ for(let round=1;round<=15&&!bound.session.finished;round++){
+  submitRoomCommanderTurn(room,bound,{token:'player-a',round,command:'pass'});
+  submitRoomCommanderTurn(room,bound,{token:'player-b',round,command:'pass'});
+ }
+ assert.equal(bound.session.finished,true);
+ const turnsBefore=structuredClone(bound.session.turns);
+ const resultBefore=structuredClone(bound.session.result);
+ assert.throws(()=>submitRoomCommanderTurn(room,bound,{token:'player-a',round:bound.session.round,command:'pass'}),/Battle already finished/);
+ assert.deepEqual(bound.session.turns,turnsBefore);
+ assert.deepEqual(bound.session.result,resultBefore);
+});
+test('finished result is visible from each player perspective only at completion',()=>{
+ const {room,bound}=setup();
+ assert.equal(viewRoomCommanderSession(room,bound,'player-a').result,null);
+ for(let round=1;round<=15&&!bound.session.finished;round++){
+  submitRoomCommanderTurn(room,bound,{token:'player-a',round,command:'pass'});
+  submitRoomCommanderTurn(room,bound,{token:'player-b',round,command:'pass'});
+ }
+ const a=viewRoomCommanderSession(room,bound,'player-a');
+ const b=viewRoomCommanderSession(room,bound,'player-b');
+ assert.equal(a.finished,true);
+ assert.equal(b.finished,true);
+ assert.ok(a.result);
+ assert.ok(b.result);
+ if(a.result.winner!==null){
+  assert.equal(a.result.winner+b.result.winner,1);
+ }else assert.equal(b.result.winner,null);
+});
+test('rematch starts at round one with fresh energy and no previous result',()=>{
+ const {room,bound}=setup();
+ submitRoomCommanderTurn(room,bound,{token:'player-a',round:1,command:'pass'});
+ submitRoomCommanderTurn(room,bound,{token:'player-b',round:1,command:'pass'});
+ room.matchNumber=2;
+ const next=createRoomCommanderSession(room,{cardsA:cards('a'),cardsB:cards('b'),commanders:[createCommanderProfile('attack'),createCommanderProfile('defense')]});
+ const fresh=viewRoomCommanderSession(room,next,'player-a');
+ assert.equal(fresh.round,1);
+ assert.equal(fresh.energy,12);
+ assert.equal(fresh.result,null);
+ assert.deepEqual(fresh.submitted,[false,false]);
+ assert.throws(()=>viewRoomCommanderSession(room,bound,'player-a'),/expired/);
+});
