@@ -5,6 +5,29 @@ const roleNames={tank:'Tank',fighter:'Savaşçı',assassin:'Suikastçı',energy:
 const rarityNames={common:'SIRADAN',advanced:'GELİŞMİŞ',rare:'NADİR',legendary:'EFSANEVİ',siradan:'SIRADAN',gelismis:'GELİŞMİŞ',nadir:'NADİR',efsanevi:'EFSANEVİ'};
 let heroes=[],selected='all';
 const shortDescriptions={tank:'Ön safta dayanıklılığıyla takımını korur.',fighter:'Yakın dövüşte güçlü saldırılarla rakibi zorlar.',assassin:'Hızlı ve delici saldırılarla kritik hedefleri avlar.',energy:'Büyü ve enerji yetenekleriyle uzaktan baskı kurar.',support:'Takımına destek sağlayarak savaşın gidişatını değiştirir.'};
+const roleIntro={
+ tank:'Ön safta yer alarak gelen darbeleri karşılar ve takımının savunmasını güçlendirir.',
+ fighter:'Yakın dövüşte rakibe baskı kurar ve ön saftaki çatışmalarda etkili olur.',
+ assassin:'Hızlı hamlelerle savunmadaki açıklıkları değerlendirir ve hedeflerine baskın yapar.',
+ energy:'Arka saftan büyü ve enerji saldırılarıyla rakip düzenini bozmaya çalışır.',
+ support:'Takım arkadaşlarını destekleyerek uzun süren mücadelelerde dengeyi korur.'
+};
+const passiveEffects={
+ guard:'savunma ve hasar azaltma avantajı',
+ evasion:'saldırılardan kaçınma avantajı',
+ rage:'saldırı gücü avantajı',
+ focus:'yetenek odağı avantajı',
+ regen:'can yenileme avantajı',
+ resist:'direnç avantajı',
+ momentum:'savaş temposu avantajı'
+};
+function heroCardSummary(hero){
+ const roleText=roleIntro[hero.role]||'Arenada takımının stratejisine uygun bir görev üstlenir.';
+ const activeText=hero.active?.name?'Aktif yeteneği '+prettySkill(hero.active.name)+' ile savaşta özel bir hamle yapar.':'Kendi rolüne uygun hamlelerle savaşın gidişatını etkiler.';
+ const passive=hero.passive;
+ const passiveText=passive?.name?'Pasif yeteneği '+prettySkill(passive.name)+', '+(passiveEffects[passive.effect]||'sürekli bir savaş avantajı')+' sağlar'+(Number.isFinite(Number(passive.value))&&Number(passive.value)>0?' ('+(Number(passive.value)*100).toFixed(0)+'%)':'')+'.':'Pasif yetenek bilgisi henüz tanımlanmamıştır.';
+ return roleText+' '+activeText+' '+passiveText;
+}
 const prettySkill=name=>String(name||'').replace(/[-_]/g,' ').replace(/\b\p{L}/gu,c=>c.toLocaleUpperCase('tr-TR'));
 const fmt=n=>(n>=0?'+':'')+(n*100).toFixed(0)+'%';
 function line(label,value){const el=document.createElement('div');el.className='gallery-detail-line';const a=document.createElement('span'),b=document.createElement('strong');a.textContent=label;b.textContent=value;el.append(a,b);return el}
@@ -19,7 +42,7 @@ function makeCard(hero){
  const world=document.createElement('span');world.className='gallery-world';world.textContent=worlds[hero.universe]||hero.universe;
  const title=document.createElement('h2');title.textContent=hero.name;
  const role=document.createElement('span');role.className='gallery-role';role.textContent=roleNames[hero.role]||hero.role;
- body.append(world,title,role); const summary=document.createElement('p');summary.className='gallery-summary';summary.textContent=(shortDescriptions[hero.role]||'Arenada kendine özgü yetenekleriyle savaşır.')+(hero.active?.name?' Özel gücü: '+prettySkill(hero.active.name)+'.':'');body.append(summary);
+ body.append(world,title,role); const summary=document.createElement('p');summary.className='gallery-summary';summary.textContent=heroCardSummary(hero);body.append(summary);
  if(hero.rarity){const rarity=document.createElement('span');rarity.className='gallery-rarity';rarity.textContent='NADİRLİK: '+(rarityNames[hero.rarity]||hero.rarity.toLocaleUpperCase('tr-TR'));body.append(rarity)}
  const details=document.createElement('div');details.className='gallery-details';
  if(Number.isInteger(hero.power))details.append(line('Güç',hero.power+'/100'));
