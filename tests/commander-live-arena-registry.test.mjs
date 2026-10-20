@@ -46,3 +46,18 @@ test('snapshot reports authoritative remaining cooldown for own seat',()=>{
  assert.equal(after.abilities[0].cooldownMs,0);
  assert.equal(after.abilities[0].canUseNormal,true);
 });
+
+test('only server advances rounds and grants twelve energy',()=>{
+ const {registry,matchKey}=setup();
+ assert.throws(()=>registry.advanceServerRound(matchKey),/Round not ready/);
+ registry.stepServerHero(matchKey);
+ registry.stepServerHero(matchKey);
+ const before=registry.snapshot({matchKey,token:'secret-A',now:1000});
+ assert.equal(before.round,1);
+ const result=registry.advanceServerRound(matchKey);
+ assert.equal(result.round,2);
+ const after=registry.snapshot({matchKey,token:'secret-A',now:1000});
+ assert.equal(after.round,2);
+ assert.equal(after.abilities[0].energy,100);
+ assert.equal(after.nextHero.round,2);
+});
