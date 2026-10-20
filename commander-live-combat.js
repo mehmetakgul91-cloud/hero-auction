@@ -40,7 +40,7 @@ export function viewLiveCommanderCombat(combat,{sinceVersion=0}={}){
 // snapshot as commander abilities. Never accept this action from an HTTP client.
 export function applyServerHeroAction(combat,{side,actorId,targetId,action='attack',value,round=combat?.round}){
  if(!combat||combat.finished)throw Error('Battle already finished');
- if(![0,1].includes(side)||!['attack','heal'].includes(action)||!Number.isSafeInteger(value)||value<0)throw Error('Invalid server hero action');
+ if(![0,1].includes(side)||!['attack','heal'].includes(action)||!Number.isSafeInteger(value)||value<0||value>1000000||!Number.isInteger(round)||round!==combat.round)throw Error('Invalid server hero action');
  const next=structuredClone(combat.teams);
  const actor=next[side].find(u=>u.id===actorId&&u.hp>0);
  const targetSide=action==='heal'?side:1-side;
@@ -61,7 +61,6 @@ export function applyServerHeroAction(combat,{side,actorId,targetId,action='atta
  }
  combat.teams=next;
  combat.version++;
- combat.round=round;
  const event={round,side,actor:actorId,action,target:targetId,value:applied,absorbed,version:combat.version};
  combat.events.push(event);
  // Preserve the existing per-casualty energy bonus once, per affected side.
