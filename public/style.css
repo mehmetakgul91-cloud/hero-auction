@@ -829,3 +829,36 @@ header{gap:14px;flex-wrap:wrap}
   #home-play-panel .cinema-hero{padding:16px 4px}
   #home-play-panel .cinema-play-grid button{min-height:56px}
 }
+
+/* Play lobby 2.0 */
+#home-play-panel .play-lobby-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:16px 0 24px}
+#home-play-panel .play-lobby-kicker{color:#86dcff;font-size:12px;font-weight:900;letter-spacing:2px}
+#home-play-panel .play-lobby-heading h1{font-size:clamp(27px,4vw,46px);line-height:1.1;margin:10px 0;color:white}
+#home-play-panel .play-lobby-heading h1 em{color:#ffd47d;font-style:normal}
+#home-play-panel .play-lobby-heading p{color:#d2e7ff}
+#home-play-panel .play-lobby-status{border:1px solid #64d9b7;border-radius:30px;padding:10px;color:#b4ffdf;white-space:nowrap}
+#home-play-panel .cinema-dashboard{display:block}
+#home-play-panel .play-lobby-profile{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+#home-play-panel .play-lobby-profile label{font-size:12px;font-weight:900;white-space:nowrap}
+#home-play-panel .play-lobby-profile input{max-width:280px}
+#home-play-panel .play-mode-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+#home-play-panel .play-mode-card{min-width:0;display:flex;flex-direction:column;gap:12px;padding:22px;border:1px solid #64c8ff;border-radius:20px;background:linear-gradient(150deg,#175587,#10233f);box-shadow:0 12px 30px #0005}
+#home-play-panel .play-mode-friends{border-color:#ffca77;background:linear-gradient(150deg,#614525,#262136)}
+#home-play-panel .play-mode-training{border-color:#b9a2ff;background:linear-gradient(150deg,#4a4084,#20203f)}
+#home-play-panel .play-mode-art{height:85px;display:grid;place-items:center;font-size:58px;background:radial-gradient(circle,#ffffff24,transparent 75%);border-radius:14px}
+#home-play-panel .play-mode-label{font-size:11px;letter-spacing:1px;font-weight:900;color:#c9e6ff}
+#home-play-panel .play-mode-card h2{font-size:clamp(18px,2vw,25px);color:white;margin:0}
+#home-play-panel .play-mode-card p{color:#e0ecfa;line-height:1.5;font-size:14px;min-height:65px;margin:0}
+#home-play-panel .play-mode-meta{font-size:12px;color:#b3ffdc;font-weight:800}
+#home-play-panel .play-mode-card label{font-size:11px;font-weight:800}
+#home-play-panel .play-mode-card select{width:100%;min-height:44px;border-radius:9px;padding:8px}
+#home-play-panel .play-mode-action{margin-top:auto;min-height:52px;width:100%;border-radius:11px;background:#087fb6;color:white;border:1px solid #9be6ff;font-weight:900;cursor:pointer}
+#home-play-panel .play-mode-online .play-mode-action{background:#079c76;border-color:#7cffc4}
+#home-play-panel .play-mode-friends .play-mode-action{background:#c48b35;border-color:#ffe1a3}
+#home-play-panel .play-mode-training .play-mode-action{background:#7848c7;border-color:#d3b8ff}
+#home-play-panel .play-mode-join{display:flex;gap:7px;min-width:0}
+#home-play-panel .play-mode-join input{flex:1;width:0;min-width:0;font-size:12px}
+#home-play-panel .play-mode-join button{flex:0 0 auto;border-radius:9px;padding:8px}
+#home-play-panel .play-lobby-note{text-align:center;color:#c3dfff;margin:18px 0}
+@media(max-width:850px){#home-play-panel .play-mode-cards{grid-template-columns:1fr}#home-play-panel .play-mode-art{height:55px;font-size:40px}#home-play-panel .play-mode-card p{min-height:0}#home-play-panel .play-lobby-status{display:none}}
+@media(max-width:480px){#home-play-panel .play-lobby-profile{flex-direction:column;align-items:stretch}#home-play-panel .play-lobby-profile input{max-width:none}#home-play-panel .play-mode-card{padding:15px}}
