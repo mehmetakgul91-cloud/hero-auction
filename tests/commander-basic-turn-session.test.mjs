@@ -144,3 +144,23 @@ test('stat special actor uses ordinary attack on non-special round',()=>{
  const session=createBasicTurnSession(c,{parity:true,statSpecial:true});
  assert.equal(stepBasicTurn(session).result.event.action,'attack');
 });
+
+test('execute finishes target only when post-hit HP falls strictly below 12 percent',()=>{
+ const c=make();c.round=3;c.teams[0][0].active={effect:'execute',name:'Finisher'};
+ c.teams[1][0].maxHp=100;c.teams[1][0].hp=35;
+ const session=createBasicTurnSession(c,{parity:true,executeSpecial:true});
+ const {result}=stepBasicTurn(session);
+ assert.equal(c.teams[1][0].hp,0);
+ assert.ok(result.event.executedDamage>=0);
+ assert.equal(c.teams[0][0].kills,1);
+});
+test('execute skill falls back to normal attack on first round',()=>{
+ const c=make();c.teams[0][0].active={effect:'execute'};
+ const session=createBasicTurnSession(c,{parity:true,executeSpecial:true});
+ const {result}=stepBasicTurn(session);
+ assert.equal(result.event.action,'attack');
+});
+test('execute is not allowed on unsupported tank class',()=>{
+ const c=make();c.teams[0][0].active={effect:'execute'};c.teams[0][0].role='tank';
+ assert.throws(()=>createBasicTurnSession(c,{parity:true,executeSpecial:true}),/Special hero mechanics/);
+});
