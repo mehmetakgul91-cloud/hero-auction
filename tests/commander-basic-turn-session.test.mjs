@@ -81,3 +81,22 @@ test('unported special effects remain blocked even with healing enabled',()=>{
  const c=make();c.teams[0][0].active={effect:'splash'};
  assert.throws(()=>createBasicTurnSession(c,{parity:true,specialHealing:true}),/Special hero mechanics/);
 });
+
+test('opt-in energy splash applies primary and secondary damage in one scheduled turn',()=>{
+ const c=make();c.round=3;
+ c.teams[0][0].role='energy';
+ c.teams[1].push({id:'b2',hp:100,maxHp:100,attack:30,defense:0,shield:10,lane:'back',speed:5,position:1});
+ const s=createBasicTurnSession(c,{parity:true,energySplash:true});
+ const {result}=stepBasicTurn(s);
+ assert.equal(result.result.events.length,2);
+ assert.equal(c.version,1);
+ assert.equal(peekBasicTurn(s).actorId,'b');
+ assert.equal(c.teams[1].filter(u=>u.hp<100).length,2);
+ assert.equal(c.teams[1][1].shield<10,true);
+});
+test('energy splash is inactive on ordinary rounds',()=>{
+ const c=make();c.teams[0][0].role='energy';
+ const s=createBasicTurnSession(c,{parity:true,energySplash:true});
+ const {result}=stepBasicTurn(s);
+ assert.equal(result.event.action,'attack');
+});
