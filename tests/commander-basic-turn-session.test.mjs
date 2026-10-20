@@ -198,3 +198,15 @@ test('thorns combines with execute special exactly once',()=>{
  assert.equal(result.event.thornsShield,expected);
  assert.equal(c.teams[0][0].shield,expected);
 });
+
+test('energy splash with thorns adds one shield after area attack',()=>{
+ const c=make();c.round=3;c.teams[0][0].role='energy';c.teams[0][0].defense=50;
+ c.teams[0][0].passive={effect:'thorns',value:.2};
+ c.teams[1].push({id:'b2',hp:100,maxHp:100,attack:30,defense:0,shield:0,lane:'back',speed:5,position:1});
+ const session=createBasicTurnSession(c,{parity:true,energySplash:true,thornsPassive:true});
+ const {result}=stepBasicTurn(session);
+ assert.equal(result.events.filter(e=>e.action==='splash').length,1);
+ assert.equal(result.events.filter(e=>e.action==='thorns-shield').length,1);
+ assert.equal(c.teams[0][0].shield,10);
+ assert.equal(c.version,1);
+});
