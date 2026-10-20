@@ -9,6 +9,7 @@ import {simulateRosterBattle,battleRoster} from './battle-roster.js';
 import {createCommanderProfile,validateCommanderProfile,resolveCommander,previewCommanderUpgrade,commanderLevelCap,commanderUpgradeCost,COMMANDER_STATS} from './arena-commanders.js';
 import {auctionRoomToBattleState,prepareBattleTeams} from './battle-match.js';
 import {createRoomCommanderSession,submitRoomCommanderTurn,viewRoomCommanderSession} from './commander-room-bridge.js';
+import {createLiveCommanderAbilities,castLiveCommanderAbility,viewLiveCommanderAbilities} from './commander-live-abilities.js';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
 const GOOGLE_CLIENT_ID=process.env.GOOGLE_CLIENT_ID||'742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
@@ -20,6 +21,7 @@ function chosenName(body,fallback){return readLogin(body.authToken)?.name||Strin
 const rooms=new Map();
 // Experimental commander turn endpoint; disabled unless explicitly enabled in a test environment.
 const commanderTurnSessions=new Map();
+const liveCommanderAbilitySessions=new Map();
 const commanderTurnApiEnabled=process.env.EXPERIMENTAL_COMMANDER_TURNS==='1';
 const artCache=new Map();
 const cardDetails=JSON.parse(fs.readFileSync(path.join(root,'public','cards.json'),'utf8'));
@@ -454,6 +456,28 @@ const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.w
  try{prepareBattleTeams(auctionRoomToBattleState(room))}catch(e){return send(422,{error:e.message})}
  if(!room.battleSync?.result)return send(409,{error:'Savaş henüz başlamadı'});
  room.battleCompleted??=[false,false];room.battleCompleted[seat]=true;markRoom(room);return send(200,{ok:true,completed:room.battleCompleted,series:room.series||[0,0],seat,players:room.players.map(p=>({name:p?.name||'Oyuncu'}))});
+}
+if(url.pathname==='/api/experimental/commander-live'&&(req.method==='GET'||req.method==='POST')){
+ if(!commanderTurnApiEnabled)return send(404,{error:'Experimental commander API disabled'});
+ let body={};
+ if(req.method==='POST'){
+  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>2000)return send(413,{error:'İstek çok büyük'})}
+  try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz JSON'})}
+ }else body={code:url.searchParams.get('code'),token:url.searchParams.get('token')};
+ const room=rooms.get(String(body?.code||'').toUpperCase());
+ const side=room?.players?.findIndex(p=>p?.token===body?.token)??-1;
+ if(!room||side<0||room.mode==='bot')return send(403,{error:'Yetkisiz oda'});
+ if(room.phase!=='finished'||!room.battleSync?.result||!room.battleSync?.commanderInput)return send(409,{error:'Arena henüz hazır değil'});
+ const matchKey=room.code+':'+String(room.matchNumber||1)+':'+String(room.created);
+ let session=liveCommanderAbilitySessions.get(matchKey);
+ if(!session){
+  session=createLiveCommanderAbilities({matchKey});
+  liveCommanderAbilitySessions.set(matchKey,session);
+ }
+ try{
+  if(req.method==='POST')return send(409,{error:'Anlık yetenek savaş motoruna bağlanana kadar kullanılamaz; enerji harcanmadı'});
+  return send(200,{...viewLiveCommanderAbilities(session,side),mode:'preview',cooldownSeconds:5});
+ }catch(e){return send(422,{error:e.message})}
 }
 if(url.pathname==='/api/experimental/commander-turn'&&(req.method==='GET'||req.method==='POST')){
  if(!commanderTurnApiEnabled)return send(404,{error:'Experimental commander API disabled'});
