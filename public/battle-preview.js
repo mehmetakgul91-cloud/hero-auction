@@ -324,6 +324,21 @@ function comicBattleCue(e){
  cue.setAttribute('aria-hidden','true');document.body.append(cue);
  setTimeout(()=>cue.remove(),750);
 }
+
+const visualHealth=new Map();
+function floatingArenaEffect(target,className,text,lifetime=1600){
+ if(!target||document.hidden)return;
+ const rect=target.getBoundingClientRect();
+ const effect=document.createElement('span');effect.className=className;
+ effect.textContent=text;effect.setAttribute('aria-hidden','true');
+ effect.style.left=(rect.left+rect.width/2)+'px';effect.style.top=(rect.top+rect.height*.3)+'px';
+ document.body.append(effect);setTimeout(()=>effect.remove(),lifetime);
+}
+function showHeroSoul(card){
+ if(!motion())return;
+ floatingArenaEffect(card,'arena-rising-soul','✦',2200);
+}
+
 function animateMove(e){
  if(!motion())return;
  const splash=e.damageType==='splash';
@@ -368,8 +383,7 @@ function animateMove(e){
   setTimeout(()=>orb.remove(),Math.min(600,duration()*.5)+120);
  }
  if(effectTarget&&Number(e.value)>0&&(heal||shield||!(/haste/i.test(action)))){
-  const label=document.createElement('span');label.className='damage-number'+(heal?' heal-number':'')+(splash?' splash-damage':'');
-  label.textContent=(heal||shield?'+':'−')+e.value;effectTarget.append(label);setTimeout(()=>label.remove(),splash?550:850);
+  floatingArenaEffect(effectTarget,'arena-floating-damage'+(heal?' healing':shield?' shielding':e.critical?' critical':'')+(splash?' area-hit':''),(heal||shield?'+':'−')+Math.round(Number(e.value))+(e.critical?'!':''));
  }
  if(!splash)setTimeout(()=>{actor.classList.remove('attack-melee','attack-energy','special-cast');effectTarget.classList.remove('healing-aura','shield-aura')},700);
 }
@@ -403,7 +417,7 @@ function renderArenaCommanderMatchup(profiles){
  }
 }
 async function build(overrideResult){
- stop();resetArenaClock();cursor=0;events=[];$('arena-counter-round').textContent='0';$('arena-counter-move').textContent='0 / 0';$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;victoryRevealDone=false;if(victoryRevealTimer!==null){clearTimeout(victoryRevealTimer);victoryRevealTimer=null}if($('arena-victory-reveal'))$('arena-victory-reveal').hidden=true;$('next').disabled=true;$('play').disabled=true;
+ stop();resetArenaClock();visualHealth.clear();cursor=0;events=[];$('arena-counter-round').textContent='0';$('arena-counter-move').textContent='0 / 0';$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;victoryRevealDone=false;if(victoryRevealTimer!==null){clearTimeout(victoryRevealTimer);victoryRevealTimer=null}if($('arena-victory-reveal'))$('arena-victory-reveal').hidden=true;$('next').disabled=true;$('play').disabled=true;
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
  try{
   let result=overrideResult;
@@ -464,6 +478,7 @@ function render(flash){
    const bar=document.createElement('div');bar.className='hp';bar.setAttribute('aria-label','Can '+u.hp+' / '+u.maxHp);const fill=document.createElement('span');fill.style.width=(100*u.hp/u.maxHp)+'%';bar.append(fill);
    card.dataset.lane=u.lane==='front'?'front':'back';card.dataset.role=u.role||'';card.style.gridColumn=u.lane==='front'?(side?'1':'2'):(side?'2':'1');card.style.gridRow=String(laneRows[u.lane==='front'?'front':'back'][states[side].slice(0,unitIndex).filter(x=>(x.lane==='front')===(u.lane==='front')).length]);card.title=u.name+' · '+roleNames[u.role]+' · Can '+u.hp+'/'+u.maxHp;
    const heroLabel=document.createElement('span');heroLabel.className='arena-hero-label';heroLabel.textContent=u.name;card.append(portrait,heroLabel,bar);parent.append(card);
+   const healthKey=side+':'+u.id,previousHp=visualHealth.get(healthKey);visualHealth.set(healthKey,u.hp);if(previousHp>0&&u.hp<=0)showHeroSoul(card);
   }
   $(side?'score-b':'score-a').textContent=states[side].filter(u=>u.hp>0).length+' / 5';
   const suffix=side?'b':'a';
