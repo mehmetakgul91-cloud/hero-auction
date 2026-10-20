@@ -1,6 +1,7 @@
 // Experimental server-owned arena registry. Never exposes direct hero-action inputs.
 // Route activation must wait until all hero mechanics reach legacy parity.
 import {createLiveArenaSession,castDuringLiveArena,stepLiveArenaHero,viewLiveArenaSession} from './commander-live-arena-session.js';
+import {viewLiveCommanderAbilities} from './commander-live-abilities.js';
 export function createLiveArenaRegistry(){
  const matches=new Map();
  function requireMatch(key,token){
@@ -15,13 +16,11 @@ export function createLiveArenaRegistry(){
    matches.set(matchKey,{tokens:[...tokens],session});
    return true;
   },
-  snapshot({matchKey,token,sinceVersion=0}){
+  snapshot({matchKey,token,sinceVersion=0,now=Date.now()}){
    const {entry,side}=requireMatch(matchKey,token);
-   return {...viewLiveArenaSession(entry.session,{sinceVersion}),side,abilities:[0,1].map(i=>({
-    energy:i===side?entry.session.combat.abilities.energy[i]:null,
-    cooldownUntil:i===side?entry.session.combat.abilities.cooldownUntil[i]:null,
-    finished:entry.session.combat.finished
-   }))};
+   if(!Number.isFinite(now))throw Error('Invalid snapshot time');
+   const own=viewLiveCommanderAbilities(entry.session.combat.abilities,side,now);
+   return {...viewLiveArenaSession(entry.session,{sinceVersion}),side,abilities:[0,1].map(i=>i===side?own:{energy:null,cooldownMs:null,cooldownUntil:null,finished:entry.session.combat.finished})};
   },
   cast({matchKey,token,ability,requestId,targetIds,now}){
    const {entry,side}=requireMatch(matchKey,token);
