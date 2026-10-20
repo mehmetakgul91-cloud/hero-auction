@@ -21,7 +21,7 @@ function highlightHeroes(kind,side,ability){
  }
 }
 
-window.addEventListener('heroarena:move',event=>{
+function showCommanderAbility(event){
  const entries=event.detail?.events||[event.detail?.event];
  const commander=entries.find(e=>/^commander-(attack|defense|magic|support)-(normal|ultimate)$/.test(e?.action||''));
  if(!commander)return;
@@ -49,4 +49,6 @@ window.addEventListener('heroarena:move',event=>{
  highlightHeroes(kind,commander.side,ability);
  requestAnimationFrame(()=>banner.classList.add('visible'));
  cleanupTimer=setTimeout(()=>{banner.remove();cleanupTimer=null},ability==='ultimate'?1900:1300);
-});
+}
+window.addEventListener('heroarena:move',showCommanderAbility);
+window.addEventListener('heroarena:commander-round',showCommanderAbility);
