@@ -4,11 +4,11 @@ import {applyAttackThorns} from './commander-parity-thorns.js';
 import {calculateHeroRawDamage} from './battle-damage-formula.js';
 import {selectBattleTarget} from './battle-target-selection.js';
 import {grantLiveCommanderEnergy} from './commander-live-abilities.js';
-export function stepParityShieldDrain(combat,{side,actorId,round=combat?.round,critical=false,allowThornsPassive=false}={}){
+export function stepParityShieldDrain(combat,{side,actorId,round=combat?.round,critical=false,allowThornsPassive=false,allowRoundPassives=false}={}){
  if(!combat||combat.finished||![0,1].includes(side)||round!==combat.round||round%3!==0||typeof critical!=='boolean')throw Error('Invalid special attack');
  const teams=structuredClone(combat.teams),actor=teams[side].find(u=>u.id===actorId&&u.hp>0);
  const effect=actor?.active?.effect;
- if(!actor||(actor.passive&&!(allowThornsPassive&&actor.passive.effect==='thorns'))||!['shield','drain'].includes(effect)||!Number.isFinite(actor.attack)||!Number.isFinite(actor.defense))throw Error('Unsupported special attack');
+ if(!actor||(actor.passive&&!((allowThornsPassive&&actor.passive.effect==='thorns')||(allowRoundPassives&&['guard','resist','focus','evasion','momentum','regen','rage'].includes(actor.passive.effect))))||!['shield','drain'].includes(effect)||!Number.isFinite(actor.attack)||!Number.isFinite(actor.defense))throw Error('Unsupported special attack');
  // Tank-wide reinforcement and energy-role splash require additional integration.
  if(actor.role==='energy')throw Error('Role special mechanics not yet integrated');
  const enemies=teams[1-side],target=selectBattleTarget(enemies,actor,round);
