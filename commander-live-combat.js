@@ -77,5 +77,8 @@ export function beginServerCombatRound(combat,round){
  combat.round=round;
  for(const team of combat.teams)for(const unit of team){if(unit.commanderWeaken&&Number.isInteger(unit.commanderWeakenUntilRound)&&round>unit.commanderWeakenUntilRound){delete unit.commanderWeaken;delete unit.commanderWeakenUntilRound;}}
  for(let side=0;side<2;side++)grantLiveCommanderEnergy(combat.abilities,side,12);
- return {round,energy:[...combat.abilities.energy]};
+ combat.version++;
+ const event={round,action:'round-start',energy:[...combat.abilities.energy],version:combat.version};
+ combat.events.push(event);
+ return {round,energy:[...combat.abilities.energy],version:combat.version,event};
 }
