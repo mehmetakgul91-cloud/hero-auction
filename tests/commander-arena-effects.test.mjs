@@ -23,3 +23,12 @@ test('repeated commander cues clear previous hero highlights',()=>{
  assert.match(effect,/function clearHeroEffects\(/);
  assert.match(effect,/clearHeroEffects\(\)/);
 });
+
+test('experimental committed round feeds commander visuals without altering replay',()=>{
+ const client=readFileSync(new URL('../public/commander-experimental.js',import.meta.url),'utf8');
+ const three=readFileSync(new URL('../public/arena-three.js',import.meta.url),'utf8');
+ assert.match(client,/heroarena:commander-round/);
+ assert.match(effect,/addEventListener\('heroarena:commander-round',showCommanderAbility\)/);
+ assert.match(three,/addEventListener\('heroarena:commander-round',commanderVisual\)/);
+ assert.match(client,/completed>lastCompletedRound/);
+});
