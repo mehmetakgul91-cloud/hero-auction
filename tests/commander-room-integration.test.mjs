@@ -112,3 +112,17 @@ test('both players receive the same completed round events only after both submi
  assert.deepEqual(a.roundEvents,b.roundEvents);
  assert.ok(a.roundEvents.every(event=>event.round===1));
 });
+
+test('round-end HP snapshots are identical for both seats and absent before resolution',()=>{
+ const {room,bound}=setup();
+ assert.equal(viewRoomCommanderSession(room,bound,'player-a').roundTeams,null);
+ submitRoomCommanderTurn(room,bound,{token:'player-a',round:1,command:'pass'});
+ assert.equal(viewRoomCommanderSession(room,bound,'player-a').roundTeams,null);
+ submitRoomCommanderTurn(room,bound,{token:'player-b',round:1,command:'pass'});
+ const a=viewRoomCommanderSession(room,bound,'player-a');
+ const b=viewRoomCommanderSession(room,bound,'player-b');
+ assert.deepEqual(a.roundTeams,b.roundTeams);
+ assert.equal(a.roundTeams.length,2);
+ assert.equal(a.roundTeams[0].length,5);
+ assert.ok(a.roundTeams.flat().every(hero=>Number.isFinite(hero.hp)&&Number.isFinite(hero.maxHp)));
+});
