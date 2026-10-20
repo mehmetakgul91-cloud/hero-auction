@@ -1,7 +1,7 @@
 {
   "version": 3,
   "mode": "auto-battle",
-  "rosterSize": 103,
+  "rosterSize": 102,
   "description": "50 classic battle heroes and 53 original Hero Auction heroes",
   "characters": [
     {
@@ -1060,7 +1060,7 @@
       "universe": "original",
       "role": "tank",
       "displayRole": "tank",
-      "rarity": "efsanevi",
+      "rarity": "legendary",
       "stats": {
         "attack": 72,
         "defense": 98,
@@ -1073,7 +1073,7 @@
         "hasar-azaltma"
       ],
       "portrait": "/images/original/hero-01.png",
-      "proposedPower": 84,
+      "proposedPower": 90,
       "active": {
         "name": "obsidyen-kalkan",
         "effect": "shield",
@@ -1096,7 +1096,7 @@
       "universe": "original",
       "role": "tank",
       "displayRole": "tank",
-      "rarity": "gelismis",
+      "rarity": "advanced",
       "stats": {
         "attack": 66,
         "defense": 91,
@@ -1132,7 +1132,7 @@
       "universe": "original",
       "role": "tank",
       "displayRole": "tank",
-      "rarity": "nadir",
+      "rarity": "rare",
       "stats": {
         "attack": 80,
         "defense": 96,
@@ -1168,7 +1168,7 @@
       "universe": "original",
       "role": "tank",
       "displayRole": "tank",
-      "rarity": "nadir",
+      "rarity": "rare",
       "stats": {
         "attack": 73,
         "defense": 94,
@@ -1204,7 +1204,7 @@
       "universe": "original",
       "role": "assassin",
       "displayRole": "assassin",
-      "rarity": "nadir",
+      "rarity": "legendary",
       "stats": {
         "attack": 94,
         "defense": 38,
@@ -1217,7 +1217,7 @@
         "kritik-darbe"
       ],
       "portrait": "/images/original/hero-05.png",
-      "proposedPower": 77,
+      "proposedPower": 90,
       "active": {
         "name": "gorunmezlik",
         "effect": "pierce",
@@ -1240,7 +1240,7 @@
       "universe": "original",
       "role": "tank",
       "displayRole": "tank",
-      "rarity": "efsanevi",
+      "rarity": "legendary",
       "stats": {
         "attack": 82,
         "defense": 91,
@@ -1276,7 +1276,7 @@
       "universe": "original",
       "role": "fighter",
       "displayRole": "fighter",
-      "rarity": "nadir",
+      "rarity": "rare",
       "stats": {
         "attack": 92,
         "defense": 77,
@@ -1310,9 +1310,9 @@
       "id": "original:08",
       "name": "Kadim Koruyucu",
       "universe": "original",
-      "role": "energy",
+      "role": "fighter",
       "displayRole": "marksman",
-      "rarity": "gelismis",
+      "rarity": "rare",
       "stats": {
         "attack": 84,
         "defense": 42,
@@ -1336,10 +1336,10 @@
         "effect": "focus",
         "value": 0.06
       },
-      "specialty": "energy",
+      "specialty": "fighter",
       "laneModifiers": {
-        "front": -0.06,
-        "back": 0.07
+        "front": -0.04,
+        "back": 0.06
       }
     },
     {
@@ -1348,7 +1348,7 @@
       "universe": "original",
       "role": "energy",
       "displayRole": "mage",
-      "rarity": "efsanevi",
+      "rarity": "legendary",
       "stats": {
         "attack": 88,
         "defense": 48,
@@ -1361,7 +1361,7 @@
         "can-emme"
       ],
       "portrait": "/images/original/hero-09.png",
-      "proposedPower": 85,
+      "proposedPower": 90,
       "active": {
         "name": "Ruh Çağırma",
         "effect": "splash",
@@ -1382,9 +1382,9 @@
       "id": "original:10",
       "name": "Brunn",
       "universe": "original",
-      "role": "energy",
-      "displayRole": "marksman",
-      "rarity": "gelismis",
+      "role": "tank",
+      "displayRole": "tank",
+      "rarity": "rare",
       "stats": {
         "attack": 89,
         "defense": 64,
@@ -1393,25 +1393,25 @@
         "mobility": 48
       },
       "abilities": [
-        "taret",
-        "surekli-hasar"
+        "taret-siperi",
+        "mekanik-zirh"
       ],
       "portrait": "/images/original/hero-10.png",
       "proposedPower": 75,
       "active": {
-        "name": "taret",
-        "effect": "sunder",
+        "name": "Taret Siperi",
+        "effect": "shield",
         "power": 1.12
       },
       "passive": {
-        "name": "surekli-hasar",
-        "effect": "focus",
+        "name": "Mekanik Zırh",
+        "effect": "guard",
         "value": 0.06
       },
-      "specialty": "energy",
+      "specialty": "tank",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.06
+        "front": 0.06,
+        "back": -0.04
       }
     },
     {
@@ -1420,7 +1420,7 @@
       "universe": "original",
       "role": "tank",
       "displayRole": "tank",
-      "rarity": "efsanevi",
+      "rarity": "legendary",
       "stats": {
         "attack": 78,
         "defense": 99,
@@ -1433,7 +1433,7 @@
         "yavaslatma"
       ],
       "portrait": "/images/original/hero-11.png",
-      "proposedPower": 88,
+      "proposedPower": 92,
       "active": {
         "name": "buz-alan-hasari",
         "effect": "shield",
@@ -1456,7 +1456,7 @@
       "universe": "original",
       "role": "assassin",
       "displayRole": "assassin",
-      "rarity": "nadir",
+      "rarity": "legendary",
       "stats": {
         "attack": 91,
         "defense": 38,
@@ -1469,7 +1469,7 @@
         "kacis"
       ],
       "portrait": "/images/original/hero-12.png",
-      "proposedPower": 75,
+      "proposedPower": 91,
       "active": {
         "name": "can-calma",
         "effect": "pierce",
@@ -1490,9 +1490,9 @@
       "id": "original:13",
       "name": "Eloren",
       "universe": "original",
-      "role": "energy",
+      "role": "fighter",
       "displayRole": "marksman",
-      "rarity": "gelismis",
+      "rarity": "rare",
       "stats": {
         "attack": 88,
         "defense": 30,
@@ -1516,9 +1516,9 @@
         "effect": "focus",
         "value": 0.06
       },
-      "specialty": "energy",
+      "specialty": "fighter",
       "laneModifiers": {
-        "front": -0.09,
+        "front": -0.06,
         "back": 0.08
       }
     },
@@ -1528,7 +1528,7 @@
       "universe": "original",
       "role": "fighter",
       "displayRole": "fighter",
-      "rarity": "nadir",
+      "rarity": "legendary",
       "stats": {
         "attack": 93,
         "defense": 76,
@@ -1541,7 +1541,7 @@
         "yildirim"
       ],
       "portrait": "/images/original/hero-14.png",
-      "proposedPower": 87,
+      "proposedPower": 90,
       "active": {
         "name": "sersemletme",
         "effect": "burst",
@@ -1562,9 +1562,9 @@
       "id": "original:15",
       "name": "Seraphine",
       "universe": "original",
-      "role": "energy",
-      "displayRole": "mage",
-      "rarity": "nadir",
+      "role": "support",
+      "displayRole": "support",
+      "rarity": "legendary",
       "stats": {
         "attack": 84,
         "defense": 78,
@@ -1573,24 +1573,24 @@
         "mobility": 82
       },
       "abilities": [
-        "buz-firtinasi",
-        "ejderha-kalkani"
+        "ejderha-kalkani",
+        "buz-direnci"
       ],
       "portrait": "/images/original/hero-15.png",
       "proposedPower": 92,
       "active": {
-        "name": "buz-firtinasi",
-        "effect": "splash",
+        "name": "Ejderha Kalkanı",
+        "effect": "shield",
         "power": 1.12
       },
       "passive": {
-        "name": "ejderha-kalkani",
-        "effect": "focus",
+        "name": "Buz Direnci",
+        "effect": "resist",
         "value": 0.06
       },
-      "specialty": "energy",
+      "specialty": "support",
       "laneModifiers": {
-        "front": -0.04,
+        "front": -0.03,
         "back": 0.07
       }
     },
@@ -1819,8 +1819,8 @@
       "id": "original:expansion-06",
       "name": "Çan Muhafızı",
       "universe": "original",
-      "role": "support",
-      "displayRole": "support",
+      "role": "tank",
+      "displayRole": "tank",
       "rarity": "rare",
       "stats": {
         "attack": 65,
@@ -1841,7 +1841,7 @@
         "effect": "guard",
         "value": 0.06
       },
-      "specialty": "support",
+      "specialty": "tank",
       "laneModifiers": {
         "front": 0.05,
         "back": -0.03
@@ -1912,38 +1912,6 @@
       }
     },
     {
-      "id": "original:expansion-09",
-      "name": "Kor Çırağı",
-      "universe": "original",
-      "role": "energy",
-      "displayRole": "energy",
-      "rarity": "advanced",
-      "stats": {
-        "attack": 68,
-        "defense": 36,
-        "ability": 77,
-        "control": 53,
-        "mobility": 71
-      },
-      "portrait": "/images/original/expansion-09.webp",
-      "proposedPower": 64,
-      "active": {
-        "name": "Kor Patlaması",
-        "effect": "burst",
-        "power": 1.12
-      },
-      "passive": {
-        "name": "Ateş Odağı",
-        "effect": "focus",
-        "value": 0.06
-      },
-      "specialty": "energy",
-      "laneModifiers": {
-        "front": -0.08,
-        "back": 0.08
-      }
-    },
-    {
       "id": "original:expansion-10",
       "name": "Kara Siper",
       "universe": "original",
@@ -1981,7 +1949,7 @@
       "universe": "original",
       "role": "support",
       "displayRole": "support",
-      "rarity": "rare",
+      "rarity": "legendary",
       "stats": {
         "attack": 61,
         "defense": 65,
@@ -1990,7 +1958,7 @@
         "mobility": 62
       },
       "portrait": "/images/original/expansion-11.webp",
-      "proposedPower": 79,
+      "proposedPower": 90,
       "active": {
         "name": "Ruh Şifası",
         "effect": "heal",
@@ -2173,7 +2141,7 @@
       "universe": "original",
       "role": "support",
       "displayRole": "support",
-      "rarity": "rare",
+      "rarity": "legendary",
       "stats": {
         "attack": 66,
         "defense": 79,
@@ -2182,7 +2150,7 @@
         "mobility": 73
       },
       "portrait": "/images/original/expansion-17.webp",
-      "proposedPower": 86,
+      "proposedPower": 93,
       "active": {
         "name": "Seraf Duası",
         "effect": "heal",
@@ -2427,8 +2395,8 @@
       "id": "original:expansion-25",
       "name": "Kadim Meşe",
       "universe": "original",
-      "role": "support",
-      "displayRole": "support",
+      "role": "tank",
+      "displayRole": "tank",
       "rarity": "rare",
       "stats": {
         "attack": 64,
@@ -2440,8 +2408,8 @@
       "portrait": "/images/original/expansion-25.webp",
       "proposedPower": 81,
       "active": {
-        "name": "Orman Şifası",
-        "effect": "heal",
+        "name": "Kadim Kabuk",
+        "effect": "shield",
         "power": 1.12
       },
       "passive": {
@@ -2449,7 +2417,7 @@
         "effect": "guard",
         "value": 0.06
       },
-      "specialty": "support",
+      "specialty": "tank",
       "laneModifiers": {
         "front": 0.07,
         "back": -0.05
@@ -2461,7 +2429,7 @@
       "universe": "original",
       "role": "assassin",
       "displayRole": "assassin",
-      "rarity": "rare",
+      "rarity": "legendary",
       "stats": {
         "attack": 90,
         "defense": 44,
@@ -2470,7 +2438,7 @@
         "mobility": 95
       },
       "portrait": "/images/original/expansion-26.webp",
-      "proposedPower": 82,
+      "proposedPower": 92,
       "active": {
         "name": "Hilal Baskını",
         "effect": "pierce",
