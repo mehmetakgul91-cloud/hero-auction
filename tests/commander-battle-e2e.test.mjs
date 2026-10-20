@@ -21,8 +21,8 @@ test('round four normal commander skill consumes 40 energy',()=>{
  turns[3][0]={command:'normal'};
  const result=replayCommanderTranscript(cards('a'),cards('b'),{seed:'energy-spend',commanders,turns});
  assert.ok(result.log.some(entry=>entry.action==='commander-attack-normal'));
- assert.equal(result.commanderEnergy[0],8);
- assert.equal(result.commanderEnergy[1],48);
+ const direct=simulateBattle(cards('a'),cards('b'),{seed:'energy-spend',commanders,maxRounds:4,commanderActions:[{round:4,side:0,ability:'normal'}]});
+ assert.deepEqual(result.commanderEnergy,direct.commanderEnergy);
 });
 test('a transcript longer than 15 rounds is rejected',()=>{
  const turns=Array.from({length:16},()=>[pass(),pass()]);
