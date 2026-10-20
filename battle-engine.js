@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import {orderHeroActions} from './battle-action-scheduler.js';
 import {selectBattleTarget} from './battle-target-selection.js';
 import {calculateHeroRawDamage} from './battle-damage-formula.js';
+import {calculateSplashRawDamage,calculateSpecialHeal} from './battle-special-formulas.js';
 import {applyCommanderSupport} from './arena-commanders.js';
 
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
@@ -135,7 +136,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       if(!target)break;
       const special=round%3===0;
       const skill=special?unit.active:null;
-      if(skill?.effect==='heal'&&unit.hp<unit.maxHp){const healed=Math.min(unit.maxHp-unit.hp,Math.max(1,Math.round(unit.attack*.52)));unit.hp+=healed;unit.healing+=healed;log.push({round,side,actor:unit.id,action:'heal',target:unit.id,value:healed});continue;}
+      if(skill?.effect==='heal'&&unit.hp<unit.maxHp){const healed=calculateSpecialHeal({attack:unit.attack,missingHp:unit.maxHp-unit.hp});unit.hp+=healed;unit.healing+=healed;log.push({round,side,actor:unit.id,action:'heal',target:unit.id,value:healed});continue;}
       const critical=random()<.08;
       const guarded=!isFront(target)&&enemies.some(x=>x.hp>0&&isFront(x));
       const weakened=unit.commanderWeaken||0;
@@ -154,7 +155,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       if(skill?.effect==='weaken'){target.attack=Math.max(5,Math.floor(target.attack*.9));log.push({round,side,actor:unit.id,action:'weaken',target:target.id,value:0});}
       if(skill?.effect==='haste'){unit.speed=Math.min(150,unit.speed+8);log.push({round,side,actor:unit.id,action:'haste',target:unit.id,value:8});}
       if(skill?.effect==='execute'&&target.hp>0&&target.hp/target.maxHp<.12){unit.damage+=target.hp;target.hp=0;unit.kills++;}
-      if(skill?.effect==='splash'||unit.role==='energy'&&special)for(const other of enemies.filter(x=>x!==target&&x.hp>0)){const splashPercent=skill?.effect==='splash'?.25:.15;const splashRaw=Math.max(1,Math.floor(raw*splashPercent));const splashAbsorbed=Math.min(other.shield,splashRaw);other.shield-=splashAbsorbed;const extra=Math.min(other.hp,splashRaw-splashAbsorbed);other.hp-=extra;unit.damage+=extra;if(other.hp===0)unit.kills++;log.push({round,side,actor:unit.id,action:'splash',target:other.id,value:extra,absorbed:splashAbsorbed,rawDamage:splashRaw,damageType:'splash'});}
+      if(skill?.effect==='splash'||unit.role==='energy'&&special)for(const other of enemies.filter(x=>x!==target&&x.hp>0)){const splashRaw=calculateSplashRawDamage(raw,{skill,role:unit.role,special});const splashAbsorbed=Math.min(other.shield,splashRaw);other.shield-=splashAbsorbed;const extra=Math.min(other.hp,splashRaw-splashAbsorbed);other.hp-=extra;unit.damage+=extra;if(other.hp===0)unit.kills++;log.push({round,side,actor:unit.id,action:'splash',target:other.id,value:extra,absorbed:splashAbsorbed,rawDamage:splashRaw,damageType:'splash'});}
       if(unit.passive?.effect==='thorns'&&unit.hp>0)unit.shield+=Math.floor(unit.defense*unit.passive.value);
       log.push({round,side,actor:unit.id,action:skill?.name|| (special?'special':'attack'),target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:special?'special':'normal'});
       if(unit.role==='tank'&&special)unit.shield+=Math.round(unit.defense*.2);
