@@ -247,6 +247,8 @@ function enterArenaWithoutReload(url){
  // Preserve the user-unlocked HTMLAudioElement across the formation-to-arena transition.
  history.replaceState(null,'',url);
  arenaMode=true;
+ void requestArenaWakeLock();
+ startArenaVideoKeepAwake();
  revealArenaAudio();
  document.body.classList.add('arena-room');
  document.querySelector('.formation').hidden=true;
@@ -608,7 +610,7 @@ let replayDueAt=0;
 let arenaWakeLock=null,arenaWakeRequestPending=false,arenaWakeRetryAt=0;
 let arenaKeepAwakeVideo=null;
 function startArenaVideoKeepAwake(){
- if(timer===null||document.hidden||arenaKeepAwakeVideo)return;
+ if((!arenaMode&&timer===null)||document.hidden||arenaKeepAwakeVideo)return;
  // iOS Safari fallback: a tiny muted inline video; no audio or visible UI.
  try{
   const canvas=document.createElement('canvas');canvas.width=2;canvas.height=2;
@@ -636,13 +638,13 @@ function stopArenaVideoKeepAwake(){
 }
 
 async function requestArenaWakeLock(){
- if(timer===null||document.hidden||!('wakeLock' in navigator)||arenaWakeLock||arenaWakeRequestPending||Date.now()<arenaWakeRetryAt)return;
+ if((!arenaMode&&timer===null)||document.hidden||!('wakeLock' in navigator)||arenaWakeLock||arenaWakeRequestPending||Date.now()<arenaWakeRetryAt)return;
  arenaWakeRequestPending=true;
  try{
   const lock=await navigator.wakeLock.request('screen');
-  if(timer===null||document.hidden){await lock.release();return}
+  if((!arenaMode&&timer===null)||document.hidden){await lock.release();return}
   arenaWakeLock=lock;
-  lock.addEventListener('release',()=>{if(arenaWakeLock===lock){arenaWakeLock=null;arenaWakeRetryAt=Date.now()+1200}},{once:true});
+  lock.addEventListener('release',()=>{if(arenaWakeLock===lock){arenaWakeLock=null;arenaWakeRetryAt=Date.now()+1200;if((arenaMode||timer!==null)&&!document.hidden)setTimeout(()=>{void requestArenaWakeLock()},1250)}},{once:true});
  }catch(e){arenaWakeRetryAt=Date.now()+5000;/* iOS Safari may deny wake lock; retry while playing. */}
  finally{arenaWakeRequestPending=false}
 }
@@ -650,7 +652,7 @@ function releaseArenaWakeLock(){
  const lock=arenaWakeLock;arenaWakeLock=null;
  if(lock)void lock.release().catch(()=>{});
 }
-function stop(){if(timer!==null){clearInterval(timer);timer=null}replayDueAt=0;pauseArenaClock();if(!arenaMode)stopArenaMusic();releaseArenaWakeLock();stopArenaVideoKeepAwake()}
+function stop(){if(timer!==null){clearInterval(timer);timer=null}replayDueAt=0;pauseArenaClock();if(!arenaMode){stopArenaMusic();releaseArenaWakeLock();stopArenaVideoKeepAwake()}}
 function advanceReplay(){
  if(timer===null||!replayDueAt)return;
  if(!document.hidden&&!arenaWakeLock)void requestArenaWakeLock();
@@ -693,18 +695,21 @@ function syncArenaAudioVisibility(){
  }
  advanceReplay();
  void requestArenaWakeLock();
- if(timer!==null)startArenaVideoKeepAwake();
+ if(arenaMode||timer!==null)startArenaVideoKeepAwake();
 }
 document.addEventListener('visibilitychange',syncArenaAudioVisibility);
 window.addEventListener('pagehide',()=>{arenaAudioSuspendedByBackground=true;stopArenaMusic();releaseArenaWakeLock();stopArenaVideoKeepAwake()});
 window.addEventListener('focus',syncArenaAudioVisibility);
-document.addEventListener('pointerdown',()=>{if(timer!==null&&!document.hidden){void requestArenaWakeLock();startArenaVideoKeepAwake()}},{passive:true});
+document.addEventListener('pointerdown',()=>{if((arenaMode||timer!==null)&&!document.hidden){void requestArenaWakeLock();startArenaVideoKeepAwake()}},{passive:true});
 window.addEventListener('pageshow',syncArenaAudioVisibility);
 // Entering the arena, rather than pressing Play, triggers the soundtrack.
 if(arenaMode){
  try{if(sessionStorage.getItem('hero-auction-arena-music')==='1')sessionStorage.removeItem('hero-auction-arena-music')}catch{}
  // Browsers permitting autoplay begin immediately; iOS users can use the always-visible toggle.
  void startArenaMusic();
+ // Keep the screen on for live matches and while waiting for the opponent too.
+ void requestArenaWakeLock();
+ startArenaVideoKeepAwake();
 }
 $('arena-music-toggle').onclick=()=>{arenaMusicEnabled=!arenaMusicEnabled;updateMusicButton();if(arenaMusicEnabled&&(arenaMode||timer!==null))void startArenaMusic();else stopArenaMusic()};updateMusicButton();
 $('next').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';step()};
