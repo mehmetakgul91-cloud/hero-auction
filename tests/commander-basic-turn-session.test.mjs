@@ -164,3 +164,17 @@ test('execute is not allowed on unsupported tank class',()=>{
  const c=make();c.teams[0][0].active={effect:'execute'};c.teams[0][0].role='tank';
  assert.throws(()=>createBasicTurnSession(c,{parity:true,executeSpecial:true}),/Special hero mechanics/);
 });
+
+test('thorns passive grants defense-scaled shield after ordinary attack',()=>{
+ const c=make();c.teams[0][0].passive={effect:'thorns',value:.2};
+ const expected=Math.floor(c.teams[0][0].defense*.2);
+ const s=createBasicTurnSession(c,{parity:true,thornsPassive:true});
+ const {result}=stepBasicTurn(s);
+ assert.equal(c.teams[0][0].shield,expected);
+ assert.equal(result.event.thornsShield,expected);
+ assert.equal(c.version,1);
+});
+test('thorns passive requires explicit opt-in',()=>{
+ const c=make();c.teams[0][0].passive={effect:'thorns',value:.2};
+ assert.throws(()=>createBasicTurnSession(c,{parity:true}),/Special hero mechanics/);
+});
