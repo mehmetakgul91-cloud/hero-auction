@@ -15,3 +15,11 @@ test('each commander type has a distinct hero effect class',()=>{
 test('commander effect layer does not mutate combat health or winner',()=>{
  assert.doesNotMatch(effect,/\.hp\s*=|\.winner\s*=|\.energy\s*=/);
 });
+
+test('commander overlays skip background catch-up frames',()=>{
+ assert.match(effect,/document\.hidden\|\|document\.body\.classList\.contains\('arena-catching-up'\)/);
+});
+test('repeated commander cues clear previous hero highlights',()=>{
+ assert.match(effect,/function clearHeroEffects\(/);
+ assert.match(effect,/clearHeroEffects\(\)/);
+});
