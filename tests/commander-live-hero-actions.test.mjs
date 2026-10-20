@@ -45,7 +45,9 @@ test('stale hero actions cannot roll back combat rounds or spend energy',()=>{
  assert.throws(()=>applyServerHeroAction(c,{side:0,actorId:'0-0',targetId:'1-0',value:20,round:1}),/Invalid server hero action/);
  assert.deepEqual(c.teams,before);
  assert.deepEqual(c.abilities.energy,energy);
- assert.equal(c.version,0);
+ assert.equal(c.version,1); // The valid round transition is versioned; the stale action adds nothing.
+ assert.equal(c.events.length,1);
+ assert.equal(c.events[0].action,'round-start');
 });
 test('negative, fractional and oversized hero damage is rejected',()=>{
  const c=make();
