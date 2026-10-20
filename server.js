@@ -26,6 +26,7 @@ const liveCommanderAbilitySessions=new Map();
 const commanderTurnApiEnabled=process.env.EXPERIMENTAL_COMMANDER_TURNS==='1';
 // Standalone preview only: temporary, non-persistent guest credits without a database.
 const previewGuestWallets=new Map();
+const previewCommanderProfiles=new Map();
 const previewGuestMode=process.env.COMMANDER_TEST_GUEST_MODE==='1';
 const artCache=new Map();
 const cardDetails=JSON.parse(fs.readFileSync(path.join(root,'public','cards.json'),'utf8'));
@@ -251,6 +252,27 @@ async function adminApi(url,b){
 }
 async function api(url,b){if(url.startsWith('/api/admin/'))return adminApi(url,b);if(url==='/api/auth/check'){const user=readLogin(b.authToken);if(!user)error('Oturumun sona erdi. Yeniden giriş yap.',401);await rememberDisplayName(user);return{user:{name:user.name},gold:await goldBalance(user.sub)}}if(url==='/api/auth/guest'){const name=String(b.name||'Oyuncu').trim().slice(0,24)||'Oyuncu';const user={sub:'guest:'+crypto.randomUUID(),name};await rememberDisplayName(user);return{user:{name},authToken:signLogin(user),gold:await goldBalance(user.sub)}}
 if(!url.startsWith('/api/auth/')){const user=readLogin(b.authToken);if(!user)error('Odaya erişmek için giriş yapmalısın.',401);if(databaseReady){const block=await database.query('SELECT banned FROM hero_auction_admin_accounts WHERE account_id=$1',[user.sub]);if(block.rows[0]?.banned)error('Hesap askıya alınmıştır.',403)}}
+if(previewGuestMode&&url==='/api/commander/get'){
+ const user=readLogin(b.authToken);
+ return {profile:previewCommanderProfiles.get(user.sub)||null,gold:await goldBalance(user.sub)};
+}
+if(previewGuestMode&&url==='/api/commander/select'){
+ const user=readLogin(b.authToken);
+ if(previewCommanderProfiles.has(user.sub))error('Komutanın zaten seçilmiş.',409);
+ const profile=createCommanderProfile(String(b.commanderId||''));
+ previewCommanderProfiles.set(user.sub,profile);
+ return {profile,gold:await goldBalance(user.sub)};
+}
+if(previewGuestMode&&url==='/api/commander/change'){
+ const user=readLogin(b.authToken);
+ if(!previewCommanderProfiles.has(user.sub))error('Önce komutan seçmelisin.',409);
+ const commanderId=String(b.commanderId||'');
+ if(!resolveCommander(commanderId))error('Geçersiz komutan.',400);
+ const old=previewCommanderProfiles.get(user.sub);
+ const profile={commanderId,levels:{...old.levels}};
+ previewCommanderProfiles.set(user.sub,profile);
+ return {profile,gold:await goldBalance(user.sub),cost:0};
+}
 if(url==='/api/commander/get'){
  const user=readLogin(b.authToken);
  if(!database||!databaseReady)error('Komutan sistemi geçici olarak kullanılamıyor.',503);
