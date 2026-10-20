@@ -31,10 +31,10 @@ export function stepBasicTurn(session){
  const canSupportHeal=actor.role==='support'&&allies.some(u=>u.hp>0&&u.hp<u.maxHp);
  const canSelfHeal=actor.active?.effect==='heal'&&actor.hp<actor.maxHp;
  const heal=session.specialHealing&&next.round%3===0&&(canSupportHeal||canSelfHeal);
- const splash=session.energySplash&&next.round%3===0&&actor.role==='energy'&&!actor.active&&!actor.passive&&!heal;
+ const splash=session.energySplash&&next.round%3===0&&actor.role==='energy'&&!actor.active&&(!actor.passive||(session.thornsPassive&&actor.passive.effect==='thorns'))&&!heal;
  const special=session.shieldDrain&&next.round%3===0&&['shield','drain'].includes(actor.active?.effect)&&(!actor.passive||(session.thornsPassive&&actor.passive.effect==='thorns'));
- const stat=session.statSpecial&&next.round%3===0&&['sunder','weaken','haste'].includes(actor.active?.effect)&&!actor.passive;
- const execute=session.executeSpecial&&next.round%3===0&&actor.active?.effect==='execute'&&!actor.passive;
+ const stat=session.statSpecial&&next.round%3===0&&['sunder','weaken','haste'].includes(actor.active?.effect)&&(!actor.passive||(session.thornsPassive&&actor.passive.effect==='thorns'));
+ const execute=session.executeSpecial&&next.round%3===0&&actor.active?.effect==='execute'&&(!actor.passive||(session.thornsPassive&&actor.passive.effect==='thorns'));
  const result=execute?stepParityExecute(session.combat,{side:next.side,actorId:next.actorId,round:next.round,critical:randomInt(100)<8,allowThornsPassive:session.thornsPassive}):stat?stepParityStatSpecial(session.combat,{side:next.side,actorId:next.actorId,round:next.round,critical:randomInt(100)<8,allowThornsPassive:session.thornsPassive}):special?stepParityShieldDrain(session.combat,{side:next.side,actorId:next.actorId,round:next.round,critical:randomInt(100)<8,allowThornsPassive:session.thornsPassive}):splash?stepParityEnergySplash(session.combat,{side:next.side,actorId:next.actorId,round:next.round,critical:randomInt(100)<8,allowThornsPassive:session.thornsPassive}):heal?applyServerSpecialHeal(session.combat,{side:next.side,actorId:next.actorId,round:next.round}):
   session.parity?stepParityBasicAttack(session.combat,{side:next.side,actorId:next.actorId,round:next.round,critical:randomInt(100)<8,allowHealActive:session.specialHealing,allowShieldDrainActive:session.shieldDrain,allowStatActive:session.statSpecial,allowExecuteActive:session.executeSpecial,allowThornsPassive:session.thornsPassive}):
   stepBasicHeroCombat(session.combat,{side:next.side,actorId:next.actorId,round:next.round});
