@@ -8,7 +8,7 @@ if(panel&&params.get('commanderTest')==='1'&&params.has('auctionCode')&&params.h
  const meter=panel.querySelector('[data-energy-meter]');
  const fill=panel.querySelector('[data-energy-fill]');
  const buttons=[...panel.querySelectorAll('[data-command]')];
- let state=null,busy=false,requestId=0,stopped=false;
+ let state=null,busy=false,requestId=0,stopped=false,lastCompletedRound=0;
  panel.hidden=false;
  function showError(message){status.textContent='⚠ '+message}
  function updateButtons(){
@@ -30,11 +30,18 @@ if(panel&&params.get('commanderTest')==='1'&&params.has('auctionCode')&&params.h
     return;
    }
    state=data;
+   const completed=Number(data.completedRound)||0;
+   if(completed>lastCompletedRound){
+    lastCompletedRound=completed;
+    window.dispatchEvent(new CustomEvent('heroarena:commander-round',{
+     detail:{round:completed,events:Array.isArray(data.roundEvents)?data.roundEvents:[],finished:!!data.finished}
+    }));
+   }
    const value=Math.max(0,Math.min(100,Number(data.energy)||0));
    energy.textContent=value+' / 100';
    meter.setAttribute('aria-valuenow',String(value));
    fill.style.width=value+'%';
-   status.textContent=data.finished?'Savaş tamamlandı':'Tur '+data.round+' · '+(data.submitted[data.yourSide]?'Komut kaydedildi; rakip bekleniyor':'Komutunu seç');
+   status.textContent=data.finished?'Savaş tamamlandı':completed>0?'Tur '+data.round+' · Önceki tur '+completed+' tamamlandı · '+(data.submitted[data.yourSide]?'Rakip bekleniyor':'Komutunu seç'):'Tur '+data.round+' · '+(data.submitted[data.yourSide]?'Komut kaydedildi; rakip bekleniyor':'Komutunu seç');
    updateButtons();
   }catch(error){if(id===requestId&&!busy)showError(error.message)}
  }
