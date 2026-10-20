@@ -1,14 +1,15 @@
 // One atomic server-owned primary attack plus energy-role splash.
 // This opt-in action does not support active skills or passives yet.
+import {applyAttackThorns} from './commander-parity-thorns.js';
 import {calculateHeroRawDamage} from './battle-damage-formula.js';
 import {calculateSplashRawDamage} from './battle-special-formulas.js';
 import {selectBattleTarget} from './battle-target-selection.js';
 import {grantLiveCommanderEnergy} from './commander-live-abilities.js';
-export function stepParityEnergySplash(combat,{side,actorId,round=combat?.round,critical=false}={}){
+export function stepParityEnergySplash(combat,{side,actorId,round=combat?.round,critical=false,allowThornsPassive=false}={}){
  if(!combat||combat.finished||![0,1].includes(side)||round!==combat.round||round%3!==0||typeof critical!=='boolean')throw Error('Invalid energy splash step');
  const next=structuredClone(combat.teams);
  const actor=next[side].find(u=>u.id===actorId&&u.hp>0);
- if(!actor||actor.role!=='energy'||actor.active||actor.passive)throw Error('Unsupported energy splash hero');
+ if(!actor||actor.role!=='energy'||actor.active||(actor.passive&&!(allowThornsPassive&&actor.passive.effect==='thorns')))throw Error('Unsupported energy splash hero');
  const enemies=next[1-side],target=selectBattleTarget(enemies,actor,round);
  if(!target)throw Error('No living target');
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
@@ -28,6 +29,8 @@ export function stepParityEnergySplash(combat,{side,actorId,round=combat?.round,
  hit(target,raw,'special');
  const splashRaw=calculateSplashRawDamage(raw,{role:actor.role,special:true});
  for(const other of enemies.filter(u=>u!==target&&u.hp>0))hit(other,splashRaw,'splash');
+ const thornsShield=applyAttackThorns(actor,{enabled:allowThornsPassive});
+ if(thornsShield)events.push({round,side,actor:actorId,action:'thorns-shield',target:actorId,value:thornsShield});
  combat.teams=next;
  combat.version++;
  for(const event of events){event.version=combat.version;combat.events.push(event);}
