@@ -10,6 +10,7 @@ import {createCommanderProfile,validateCommanderProfile,resolveCommander,preview
 import {auctionRoomToBattleState,prepareBattleTeams} from './battle-match.js';
 import {createRoomCommanderSession,submitRoomCommanderTurn,viewRoomCommanderSession} from './commander-room-bridge.js';
 import {createLiveCommanderAbilities,viewLiveCommanderAbilities} from './commander-live-abilities.js';
+import {deriveLiveArenaRoomBinding,verifyLiveArenaRoomBinding} from './commander-live-room-binding.js';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
 const GOOGLE_CLIENT_ID=process.env.GOOGLE_CLIENT_ID||'742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
@@ -456,6 +457,16 @@ const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.w
  try{prepareBattleTeams(auctionRoomToBattleState(room))}catch(e){return send(422,{error:e.message})}
  if(!room.battleSync?.result)return send(409,{error:'Savaş henüz başlamadı'});
  room.battleCompleted??=[false,false];room.battleCompleted[seat]=true;markRoom(room);return send(200,{ok:true,completed:room.battleCompleted,series:room.series||[0,0],seat,players:room.players.map(p=>({name:p?.name||'Oyuncu'}))});
+}
+if(url.pathname==='/api/experimental/live-room-binding'&&req.method==='GET'){
+ if(!commanderTurnApiEnabled)return send(404,{error:'Experimental commander API disabled'});
+ const room=rooms.get(String(url.searchParams.get('code')||'').toUpperCase());
+ try{
+  const binding=deriveLiveArenaRoomBinding(room);
+  const side=verifyLiveArenaRoomBinding(room,binding,url.searchParams.get('token'));
+  // Only readiness metadata; never return private seat tokens or claim live combat exists.
+  return send(200,{readyForPreparation:true,liveCombatReady:false,matchKey:binding.matchKey,side});
+ }catch(e){return send(403,{error:e.message})}
 }
 if(url.pathname==='/api/experimental/commander-live'&&(req.method==='GET'||req.method==='POST')){
  if(!commanderTurnApiEnabled)return send(404,{error:'Experimental commander API disabled'});
