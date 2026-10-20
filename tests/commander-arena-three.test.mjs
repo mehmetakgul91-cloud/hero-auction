@@ -17,3 +17,7 @@ test('3D commander effects do not mutate winner or health',()=>{
  const code=source.slice(start,end);
  assert.doesNotMatch(code,/\.hp\s*=|\.winner\s*=|\.energy\s*=/);
 });
+
+test('3D commander effects skip background catch-up frames',()=>{
+ assert.match(source,/const commanderVisual=e=>\{\s*if\(document\.hidden\|\|document\.body\.classList\.contains\('arena-catching-up'\)\)return;/);
+});
