@@ -9,7 +9,7 @@ const prettySkill=name=>String(name||'').replace(/[-_]/g,' ').replace(/\\b\\p{L}
 const fmt=n=>(n>=0?'+':'')+(n*100).toFixed(0)+'%';
 function line(label,value){const el=document.createElement('div');el.className='gallery-detail-line';const a=document.createElement('span'),b=document.createElement('strong');a.textContent=label;b.textContent=value;el.append(a,b);return el}
 function makeCard(hero){
- const card=document.createElement('article');card.className='gallery-card';
+ const card=document.createElement('article');card.className='gallery-card';\n const rarityKey=({efsanevi:'legendary',nadir:'rare',gelismis:'advanced',siradan:'common'})[hero.rarity]||hero.rarity;\n if(['legendary','rare','advanced','common'].includes(rarityKey))card.classList.add('gallery-card--'+rarityKey);
  const art=document.createElement('div');art.className='gallery-art';
  const fallback=document.createElement('div');fallback.className='gallery-fallback';fallback.textContent='✦';art.append(fallback);
  if(hero.portrait){const img=document.createElement('img');img.src=hero.portrait;img.alt=hero.name;img.loading='lazy';img.onerror=()=>img.remove();art.append(img)}
