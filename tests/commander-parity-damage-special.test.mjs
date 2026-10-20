@@ -4,7 +4,7 @@ import {createLiveCommanderAbilities} from '../commander-live-abilities.js';
 import {createLiveCommanderCombat} from '../commander-live-combat.js';
 import {createBasicTurnSession,stepBasicTurn} from '../commander-basic-turn-session.js';
 import {calculateHeroRawDamage} from '../battle-damage-formula.js';
-const hero=(id,role='fighter',active=null,passive=null)=>({id,role,active,passive,hp:120,maxHp:120,attack:90,defense:20,speed:50,position:0,lane:'front',shield:0,damage:0,kills:0,healing:0});
+const hero=(id,role='fighter',active=null,passive=null)=>({id,role,active,passive,hp:120,maxHp:120,attack:90,defense:20,speed:id==='a'?100:20,position:0,lane:'front',shield:0,damage:0,kills:0,healing:0});
 function make(effect,role='fighter'){
  const key='damage-special-test';
  return createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:key,now:0}),teams:[[hero('a',role,{effect,name:effect,power:1.5},{effect:'focus',value:.1})],[hero('b'),hero('c')]],commanders:[{commanderId:'attack'},{commanderId:'defense'}],round:3});
