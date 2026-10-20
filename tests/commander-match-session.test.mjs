@@ -24,4 +24,15 @@ test('invalid ability does not commit a round',()=>{
  assert.throws(()=>submitCommanderMatchTurn(session,{side:1,round:1,command:'pass'}),/Insufficient commander energy/);
  assert.equal(session.turns.length,0);
  assert.equal(session.round,1);
+ assert.equal(session.pending[1],undefined);
+ assert.deepEqual(session.pending[0],{command:'normal'});
+});
+
+test('invalid command can be corrected without trapping the opponent',()=>{
+ const session=make();
+ submitCommanderMatchTurn(session,{side:0,round:1,command:'normal'});
+ assert.throws(()=>submitCommanderMatchTurn(session,{side:1,round:1,command:'pass'}),/Insufficient commander energy/);
+ assert.equal(session.pending[1],undefined);
+ // The invalid side must correct its pending command before the turn can proceed.
+ assert.throws(()=>submitCommanderMatchTurn(session,{side:0,round:1,command:'pass'}),/already submitted/);
 });
