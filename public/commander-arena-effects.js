@@ -1,0 +1,30 @@
+// Read-only visual layer: never alters combat results or server decisions.
+const names={attack:'SALDIRI',defense:'SAVUNMA',magic:'BÜYÜ',support:'DESTEK'};
+const symbols={attack:'⚔',defense:'🛡',magic:'✦',support:'✚'};
+let cleanupTimer;
+window.addEventListener('heroarena:move',event=>{
+ const entries=event.detail?.events||[event.detail?.event];
+ const commander=entries.find(e=>/^commander-(attack|defense|magic|support)-(normal|ultimate)$/.test(e?.action||''));
+ if(!commander)return;
+ const match=/^commander-(attack|defense|magic|support)-(normal|ultimate)$/.exec(commander.action);
+ const [,kind,ability]=match;
+ const arena=document.getElementById('battle-arena');
+ if(!arena||arena.hidden)return;
+ document.getElementById('commander-ability-flash')?.remove();
+ if(cleanupTimer)clearTimeout(cleanupTimer);
+ const banner=document.createElement('div');
+ banner.id='commander-ability-flash';
+ banner.className='commander-ability-flash'+(ability==='ultimate'?' ultimate':'');
+ banner.setAttribute('role','status');
+ banner.setAttribute('aria-live','polite');
+ const symbol=document.createElement('span');
+ symbol.className='commander-ability-symbol';symbol.textContent=symbols[kind];
+ const label=document.createElement('strong');
+ label.textContent=(commander.side===0?'MAVİ':'KIRMIZI')+' · '+names[kind]+' KOMUTANI';
+ const skill=document.createElement('span');
+ skill.textContent=ability==='ultimate'?'NİHAİ YETENEK':'NORMAL YETENEK';
+ banner.append(symbol,label,skill);
+ arena.append(banner);
+ requestAnimationFrame(()=>banner.classList.add('visible'));
+ cleanupTimer=setTimeout(()=>{banner.remove();cleanupTimer=null},ability==='ultimate'?1900:1300);
+});
