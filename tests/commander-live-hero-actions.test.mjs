@@ -37,3 +37,21 @@ test('server hero healing cannot exceed maximum health',()=>{
  assert.equal(healed.teams[1][0].hp,100);
  assert.equal(healed.event.value,40);
 });
+
+test('stale hero actions cannot roll back combat rounds or spend energy',()=>{
+ const c=make();
+ beginServerCombatRound(c,2);
+ const before=structuredClone(c.teams),energy=[...c.abilities.energy];
+ assert.throws(()=>applyServerHeroAction(c,{side:0,actorId:'0-0',targetId:'1-0',value:20,round:1}),/Invalid server hero action/);
+ assert.deepEqual(c.teams,before);
+ assert.deepEqual(c.abilities.energy,energy);
+ assert.equal(c.version,0);
+});
+test('negative, fractional and oversized hero damage is rejected',()=>{
+ const c=make();
+ for(const value of [-1,1.5,1000001,Infinity,NaN]){
+  assert.throws(()=>applyServerHeroAction(c,{side:0,actorId:'0-0',targetId:'1-0',value}),/Invalid server hero action/);
+ }
+ assert.equal(c.version,0);
+ assert.equal(c.teams[1][0].hp,100);
+});
