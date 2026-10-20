@@ -33,7 +33,8 @@ export function viewRoomCommanderSession(room,bound,token){
  const energy=session.finished?(session.result?.commanderEnergy?.[side]??0):Math.min(100,(session.result?.commanderEnergy?.[side]??0)+12);
  const completedRound=session.turns.length;
  const roundEvents=Array.isArray(session.result?.log)?session.result.log.filter(event=>event.round===completedRound):[];
- return {round:session.round,completedRound,roundEvents,finished:session.finished,
+ const roundTeams=completedRound&&Array.isArray(session.result?.teams)?session.result.teams.map(team=>team.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position}))):null;
+ return {round:session.round,completedRound,roundEvents,roundTeams,finished:session.finished,
   submitted:session.pending.map(x=>x!==undefined),
   yourSide:side,
   yourCommand:session.pending[side]?.command??null,
