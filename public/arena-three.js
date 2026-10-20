@@ -247,6 +247,23 @@ if(stage){
         if(['magic','cosmic','lightning','mind','shield'].includes(profile.style))spawnAbility(actor,profile.style,profile.accent||'#65ddff');
       }
     };
+    // Commander effects are presentation-only; the server's combat log remains authoritative.
+    const commanderVisual=e=>{
+      const entries=e.detail?.events||[e.detail?.event];
+      for(const entry of entries){
+        const match=/^commander-(attack|defense|magic|support)-(normal|ultimate)$/.exec(entry?.action||'');
+        if(!match||![0,1].includes(entry.side))continue;
+        const [,kind,ability]=match;
+        const affectedSide=kind==='attack'||kind==='magic'?1-entry.side:entry.side;
+        const color={attack:0xff665a,defense:0x49cfff,magic:0xb68cff,support:0x54eea1}[kind];
+        for(const mesh of fighters.values()){
+          if(mesh.userData.side!==affectedSide||!mesh.visible)continue;
+          spawnAbility(mesh,ability==='ultimate'?'cosmic':'magic',color);
+          if(ability==='ultimate')spawnImpact(mesh.position,color);
+        }
+      }
+    };
+    window.addEventListener('heroarena:move',commanderVisual);
     window.addEventListener('heroarena:ready',e=>sync(e.detail.teams));
     window.addEventListener('heroarena:move',move);
     if(Array.isArray(window.heroArenaTeams))sync(window.heroArenaTeams);
