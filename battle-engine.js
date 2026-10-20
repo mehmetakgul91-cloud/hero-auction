@@ -2,6 +2,7 @@
 // Not connected to live matchmaking or wallet payouts.
 import crypto from 'node:crypto';
 import {orderHeroActions} from './battle-action-scheduler.js';
+import {selectBattleTarget} from './battle-target-selection.js';
 import {applyCommanderSupport} from './arena-commanders.js';
 
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
@@ -23,13 +24,7 @@ export function fighterFromCard(card,position=0){
 }
 // Slots 0-1 are the front line; slots 2-4 are the protected rear line.
 function isFront(unit){return unit.lane==='front'}
-function targetOf(enemies,attacker,round){
-  const alive=enemies.filter(x=>x.hp>0);
-  if(!alive.length)return null;
-  const frontline=alive.filter(isFront);
-  const pool=attacker.role==='assassin'&&round%3===0?alive:(frontline.length?frontline:alive);
-  return [...pool].sort((a,b)=>a.position-b.position||a.id.localeCompare(b.id))[(round+attacker.position)%pool.length];
-}
+
 // Manual commander commands are validated against actual round energy; no command means no active ability.
 export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,remainingCredits=[0,0],commanders=[null,null],commanderActions=[]}={}){
   if(!Array.isArray(remainingCredits)||remainingCredits.length!==2||remainingCredits.some(v=>!Number.isSafeInteger(v)||v< -10000||v>10000))throw Error('Invalid auction remaining credits');
@@ -135,7 +130,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
         const ally=[...allies].filter(x=>x.hp>0&&x.hp<x.maxHp).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
         if(ally){const heal=Math.min(ally.maxHp-ally.hp,Math.round(unit.attack*.52));ally.hp+=heal;unit.healing+=heal;log.push({round,side,actor:unit.id,action:'heal',target:ally.id,value:heal});continue}
       }
-      const target=targetOf(enemies,unit,round);
+      const target=selectBattleTarget(enemies,unit,round);
       if(!target)break;
       const special=round%3===0;
       const skill=special?unit.active:null;
