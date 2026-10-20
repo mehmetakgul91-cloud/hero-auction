@@ -3,11 +3,11 @@ import {applyAttackThorns} from './commander-parity-thorns.js';
 import {calculateHeroRawDamage} from './battle-damage-formula.js';
 import {selectBattleTarget} from './battle-target-selection.js';
 import {grantLiveCommanderEnergy} from './commander-live-abilities.js';
-export function stepParityStatSpecial(combat,{side,actorId,round=combat?.round,critical=false,allowThornsPassive=false}={}){
+export function stepParityStatSpecial(combat,{side,actorId,round=combat?.round,critical=false,allowThornsPassive=false,allowRoundPassives=false}={}){
  if(!combat||combat.finished||![0,1].includes(side)||round!==combat.round||round%3!==0||typeof critical!=='boolean')throw Error('Invalid stat special turn');
  const teams=structuredClone(combat.teams),actor=teams[side].find(u=>u.id===actorId&&u.hp>0);
  const effect=actor?.active?.effect;
- if(!actor||(actor.passive&&!(allowThornsPassive&&actor.passive.effect==='thorns'))||!['sunder','weaken','haste'].includes(effect)||['tank','energy'].includes(actor.role))throw Error('Unsupported stat special');
+ if(!actor||(actor.passive&&!((allowThornsPassive&&actor.passive.effect==='thorns')||(allowRoundPassives&&['guard','resist','focus','evasion','momentum','regen','rage'].includes(actor.passive.effect))))||!['sunder','weaken','haste'].includes(effect)||['tank','energy'].includes(actor.role))throw Error('Unsupported stat special');
  const enemies=teams[1-side],target=selectBattleTarget(enemies,actor,round);
  if(!target)throw Error('No living target');
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
