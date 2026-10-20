@@ -26,7 +26,7 @@ test('support commander heals once, retains HP next round and never exceeds max 
 });
 test('magic weakening remains recorded across round boundary pending duration decision',()=>{
  const c=combat('magic');
- castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'magic_once_01',matchKey:'effects:1',now:2000});
+ castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'magic_once_01',targetIds:['1-0'],matchKey:'effects:1',now:2000});
  const weakened=c.teams[1].filter(u=>u.commanderWeaken>0);
  assert.equal(weakened.length,1);
  beginServerCombatRound(c,2);
@@ -36,7 +36,7 @@ test('magic weakening remains recorded across round boundary pending duration de
 test('magic expires after three inclusive rounds',()=>{
  const c=combat('magic');
  beginServerCombatRound(c,2);beginServerCombatRound(c,3);beginServerCombatRound(c,4);
- castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'magic_fourth_01',matchKey:'effects:1',now:2000});
+ castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'magic_fourth_01',targetIds:['1-0'],matchKey:'effects:1',now:2000});
  const target=c.teams[1].find(u=>u.commanderWeaken>0);
  assert.equal(target.commanderWeakenUntilRound,6);
  beginServerCombatRound(c,5);assert.equal(target.commanderWeakenUntilRound,6);
@@ -45,11 +45,11 @@ test('magic expires after three inclusive rounds',()=>{
 });
 test('recast refreshes duration without stacking weakening percentages',()=>{
  const c=combat('magic');
- castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'magic_first_01',matchKey:'effects:1',now:2000});
+ castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'magic_first_01',targetIds:['1-0'],matchKey:'effects:1',now:2000});
  const initial=c.teams[1].find(u=>u.commanderWeaken>0);
  assert.equal(initial.commanderWeaken,.30);
  beginServerCombatRound(c,2);
- castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'magic_again_01',matchKey:'effects:1',now:7000});
+ castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'magic_again_01',targetIds:['1-0'],matchKey:'effects:1',now:7000});
  const renewed=c.teams[1].find(u=>u.id===initial.id);
  assert.equal(renewed.commanderWeaken,.30);
  assert.equal(renewed.commanderWeakenUntilRound,4);
