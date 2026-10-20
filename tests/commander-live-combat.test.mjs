@@ -64,3 +64,23 @@ test('magic cannot target dead enemy and rejected selection costs no energy',()=
  assert.equal(combat.abilities.energy[0],100);
  assert.equal(combat.version,0);
 });
+
+test('magic ultimate accepts one target when only one enemy survives',()=>{
+ const combat=make();combat.commanders[0]={commanderId:'magic'};
+ for(let i=1;i<5;i++)combat.teams[1][i].hp=0;
+ const result=castLiveCommanderCombat(combat,{side:0,ability:'ultimate',requestId:'sole_enemy_001',matchKey:'room:1',now:2000,targetIds:['1-0']});
+ assert.equal(result.version,1);
+ assert.equal(combat.teams[1][0].commanderWeaken,.4);
+ assert.equal(combat.teams[1][0].commanderWeakenUntilRound,3);
+ assert.equal(combat.abilities.energy[0],0);
+ assert.equal(combat.abilities.cooldownUntil[0],7000);
+});
+test('magic ultimate still requires two distinct targets when two enemies survive',()=>{
+ const combat=make();combat.commanders[0]={commanderId:'magic'};
+ for(let i=2;i<5;i++)combat.teams[1][i].hp=0;
+ assert.throws(()=>castLiveCommanderCombat(combat,{side:0,ability:'ultimate',requestId:'two_enemy_001',matchKey:'room:1',now:2000,targetIds:['1-0']}),/Invalid magic targets/);
+ assert.equal(combat.abilities.energy[0],100);
+ assert.equal(combat.version,0);
+ const result=castLiveCommanderCombat(combat,{side:0,ability:'ultimate',requestId:'two_enemy_001',matchKey:'room:1',now:2000,targetIds:['1-0','1-1']});
+ assert.equal(result.version,1);
+});
