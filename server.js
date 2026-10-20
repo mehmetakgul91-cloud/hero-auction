@@ -11,6 +11,9 @@ import {auctionRoomToBattleState,prepareBattleTeams} from './battle-match.js';
 import {createRoomCommanderSession,submitRoomCommanderTurn,viewRoomCommanderSession} from './commander-room-bridge.js';
 import {createLiveCommanderAbilities,viewLiveCommanderAbilities} from './commander-live-abilities.js';
 import {deriveLiveArenaRoomBinding,verifyLiveArenaRoomBinding} from './commander-live-room-binding.js';
+import {createLiveArenaLifecycle} from './commander-live-arena-lifecycle.js';
+import {prepareLiveArenaTeams} from './commander-live-team-preparation.js';
+import {createLiveCommanderCombat} from './commander-live-combat.js';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
 const GOOGLE_CLIENT_ID=process.env.GOOGLE_CLIENT_ID||'742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
@@ -24,6 +27,8 @@ const rooms=new Map();
 const commanderTurnSessions=new Map();
 const liveCommanderAbilitySessions=new Map();
 const commanderTurnApiEnabled=process.env.EXPERIMENTAL_COMMANDER_TURNS==='1';
+const liveArenaLifecycle=createLiveArenaLifecycle({intervalMs:900,onError:(e,key)=>console.error('Live arena stopped:',key,e.message)});
+const liveArenaMatchKeys=new Map();
 // Standalone preview only: temporary, non-persistent guest credits without a database.
 const previewGuestWallets=new Map();
 const previewCommanderProfiles=new Map();
@@ -83,7 +88,7 @@ async function applyVerifiedReward(accountId,providerEventId){
     return {credited:true,amount:REWARDED_AD_GOLD};
   }catch(e){await client.query('ROLLBACK').catch(()=>{});throw e}finally{client.release()}
 }
-async function chargeEntry(accountIds,matchId){if(!database||!databaseReady)error('Altın sistemi şu anda kullanılamıyor.',503);const ids=[...new Set(accountIds.filter(Boolean))];if(ids.length!==accountIds.filter(Boolean).length)error('Aynı hesap iki oyuncu olarak katılamaz.');const client=await database.connect();try{await client.query('BEGIN');for(const id of ids.sort()){await client.query('INSERT INTO hero_auction_wallets(account_id,gold) VALUES($1,500) ON CONFLICT DO NOTHING',[id]);const paid=await client.query('UPDATE hero_auction_wallets SET gold=gold-50 WHERE account_id=$1 AND gold>=50 RETURNING gold',[id]);if(!paid.rowCount)error('Maça katılmak için en az 50 altın gerekli.')}await client.query('COMMIT');return true}catch(e){await client.query('ROLLBACK').catch(()=>{});throw e}finally{client.release()}}
+async function chargeEntry(accountIds,matchId){const ids=[...new Set(accountIds.filter(Boolean))];if(ids.length!==accountIds.filter(Boolean).length)error('Aynı hesap iki oyuncu olarak katılamaz.');if(previewGuestMode&&!databaseReady){const before=new Map(ids.map(id=>[id,previewGuestWallets.get(id)??500]));if([...before.values()].some(gold=>gold<50))error('Maça katılmak için en az 50 altın gerekli.');for(const [id,gold] of before)previewGuestWallets.set(id,gold-50);return true}if(!database||!databaseReady)error('Altın sistemi şu anda kullanılamıyor.',503);const client=await database.connect();try{await client.query('BEGIN');for(const id of ids.sort()){await client.query('INSERT INTO hero_auction_wallets(account_id,gold) VALUES($1,500) ON CONFLICT DO NOTHING',[id]);const paid=await client.query('UPDATE hero_auction_wallets SET gold=gold-50 WHERE account_id=$1 AND gold>=50 RETURNING gold',[id]);if(!paid.rowCount)error('Maça katılmak için en az 50 altın gerekli.')}await client.query('COMMIT');return true}catch(e){await client.query('ROLLBACK').catch(()=>{});throw e}finally{client.release()}}
 async function flushGold(){if(!database||!databaseReady)return;for(const [id,a] of [...pendingGold]){const client=await database.connect().catch(()=>null);if(!client)break;try{await client.query('BEGIN');const inserted=await client.query('INSERT INTO hero_auction_gold_awards(award_id,account_id,amount) VALUES($1,$2,$3) ON CONFLICT DO NOTHING RETURNING award_id',[id,a.accountId,a.amount]);if(inserted.rowCount){await client.query('INSERT INTO hero_auction_wallets(account_id,gold) VALUES($1,$2) ON CONFLICT(account_id) DO UPDATE SET gold=hero_auction_wallets.gold+$2',[a.accountId,a.amount])}await client.query('COMMIT');pendingGold.delete(id)}catch(e){await client.query('ROLLBACK').catch(()=>{});console.error('Gold reward error:',e.message)}finally{client.release()}}}
 function onlineStats(){
  const now=Date.now();
@@ -494,7 +499,7 @@ if(url.pathname==='/api/experimental/live-room-binding'&&req.method==='GET'){
  }catch(e){return send(403,{error:e.message})}
 }
 if(url.pathname==='/api/experimental/commander-live'&&(req.method==='GET'||req.method==='POST')){
- if(!commanderTurnApiEnabled)return send(404,{error:'Experimental commander API disabled'});
+ if(!commanderTurnApiEnabled&&!previewGuestMode)return send(404,{error:'Experimental commander API disabled'});
  let body={};
  if(req.method==='POST'){
   let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>2000)return send(413,{error:'İstek çok büyük'})}
@@ -505,21 +510,21 @@ if(url.pathname==='/api/experimental/commander-live'&&(req.method==='GET'||req.m
  if(!room||side<0||room.mode==='bot')return send(403,{error:'Yetkisiz oda'});
  if(room.phase!=='finished'||!room.battleSync?.result||!room.battleSync?.commanderInput)return send(409,{error:'Arena henüz hazır değil'});
  const matchKey=room.code+':'+String(room.matchNumber||1)+':'+String(room.created);
- let session=liveCommanderAbilitySessions.get(matchKey);
- if(!session){
-  session=createLiveCommanderAbilities({matchKey});
-  liveCommanderAbilitySessions.set(matchKey,session);
- }
+ const liveKey=liveArenaMatchKeys.get(room.code)||room.code+':'+String(room.matchNumber||1)+':'+String(room.created);
+ const sinceVersion=Number(req.method==='GET'?url.searchParams.get('sinceVersion')||0:body.sinceVersion||0);
+ if(!Number.isSafeInteger(sinceVersion)||sinceVersion<0)return send(400,{error:'Geçersiz savaş sürümü'});
+ const snapshot=()=>{const current=liveArenaLifecycle.snapshot({matchKey:liveKey,token:body.token,sinceVersion});return side===0?current:{...current,side:0,teams:[...current.teams].reverse(),abilities:[...current.abilities].reverse(),events:current.events.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side}))};};
  try{
   if(req.method==='POST'){
-   // Fail closed: validating the cast request never deducts energy or starts cooldown.
-   // The authoritative incremental hero battle is not yet integrated.
    if(!['normal','ultimate'].includes(body?.ability))return send(422,{error:'Geçersiz komutan yeteneği'});
    if(typeof body?.requestId!=='string'||!/^[-a-zA-Z0-9_]{8,80}$/.test(body.requestId))return send(422,{error:'Geçersiz yetenek istek kimliği'});
    if(body?.targetIds!==undefined&&(!Array.isArray(body.targetIds)||body.targetIds.length>2||body.targetIds.some(id=>typeof id!=='string'||id.length>120)||new Set(body.targetIds).size!==body.targetIds.length))return send(422,{error:'Geçersiz büyü hedefleri'});
-   return send(409,{error:'Anlık yetenek henüz gerçek savaş motoruna bağlı değil; enerji harcanmadı',code:'LIVE_COMBAT_NOT_READY'});
+   const cast=liveArenaLifecycle.cast({matchKey:liveKey,token:body.token,ability:body.ability,requestId:body.requestId,targetIds:body.targetIds,now:Date.now()});
+   const current=snapshot();
+   return send(200,{...current,cast,serverTime:Date.now()});
   }
-  return send(200,{...viewLiveCommanderAbilities(session,side),mode:'preview',cooldownSeconds:5});
+  const current=snapshot();
+  return send(200,{...current,commanderId:room.battleSync.commanderInput.commanders[side]?.commanderId,serverTime:Date.now()});
  }catch(e){return send(422,{error:e.message})}
 }
 if(url.pathname==='/api/experimental/commander-turn'&&(req.method==='GET'||req.method==='POST')){
@@ -597,15 +602,26 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
   if(ids.length){
    const records=await database.query('SELECT account_id,profile FROM hero_auction_commanders WHERE account_id=ANY($1::text[])',[ids]);
    const byId=new Map(records.rows.map(row=>[row.account_id,row.profile]));
-   for(let i=0;i<2;i++){
+    for(let i=0;i<2;i++){
     const profile=byId.get(accountIds[i]);
     if(profile)commanderProfiles[i]=validateCommanderProfile(profile);
    }
   }
+ }else if(previewGuestMode){
+  for(let i=0;i<2;i++){const accountId=room.players[i]?.accountId;const profile=accountId&&previewCommanderProfiles.get(accountId);if(profile)commanderProfiles[i]=validateCommanderProfile(profile);}
  }
- const result=simulateRosterBattle(ordered[0],ordered[1],{seed:'auction-battle-'+room.code+'-'+matchKey,remainingCredits:[state.remainingCreditsA,state.remainingCreditsB],commanders:commanderProfiles});
  sync.commanderInput={cards:ordered,commanders:commanderProfiles,remainingCredits:[state.remainingCreditsA,state.remainingCreditsB]};
- sync.result={winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log,commanders:commanderProfiles.map(profile=>profile?{commanderId:profile.commanderId,levels:{...profile.levels}}:null)};
+ let result;
+ if(room.mode!=='bot'&&commanderProfiles.every(Boolean)){
+  const liveKey=room.code+':'+matchKey;
+  const liveTeams=prepareLiveArenaTeams(ordered[0],ordered[1],{remainingCredits:[state.remainingCreditsA,state.remainingCreditsB],commanders:commanderProfiles,cardAdapter:'auction'});
+  const combat=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:liveKey,energy:[0,0]}),teams:liveTeams,commanders:commanderProfiles});
+  liveArenaLifecycle.begin({matchKey:liveKey,tokens:room.players.map(p=>p.token),combat,options:{parity:true,specialHealing:true,energySplash:true,shieldDrain:true,statSpecial:true,executeSpecial:true,thornsPassive:true,roundPassives:true,damageSpecial:true}});
+  liveArenaMatchKeys.set(room.code,liveKey);
+ }
+ try{result=simulateRosterBattle(ordered[0],ordered[1],{seed:'auction-battle-'+room.code+'-'+matchKey,remainingCredits:[state.remainingCreditsA,state.remainingCreditsB],commanders:commanderProfiles});}
+ catch(e){if(!liveArenaMatchKeys.has(room.code))throw e;const live=liveArenaLifecycle.snapshot({matchKey:liveArenaMatchKeys.get(room.code),token:room.players[0].token});result={winner:null,rounds:live.round,teams:live.teams,log:[]};}
+ sync.result={winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log,live:liveArenaMatchKeys.has(room.code),commanders:commanderProfiles.map(profile=>profile?{commanderId:profile.commanderId,levels:{...profile.levels}}:null)};
  if(room.battleSettlementPending&&!room.matchSettled){settleFinishedMatch(room,result.winner);room.battleSettlementPending=false;}
  }markRoom(room);
  }

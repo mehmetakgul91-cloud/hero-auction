@@ -30,5 +30,6 @@ test('experimental committed round feeds commander visuals without altering repl
  assert.match(client,/heroarena:commander-round/);
  assert.match(effect,/addEventListener\('heroarena:commander-round',showCommanderAbility\)/);
  assert.match(three,/addEventListener\('heroarena:commander-round',commanderVisual\)/);
- assert.match(client,/completed>lastCompletedRound/);
+ assert.match(client,/data\.events\|\|\[\]/);
+ assert.match(client,/heroarena:experimental-round-end/);
 });
