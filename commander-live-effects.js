@@ -1,6 +1,6 @@
 // Deterministic commander effects against an already initialized combat snapshot.
 // This is an isolated adapter; it does not advance the existing hero attack loop.
-export function applyLiveCommanderEffect(teams,{side,ability,commanderId,round=1}){
+export function applyLiveCommanderEffect(teams,{side,ability,commanderId,round=1,targetIds}){
  if(!Array.isArray(teams)||teams.length!==2||teams.some(t=>!Array.isArray(t))||![0,1].includes(side))throw Error('Invalid battle snapshot');
  if(!['normal','ultimate'].includes(ability))throw Error('Invalid ability');
  if(!['attack','defense','magic','support'].includes(commanderId))throw Error('Invalid commander');
@@ -29,7 +29,10 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,round=1
    const healed=Math.max(0,Math.min(budget,u.maxHp-u.hp));u.hp+=healed;budget-=healed;value+=healed;
   }
  }else{
-  for(const u of [...enemies].sort((a,b)=>b.attack-a.attack).slice(0,strong?2:1)){
+  const count=strong?2:1;
+  if(!Array.isArray(targetIds)||targetIds.length!==count||new Set(targetIds).size!==count||targetIds.some(id=>typeof id!=='string'||!enemies.some(u=>u.id===id)))throw Error('Invalid magic targets');
+  for(const id of targetIds){
+   const u=enemies.find(hero=>hero.id===id);
    u.commanderWeaken=Math.max(u.commanderWeaken||0,strong?.40:.30);u.commanderWeakenUntilRound=round+2;value++;
   }
  }
