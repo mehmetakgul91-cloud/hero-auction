@@ -124,3 +124,23 @@ test('shield skill attacks normally outside special rounds',()=>{
  assert.equal(result.event.action,'attack');
  assert.equal(c.teams[0][0].shield,0);
 });
+
+for(const [effect,action] of [['sunder','armor-break'],['weaken','weaken'],['haste','haste']]){
+ test('scheduled '+effect+' special updates stats on third round',()=>{
+  const c=make();c.round=3;c.teams[0][0].active={effect,name:effect};
+  const original={defense:c.teams[1][0].defense,attack:c.teams[1][0].attack,speed:c.teams[0][0].speed};
+  const session=createBasicTurnSession(c,{parity:true,statSpecial:true});
+  const {result}=stepBasicTurn(session);
+  assert.equal(result.events[0].action,action);
+  assert.equal(result.events.length,2);
+  assert.equal(c.version,1);
+  if(effect==='sunder')assert.equal(c.teams[1][0].defense,Math.max(5,Math.floor(original.defense*.85)));
+  if(effect==='weaken')assert.equal(c.teams[1][0].attack,Math.max(5,Math.floor(original.attack*.9)));
+  if(effect==='haste')assert.equal(c.teams[0][0].speed,Math.min(150,original.speed+8));
+ });
+}
+test('stat special actor uses ordinary attack on non-special round',()=>{
+ const c=make();c.teams[0][0].active={effect:'weaken'};
+ const session=createBasicTurnSession(c,{parity:true,statSpecial:true});
+ assert.equal(stepBasicTurn(session).result.event.action,'attack');
+});
