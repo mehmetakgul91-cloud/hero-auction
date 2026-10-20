@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createTurnSubmissionState,submitTurnCommand,validateTurnCommand} from '../commander-turns.js';
+import {createTurnSubmissionState,submitTurnCommand,validateTurnCommand,resolveTurnSubmissions,calculateNextTurnEnergy} from '../commander-turns.js';
 
 test('two players must both submit before a turn is ready',()=>{
  const state=createTurnSubmissionState(4);
@@ -24,4 +24,21 @@ test('rejects insufficient energy and missing commander',()=>{
 });
 test('accepts ultimate at 100 energy',()=>{
  assert.equal(validateTurnCommand('ultimate',{side:1,round:9,energy:100,commanderId:'support'}).ability,'ultimate');
+});
+
+test('turn cannot resolve until both players submit',()=>{
+ const state=createTurnSubmissionState(4);
+ submitTurnCommand(state,{side:0,round:4,command:'pass',energy:48,commanderId:'attack'});
+ assert.throws(()=>resolveTurnSubmissions(state),/Both players/);
+ submitTurnCommand(state,{side:1,round:4,command:'normal',energy:48,commanderId:'defense'});
+ assert.deepEqual(resolveTurnSubmissions(state),[{side:1,round:4,ability:'normal'}]);
+});
+test('next turn energy accounts for skill cost and hero losses',()=>{
+ assert.equal(calculateNextTurnEnergy(48,{ability:'normal'}),20);
+ assert.equal(calculateNextTurnEnergy(90,{ability:'normal'},{lostHeroes:2}),82);
+ assert.equal(calculateNextTurnEnergy(100,null,{lostHeroes:5}),100);
+});
+test('invalid energy calculations are rejected',()=>{
+ assert.throws(()=>calculateNextTurnEnergy(20,{ability:'normal'}),/unaffordable/);
+ assert.throws(()=>calculateNextTurnEnergy(40,{ability:'normal'},{lostHeroes:6}),/Invalid hero loss/);
 });
