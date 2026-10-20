@@ -15,6 +15,6 @@ jobs:
         with:
           node-version: '22'
       - name: Commander regression tests
-        run: node --test tests/commander-regression.test.mjs tests/commander-turns.test.mjs tests/commander-transcript.test.mjs tests/commander-match-session.test.mjs tests/commander-room-bridge.test.mjs tests/commander-room-integration.test.mjs
+        run: node --test tests/commander-regression.test.mjs tests/commander-turns.test.mjs tests/commander-transcript.test.mjs tests/commander-match-session.test.mjs tests/commander-room-bridge.test.mjs tests/commander-room-integration.test.mjs tests/commander-http.test.mjs
       - name: Existing battle balance smoke test
         run: node tools/battle-balance.mjs > /tmp/hero-auction-balance.json
