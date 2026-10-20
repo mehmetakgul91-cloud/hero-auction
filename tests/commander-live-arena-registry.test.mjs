@@ -27,9 +27,22 @@ test('server-only hero action interleaves with authorized commander cast',()=>{
  assert.equal(snapshot.side,0);
  assert.equal(snapshot.abilities[0].energy,60);
  assert.equal(snapshot.abilities[1].energy,null);
+ assert.equal(snapshot.abilities[1].cooldownMs,null);
  assert.equal(snapshot.nextHero.actorId,'b');
 });
 test('duplicate match registration is rejected',()=>{
  const {registry,matchKey}=setup();
  assert.throws(()=>registry.register({matchKey,tokens:['x','y'],combat:{}}),/Invalid live arena registration/);
+});
+
+test('snapshot reports authoritative remaining cooldown for own seat',()=>{
+ const {registry,matchKey}=setup();
+ registry.cast({matchKey,token:'secret-A',ability:'normal',requestId:'cast_00001',now:1000});
+ const during=registry.snapshot({matchKey,token:'secret-A',now:2500});
+ assert.equal(during.abilities[0].cooldownMs,3500);
+ assert.equal(during.abilities[0].canUseNormal,false);
+ assert.equal(during.abilities[1].cooldownMs,null);
+ const after=registry.snapshot({matchKey,token:'secret-A',now:6000});
+ assert.equal(after.abilities[0].cooldownMs,0);
+ assert.equal(after.abilities[0].canUseNormal,true);
 });
