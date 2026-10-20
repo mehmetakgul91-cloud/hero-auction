@@ -16,9 +16,13 @@ export function submitCommanderMatchTurn(session,{side,round,command}){
  if(round!==session.round)throw Error('Stale or future turn');
  if(session.pending[side]!==undefined)throw Error('Turn already submitted');
  if(!['pass','normal','ultimate',null].includes(command))throw Error('Invalid commander command');
- session.pending[side]={command};
- if(session.pending.some(x=>x===undefined))return {ready:false,round:session.round};
- const turns=[...session.turns,session.pending.map(x=>({...x}))];
+ const nextPending=[...session.pending];
+ nextPending[side]={command};
+ if(nextPending.some(x=>x===undefined)){
+  session.pending=nextPending;
+  return {ready:false,round:session.round};
+ }
+ const turns=[...session.turns,nextPending.map(x=>({...x}))];
  // Validate and compute the complete round before mutating committed state.
  const result=replayCommanderTranscript(session.cardsA,session.cardsB,{
   commanders:session.commanders,turns,seed:session.seed,
