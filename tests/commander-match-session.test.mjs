@@ -15,7 +15,8 @@ test('waits for both players and advances one round',()=>{
 test('rejects stale turns and allows changing a pending choice',()=>{
  const session=make();
  submitCommanderMatchTurn(session,{side:0,round:1,command:'pass'});
- assert.equal(submitCommanderMatchTurn(session,{side:0,round:1,command:'pass'}).ready,false);
+ assert.equal(submitCommanderMatchTurn(session,{side:0,round:1,command:null}).ready,false);
+ assert.deepEqual(session.pending[0],{command:null});
  assert.throws(()=>submitCommanderMatchTurn(session,{side:1,round:2,command:'pass'}),/Stale or future/);
 });
 test('invalid ability is rejected immediately without mutating the session',()=>{
