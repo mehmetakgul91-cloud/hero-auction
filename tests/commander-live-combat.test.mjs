@@ -35,7 +35,11 @@ test('cooldown rejection leaves battle snapshot unchanged',()=>{
 test('both players see identical snapshots and incremental events',()=>{
  const combat=make();
  castLiveCommanderCombat(combat,{side:0,ability:'normal',requestId:'request_001',matchKey:'room:1',now:2000});
- castLiveCommanderCombat(combat,{side:1,ability:'normal',requestId:'request_002',matchKey:'room:1',now:2001});
+ const before=viewLiveCommanderCombat(combat);
+ assert.throws(()=>castLiveCommanderCombat(combat,{side:1,ability:'normal',requestId:'request_002',matchKey:'room:1',now:3999}),/Komutan efekti/);
+ assert.deepEqual(viewLiveCommanderCombat(combat),before);
+ assert.equal(combat.abilities.energy[1],100);
+ castLiveCommanderCombat(combat,{side:1,ability:'normal',requestId:'request_002',matchKey:'room:1',now:4000});
  assert.equal(viewLiveCommanderCombat(combat,{sinceVersion:1}).events.every(e=>e.version===2),true);
  assert.deepEqual(viewLiveCommanderCombat(combat).teams,viewLiveCommanderCombat(combat,{sinceVersion:1}).teams);
 });
