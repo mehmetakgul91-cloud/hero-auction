@@ -1,7 +1,8 @@
 // Authenticated two-seat controls for the server-owned live arena.
-const params=new URLSearchParams(location.search);
-const panel=document.getElementById('experimental-commander-controls');
-if(panel&&params.get('commanderTest')==='1'&&params.has('auctionCode')&&params.has('auctionToken')&&!window.__heroArenaCommanderControlsInitialized){
+function initializeCommanderControls(){
+ const params=new URLSearchParams(location.search);
+ const panel=document.getElementById('experimental-commander-controls');
+ if(!panel||params.get('commanderTest')!=='1'||!params.has('auctionCode')||!params.has('auctionToken')||window.__heroArenaCommanderControlsInitialized)return;
  window.__heroArenaCommanderControlsInitialized=true;
  const code=params.get('auctionCode'),token=params.get('auctionToken'),side=Number(params.get('seat')||0);
  const $=s=>panel.querySelector(s),normal=$('[data-command="normal"]'),ultimate=$('[data-command="ultimate"]'),pass=$('[data-command="pass"]');
@@ -17,3 +18,5 @@ if(panel&&params.get('commanderTest')==='1'&&params.has('auctionCode')&&params.h
  void refresh();const interval=setInterval(()=>{if(stopped){clearInterval(interval);return}if(!document.hidden)void refresh()},700);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh()});
 }
+initializeCommanderControls();
+window.addEventListener('heroarena:route-change',initializeCommanderControls);

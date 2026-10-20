@@ -46,6 +46,16 @@ test('live commander profile and ability buttons share a safe-area bottom dock',
  assert.match(css,/\[data-command\]\{min-height:48px!important/);
 });
 
+test('commander controls initialize after the single page arena route changes',()=>{
+ const client=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8');
+ const controls=readFileSync(new URL('../public/commander-experimental.js',import.meta.url),'utf8');
+ const cooldown=readFileSync(new URL('../public/commander-live-cooldown.js',import.meta.url),'utf8');
+ assert.match(client,/history\.replaceState\(null,'',url\)[\s\S]{0,160}heroarena:route-change/);
+ assert.match(controls,/window\.addEventListener\('heroarena:route-change',initializeCommanderControls\)/);
+ assert.match(cooldown,/window\.addEventListener\('heroarena:route-change',initializeCommanderCooldown\)/);
+ assert.match(controls,/panel\.hidden=false/);
+});
+
 test('experimental committed round feeds commander visuals without altering replay',()=>{
  const client=readFileSync(new URL('../public/commander-experimental.js',import.meta.url),'utf8');
  const three=readFileSync(new URL('../public/arena-three.js',import.meta.url),'utf8');

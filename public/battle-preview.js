@@ -257,6 +257,7 @@ function enterArenaWithoutReload(url){
  history.replaceState(null,'',url);
  arenaMode=true;
  mountCommanderDock();
+ window.dispatchEvent(new CustomEvent('heroarena:route-change',{detail:{url}}));
  void requestArenaWakeLock();
  startArenaVideoKeepAwake();
  revealArenaAudio();
