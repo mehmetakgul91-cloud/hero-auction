@@ -1,17 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const read=name=>readFileSync(new URL('../public/'+name,import.meta.url),'utf8');
-test('experimental cooldown UI fetches server-owned remaining time',()=>{
- const src=read('commander-live-cooldown.js');
- assert.match(src,/api\/experimental\/commander-live/);
- assert.match(src,/data\.cooldownMs/);
- assert.match(src,/Math\.ceil/);
- assert.match(src,/visibilitychange/);
+import {runInNewContext} from 'node:vm';
+const src=readFileSync(new URL('../public/commander-live-cooldown.js',import.meta.url),'utf8');
+function harness(){
+ let now=0,tick;const events=new Map(),label={textContent:''},window={heroCommanderEffectUntil:0,addEventListener:(name,fn)=>events.set(name,fn)};
+ runInNewContext(src,{window,document:{querySelector:()=>label},Date:{now:()=>now},setInterval:fn=>{tick=fn;}});
+ return {label,window,snapshot:data=>events.get('heroarena:commander-state')({detail:data}),advance:time=>{now=time;tick();}};
+}
+test('cooldown uses the acting seat snapshot and prioritizes the shared effect',()=>{
+ const h=harness();h.snapshot({side:1,abilities:[{}, {cooldownMs:5000,effectLockMs:2000}],finished:false});
+ assert.match(h.label.textContent,/Komutan efekti · 2/);
+ h.advance(2000);assert.match(h.label.textContent,/bekleme süresi: 3/);
+ h.advance(5000);assert.match(h.label.textContent,/becerini kullanabilirsin/);
+ h.window.heroCommanderEffectUntil=6500;h.advance(5100);assert.match(h.label.textContent,/Komutan efekti · 2/);
+ h.snapshot({side:1,abilities:[{},{}],finished:true});assert.equal(h.label.textContent,'Savaş tamamlandı');
 });
-test('cooldown preview is explicitly non-interactive until combat integration',()=>{
- const src=read('commander-live-cooldown.js');
- assert.doesNotMatch(src,/method:\s*'POST'/);
- assert.match(src,/savaş motoru bağlantısını bekliyor/);
- assert.match(read('battle-preview.html'),/commander-live-cooldown\.js/);
+test('cooldown shares the control snapshot without extra network calls',()=>{
+ assert.doesNotMatch(src,/fetch\s*\(/);
+ const controls=readFileSync(new URL('../public/commander-experimental.js',import.meta.url),'utf8');
+ assert.match(controls,/heroarena:commander-state/);
 });
