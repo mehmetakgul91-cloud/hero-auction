@@ -32,3 +32,29 @@ test('magic weakening remains recorded across round boundary pending duration de
  beginServerCombatRound(c,2);
  assert.equal(c.teams[1].filter(u=>u.commanderWeaken>0).length,1);
 });
+
+test('magic expires after three inclusive rounds',()=>{
+ const c=combat('magic');
+ beginServerCombatRound(c,2);beginServerCombatRound(c,3);beginServerCombatRound(c,4);
+ castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'magic_fourth_01',matchKey:'effects:1',now:2000});
+ const target=c.teams[1].find(u=>u.commanderWeaken>0);
+ assert.equal(target.commanderWeakenUntilRound,6);
+ beginServerCombatRound(c,5);assert.equal(target.commanderWeakenUntilRound,6);
+ beginServerCombatRound(c,6);assert.ok(c.teams[1].some(u=>u.commanderWeaken>0));
+ beginServerCombatRound(c,7);assert.ok(c.teams[1].every(u=>!u.commanderWeaken));
+});
+test('recast refreshes duration without stacking weakening percentages',()=>{
+ const c=combat('magic');
+ castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'magic_first_01',matchKey:'effects:1',now:2000});
+ const initial=c.teams[1].find(u=>u.commanderWeaken>0);
+ assert.equal(initial.commanderWeaken,.30);
+ beginServerCombatRound(c,2);
+ castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'magic_again_01',matchKey:'effects:1',now:7000});
+ const renewed=c.teams[1].find(u=>u.id===initial.id);
+ assert.equal(renewed.commanderWeaken,.30);
+ assert.equal(renewed.commanderWeakenUntilRound,4);
+ beginServerCombatRound(c,3);beginServerCombatRound(c,4);
+ assert.equal(c.teams[1].find(u=>u.id===initial.id).commanderWeaken,.30);
+ beginServerCombatRound(c,5);
+ assert.ok(c.teams[1].every(u=>!u.commanderWeaken));
+});
