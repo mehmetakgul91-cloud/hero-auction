@@ -49,3 +49,19 @@ test('splash damage uses raw damage and validates absorption',()=>{
  assert.equal(c.teams[1][0].hp,85);
  assert.throws(()=>applyBattleLogHeroEvent(c,{round:1,side:0,actor:'0-0',target:'1-0',action:'attack',value:50,absorbed:0,rawDamage:10,damageType:'normal'}),/trustworthy/);
 });
+
+test('invalid future-round damage does not advance round or grant energy',()=>{
+ const c=setup();
+ const before=structuredClone(c.teams);
+ assert.throws(()=>applyBattleLogHeroEvent(c,{round:2,side:0,actor:'0-0',target:'1-0',action:'attack',value:30,absorbed:0,rawDamage:2,damageType:'normal'}),/trustworthy/);
+ assert.equal(c.round,1);
+ assert.deepEqual(c.abilities.energy,[0,0]);
+ assert.deepEqual(c.teams,before);
+ assert.equal(c.version,0);
+});
+test('unsupported debuff in next round leaves combat untouched',()=>{
+ const c=setup();
+ assert.throws(()=>applyBattleLogHeroEvent(c,{round:2,side:0,actor:'0-0',target:'1-0',action:'weaken',value:0}),/Unsupported/);
+ assert.equal(c.round,1);
+ assert.deepEqual(c.abilities.energy,[0,0]);
+});
