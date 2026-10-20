@@ -40,10 +40,10 @@ export function viewLiveCommanderCombat(combat,{sinceVersion=0}={}){
 // snapshot as commander abilities. Never accept this action from an HTTP client.
 export function applyServerHeroAction(combat,{side,actorId,targetId,action='attack',value,round=combat?.round}){
  if(!combat||combat.finished)throw Error('Battle already finished');
- if(![0,1].includes(side)||!['attack','heal'].includes(action)||!Number.isSafeInteger(value)||value<0||value>1000000||!Number.isInteger(round)||round!==combat.round)throw Error('Invalid server hero action');
+ if(![0,1].includes(side)||!['attack','heal','shield'].includes(action)||!Number.isSafeInteger(value)||value<0||value>1000000||!Number.isInteger(round)||round!==combat.round)throw Error('Invalid server hero action');
  const next=structuredClone(combat.teams);
  const actor=next[side].find(u=>u.id===actorId&&u.hp>0);
- const targetSide=action==='heal'?side:1-side;
+ const targetSide=action==='heal'||action==='shield'?side:1-side;
  const target=next[targetSide].find(u=>u.id===targetId&&u.hp>0);
  if(!actor||!target)throw Error('Invalid living actor or target');
  let applied=0,absorbed=0;
@@ -54,6 +54,9 @@ export function applyServerHeroAction(combat,{side,actorId,targetId,action='atta
   target.hp-=applied;
   actor.damage=(actor.damage||0)+applied;
   if(target.hp===0)actor.kills=(actor.kills||0)+1;
+ }else if(action==='shield'){
+  applied=value;
+  target.shield=(target.shield||0)+applied;
  }else{
   applied=Math.min(target.maxHp-target.hp,value);
   target.hp+=applied;
