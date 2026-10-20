@@ -19,18 +19,18 @@ export function stepParityDamageSpecial(combat,{side,actorId,round=combat?.round
  const weakened=Number.isInteger(actor.commanderWeakenUntilRound)&&round<=actor.commanderWeakenUntilRound?Math.max(0,Math.min(1,Number(actor.commanderWeaken)||0)):0;
  const raw=calculateHeroRawDamage({unit:actor,target,skill,special:true,critical,guarded,weakened});
  const events=[],deaths=[];
- function hit(victim,amount,action){
+ function hit(victim,amount,action,isSecondary=false){
   const absorbed=Math.min(victim.shield||0,amount);
   victim.shield=(victim.shield||0)-absorbed;
   const damage=Math.min(victim.hp,amount-absorbed);
   victim.hp-=damage;actor.damage=(actor.damage||0)+damage;
   if(victim.hp===0){actor.kills=(actor.kills||0)+1;deaths.push(victim.id)}
-  events.push({round,side,actor:actorId,action,target:victim.id,value:damage,absorbed,rawDamage:amount,damageType:action==='splash'?'splash':'special',...(action==='splash'?{}:{critical})});
+  events.push({round,side,actor:actorId,action,target:victim.id,value:damage,absorbed,rawDamage:amount,damageType:isSecondary?'splash':'special',...(isSecondary?{}:{critical})});
  }
  hit(target,raw,skill.name||'special');
  if(skill.effect==='splash'||actor.role==='energy'){
   const splashRaw=calculateSplashRawDamage(raw,{skill,role:actor.role,special:true});
-  for(const victim of enemies.filter(u=>u!==target&&u.hp>0))hit(victim,splashRaw,'splash');
+  for(const victim of enemies.filter(u=>u!==target&&u.hp>0))hit(victim,splashRaw,'splash',true);
  }
  if(actor.role==='tank'){
   for(const ally of teams[side].filter(u=>u.hp>0&&u.lane==='front'))ally.shield=(ally.shield||0)+Math.max(1,Math.round(actor.defense*.16));
