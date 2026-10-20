@@ -1,10 +1,10 @@
 // Audit the entire real roster against the opt-in incremental turn engine.
 // Reporting readiness never enables unsupported mechanics or changes the live game.
-import {battleRoster} from './battle-roster.js';
+import {commanderOriginalRoster} from './commander-original-roster.js';
 const START_PASSIVES=new Set(['guard','resist','focus','evasion','momentum','regen','rage']);
 const SUPPORTED_PASSIVES=new Set([...START_PASSIVES,'thorns']);
 const SUPPORTED_ACTIVE=new Set(['heal','shield','drain','sunder','weaken','haste','execute','burst','pierce','splash','headshot']);
-export function auditIncrementalRoster(roster=battleRoster){
+export function auditIncrementalRoster(roster=commanderOriginalRoster){
  if(!Array.isArray(roster))throw Error('Invalid hero roster');
  const rows=roster.map(hero=>{
   const issues=[];
