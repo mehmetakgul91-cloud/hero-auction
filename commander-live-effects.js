@@ -29,7 +29,7 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,round=1
    const healed=Math.max(0,Math.min(budget,u.maxHp-u.hp));u.hp+=healed;budget-=healed;value+=healed;
   }
  }else{
-  const count=strong?2:1;
+  const count=strong?Math.min(2,enemies.length):1;
   if(!Array.isArray(targetIds)||targetIds.length!==count||new Set(targetIds).size!==count||targetIds.some(id=>typeof id!=='string'||!enemies.some(u=>u.id===id)))throw Error('Invalid magic targets');
   for(const id of targetIds){
    const u=enemies.find(hero=>hero.id===id);
