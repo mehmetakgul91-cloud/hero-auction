@@ -1,6 +1,10 @@
 // Hero Auction 2.0 - isolated, deterministic automatic battle prototype.
 // Not connected to live matchmaking or wallet payouts.
 import crypto from 'node:crypto';
+import {orderHeroActions} from './battle-action-scheduler.js';
+import {selectBattleTarget} from './battle-target-selection.js';
+import {calculateHeroRawDamage} from './battle-damage-formula.js';
+import {calculateSplashRawDamage,calculateSpecialHeal} from './battle-special-formulas.js';
 import {applyCommanderSupport} from './arena-commanders.js';
 
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
@@ -22,13 +26,7 @@ export function fighterFromCard(card,position=0){
 }
 // Slots 0-1 are the front line; slots 2-4 are the protected rear line.
 function isFront(unit){return unit.lane==='front'}
-function targetOf(enemies,attacker,round){
-  const alive=enemies.filter(x=>x.hp>0);
-  if(!alive.length)return null;
-  const frontline=alive.filter(isFront);
-  const pool=attacker.role==='assassin'&&round%3===0?alive:(frontline.length?frontline:alive);
-  return [...pool].sort((a,b)=>a.position-b.position||a.id.localeCompare(b.id))[(round+attacker.position)%pool.length];
-}
+
 // Manual commander commands are validated against actual round energy; no command means no active ability.
 export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,remainingCredits=[0,0],commanders=[null,null],commanderActions=[]}={}){
   if(!Array.isArray(remainingCredits)||remainingCredits.length!==2||remainingCredits.some(v=>!Number.isSafeInteger(v)||v< -10000||v>10000))throw Error('Invalid auction remaining credits');
@@ -125,8 +123,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       if(effect==='regen'){const healed=Math.min(u.maxHp-u.hp,Math.max(1,Math.floor(u.maxHp*value)));u.hp+=healed;u.healing+=healed;if(healed)log.push({round,actor:u.id,action:'passive-heal',value:healed});}
       if(effect==='rage'&&u.hp/u.maxHp<.5&&!u.rageActivated){u.attack=Math.min(180,u.attack+Math.max(1,Math.floor(u.attack*value)));u.rageActivated=true;log.push({round,actor:u.id,action:'rage',value:u.attack});}
     }
-    const order=teams.flatMap((team,side)=>team.map(unit=>({unit,side})))
-      .sort((a,b)=>b.unit.speed-a.unit.speed||a.side-b.side||a.unit.position-b.unit.position);
+    const order=orderHeroActions(teams);
     for(const {unit,side} of order){
       if(unit.hp<=0)continue;
       const allies=teams[side],enemies=teams[1-side];
@@ -135,23 +132,16 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
         const ally=[...allies].filter(x=>x.hp>0&&x.hp<x.maxHp).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
         if(ally){const heal=Math.min(ally.maxHp-ally.hp,Math.round(unit.attack*.52));ally.hp+=heal;unit.healing+=heal;log.push({round,side,actor:unit.id,action:'heal',target:ally.id,value:heal});continue}
       }
-      const target=targetOf(enemies,unit,round);
+      const target=selectBattleTarget(enemies,unit,round);
       if(!target)break;
       const special=round%3===0;
       const skill=special?unit.active:null;
-      if(skill?.effect==='heal'&&unit.hp<unit.maxHp){const healed=Math.min(unit.maxHp-unit.hp,Math.max(1,Math.round(unit.attack*.52)));unit.hp+=healed;unit.healing+=healed;log.push({round,side,actor:unit.id,action:'heal',target:unit.id,value:healed});continue;}
-      const multiplier=skill?.power??(special?1.15:1);
+      if(skill?.effect==='heal'&&unit.hp<unit.maxHp){const healed=calculateSpecialHeal({attack:unit.attack,missingHp:unit.maxHp-unit.hp});unit.hp+=healed;unit.healing+=healed;log.push({round,side,actor:unit.id,action:'heal',target:unit.id,value:healed});continue;}
       const critical=random()<.08;
-      // Tanks shield their allies by holding the frontline. Rear units take reduced
-      // damage until their front line falls, except when assassins infiltrate.
       const guarded=!isFront(target)&&enemies.some(x=>x.hp>0&&isFront(x));
-      const defense=skill?.effect==='pierce'?Math.floor(target.defense*.6):target.defense;
-      const roleMultiplier=(guarded?0.85:1)*(unit.role==='energy'?0.97:unit.role==='support'?1.03:1);
-      // Exposed all-ranged squads lose protection; mixed frontlines intercept fire.
-      
       const weakened=unit.commanderWeaken||0;
       unit.commanderWeaken=0;
-      const raw=skill?.effect==='headshot'?target.hp+target.shield:Math.max(1,Math.floor(unit.attack*(1-weakened)*multiplier*roleMultiplier*0.7*100/(100+defense)*(critical?1.3:1)));
+      const raw=calculateHeroRawDamage({unit,target,skill,special,critical,guarded,weakened});
       const absorbed=Math.min(target.shield,raw);
       target.shield-=absorbed;
       const damage=Math.min(target.hp,raw-absorbed);
@@ -165,7 +155,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       if(skill?.effect==='weaken'){target.attack=Math.max(5,Math.floor(target.attack*.9));log.push({round,side,actor:unit.id,action:'weaken',target:target.id,value:0});}
       if(skill?.effect==='haste'){unit.speed=Math.min(150,unit.speed+8);log.push({round,side,actor:unit.id,action:'haste',target:unit.id,value:8});}
       if(skill?.effect==='execute'&&target.hp>0&&target.hp/target.maxHp<.12){unit.damage+=target.hp;target.hp=0;unit.kills++;}
-      if(skill?.effect==='splash'||unit.role==='energy'&&special)for(const other of enemies.filter(x=>x!==target&&x.hp>0)){const splashPercent=skill?.effect==='splash'?.25:.15;const splashRaw=Math.max(1,Math.floor(raw*splashPercent));const splashAbsorbed=Math.min(other.shield,splashRaw);other.shield-=splashAbsorbed;const extra=Math.min(other.hp,splashRaw-splashAbsorbed);other.hp-=extra;unit.damage+=extra;if(other.hp===0)unit.kills++;log.push({round,side,actor:unit.id,action:'splash',target:other.id,value:extra,absorbed:splashAbsorbed,rawDamage:splashRaw,damageType:'splash'});}
+      if(skill?.effect==='splash'||unit.role==='energy'&&special)for(const other of enemies.filter(x=>x!==target&&x.hp>0)){const splashRaw=calculateSplashRawDamage(raw,{skill,role:unit.role,special});const splashAbsorbed=Math.min(other.shield,splashRaw);other.shield-=splashAbsorbed;const extra=Math.min(other.hp,splashRaw-splashAbsorbed);other.hp-=extra;unit.damage+=extra;if(other.hp===0)unit.kills++;log.push({round,side,actor:unit.id,action:'splash',target:other.id,value:extra,absorbed:splashAbsorbed,rawDamage:splashRaw,damageType:'splash'});}
       if(unit.passive?.effect==='thorns'&&unit.hp>0)unit.shield+=Math.floor(unit.defense*unit.passive.value);
       log.push({round,side,actor:unit.id,action:skill?.name|| (special?'special':'attack'),target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:special?'special':'normal'});
       if(unit.role==='tank'&&special)unit.shield+=Math.round(unit.defense*.2);

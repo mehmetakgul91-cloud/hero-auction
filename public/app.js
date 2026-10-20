@@ -206,6 +206,12 @@ const homePlayTab=$('home-play-tab'),homePlayPanel=$('home-play-panel');
 const homeGuidePlay=$('home-guide-play');if(homeGuidePlay)homeGuidePlay.onclick=()=>{if(homePlayPanel.hidden)homePlayTab.click();else homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'});};
 if(homePlayTab&&homePlayPanel){homePlayTab.onclick=()=>{const open=homePlayPanel.hidden;homePlayPanel.hidden=!open;homePlayTab.setAttribute('aria-expanded',String(open));homePlayTab.classList.toggle('selected',open);if(open)homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'})};}
 applyLogin();initGoogle();
+// Isolated test service only: create a fresh guest seat automatically.
+// Production deployments do not set this flag.
+if(window.location.hostname==='hero-auction-commander-test.onrender.com'&&!signedIn()){
+ void enterGuest();
+}
+
 
 const visitorId=crypto.randomUUID();
 async function refreshOnline(){

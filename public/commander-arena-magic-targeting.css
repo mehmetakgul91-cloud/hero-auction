@@ -1,0 +1,5 @@
+.arena-hero.magic-target-available{cursor:pointer;outline:2px dashed #bb8cff;outline-offset:2px;touch-action:manipulation}
+.arena-hero.magic-target-selected{outline:4px solid #d39aff;box-shadow:0 0 26px #a84cff, inset 0 0 12px #8c3bd955}
+.arena-hero.magic-target-selected::after{content:'✦ BÜYÜ HEDEFİ';position:absolute;z-index:6;top:0;left:0;right:0;text-align:center;background:#3e176bdc;color:#fff;font-size:11px;font-weight:800;padding:4px}
+.arena-hero.magic-target-available:focus-visible{outline:4px solid #e4c3ff}
+@media(prefers-reduced-motion:no-preference){.arena-hero.magic-target-selected{animation:magic-target-glow 1.2s ease-in-out infinite alternate}@keyframes magic-target-glow{to{box-shadow:0 0 36px #c45fff}}}

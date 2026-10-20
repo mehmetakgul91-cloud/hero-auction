@@ -247,8 +247,29 @@ if(stage){
         if(['magic','cosmic','lightning','mind','shield'].includes(profile.style))spawnAbility(actor,profile.style,profile.accent||'#65ddff');
       }
     };
+    // Commander effects are presentation-only; the server's combat log remains authoritative.
+    const commanderVisual=e=>{
+      if(document.hidden||document.body.classList.contains('arena-catching-up'))return;
+      const entries=e.detail?.events||[e.detail?.event];
+      for(const entry of entries){
+        const match=/^commander-(attack|defense|magic|support)-(normal|ultimate)$/.exec(entry?.action||'');
+        if(!match||![0,1].includes(entry.side))continue;
+        const [,kind,ability]=match;
+        const affectedSide=kind==='attack'||kind==='magic'?1-entry.side:entry.side;
+        const color={attack:0xff665a,defense:0x49cfff,magic:0xb68cff,support:0x54eea1}[kind];
+        for(const mesh of fighters.values()){
+          if(mesh.userData.side!==affectedSide||!mesh.visible)continue;
+          spawnAbility(mesh,ability==='ultimate'?'cosmic':'magic',color);
+          if(ability==='ultimate')spawnImpact(mesh.position,color);
+        }
+      }
+    };
+    window.addEventListener('heroarena:move',commanderVisual);
+    window.addEventListener('heroarena:commander-round',commanderVisual);
     window.addEventListener('heroarena:ready',e=>sync(e.detail.teams));
     window.addEventListener('heroarena:move',move);
+    window.addEventListener('heroarena:experimental-move',move);
+    window.addEventListener('heroarena:experimental-round-end',e=>sync(e.detail.teams));
     if(Array.isArray(window.heroArenaTeams))sync(window.heroArenaTeams);
     if(heroShowcase){sync([[{id:'marvel:hulk',name:'Hulk',hp:100,maxHp:100,rarity:'legendary'},{id:'marvel:iron man',name:'Iron Man',hp:100,maxHp:100,rarity:'rare'},{id:'marvel:doctor strange',name:'Doctor Strange',hp:100,maxHp:100,rarity:'advanced'}],[]]);}
     const resize=new ResizeObserver(()=>{const w=stage.clientWidth,h=stage.clientHeight;if(w&&h){fitCamera();renderer.setSize(w,h,false)}});resize.observe(stage);
