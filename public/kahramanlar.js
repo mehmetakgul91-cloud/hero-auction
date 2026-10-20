@@ -10,6 +10,7 @@ const fmt=n=>(n>=0?'+':'')+(n*100).toFixed(0)+'%';
 function line(label,value){const el=document.createElement('div');el.className='gallery-detail-line';const a=document.createElement('span'),b=document.createElement('strong');a.textContent=label;b.textContent=value;el.append(a,b);return el}
 function makeCard(hero){
  const card=document.createElement('article');card.className='gallery-card'; const rarityKey=({efsanevi:'legendary',nadir:'rare',gelismis:'advanced',siradan:'common'})[hero.rarity]||hero.rarity; if(['legendary','rare','advanced','common'].includes(rarityKey))card.classList.add('gallery-card--'+rarityKey);
+ card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',hero.name+' hikâyesini oku');card.addEventListener('click',()=>openHeroStory(hero));card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openHeroStory(hero)}});
  const art=document.createElement('div');art.className='gallery-art';
  const fallback=document.createElement('div');fallback.className='gallery-fallback';fallback.textContent='✦';art.append(fallback);
  if(hero.portrait){const img=document.createElement('img');img.src=hero.portrait;img.alt=hero.name;img.loading='lazy';img.onerror=()=>img.remove();art.append(img)}
@@ -36,3 +37,14 @@ function render(){
 }
 search.addEventListener('input',render);
 fetch('/api/heroes',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Kart kataloğu alınamadı');return r.json()}).then(data=>{heroes=Array.isArray(data.heroes)?data.heroes:[];render()}).catch(e=>{status.textContent='⚠ '+e.message;root.replaceChildren()});
+
+function openHeroStory(hero){
+ const dialog=document.getElementById('hero-story-dialog');
+ document.getElementById('hero-story-title').textContent=hero.name;
+ const text=document.getElementById('hero-story-text');text.replaceChildren();
+ const sentences=heroStory(hero).match(/[^.!?]+[.!?]+/g)||[heroStory(hero)];
+ for(let i=0;i<sentences.length;i+=4){const p=document.createElement('p');p.textContent=sentences.slice(i,i+4).join(' ').trim();text.append(p)}
+ dialog.showModal();
+}
+document.getElementById('hero-story-close').addEventListener('click',()=>document.getElementById('hero-story-dialog').close());
+document.getElementById('hero-story-dialog').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.close()});
