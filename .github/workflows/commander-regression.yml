@@ -1,0 +1,20 @@
+name: Commander regression tests
+on:
+  push:
+    branches:
+      - test/commander-arena-2-20261020
+  workflow_dispatch:
+jobs:
+  commander-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Commander regression tests
+        run: node --test tests/commander-regression.test.mjs
+      - name: Existing battle balance smoke test
+        run: node tools/battle-balance.mjs > /tmp/hero-auction-balance.json
