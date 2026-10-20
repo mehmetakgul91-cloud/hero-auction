@@ -3,7 +3,7 @@
 import {createCommanderMatchSession,submitCommanderMatchTurn} from './commander-match-session.js';
 
 export function createRoomCommanderSession(room,{cardsA,cardsB,commanders,remainingCredits=[0,0]}){
- if(!room||!Array.isArray(room.players)||room.players.length!==2||room.players.some(p=>!p?.token))throw Error('Two authenticated room players required');
+ if(!room||!Array.isArray(room.players)||room.players.length!==2||room.players.some(p=>typeof p?.token!=='string'||!p.token)||room.players[0].token===room.players[1].token)throw Error('Two authenticated room players required');
  if(room.phase!=='finished')throw Error('Auction not finished');
  const matchKey=String(room.matchNumber||1)+':'+String(room.created);
  const session=createCommanderMatchSession({cardsA,cardsB,commanders,remainingCredits,seed:'auction-battle-'+room.code+'-'+matchKey});
