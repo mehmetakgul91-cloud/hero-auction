@@ -12,7 +12,13 @@ export function castDuringLiveArena(session,cast){
 }
 export function stepLiveArenaHero(session){
  if(!session||session.turns.combat!==session.combat)throw Error('Invalid live arena session');
- return stepBasicTurn(session.turns);
+ const result=stepBasicTurn(session.turns);
+ // Exhausting the final round must produce a finished snapshot, not only stop the runner.
+ if(!session.combat.finished&&session.combat.round>=15&&!peekBasicTurn(session.turns)){
+  session.combat.finished=true;session.combat.abilities.finished=true;
+  result.finished=true;
+ }
+ return result;
 }
 export function advanceLiveArenaRound(session){
  if(!session||session.turns.combat!==session.combat)throw Error('Invalid live arena session');
