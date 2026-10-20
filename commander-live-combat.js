@@ -38,7 +38,7 @@ export function viewLiveCommanderCombat(combat,{sinceVersion=0}={}){
 
 // Advance a trusted, server-calculated hero action on the same authoritative
 // snapshot as commander abilities. Never accept this action from an HTTP client.
-export function applyServerHeroAction(combat,{side,actorId,targetId,action='attack',value,round=combat?.round}){
+export function applyServerHeroAction(combat,{side,actorId,targetId,action='attack',value,round=combat?.round,applyThorns=false}){
  if(!combat||combat.finished)throw Error('Battle already finished');
  if(![0,1].includes(side)||!['attack','heal','shield'].includes(action)||!Number.isSafeInteger(value)||value<0||value>1000000||!Number.isInteger(round)||round!==combat.round)throw Error('Invalid server hero action');
  const next=structuredClone(combat.teams);
@@ -62,9 +62,15 @@ export function applyServerHeroAction(combat,{side,actorId,targetId,action='atta
   target.hp+=applied;
   actor.healing=(actor.healing||0)+applied;
  }
+ if(applyThorns&&action==='attack'&&actor.hp>0&&actor.passive?.effect==='thorns'){
+  const amount=Math.floor(actor.defense*actor.passive.value);
+  if(!Number.isSafeInteger(amount)||amount<0)throw Error('Invalid thorns value');
+  actor.shield=(actor.shield||0)+amount;
+ }
  combat.teams=next;
  combat.version++;
  const event={round,side,actor:actorId,action,target:targetId,value:applied,absorbed,version:combat.version};
+ if(applyThorns&&action==='attack'&&actor.passive?.effect==='thorns')event.thornsShield=Math.floor(actor.defense*actor.passive.value);
  combat.events.push(event);
  // Preserve the existing per-casualty energy bonus once, per affected side.
  if(action==='attack'&&target.hp===0)grantLiveCommanderEnergy(combat.abilities,targetSide,10);
