@@ -6,3 +6,5 @@
 .gallery-card--common{--rarity-accent:#9aadc8;border-color:var(--rarity-accent)}
 .gallery-card[class*="gallery-card--"] .gallery-summary,.gallery-card[class*="gallery-card--"] .gallery-rarity{color:var(--rarity-accent)}
 .gallery-summary{font-size:12px;line-height:1.5;margin:5px 0 12px;color:#c7d9ef}
+
+.gallery-card{cursor:pointer}.gallery-card:focus-visible{outline:3px solid #8ce9ff;outline-offset:3px}.gallery-card:hover{transform:translateY(-2px);transition:transform .15s ease}.hero-story-dialog{width:min(760px,calc(100% - 24px));max-height:85dvh;overflow:auto;border:1px solid #637da7;border-radius:20px;background:#121d35;color:#f1f5ff;padding:24px;box-shadow:0 30px 90px #000b}.hero-story-dialog::backdrop{background:#020714d9}.hero-story-top{display:flex;justify-content:space-between;align-items:center;gap:16px;color:#8ddfff;font-size:12px;font-weight:800;letter-spacing:1px}.hero-story-top button{background:#263c60;border:1px solid #6d8cb5;color:white;border-radius:10px;padding:9px 13px;cursor:pointer}.hero-story-dialog h2{font-size:clamp(24px,5vw,36px);margin:15px 0 20px}.hero-story-text p{font-size:15px;line-height:1.85;color:#dbe8ff;margin:0 0 16px}
