@@ -265,6 +265,7 @@ if(stage){
       }
     };
     window.addEventListener('heroarena:move',commanderVisual);
+    window.addEventListener('heroarena:commander-round',commanderVisual);
     window.addEventListener('heroarena:ready',e=>sync(e.detail.teams));
     window.addEventListener('heroarena:move',move);
     if(Array.isArray(window.heroArenaTeams))sync(window.heroArenaTeams);
