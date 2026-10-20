@@ -47,3 +47,24 @@ test('allows one manual action for each player in a round',()=>{
 test('rejects commands with an invalid side',()=>{
  assert.throws(()=>run('attack',[{side:2,round:4,ability:'normal'}]),/Invalid commander action/);
 });
+
+
+test('ultimate ability becomes available after nine rounds of charging',()=>{
+ const result=run('attack',[{side:0,round:9,ability:'ultimate'}]);
+ assert.ok(result.log.some(x=>x.action==='commander-attack-ultimate'));
+});
+test('energy cannot be spent twice before recharging',()=>{
+ assert.throws(()=>run('attack',[
+  {side:0,round:4,ability:'normal'},
+  {side:0,round:5,ability:'normal'}
+ ]),/Insufficient commander energy/);
+});
+test('energy cannot exceed 100 even with no ability use',()=>{
+ const result=run('attack');
+ assert.ok(result.commanderEnergy.every(x=>x>=0&&x<=100));
+});
+test('same seed and manual commands produce the same outcome',()=>{
+ const actions=[{side:0,round:4,ability:'normal'}];
+ const a=run('attack',actions),b=run('attack',actions);
+ assert.deepEqual({winner:a.winner,log:a.log},{winner:b.winner,log:b.log});
+});
