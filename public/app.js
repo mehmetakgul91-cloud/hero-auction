@@ -251,7 +251,15 @@ const specialtyGroups={
  '✨ DESTEK / HİLE':'Loki|Vision|Starfire'
 };
 const specialtyByName=new Map(Object.entries(specialtyGroups).flatMap(([label,names])=>names.split('|').map(name=>[name.toLowerCase(),label])));
-const specialtyLabel=hero=>specialtyByName.get(String(hero?.name||'').toLowerCase())||'⚔️ SAVAŞÇI';
+const originalRoleLabels={tank:'🛡️ TANK',fighter:'⚔️ SAVAŞÇI',assassin:'🥷 SUİKASTÇI',energy:'🔮 BÜYÜCÜ',support:'💚 ŞİFACI / DESTEK'};
+const originalRolesByName=new Map();
+fetch('/api/heroes',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(data=>{for(const hero of data?.heroes||[])originalRolesByName.set(String(hero.name||'').toLocaleLowerCase('tr-TR'),hero.role)}).catch(()=>{});
+const specialtyLabel=hero=>{
+ const name=String(hero?.name||'').toLocaleLowerCase('tr-TR');
+ const role=hero?.role||hero?.displayRole||originalRolesByName.get(name);
+ if(originalRoleLabels[role])return originalRoleLabels[role];
+ return specialtyByName.get(String(hero?.name||'').toLowerCase())||'⚔️ SAVAŞÇI';
+};
 const specialtyLaneBonuses={
  '🛡️ TANK':[8,-6],'⚔️ DÖVÜŞ USTASI':[6,-4],'💪 GÜÇ SAVAŞÇISI':[7,-5],
  '⚡ YILDIRIM SAVAŞÇISI':[4,4],'🗡️ KARANLIK SAVAŞÇI':[5,3],
