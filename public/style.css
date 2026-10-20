@@ -924,3 +924,22 @@ header{gap:14px;flex-wrap:wrap}
 #home-play-panel .play-compact-secondary .play-compact-mode .play-compact-action{border-width:2px;box-shadow:0 3px 8px #0006}
 #home-play-panel .play-compact-match .play-compact-action{border-width:2px;box-shadow:0 3px 8px #0006}
 @media(max-width:680px){#home-play-panel .play-compact-modes{gap:12px!important}#home-play-panel .play-compact-secondary{gap:2px}}
+
+/* High-contrast mode selection: visibly independent cards inside the lower group. */
+#home-play-panel .play-compact-modes{gap:20px!important}
+#home-play-panel .play-compact-match{border:3px solid #52e5ff!important;border-radius:16px!important;background:linear-gradient(135deg,#096ba1 0%,#063253 100%)!important;box-shadow:0 0 0 3px #05233c,0 0 18px #28d9ff77,0 10px 20px #0009!important}
+#home-play-panel .play-compact-secondary{border:0!important;box-shadow:none!important;background:transparent!important;gap:14px!important;overflow:visible!important;border-radius:0!important}
+#home-play-panel .play-compact-secondary .play-compact-friend{border:3px solid #ffca65!important;border-radius:15px!important;background:linear-gradient(145deg,#815218,#382713)!important;box-shadow:0 0 0 2px #30200d,0 7px 16px #0009!important}
+#home-play-panel .play-compact-secondary .play-compact-bot{border:3px solid #bf9cff!important;border-radius:15px!important;background:linear-gradient(145deg,#6945a4,#2a1c52)!important;box-shadow:0 0 0 2px #23143f,0 7px 16px #0009!important}
+#home-play-panel .play-compact-secondary .play-compact-mode+.play-compact-mode{border-left-width:3px!important}
+#home-play-panel .play-compact-mode h3{font-weight:900!important;letter-spacing:.5px;text-shadow:0 2px 5px #000a!important}
+#home-play-panel .play-compact-secondary .play-compact-mode{padding:16px!important}
+#home-play-panel .play-compact-action{font-weight:900!important;outline-offset:2px;box-shadow:0 4px 0 #0007!important}
+#home-play-panel .play-compact-mode:focus-within{outline:3px solid #fff9;outline-offset:3px}
+@media(max-width:680px){
+ #home-play-panel .play-compact-modes{gap:16px!important}
+ #home-play-panel .play-compact-secondary{gap:9px!important}
+ #home-play-panel .play-compact-secondary .play-compact-mode{padding:10px 6px!important}
+ #home-play-panel .play-compact-secondary .play-compact-mode h3{font-size:11px!important;letter-spacing:0}
+ #home-play-panel .play-compact-secondary .play-compact-mode .play-compact-action{font-size:10px!important}
+}
