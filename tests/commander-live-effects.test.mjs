@@ -23,7 +23,7 @@ test('support heals injured units without exceeding max HP',()=>{
  assert.ok(out.teams[0].every(u=>u.hp<=u.maxHp));
 });
 test('magic weakens at most two opponents',()=>{
- const out=applyLiveCommanderEffect(teams(),{side:0,ability:'ultimate',commanderId:'magic'});
+ const out=applyLiveCommanderEffect(teams(),{side:0,ability:'ultimate',commanderId:'magic',targetIds:['0','1']});
  assert.equal(out.teams[1].filter(u=>u.commanderWeaken>0).length,2);
 });
 test('rejects invalid commands and completed battles',()=>{
