@@ -1683,8 +1683,8 @@
       },
       "specialty": "energy",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": -0.06,
+        "back": 0.08
       }
     },
     {
@@ -1715,8 +1715,8 @@
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": 0.04,
+        "back": -0.03
       }
     },
     {
@@ -1747,8 +1747,8 @@
       },
       "specialty": "fighter",
       "laneModifiers": {
-        "front": 0.06,
-        "back": -0.04
+        "front": 0.08,
+        "back": -0.06
       }
     },
     {
@@ -1780,7 +1780,7 @@
       "specialty": "fighter",
       "laneModifiers": {
         "front": 0.06,
-        "back": -0.04
+        "back": -0.02
       }
     },
     {
@@ -1811,8 +1811,8 @@
       },
       "specialty": "support",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": -0.07,
+        "back": 0.08
       }
     },
     {
@@ -1843,8 +1843,8 @@
       },
       "specialty": "support",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": 0.05,
+        "back": -0.03
       }
     },
     {
@@ -1875,8 +1875,8 @@
       },
       "specialty": "support",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": -0.08,
+        "back": 0.09
       }
     },
     {
@@ -1907,7 +1907,7 @@
       },
       "specialty": "energy",
       "laneModifiers": {
-        "front": -0.04,
+        "front": -0.06,
         "back": 0.07
       }
     },
@@ -1939,8 +1939,8 @@
       },
       "specialty": "energy",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": -0.08,
+        "back": 0.08
       }
     },
     {
@@ -1971,8 +1971,8 @@
       },
       "specialty": "tank",
       "laneModifiers": {
-        "front": 0.08,
-        "back": -0.06
+        "front": 0.09,
+        "back": -0.08
       }
     },
     {
@@ -2003,8 +2003,8 @@
       },
       "specialty": "support",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": -0.07,
+        "back": 0.09
       }
     },
     {
@@ -2035,8 +2035,8 @@
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": 0.05,
+        "back": -0.04
       }
     },
     {
@@ -2067,8 +2067,8 @@
       },
       "specialty": "energy",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": -0.07,
+        "back": 0.09
       }
     },
     {
@@ -2099,8 +2099,8 @@
       },
       "specialty": "energy",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": -0.03,
+        "back": 0.06
       }
     },
     {
@@ -2131,8 +2131,8 @@
       },
       "specialty": "support",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": 0.04,
+        "back": -0.02
       }
     },
     {
@@ -2163,8 +2163,8 @@
       },
       "specialty": "fighter",
       "laneModifiers": {
-        "front": 0.06,
-        "back": -0.04
+        "front": 0.07,
+        "back": -0.05
       }
     },
     {
@@ -2195,8 +2195,8 @@
       },
       "specialty": "support",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": -0.03,
+        "back": 0.06
       }
     },
     {
@@ -2227,8 +2227,8 @@
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": 0.03,
+        "back": 0.05
       }
     },
     {
@@ -2259,8 +2259,8 @@
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": 0.06,
+        "back": -0.05
       }
     },
     {
@@ -2291,8 +2291,8 @@
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": -0.03,
+        "back": 0.06
       }
     },
     {
@@ -2323,7 +2323,7 @@
       },
       "specialty": "support",
       "laneModifiers": {
-        "front": -0.04,
+        "front": -0.05,
         "back": 0.07
       }
     },
@@ -2355,7 +2355,7 @@
       },
       "specialty": "fighter",
       "laneModifiers": {
-        "front": 0.06,
+        "front": 0.07,
         "back": -0.04
       }
     },
@@ -2387,8 +2387,8 @@
       },
       "specialty": "energy",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": -0.05,
+        "back": 0.08
       }
     },
     {
@@ -2419,7 +2419,7 @@
       },
       "specialty": "support",
       "laneModifiers": {
-        "front": -0.04,
+        "front": -0.06,
         "back": 0.07
       }
     },
@@ -2451,8 +2451,8 @@
       },
       "specialty": "support",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": 0.07,
+        "back": -0.05
       }
     },
     {
@@ -2483,8 +2483,8 @@
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": 0.06,
+        "back": -0.03
       }
     },
     {
@@ -2515,8 +2515,8 @@
       },
       "specialty": "fighter",
       "laneModifiers": {
-        "front": 0.06,
-        "back": -0.04
+        "front": 0.08,
+        "back": -0.07
       }
     },
     {
@@ -2579,8 +2579,8 @@
       },
       "specialty": "fighter",
       "laneModifiers": {
-        "front": 0.06,
-        "back": -0.04
+        "front": 0.08,
+        "back": -0.06
       }
     },
     {
@@ -2611,8 +2611,8 @@
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": 0.04,
+        "back": 0.02
       }
     },
     {
@@ -2643,8 +2643,8 @@
       },
       "specialty": "support",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": 0.06,
+        "back": -0.04
       }
     },
     {
@@ -2675,8 +2675,8 @@
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": 0.05,
+        "back": -0.04
       }
     },
     {
@@ -2707,8 +2707,8 @@
       },
       "specialty": "energy",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": -0.06,
+        "back": 0.08
       }
     },
     {
@@ -2739,7 +2739,7 @@
       },
       "specialty": "support",
       "laneModifiers": {
-        "front": -0.04,
+        "front": -0.05,
         "back": 0.07
       }
     },
@@ -2771,8 +2771,8 @@
       },
       "specialty": "energy",
       "laneModifiers": {
-        "front": -0.04,
-        "back": 0.07
+        "front": -0.05,
+        "back": 0.08
       }
     },
     {
