@@ -34,7 +34,7 @@ if(panel&&params.get('commanderTest')==='1'&&params.has('auctionCode')&&params.h
    if(completed>lastCompletedRound){
     lastCompletedRound=completed;
     window.dispatchEvent(new CustomEvent('heroarena:commander-round',{
-     detail:{round:completed,events:Array.isArray(data.roundEvents)?data.roundEvents:[],finished:!!data.finished}
+     detail:{round:completed,events:Array.isArray(data.roundEvents)?data.roundEvents:[],teams:Array.isArray(data.roundTeams)?data.roundTeams:null,finished:!!data.finished}
     }));
    }
    const value=Math.max(0,Math.min(100,Number(data.energy)||0));
