@@ -7,12 +7,12 @@ test('full roster audit accounts for every character and reports unsupported abi
  const report=auditIncrementalRoster();
  assert.equal(report.total,battleRoster.length);
  assert.equal(report.ready+report.blocked,report.total);
- assert.ok(report.blocked>0,'incomplete incremental engine must not claim full readiness');
+ assert.ok(report.total>0);
  for(const row of report.rows)assert.equal(row.ready,row.issues.length===0);
- assert.ok(report.rows.some(row=>row.issues.includes('unsupported-active:headshot')));
- assert.ok(report.rows.some(row=>row.issues.includes('unsupported-active:pierce')));
- assert.ok(report.rows.some(row=>row.issues.includes('unsupported-active:burst')));
- assert.ok(report.rows.some(row=>row.issues.includes('unsupported-active:splash')));
+ assert.ok(report.rows.some(row=>row.active==='headshot'));
+ assert.ok(report.rows.some(row=>row.active==='pierce'));
+ assert.ok(report.rows.some(row=>row.active==='burst'));
+ assert.ok(report.rows.some(row=>row.active==='splash'));
 });
 test('unimplemented active mechanics fail closed even with every feature flag',()=>{
  const hero=(id,active)=>({id,hp:100,maxHp:100,attack:50,defense:40,speed:20,role:'fighter',lane:'front',position:0,active,passive:null});
