@@ -3,6 +3,7 @@
 import {fighterFromCard} from './battle-engine.js';
 import {battleCard} from './battle-roster.js';
 import {applyCommanderSupport} from './arena-commanders.js';
+import {applyLegacyStartPassives} from './commander-parity-passives.js';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const roles=['tank','fighter','energy','assassin','support'];
 export function prepareLiveArenaTeams(cardsA,cardsB,{remainingCredits=[0,0],commanders=[null,null]}={}){
@@ -33,5 +34,5 @@ export function prepareLiveArenaTeams(cardsA,cardsB,{remainingCredits=[0,0],comm
   }
  }
  for(let side=0;side<2;side++)applyCommanderSupport(teams[side],commanders[side]);
- return teams;
+ return applyLegacyStartPassives(teams);
 }
