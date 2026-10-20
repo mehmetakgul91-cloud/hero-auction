@@ -417,7 +417,7 @@ function renderArenaCommanderMatchup(profiles){
  }
 }
 async function build(overrideResult){
- stop();resetArenaClock();visualHealth.clear();cursor=0;events=[];$('arena-counter-round').textContent='0';$('arena-counter-move').textContent='0 / 0';$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;victoryRevealDone=false;if(victoryRevealTimer!==null){clearTimeout(victoryRevealTimer);victoryRevealTimer=null}if($('arena-victory-reveal'))$('arena-victory-reveal').hidden=true;$('next').disabled=true;$('play').disabled=true;
+ stop();if(victoryPendingTimer!==null){clearTimeout(victoryPendingTimer);victoryPendingTimer=null}resetArenaClock();visualHealth.clear();cursor=0;events=[];$('arena-counter-round').textContent='0';$('arena-counter-move').textContent='0 / 0';$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;victoryRevealDone=false;if(victoryRevealTimer!==null){clearTimeout(victoryRevealTimer);victoryRevealTimer=null}if($('arena-victory-reveal'))$('arena-victory-reveal').hidden=true;$('next').disabled=true;$('play').disabled=true;
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
  try{
   let result=overrideResult;
@@ -452,6 +452,7 @@ async function build(overrideResult){
 // Experimental round-end HP is server-owned. Do not interfere with manual replay.
 window.addEventListener('heroarena:experimental-round-end',e=>{
  if(timer!==null||!Array.isArray(e.detail?.teams)||states.length!==2)return;
+ if(victoryRevealDone)return;
  const snapshot=e.detail.teams;
  for(let side=0;side<2;side++){
   const hpById=new Map((snapshot[side]||[]).map(u=>[u.id,u.hp]));
@@ -495,11 +496,10 @@ function render(flash){
  $('play').disabled=cursor>=events.length;
  if(events.length&&cursor===events.length){
   showVictoryReveal();
-  if(auctionMode)void showAuctionRematch();
   $('message').textContent=finalResult?.winner===null?'🤝 Beraberlik':finalResult?.winner===0?'🏆 Mavi takım kazandı!':'🏆 Kırmızı takım kazandı!';
  }
 }
-let victoryRevealDone=false,victoryRevealTimer=null;
+let victoryRevealDone=false,victoryRevealTimer=null,victoryPendingTimer=null;
 function podiumPortrait(hero,side){
  const universe=String(hero.id||'').split(':')[0]||(side?'dc':'marvel');
  const key=universe+':'+hero.name;
@@ -507,6 +507,20 @@ function podiumPortrait(hero,side){
  return arenaArtCache.get(key);
 }
 function showVictoryReveal(){
+ if(victoryRevealDone||!finalResult||victoryPendingTimer!==null)return;
+ pauseArenaClock();
+ const controls=$('experimental-commander-controls');
+ if(controls)controls.querySelectorAll('button').forEach(button=>button.disabled=true);
+ $('message').textContent='Son hamle tamamlandı · Savaş sonucu hazırlanıyor…';
+ const finish=()=>{
+  const effectRemaining=Math.max(0,(window.heroCommanderEffectUntil||0)-Date.now());
+  if(effectRemaining>0||arenaFinaleActive){victoryPendingTimer=setTimeout(finish,Math.max(100,effectRemaining));return;}
+  victoryPendingTimer=null;revealVictoryNow();
+ };
+ // Let the final hit and rising soul finish before the victory podium covers the arena.
+ victoryPendingTimer=setTimeout(finish,2400);
+}
+function revealVictoryNow(){
  if(victoryRevealDone||!finalResult)return;
  victoryRevealDone=true;
  pauseArenaClock();
@@ -641,7 +655,7 @@ function step(){
  for(const e of batch){if(e!==primary)animateMove(e)}
  window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position})));
  window.dispatchEvent(new CustomEvent('heroarena:move',{detail:{event:primary,events:batch,teams:window.heroArenaTeams}}));
- if(cursor>=events.length){stop();$('play').textContent='✓ SAVAŞ TAMAMLANDI';if(lastFallen)showFinalKnockout(lastFallen,primary.actor);else showVictoryReveal()}
+ if(cursor>=events.length){stop();$('play').textContent='✓ SAVAŞ TAMAMLANDI';if(lastFallen)$('message').textContent=lastFallen.name+' elendi · Savaş sona erdi';showVictoryReveal()}
 }
 // Advance the replay by elapsed wall-clock time, not by the number of browser timer ticks.
 // Mobile browsers throttle or suspend intervals when the tab is in the background.
