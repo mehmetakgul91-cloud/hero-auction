@@ -14,6 +14,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
       - name: Commander regression tests
         run: node --test tests/commander-regression.test.mjs tests/commander-turns.test.mjs tests/commander-transcript.test.mjs tests/commander-match-session.test.mjs tests/commander-room-bridge.test.mjs tests/commander-room-integration.test.mjs tests/commander-http.test.mjs tests/commander-battle-e2e.test.mjs
       - name: Existing battle balance smoke test
