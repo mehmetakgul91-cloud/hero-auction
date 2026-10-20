@@ -88,7 +88,7 @@ test('opt-in energy splash applies primary and secondary damage in one scheduled
  c.teams[1].push({id:'b2',hp:100,maxHp:100,attack:30,defense:0,shield:10,lane:'back',speed:5,position:1});
  const s=createBasicTurnSession(c,{parity:true,energySplash:true});
  const {result}=stepBasicTurn(s);
- assert.equal(result.result.events.length,2);
+ assert.equal(result.events.length,2);
  assert.equal(c.version,1);
  assert.equal(peekBasicTurn(s).actorId,'b');
  assert.equal(c.teams[1].filter(u=>u.hp<100).length,2);
