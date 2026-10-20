@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createLiveCommanderAbilities} from '../commander-live-abilities.js';
-import {createLiveCommanderCombat,castLiveCommanderCombat,viewLiveCommanderCombat} from '../commander-live-combat.js';
+import {createLiveCommanderCombat,castLiveCommanderCombat,viewLiveCommanderCombat,beginServerCombatRound} from '../commander-live-combat.js';
 const make=()=>{
  const teams=[0,1].map(side=>Array.from({length:5},(_,i)=>({id:side+'-'+i,hp:100,maxHp:100,attack:50,shield:0})));
  const abilities=createLiveCommanderAbilities({matchKey:'room:1',energy:[100,100],now:1000});
@@ -83,4 +83,17 @@ test('magic ultimate still requires two distinct targets when two enemies surviv
  assert.equal(combat.version,0);
  const result=castLiveCommanderCombat(combat,{side:0,ability:'ultimate',requestId:'two_enemy_001',matchKey:'room:1',now:2000,targetIds:['1-0','1-1']});
  assert.equal(result.version,1);
+});
+
+test('round changes increment snapshot version and announce magic expiration',()=>{
+ const combat=make();combat.commanders[0]={commanderId:'magic'};
+ castLiveCommanderCombat(combat,{side:0,ability:'normal',requestId:'magic_round_01',matchKey:'room:1',now:2000,targetIds:['1-0']});
+ const first=beginServerCombatRound(combat,2);
+ assert.equal(first.version,2);
+ assert.equal(viewLiveCommanderCombat(combat,{sinceVersion:1}).events[0].action,'round-start');
+ beginServerCombatRound(combat,3);
+ beginServerCombatRound(combat,4);
+ assert.equal(combat.teams[1][0].commanderWeaken,undefined);
+ assert.equal(combat.version,4);
+ assert.equal(viewLiveCommanderCombat(combat,{sinceVersion:3}).events[0].round,4);
 });
