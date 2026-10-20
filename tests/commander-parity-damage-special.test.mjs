@@ -15,7 +15,7 @@ for(const effect of ['burst','pierce','splash','headshot']){
   const session=createBasicTurnSession(combat,{parity:true,damageSpecial:true,roundPassives:true});
   const result=stepBasicTurn(session);
   assert.equal(result.result.version,1);
-  assert.ok(combat.events.some(e=>e.actor==='a'&&e.damageType==='special'));
+  assert.ok(combat.events.some(e=>e.actor==='a'&&e.damageType==='special'),JSON.stringify(combat.events));
   assert.ok(combat.teams[1].some(u=>u.hp<120));
   if(effect==='splash')assert.ok(combat.events.some(e=>e.action==='splash'),JSON.stringify(combat.events));
  });
