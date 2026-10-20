@@ -3,10 +3,10 @@
 import {calculateHeroRawDamage} from './battle-damage-formula.js';
 import {selectBattleTarget} from './battle-target-selection.js';
 import {applyServerHeroAction} from './commander-live-combat.js';
-export function stepParityBasicAttack(combat,{side,actorId,round=combat?.round,critical=false,allowHealActive=false,allowShieldDrainActive=false,allowStatActive=false}={}){
+export function stepParityBasicAttack(combat,{side,actorId,round=combat?.round,critical=false,allowHealActive=false,allowShieldDrainActive=false,allowStatActive=false,allowExecuteActive=false}={}){
  if(!combat||combat.finished||![0,1].includes(side)||round!==combat.round||typeof critical!=='boolean')throw Error('Invalid parity combat step');
  const actor=combat.teams[side].find(u=>u.id===actorId&&u.hp>0);
- if(!actor||actor.passive||(actor.active&&!((allowHealActive&&actor.active.effect==='heal')||(allowShieldDrainActive&&['shield','drain'].includes(actor.active.effect)&&!['tank','energy'].includes(actor.role))||(allowStatActive&&['sunder','weaken','haste'].includes(actor.active.effect)&&!['tank','energy'].includes(actor.role)))))throw Error('Special hero mechanics require incremental engine integration');
+ if(!actor||actor.passive||(actor.active&&!((allowHealActive&&actor.active.effect==='heal')||(allowShieldDrainActive&&['shield','drain'].includes(actor.active.effect)&&!['tank','energy'].includes(actor.role))||(allowStatActive&&['sunder','weaken','haste'].includes(actor.active.effect)&&!['tank','energy'].includes(actor.role))||(allowExecuteActive&&actor.active.effect==='execute'&&!['tank','energy'].includes(actor.role)))))throw Error('Special hero mechanics require incremental engine integration');
  if(!Number.isSafeInteger(actor.attack)||actor.attack<0||!Number.isFinite(actor.position)||!Number.isFinite(actor.defense))throw Error('Invalid hero stats');
  const enemies=combat.teams[1-side];
  const target=selectBattleTarget(enemies,actor,round);
