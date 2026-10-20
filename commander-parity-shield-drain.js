@@ -9,7 +9,7 @@ export function stepParityShieldDrain(combat,{side,actorId,round=combat?.round,c
  const effect=actor?.active?.effect;
  if(!actor||actor.passive||!['shield','drain'].includes(effect)||!Number.isFinite(actor.attack)||!Number.isFinite(actor.defense))throw Error('Unsupported special attack');
  // Tank-wide reinforcement and energy-role splash require additional integration.
- if(actor.role==='tank'||actor.role==='energy')throw Error('Role special mechanics not yet integrated');
+ if(actor.role==='energy')throw Error('Role special mechanics not yet integrated');
  const enemies=teams[1-side],target=selectBattleTarget(enemies,actor,round);
  if(!target)throw Error('No living target');
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
@@ -31,7 +31,17 @@ export function stepParityShieldDrain(combat,{side,actorId,round=combat?.round,c
   actor.shield=(actor.shield||0)+amount;
   events.push({round,side,actor:actorId,action:'shield',target:actorId,value:amount});
  }
+ if(actor.role==='tank')for(const ally of teams[side].filter(u=>u.hp>0&&u.lane==='front')){
+  const amount=Math.max(1,Math.round(actor.defense*.16));
+  ally.shield=(ally.shield||0)+amount;
+  events.push({round,side,actor:actorId,action:'tank-front-shield',target:ally.id,value:amount});
+ }
  events.push({round,side,actor:actorId,action:actor.active.name||'special',target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:'special'});
+ if(actor.role==='tank'){
+  const amount=Math.round(actor.defense*.2);
+  actor.shield=(actor.shield||0)+amount;
+  events.push({round,side,actor:actorId,action:'tank-self-shield',target:actorId,value:amount});
+ }
  combat.teams=teams;combat.version++;
  for(const event of events){event.version=combat.version;combat.events.push(event);}
  if(killed)grantLiveCommanderEnergy(combat.abilities,1-side,10);
