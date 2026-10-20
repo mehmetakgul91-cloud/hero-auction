@@ -5,12 +5,13 @@ import {stepBasicHeroCombat,advanceBasicCombatRound} from './commander-increment
 import {stepParityBasicAttack} from './commander-parity-basic-attack.js';
 import {randomInt} from 'node:crypto';
 import {applyServerSpecialHeal} from './commander-live-special-heal.js';
-export function createBasicTurnSession(combat,{parity=false,specialHealing=false}={}){
+import {stepParityEnergySplash} from './commander-parity-energy-splash.js';
+export function createBasicTurnSession(combat,{parity=false,specialHealing=false,energySplash=false}={}){
  if(!combat||combat.finished||!Array.isArray(combat.teams)||combat.teams.length!==2)throw Error('Invalid turn session');
  if(combat.teams.some(team=>team.some(hero=>hero.passive||(hero.active&&!(specialHealing&&hero.active.effect==='heal')))))throw Error('Special hero mechanics require incremental engine integration');
- if(specialHealing&&!parity)throw Error('Special healing requires parity mode');
+ if((specialHealing||energySplash)&&!parity)throw Error('Special healing requires parity mode');
  if(typeof parity!=='boolean')throw Error('Invalid parity mode');
- return {combat,parity,specialHealing,round:combat.round,order:orderHeroActions(combat.teams).map(x=>({side:x.side,id:x.unit.id})),cursor:0};
+ return {combat,parity,specialHealing,energySplash,round:combat.round,order:orderHeroActions(combat.teams).map(x=>({side:x.side,id:x.unit.id})),cursor:0};
 }
 export function peekBasicTurn(session){
  if(!session||session.combat.finished||session.round!==session.combat.round) return null;
@@ -27,7 +28,8 @@ export function stepBasicTurn(session){
  const canSupportHeal=actor.role==='support'&&allies.some(u=>u.hp>0&&u.hp<u.maxHp);
  const canSelfHeal=actor.active?.effect==='heal'&&actor.hp<actor.maxHp;
  const heal=session.specialHealing&&next.round%3===0&&(canSupportHeal||canSelfHeal);
- const result=heal?applyServerSpecialHeal(session.combat,{side:next.side,actorId:next.actorId,round:next.round}):
+ const splash=session.energySplash&&next.round%3===0&&actor.role==='energy'&&!actor.active&&!actor.passive&&!heal;
+ const result=splash?stepParityEnergySplash(session.combat,{side:next.side,actorId:next.actorId,round:next.round,critical:randomInt(100)<8}):heal?applyServerSpecialHeal(session.combat,{side:next.side,actorId:next.actorId,round:next.round}):
   session.parity?stepParityBasicAttack(session.combat,{side:next.side,actorId:next.actorId,round:next.round,critical:randomInt(100)<8,allowHealActive:session.specialHealing}):
   stepBasicHeroCombat(session.combat,{side:next.side,actorId:next.actorId,round:next.round});
  session.cursor=session.order.findIndex((x,i)=>i>=session.cursor&&x.side===next.side&&x.id===next.actorId)+1;
