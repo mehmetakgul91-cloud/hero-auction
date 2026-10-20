@@ -528,6 +528,20 @@ if(req.method==='POST'&&url.pathname==='/api/battle-room'){let raw='';for await(
  session=battleSessions.get(String(body?.code||'').toUpperCase());if(!session)return send(404,{error:'Oda bulunamadı'});
  if(action==='join'){if(session.players[1]&&!session.players[1].left)return send(409,{error:'Oda dolu'});session.players[1]={token:crypto.randomBytes(24).toString('hex'),ready:false,positions:null};return send(200,{...battleSessionView(session,session.players[1].token),token:session.players[1].token})}
  const seat=session.players.findIndex(p=>p?.token===body?.token);if(seat<0||session.players[seat].left)return send(403,{error:'Geçersiz oturum'});if(action==='leave'){session.players[seat].left=true;session.players[seat].ready=false;if(session.players.every(p=>!p||p.left))battleSessions.delete(session.code);return send(200,{ok:true,left:true})}if(action==='ready'){if(!validBattlePositions(body.positions))return send(400,{error:'Geçersiz diziliş'});if(session.result)return send(409,{error:'Savaş başladı'});if(!Array.isArray(body.lanes)||body.lanes.length!==5||body.lanes.some(l=>l!=='front'&&l!=='back'))return send(400,{error:'Geçersiz ön/arka saf dizilişi'});if(!Array.isArray(body.roles)||body.roles.length!==5||body.roles.some(role=>!['tank','fighter','energy','assassin','support'].includes(role)))return send(400,{error:'Geçersiz savaş rolü'});session.players[seat].roles=body.roles;session.players[seat].lanes=body.lanes;session.players[seat].positions=body.positions;session.players[seat].ready=true;if(session.players.every(p=>p?.ready))session.result=battleSessionResult(session);return send(200,battleSessionView(session,body.token))}return send(400,{error:'Geçersiz işlem'})}
+if(req.method==='POST'&&url.pathname==='/api/commander-manual-demo'){
+ // Isolated training arena: fixed server-side teams, no rooms, accounts, currency or payouts.
+ let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>6000)return send(413,{error:'İstek çok büyük'})}
+ let body;try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz JSON'})}
+ const commanderId=String(body?.commanderId||'');if(!resolveCommander(commanderId))return send(400,{error:'Geçersiz komutan'});
+ const actions=body?.actions;if(!Array.isArray(actions)||actions.length>15||actions.some(a=>!a||!Number.isInteger(a.round)||a.round<1||a.round>15||!['normal','ultimate'].includes(a.ability)))return send(400,{error:'Geçersiz yetenek listesi'});
+ const seen=new Set();if(actions.some(a=>{if(seen.has(a.round))return true;seen.add(a.round);return false}))return send(400,{error:'Bir turda yalnızca bir yetenek kullanılabilir'});
+ const idsA=['marvel:hulk','marvel:thor','marvel:wolverine','marvel:scarlet witch','marvel:iron man'];
+ const idsB=['dc:superman','dc:wonder woman','dc:doomsday','dc:the flash','dc:doctor fate'];
+ const cards=ids=>ids.map((id,i)=>({id,power:Math.max(1,Math.min(100,Number(cardDetails[id]?.power)||70)),lane:i<2?'front':'back'}));
+ const commander={commanderId,levels:{attack:0,defense:0,magic:0,support:0}};
+ try{const result=simulateRosterBattle(cards(idsA),cards(idsB),{seed:'manual-commander-training-v1',maxRounds:15,commanders:[commander,null],commanderActions:actions.map(a=>({side:0,round:a.round,ability:a.ability}))});return send(200,{rounds:result.rounds,winner:result.winner,teams:result.teams.map(team=>team.map(u=>({id:u.id,name:u.name,maxHp:u.maxHp}))),log:result.log});}
+ catch(e){return send(400,{error:e.message})}
+}
 if(req.method==='GET'&&url.pathname==='/api/battle-preview'){
  // Fixed public demo teams. This endpoint never accesses rooms, accounts or wallets.
  const idsA=['marvel:hulk','marvel:thor','marvel:wolverine','marvel:scarlet witch','marvel:iron man'];
