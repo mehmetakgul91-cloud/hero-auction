@@ -3,6 +3,7 @@
 import crypto from 'node:crypto';
 import {orderHeroActions} from './battle-action-scheduler.js';
 import {selectBattleTarget} from './battle-target-selection.js';
+import {calculateHeroRawDamage} from './battle-damage-formula.js';
 import {applyCommanderSupport} from './arena-commanders.js';
 
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
@@ -135,18 +136,11 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       const special=round%3===0;
       const skill=special?unit.active:null;
       if(skill?.effect==='heal'&&unit.hp<unit.maxHp){const healed=Math.min(unit.maxHp-unit.hp,Math.max(1,Math.round(unit.attack*.52)));unit.hp+=healed;unit.healing+=healed;log.push({round,side,actor:unit.id,action:'heal',target:unit.id,value:healed});continue;}
-      const multiplier=skill?.power??(special?1.15:1);
       const critical=random()<.08;
-      // Tanks shield their allies by holding the frontline. Rear units take reduced
-      // damage until their front line falls, except when assassins infiltrate.
       const guarded=!isFront(target)&&enemies.some(x=>x.hp>0&&isFront(x));
-      const defense=skill?.effect==='pierce'?Math.floor(target.defense*.6):target.defense;
-      const roleMultiplier=(guarded?0.85:1)*(unit.role==='energy'?0.97:unit.role==='support'?1.03:1);
-      // Exposed all-ranged squads lose protection; mixed frontlines intercept fire.
-      
       const weakened=unit.commanderWeaken||0;
       unit.commanderWeaken=0;
-      const raw=skill?.effect==='headshot'?target.hp+target.shield:Math.max(1,Math.floor(unit.attack*(1-weakened)*multiplier*roleMultiplier*0.7*100/(100+defense)*(critical?1.3:1)));
+      const raw=calculateHeroRawDamage({unit,target,skill,special,critical,guarded,weakened});
       const absorbed=Math.min(target.shield,raw);
       target.shield-=absorbed;
       const damage=Math.min(target.hp,raw-absorbed);
