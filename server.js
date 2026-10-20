@@ -9,7 +9,7 @@ import {simulateRosterBattle,battleRoster} from './battle-roster.js';
 import {createCommanderProfile,validateCommanderProfile,resolveCommander,previewCommanderUpgrade,commanderLevelCap,commanderUpgradeCost,COMMANDER_STATS} from './arena-commanders.js';
 import {auctionRoomToBattleState,prepareBattleTeams} from './battle-match.js';
 import {createRoomCommanderSession,submitRoomCommanderTurn,viewRoomCommanderSession} from './commander-room-bridge.js';
-import {createLiveCommanderAbilities,castLiveCommanderAbility,viewLiveCommanderAbilities} from './commander-live-abilities.js';
+import {createLiveCommanderAbilities,viewLiveCommanderAbilities} from './commander-live-abilities.js';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
 const GOOGLE_CLIENT_ID=process.env.GOOGLE_CLIENT_ID||'742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
