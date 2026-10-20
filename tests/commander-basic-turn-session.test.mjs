@@ -31,3 +31,26 @@ test('special heroes cannot enter basic-only scheduler',()=>{
  const c=make();c.teams[0][0].active={effect:'heal'};
  assert.throws(()=>createBasicTurnSession(c),/Special hero mechanics/);
 });
+
+test('skipping defeated actors never repeats the next living hero',()=>{
+ const c=make();
+ c.teams[0].push({id:'a2',hp:100,maxHp:100,attack:30,defense:0,shield:0,lane:'front',speed:5,position:1});
+ const session=createBasicTurnSession(c);
+ assert.equal(peekBasicTurn(session).actorId,'a');
+ stepBasicTurn(session);
+ c.teams[1][0].hp=0;
+ assert.equal(peekBasicTurn(session).actorId,'a2');
+ stepBasicTurn(session);
+ assert.equal(peekBasicTurn(session),null);
+ assert.throws(()=>stepBasicTurn(session),/No scheduled hero action/);
+});
+test('opt-in parity session calculates legacy damage with server-owned critical',()=>{
+ const c=make();
+ const session=createBasicTurnSession(c,{parity:true});
+ const before=c.teams[1][0].hp;
+ const {result}=stepBasicTurn(session);
+ assert.ok([21,27].includes(before-c.teams[1][0].hp));
+ assert.equal(result.event.rawDamage,before-c.teams[1][0].hp);
+ assert.equal(typeof result.event.critical,'boolean');
+ assert.equal(peekBasicTurn(session).actorId,'b');
+});
