@@ -19,7 +19,7 @@ export function createMagicCastControls({enemyRoot,confirmButton,cancelButton,st
    // Server must revalidate living targets, cooldown and energy atomically.
    await onCast({ability:chosen,targetIds});
    reset();status.textContent='Büyü komutu sunucu tarafından kabul edildi';
-  }catch(error){pending=false;status.textContent='⚠ '+(error?.message||'Büyü komutu reddedildi');sync()}
+  }catch(error){pending=false;sync();status.textContent='⚠ '+(error?.message||'Büyü komutu reddedildi')}
  };
  const cancel=()=>{reset();status.textContent='Büyü seçimi iptal edildi; enerji harcanmadı'};
  enemyRoot.addEventListener('click',click);
