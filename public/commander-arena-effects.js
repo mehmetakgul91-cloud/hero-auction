@@ -11,7 +11,8 @@ function highlightHeroes(kind,side,ability){
  if(!team)return;
  const className='commander-hero-'+kind;
  const cards=[...team.querySelectorAll('.arena-hero:not(.dead)')];
- const targets=kind==='magic'?cards.slice(0,ability==='ultimate'?2:1):cards;
+ // The combat log owns exact targets; the aura deliberately marks the opposing team, not invented targets.
+ const targets=cards;
  for(const element of targets){
   element.classList.add(className);
   const item={element,className,timer:null};
