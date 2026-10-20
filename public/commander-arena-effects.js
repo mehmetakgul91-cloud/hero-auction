@@ -25,6 +25,8 @@ window.addEventListener('heroarena:move',event=>{
  const entries=event.detail?.events||[event.detail?.event];
  const commander=entries.find(e=>/^commander-(attack|defense|magic|support)-(normal|ultimate)$/.test(e?.action||''));
  if(!commander)return;
+ // Background-tab catch-up replays multiple moves immediately; avoid flashing stale skills.
+ if(document.hidden||document.body.classList.contains('arena-catching-up'))return;
  const match=/^commander-(attack|defense|magic|support)-(normal|ultimate)$/.exec(commander.action);
  const [,kind,ability]=match;
  const arena=document.getElementById('battle-arena');
