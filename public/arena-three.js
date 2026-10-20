@@ -249,6 +249,7 @@ if(stage){
     };
     // Commander effects are presentation-only; the server's combat log remains authoritative.
     const commanderVisual=e=>{
+      if(document.hidden||document.body.classList.contains('arena-catching-up'))return;
       const entries=e.detail?.events||[e.detail?.event];
       for(const entry of entries){
         const match=/^commander-(attack|defense|magic|support)-(normal|ultimate)$/.exec(entry?.action||'');
