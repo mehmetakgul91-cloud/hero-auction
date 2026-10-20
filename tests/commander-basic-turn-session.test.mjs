@@ -57,3 +57,27 @@ test('opt-in parity session calculates legacy damage with server-owned critical'
  assert.equal(typeof result.event.critical,'boolean');
  assert.equal(peekBasicTurn(session).actorId,'b');
 });
+
+test('opt-in support heals injured ally on third round instead of attacking',()=>{
+ const c=make();c.round=3;
+ c.teams[0][0].role='support';c.teams[0][0].attack=100;
+ c.teams[0].push({id:'injured',hp:20,maxHp:100,attack:10,defense:0,shield:0,lane:'back',speed:5,position:1});
+ const session=createBasicTurnSession(c,{parity:true,specialHealing:true});
+ const {result}=stepBasicTurn(session);
+ assert.equal(result.event.action,'heal');
+ assert.equal(result.event.target,'injured');
+ assert.equal(c.teams[0][1].hp,72);
+ assert.equal(c.teams[1][0].hp,100);
+});
+test('opt-in self-heal falls back to ordinary attack when at full HP',()=>{
+ const c=make();c.round=3;
+ c.teams[0][0].active={effect:'heal'};
+ const session=createBasicTurnSession(c,{parity:true,specialHealing:true});
+ const {result}=stepBasicTurn(session);
+ assert.equal(result.event.action,'attack');
+ assert.ok(c.teams[1][0].hp<100);
+});
+test('unported special effects remain blocked even with healing enabled',()=>{
+ const c=make();c.teams[0][0].active={effect:'splash'};
+ assert.throws(()=>createBasicTurnSession(c,{parity:true,specialHealing:true}),/Special hero mechanics/);
+});
