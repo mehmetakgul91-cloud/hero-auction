@@ -140,7 +140,7 @@ if(stage){
           const old=fighters.get(key);scene.remove(old);old.traverse(node=>{node.geometry?.dispose();if(node.material)(Array.isArray(node.material)?node.material:[node.material]).forEach(m=>m.dispose())});fighters.delete(key);
         }
         if(!fighters.has(key))make(unit,side,i);
-        const mesh=fighters.get(key);mesh.userData.unit=unit;mesh.scale.setScalar(cardScale(unit));
+        const mesh=fighters.get(key);if(mesh.userData.unit.hp>0&&unit.hp<=0)spawnSoul(mesh);mesh.userData.unit=unit;mesh.scale.setScalar(cardScale(unit));
         if(/hulk|juggernaut|doomsday|the thing|bane|solomon grundy|killer croc/i.test(String(unit.name)))mesh.scale.x*=1.22;
         mesh.userData.style=profiles[String(unit.id||'').toLowerCase()]?.style||'charge';
         const ratio=Math.max(0,Math.min(1,unit.hp/Math.max(1,unit.maxHp)));
@@ -214,6 +214,19 @@ if(stage){
       scene.add(beam);effects.push({mesh:beam,expires:elapsed+.4});
     };
     const floatingNumbers=[];
+    const spawnSoul=target=>{
+      if(document.hidden||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+      const canvas=document.createElement('canvas');canvas.width=128;canvas.height=192;
+      const ctx=canvas.getContext('2d');if(!ctx)return;
+      const glow=ctx.createRadialGradient(64,65,5,64,75,70);
+      glow.addColorStop(0,'#ffffff');glow.addColorStop(.4,'#c4faff');glow.addColorStop(1,'#75ccff00');
+      ctx.fillStyle=glow;ctx.beginPath();ctx.ellipse(64,75,42,60,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#b8f7ff99';ctx.beginPath();ctx.moveTo(34,100);ctx.lineTo(45,174);ctx.lineTo(64,146);ctx.lineTo(82,179);ctx.lineTo(95,100);ctx.fill();
+      const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(canvas),transparent:true,depthTest:false,depthWrite:false}));
+      sprite.position.copy(target.position);sprite.position.y+=1;
+      sprite.scale.set(1.4,2.1,1);scene.add(sprite);
+      floatingNumbers.push({sprite,born:elapsed,baseY:sprite.position.y,soul:true});
+    };
     const floatDamage=(target,event)=>{
       const value=Number(event.value||0),absorbed=Number(event.absorbed||0);
       const action=String(event.action||'');
@@ -236,7 +249,7 @@ if(stage){
       });
     };
     const move=e=>{
-      const event=e.detail.event;sync(e.detail.teams);
+      const event=e.detail.event;if(e.type!=='heroarena:experimental-move')sync(e.detail.teams);
       const actor=[...fighters.values()].find(m=>m.userData.unit.id===event.actor||m.userData.unit.name===event.actor);
       const target=[...fighters.values()].find(m=>m.userData.unit.id===event.target||m.userData.unit.name===event.target);
       if(actor){actor.userData.until=elapsed+.7;actor.userData.kind='attack';actor.userData.attackStart=elapsed;actor.userData.targetPosition=target?target.position.clone():null}
@@ -318,10 +331,11 @@ if(stage){
         }
         for(let i=floatingNumbers.length-1;i>=0;i--){
           const d=floatingNumbers[i],age=elapsed-d.born;
-          const life=2.2,progress=Math.min(1,age/life);
-          d.sprite.position.y=d.baseY+progress*1.2;
-          d.sprite.scale.set(6.1*(1+progress*.3),1.35*(1+progress*.3),1);
-          d.sprite.material.opacity=progress<.65?1:Math.max(0,(1-progress)/.35);
+          const life=d.soul?2.4:1.8,progress=Math.min(1,age/life);
+          d.sprite.position.y=d.baseY+progress*(d.soul?4.2:2.6);
+          const growth=1+progress*.2;
+          d.sprite.scale.set((d.soul?1.4:6.1)*growth,(d.soul?2.1:1.35)*growth,1);
+          d.sprite.material.opacity=Math.max(0,1-progress);
           if(age>life){scene.remove(d.sprite);d.sprite.material.map.dispose();d.sprite.material.dispose();floatingNumbers.splice(i,1)}
         }
         for(let i=impactBursts.length-1;i>=0;i--){
