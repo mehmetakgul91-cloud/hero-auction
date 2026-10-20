@@ -1,5 +1,6 @@
 // Isolated authoritative commander match session. Not wired to production routes.
 import {replayCommanderTranscript} from './commander-transcript.js';
+import {validateTurnCommand} from './commander-turns.js';
 
 export function createCommanderMatchSession({cardsA,cardsB,commanders,seed,remainingCredits=[0,0]}){
  if(!Array.isArray(cardsA)||cardsA.length!==5||!Array.isArray(cardsB)||cardsB.length!==5)throw Error('Invalid teams');
@@ -14,8 +15,10 @@ export function submitCommanderMatchTurn(session,{side,round,command}){
  if(!session||session.finished)throw Error('Battle already finished');
  if(!Number.isInteger(side)||![0,1].includes(side))throw Error('Invalid player side');
  if(round!==session.round)throw Error('Stale or future turn');
- if(session.pending[side]!==undefined)throw Error('Turn already submitted');
- if(!['pass','normal','ultimate',null].includes(command))throw Error('Invalid commander command');
+ // A pending choice may be revised until both players have committed the round.
+ // Validate against engine-owned energy before storing any choice.
+ const energy=Math.min(100,(session.result?.commanderEnergy?.[side]??0)+12);
+ validateTurnCommand(command,{side,round,energy,commanderId:session.commanders[side]?.commanderId});
  const nextPending=[...session.pending];
  nextPending[side]={command};
  if(nextPending.some(x=>x===undefined)){
