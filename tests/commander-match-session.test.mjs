@@ -12,27 +12,31 @@ test('waits for both players and advances one round',()=>{
  assert.equal(session.turns.length,1);
  assert.equal(session.round,2);
 });
-test('rejects stale turns and duplicate submissions',()=>{
+test('rejects stale turns and allows changing a pending choice',()=>{
  const session=make();
  submitCommanderMatchTurn(session,{side:0,round:1,command:'pass'});
- assert.throws(()=>submitCommanderMatchTurn(session,{side:0,round:1,command:'pass'}),/already submitted/);
+ assert.equal(submitCommanderMatchTurn(session,{side:0,round:1,command:'pass'}).ready,false);
  assert.throws(()=>submitCommanderMatchTurn(session,{side:1,round:2,command:'pass'}),/Stale or future/);
 });
-test('invalid ability does not commit a round',()=>{
+test('invalid ability is rejected immediately without mutating the session',()=>{
  const session=make();
- submitCommanderMatchTurn(session,{side:0,round:1,command:'normal'});
- assert.throws(()=>submitCommanderMatchTurn(session,{side:1,round:1,command:'pass'}),/Insufficient commander energy/);
+ assert.throws(()=>submitCommanderMatchTurn(session,{side:0,round:1,command:'normal'}),/Insufficient commander energy/);
  assert.equal(session.turns.length,0);
+ assert.equal(session.pending[0],undefined);
  assert.equal(session.round,1);
- assert.equal(session.pending[1],undefined);
- assert.deepEqual(session.pending[0],{command:'normal'});
 });
-
-test('invalid command can be corrected without trapping the opponent',()=>{
+test('player can correct a pending choice before opponent commits',()=>{
  const session=make();
- submitCommanderMatchTurn(session,{side:0,round:1,command:'normal'});
- assert.throws(()=>submitCommanderMatchTurn(session,{side:1,round:1,command:'pass'}),/Insufficient commander energy/);
- assert.equal(session.pending[1],undefined);
- // The invalid side must correct its pending command before the turn can proceed.
- assert.throws(()=>submitCommanderMatchTurn(session,{side:0,round:1,command:'pass'}),/already submitted/);
+ submitCommanderMatchTurn(session,{side:0,round:1,command:'pass'});
+ submitCommanderMatchTurn(session,{side:0,round:1,command:null});
+ assert.deepEqual(session.pending[0],{command:null});
+ const response=submitCommanderMatchTurn(session,{side:1,round:1,command:'pass'});
+ assert.equal(response.ready,true);
+ assert.equal(session.round,2);
+});
+test('rejects an unaffordable replacement without changing existing choice',()=>{
+ const session=make();
+ submitCommanderMatchTurn(session,{side:0,round:1,command:'pass'});
+ assert.throws(()=>submitCommanderMatchTurn(session,{side:0,round:1,command:'ultimate'}),/Insufficient commander energy/);
+ assert.deepEqual(session.pending[0],{command:'pass'});
 });
