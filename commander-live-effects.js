@@ -30,7 +30,7 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,round=1
   }
  }else{
   for(const u of [...enemies].sort((a,b)=>b.attack-a.attack).slice(0,strong?2:1)){
-   u.commanderWeaken=Math.max(u.commanderWeaken||0,strong?.40:.30);value++;
+   u.commanderWeaken=Math.max(u.commanderWeaken||0,strong?.40:.30);u.commanderWeakenUntilRound=round+2;value++;
   }
  }
  log.push({round,side,actor:'commander:'+side,action:'commander-'+commanderId+'-'+ability,value});
