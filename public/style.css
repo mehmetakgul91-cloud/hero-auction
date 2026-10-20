@@ -862,3 +862,9 @@ header{gap:14px;flex-wrap:wrap}
 #home-play-panel .play-lobby-note{text-align:center;color:#c3dfff;margin:18px 0}
 @media(max-width:850px){#home-play-panel .play-mode-cards{grid-template-columns:1fr}#home-play-panel .play-mode-art{height:55px;font-size:40px}#home-play-panel .play-mode-card p{min-height:0}#home-play-panel .play-lobby-status{display:none}}
 @media(max-width:480px){#home-play-panel .play-lobby-profile{flex-direction:column;align-items:stretch}#home-play-panel .play-lobby-profile input{max-width:none}#home-play-panel .play-mode-card{padding:15px}}
+
+/* Keep all five home navigation tabs in one horizontal row on every screen. */
+#home .home-quick-nav{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:clamp(3px,1vw,12px)!important;width:100%;align-items:stretch}
+#home .home-quick-nav .quick-nav-item{min-width:0;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;white-space:normal;overflow-wrap:anywhere;padding:clamp(7px,1.5vw,14px) 2px;font-size:clamp(9px,1.2vw,14px);line-height:1.15}
+#home .home-quick-nav .quick-nav-icon{font-size:clamp(18px,2.5vw,29px);line-height:1.1}
+@media(max-width:480px){#home .home-quick-nav{gap:3px!important}#home .home-quick-nav .quick-nav-item{font-size:9px;padding:9px 1px;letter-spacing:0}}
