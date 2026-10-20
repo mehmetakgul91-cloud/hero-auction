@@ -759,3 +759,73 @@ header{gap:14px;flex-wrap:wrap}
 .commander-profile-v2 .ability-card.ability-magic .ability-info .commander-upgrade-bar span{background:linear-gradient(90deg,#6839b6,#e0a0ff)}
 .commander-profile-v2 .ability-card.ability-support .ability-info .commander-upgrade-bar span{background:linear-gradient(90deg,#158453,#9dffd0)}
 @media(max-width:520px){.commander-profile-v2 .commander-upgrades.commander-fishbone{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.commander-profile-v2 .ability-art{min-height:120px}.commander-profile-v2 .ability-info{padding:11px 9px;gap:8px}.commander-profile-v2 .ability-info .ability-title{font-size:15px}.commander-profile-v2 .ability-desc{font-size:10px;min-height:28px}.commander-profile-v2 .ability-values{gap:4px}.commander-profile-v2 .ability-values>span{padding:6px 4px}.commander-profile-v2 .ability-values small{font-size:8px}.commander-profile-v2 .ability-values b{font-size:16px}.commander-profile-v2 .ability-type-tag{font-size:8px;padding:5px}.commander-profile-v2 .ability-info .ability-upgrade-button{font-size:10px}}
+
+
+/* Play lobby refresh: brighter, readable, arena-inspired without changing gameplay. */
+#home-play-panel{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  padding:clamp(14px,3vw,34px);
+  border:1px solid rgba(101,205,255,.56);
+  border-radius:24px;
+  background:
+    radial-gradient(ellipse at 52% 2%,rgba(52,153,255,.40),transparent 53%),
+    radial-gradient(ellipse at 95% 42%,rgba(143,84,255,.23),transparent 48%),
+    radial-gradient(ellipse at 4% 70%,rgba(15,214,206,.18),transparent 45%),
+    linear-gradient(150deg,#163b6c 0%,#112947 47%,#17213f 100%);
+  box-shadow:0 0 0 1px rgba(82,196,255,.13),0 24px 70px rgba(0,0,0,.35),inset 0 1px rgba(255,255,255,.18);
+}
+#home-play-panel::before{
+  content:"";pointer-events:none;position:absolute;inset:0;z-index:-1;
+  background:repeating-linear-gradient(115deg,transparent 0 88px,rgba(140,218,255,.035) 89px 90px);
+}
+#home-play-panel .cinema-sky{opacity:.85;pointer-events:none}
+#home-play-panel .cinema-hero{position:relative;text-align:center;padding:clamp(16px,3vw,32px) 8px}
+#home-play-panel .cinema-hero h1{
+  color:#fff1bb;text-shadow:0 3px 0 #815b24,0 0 32px rgba(255,195,71,.48);
+}
+#home-play-panel .cinema-hero h1 em{color:#fff9dc;text-shadow:0 0 24px rgba(89,219,255,.8)}
+#home-play-panel .cinema-hero p{color:#e4f3ff}
+#home-play-panel .cinema-dashboard{position:relative}
+#home-play-panel .cinema-command{
+  background:linear-gradient(150deg,rgba(20,54,100,.97),rgba(16,37,70,.97));
+  border:1px solid rgba(110,204,255,.58);
+  box-shadow:0 12px 38px rgba(0,0,0,.25),inset 0 1px rgba(255,255,255,.13);
+  border-radius:18px;
+}
+#home-play-panel .cinema-command-top{
+  background:linear-gradient(90deg,rgba(18,123,191,.32),rgba(69,82,174,.28));
+  color:#e7f7ff;
+}
+#home-play-panel .panel-heading h2{color:#fff4cb}
+#home-play-panel .cinema-play-grid{gap:12px}
+#home-play-panel .cinema-play-grid button{
+  min-height:60px;border-radius:14px;font-weight:900;letter-spacing:.4px;
+  box-shadow:0 7px 19px rgba(0,0,0,.24);
+  transition:transform .15s ease,filter .15s ease,box-shadow .15s ease;
+}
+#home-play-panel .cinema-play-grid button:hover{transform:translateY(-2px);filter:brightness(1.14)}
+#home-play-panel #match{
+  color:#fff;background:linear-gradient(135deg,#098a56,#0bc98b);
+  border:2px solid #70ffd0;box-shadow:0 0 22px rgba(24,225,146,.30);
+}
+#home-play-panel #create{
+  background:linear-gradient(135deg,#1767c6,#229de9);border:2px solid #85dfff;color:white;
+}
+#home-play-panel #bot{
+  background:linear-gradient(135deg,#6235ae,#9253dc);border:2px solid #cda7ff;color:white;
+}
+#home-play-panel input,#home-play-panel select{
+  background:#16345b!important;color:#fff!important;border:1px solid #83b7e2!important;
+}
+#home-play-panel .hint,#home-play-panel .or{color:#d2eaff}
+#home-play-panel .cinema-extras .panel{
+  background:linear-gradient(150deg,rgba(24,55,98,.97),rgba(18,39,75,.96));
+  border-color:rgba(117,190,244,.40);
+}
+@media(max-width:600px){
+  #home-play-panel{padding:12px;border-radius:16px}
+  #home-play-panel .cinema-hero{padding:16px 4px}
+  #home-play-panel .cinema-play-grid button{min-height:56px}
+}
