@@ -8,17 +8,17 @@ export function createLiveCommanderCombat({abilities,teams,commanders,round=1}){
  if(commanders.some(c=>!['attack','defense','magic','support'].includes(c?.commanderId)))throw Error('Invalid commander profiles');
  return {abilities,teams:structuredClone(teams),commanders:structuredClone(commanders),round,version:0,events:[],finished:false};
 }
-export function castLiveCommanderCombat(combat,{side,ability,requestId,matchKey,now=Date.now()}){
+export function castLiveCommanderCombat(combat,{side,ability,requestId,matchKey,now=Date.now(),targetIds}){
  if(!combat||combat.finished)throw Error('Battle already finished');
  if(![0,1].includes(side))throw Error('Unauthorized commander seat');
  const requestKey=side+':'+requestId;
  const prior=combat.abilities.requests.get(requestKey);
  if(prior){
-  if(prior.ability!==ability)throw Error('Cast request ID conflict');
+  if(prior.ability!==ability||JSON.stringify(prior.targetIds??null)!==JSON.stringify(targetIds??null))throw Error('Cast request ID conflict');
   return {duplicate:true,version:prior.version,events:[],teams:structuredClone(combat.teams)};
  }
  // Compute effects first, without changing energy or HP if the cast cannot apply.
- const effect=applyLiveCommanderEffect(combat.teams,{side,ability,commanderId:combat.commanders[side].commanderId,round:combat.round});
+ const effect=applyLiveCommanderEffect(combat.teams,{side,ability,commanderId:combat.commanders[side].commanderId,round:combat.round,targetIds});
  const cast=castLiveCommanderAbility(combat.abilities,{side,ability,requestId,matchKey,now});
  combat.teams=effect.teams;
  combat.version++;
@@ -27,7 +27,7 @@ export function castLiveCommanderCombat(combat,{side,ability,requestId,matchKey,
  combat.finished=effect.finished;
  combat.abilities.finished=effect.finished;
  const record=combat.abilities.requests.get(requestKey);
- if(record)record.version=combat.version;
+ if(record){record.version=combat.version;record.targetIds=structuredClone(targetIds??null);}
  return {duplicate:false,version:combat.version,events,teams:structuredClone(combat.teams),finished:combat.finished,energy:cast.energy,cooldownUntil:cast.cooldownUntil};
 }
 export function viewLiveCommanderCombat(combat,{sinceVersion=0}={}){
