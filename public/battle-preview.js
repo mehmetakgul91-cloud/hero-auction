@@ -115,6 +115,15 @@ let arenaMode=query.get('room')==='arena';
 const auctionCode=query.get('auctionCode');
 const auctionToken=query.get('auctionToken');
 const auctionMode=Boolean(auctionCode&&auctionToken);
+function mountCommanderDock(){
+ const current=new URLSearchParams(location.search);
+ if(!arenaMode||!auctionMode||current.get('commanderTest')!=='1')return;
+ const arena=$('battle-arena'),matchup=$('arena-commander-matchup'),controls=$('experimental-commander-controls');
+ if(!arena||!matchup||!controls)return;
+ let dock=$('arena-commander-dock');
+ if(!dock){dock=document.createElement('div');dock.id='arena-commander-dock';dock.className='arena-commander-dock';dock.setAttribute('aria-label','Komutan kontrol paneli');arena.after(dock)}
+ dock.append(matchup,controls);
+}
 const multiplayerCode=query.get('code');
 const multiplayerToken=query.get('token');
 let battlePoll=null;
@@ -247,6 +256,7 @@ function enterArenaWithoutReload(url){
  // Preserve the user-unlocked HTMLAudioElement across the formation-to-arena transition.
  history.replaceState(null,'',url);
  arenaMode=true;
+ mountCommanderDock();
  void requestArenaWakeLock();
  startArenaVideoKeepAwake();
  revealArenaAudio();
@@ -296,7 +306,7 @@ function renderRolePickers(){const root=$('role-pickers');root.replaceChildren()
  const pick=document.createElement('button');pick.className='formation-select';pick.type='button';pick.textContent='📍 YUVAYA YERLEŞTİR';pick.onclick=()=>{selectedHero=i;renderBoard()};card.append(heading,badge,stats,choices,pick);root.append(card);attachDrag(card,i);update();
  })}
 $('apply-roles').onclick=lockFormation;
-if(arenaMode){document.body.classList.add('arena-room');document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;$('arena-3d').hidden=true;$('play').textContent='▶ SAVAŞI BAŞLAT';}else{renderRolePickers();renderBoard();if(!auctionMode)startPreparation();else{$('apply-roles').disabled=true;$('prep-clock').textContent='--:--';$('prep-note').textContent='Açık artırma kartları doğrulanıyor…'}}
+if(arenaMode){document.body.classList.add('arena-room');document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;$('arena-3d').hidden=true;$('play').textContent='▶ SAVAŞI BAŞLAT';mountCommanderDock()}else{renderRolePickers();renderBoard();if(!auctionMode)startPreparation();else{$('apply-roles').disabled=true;$('prep-clock').textContent='--:--';$('prep-note').textContent='Açık artırma kartları doğrulanıyor…'}}
 const motion=()=> $('motion').checked&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const duration=()=>Number($('speed').value);
 function comicBattleCue(e){
