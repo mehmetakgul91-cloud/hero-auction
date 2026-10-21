@@ -2,6 +2,7 @@
 // Source assets remain shared; only platform documents/scripts are adapted.
 export function crazyGamesSource(source, extension){
  if(extension==='.js')return source
+  .replace(/WHATSAPP İLE DAVET ET/g,'DAVET BAĞLANTISINI KOPYALA')
   .replace(/(['"`])hero-auction-([a-z-]+)\1/g,(_,q,key)=>q+'hero-auction-cg-'+key+q)
   .replace(/https:\/\/heroauction\.com\.tr\//g,'/crazygames/')
   .replace(/(\b(?:from\s+|import\s*\(\s*))(['"])\/(?!\/|crazygames\/)/g,'$1$2/crazygames/')
