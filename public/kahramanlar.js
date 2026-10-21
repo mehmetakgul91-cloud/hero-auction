@@ -1,3 +1,4 @@
+import {abilityName} from '/hero-ability-text.js?v=tr-abilities-20261021';
 const root=document.getElementById('hero-gallery'),status=document.getElementById('gallery-status'),filters=document.getElementById('hero-filters'),search=document.getElementById('hero-search');
 const categories=[['all','TÜMÜ'],['tank','🛡️ TANK'],['fighter','⚔️ SAVAŞÇI'],['assassin','🥷 SUİKASTÇI'],['energy','🔮 ENERJİ / BÜYÜCÜ'],['support','💚 DESTEK'],['legendary','🌟 EFSANEVİ'],['rare','💎 NADİR'],['advanced','🔷 GELİŞMİŞ'],['common','⚪ SIRADAN']];
 const worlds={marvel:'MARVEL',dc:'DC',original:'HERO AUCTION',lotr:'YÜZÜKLERİN EFENDİSİ',pokemon:'POKÉMON'};
@@ -22,12 +23,11 @@ const passiveEffects={
  momentum:'savaş temposu avantajı'
 };
 function heroCardSummary(hero){
- const active=hero.active?.name?prettySkill(hero.active.name):'Belirtilmemiş';
- const passive=hero.passive?.name?prettySkill(hero.passive.name):'Belirtilmemiş';
+ const active=hero.active?.name?abilityName(hero.active.name):'Belirtilmemiş';
+ const passive=hero.passive?.name?abilityName(hero.passive.name):'Belirtilmemiş';
  return '⚡ Aktif: '+active+' · ✦ Pasif: '+passive;
 }
 
-const prettySkill=name=>String(name||'').replace(/[-_]/g,' ').replace(/\b\p{L}/gu,c=>c.toLocaleUpperCase('tr-TR'));
 const fmt=n=>(n>=0?'+':'')+(n*100).toFixed(0)+'%';
 function line(label,value){const el=document.createElement('div');el.className='gallery-detail-line';const a=document.createElement('span'),b=document.createElement('strong');a.textContent=label;b.textContent=value;el.append(a,b);return el}
 function makeCard(hero){
@@ -46,8 +46,8 @@ function makeCard(hero){
  const details=document.createElement('div');details.className='gallery-details';
  if(Number.isInteger(hero.power))details.append(line('Güç',hero.power+'/100'));
  if(hero.laneModifiers){details.append(line('🛡 Ön saf',fmt(Number(hero.laneModifiers.front)||0)),line('🎯 Arka saf',fmt(Number(hero.laneModifiers.back)||0)))}
- if(hero.active?.name)details.append(line('⚡ Aktif yetenek',prettySkill(hero.active.name)));
- if(hero.passive?.name)details.append(line('✦ Pasif yetenek',prettySkill(hero.passive.name)));
+ if(hero.active?.name)details.append(line('⚡ Aktif yetenek',abilityName(hero.active.name)));
+ if(hero.passive?.name)details.append(line('✦ Pasif yetenek',abilityName(hero.passive.name)));
  if(hero.stats){const labels={attack:'Saldırı',defense:'Savunma',ability:'Yetenek',control:'Kontrol',mobility:'Hareket'};const stats=document.createElement('div');stats.className='gallery-stat-grid';for(const [key,label] of Object.entries(labels)){if(hero.stats[key]===undefined)continue;const el=document.createElement('span');el.textContent=label+' '+hero.stats[key];stats.append(el)}details.append(stats)}
  body.append(details);card.append(art,body);return card
 }

@@ -1,3 +1,4 @@
+import {abilityText} from '/hero-ability-text.js?v=tr-abilities-20261021';
 const $=id=>document.getElementById(id);
 let session=null,room=null,stream=null;
 const world='mixed';
@@ -435,13 +436,7 @@ async function loadHeroInfo(card){
  const data=infoMemo.get(key);
  const desc=document.getElementById('hero-description');
  if(desc)desc.textContent=data?.description||card.description||card.name+' hakkında doğrulanmış kısa açıklama henüz eklenmedi.';
- const abilityText=(ability,label)=>{
-  if(!ability||typeof ability!=='object')return label+': Tanımlı değil';
-  const name=String(ability.name||'Yetenek').replace(/-/g,' ');
-  const effect=String(ability.effect||'').replace(/-/g,' ');
-  const amount=Number(ability.value);
-  return label+': '+name+(effect?' · '+effect:'')+(Number.isFinite(amount)?' ('+(amount*100).toFixed(0)+'%)':'');
- };
+
  const activeNode=document.getElementById('auction-active'),passiveNode=document.getElementById('auction-passive');
  if(activeNode)activeNode.textContent=abilityText(data?.active,'⚔ Aktif');
  if(passiveNode)passiveNode.textContent=abilityText(data?.passive,'✦ Pasif');
