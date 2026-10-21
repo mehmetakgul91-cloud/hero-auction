@@ -412,4 +412,4 @@ body.arena-results .shell{height:auto;min-height:100dvh;padding-top:8px}
 .arena-results .shell{position:relative}
 .arena-results .arena-room-nav{padding-right:55px}
 .arena-results #arena-music-toggle{position:absolute;top:10px;right:14px;width:40px;height:40px;min-height:40px;border-radius:10px;font-size:19px}
-.arena-results .arena-prep-link{display:none}
+.arena-results .arena-prep-link{display:none!important}

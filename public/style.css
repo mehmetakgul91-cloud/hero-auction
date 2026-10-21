@@ -974,8 +974,8 @@ body:has(#game[data-phase="auction"]:not([hidden])) .shell>header,
 body:has(#game[data-phase="auction"]:not([hidden])) .shell>footer,
 #game[data-phase="auction"] .room-tools{display:none}
 body:has(#game[data-phase="auction"]:not([hidden])) .shell{padding-top:8px}
-#game[data-phase="auction"] .auction-hero>.tag,
-#game[data-phase="auction"] .auction-hero>.hero-description{display:none}
+#game[data-phase="auction"] .auction-hero>.tag:not(#auction-lane-bonuses),
+#game[data-phase="auction"] .auction-hero>.hero-description{display:none!important}
 .auction-budget{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:12px;text-align:center}
 .auction-budget>div{padding:8px 4px;border:1px solid #3b8596;border-radius:10px;background:#102e41}
 .auction-budget .auction-budget-rival{border-color:#77577f;background:#2b2039}
