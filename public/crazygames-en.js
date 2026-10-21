@@ -1,6 +1,12 @@
 // Presentation-only English locale for the CrazyGames entry point.
 // Do not translate stored values, hero IDs, requests, or game rules.
 export const phrases = {
+'TAKIMINI KUR. ARENAYA HÜKMET.':'BUILD YOUR TEAM. RULE THE ARENA.',
+'Oyna':'Play',
+'Komutan':'Commander',
+'Kahramanlar':'Heroes',
+'Ligler':'Leagues',
+'İletişim':'Contact',
 'Oyunun hazırlanıyor. Bağlantı kesilirse aşağıdaki düğmeyle tekrar deneyebilirsin.':'Your game is loading. If disconnected, use the button below to retry.',
 'Kahramanlarını açık artırmada kazan, takımını oluştur ve arenada stratejini konuştur.':'Bid for heroes, build your team, and put your strategy to the test in the arena.',
 '10 kartlık açık artırmada sırayla teklif ver. Kredini dikkatli kullan; her oyuncu 5 kahraman kazanır.':'Take turns bidding on 10 heroes. Manage your credits: each player recruits five heroes.',

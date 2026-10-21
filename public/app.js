@@ -45,6 +45,7 @@ const commanderPortraits={"attack":"/images/Ate%C5%9Fler%20%C4%B0%C3%A7inde%20Sa
 function commanderPortrait(id){return commanderPortraits[id]||'/images/commander-attack.svg';}
 let commanderProfile=null,commanderLoaded=false,commanderPending=null,commanderChangePending=null,commanderProfileOpen=false,commanderBusy=false,commanderLoading=false,commanderChangeOpen=false;
 function commanderVisibility(){
+ renderLobbyIdentity();
  const logged=signedIn(),needSelection=logged&&commanderLoaded&&!commanderProfile&&(!window.HeroPlatform||!room);
  $('commander-onboarding').hidden=!needSelection;
  $('commander-profile').hidden=!logged||!commanderProfileOpen||!commanderProfile;
@@ -99,6 +100,7 @@ $('commander-change-confirm').onclick=()=>void changeCommander();
 $('commander-change-open').onclick=()=>{commanderChangeOpen=!commanderChangeOpen;commanderChangePending=null;renderCommanderRoster()};
 $('commander-change-close').onclick=()=>{commanderChangeOpen=false;commanderChangePending=null;renderCommanderRoster()};
 function renderCommanderProfile(){
+ renderLobbyIdentity();
  if(!commanderProfile)return;
  const chosen=commanderOptions.find(c=>c.id===commanderProfile.commanderId);
  $('commander-profile-name').textContent=(chosen?.icon||'♛')+' '+(chosen?.name||'Komutan');
@@ -186,7 +188,20 @@ function showGold(value){walletGold=Math.max(0,Number(value)||0);if(commanderPro
 async function refreshGold(){if(!signedIn())return;try{const data=await post('/api/wallet',{});showGold(data.gold)}catch(e){console.warn('Gold balance unavailable:',e.message)}}
 function clearExpiredLogin(){login=null;session=null;room=null;stream?.close();localStorage.removeItem('hero-auction-login');localStorage.removeItem('hero-auction-session');showGold(0);commanderProfile=null;commanderLoaded=false;commanderProfileOpen=false;applyLogin();notify('Oturumun sona ermiş. Lütfen yeniden giriş yap.');}
 async function validateLogin(){if(!signedIn())return false;try{const result=await post('/api/auth/check',{});showGold(result.gold);if(!commanderLoaded)void loadCommander();return true}catch(e){if(/giriş yap|Oturumun sona erdi|401/.test(e.message)){clearExpiredLogin();return false}notify('Sunucuya bağlanılamadı. Tekrar dene.');return false}}
-function applyLogin(){const active=signedIn();if(!room)window.HeroPlatform?.gameplay(false);if(!room)window.HeroPlatform?.setRoom(null);const wallet=$('gold-wallet');if(wallet)wallet.hidden=!active;$('login-gate').hidden=active;$('home').hidden=!active||!!room;$('game').hidden=!active||!room;$('account-status').hidden=!active;$('google-logout').hidden=true;$('account-status').setAttribute('aria-expanded','false');if(active){$('name').value=login.user?.name||'Oyuncu';$('name').readOnly=login.type==='google'||login.type==='crazygames';$('account-status').textContent=(login.type==='crazygames'?'CrazyGames: ':login.type==='google'?'Google: ':'Misafir: ')+(login.user?.name||'Oyuncu');}else{$('account-status').textContent='';}commanderVisibility();}
+function renderLobbyIdentity(){
+ const active=signedIn(),bar=$('account-bar');if(!bar)return;
+ bar.hidden=!active;
+ if(!active){$('account-name').textContent='';$('account-meta').textContent='';return;}
+ const name=login.user?.name||'Oyuncu',provider=login.type==='crazygames'?'CrazyGames':login.type==='google'?'Google':'Misafir';
+ const chosen=commanderOptions.find(c=>c.id===commanderProfile?.commanderId);
+ $('account-name').textContent=name;
+ $('account-meta').textContent=provider+(chosen?' · '+chosen.name+' · Sv. '+commanderAbilityStats(commanderProfile).level:'');
+ $('account-status').setAttribute('aria-label',name+' · '+provider+' · Hesap menüsünü aç');
+ const portrait=chosen?commanderPortrait(chosen.id):'/images/lobby-crest.svg';
+ if($('account-avatar').getAttribute('src')!==portrait)$('account-avatar').src=portrait;
+ if(chosen&&$('nav-commander-portrait').getAttribute('src')!==portrait)$('nav-commander-portrait').src=portrait;
+}
+function applyLogin(){const active=signedIn();if(!room)window.HeroPlatform?.gameplay(false);if(!room)window.HeroPlatform?.setRoom(null);const wallet=$('gold-wallet');if(wallet)wallet.hidden=!active;$('login-gate').hidden=active;$('home').hidden=!active||!!room;$('game').hidden=!active||!room;$('account-status').hidden=!active;$('google-logout').hidden=true;$('account-status').setAttribute('aria-expanded','false');if(active){$('name').value=login.user?.name||'Oyuncu';$('name').readOnly=login.type==='google'||login.type==='crazygames';}renderLobbyIdentity();commanderVisibility();}
 async function enterGuest(){try{const name=$('guest-name').value.trim()||'Oyuncu';const result=await post('/api/auth/guest',{name});login={type:'guest',user:result.user,authToken:result.authToken};localStorage.setItem('hero-auction-login',JSON.stringify(login));showGold(result.gold);applyLogin();void loadCommander();restoreGame()}catch(e){notify(e.message)}}
 $('guest-login').onclick=()=>window.HeroPlatform?startPlatform():enterGuest();
 $('account-status').onclick=()=>{if(window.HeroPlatform||!signedIn())return;const button=$('google-logout');button.hidden=!button.hidden;$('account-status').setAttribute('aria-expanded',String(!button.hidden));};
