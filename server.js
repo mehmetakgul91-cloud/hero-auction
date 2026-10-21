@@ -676,7 +676,7 @@ if(req.method==='GET'&&url.pathname==='/api/art'){
  }
  const art=artCache.get(key);
  const hero=battleRoster.find(h=>h.universe===universe&&h.name.toLocaleLowerCase('tr-TR')===name.toLocaleLowerCase('tr-TR'));
- return send(200,hero?{...art,role:hero.role,laneModifiers:hero.laneModifiers||null}:art);
+ return send(200,hero?{...art,role:hero.role,active:hero.active||null,passive:hero.passive||null,laneModifiers:hero.laneModifiers||null}:art);
 }
 if(req.method==='GET'&&url.pathname==='/api/online'){
  const id=url.searchParams.get('visitor')||'';
