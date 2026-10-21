@@ -468,8 +468,8 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
   const order=[...frontIndices,...botCards.map(c=>c.index).filter(i=>!frontIndices.includes(i))];
   sync.ready[1]={positions:order,lanes:order.map(i=>frontIndices.includes(i)?'front':'back'),roles:order.map(i=>botCards[i].hero?.role||'fighter')};
  }
- if(req.method==='POST'){
- if(sync.ready[seat])return send(409,{error:'Diziliş zaten onaylandı'});
+ // Re-entering a confirmed formation returns the existing battle without changing it.
+ if(req.method==='POST'&&!sync.ready[seat]){
  if(!validBattlePositions(body.positions)||!Array.isArray(body.lanes)||body.lanes.length!==5||body.lanes.some(l=>!['front','back'].includes(l)))return send(400,{error:'Geçersiz diziliş'});
  if(!Array.isArray(body.roles)||body.roles.length!==5||body.roles.some((v,i)=>v!==(battleRoster.find(hero=>hero.id===teams[seat][body.positions[i]].id)?.role)))return send(400,{error:'Kart türü değiştirilemez'});
  sync.ready[seat]={positions:body.positions,lanes:body.lanes,roles:body.roles};
