@@ -1,3 +1,4 @@
+import {waitForArenaLayout} from '/arena-layout.js?v=1';
 import {makeRig} from '/arena-skeleton.js?v=1';
 // Visual-only Three.js renderer. All outcomes and HP come from server replay events.
 const stage=document.getElementById('arena-3d-stage');
@@ -7,10 +8,9 @@ const showError=error=>{
   if(message)message.textContent='3D arena yüklenemedi: '+(error?.message||'Bilinmeyen hata')+' · Ayrıntılar tarayıcı konsolunda.';
 };
 const fallback=()=>import('/arena-3d.js?v=1');
-if(stage){
+if(stage && await waitForArenaLayout(stage)){
   try{
     const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js');
-    if(!stage.clientWidth||!stage.clientHeight)throw Error('Arena boyutları sıfır');
     const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance'});
     renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
     renderer.setSize(stage.clientWidth,stage.clientHeight,false);
