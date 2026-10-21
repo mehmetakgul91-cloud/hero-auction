@@ -50,6 +50,14 @@ test('two completed live matches retain the correct series for both seats and ch
    if(winner!==null)expectedSeries[winner]++;
    const reversed=await get('/api/experimental/commander-live',{code,token:players[1].token});
    assert.equal(reversed.winner,winner===null?null:1-winner);
+   assert.ok(live.summary.actionCount>0,'finished live battle must include all actions');
+   const total=rows=>rows.flat().reduce((n,h)=>n+h.dealt,0);
+   assert.equal(total(live.summary.teams),live.teams.flat().reduce((n,h)=>n+(h.damage||0),0));
+   assert.equal(total(live.summary.teams),live.summary.teams.flat().reduce((n,h)=>n+h.taken,0));
+   const finalDelta=await get('/api/experimental/commander-live',{code,token:players[0].token,sinceVersion:String(live.version)});
+   assert.deepEqual(finalDelta.events,[]);
+   assert.deepEqual(finalDelta.summary,live.summary,'even an empty final poll retains full battle statistics');
+   assert.deepEqual(reversed.summary.teams,[live.summary.teams[1],live.summary.teams[0]]);
    for(let repeat=0;repeat<2;repeat++)for(const player of players){
     const completed=await post('/api/battle-auction-complete',{code,token:player.token});
     assert.equal(completed.status,200);assert.deepEqual(completed.body.series,expectedSeries);

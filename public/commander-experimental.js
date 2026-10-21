@@ -38,7 +38,7 @@ function initializeCommanderControls(){
   const value=Math.max(0,Math.min(100,Number(own.energy)||0));
   energy.textContent=value+' / 100';meter.setAttribute('aria-valuenow',String(value));fill.style.width=value+'%';renderControls();
   if(Array.isArray(data.teams)){
-   window.dispatchEvent(new CustomEvent('heroarena:experimental-round-end',{detail:{round:data.round,teams:data.teams,finished:data.finished,winner:data.winner,events:data.events||[]}}));
+   window.dispatchEvent(new CustomEvent('heroarena:experimental-round-end',{detail:{round:data.round,teams:data.teams,finished:data.finished,winner:data.winner,summary:data.summary,version:data.version,events:data.events||[]}}));
    window.dispatchEvent(new CustomEvent('heroarena:commander-round',{detail:{round:data.round,events:data.events||[],teams:data.teams,finished:data.finished}}));
    // The arena replaces its cards on every snapshot; restore selection afterwards.
    magicControls?.refresh(data.teams[1-data.side]);

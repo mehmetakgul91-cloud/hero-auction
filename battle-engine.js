@@ -155,10 +155,11 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       if(skill?.effect==='sunder'){target.defense=Math.max(5,Math.floor(target.defense*.85));log.push({round,side,actor:unit.id,action:'armor-break',target:target.id,value:0});}
       if(skill?.effect==='weaken'){target.attack=Math.max(5,Math.floor(target.attack*.9));log.push({round,side,actor:unit.id,action:'weaken',target:target.id,value:0});}
       if(skill?.effect==='haste'){unit.speed=Math.min(150,unit.speed+8);log.push({round,side,actor:unit.id,action:'haste',target:unit.id,value:8});}
-      if(skill?.effect==='execute'&&target.hp>0&&target.hp/target.maxHp<.12){unit.damage+=target.hp;target.hp=0;unit.kills++;}
+      let executedDamage=0;
+      if(skill?.effect==='execute'&&target.hp>0&&target.hp/target.maxHp<.12){executedDamage=target.hp;unit.damage+=executedDamage;target.hp=0;unit.kills++;}
       if(skill?.effect==='splash'||unit.role==='energy'&&special)for(const other of enemies.filter(x=>x!==target&&x.hp>0)){const splashRaw=calculateSplashRawDamage(raw,{skill,role:unit.role,special});const splashAbsorbed=Math.min(other.shield,splashRaw);other.shield-=splashAbsorbed;const extra=Math.min(other.hp,splashRaw-splashAbsorbed);other.hp-=extra;unit.damage+=extra;if(other.hp===0)unit.kills++;log.push({round,side,actor:unit.id,action:'splash',target:other.id,value:extra,absorbed:splashAbsorbed,rawDamage:splashRaw,damageType:'splash'});}
       if(unit.passive?.effect==='thorns'&&unit.hp>0)unit.shield+=Math.floor(unit.defense*unit.passive.value);
-      log.push({round,side,actor:unit.id,action:skill?.name|| (special?'special':'attack'),target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:special?'special':'normal'});
+      log.push({round,side,actor:unit.id,action:skill?.name|| (special?'special':'attack'),target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:special?'special':'normal',executedDamage});
       if(unit.role==='tank'&&special)unit.shield+=Math.round(unit.defense*.2);
     }
     for(let side=0;side<2;side++){

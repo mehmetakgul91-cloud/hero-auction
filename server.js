@@ -18,6 +18,7 @@ import {prepareLiveArenaTeams} from './commander-live-team-preparation.js';
 import {createLiveCommanderCombat} from './commander-live-combat.js';
 import {isLiveCommanderApiAvailable} from './commander-live-api-access.js';
 import {settleLiveBattle} from './live-battle-settlement.js';
+import {orientBattleSummary} from './public/battle-summary-data.js';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
 const GOOGLE_CLIENT_ID=process.env.GOOGLE_CLIENT_ID||'742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
@@ -427,7 +428,7 @@ if(url.pathname==='/api/experimental/commander-live'&&(req.method==='GET'||req.m
  const liveKey=activeLiveKey||matchKey;
  const sinceVersion=Number(req.method==='GET'?url.searchParams.get('sinceVersion')||0:body.sinceVersion||0);
  if(!Number.isSafeInteger(sinceVersion)||sinceVersion<0)return send(400,{error:'Geçersiz savaş sürümü'});
- const snapshot=()=>{const current=liveArenaLifecycle.snapshot({matchKey:liveKey,token:body.token,sinceVersion});return side===0?current:{...current,side:0,winner:current.winner===null?null:1-current.winner,teams:[...current.teams].reverse(),abilities:[...current.abilities].reverse(),events:current.events.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side}))};};
+ const snapshot=()=>{const current=liveArenaLifecycle.snapshot({matchKey:liveKey,token:body.token,sinceVersion});return side===0?current:{...current,side:0,summary:orientBattleSummary(current.summary,side),winner:current.winner===null?null:1-current.winner,teams:[...current.teams].reverse(),abilities:[...current.abilities].reverse(),events:current.events.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side}))};};
  try{
   if(req.method==='POST'){
    if(!['normal','ultimate'].includes(body?.ability))return send(422,{error:'Geçersiz komutan yeteneği'});
@@ -541,7 +542,7 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
  if(!sync.result.live&&room.battleSettlementPending&&!room.matchSettled){settleFinishedMatch(room,result.winner);room.battleSettlementPending=false;}
  }markRoom(room);
  }
- return send(200,{ready:sync.ready.map(Boolean),started:Boolean(sync.result),result:sync.result?{...sync.result,winner:sync.result.winner===null?null:sync.result.winner===seat?0:1,teams:seat===0?sync.result.teams:[...sync.result.teams].reverse(),commanders:seat===0?sync.result.commanders:[...sync.result.commanders].reverse(),log:seat===0?sync.result.log:sync.result.log.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side}))}:null});
+ return send(200,{ready:sync.ready.map(Boolean),started:Boolean(sync.result),result:sync.result?{...sync.result,summary:orientBattleSummary(sync.result.summary,seat),winner:sync.result.winner===null?null:sync.result.winner===seat?0:1,teams:seat===0?sync.result.teams:[...sync.result.teams].reverse(),commanders:seat===0?sync.result.commanders:[...sync.result.commanders].reverse(),log:seat===0?sync.result.log:sync.result.log.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side}))}:null});
  }catch(e){return send(422,{error:e.message})}
 }
 if(req.method==='GET'&&url.pathname==='/api/battle-auction-team'){

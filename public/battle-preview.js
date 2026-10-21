@@ -1,3 +1,4 @@
+import {summarizeBattle} from '/battle-summary-data.js?v=complete-results-20261021';
 import {commanderAbilityStats,commanderAbilityDescription} from '/commander-ability-rules.js?v=commander-attack-fix-20261021';
 import {getArenaLaneLayout} from '/arena-viewport.js?v=arena-viewport-20261021b';
 // Verify the current portal account before accessing any saved arena seat.
@@ -456,6 +457,7 @@ function renderArenaCommanderMatchup(profiles){
  }
 }
 async function build(overrideResult){
+ document.body.classList.remove('arena-results');document.querySelector('.controls').hidden=false;
  stop();if(victoryPendingTimer!==null){clearTimeout(victoryPendingTimer);victoryPendingTimer=null}resetArenaClock();visualHealth.clear();cursor=0;events=[];$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;victoryRevealDone=false;if(victoryRevealTimer!==null){clearTimeout(victoryRevealTimer);victoryRevealTimer=null}if($('arena-victory-reveal'))$('arena-victory-reveal').hidden=true;$('next').disabled=true;$('play').disabled=true;
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
  try{
@@ -495,11 +497,11 @@ window.addEventListener('heroarena:experimental-round-end',e=>{
  const snapshot=e.detail.teams;
  for(let side=0;side<2;side++){
   const hpById=new Map((snapshot[side]||[]).map(u=>[u.id,u.hp]));
-  for(const unit of states[side])if(hpById.has(unit.id)){const live=snapshot[side].find(u=>u.id===unit.id);unit.maxHp=Number(live.maxHp)||unit.maxHp;unit.hp=Math.max(0,Math.min(unit.maxHp,Number(live.hp)||0));unit.shield=Number(live.shield)||0;}
+  for(const unit of states[side])if(hpById.has(unit.id)){const live=snapshot[side].find(u=>u.id===unit.id);Object.assign(unit,live);unit.hp=Math.max(0,Math.min(unit.maxHp,Number(live.hp)||0));unit.shield=Number(live.shield)||0;}
  }
  render();
  $('round').textContent=String(e.detail.round||0);$('message').textContent=e.detail.finished?'Canlı savaş tamamlandı':'Canlı savaş · Tur '+e.detail.round;
- if(liveArenaMode&&e.detail.finished){finalResult={...finalResult,winner:[0,1].includes(e.detail.winner)?e.detail.winner:null,rounds:Number(e.detail.round)||0,teams:states,log:[...(finalResult?.log||[]),...(e.detail.events||[])]};showVictoryReveal();}
+ if(liveArenaMode&&e.detail.finished){finalResult={...finalResult,winner:[0,1].includes(e.detail.winner)?e.detail.winner:null,rounds:Number(e.detail.round)||0,teams:states,summary:e.detail.summary,log:[...(finalResult?.log||[]),...(e.detail.events||[])]};showVictoryReveal();}
 });
 const arenaArtCache=new Map();
 let finalResult=null;
@@ -553,6 +555,7 @@ function showVictoryReveal(){
  if(victoryRevealDone||!finalResult||victoryPendingTimer!==null)return;
  pauseArenaClock();
  finishCommanderControls();
+ $('play').textContent='✓ SAVAŞ TAMAMLANDI';$('play').disabled=true;
  $('message').textContent='Son hamle tamamlandı · Savaş sonucu hazırlanıyor…';
  const finish=()=>{
   const effectRemaining=Math.max(0,Math.max(window.heroCommanderEffectUntil||0,window.heroCommanderImpactUntil||0)-Date.now());
@@ -618,32 +621,41 @@ function showBattleSummary(){
  finishCommanderControls();
  const winner=finalResult.winner;
  const survivors=states.map(team=>team.filter(unit=>unit.hp>0).length);
- $('battle-summary-title').textContent=winner===null?'🤝 BERABERLİK':winner===0?'🏆 MAVİ TAKIM KAZANDI':'🏆 KIRMIZI TAKIM KAZANDI';
- $('battle-summary-detail').textContent='Açık artırma gücü, diziliş ve kahraman yetenekleri savaş sonucunu belirledi.';
+ panel.dataset.winner=winner===null?'draw':winner===0?'blue':'red';
+ $('battle-summary-title').textContent=winner===null?'BERABERLİK':winner===0?'ZAFER SENİN':'RAKİP KAZANDI';
+ $('battle-summary-detail').textContent='Kahramanların ve komutanın savaştaki katkısı.';
  $('battle-summary-rounds').textContent=String(finalResult.rounds??events.at(-1)?.round??0);
  $('battle-summary-survivors').textContent=survivors.join(' - ');
- $('battle-summary-actions').textContent=String(events.length);
+ const summary=finalResult.summary||summarizeBattle(finalResult.teams,finalResult.log||[]);
+ $('battle-summary-actions').textContent=String(summary.actionCount);
  const stats=panel.querySelector('.battle-hero-stats')||document.createElement('div');stats.className='battle-hero-stats';stats.replaceChildren();
- const damageEvents=finalResult.log||[];
  for(let side=0;side<2;side++){
   const section=document.createElement('section');section.className='battle-hero-stats-team';
-  const heading=document.createElement('h3');heading.textContent=side?'🔴 KIRMIZI TAKIM':'🔵 MAVİ TAKIM';section.append(heading);
-  const rankedHeroes=finalResult.teams[side].map((hero,index)=>({
-   hero,index,
-   dealt:damageEvents.filter(e=>e.actor===hero.id&&e.damageType).reduce((n,e)=>n+(Number(e.value)||0),0),
-   taken:damageEvents.filter(e=>e.target===hero.id&&e.damageType).reduce((n,e)=>n+(Number(e.value)||0),0),
-   blocked:damageEvents.filter(e=>e.target===hero.id&&e.damageType).reduce((n,e)=>n+(Number(e.absorbed)||0),0)
-  })).sort((a,b)=>b.dealt-a.dealt||a.index-b.index);
-  for(const {hero,dealt,taken,blocked} of rankedHeroes){
+  const heading=document.createElement('h3');heading.textContent=side?'🔴 RAKİP TAKIM':'🔵 SENİN TAKIMIN';section.append(heading);
+  const header=document.createElement('div');header.className='battle-stat-head';
+  for(const label of ['Kahraman','Hasar','Alınan','Kalkan','Şifa']){const text=document.createElement('span');text.textContent=label;header.append(text)}
+  section.append(header);
+  const rankedHeroes=summary.teams[side].map((stats,index)=>({...stats,hero:finalResult.teams[side].find(hero=>hero.id===stats.id),index})).sort((a,b)=>b.dealt-a.dealt||a.index-b.index);
+  for(const {hero,dealt,taken,blocked,healing} of rankedHeroes){
    const line=document.createElement('div');line.className='battle-hero-stat-row';
    const name=document.createElement('strong');name.textContent=hero.name;
-   const numbers=document.createElement('span');numbers.textContent='⚔ '+dealt+' vurdu · 🛡 '+blocked+' engelledi · ❤️ '+taken+' aldı';
-   line.append(name,numbers);section.append(line);
+   line.append(name);
+   for(const [label,value] of [['Hasar',dealt],['Alınan',taken],['Kalkan',blocked],['Şifa',healing]]){
+    const number=document.createElement('span');number.textContent=Number(value).toLocaleString('tr-TR');number.setAttribute('aria-label',label+': '+value);line.append(number);
+   }
+   section.append(line);
+  }
+  const commander=summary.commanders[side];
+  if(commander?.casts){
+   const line=document.createElement('p');line.className='battle-commander-stats';
+   line.textContent='Komutan · '+commander.casts+' beceri'+(commander.dealt?' · '+commander.dealt+' hasar':'')+(commander.healing?' · '+commander.healing+' şifa':'')+(commander.shield?' · '+commander.shield+' kalkan':'');section.append(line);
   }
   stats.append(section);
  }
  panel.append(stats);
- document.body.classList.remove('arena-fit');
+ document.body.classList.remove('arena-fit');document.body.classList.add('arena-results');
+ $('arena-score').hidden=true;document.querySelector('.controls').hidden=true;
+ $('message').textContent='Savaş tamamlandı';
  panel.hidden=false;
  if(auctionMode)void showAuctionRematch();
  $('battle-arena').hidden=true;
@@ -831,11 +843,18 @@ async function showAuctionRematch(){
  if(battleRematchShown||!auctionMode)return;battleRematchShown=true;
  try{const response=await fetch('/api/battle-auction-complete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken})});const data=await response.json();if(!response.ok)throw Error(data.error||'Savaş tamamlanamadı');
  const controls=$('battle-summary');if(!controls)return;
- const button=document.createElement('button');button.type='button';button.textContent='⚔ RÖVANŞ İSTE';button.className='primary';button.style.cssText='display:block;width:100%;min-height:48px;margin:12px 0';
+ const button=document.createElement('button');button.type='button';button.textContent='⚔ RÖVANŞ İSTE';button.className='primary arena-rematch-button';
  const title=$('battle-summary-title');if(title)title.after(button);else controls.prepend(button);
  const series=document.createElement('div');series.id='arena-rematch-series';series.setAttribute('role','status');series.style.cssText='display:block;width:100%;box-sizing:border-box;margin:12px 0;padding:16px;border:2px solid #58dfff;border-radius:12px;background:#11233b;color:#fff;text-align:center;font-weight:700';
  const seat=Number(data.seat),scores=Array.isArray(data.series)?data.series:[0,0],players=Array.isArray(data.players)?data.players:[];
- series.textContent='🏆 RÖVANŞ SERİSİ · '+(players[seat]?.name||'SEN')+' '+(Number(scores[seat])||0)+' – '+(Number(scores[1-seat])||0)+' '+(players[1-seat]?.name||'RAKİP');
+ series.removeAttribute('style');
+ const caption=document.createElement('small');caption.textContent='RÖVANŞ SERİSİ';
+ const scoreline=document.createElement('div');scoreline.className='arena-series-scoreline';
+ const own=document.createElement('span');own.textContent=players[seat]?.name||'SEN';
+ const score=document.createElement('strong');score.textContent=(Number(scores[seat])||0)+' – '+(Number(scores[1-seat])||0);
+ const rival=document.createElement('span');rival.textContent=players[1-seat]?.name||'RAKİP';
+ scoreline.append(own,score,rival);series.append(caption,scoreline);
+
  button.after(series);
  button.onclick=async()=>{button.disabled=true;try{const auth=JSON.parse(localStorage.getItem('hero-auction-login')||'null');const response=await fetch('/api/rematch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,authToken:auth?.authToken})});const result=await response.json();if(!response.ok)throw Error(result.error||'Rövanş gönderilemedi');button.textContent='✓ RÖVANŞ İSTEĞİ GÖNDERİLDİ';const watch=setInterval(async()=>{try{const response=await fetch('/api/battle-auction-team?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});if(response.status===409){clearInterval(watch);location.replace('/')} }catch{}},2500);}catch(e){button.disabled=false;$('message').textContent='⚠ '+e.message}};
  }catch(e){battleRematchShown=false;$('message').textContent='⚠ '+e.message}

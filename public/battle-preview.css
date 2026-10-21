@@ -377,3 +377,39 @@ body.arena-fit{height:var(--arena-viewport-height,100vh);height:var(--arena-view
 /* Image dimensions never resize the arena frame; landscape cards show the character on the right. */
 .arena-portrait-image{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;object-position:center 25%}
 .arena-portrait-image.hero-portrait-wide,.slot-portrait.hero-portrait-wide{object-position:right center}
+
+/* Finished battles have a single result surface; no active combat controls remain. */
+body.arena-results .controls,body.arena-results #arena-score,body.arena-results #arena-commander-dock{display:none!important}
+body.arena-results .shell{height:auto;min-height:100dvh;padding-top:8px}
+.arena-results .battle-summary{margin:12px auto 20px;padding:20px;width:100%;max-width:900px;border-radius:18px;border-color:#45647c;background:radial-gradient(ellipse at top,#1d3448,#0d192c 65%);box-sizing:border-box}
+.arena-results .battle-summary[data-winner="red"]{background:radial-gradient(ellipse at top,#3b2336,#10192b 65%);border-color:#8d526b}
+.arena-results #battle-summary-title{font-size:clamp(23px,5vw,32px);letter-spacing:1px;margin:4px 0 16px;color:#a7e7f3}
+.arena-results [data-winner="red"] #battle-summary-title{color:#f0b4c3}
+.arena-rematch-button{display:block;width:100%;min-height:48px;margin:10px 0 12px;background:linear-gradient(110deg,#167b9c,#315a9b);border:1px solid #79c7df;border-radius:10px;color:#fff;font-weight:800}
+#arena-rematch-series{padding:12px;margin:12px 0;border:1px solid #576b83;border-radius:12px;background:#09152480;text-align:center}
+#arena-rematch-series>small{display:block;color:#9aafc5;font-size:9px;letter-spacing:1.5px;margin-bottom:8px}
+.arena-series-scoreline{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px}
+.arena-series-scoreline span{font-size:13px;line-height:1.25;overflow-wrap:anywhere}
+.arena-series-scoreline span:first-child{color:#9edce9}.arena-series-scoreline span:last-child{color:#efafc2}
+.arena-series-scoreline strong{font-size:27px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.arena-results #battle-summary-detail{font-size:12px;color:#9db0c6;margin:16px 0}
+.arena-results .battle-summary-stats{gap:8px}
+.arena-results .battle-summary-stats>div{padding:11px 5px;background:#0c192c;border:1px solid #334d68;border-radius:10px}
+.arena-results .battle-summary-stats small{font-size:9px;letter-spacing:.4px}
+.arena-results .battle-summary-stats strong{font-size:23px}
+.arena-results .battle-hero-stats-team{padding:12px;margin-top:12px;border-radius:12px;background:#0c192c;border-color:#304b67}
+.arena-results .battle-hero-stats-team h3{font-size:12px;margin:2px 0 12px}
+.arena-results .battle-hero-stat-row,.arena-results .battle-stat-head{display:grid;grid-template-columns:minmax(80px,1.6fr) repeat(4,minmax(0,.65fr));align-items:center;gap:6px;text-align:right}
+.arena-results .battle-stat-head{padding:0 0 8px;color:#8fa6bf;font-size:10px}
+.arena-results .battle-stat-head span:first-child,.arena-results .battle-hero-stat-row strong{text-align:left}
+.arena-results .battle-hero-stat-row{padding:10px 0;font-size:12px;border-top:1px solid #30465e}
+.arena-results .battle-hero-stat-row strong{font-size:12px;line-height:1.35;overflow-wrap:anywhere}
+.arena-results .battle-hero-stat-row>span{font-size:12px;font-variant-numeric:tabular-nums;color:#b8ccdf}
+.arena-results .battle-hero-stat-row>span:nth-child(2){color:#f1d59b;font-weight:750}
+.arena-results .battle-hero-stat-row>span:last-child{color:#88d5b3}
+.battle-commander-stats{font-size:11px;line-height:1.6;margin:10px 0 0;padding:8px;border-radius:7px;background:#272440;color:#c9b8ee}
+@media(max-width:520px){.arena-results .battle-summary{padding:14px 12px}.arena-results .battle-hero-stats-team{padding:10px}.arena-results .battle-hero-stat-row,.arena-results .battle-stat-head{gap:4px}.arena-results .battle-hero-stat-row strong,.arena-results .battle-hero-stat-row>span{font-size:11px}.arena-series-scoreline{gap:8px}.arena-series-scoreline span{font-size:12px}}
+.arena-results .shell{position:relative}
+.arena-results .arena-room-nav{padding-right:55px}
+.arena-results #arena-music-toggle{position:absolute;top:10px;right:14px;width:40px;height:40px;min-height:40px;border-radius:10px;font-size:19px}
+.arena-results .arena-prep-link{display:none}

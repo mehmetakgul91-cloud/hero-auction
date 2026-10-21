@@ -969,6 +969,13 @@ header{gap:14px;flex-wrap:wrap}
 }
 
 /* Keep the budget at the bidding controls; collected cards grow underneath on phones. */
+/* During bidding the card and budget are the page header. Account tools stay on the home screen. */
+body:has(#game[data-phase="auction"]:not([hidden])) .shell>header,
+body:has(#game[data-phase="auction"]:not([hidden])) .shell>footer,
+#game[data-phase="auction"] .room-tools{display:none}
+body:has(#game[data-phase="auction"]:not([hidden])) .shell{padding-top:8px}
+#game[data-phase="auction"] .auction-hero>.tag,
+#game[data-phase="auction"] .auction-hero>.hero-description{display:none}
 .auction-budget{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:12px;text-align:center}
 .auction-budget>div{padding:8px 4px;border:1px solid #3b8596;border-radius:10px;background:#102e41}
 .auction-budget .auction-budget-rival{border-color:#77577f;background:#2b2039}
@@ -987,3 +994,61 @@ header{gap:14px;flex-wrap:wrap}
  #game .side-hero-cost{grid-column:2;grid-row:1}
  #game .side-hero-role{grid-column:1/-1;grid-row:2;font-size:9px;line-height:1.3;word-break:normal;overflow-wrap:normal}
 }
+
+/* Compact illustrated guide: the same four steps form a two-column board on phones. */
+#home .home-guide{max-width:920px;margin:14px auto 22px;padding:22px;border-radius:20px;background:radial-gradient(ellipse at 0 0,#16334b,transparent 55%),#0b1424;border-color:#334a65}
+#home .home-guide-head{text-align:left;margin-bottom:13px}
+#home .home-guide-eyebrow{color:#c4a773;font-size:10px;letter-spacing:1.8px}
+#home .home-guide-head h2{font-size:30px;letter-spacing:-.8px;margin:6px 0;color:#f0f5ff}
+#home .home-guide-head p{font-size:13px;line-height:1.4;max-width:none;margin:0;color:#a9bdd1}
+#home .home-guide-stats{display:flex;align-items:center;gap:0;margin:0 0 16px;padding:10px 0;border-block:1px solid #3b506440}
+#home .home-guide-stats>span{flex:1;text-align:center;color:#9fb5cb;font-size:12px;white-space:nowrap}
+#home .home-guide-stats>span+span{border-left:1px solid #3b506460}
+#home .home-guide-stats strong{font-size:16px;color:#ddeef8;margin-right:4px}
+#home .home-guide-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+#home .home-guide-card{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:stretch;min-height:198px;padding:12px;border-radius:13px;border:1px solid #3f587777;background:linear-gradient(155deg,#1a2c42,#101b2c)}
+#home .home-guide-step{position:absolute;top:11px;right:11px;z-index:2;font-size:11px;color:#8ea4bb;letter-spacing:1px}
+#home .home-guide-card h3{font-size:14px;line-height:1.25;margin:10px 0 6px;letter-spacing:-.2px}
+#home .home-guide-card p{font-size:12px;line-height:1.45;color:#a8bad0;margin:0}
+.guide-scene{height:91px;position:relative;flex-shrink:0}
+.guide-card-fan{display:flex;align-items:center;justify-content:center;padding-bottom:5px}
+.guide-card-fan img{position:absolute;width:49px;height:69px;object-fit:cover;object-position:center 20%;border:1px solid #c5a663;border-radius:5px;box-shadow:0 5px 15px #0008}
+.guide-card-fan img:nth-child(1){transform:translateX(-34px) rotate(-18deg);border-color:#5fc3db}
+.guide-card-fan img:nth-child(2){transform:translateY(-5px);z-index:1}
+.guide-card-fan img:nth-child(3){transform:translateX(34px) rotate(18deg);border-color:#c695ef}
+.guide-bid-chip{position:absolute;bottom:1px;z-index:2;padding:4px 9px;border:1px solid #9e8651;border-radius:12px;background:#302719;color:#f6d78f;font-size:9px;font-weight:800;letter-spacing:.5px}
+.guide-mini-board{display:grid;grid-template-columns:30px 100px;grid-template-rows:32px 32px;align-content:center;justify-content:center;align-items:center;gap:7px;transform:perspective(300px) rotateX(14deg)}
+.guide-mini-board>span{font-size:8px;letter-spacing:.6px;color:#8eb9d2}
+.guide-mini-board>div{display:flex;justify-content:center;gap:7px}
+.guide-mini-board i{width:24px;height:27px;border:1px solid #8edce3;border-radius:5px;background:linear-gradient(150deg,#387283,#173747);box-shadow:0 3px 0 #091923,0 0 15px #77d6e929}
+.guide-mini-board>div:last-child i{border-color:#b6a2ec;background:linear-gradient(150deg,#665b92,#302c50)}
+.guide-cast{display:flex;align-items:center;justify-content:center;gap:12px;padding-bottom:12px}
+.guide-cast img{width:62px;height:68px;object-fit:cover;object-position:center 20%;border:1px solid #b69bef;border-radius:50%;box-shadow:0 0 24px #a26bf344}
+.guide-cast svg{width:31px;height:39px;fill:#e0c6ff;filter:drop-shadow(0 0 8px #b075e9)}
+.guide-energy{position:absolute;bottom:1px;left:calc(50% - 53px);height:6px;width:106px;border-radius:8px;background:#302847;overflow:hidden}
+.guide-energy i{display:block;height:100%;width:88%;background:linear-gradient(90deg,#7ecbff,#cc9dff,#f2d3a1);border-radius:inherit}
+.guide-prize{display:flex;align-items:center;justify-content:center;gap:3px}
+.guide-prize svg{height:88px;width:76px;filter:drop-shadow(0 0 16px #e1bb4930)}
+.guide-medal{fill:#312a24;stroke:#c7a15a;stroke-width:2}
+.guide-star{fill:#e1bc6e;stroke:#ffebad;stroke-width:1}
+.guide-prize>span{display:flex;flex-direction:column;color:#f1d293;font-weight:850;font-size:27px;line-height:1}
+.guide-prize small{font-size:8px;letter-spacing:1.5px;margin-top:6px}
+#home .home-guide-cta{min-height:48px;margin-top:15px;padding:12px;font-size:13px;background:linear-gradient(105deg,#147e99,#345c99);border-color:#63b6d0;border-radius:10px;letter-spacing:.5px;box-shadow:0 5px 16px #008bd922}
+#home .home-guide-note{font-size:11px;line-height:1.6;text-align:center;color:#91a5bc;margin:11px 0 0}
+@media(max-width:700px){
+ #home .home-guide{padding:15px 12px;border-radius:16px;margin-top:10px}
+ #home .home-guide-head{margin-bottom:12px}
+ #home .home-guide-head h2{font-size:24px}
+ #home .home-guide-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ #home .home-guide-card{min-height:169px;padding:11px}
+ #home .home-guide-card h3{font-size:13px;margin-top:7px}
+ #home .home-guide-card p{font-size:11px}
+ .guide-scene{height:76px}
+ .guide-card-fan img{width:41px;height:58px}
+ .guide-card-fan img:nth-child(1){transform:translateX(-27px) rotate(-18deg)}
+ .guide-card-fan img:nth-child(3){transform:translateX(27px) rotate(18deg)}
+ .guide-cast img{width:52px;height:56px}
+ .guide-prize svg{height:72px;width:60px}
+ .guide-prize>span{font-size:24px}
+}
+@media(max-width:380px){.guide-mini-board{grid-template-columns:22px 78px;gap:5px}.guide-mini-board i{width:20px;height:24px}}
