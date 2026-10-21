@@ -1,0 +1,109 @@
+// Presentation-only English locale for the CrazyGames entry point.
+// Do not translate stored values, hero IDs, requests, or game rules.
+export const phrases = {
+'Oyunun hazırlanıyor. Bağlantı kesilirse aşağıdaki düğmeyle tekrar deneyebilirsin.':'Your game is loading. If disconnected, use the button below to retry.',
+'Kahramanlarını açık artırmada kazan, takımını oluştur ve arenada stratejini konuştur.':'Bid for heroes, build your team, and put your strategy to the test in the arena.',
+'10 kartlık açık artırmada sırayla teklif ver. Kredini dikkatli kullan; her oyuncu 5 kahraman kazanır.':'Take turns bidding on 10 heroes. Manage your credits: each player recruits five heroes.',
+'Kahramanlarını ön ve arka sıraya yerleştir. Sınıf özellikleri, konum bonusları ve komutanın savaş gücünü etkiler.':'Place heroes in the front or back row. Roles, positioning bonuses, and your commander affect their power.',
+'Takımlar otomatik olarak mücadele eder. Kahraman yetenekleri, dayanıklılık ve doğru diziliş sonucu belirler.':'Teams fight automatically. Hero abilities, durability, and positioning determine the outcome.',
+"Gerçek oyunculu maçlarda iki taraftan 50'şer altın alınır; kazanan 100 altın kazanır. Bilgisayara karşı maçlar antrenmandır.":'Online matches cost 50 gold per player; the winner receives 100. Computer matches are free practice.',
+'En güçlü karta bütün kredini harcamak her zaman kazandırmaz. Kalan kredi ve takım uyumu da önemlidir.':'Spending everything on the strongest hero is not always best. Remaining credits and team synergy matter.',
+'İlk girişinde bir komutan seç. Seçim hesabına kaydedilir. Daha sonra 5.000 altın karşılığında komutanını değiştirebilirsin.':'Choose a commander for your account. You can change commanders later for 5,000 gold.',
+'Yalnızca ilgili kahraman sınıfı güçlenir. Ana uzmanlık en fazla %20, diğer dallar %10.':'Bonuses apply to the matching hero role. Main specialty: up to 20%; other branches: up to 10%.',
+'Diğer komutanlar yalnızca burada görüntülenir. Gelişim seviyelerin korunur.':'Choose another commander here. Your upgrade levels are preserved.',
+'Oyuncu kimliği ve ilerleme oyun sunucusunda saklanır.':'Player identity and progress are stored on the game server.',
+'Gizli puanlar yalnızca sunucuda hesaplanır · 1 kredi = 10 final bonusu':'Hidden power is calculated by the game server.',
+'Her kalan kredi kahraman güçlerini %1 artırır; negatif kredi aynı oranda azaltır. Hazır olduğunda arenaya geç.':'Each remaining credit adds 1% hero power; negative credits reduce it by the same rate. Continue when ready.',
+'Bu ekran savaş sonucu değildir. Arena yalnızca onayından sonra açılır.':'These are team power totals, not the battle result. Confirm to enter the arena.',
+'Kartını seç → Yuvaya dokun → Hazırım. İstersen sürükleyip bırak.':'Select a hero → Choose a slot → Ready. You can also drag and drop.',
+'Kartını seç, ardından bir yuvaya dokun. Dolu yuvaya taşırsan yer değiştirir.':'Select a hero, then a slot. Selecting an occupied slot swaps the heroes.',
+'Kartlar doğrulandı. Diziliş için 60 saniyen var.':'Heroes verified. You have 60 seconds to arrange your team.',
+'İki misafir oyuncu aynı odada beşer kahraman seçer. Arena savaşını sunucu gerçek zamanlı yürütür; komutan yetenekleri savaş sonucunu etkiler.':'Build a five-hero formation. The server runs the battle; in online matches, time your commander abilities to influence it.',
+'İstersen oda kur veya mevcut bir odaya katıl. Oda kodunu arkadaşınla paylaş.':'Create a room or join an existing one. Share the room code with your friend.',
+'Açık artırma gücü, diziliş ve kahraman yetenekleri savaş sonucunu belirledi.':'Auction power, formation, and hero abilities determined the outcome.',
+'Komutan enerjisi ve becerileri yalnızca iki gerçek oyunculu odalarda kullanılabilir':'Commander energy and active abilities are available in online two-player matches.',
+'Yeterli enerjin varsa becerini kullanabilirsin':'Use an ability when you have enough energy.',
+'ÖN / ARKA SAF BONUSLARI YÜKLENİYOR…':'LOADING POSITION BONUSES…',
+'KAHRAMAN GÜÇLERİ · ARENA ONAYI':'HERO POWER · ARENA CONFIRMATION',
+'AÇIK ARTIRMA TAMAMLANDI':'AUCTION COMPLETE','TAKIM GÜÇLERİ AÇIKLANDI':'TEAM POWER REVEALED',
+'ONAYLA VE ARENAYA GEÇ':'CONFIRM AND ENTER ARENA','BONUS DAHİL TAKIM GÜCÜ':'TOTAL TEAM POWER',
+'Kahramanların temel gücü':'Base hero power','Kalan kredi:':'Remaining credits:','Güç değişimi':'Power change',
+'SENİN TAKIMIN':'YOUR TEAM','RAKİP TAKIM':'OPPONENT TEAM','RAKİP BEKLENİYOR':'WAITING FOR OPPONENT',
+'ARENA GİRİŞ KAPISI':'ENTER THE ARENA','MİSAFİR OLARAK OYNA':'PLAY AS GUEST','OYUNA KATIL':'JOIN THE GAME',
+'OYUNCU ADIN':'PLAYER NAME','OYUNCU ADI':'PLAYER NAME','Oyuncu adını yaz':'Enter your name','Oyuncu adın':'Your name',
+'Hesap menüsünü aç':'Open account menu','Gizlilik bilgisi':'Privacy information','Gizlilik Politikası':'Privacy policy',
+'KOMUTANINI SEÇ':'CHOOSE YOUR COMMANDER','KOMUTANI ONAYLA':'CONFIRM COMMANDER','KOMUTAN DEĞİŞTİR':'CHANGE COMMANDER',
+'YENİ KOMUTAN SEÇ':'CHOOSE A NEW COMMANDER','AKTİF KOMUTAN':'ACTIVE COMMANDER','ANA UZMANLIK':'MAIN SPECIALTY',
+'UZMANLIK AĞACI · 4 GELİŞİM DALI':'SPECIALTY TREE · 4 UPGRADE BRANCHES','ANA YETENEK':'MAIN ABILITY','YAN YETENEK':'SECONDARY ABILITY',
+'ALTIN YETERSİZ':'NOT ENOUGH GOLD','KOMUTANIM':'MY COMMANDER','GERİ DÖN':'GO BACK','ANA MENÜ':'MAIN MENU',
+'KAHRAMANLAR':'HEROES','KOMUTAN':'COMMANDER','LİGLER':'LEAGUES','AYARLAR':'SETTINGS',
+'ARENA HAZIRLIK':'ARENA PREPARATION','ARENAYA HAZIR MISIN?':'READY FOR THE ARENA?','HERO AUCTION REHBERİ':'HERO AUCTION GUIDE',
+'BAŞLANGIÇ KREDİSİ':'STARTING CREDITS','TAKIM KAHRAMANI':'TEAM HEROES','ARENA DÜELLOSU':'ARENA DUEL',
+'KARTLARINI TOPLA':'RECRUIT YOUR HEROES','TAKIMINI DİZ':'ARRANGE YOUR TEAM','SAVAŞI İZLE':'WATCH THE BATTLE',
+'ZAFERE ULAŞ':'CLAIM VICTORY','STRATEJİ İPUCU':'STRATEGY TIP','STRATEJİ':'STRATEGY','AÇIK ARTIRMA':'AUCTION',
+'Rakibini seç, arenaya çık.':'Choose an opponent and enter the arena.','Çevrimiçi oyuncuyla düello':'Duel an online opponent',
+'Arkadaşınla oyna':'Play with a friend','Ücretsiz antrenman':'Free practice','HEMEN OYNA':'PLAY NOW','RAKİP BUL':'FIND OPPONENT',
+'ÖZEL ODA':'PRIVATE ROOM','ODA OLUŞTUR':'CREATE ROOM','3 HANELİ KOD':'3-DIGIT CODE','Oda kodu':'Room code',
+'BİLGİSAYARA KARŞI':'VS COMPUTER','BİLGİSAYAR':'COMPUTER','Bilgisayar zorluk seviyesi':'Computer difficulty',
+'KOLAY':'EASY','ORTA':'MEDIUM','ZOR':'HARD','Canlı maç:':'Online match:','Kazanan:':'Winner:',
+'OYUNCU MERKEZİ':'PLAYER HUB','PROFİLİM':'MY PROFILE','LİG SIRALAMASI':'LEADERBOARD','ARKADAŞLAR':'FRIENDS','CANLI MAÇLAR':'LIVE MATCHES',
+'ARKADAŞINI DAVET ET':'INVITE A FRIEND','DAVET BAĞLANTISINI KOPYALA':'COPY INVITE LINK','KODU KOPYALA':'COPY CODE',
+'KARMA EVREN':'HERO AUCTION','GÜÇ GİZLİ':'HIDDEN POWER','En yüksek teklif:':'Highest bid:','Henüz teklif yok':'No bids yet',
+'AÇILIŞ TEKLİFİ VER':'PLACE OPENING BID','TEKLİFİ ARTIR':'RAISE BID','Teklifi azalt':'Decrease bid','Teklifi artır':'Increase bid',
+'Teklif sırası:':'Bidding turn:','Rakibin kararını bekle.':'Waiting for your opponent.',
+'TEKLİF GEÇMİŞİNİ GÖSTER':'SHOW BID HISTORY','ODADAN AYRIL':'LEAVE ROOM','OYUN ODASI':'GAME ROOM',
+'kalan kredi':'credits remaining','kredi kullanıldı':'credits spent','Henüz karakter yok':'No heroes yet','KARTLAR':'HEROES',
+'EFSANEVİ':'LEGENDARY','GELİŞMİŞ':'UNCOMMON','SIRADAN':'COMMON','NADİR':'RARE',
+'ŞİFACI / DESTEK':'HEALER / SUPPORT','ENERJİ / MESAFELİ':'ENERGY / RANGED','SAVAŞÇI':'FIGHTER','BÜYÜCÜ':'MAGE','SUİKASTÇI':'ASSASSIN','DESTEK':'SUPPORT',
+'ÖN SAF · RAKİBE YAKIN':'FRONT ROW · CLOSE TO ENEMY','ARKA SAF · RAKİPTEN UZAK':'BACK ROW · FAR FROM ENEMY',
+'ÖN SAF':'FRONT ROW','ARKA SAF':'BACK ROW','ÖN SIRA':'FRONT ROW','ARKA SIRA':'BACK ROW','ÖN ':'FRONT ','ARKA ':'BACK ',
+'TAKIM DİZİLİŞİ':'TEAM FORMATION','YERLEŞTİRİLEN KAHRAMAN':'HEROES PLACED','BAZ TAKIM GÜCÜ':'BASE TEAM POWER',
+'GÜNCEL TAKIM GÜCÜ':'CURRENT TEAM POWER','SAF / ROL / KREDİ / KOMUTAN ETKİSİ':'ROW / ROLE / CREDIT / COMMANDER BONUS',
+'Güç ve komutan bonusu detayları':'Power and commander bonus details','BOŞ KONUM':'EMPTY SLOT','Arka safa':'To back row','Ön safa':'To front row',
+'Bu safta kahraman yok':'No heroes in this row','Dokun veya sürükle':'Select or drag','kahramanını seç':'select hero',
+'HAZIRIM':'READY','Sen:':'You:','Örnek rakip:':'Opponent:','Hazırlanıyor':'Preparing','Hazır':'Ready',
+'Başlamak için savaşı oynat.':'Start the battle to begin.','Animasyon hızı':'Animation speed','Hareketli efektler':'Animated effects',
+'SAVAŞI OYNAT':'PLAY BATTLE','SAVAŞI BAŞLAT':'START BATTLE','SONRAKİ HAMLE':'NEXT ACTION','BAŞA SAR':'RESTART REPLAY','SAVAŞ GÜNLÜĞÜ':'BATTLE LOG',
+'MAVİ TAKIM':'BLUE TEAM','KIRMIZI TAKIM':'RED TEAM','SAVAŞ ARENASI':'BATTLE ARENA','Maçtan Ayrıl':'Leave Match',
+'Maçtan ayrıl ve klasik oyuna dön':'Leave match and return to the menu','Klasik oyuna dön':'Return to the menu',
+'Arena sesini kapat':'Mute arena audio','Arena sesini aç':'Unmute arena audio','Mavi takım toplam can':'Blue team total health',
+'Kırmızı takım toplam can':'Red team total health','Savaş süresi':'Battle time','SÜRE':'TIME','Komutan kontrol paneli':'Commander controls',
+'Komutan karşılaşması':'Commander matchup','Deneysel komutan kontrolü':'Commander abilities','Komutan enerjisi':'Commander energy',
+'Saldırı Komutanı':'Attack Commander','Savunma Komutanı':'Defense Commander','Büyü Komutanı':'Magic Commander','Destek Komutanı':'Support Commander',
+'Saldırı komutanı':'Attack commander','Savunma komutanı':'Defense commander','Büyü komutanı':'Magic commander','Destek komutanı':'Support commander',
+'Geliştirme yok':'No upgrades','Komutan seçilmedi':'No commander selected','Bonus yok':'No bonus','Enerji:':'Energy:',
+'Nihai':'Ultimate','Bağlanıyor…':'Connecting…','Canlı savaş başladı · Komutanını yönet':'Live battle started · Command your team',
+'CANLI SAVAŞ SÜRÜYOR':'LIVE BATTLE IN PROGRESS','SAVAŞ TAMAMLANDI':'BATTLE COMPLETE','Savaş tamamlandı':'Battle complete',
+'Savaş sona erdi':'Battle ended','RÖVANŞ İSTEĞİ GÖNDERİLDİ':'REMATCH REQUEST SENT','RÖVANŞ İSTE':'REQUEST REMATCH','RÖVANŞ SERİSİ':'REMATCH SERIES',
+'KAZANDI':'WINS','AYAKTA KALAN':'SURVIVORS','TOPLAM HAMLE':'TOTAL ACTIONS','MAÇ TAMAMLANDI':'MATCH COMPLETE',
+'Rakibin hazırlanması bekleniyor…':'Waiting for the opponent to get ready…','Rakibin dizilişi bekleniyor…':'Waiting for the opponent’s formation…',
+'İki taraf hazır. Savaş başlıyor!':'Both teams are ready. Battle begins!','GELİŞTİRME ÖNİZLEMESİ':'TEAM PREPARATION','OTOMATİK SAVAŞ':'AUTO BATTLE',
+'İKİ OYUNCULU TEST ODASI':'TWO-PLAYER ROOM','Oda oluştur':'Create room','Odaya katıl':'Join room','6 haneli oda kodu':'6-digit room code',
+'Karakter bilgisi yükleniyor…':'Loading hero details…','Görsel yükleniyor…':'Loading image…','Aktif yetenek yükleniyor…':'Loading active ability…',
+'Pasif yetenek yükleniyor…':'Loading passive ability…','Aktif:':'Active:','Pasif:':'Passive:','Aktif yetenek':'Active ability','Pasif yetenek':'Passive ability',
+'TEKRAR DENE':'TRY AGAIN','ÇIKIŞ YAP':'SIGN OUT','GELİŞTİR':'UPGRADE','TAMAMLANDI':'COMPLETE',
+'KATIL':'JOIN','OYNA':'PLAY','ALTIN':'GOLD','KREDİ':'CREDITS','KART ':'HERO ','ODA ':'ROOM ','GÜÇ':'POWER','TUR':'ROUND',
+'Bilgisayar':'Computer','Misafir:':'Guest:',' saniye':' seconds',' kredi':' credits',' altın':' gold',' vurdu':' damage',' engelledi':' blocked',' aldı':' received',' elendi':' eliminated',
+'Seviye':'Level','SEVİYE':'LEVEL','Komutan':'Commander','Uzmanlık':'Specialty','Enerji':'Energy','Normal':'Normal','Hızlı':'Fast','Yavaş':'Slow','Boş':'Empty',' bölgesi:':' slot:',
+'(SEN)':'(YOU)','GÖNDER':'SEND','İptal':'Cancel','Kapat':'Close'
+};
+const pairs=Object.entries(phrases).sort((a,b)=>b[0].length-a[0].length);
+export function translate(text){
+ if(text.trim()==='PAS')return text.replace('PAS','PASS');
+ let out=text.replace(/Şu anda (\d+) özgün kahraman hazır/g,'$1 original heroes available');
+ for(const [tr,en] of pairs)out=out.split(tr).join(en);
+ return out;
+}
+if(typeof document!=='undefined'){
+ document.documentElement.lang='en';
+ document.title='Hero Auction | Hero Auctions and Arena Battles';
+ const skip='script,style,textarea,[contenteditable="true"]';
+ function localize(node){
+  if(node.nodeType===3){if(node.parentElement?.closest(skip))return;const value=translate(node.nodeValue);if(value!==node.nodeValue)node.nodeValue=value;return;}
+  if(node.nodeType!==1||node.matches(skip))return;
+  for(const key of ['aria-label','title','placeholder','alt'])if(node.hasAttribute(key)){const old=node.getAttribute(key),value=translate(old);if(old!==value)node.setAttribute(key,value);}
+  for(const child of node.childNodes)localize(child);
+ }
+ const start=()=>{localize(document.body);new MutationObserver(records=>{for(const record of records){if(record.type==='childList')record.addedNodes.forEach(localize);else if(record.type==='characterData')localize(record.target);else localize(record.target);}}).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['aria-label','title','placeholder','alt']});};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+}
