@@ -19,12 +19,10 @@ test('queued playback deduplicates events and never overwrites authoritative hea
  assert.equal(window.heroArenaTeams,undefined);
  assert.equal(teams[0][0].hp,100);assert.equal(teams[1][0].hp,80);
 });
-test('2D and 3D renderers consume committed round snapshots',()=>{
+test('active arena consumes committed round snapshots',()=>{
  assert.match(read('battle-preview.js'),/heroarena:experimental-round-end/);
  assert.match(read('battle-preview.js'),/addEventListener\('heroarena:experimental-move'/);
  assert.match(read('battle-preview.js'),/animateMove\(\{\.\.\.move,actorId:move\.actor,targetId:move\.target\}\)/);
  assert.match(read('battle-preview.js'),/if\(auctionMode\)void showAuctionRematch\(\)/);
- assert.match(read('arena-three.js'),/heroarena:experimental-round-end/);
- assert.match(read('arena-three.js'),/heroarena:experimental-move/);
  assert.match(read('battle-preview.html'),/commander-round-playback\.js/);
 });

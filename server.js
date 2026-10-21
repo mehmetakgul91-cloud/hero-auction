@@ -37,8 +37,6 @@ const previewGuestWallets=new Map();
 const previewCommanderProfiles=new Map();
 const previewGuestMode=process.env.COMMANDER_TEST_GUEST_MODE==='1';
 const artCache=new Map();
-const cardDetails=JSON.parse(fs.readFileSync(path.join(root,'public','cards.json'),'utf8'));
-const auditedArt=JSON.parse(fs.readFileSync(path.join(root,'public','verified-art.json'),'utf8'));
 
 const listeners=new Map();
 const waiting=new Map();
@@ -107,8 +105,7 @@ function onlineStats(){
  return {players:onlineVisitors.size,matches:activeRooms.size,waiting:waitingRooms.size};
 }
 
-const curated={"marvel:thanos":95,"marvel:galactus":99,"marvel:odin":95,"marvel:sentry":94,"marvel:silver surfer":93,"marvel:thor":88,"marvel:hulk":87,"marvel:scarlet witch":94,"marvel:doctor strange":91,"marvel:iron man":75,"marvel:spider-man":70,"marvel:captain america":61,"dc:the spectre":100,"dc:anti-monitor":99,"dc:doctor manhattan":99,"dc:darkseid":97,"dc:superman":92,"dc:batman":65,"dc:wonder woman":88,"dc:the flash":90,"lotr:eru ilúvatar":100,"lotr:morgoth":99,"lotr:sauron":95,"lotr:gandalf":87,"lotr:aragorn":70,"pokemon:arceus":100,"pokemon:mewtwo":94,"pokemon:rayquaza":94,"pokemon:pikachu":65};
-const stablePower=(id)=>{if(Number.isInteger(cardDetails[id]?.power))return cardDetails[id].power;const original=battleRoster.find(hero=>hero.id===id);if(original?.universe==='original')return original.proposedPower;if(curated[id]!=null)return curated[id];const h=crypto.createHash("sha256").update("hero-auction-v3:"+id).digest();return 15+(h.readUInt32BE(0)%86)};
+const stablePower=id=>battleRoster.find(hero=>hero.id===id)?.proposedPower||70;
 const rarityForPower=(power)=>power>=90?'legendary':power>=70?'rare':power>=50?'advanced':'common';
 const liveBattleIds=new Set(battleRoster.map(x=>x.id));
 const newCards=(universe)=>shuffle([...catalogue.values()].filter(x=>liveBattleIds.has(x.id)&&(universe==="mixed"||x.universe===universe))).slice(0,10).map(x=>({...x,power:stablePower(x.id)}));
@@ -335,137 +332,31 @@ if(url==='/api/rewarded/status'){return await rewardedAdStatus(readLogin(b.authT
 if(url==='/api/rewarded/claim'){error('Ödüllü reklam sistemi henüz etkin değil.',503)}
 if(url==='/api/wallet'){return{gold:await goldBalance(readLogin(b.authToken).sub)}}
 if(url==='/api/auth/google'){const credential=String(b.credential||'');if(credential.length<100||credential.length>8000)error('Geçersiz Google kimliği.');const response=await fetch('https://oauth2.googleapis.com/tokeninfo?id_token='+encodeURIComponent(credential),{signal:AbortSignal.timeout(8000)});if(!response.ok)error('Google kimliği doğrulanamadı.',401);const claims=await response.json();if(claims.aud!==GOOGLE_CLIENT_ID||!['accounts.google.com','https://accounts.google.com'].includes(claims.iss)||Number(claims.exp)*1000<Date.now()||!claims.sub||claims.email_verified!=='true')error('Google kimliği doğrulanamadı.',401);const user={sub:claims.sub,name:String(claims.name||claims.given_name||'Oyuncu').slice(0,24),email:String(claims.email||'').toLowerCase()};await rememberDisplayName(user);return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}
-if(url==='/api/create'){const name=chosenName(b,'Oyuncu 1');const universe=['marvel','dc','mixed'].includes(b.universe)?b.universe:'mixed';const pool=shuffle([...catalogue.values()].filter(x=>universe==='mixed'||x.universe===universe));if(pool.length<10)error('Bu evrende yeterli karakter yok.');const cards=pool.slice(0,10).map(x=>({...x,power:stablePower(x.id)}));let id;do{id=code()}while(rooms.has(id));const t=token();const accountId=readLogin(b.authToken).sub;const r={code:id,universe,cards,round:0,phase:'waiting',turn:0,topBid:0,topSeat:null,players:[{name,token:t,accountId,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],deadline:null,mode:'friend'};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
+if(url==='/api/create'){const name=chosenName(b,'Oyuncu 1');const universe='mixed';const pool=shuffle([...catalogue.values()].filter(x=>universe==='mixed'||x.universe===universe));if(pool.length<10)error('Bu evrende yeterli karakter yok.');const cards=pool.slice(0,10).map(x=>({...x,power:stablePower(x.id)}));let id;do{id=code()}while(rooms.has(id));const t=token();const accountId=readLogin(b.authToken).sub;const r={code:id,universe,cards,round:0,phase:'waiting',turn:0,topBid:0,topSeat:null,players:[{name,token:t,accountId,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],deadline:null,mode:'friend'};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/join'){const r=rooms.get(String(b.code||'').toUpperCase());if(!r)error('Oda bulunamadı.',404);if(r.players[1]||r.joinPending)error('Oda dolu.');r.joinPending=true;try{await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name:chosenName(b,'Oyuncu 2'),token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;log(r,`Oyun başladı. 1. kart için açılış: ${r.players[0].name}`);publish(r);return{token:t,room:publicRoom(r,1)}}finally{r.joinPending=false}}
 if(url==='/api/rematch'){const{r,seat}=authorize(b);if(r.battleSettlementPending&&!r.matchSettled)error('Savaş sonucu henüz kesinleşmedi.');if(r.players.every(p=>p?.team?.length===5)&&r.battleSync?.result&&!r.battleCompleted?.[seat])error('Önce 2.0 savaşını tamamlamalısın.');if(r.phase!=='finished')error('Maç henüz bitmedi.');r.rematch[seat]=true;if(r.mode==='bot')r.rematch[1]=true;if(r.rematch.every(Boolean)){if(r.mode!=='bot'){try{await chargeEntry(r.players.map(p=>p.accountId),r.code);}catch(e){r.rematch=[false,false];throw e}}r.entryPaid=r.mode!=='bot';r.goldRefunds=null;r.matchNumber=(r.matchNumber||1)+1;r.goldAward=null;r.rankChange=null;r.rankBefore=null;r.cards=newCards(r.universe);r.round=0;r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.topBid=0;r.topSeat=null;r.history=[];r.openingPassSeat=null;r.rematch=[false,false];r.battleCompleted=[false,false];r.matchSettled=false;r.battleSettlementPending=false;r.battleSync=null;r.created=Date.now();r.lastActivity=Date.now();for(const p of r.players){p.credits=20;p.team=[];}log(r,'Rövanş başladı!');}publish(r);return{room:publicRoom(r,seat)}}
-if(url==='/api/bot'){const difficulty=['easy','medium','hard'].includes(b.difficulty)?b.difficulty:'medium';const universe=['marvel','dc','mixed'].includes(b.universe)?b.universe:'mixed';const name=chosenName(b,'Oyuncu');let id;do{id=code()}while(rooms.has(id));const t=token();const r={entryPaid:false,code:id,universe,cards:newCards(universe),round:0,phase:'auction',turn:0,deadline:Date.now()+20000,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},{name:'Bilgisayar',token:token(),credits:20,team:[]}],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'bot',difficulty};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
-if(url==='/api/match'){const universe=['marvel','dc','mixed'].includes(b.universe)?b.universe:'mixed';const name=chosenName(b,'Oyuncu');for(const [key,item] of waiting){if(item.universe!==universe||Date.now()-item.created>60000)continue;const r=rooms.get(item.code);if(!r||r.players[1]){waiting.delete(key);continue;}await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.mode='random';waiting.delete(key);publish(r);return{token:t,room:publicRoom(r,1)}}let id;do{id=code()}while(rooms.has(id));const t=token();const r={code:id,universe,cards:newCards(universe),round:0,phase:'matching',turn:0,deadline:null,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'random'};rooms.set(id,r);markRoom(r);waiting.set(id,{code:id,universe,created:Date.now()});return{token:t,room:publicRoom(r,0)}}
+if(url==='/api/bot'){const difficulty=['easy','medium','hard'].includes(b.difficulty)?b.difficulty:'medium';const universe='mixed';const name=chosenName(b,'Oyuncu');let id;do{id=code()}while(rooms.has(id));const t=token();const r={entryPaid:false,code:id,universe,cards:newCards(universe),round:0,phase:'auction',turn:0,deadline:Date.now()+20000,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},{name:'Bilgisayar',token:token(),credits:20,team:[]}],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'bot',difficulty};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
+if(url==='/api/match'){const universe='mixed';const name=chosenName(b,'Oyuncu');for(const [key,item] of waiting){if(item.universe!==universe||Date.now()-item.created>60000)continue;const r=rooms.get(item.code);if(!r||r.players[1]){waiting.delete(key);continue;}await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.mode='random';waiting.delete(key);publish(r);return{token:t,room:publicRoom(r,1)}}let id;do{id=code()}while(rooms.has(id));const t=token();const r={code:id,universe,cards:newCards(universe),round:0,phase:'matching',turn:0,deadline:null,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'random'};rooms.set(id,r);markRoom(r);waiting.set(id,{code:id,universe,created:Date.now()});return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/chat'){const{r,seat}=authorize(b);if(r.mode==='bot')error('Sohbet yalnızca gerçek oyuncularla kullanılabilir.');const message=String(b.message||'').trim().replace(/[\u0000-\u001f\u007f]/g,' ');if(!message||message.length>240)error('Mesaj 1–240 karakter olmalı.');if(Date.now()-(r.lastChatAt?.[seat]||0)<1000)error('Yeni mesaj için bir saniye bekle.');r.lastChatAt??=[0,0];r.lastChatAt[seat]=Date.now();r.chat??=[];r.chat.push({seat,name:r.players[seat].name,message,time:Date.now()});if(r.chat.length>60)r.chat.shift();r.lastActivity=Date.now();publish(r);return{room:publicRoom(r,seat)}}
 if(url==='/api/state'){const{r,seat}=authorize(b);r.lastActivity=Date.now();return{room:publicRoom(r,seat)}}
 if(url==='/api/bid'){const{r,seat}=authorize(b);if(r.phase!=='auction')error('İhale aktif değil.');if(r.turn!==seat)error('Teklif sırası sende değil.');const amount=Number(b.amount);if(!Number.isInteger(amount)||amount<=r.topBid||amount>r.players[seat].credits)error('Teklif tutarı geçersiz.');if(r.players[seat].team.length>=5)error('Takımın tamamlandı.');r.topBid=amount;r.topSeat=seat;r.openingPassSeat=null;log(r,`${r.players[seat].name} ${amount} kredi teklif etti.`);const other=1-seat;if(r.players[other].credits<=amount||r.players[other].team.length>=5){finishAuction(r);}else{r.turn=other;r.deadline=Date.now()+20000;}publish(r);return{room:publicRoom(r,seat)}}
 if(url==='/api/pass'){const{r,seat}=authorize(b);if(r.phase!=='auction'||r.turn!==seat)error('Şu an çekilemezsin.');if(r.topSeat===null){if(r.openingPassSeat===1-seat){finishUnbidCard(r);}else{r.openingPassSeat=seat;r.turn=1-seat;r.deadline=Date.now()+20000;log(r,r.players[seat].name+' pas geçti.');}}else finishAuction(r);publish(r);return{room:publicRoom(r,seat)}}
 error('Bilinmeyen işlem.',404)}
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml'};
-// Public encyclopedia thumbnails and Turkish character summaries. No image is fabricated.
-// Some characters have no verified illustration or Turkish encyclopedia entry.
-const characterHints={marvel:'Marvel Comics',dc:'DC Comics',lotr:'Tolkien',pokemon:'Pokémon'};
-const knownDescriptions={
- 'marvel:thanos':'Thanos, Marvel evreninin en güçlü kozmik tehditlerinden biridir. Sonsuzluk Taşları ile evrenin kaderini değiştirmeye çalışır.',
- 'marvel:iron man':'Tony Stark, gelişmiş zırhlar tasarlayan dahi bir mucit ve Avengers üyesidir.',
- 'marvel:thor':'Thor, Asgardlı gök gürültüsü tanrısı ve güçlü bir Avengers üyesidir.',
- 'marvel:hulk':'Bruce Banner, öfkelendiğinde olağanüstü güce sahip Hulk’a dönüşür.',
- 'marvel:spider-man':'Peter Parker, örümcek benzeri güçlere ve güçlü bir sorumluluk duygusuna sahip kahramandır.',
- 'marvel:scarlet witch':'Wanda Maximoff, gerçekliği değiştirebilen olağanüstü büyü güçlerine sahiptir.',
- 'marvel:doctor strange':'Stephen Strange, mistik sanatları kullanarak dünyayı büyülü tehditlerden korur.',
- 'marvel:galactus':'Galactus, yaşamını sürdürmek için gezegenlerin enerjisini tüketen kozmik bir varlıktır.',
- 'dc:superman':'Kripton gezegeninden gelen Superman, uçuş ve üstün fiziksel güç gibi yeteneklere sahiptir.',
- 'dc:batman':'Bruce Wayne, ileri teknoloji ve dedektiflik yetenekleriyle Gotham City’yi korur.',
- 'dc:wonder woman':'Amazon savaşçısı Diana, olağanüstü güç ve savaş becerileriyle tanınır.',
- 'dc:the flash':'Flash, Süper Hız Gücü sayesinde olağanüstü hızlarda hareket eder.',
- 'dc:darkseid':'Darkseid, Apokolips’in hükümdarı ve DC evreninin en tehlikeli kozmik düşmanlarından biridir.',
- 'dc:doctor manhattan':'Doctor Manhattan, maddeyi atomik düzeyde kontrol edebilen son derece güçlü bir varlıktır.',
- 'dc:the spectre':'Spectre, ilahi intikamın doğaüstü temsilcisi olarak tasvir edilir.',
- 'lotr:gandalf':'Gandalf, Orta Dünya’da özgür halklara yol gösteren güçlü bir büyücüdür.',
- 'lotr:aragorn':'Aragorn, Gondor tahtının varisi ve Yüzük Savaşı’nın önde gelen liderlerindendir.',
- 'lotr:sauron':'Sauron, Tek Yüzük’ü yaratan ve Orta Dünya’ya hükmetmeye çalışan Karanlık Lord’dur.',
- 'lotr:frodo baggins':'Frodo, Tek Yüzük’ü Mordor’a götürmekle görevlendirilen Hobbit’tir.',
- 'lotr:legolas':'Legolas, usta bir elf okçusu ve Yüzük Kardeşliği üyesidir.',
- 'lotr:morgoth':'Morgoth, Tolkien mitolojisindeki ilk Karanlık Lord ve Sauron’un eski efendisidir.',
- 'pokemon:pikachu':'Pikachu, elektrik türündeki Pokémon’lardan biridir ve elektrik saldırılarıyla tanınır.',
- 'pokemon:charizard':'Charizard, ateş ve uçan türündeki güçlü bir Pokémon’dur.',
- 'pokemon:mewtwo':'Mewtwo, genetik deneylerle yaratılmış güçlü bir psişik Pokémon’dur.',
- 'pokemon:arceus':'Arceus, Pokémon mitolojisinde evrenin yaratılışıyla ilişkilendirilen efsanevi bir Pokémon’dur.'
-};
-const compactText=(raw)=>{const txt=String(raw||'').replace(/\s+/g,' ').trim();if(!txt)return null;const sentences=txt.match(/[^.!?]+[.!?]+/g);return (sentences?.slice(0,2).join(' ')||txt.slice(0,210)).slice(0,320).trim()};
-const verifiedRemoteArt={
- 'marvel:cyclops':{
-  url:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Cyclops_cosplay_at_Anime_Boston_2025-20250523_1558.jpg/450px-Cyclops_cosplay_at_Anime_Boston_2025-20250523_1558.jpg',
-  source:'https://commons.wikimedia.org/wiki/File:Cyclops_cosplay_at_Anime_Boston_2025-20250523_1558.jpg',
-  credit:'Abzeronow · CC BY 4.0'
- }
-};
-const originalHeroDescriptions={
-  "original:01": "Ön safta darbeleri karşılayan, obsidyen kalkanıyla takımına zaman kazandıran dayanıklı muhafız.",
-  "original:02": "Çelik siperini kurarak takım arkadaşlarını koruyan ağır zırhlı savunmacı.",
-  "original:03": "Yer sarsıntılarıyla rakip düzenini bozan, güçlü ve dayanıklı kaya devi.",
-  "original:04": "Buzdan kalkanı ve dondurucu etkileriyle ön hattı tutan savunma uzmanı.",
-  "original:05": "Görünmezlik ve kritik darbelerle rakiplerini hazırlıksız yakalayan çevik suikastçı.",
-  "original:06": "Kutsal kalkanıyla müttefiklerini koruyan, savunma odaklı ön saf savaşçısı.",
-  "original:07": "Alevli kılıcıyla yakın dövüşte baskı kuran, yakıcı saldırılar kullanan savaşçı.",
-  "original:08": "Uzun menzilli atışlarıyla rakiplerini yavaşlatan kadim nişancı.",
-  "original:09": "Ruh çağırma yeteneğiyle savaş alanını etkileyen karanlık büyücü.",
-  "original:10": "Taret kurarak uzaktan sürekli hasar veren teknik nişancı.",
-  "original:11": "Buz alanı saldırılarıyla rakiplerini yavaşlatan ağır ön saf tankı.",
-  "original:12": "Can çalma ve kaçış becerileriyle hayatta kalan hızlı suikastçı.",
-  "original:13": "Kritik okları ve hareket kabiliyetiyle uzaktan yüksek baskı kuran okçu.",
-  "original:14": "Yıldırım ve sersemletme etkileriyle yakın dövüşte rakiplerini durduran savaşçı.",
-  "original:15": "Buz fırtınası ve ejderha kalkanıyla alan kontrolü sağlayan büyücü."
-};
+// Only locally hosted artwork belonging to the active original roster is served.
 async function lookupCharacterInfo(universe,name){
- const key=universe+':'+name.toLowerCase();
- const local=cardDetails[key];
- const rosterHero=battleRoster.find(hero=>hero.universe===universe&&hero.name.toLocaleLowerCase('tr-TR')===name.toLocaleLowerCase('tr-TR'));
- const originalHero=universe==='original'?rosterHero:null;
- if(originalHero?.portrait&&fs.existsSync(path.join(root,'public',originalHero.portrait.slice(1))))return {url:originalHero.portrait,source:null,description:originalHeroDescriptions[originalHero.id]||originalHero.name,role:originalHero.role,laneModifiers:originalHero.laneModifiers};
- if(verifiedRemoteArt[key])return {...verifiedRemoteArt[key],description:local?.description||knownDescriptions[key]||null};
- if(auditedArt[key]?.url)return {...auditedArt[key],description:local?.description||knownDescriptions[key]||null};
- if(local?.image&&/^\/images\/[\w/-]+\.png$/i.test(local.image)&&fs.existsSync(path.join(root,'public',local.image.slice(1))))return {url:local.image,source:null,description:local.description||null};
- let image=null,source=null,description=local?.description||knownDescriptions[key]||null;
- const queries=[name+' '+characterHints[universe],name];
- // Resolve character pages directly before using broad search results.
- if(universe!=='pokemon'){
-  const suffixes={marvel:[' (Marvel Comics)',' (Marvel Comics character)',' (comics)'],dc:[' (DC Comics)',' (DC Comics character)',' (comics)'],lotr:[' (Middle-earth)',' (The Lord of the Rings)']};
-  const names=[name,...suffixes[universe].map(s=>name+s)];
-  for(const candidate of names){
-   if(image)break;
-   try{
-    const endpoint='https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(candidate.replaceAll(' ','_'));
-    const r=await fetch(endpoint,{headers:{'User-Agent':'HeroAuction/1.3 (character image lookup; contact via GitHub)'},signal:AbortSignal.timeout(3500)});
-    if(!r.ok)continue;
-    const j=await r.json();
-    if(j.type==='disambiguation')continue;
-    const title=String(j.title||'').toLowerCase();
-    const base=name.toLowerCase();
-    if(title!==base&&!title.startsWith(base+' ('))continue;
-    const context=(j.description||'')+' '+(j.extract||'').slice(0,350);
-    const relevant={marvel:/marvel|x-men|spider-man|avengers|comic/i,dc:/dc comics|dc universe|batman|superman|comic/i,lotr:/tolkien|middle-earth|lord of the rings|silmarillion|hobbit/i};
-    if(!relevant[universe].test(context))continue;
-    if(j.thumbnail?.source){image=j.thumbnail.source;source=j.content_urls?.desktop?.page||null;}
-   }catch{}
-  }
- }
-
- for(const lang of ['tr','en']){
-  if(image&&description)break;
-  try{
-   const apiUrl=new URL('https://'+lang+'.wikipedia.org/w/api.php');
-   apiUrl.searchParams.set('action','query');apiUrl.searchParams.set('generator','search');
-   apiUrl.searchParams.set('gsrsearch',queries[0]);apiUrl.searchParams.set('gsrlimit','6');
-   apiUrl.searchParams.set('prop','pageimages|info|extracts');apiUrl.searchParams.set('inprop','url');
-   apiUrl.searchParams.set('exintro','1');apiUrl.searchParams.set('explaintext','1');
-   apiUrl.searchParams.set('exsentences','2');apiUrl.searchParams.set('pithumbsize','600');
-   apiUrl.searchParams.set('format','json');
-   const response=await fetch(apiUrl,{headers:{'User-Agent':'HeroAuction/1.2 (character information; educational demo)'},signal:AbortSignal.timeout(6500)});
-   if(!response.ok)continue;
-   const payload=await response.json();const pages=Object.values(payload.query?.pages||{});
-   // Avoid attaching a completely unrelated search thumbnail to the character.
-   const norm=x=>String(x).toLocaleLowerCase('en').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
-   const needle=norm(name);
-   const match=pages.find(p=>norm(p.title).includes(needle))||null;
-   if(!match)continue;
-   if(!image&&match.thumbnail?.source){image=match.thumbnail.source;source=match.fullurl||null;}
-   if(!description&&lang==='tr'&&match.extract)description=compactText(match.extract);
-  }catch{}
- }
- return {url:image,source,description:description||`${name}, ${({marvel:'Marvel',dc:'DC',lotr:'Yüzüklerin Efendisi',pokemon:'Pokémon'})[universe]} evrenindeki karakterlerden biridir. Ayrıntılı Türkçe tanıtım henüz eklenmedi.`};
+ const hero=battleRoster.find(h=>h.universe===universe&&h.name.toLocaleLowerCase('tr-TR')===name.toLocaleLowerCase('tr-TR'));
+ const portrait=hero?.portrait;
+ const url=portrait&&fs.existsSync(path.join(root,'public',portrait.slice(1)))?portrait:null;
+ return {url,source:null,description:hero?.name||null,role:hero?.role,laneModifiers:hero?.laneModifiers};
 }
 // Isolated two-player preview sessions; no classic rooms or wallet effects.
 const battleSessions=new Map();
 setInterval(()=>{for(const [code,s] of battleSessions)if(Date.now()-s.created>2*3600_000)battleSessions.delete(code)},60000).unref();
-const battleIdsA=['marvel:hulk','marvel:thor','marvel:wolverine','marvel:scarlet witch','marvel:iron man'];
-const battleIdsB=['dc:superman','dc:wonder woman','dc:doomsday','dc:the flash','dc:doctor fate'];
+const battleIdsA=["original:01", "original:02", "original:03", "original:04", "original:05"];
+const battleIdsB=["original:06", "original:07", "original:08", "original:09", "original:10"];
 function battleSessionView(session,token){const seat=session.players.findIndex(p=>p?.token===token);if(seat<0||session.players[seat].left)return null;return {code:session.code,seat,ready:session.players.map(p=>Boolean(p?.ready)),joined:session.players.map(Boolean),started:Boolean(session.result),result:session.result,created:session.created};}
-function battleSessionResult(session){const cards=(ids,formation)=>formation.map((index,slot)=>({id:ids[index],power:Math.max(1,Math.min(100,Number(cardDetails[ids[index]]?.power)||70)),lane:session.players[ids===battleIdsA?0:1].lanes?.[slot]||(slot<2?'front':'back'),role:session.players[ids===battleIdsA?0:1].roles?.[slot]||((slot<2)?'tank':'energy')}));const a=cards(battleIdsA,session.players[0].positions),b=cards(battleIdsB,session.players[1].positions);const result=simulateRosterBattle(a,b,{seed:'battle-room-'+session.code+'-'+session.created});return {winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log};}
+function battleSessionResult(session){const cards=(ids,formation)=>formation.map((index,slot)=>({id:ids[index],power:stablePower(ids[index]),lane:session.players[ids===battleIdsA?0:1].lanes?.[slot]||(slot<2?'front':'back'),role:session.players[ids===battleIdsA?0:1].roles?.[slot]||((slot<2)?'tank':'energy')}));const a=cards(battleIdsA,session.players[0].positions),b=cards(battleIdsB,session.players[1].positions);const result=simulateRosterBattle(a,b,{seed:'battle-room-'+session.code+'-'+session.created});return {winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log};}
 function validBattlePositions(v){return Array.isArray(v)&&v.length===5&&new Set(v).size===5&&v.every(x=>Number.isInteger(x)&&x>=0&&x<5)}
 const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data))};try{const url=new URL(req.url,'http://localhost');if(req.method==='POST'&&url.pathname==='/api/battle-auction-complete'){
  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>1000)return send(413,{error:'İstek çok büyük'})}
@@ -642,23 +533,23 @@ if(req.method==='POST'&&url.pathname==='/api/commander-manual-demo'){
  const commanderId=String(body?.commanderId||'');if(!resolveCommander(commanderId))return send(400,{error:'Geçersiz komutan'});
  const actions=body?.actions;if(!Array.isArray(actions)||actions.length>15||actions.some(a=>!a||!Number.isInteger(a.round)||a.round<1||a.round>15||!['normal','ultimate'].includes(a.ability)))return send(400,{error:'Geçersiz yetenek listesi'});
  const seen=new Set();if(actions.some(a=>{if(seen.has(a.round))return true;seen.add(a.round);return false}))return send(400,{error:'Bir turda yalnızca bir yetenek kullanılabilir'});
- const idsA=['marvel:hulk','marvel:thor','marvel:wolverine','marvel:scarlet witch','marvel:iron man'];
- const idsB=['dc:superman','dc:wonder woman','dc:doomsday','dc:the flash','dc:doctor fate'];
- const cards=ids=>ids.map((id,i)=>({id,power:Math.max(1,Math.min(100,Number(cardDetails[id]?.power)||70)),lane:i<2?'front':'back'}));
+ const idsA=["original:01", "original:02", "original:03", "original:04", "original:05"];
+ const idsB=["original:06", "original:07", "original:08", "original:09", "original:10"];
+ const cards=ids=>ids.map((id,i)=>({id,power:stablePower(id),lane:i<2?'front':'back'}));
  const commander={commanderId,levels:{attack:0,defense:0,magic:0,support:0}};
  try{const result=simulateRosterBattle(cards(idsA),cards(idsB),{seed:'manual-commander-training-v1',maxRounds:15,commanders:[commander,null],commanderActions:actions.map(a=>({side:0,round:a.round,ability:a.ability}))});return send(200,{rounds:result.rounds,winner:result.winner,teams:result.teams.map(team=>team.map(u=>({id:u.id,name:u.name,maxHp:u.maxHp}))),log:result.log});}
  catch(e){return send(400,{error:e.message})}
 }
 if(req.method==='GET'&&url.pathname==='/api/battle-preview'){
  // Fixed public demo teams. This endpoint never accesses rooms, accounts or wallets.
- const idsA=['marvel:hulk','marvel:thor','marvel:wolverine','marvel:scarlet witch','marvel:iron man'];
- const idsB=['dc:superman','dc:wonder woman','dc:doomsday','dc:the flash','dc:doctor fate'];
+ const idsA=["original:01", "original:02", "original:03", "original:04", "original:05"];
+ const idsB=["original:06", "original:07", "original:08", "original:09", "original:10"];
  const roles=['tank','fighter','energy'];
  const selected=String(url.searchParams.get('roles')||'').split(',');
  if(selected.length!==5||selected.some(role=>!roles.includes(role)))return send(400,{error:'Beş geçerli rol seçilmelidir.'});
  const positions=String(url.searchParams.get('positions')||'0,1,2,3,4').split(',').map(Number);
  if(positions.length!==5||new Set(positions).size!==5||positions.some(n=>!Number.isInteger(n)||n<0||n>4))return send(400,{error:'Beş farklı yuva seçilmelidir.'});
- const cards=(ids,custom)=>ids.map((id,i)=>({id,power:Math.max(1,Math.min(100,Number(cardDetails[id]?.power)||70)),...(custom?{role:selected[i]}:{})}));
+ const cards=(ids,custom)=>ids.map((id,i)=>({id,power:stablePower(id),...(custom?{role:selected[i]}:{})}));
  const chosen=cards(idsA,true);
  const laneParam=String(url.searchParams.get('lanes')||'front,front,back,back,back').split(',');if(laneParam.length!==5||laneParam.some(l=>l!=='front'&&l!=='back'))return send(400,{error:'Geçersiz saf'});const ordered=positions.map((heroIndex,i)=>({...chosen[heroIndex],lane:laneParam[i],role:laneParam[i]==='back'?'energy':selected[i]}));
  const result=simulateRosterBattle(ordered,cards(idsB,false),{seed:'hero-auction-preview-v1'});
@@ -669,7 +560,7 @@ if(req.method==='GET'&&url.pathname==='/api/heroes'){return send(200,{heroes:bat
 if(req.method==='GET'&&url.pathname==='/api/art'){
  const universe=url.searchParams.get('universe')||'';
  const name=url.searchParams.get('name')||'';
- if(!['marvel','dc','lotr','pokemon','original'].includes(universe)||name.length>100||!(catalogue.has(`${universe}:${name.toLowerCase()}`)||(universe==='original'&&battleRoster.some(hero=>hero.universe==='original'&&hero.name.toLocaleLowerCase('tr-TR')===name.toLocaleLowerCase('tr-TR')))))return send(400,{error:'Geçersiz karakter'});
+ if(universe!=='original'||name.length>100||!(catalogue.has(`${universe}:${name.toLowerCase()}`)||(universe==='original'&&battleRoster.some(hero=>hero.universe==='original'&&hero.name.toLocaleLowerCase('tr-TR')===name.toLocaleLowerCase('tr-TR')))))return send(400,{error:'Geçersiz karakter'});
  const key=universe+':'+name.toLowerCase();
  if(!artCache.has(key)){
   const result=await lookupCharacterInfo(universe,name);
@@ -689,7 +580,7 @@ if(req.method==='GET'&&url.pathname==='/api/online'){
  onlineVisitors.set(id,{seen:Date.now(),code:belongs?code:null});
  return send(200,onlineStats());
 }
-if(req.method==='GET'&&url.pathname==='/api/info')return send(200,{catalogueCount:catalogue.size,counts:Object.fromEntries(['pokemon','marvel','dc','lotr','original'].map(k=>[k,[...catalogue.values()].filter(x=>x.universe===k).length]))});
+if(req.method==='GET'&&url.pathname==='/api/info')return send(200,{catalogueCount:catalogue.size,counts:Object.fromEntries(['original'].map(k=>[k,[...catalogue.values()].filter(x=>x.universe===k).length]))});
 if(req.method==='POST'&&url.pathname.startsWith('/api/')){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>12000)error('İstek çok büyük.')}let body;try{body=JSON.parse(raw)}catch{error('Geçersiz JSON')}return send(200,await api(url.pathname,body))}
 if(req.method==='GET'&&(url.pathname==='/crazygames'||url.pathname.startsWith('/crazygames/'))){
  if(url.pathname==='/crazygames'){res.writeHead(302,{Location:'/crazygames/'});res.end();return}
@@ -754,4 +645,3 @@ if(r.deadline&&Date.now()>=r.deadline){const expiredSeat=r.turn;log(r,`${r.playe
 }for(const [id,r]of rooms){const age=Date.now()-(r.lastActivity||r.created);const expiry=r.phase==='finished'?24*3600_000:r.phase==='waiting'?2*3600_000:r.phase==='matching'?5*60_000:r.phase==='auction'?6*3600_000:24*3600_000;if(age>expiry){rooms.delete(id);dirtyRooms.add(id);waiting.delete(id);const clients=listeners.get(id);if(clients){for(const c of clients){try{c.res.end()}catch{}}listeners.delete(id)}}}for(const [id,w]of waiting)if(!rooms.has(w.code)||Date.now()-w.created>60000)waiting.delete(id)},500).unref();
 setInterval(()=>{flushRooms().catch(e=>console.error('Database flush:',e.message));flushGold().catch(e=>console.error('Gold flush:',e.message))},1000).unref();
 initializeDatabase().then(()=>{server.listen(PORT,'0.0.0.0',()=>console.log(`Hero Auction http://localhost:${PORT} | characters: ${catalogue.size}`));});
-

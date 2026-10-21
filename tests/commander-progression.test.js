@@ -35,11 +35,11 @@ test('non-specialty max 10 percent and specialty max 20 percent',()=>{
 });
 test('only matching hero classes get bonuses, speed never changes',()=>{
  const p={commanderId:'magic',levels:{attack:2,defense:3,magic:20,support:8}};
- const team=['energy','tank','fighter','assassin','support'].map(role=>({role,attack:1000,defense:1000,maxHp:1000,hp:1000,speed:100}));
+ const team=['energy','tank','fighter','assassin','support'].map(role=>({role,power:1000,attack:1000,defense:1000,maxHp:1000,hp:1000,speed:100}));
  applyCommanderSupport(team,p);
  assert.deepEqual(team.map(h=>h.attack),[1100,1000,1010,1010,1000]);
  assert.deepEqual(team.map(h=>h.defense),[1000,1015,1000,1000,1000]);
- assert.deepEqual(team.map(h=>h.maxHp),[1000,1000,1000,1000,1040]);
+ assert.deepEqual(team.map(h=>h.maxHp),[1000,1000,1000,1000,1080]);
  assert.deepEqual(team.map(h=>h.speed),[100,100,100,100,100]);
 });
 test('insufficient gold and invalid upgrade rejected',()=>{

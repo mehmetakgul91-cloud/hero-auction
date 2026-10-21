@@ -82,10 +82,8 @@ test('arena omits training shortcut and reports unsupported bot rooms clearly',(
 
 test('experimental committed round feeds commander visuals without altering replay',()=>{
  const client=readFileSync(new URL('../public/commander-experimental.js',import.meta.url),'utf8');
- const three=readFileSync(new URL('../public/arena-three.js',import.meta.url),'utf8');
  assert.match(client,/heroarena:commander-round/);
  assert.match(effect,/addEventListener\('heroarena:commander-round',showCommanderAbility\)/);
- assert.match(three,/addEventListener\('heroarena:commander-round',commanderVisual\)/);
  assert.match(client,/data\.events\|\|\[\]/);
  assert.match(client,/heroarena:experimental-round-end/);
 });

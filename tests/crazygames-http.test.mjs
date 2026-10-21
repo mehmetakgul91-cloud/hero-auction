@@ -16,6 +16,21 @@ test('verified portal accounts retain progress; invites join once and preserve a
   let ready=false;
   for(let i=0;i<100;i++){if(child.exitCode!==null)throw Error(logs);try{if((await fetch(base+'/api/info')).ok){ready=true;break}}catch{}await new Promise(r=>setTimeout(r,100))}
   assert.ok(ready,'server did not start: '+logs);
+  const heroes=await (await fetch(base+'/api/heroes')).json();
+  assert.equal(heroes.heroes.length,50);
+  assert.ok(heroes.heroes.every(h=>h.universe==='original'));
+  const hero=heroes.heroes[0];
+  const artResponse=await fetch(base+'/api/art?universe=original&name='+encodeURIComponent(hero.name));
+  assert.equal(artResponse.status,200);
+  const art=await artResponse.json();assert.equal(art.url,hero.portrait);assert.equal(art.role,hero.role);
+  assert.deepEqual(art.active,hero.active);assert.deepEqual(art.passive,hero.passive);
+  assert.equal((await fetch(base+'/api/art?universe=marvel&name=Hulk')).status,400);
+  const demo=await fetch(base+'/api/battle-preview?roles=tank,fighter,energy,energy,energy');
+  assert.equal(demo.status,200);
+  assert.ok((await demo.json()).teams.flat().every(h=>h.id.startsWith('original:')));
+  const arenaHtml=await (await fetch(base+'/crazygames/battle-preview.html')).text();
+  assert.doesNotMatch(arenaHtml,/arena-three\.js|arena-3d\.css|id="arena-3d"/);
+
   const auth=async(id,extra={})=>{const result=await post('/api/auth/crazygames',{credential:credential(id,extra)});assert.equal(result.status,200);return result.body};
   const a=await auth('player-a'),b=await auth('player-b'),c=await auth('player-c');
   assert.equal(a.user.sub,'crazygames:fixture-game:player-a');

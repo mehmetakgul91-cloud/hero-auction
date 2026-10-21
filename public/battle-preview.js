@@ -23,12 +23,12 @@ if(window.HeroPlatform){
 }
 // Browser-only battle replay preview. No wallet or live room mutations.
 const $=id=>document.getElementById(id);
-let demoA=[['Hulk','tank',85],['Thor','fighter',88],['Wolverine','fighter',78],['Scarlet Witch','energy',90],['Iron Man','support',80]];
+let demoA=[["Obsidyen Muhafız", "tank", 90, "original"], ["Demir Sur", "tank", 69, "original"], ["Kaya Titanı", "tank", 80, "original"], ["Buz Kalesi", "tank", 83, "original"], ["Gölge Suikastçı", "assassin", 90, "original"]];
 // Preview uses zero credits until verified auction balances are wired in.
 let previewCredits=0;
 const creditBonus=credits=>Math.max(-0.99,credits*0.01);
 const effectivePower=power=>Math.round(power*(1+creditBonus(previewCredits))*10)/10;
-let demoB=[['Superman','fighter',92],['Wonder Woman','fighter',85],['Doomsday','tank',84],['The Flash','assassin',81],['Doctor Fate','energy',87]];
+let demoB=[["Altın Muhafız", "tank", 91, "original"], ["Alev Zırhı", "fighter", 84, "original"], ["Kadim Koruyucu", "fighter", 72, "original"], ["Morvan", "energy", 90, "original"], ["Brunn", "tank", 75, "original"]];
 const roleNames={tank:'TANK',fighter:'SAVAŞÇI',energy:'ENERJİ / MESAFELİ',assassin:'SUİKASTÇI',support:'DESTEK'};
 let states=[],events=[],cursor=0,timer=null,liveArenaMode=false;
 // Original procedural arena soundtrack; no external copyrighted audio assets.
@@ -130,7 +130,7 @@ function roleAt(slot){return positions[slot]===null?'fighter':assignedRoles[posi
 function setLane(slot,lane){if(prepDone)return;lanes[slot]=lane;renderBoard();renderRolePickers()}
 
 const heroArtCache=new Map();
-async function loadHeroArt(i){if(heroArtCache.has(i))return heroArtCache.get(i);const promise=fetch('/api/art?universe='+encodeURIComponent(demoA[i][3]||'marvel')+'&name='+encodeURIComponent(demoA[i][0])).then(r=>r.ok?r.json():null).then(data=>data?.url||null).catch(()=>null);heroArtCache.set(i,promise);return promise}
+async function loadHeroArt(i){if(heroArtCache.has(i))return heroArtCache.get(i);const promise=fetch('/api/art?universe='+encodeURIComponent(demoA[i][3]||'original')+'&name='+encodeURIComponent(demoA[i][0])).then(r=>r.ok?r.json():null).then(data=>data?.url||null).catch(()=>null);heroArtCache.set(i,promise);return promise}
 function heroPortrait(i,container){const img=document.createElement('img');img.className='slot-portrait';img.alt=demoA[i][0];img.loading='lazy';const fallback=document.createElement('span');fallback.className='portrait-fallback';fallback.textContent=demoA[i][0].slice(0,1);container.append(fallback);void loadHeroArt(i).then(url=>{if(!url||!container.isConnected)return;img.src=url;img.onload=()=>{if(container.isConnected){fallback.remove();container.append(img)}};img.onerror=()=>img.remove()})}
 
 const query=new URLSearchParams(location.search);
@@ -288,7 +288,7 @@ function enterArenaWithoutReload(url){
  document.querySelector('.formation').hidden=true;
  $('battle-lobby').hidden=true;
  $('battle-arena').hidden=false;
- $('arena-3d').hidden=true;
+ 
  $('play').textContent='▶ SAVAŞI BAŞLAT';
  $('play').disabled=true;
  if(prepTimer!==null){clearInterval(prepTimer);prepTimer=null}
@@ -312,7 +312,7 @@ function enterArenaWithoutReload(url){
   void check();if(battlePoll===null)battlePoll=setInterval(check,1800);
  }else if(!multiplayerCode){void build().then(()=>{if(events.length)startReplay()})}
 }
-function lockFormation(){if(prepDone||auctionMode&&!auctionLoaded)return;if(!arenaMode&&arenaMusicEnabled){if(!arenaAudioPrimed)primeArenaAudio()}clearHover();completeSlots();if(!arenaMode){try{sessionStorage.setItem('hero-auction-arena-music','1')}catch{};sessionStorage.setItem('hero-auction-formation',JSON.stringify(positions));sessionStorage.setItem('hero-auction-lanes',JSON.stringify(lanes));if(multiplayerCode&&multiplayerToken){void fetch('/api/battle-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ready',code:multiplayerCode,token:multiplayerToken,positions,lanes,roles:positions.map((_,slot)=>roleAt(slot))})}).then(async r=>{const v=await r.json();if(!r.ok)throw Error(v.error);enterArenaWithoutReload('/battle-preview.html?room=arena&code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken))}).catch(e=>{$('prep-note').textContent='⚠ '+e.message});return}if(auctionMode){void fetch('/api/battle-auction-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,positions,lanes,roles:positions.map((_,slot)=>roleAt(slot))})}).then(async response=>{const data=await response.json();if(!response.ok)throw Error(data.error||'Diziliş gönderilemedi');enterArenaWithoutReload('/battle-preview.html?room=arena&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken)+'&commanderTest=1')}).catch(e=>{$('prep-note').textContent='⚠ '+e.message});return}enterArenaWithoutReload('/battle-preview.html?room=arena'+(auctionCode&&auctionToken?'&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken):''));return}prepDone=true;document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;$('arena-3d').hidden=true;if(prepTimer!==null){clearInterval(prepTimer);prepTimer=null}document.querySelectorAll('.formation-choices button,.board-slot,.formation-select').forEach(b=>b.disabled=true);$('apply-roles').disabled=true;$('apply-roles').textContent='✓ HAZIR';$('ready-a').textContent='🔵 Sen: Hazır';$('prep-note').textContent='İki taraf hazır. Savaş başlıyor!';stop();$('events').replaceChildren();$('play').textContent='▶ SAVAŞI OYNAT';void build().then(()=>{if(events.length)$('play').click()})}
+function lockFormation(){if(prepDone||auctionMode&&!auctionLoaded)return;if(!arenaMode&&arenaMusicEnabled){if(!arenaAudioPrimed)primeArenaAudio()}clearHover();completeSlots();if(!arenaMode){try{sessionStorage.setItem('hero-auction-arena-music','1')}catch{};sessionStorage.setItem('hero-auction-formation',JSON.stringify(positions));sessionStorage.setItem('hero-auction-lanes',JSON.stringify(lanes));if(multiplayerCode&&multiplayerToken){void fetch('/api/battle-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ready',code:multiplayerCode,token:multiplayerToken,positions,lanes,roles:positions.map((_,slot)=>roleAt(slot))})}).then(async r=>{const v=await r.json();if(!r.ok)throw Error(v.error);enterArenaWithoutReload('/battle-preview.html?room=arena&code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken))}).catch(e=>{$('prep-note').textContent='⚠ '+e.message});return}if(auctionMode){void fetch('/api/battle-auction-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,positions,lanes,roles:positions.map((_,slot)=>roleAt(slot))})}).then(async response=>{const data=await response.json();if(!response.ok)throw Error(data.error||'Diziliş gönderilemedi');enterArenaWithoutReload('/battle-preview.html?room=arena&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken)+'&commanderTest=1')}).catch(e=>{$('prep-note').textContent='⚠ '+e.message});return}enterArenaWithoutReload('/battle-preview.html?room=arena'+(auctionCode&&auctionToken?'&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken):''));return}prepDone=true;document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;if(prepTimer!==null){clearInterval(prepTimer);prepTimer=null}document.querySelectorAll('.formation-choices button,.board-slot,.formation-select').forEach(b=>b.disabled=true);$('apply-roles').disabled=true;$('apply-roles').textContent='✓ HAZIR';$('ready-a').textContent='🔵 Sen: Hazır';$('prep-note').textContent='İki taraf hazır. Savaş başlıyor!';stop();$('events').replaceChildren();$('play').textContent='▶ SAVAŞI OYNAT';void build().then(()=>{if(events.length)$('play').click()})}
 function startPreparation(){if(prepTimer!==null)clearInterval(prepTimer);prepDone=false;prepDeadline=Date.now()+60000;const tick=()=>{const remaining=Math.max(0,Math.ceil((prepDeadline-Date.now())/1000));$('prep-clock').textContent=String(Math.floor(remaining/60)).padStart(2,'0')+':'+String(remaining%60).padStart(2,'0');if(!remaining)lockFormation()};tick();prepTimer=setInterval(tick,200)}
 const roleIcons={tank:'🛡️',fighter:'⚔️',energy:'⚡',assassin:'🗡️',support:'💚'};
 const modifiers={tank:[-12,22,30,-8],fighter:[6,7,8,0],energy:[15,-10,-12,2],assassin:[17,-14,-15,17],support:[-7,0,4,9]};
@@ -335,7 +335,7 @@ function renderRolePickers(){const root=$('role-pickers');root.replaceChildren()
  card.append(portrait,heading,badge,stats,choices,pick);root.append(card);attachDrag(card,i);update();
  })}
 $('apply-roles').onclick=lockFormation;
-if(arenaMode){document.body.classList.add('arena-room');document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;$('arena-3d').hidden=true;$('play').textContent='▶ SAVAŞI BAŞLAT';mountCommanderDock()}else{renderRolePickers();renderBoard();if(!auctionMode)startPreparation();else{$('apply-roles').disabled=true;$('prep-clock').textContent='--:--';$('prep-note').textContent='Açık artırma kartları doğrulanıyor…'}}
+if(arenaMode){document.body.classList.add('arena-room');document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;$('play').textContent='▶ SAVAŞI BAŞLAT';mountCommanderDock()}else{renderRolePickers();renderBoard();if(!auctionMode)startPreparation();else{$('apply-roles').disabled=true;$('prep-clock').textContent='--:--';$('prep-note').textContent='Açık artırma kartları doğrulanıyor…'}}
 const motion=()=> $('motion').checked&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const duration=()=>Number($('speed').value);
 function comicBattleCue(e){
@@ -445,7 +445,7 @@ function renderArenaCommanderMatchup(profiles){
  }
 }
 async function build(overrideResult){
- stop();if(victoryPendingTimer!==null){clearTimeout(victoryPendingTimer);victoryPendingTimer=null}resetArenaClock();visualHealth.clear();cursor=0;events=[];$('arena-counter-round').textContent='0';$('arena-counter-move').textContent='0 / 0';$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;victoryRevealDone=false;if(victoryRevealTimer!==null){clearTimeout(victoryRevealTimer);victoryRevealTimer=null}if($('arena-victory-reveal'))$('arena-victory-reveal').hidden=true;$('next').disabled=true;$('play').disabled=true;
+ stop();if(victoryPendingTimer!==null){clearTimeout(victoryPendingTimer);victoryPendingTimer=null}resetArenaClock();visualHealth.clear();cursor=0;events=[];$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;victoryRevealDone=false;if(victoryRevealTimer!==null){clearTimeout(victoryRevealTimer);victoryRevealTimer=null}if($('arena-victory-reveal'))$('arena-victory-reveal').hidden=true;$('next').disabled=true;$('play').disabled=true;
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
  try{
   let result=overrideResult;
@@ -472,7 +472,7 @@ async function build(overrideResult){
   // The server is authoritative for winner; the UI reconstructs interim HP from logs.
   finalResult=result;
   if(liveArenaMode)startArenaClock();
-  $('arena-score').hidden=false;$('battle-arena').hidden=false;$('arena-3d').hidden=true;
+  $('arena-score').hidden=false;$('battle-arena').hidden=false;
   $('message').textContent=liveArenaMode?'Canlı savaş başladı · Komutanını yönet':'Gerçek savaş motoru hazır · '+result.rounds+' tur';
   render();window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position})));window.dispatchEvent(new CustomEvent('heroarena:ready',{detail:{teams:window.heroArenaTeams}}));
  }catch(e){$('message').textContent='⚠ '+e.message}
@@ -487,7 +487,7 @@ window.addEventListener('heroarena:experimental-round-end',e=>{
   for(const unit of states[side])if(hpById.has(unit.id)){const live=snapshot[side].find(u=>u.id===unit.id);unit.maxHp=Number(live.maxHp)||unit.maxHp;unit.hp=Math.max(0,Math.min(unit.maxHp,Number(live.hp)||0));unit.shield=Number(live.shield)||0;}
  }
  render();
- $('round').textContent=String(e.detail.round||0);$('arena-counter-round').textContent=$('round').textContent;$('message').textContent=e.detail.finished?'Canlı savaş tamamlandı':'Canlı savaş · Tur '+e.detail.round;
+ $('round').textContent=String(e.detail.round||0);$('message').textContent=e.detail.finished?'Canlı savaş tamamlandı':'Canlı savaş · Tur '+e.detail.round;
  if(liveArenaMode&&e.detail.finished){const alive=states.map(team=>team.filter(u=>u.hp>0).length);finalResult={...finalResult,winner:alive[0]===alive[1]?null:alive[0]>alive[1]?0:1,rounds:Number(e.detail.round)||0,teams:states,log:[...(finalResult?.log||[]),...(e.detail.events||[])]};showVictoryReveal();}
 });
 const arenaArtCache=new Map();
@@ -501,7 +501,7 @@ function render(flash){
    const card=document.createElement('article');card.dataset.heroId=u.id;card.className='hero arena-hero'+(u.lane==='front'?' frontline':' backline')+(u.hp<=0?' dead':'')+(flash?.actorId===u.id?' cast':'')+(flash?.targetId===u.id?' hit':'');
    const portrait=document.createElement('div');portrait.className='arena-portrait';portrait.setAttribute('role','img');portrait.setAttribute('aria-label',u.name+' - '+roleNames[u.role]);
    const fallback=document.createElement('span');fallback.className='portrait-fallback';fallback.textContent=u.name.slice(0,1);portrait.append(fallback);
-   const universe=String(u.id||'').split(':')[0]|| (side?'dc':'marvel');const artKey=universe+':'+u.name;
+   const universe=String(u.id||'').split(':')[0]|| 'original';const artKey=universe+':'+u.name;
    if(!arenaArtCache.has(artKey))arenaArtCache.set(artKey,fetch('/api/art?universe='+universe+'&name='+encodeURIComponent(u.name)).then(r=>r.ok?r.json():null).then(j=>j?.url||null).catch(()=>null));
    void arenaArtCache.get(artKey).then(url=>{if(!url||!portrait.isConnected)return;const img=document.createElement('img');img.className='arena-portrait-image';img.alt=u.name;img.src=url;img.onload=()=>{if(portrait.isConnected){fallback.remove();portrait.append(img)}}});
    const bar=document.createElement('div');bar.className='hp';bar.setAttribute('aria-label','Can '+u.hp+' / '+u.maxHp);const fill=document.createElement('span');fill.style.width=(100*u.hp/u.maxHp)+'%';bar.append(fill);
@@ -519,7 +519,7 @@ function render(flash){
   $('team-hp-'+suffix+'-track').setAttribute('aria-valuenow',String(Math.round(percent)));
   $('team-hp-'+suffix+'-track').setAttribute('aria-valuetext',Math.round(remainingHp)+' / '+Math.round(maxHp)+' HP');
  }
- $('round').textContent=cursor?events[cursor-1].round:'0';$('arena-counter-round').textContent=$('round').textContent;$('arena-counter-move').textContent=cursor+' / '+events.length;
+ $('round').textContent=cursor?events[cursor-1].round:'0';
  $('next').disabled=cursor>=events.length;
  $('play').disabled=cursor>=events.length;
  if(events.length&&cursor===events.length){
@@ -529,7 +529,7 @@ function render(flash){
 }
 let victoryRevealDone=false,victoryRevealTimer=null,victoryPendingTimer=null;
 function podiumPortrait(hero,side){
- const universe=String(hero.id||'').split(':')[0]||(side?'dc':'marvel');
+ const universe=String(hero.id||'').split(':')[0]||'original';
  const key=universe+':'+hero.name;
  if(!arenaArtCache.has(key))arenaArtCache.set(key,fetch('/api/art?universe='+encodeURIComponent(universe)+'&name='+encodeURIComponent(hero.name)).then(r=>r.ok?r.json():null).then(data=>data?.url||null).catch(()=>null));
  return arenaArtCache.get(key);
@@ -631,7 +631,7 @@ function showBattleSummary(){
  panel.append(stats);
  panel.hidden=false;
  if(auctionMode)void showAuctionRematch();
- $('battle-arena').hidden=true;$('arena-3d').hidden=true;
+ $('battle-arena').hidden=true;
  panel.scrollIntoView({behavior:'smooth',block:'start'});
 }
 let arenaFinaleTimer=null,arenaFinaleActive=false;
