@@ -75,7 +75,9 @@ async function boot(){
   $('quality').addEventListener('click',()=>{autoQuality=false;scene.setEconomy(!scene.economy);$('quality').textContent=scene.economy?'EKO':'HD';$('quality').setAttribute('aria-label',scene.economy?'Görüntü kalitesi: ekonomik':'Görüntü kalitesi: yüksek');});
   $('arena-canvas').addEventListener('webglcontextlost',event=>{event.preventDefault();scene.renderer.setAnimationLoop(null);showError('Grafik bağlantısı kesildi. Denemeyi yeniden açabilirsin.');});
   const animate=time=>{
-   const raw=lastTime?(time-lastTime)/1000:0;lastTime=time;const dt=Math.min(raw,.05),playing=clock.playing;
+   // Snapshot playback is time based. Dropping elapsed time on slow frames
+   // makes a one-second attack last many seconds on low-powered devices.
+   const raw=lastTime?(time-lastTime)/1000:0;lastTime=time;const dt=Math.max(0,raw),playing=clock.playing;
    if(autoQuality&&playing&&!scene.economy){slowSeconds=raw>.045?slowSeconds+dt:Math.max(0,slowSeconds-dt*.5);if(slowSeconds>3){scene.setEconomy(true);$('quality').textContent='EKO';$('quality').setAttribute('aria-label','Görüntü kalitesi: otomatik ekonomik');}}
    clock.advance(dt*speed);scene.render(dt,clock.progress,playing||!scene.active);
   };
