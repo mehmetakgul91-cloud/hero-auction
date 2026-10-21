@@ -145,7 +145,15 @@ function mountCommanderDock(){
  if(!arena||!matchup||!controls)return;
  let dock=$('arena-commander-dock');
  if(!dock){dock=document.createElement('div');dock.id='arena-commander-dock';dock.className='arena-commander-dock';dock.setAttribute('aria-label','Komutan kontrol paneli');arena.after(dock)}
+ dock.hidden=false;
  dock.append(matchup,controls);
+}
+function finishCommanderControls(){
+ for(const id of ['arena-commander-dock','experimental-commander-controls','arena-commander-matchup']){
+  const panel=$(id);if(panel)panel.hidden=true;
+ }
+ $('experimental-commander-controls')?.querySelectorAll('button').forEach(button=>button.disabled=true);
+ window.dispatchEvent(new CustomEvent('heroarena:battle-finished'));
 }
 const multiplayerCode=query.get('code');
 const multiplayerToken=query.get('token');
@@ -538,8 +546,7 @@ function showVictoryReveal(){
  window.HeroPlatform?.gameplay(false);
  if(victoryRevealDone||!finalResult||victoryPendingTimer!==null)return;
  pauseArenaClock();
- const controls=$('experimental-commander-controls');
- if(controls)controls.querySelectorAll('button').forEach(button=>button.disabled=true);
+ finishCommanderControls();
  $('message').textContent='Son hamle tamamlandı · Savaş sonucu hazırlanıyor…';
  const finish=()=>{
   const effectRemaining=Math.max(0,(window.heroCommanderEffectUntil||0)-Date.now());
@@ -602,6 +609,7 @@ function revealVictoryNow(){
 }
 function showBattleSummary(){
  const panel=$('battle-summary');if(!panel||!finalResult)return;
+ finishCommanderControls();
  const winner=finalResult.winner;
  const survivors=states.map(team=>team.filter(unit=>unit.hp>0).length);
  $('battle-summary-title').textContent=winner===null?'🤝 BERABERLİK':winner===0?'🏆 MAVİ TAKIM KAZANDI':'🏆 KIRMIZI TAKIM KAZANDI';

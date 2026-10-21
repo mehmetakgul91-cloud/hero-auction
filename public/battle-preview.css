@@ -209,19 +209,23 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 .arena-commander-matchup small{font-size:clamp(8px,2vw,12px);line-height:1.25;color:#c3d7ed}
 .arena-commander-versus{font-weight:1000;color:#f2d17e;font-size:15px;text-shadow:0 0 8px #ffd37599}
 
-/* Thumb-reachable live commander controls, clear of iPhone browser safe areas. */
-.arena-commander-dock{position:fixed;z-index:900;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 8px);transform:translateX(-50%);display:grid;grid-template-columns:minmax(0,1fr);gap:6px;width:min(520px,calc(100vw - 16px));max-height:min(42vh,310px);overflow:auto;overscroll-behavior:contain;padding:7px;border:1px solid #6ecff0;border-radius:16px;background:linear-gradient(145deg,rgba(9,25,47,.97),rgba(25,20,48,.97));box-shadow:0 8px 32px #000b,0 0 18px #35cfff33;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+/* The commander panel occupies its own space below the battlefield, never an overlay. */
+.arena-commander-dock{position:relative;display:grid;grid-template-columns:minmax(0,1fr);gap:6px;width:100%;margin:8px auto 12px;padding:7px;border:1px solid #6ecff0;border-radius:16px;background:linear-gradient(145deg,#09192f,#191430);box-shadow:0 4px 18px #0005}
+.arena-commander-dock[hidden]{display:none!important}
 .arena-commander-dock .arena-commander-matchup{margin:0;padding:5px 7px;gap:4px;border-radius:11px;box-shadow:none}
 .arena-commander-dock .arena-commander-portrait{width:36px;height:36px;border-radius:9px}
 .arena-commander-dock .arena-commander-matchup>div{gap:6px}
-.arena-commander-dock #experimental-commander-controls{width:auto;max-width:none!important;margin:0!important;padding:5px 7px!important;border:0!important;background:transparent!important}
+.arena-commander-dock #experimental-commander-controls{display:grid;grid-template-columns:minmax(75px,.8fr) repeat(2,minmax(0,1fr));align-items:center;column-gap:8px;width:auto;max-width:none!important;margin:0!important;padding:5px 7px!important;border:0!important;background:transparent!important}
 .arena-commander-dock #experimental-commander-controls h2{display:none}
-.arena-commander-dock #experimental-commander-controls>p{margin:3px 0;font-size:12px}
-.arena-commander-dock #experimental-commander-controls [data-energy-meter]{height:8px!important;margin:4px 0 6px!important}
-.arena-commander-dock #experimental-commander-controls [data-command]{min-height:48px!important;border-radius:12px;font-size:13px;font-weight:900;touch-action:manipulation}
+.arena-commander-dock #experimental-commander-controls>p{margin:3px 0;font-size:12px;grid-column:1/-1}
+.arena-commander-dock #experimental-commander-controls>p:first-of-type{grid-column:1;grid-row:1;font-size:11px;white-space:nowrap}
+.arena-commander-dock #experimental-commander-controls [data-energy-meter]{grid-column:1;grid-row:2;width:100%;height:8px!important;margin:0!important;align-self:start}
+.arena-commander-dock #experimental-commander-controls>div:not([data-energy-meter]){grid-column:2/-1;grid-row:1/3;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px!important}
+.arena-commander-dock #experimental-commander-controls [data-command]{min-width:0;min-height:44px!important;padding:8px 6px;border-radius:10px;font-size:12px;font-weight:900;touch-action:manipulation}
 .arena-commander-dock #experimental-commander-controls [data-command="pass"]{display:none}
-.arena-room #battle-arena{margin-bottom:12px}
-@media(max-width:600px){.arena-commander-dock{width:calc(100vw - 12px);bottom:calc(env(safe-area-inset-bottom,0px) + 6px);max-height:38vh;padding:6px;gap:4px}.arena-commander-dock .arena-commander-matchup{grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr);padding:4px}.arena-commander-dock .arena-commander-portrait{width:32px;height:32px}.arena-commander-dock .arena-commander-matchup strong{font-size:10px}.arena-commander-dock .arena-commander-matchup small{font-size:8px}.arena-commander-dock #experimental-commander-controls [data-command]{flex-basis:120px!important;min-height:46px!important;padding:8px 6px;font-size:12px}}
+.arena-commander-dock #experimental-commander-controls [data-live-cooldown],.arena-commander-dock #experimental-commander-controls [data-status]{font-size:11px;line-height:1.3;overflow-wrap:anywhere}
+.arena-room #battle-arena{margin-bottom:0}
+@media(max-width:600px){.arena-commander-dock{padding:5px;gap:4px}.arena-commander-dock .arena-commander-matchup{grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr);padding:4px}.arena-commander-dock .arena-commander-portrait{width:28px;height:32px}.arena-commander-dock .arena-commander-matchup strong{font-size:10px}.arena-commander-dock .arena-commander-matchup small{font-size:8px}}
 
 /* Cinematic elimination of the last standing hero */
 .arena-final-knockout{position:fixed;inset:0;z-index:9998;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at center,rgba(132,24,39,.5),rgba(4,6,19,.93) 70%);backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .2s ease}

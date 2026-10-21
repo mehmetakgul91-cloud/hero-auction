@@ -54,14 +54,15 @@ test('commander matchup uses portraits and centered mobile ability area',()=>{
  assert.match(html,/translate\(-50%,-50%\) scale\(1\)/);
 });
 
-test('live commander profile and ability buttons share a safe-area bottom dock',()=>{
+test('live commander controls occupy their own space below the arena',()=>{
  const client=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8');
  const css=readFileSync(new URL('../public/battle-preview.css',import.meta.url),'utf8');
  assert.match(client,/function mountCommanderDock\(/);
  assert.match(client,/dock\.append\(matchup,controls\)/);
- assert.match(css,/\.arena-commander-dock\{position:fixed/);
- assert.match(css,/bottom:calc\(env\(safe-area-inset-bottom,0px\) \+ 8px\)/);
- assert.match(css,/\[data-command\]\{min-height:48px!important/);
+ assert.match(client,/arena\.after\(dock\)/);
+ assert.match(css,/\.arena-commander-dock\{position:relative/);
+ assert.match(css,/\.arena-commander-dock\[hidden\]\{display:none!important/);
+ assert.match(css,/\[data-command\]\{[^}]*min-height:44px!important/);
 });
 
 test('commander controls initialize after the single page arena route changes',()=>{
