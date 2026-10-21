@@ -11,6 +11,7 @@ test('submission HTML removes external ads/login before execution and stays insi
  assert.match(page,/src="\/crazygames\/platform.js"/);
  assert.match(page,/src="\/crazygames\/app.js/);
  assert.match(page,/href="\/crazygames\/kahramanlar.html"/);
+ assert.match(page,/href="\/crazygames\/crazygames-privacy.html"/);
  assert.equal(crazyGamesSource('binary untouched','.png'),'binary untouched');
 });
 test('platform storage and arena/rematch links are isolated; API endpoints are unchanged',()=>{
@@ -38,7 +39,7 @@ test('SDK initializes before calls; queued gameplay is reported once and respect
  h.platform.gameplay(true);h.platform.gameplay(false);h.platform.gameplay(false);
  assert.deepEqual(h.calls,['loadingStart','loadingStop','start','stop']);
  assert.equal(h.platform.muteAudio,true);assert.equal(h.platform.disableChat,true);
- h.listeners.settings({muteAudio:false,disableChat:false});assert.equal(h.platform.muteAudio,false);
+ h.listeners.settings({muteAudio:false,disableChat:false});assert.equal(h.platform.muteAudio,false);assert.equal(h.platform.disableChat,true);
 });
 test('disabled SDK and network failure leave game available without SDK calls',async()=>{
  for(const [env,fail] of [['disabled',false],['crazygames',true]]){const h=harness(env,fail);h.platform.gameplay(true);await h.script.onload();await h.platform.ready;assert.deepEqual(h.calls,[])}

@@ -1,7 +1,7 @@
 // Shared CrazyGames adapter. Basic Launch never requests advertisements.
 (()=>{
  let sdk=null,playing=false,reported=false,loaded=false,roomData=null,roomReported='',joinHandler=null,pendingJoin=null,watching=false;
- const platform=window.HeroPlatform={basicLaunch:true,muteAudio:false,disableChat:false,
+ const platform=window.HeroPlatform={basicLaunch:true,muteAudio:false,disableChat:true,
   gameplay(active){playing=Boolean(active);flush()},
   loaded(){loaded=true;if(sdk)call('loadingStop')},
   watchAccount(){watching=true},
@@ -29,7 +29,8 @@
  function flush(){if(!sdk||playing===reported)return;call(playing?'gameplayStart':'gameplayStop');reported=playing}
  function flushRoom(){if(!sdk)return;const value=JSON.stringify(roomData);if(value===roomReported)return;if(roomData)call('updateRoom',roomData);else call('leftRoom');roomReported=value}
  function receiveJoin(params){const code=String(params?.roomCode||'');if(!/^\d{3}$/.test(code))return;if(joinHandler)void joinHandler(code);else pendingJoin=code}
- function settings(value={}){platform.muteAudio=Boolean(value.muteAudio);platform.disableChat=Boolean(value.disableChat);document.documentElement.classList.toggle('cg-chat-disabled',platform.disableChat);window.dispatchEvent(new CustomEvent('hero:platform-settings'));}
+ // This distribution has no chat moderation service, so chat stays unavailable.
+ function settings(value={}){platform.muteAudio=Boolean(value.muteAudio);platform.disableChat=true;document.documentElement.classList.toggle('cg-chat-disabled',true);window.dispatchEvent(new CustomEvent('hero:platform-settings'));}
  platform.ready=new Promise(resolve=>{
   let finished=false;
   const finish=()=>{if(finished)return;finished=true;clearTimeout(timeout);resolve()};

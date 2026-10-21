@@ -19,5 +19,6 @@ export function crazyGamesSource(source, extension){
   .replace(/<head>/,'<head><script src="/crazygames/platform.js"></script><style>#google-login,.landing-divider,.entry-footnote,.landing-howto,.landing-story,.rewarded-ad-panel,#google-logout,a[href^="mailto:"],.entry-privacy,.disclaimer,.arena-prep-link,.art-credit{display:none!important}.cg-chat-disabled #chat-panel{display:none!important}.home-quick-nav{grid-template-columns:repeat(4,minmax(0,1fr))}</style>')
   .replace('Bir oyuncu adı belirle, giriş yöntemini seç ve arenaya katıl.','Oyunun hazırlanıyor. Bağlantı kesilirse aşağıdaki düğmeyle tekrar deneyebilirsin.')
   .replace(/VEYA GOOGLE İLE DEVAM ET/g,'')
+  .replace('</footer>','<p class="cg-privacy-notice">Oyuncu kimliği ve ilerleme oyun sunucusunda saklanır. <a href="/crazygames/crazygames-privacy.html" target="_blank" rel="noopener">Gizlilik bilgisi</a></p></footer>')
   .replace(/Misafir veya Google girişiyle oynayabilirsin\./g,'Misafir olarak hemen oynayabilirsin.');
 }
