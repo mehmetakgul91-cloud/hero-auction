@@ -4,6 +4,7 @@ export function crazyGamesSource(source, extension){
  if(extension==='.js')return source
   .replace(/(['"`])hero-auction-([a-z-]+)\1/g,(_,q,key)=>q+'hero-auction-cg-'+key+q)
   .replace(/https:\/\/heroauction\.com\.tr\//g,'/crazygames/')
+  .replace(/(\b(?:from\s+|import\s*\(\s*))(['"])\/(?!\/|crazygames\/)/g,'$1$2/crazygames/')
   .replace(/(['"`])\/battle-preview\.html/g,'$1/crazygames/battle-preview.html')
   .replace(/location\.(replace|assign)\((['"])\/\2\)/g,"location.$1('/crazygames/')");
  if(extension!=='.html')return source;

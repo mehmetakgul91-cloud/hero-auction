@@ -29,6 +29,8 @@ function playAuctionActionSound(action){
 
 const googleClientId='742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
 let login=null;try{login=JSON.parse(localStorage.getItem('hero-auction-login')||'null')}catch{}
+let platformStoredLogin=window.HeroPlatform?login:null;
+if(window.HeroPlatform)login=null;
 const signedIn=()=>!!login?.authToken;
 
 const commanderOptions=[
@@ -41,7 +43,7 @@ const commanderPortraits={"attack":"/images/Ate%C5%9Fler%20%C4%B0%C3%A7inde%20Sa
 function commanderPortrait(id){return commanderPortraits[id]||'/images/commander-attack.svg';}
 let commanderProfile=null,commanderLoaded=false,commanderPending=null,commanderChangePending=null,commanderProfileOpen=false,commanderBusy=false,commanderLoading=false,commanderChangeOpen=false;
 function commanderVisibility(){
- const logged=signedIn(),needSelection=logged&&commanderLoaded&&!commanderProfile;
+ const logged=signedIn(),needSelection=logged&&commanderLoaded&&!commanderProfile&&(!window.HeroPlatform||!room);
  $('commander-onboarding').hidden=!needSelection;
  $('commander-profile').hidden=!logged||!commanderProfileOpen||!commanderProfile;
  $('home').hidden=!logged||!!room||!commanderLoaded||needSelection||commanderProfileOpen;
@@ -182,9 +184,9 @@ function showGold(value){walletGold=Math.max(0,Number(value)||0);if(commanderPro
 async function refreshGold(){if(!signedIn())return;try{const data=await post('/api/wallet',{});showGold(data.gold)}catch(e){console.warn('Gold balance unavailable:',e.message)}}
 function clearExpiredLogin(){login=null;session=null;room=null;stream?.close();localStorage.removeItem('hero-auction-login');localStorage.removeItem('hero-auction-session');showGold(0);commanderProfile=null;commanderLoaded=false;commanderProfileOpen=false;applyLogin();notify('Oturumun sona ermiş. Lütfen yeniden giriş yap.');}
 async function validateLogin(){if(!signedIn())return false;try{const result=await post('/api/auth/check',{});showGold(result.gold);if(!commanderLoaded)void loadCommander();return true}catch(e){if(/giriş yap|Oturumun sona erdi|401/.test(e.message)){clearExpiredLogin();return false}notify('Sunucuya bağlanılamadı. Tekrar dene.');return false}}
-function applyLogin(){const active=signedIn();if(!room)window.HeroPlatform?.gameplay(false);const wallet=$('gold-wallet');if(wallet)wallet.hidden=!active;$('login-gate').hidden=active;$('home').hidden=!active||!!room;$('game').hidden=!active||!room;$('account-status').hidden=!active;$('google-logout').hidden=true;$('account-status').setAttribute('aria-expanded','false');if(active){$('name').value=login.user?.name||'Oyuncu';$('name').readOnly=login.type==='google';$('account-status').textContent=(login.type==='google'?'Google: ':'Misafir: ')+(login.user?.name||'Oyuncu');}else{$('account-status').textContent='';}commanderVisibility();}
+function applyLogin(){const active=signedIn();if(!room)window.HeroPlatform?.gameplay(false);if(!room)window.HeroPlatform?.setRoom(null);const wallet=$('gold-wallet');if(wallet)wallet.hidden=!active;$('login-gate').hidden=active;$('home').hidden=!active||!!room;$('game').hidden=!active||!room;$('account-status').hidden=!active;$('google-logout').hidden=true;$('account-status').setAttribute('aria-expanded','false');if(active){$('name').value=login.user?.name||'Oyuncu';$('name').readOnly=login.type==='google'||login.type==='crazygames';$('account-status').textContent=(login.type==='crazygames'?'CrazyGames: ':login.type==='google'?'Google: ':'Misafir: ')+(login.user?.name||'Oyuncu');}else{$('account-status').textContent='';}commanderVisibility();}
 async function enterGuest(){try{const name=$('guest-name').value.trim()||'Oyuncu';const result=await post('/api/auth/guest',{name});login={type:'guest',user:result.user,authToken:result.authToken};localStorage.setItem('hero-auction-login',JSON.stringify(login));showGold(result.gold);applyLogin();void loadCommander();restoreGame()}catch(e){notify(e.message)}}
-$('guest-login').onclick=enterGuest;
+$('guest-login').onclick=()=>window.HeroPlatform?startPlatform():enterGuest();
 $('account-status').onclick=()=>{if(window.HeroPlatform||!signedIn())return;const button=$('google-logout');button.hidden=!button.hidden;$('account-status').setAttribute('aria-expanded',String(!button.hidden));};
 $('google-logout').onclick=()=>{login=null;localStorage.removeItem('hero-auction-login');localStorage.removeItem('hero-auction-session');session=null;room=null;stream?.close();stream=null;showGold(0);commanderProfile=null;commanderLoaded=false;commanderProfileOpen=false;window.google?.accounts?.id?.disableAutoSelect();applyLogin();window.scrollTo({top:0,behavior:'instant'})};
 window.heroGoogleCallback=async response=>{try{const result=await post('/api/auth/google',{credential:response.credential});login={type:'google',user:result.user,authToken:result.authToken};localStorage.setItem('hero-auction-login',JSON.stringify(login));showGold(result.gold);applyLogin();void loadCommander();restoreGame();notify('Google hesabınla giriş yaptın.')}catch(e){notify(e.message)}};
@@ -301,7 +303,7 @@ function animateWonAuctionCard(name,seat,roomCode,round,sourceSnapshot){
  ],{duration:720,easing:'cubic-bezier(.2,.8,.2,1)',fill:'forwards'});
  animation.finished.catch(()=>{}).finally(()=>{ghost.remove();destination.classList.add('auction-card-arrived');setTimeout(()=>destination.classList.remove('auction-card-arrived'),850)});
 }
-function show(r){if(!signedIn())return;window.HeroPlatform?.gameplay(r.phase==='auction');const currentCardKey=r.phase==='auction'?r.code+':'+r.round+':'+r.card?.name:null;const isNewCard=!!currentCardKey&&currentCardKey!==lastCardKey;lastCardKey=currentCardKey;const wasFinished=room?.phase==='finished'&&room?.code===r.code;const previousArt=document.querySelector('#stage .card-art');const previousArtSnapshot=previousArt?{element:previousArt.cloneNode(true),rect:previousArt.getBoundingClientRect()}:null;const previousAuction=room?.phase==='auction'&&room?.code===r.code?{round:room.round,team:room.players?.[room.me]?.team?.map(x=>x.name)||[],me:room.me}:null;const enteredAuction=r.phase==='auction'&&(room?.phase!=='auction'||room?.code!==r.code||room?.round>r.round);room=r;if(enteredAuction)refreshGold();if(r.phase==='finished'&&!wasFinished){refreshGold();}
+function show(r){if(!signedIn())return;window.HeroPlatform?.gameplay(r.phase==='auction');const currentCardKey=r.phase==='auction'?r.code+':'+r.round+':'+r.card?.name:null;const isNewCard=!!currentCardKey&&currentCardKey!==lastCardKey;lastCardKey=currentCardKey;const wasFinished=room?.phase==='finished'&&room?.code===r.code;const previousArt=document.querySelector('#stage .card-art');const previousArtSnapshot=previousArt?{element:previousArt.cloneNode(true),rect:previousArt.getBoundingClientRect()}:null;const previousAuction=room?.phase==='auction'&&room?.code===r.code?{round:room.round,team:room.players?.[room.me]?.team?.map(x=>x.name)||[],me:room.me}:null;const enteredAuction=r.phase==='auction'&&(room?.phase!=='auction'||room?.code!==r.code||room?.round>r.round);room=r;window.HeroPlatform?.setRoom(r);if(window.HeroPlatform)commanderVisibility();if(enteredAuction)refreshGold();if(r.phase==='finished'&&!wasFinished){refreshGold();}
  if(r.phase==='finished'&&r.final?.length===2&&r.final.every(p=>p.team?.length===5)&&session?.token){
   renderChat(r);$('login-gate').hidden=true;$('home').hidden=true;$('game').hidden=false;
   $('room-title').textContent=r.code;$('phase').textContent='KAHRAMAN GÜÇLERİ · ARENA ONAYI';
@@ -354,7 +356,8 @@ $('bot').onclick=async()=>{if(!await validateLogin())return;try{const j=await po
 $('match').onclick=async()=>{if(!await validateLogin())return;try{const j=await post('/api/match',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
 setInterval(()=>{if(room?.phase==='auction'&&room.deadline){const el=$('turntimer');if(el)el.textContent='⏱ '+Math.max(0,Math.ceil((room.deadline-Date.now())/1000))+' saniye'}},250);
 function inviteUrl(code){const u=new URL('/',location.origin);u.searchParams.set('join',code);return u.toString()}
-function shareInvite(code){
+async function shareInvite(code){
+ if(window.HeroPlatform){try{const link=await window.HeroPlatform.inviteLink(code);await navigator.clipboard.writeText(link);notify('Davet bağlantısı kopyalandı.')}catch{notify('Davet bağlantısı kopyalanamadı. CrazyGames davet düğmesini kullan.')}return}
  const message='⚔️ Hero Auction\'da sana meydan okuyorum! Odaya katıl ve 20 krediyle takımını kur: '+inviteUrl(code);
  window.open('https://wa.me/?text='+encodeURIComponent(message),'_blank','noopener,noreferrer');
 }
@@ -367,8 +370,60 @@ if(invitedCode&&/^\d{3}$/.test(invitedCode)){
  $('join-invite-code').textContent=invitedCode.toUpperCase();
  $('join-invite-button').onclick=()=>$('join').click();
 }
-$('leave').onclick=()=>{if(!confirm('Bu cihazda odadan ayrılmak istiyor musun?'))return;localStorage.removeItem('hero-auction-session');stream?.close();session=null;room=null;applyLogin();refreshOnline()};
-(async()=>{try{const r=await fetch('/api/info');const j=await r.json();$('catalogue').textContent=`Şu anda ${j.catalogueCount} özgün kahraman hazır`;}catch{}if(window.HeroPlatform){await window.HeroPlatform.ready;if(!await validateLogin())await enterGuest();else await restoreGame();window.HeroPlatform.loaded();if(!room&&homePlayPanel.hidden)homePlayTab.click()}else await restoreGame();loadPokeMap();refreshOnline()})();
+$('leave').onclick=()=>{if(!confirm('Bu cihazda odadan ayrılmak istiyor musun?'))return;window.HeroPlatform?.setRoom(null);localStorage.removeItem('hero-auction-session');stream?.close();session=null;room=null;applyLogin();refreshOnline()};
+
+// CrazyGames session bridge: authenticate before restoring any device-local seat.
+let platformStarting=false,platformJoinQueue=Promise.resolve();
+function discardPlatformSeat(){
+ stream?.close();stream=null;session=null;room=null;
+ localStorage.removeItem('hero-auction-session');
+ sessionStorage.removeItem('hero-auction-formation');sessionStorage.removeItem('hero-auction-lanes');
+ window.HeroPlatform.setRoom(null);
+}
+async function authenticatePlatform(){
+ const identity=await window.HeroPlatform.identity();
+ let result,type;
+ if(identity.kind==='user'){
+  result=await post('/api/auth/crazygames',{credential:identity.credential});type='crazygames';
+ }else{
+  type='guest';
+  if(platformStoredLogin?.type==='guest'){
+   try{result=await post('/api/auth/check',{authToken:platformStoredLogin.authToken});result.authToken=platformStoredLogin.authToken}
+   catch(e){if(!/giriş yap|Oturumun sona erdi|401/.test(e.message))throw e}
+  }
+  if(!result)result=await post('/api/auth/guest',{name:'Oyuncu'});
+ }
+ if(type!==platformStoredLogin?.type||(type==='crazygames'&&result.user.sub!==platformStoredLogin?.user?.sub)||result.authToken!==platformStoredLogin?.authToken&&type==='guest')discardPlatformSeat();
+ login={type,user:result.user,authToken:result.authToken};platformStoredLogin=login;
+ localStorage.setItem('hero-auction-login',JSON.stringify(login));showGold(result.gold);applyLogin();await loadCommander();
+}
+async function joinPlatformRoom(code){
+ if(!/^\d{3}$/.test(String(code)))return;
+ if(room?.code===code)return;
+ try{
+  const j=await post('/api/join',{code,name:login.user?.name,universe:world});
+  discardPlatformSeat();save(j.token,j.room);commanderVisibility();
+ }catch(e){notify('Davete katılınamadı: '+e.message)}
+}
+async function startPlatform(){
+ if(platformStarting)return;platformStarting=true;$('guest-login').disabled=true;
+ try{
+  window.HeroPlatform.watchAccount();await authenticatePlatform();await restoreGame();
+  const code=window.HeroPlatform.takeInviteCode()||new URLSearchParams(location.search).get('join');
+  if(code)await joinPlatformRoom(code);
+  else if(window.HeroPlatform.instantMultiplayer&&!room){const j=await post('/api/create',{name:login.user?.name,universe:world});save(j.token,j.room);commanderVisibility()}
+  window.HeroPlatform.onJoin(code=>{platformJoinQueue=platformJoinQueue.then(()=>joinPlatformRoom(code));return platformJoinQueue});
+  if(!room&&homePlayPanel.hidden)homePlayTab.click();
+ }catch(e){notify(e.message);$('guest-login').textContent='TEKRAR DENE'}
+ finally{window.HeroPlatform.loaded();platformStarting=false;$('guest-login').disabled=false}
+}
+window.addEventListener('hero:platform-auth',()=>{
+ // Re-enter through the verified account flow; never reuse another user's room.
+ discardPlatformSeat();location.replace('/crazygames/');
+});
+// End CrazyGames session bridge.
+
+(async()=>{try{const r=await fetch('/api/info');const j=await r.json();$('catalogue').textContent=`Şu anda ${j.catalogueCount} özgün kahraman hazır`;}catch{}if(window.HeroPlatform)await startPlatform();else await restoreGame();loadPokeMap();refreshOnline()})();
 
 async function loadHeroInfo(card){
  const key=card.universe+':'+card.name;

@@ -1,3 +1,26 @@
+// Verify the current portal account before accessing any saved arena seat.
+if(window.HeroPlatform){
+ const restart=()=>{localStorage.removeItem('hero-auction-session');sessionStorage.removeItem('hero-auction-formation');sessionStorage.removeItem('hero-auction-lanes');location.replace('/crazygames/')};
+ window.addEventListener('hero:platform-auth',restart);window.HeroPlatform.watchAccount();
+ try{
+  const identity=await window.HeroPlatform.identity();
+  const saved=JSON.parse(localStorage.getItem('hero-auction-login')||'null');
+  if(identity.kind==='user'){
+   const response=await fetch('/api/auth/crazygames',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({credential:identity.credential})});
+   if(!response.ok)throw Error('CrazyGames hesabı doğrulanamadı');
+   const result=await response.json();
+   if(saved?.type!=='crazygames'||saved.user?.sub!==result.user.sub)throw Error('Hesap değişti');
+   localStorage.setItem('hero-auction-login',JSON.stringify({type:'crazygames',user:result.user,authToken:result.authToken}));
+  }else if(saved?.type!=='guest')throw Error('Misafir oturumu gerekli');
+ }catch{restart();await new Promise(()=>{})}
+ const portalParams=new URLSearchParams(location.search),portalCode=portalParams.get('auctionCode'),portalSeat=portalParams.get('auctionToken');
+ if(portalCode&&portalSeat){
+  try{const saved=JSON.parse(localStorage.getItem('hero-auction-login')||'null');const response=await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:portalCode,token:portalSeat,authToken:saved?.authToken})});if(response.ok)window.HeroPlatform.setRoom((await response.json()).room)}catch{}
+ }
+ window.HeroPlatform.onJoin(code=>location.assign('/crazygames/?join='+encodeURIComponent(code)));
+ const invite=window.HeroPlatform.takeInviteCode();
+ if(invite){location.replace('/crazygames/?join='+encodeURIComponent(invite));await new Promise(()=>{})}
+}
 // Browser-only battle replay preview. No wallet or live room mutations.
 const $=id=>document.getElementById(id);
 let demoA=[['Hulk','tank',85],['Thor','fighter',88],['Wolverine','fighter',78],['Scarlet Witch','energy',90],['Iron Man','support',80]];
