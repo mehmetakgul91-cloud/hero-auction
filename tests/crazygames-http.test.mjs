@@ -53,6 +53,7 @@ test('verified portal accounts retain progress; invites join once and preserve a
   assert.equal((await post('/api/state',{...seat,authToken:b.authToken})).status,403);
   const unauthorizedEvents=await fetch(base+'/api/events?'+new URLSearchParams({...seat,authToken:b.authToken}));assert.equal(unauthorizedEvents.status,403);
   assert.equal((await post('/api/join',{authToken:loser.authToken,code:'not-a-room'})).status,404);
+  assert.equal((await post('/api/commander/select',{authToken:winner.authToken,commanderId:'attack'})).status,200);
   // Finish a real auction, then verify re-entry cannot replace a locked formation.
   const joined=joins.find(r=>r.status===200).body;
   const players=[{authToken:a.authToken,token:created.body.token},{authToken:winner.authToken,token:joined.token}];
@@ -69,7 +70,8 @@ test('verified portal accounts retain progress; invites join once and preserve a
   const duplicate=await post('/api/battle-auction-preview',{...formation(0),positions:[4,3,2,1,0]});
   assert.equal(duplicate.status,200);assert.deepEqual(duplicate.body.ready,[true,false]);
   const started=await post('/api/battle-auction-preview',formation(1));
-  assert.equal(started.status,200);assert.equal(started.body.started,true);
+  assert.equal(started.status,200);assert.equal(started.body.started,true);assert.equal(started.body.result.live,true);
+  for(const player of players){const live=await fetch(base+'/api/experimental/commander-live?'+new URLSearchParams({code,token:player.token}));assert.equal(live.status,200);assert.equal((await live.json()).teams.length,2);}
   const resumed=await post('/api/battle-auction-preview',formation(1));
   assert.equal(resumed.status,200);assert.deepEqual(resumed.body,started.body);
   assert.equal((await post('/api/battle-auction-preview',{...formation(0),token:'invalid'})).status,403);
