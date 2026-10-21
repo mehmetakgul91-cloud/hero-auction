@@ -43,7 +43,7 @@ test('healing impact records only the injured recipients actually healed',()=>{
  const input=teams();input[0][0].hp=20;input[0][1].hp=50;
  const out=applyLiveCommanderEffect(input,{side:0,ability:'ultimate',commanderId:'support'});
  assert.deepEqual(out.log.at(-1).impacts,[{target:'0',kind:'heal',value:39}]);
- assert.deepEqual(applyLiveCommanderEffect(teams(),{side:0,ability:'normal',commanderId:'support'}).log.at(-1).impacts,[]);
+ assert.throws(()=>applyLiveCommanderEffect(teams(),{side:0,ability:'normal',commanderId:'support'}),/yaralı kahraman yok/);
 });
 test('shield impact records exclude dead heroes and report gained shield, not total shield',()=>{
  const input=teams();input[1][0].hp=0;input[1][1].shield=100;

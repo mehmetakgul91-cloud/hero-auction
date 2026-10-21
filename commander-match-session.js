@@ -1,3 +1,4 @@
+import {commanderRoundEnergy} from './public/commander-ability-rules.js';
 // Isolated authoritative commander match session. Not wired to production routes.
 import {replayCommanderTranscript} from './commander-transcript.js';
 import {validateTurnCommand} from './commander-turns.js';
@@ -17,7 +18,7 @@ export function submitCommanderMatchTurn(session,{side,round,command}){
  if(round!==session.round)throw Error('Stale or future turn');
  // A pending choice may be revised until both players have committed the round.
  // Validate against engine-owned energy before storing any choice.
- const energy=Math.min(100,(session.result?.commanderEnergy?.[side]??0)+12);
+ const energy=commanderRoundEnergy(session.result?.commanderEnergy?.[side]??0,session.round,session.commanders[side]);
  validateTurnCommand(command,{side,round,energy,commanderId:session.commanders[side]?.commanderId});
  const nextPending=[...session.pending];
  nextPending[side]={command};

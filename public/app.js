@@ -1,3 +1,4 @@
+import {commanderAbilityStats,commanderAbilityDescription} from '/commander-ability-rules.js?v=commander-balance-20261021';
 import {abilityText} from '/hero-ability-text.js?v=tr-abilities-20261021';
 const $=id=>document.getElementById(id);
 let session=null,room=null,stream=null;
@@ -107,9 +108,9 @@ function renderCommanderProfile(){
  $('commander-active-art').dataset.type=commanderProfile.commanderId;
  $('commander-active-name').textContent=chosen?.name||'Komutan';
  $('commander-active-role').textContent=chosen?.detail||'';
- $('commander-active-level').textContent='Seviye '+activeLevel+' / 40 · +%'+(activeLevel*.5).toLocaleString('tr-TR');
+ $('commander-active-level').textContent='Seviye '+activeLevel+' / 40 · Takım +%'+(activeLevel*.5).toLocaleString('tr-TR')+' · Beceri +%'+commanderAbilityStats(commanderProfile).bonusPercent;
  $('commander-active-progress').style.width=(activeLevel/40*100)+'%';
- $('commander-active-detail').textContent=(chosen?.name||'Komutan')+' '+(chosen?.detail||'')+' kahramanlarını güçlendirir.';
+ $('commander-active-detail').textContent=commanderAbilityDescription(commanderProfile)+' Ana dalda her seviye beceri etkisini %1 artırır. Başlangıç 30 enerji; tur başına +'+commanderAbilityStats(commanderProfile).energyPerRound+' enerji. Her 2 ana dal seviyesinde enerji kazanımı +1 artar.';
 
  renderCommanderRoster();
  const root=$('commander-upgrades');root.replaceChildren();
@@ -131,7 +132,7 @@ function renderCommanderProfile(){
   art.append(tag,node);
   const info=document.createElement('div');info.className='ability-info';
   const title=document.createElement('strong');title.className='ability-title';title.textContent=abilityNames[c.id];
-  const desc=document.createElement('small');desc.className='ability-desc';desc.textContent=abilityDescriptions[c.id];
+  const desc=document.createElement('small');desc.className='ability-desc';desc.textContent=abilityDescriptions[c.id]+(max===40?' · Her seviye aktif beceri gücü +%1':'');
   const values=document.createElement('div');values.className='ability-values';
   const bonus=document.createElement('span');bonus.innerHTML='<small>MEVCUT BONUS</small><b>+%'+(level*.5).toLocaleString('tr-TR')+'</b>';
   const next=document.createElement('span');next.innerHTML='<small>'+(isMax?'DURUM':'SONRAKİ SEVİYE')+'</small><b>'+(isMax?'MAKSİMUM':'+%'+((level+1)*.5).toLocaleString('tr-TR'))+'</b>';

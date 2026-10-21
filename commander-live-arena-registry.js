@@ -1,3 +1,4 @@
+import {commanderAbilityStats} from './public/commander-ability-rules.js';
 // Experimental server-owned arena registry. Never exposes direct hero-action inputs.
 // Route activation must wait until all hero mechanics reach legacy parity.
 import {createLiveArenaSession,castDuringLiveArena,stepLiveArenaHero,advanceLiveArenaRound,viewLiveArenaSession} from './commander-live-arena-session.js';
@@ -20,7 +21,7 @@ export function createLiveArenaRegistry(){
    const {entry,side}=requireMatch(matchKey,token);
    if(!Number.isFinite(now))throw Error('Invalid snapshot time');
    const own=viewLiveCommanderAbilities(entry.session.combat.abilities,side,now);
-   return {...viewLiveArenaSession(entry.session,{sinceVersion}),side,abilities:[0,1].map(i=>i===side?own:{energy:null,cooldownMs:null,cooldownUntil:null,finished:entry.session.combat.finished})};
+   return {...viewLiveArenaSession(entry.session,{sinceVersion}),side,commanderId:entry.session.combat.commanders[side].commanderId,abilityStats:commanderAbilityStats(entry.session.combat.commanders[side]),abilities:[0,1].map(i=>i===side?own:{energy:null,cooldownMs:null,cooldownUntil:null,finished:entry.session.combat.finished})};
   },
   cast({matchKey,token,ability,requestId,targetIds,now}){
    const {entry,side}=requireMatch(matchKey,token);

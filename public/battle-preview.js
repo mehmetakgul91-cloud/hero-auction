@@ -1,3 +1,4 @@
+import {commanderAbilityStats,commanderAbilityDescription} from '/commander-ability-rules.js?v=commander-balance-20261021';
 import {getArenaLaneLayout} from '/arena-viewport.js?v=arena-viewport-20261021b';
 // Verify the current portal account before accessing any saved arena seat.
 if(window.HeroPlatform){
@@ -447,7 +448,8 @@ function renderArenaCommanderMatchup(profiles){
   else portrait.hidden=true;
   const details=document.createElement('span');details.className='arena-commander-details';
   const name=document.createElement('strong');
-  name.textContent=info?(info[0]+' '+info[1]+' Komutanı'):'Komutan seçilmedi';
+  name.textContent=info?(info[0]+' '+info[1]+' · Sv. '+commanderAbilityStats(profile).level):'Komutan seçilmedi';
+  if(info)target.title=commanderAbilityDescription(profile);
   const levels=document.createElement('small');
   levels.textContent=profile?.levels?Object.entries(profile.levels).filter(([,level])=>level>0).map(([stat,level])=>(commanderDisplay[stat]?.[1]||stat)+' +%'+(level*.5).toLocaleString('tr-TR')).join(' · ')||'Geliştirme yok':'Bonus yok';
   details.append(name,levels);target.append(portrait,details);

@@ -1,9 +1,10 @@
+import {COMMANDER_START_ENERGY} from './public/commander-ability-rules.js';
 // Experimental server-authoritative, on-demand commander ability controller.
 // The battle engine integration is separate: accepting a cast never fabricates combat damage.
 export const COMMANDER_COOLDOWN_MS=5000;
 export const COMMANDER_EFFECT_MS=1200;
 export const COMMANDER_ABILITY_COSTS=Object.freeze({normal:40,ultimate:100});
-export function createLiveCommanderAbilities({matchKey,energy=[0,0],now=Date.now()}={}){
+export function createLiveCommanderAbilities({matchKey,energy=[COMMANDER_START_ENERGY,COMMANDER_START_ENERGY],now=Date.now()}={}){
  if(!matchKey||!Array.isArray(energy)||energy.length!==2||energy.some(n=>!Number.isInteger(n)||n<0||n>100))throw Error('Invalid live commander session');
  return {matchKey,energy:[...energy],cooldownUntil:[now,now],effectUntil:now,casts:[],requests:new Map(),finished:false};
 }

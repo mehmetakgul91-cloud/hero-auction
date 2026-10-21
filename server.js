@@ -497,7 +497,7 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
  if(room.mode!=='bot'&&commanderProfiles.every(Boolean)){
   const liveKey=room.code+':'+matchKey;
   const liveTeams=prepareLiveArenaTeams(ordered[0],ordered[1],{remainingCredits:[state.remainingCreditsA,state.remainingCreditsB],commanders:commanderProfiles,cardAdapter:'auction'});
-  const combat=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:liveKey,energy:[0,0]}),teams:liveTeams,commanders:commanderProfiles});
+  const combat=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:liveKey}),teams:liveTeams,commanders:commanderProfiles});
   liveArenaLifecycle.begin({matchKey:liveKey,tokens:room.players.map(p=>p.token),combat,options:{parity:true,specialHealing:true,energySplash:true,shieldDrain:true,statSpecial:true,executeSpecial:true,thornsPassive:true,roundPassives:true,damageSpecial:true}});
   liveArenaMatchKeys.set(room.code,liveKey);
  }

@@ -90,7 +90,7 @@ test('rematch starts at round one with fresh energy and no previous result',()=>
  const next=createRoomCommanderSession(room,{cardsA:cards('a'),cardsB:cards('b'),commanders:[createCommanderProfile('attack'),createCommanderProfile('defense')]});
  const fresh=viewRoomCommanderSession(room,next,'player-a');
  assert.equal(fresh.round,1);
- assert.equal(fresh.energy,12);
+ assert.equal(fresh.energy,30);
  assert.equal(fresh.result,null);
  assert.deepEqual(fresh.submitted,[false,false]);
  assert.throws(()=>viewRoomCommanderSession(room,bound,'player-a'),/expired/);

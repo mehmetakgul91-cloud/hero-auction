@@ -34,7 +34,7 @@ function showHeroImpacts(){
    const signs={damage:'−',heal:'+',shield:'+',weaken:'−%'};
    const label=document.createElement('span');label.className='commander-impact-label';
    const title=document.createElement('span');title.textContent=labels[impact.kind];
-   const value=document.createElement('strong');value.textContent=signs[impact.kind]+Math.round(impact.value).toLocaleString('tr-TR');
+   const value=document.createElement('strong');value.textContent=signs[impact.kind]+(impact.kind==='weaken'?impact.value:Math.round(impact.value)).toLocaleString('tr-TR',{maximumFractionDigits:1});
    label.append(title,value);
    if(impact.absorbed>0){const blocked=document.createElement('small');blocked.textContent='🛡 '+Math.round(impact.absorbed)+' engellendi';label.append(blocked);}
    descriptions.push(title.textContent+' '+value.textContent+(impact.absorbed>0?', kalkan '+impact.absorbed+' engelledi':''));

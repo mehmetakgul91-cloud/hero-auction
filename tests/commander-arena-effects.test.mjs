@@ -90,7 +90,7 @@ test('experimental committed round feeds commander visuals without altering repl
  assert.match(client,/heroarena:experimental-round-end/);
 });
 
-for(const [kind,side,value,expected,left] of [['damage',0,12,'−12','200px'],['heal',0,9,'+9','0px'],['shield',1,20,'+20','200px'],['weaken',1,40,'−%40','0px']])test(kind+' marks only the correct hero after the portrait, even with duplicate IDs on both teams',()=>{
+for(const [kind,side,value,expected,left] of [['damage',0,12,'−12','200px'],['heal',0,9,'+9','0px'],['shield',1,20,'+20','200px'],['weaken',1,40,'−%40','0px'],['weaken',1,31.8,'−%31,8','0px']])test(kind+' '+value+' marks only the correct hero after the portrait, even with duplicate IDs on both teams',()=>{
  const h=effectHarness();const commander={damage:'attack',heal:'support',shield:'defense',weaken:'magic'}[kind];
  const entry={action:'commander-'+commander+'-normal',side,sequence:1,impacts:[{target:'same',kind,value}]};
  h.emit(entry);h.emit(entry);h.advance(1199);assert.equal(h.elements.length,1);

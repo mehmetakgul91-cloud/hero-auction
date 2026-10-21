@@ -1,3 +1,4 @@
+import {commanderAbilityStats,commanderRoundEnergy} from './public/commander-ability-rules.js';
 // Hero Auction 2.0 - isolated, deterministic automatic battle prototype.
 // Not connected to live matchmaking or wallet payouts.
 import crypto from 'node:crypto';
@@ -84,6 +85,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
   const applyCommanderAction=(round,side,ability)=>{
     const commander=commanders?.[side];const id=commander?.commanderId;
     if(!roles.includes(id)&&!['attack','defense','magic','support'].includes(id))throw Error('Commander must be selected for manual ability');
+    const stats=commanderAbilityStats(commander),rate=ability==='ultimate'?stats.ultimateRate:stats.normalRate;
     const cost=ability==='ultimate'?100:40;
     if(commanderEnergy[side]<cost)throw Error('Insufficient commander energy at round '+round);
     commanderEnergy[side]-=cost;
@@ -93,27 +95,28 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
     const totalMaxHp=allies.reduce((n,u)=>n+u.maxHp,0);
     let value=0,absorbedTotal=0;
     if(id==='attack'){
-      const total=Math.max(1,Math.round(totalAttack*(ability==='ultimate'?.30:.12)));
+      const total=Math.max(1,Math.round(totalAttack*rate));
       const each=Math.max(1,Math.floor(total/enemies.length));
       for(const target of enemies){const raw=each,absorbed=Math.min(target.shield,raw);target.shield-=absorbed;const damage=Math.min(target.hp,raw-absorbed);target.hp-=damage;value+=damage;absorbedTotal+=absorbed;log.push({round,side,actor:'commander:'+side,action:'commander-hit',target:target.id,value:damage,absorbed,rawDamage:raw,damageType:'commander'}); }
     }else if(id==='defense'){
-      const total=Math.max(1,Math.round(totalMaxHp*(ability==='ultimate'?.20:.08)));
+      const total=Math.max(1,Math.round(totalMaxHp*rate));
       const each=Math.max(1,Math.floor(total/allies.length));
       for(const ally of allies){ally.shield+=each;value+=each;}
     }else if(id==='support'){
       const missing=allies.reduce((n,u)=>n+u.maxHp-u.hp,0);
-      let budget=Math.round(missing*(ability==='ultimate'?.30:.12));
-      for(const ally of [...allies].sort((a,b)=>(b.maxHp-b.hp)-(a.maxHp-a.hp))){const healed=Math.min(budget,ally.maxHp-ally.hp);ally.hp+=healed;budget-=healed;value+=healed;}
+      let budget=Math.round(missing*rate);
+      if(budget<=0)throw Error('İyileştirilebilecek yaralı kahraman yok.');
+      for(const ally of [...allies].sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp||(b.maxHp-b.hp)-(a.maxHp-a.hp))){const healed=Math.min(budget,ally.maxHp-ally.hp);ally.hp+=healed;budget-=healed;value+=healed;}
     }else if(id==='magic'){
       const targets=[...enemies].sort((a,b)=>b.attack-a.attack).slice(0,ability==='ultimate'?2:1);
-      for(const target of targets){target.commanderWeaken=Math.max(target.commanderWeaken||0,ability==='ultimate'?.40:.30);value++;}
+      for(const target of targets){target.commanderWeaken=Math.max(target.commanderWeaken||0,rate);value++;}
     }
     log.push({round,side,actor:'commander:'+side,action:'commander-'+id+'-'+ability,value,absorbed:absorbedTotal,energy:commanderEnergy[side]});
   };
   const previousAlive=teams.map(team=>team.filter(u=>u.hp>0).length);
   for(let round=1;round<=maxRounds;round++){
     for(let side=0;side<2;side++){
-      commanderEnergy[side]=Math.min(100,commanderEnergy[side]+12);
+      commanderEnergy[side]=commanderRoundEnergy(commanderEnergy[side],round,commanders?.[side]);
       const ability=actions.get(round+':'+side);
       if(ability)applyCommanderAction(round,side,ability);
     }

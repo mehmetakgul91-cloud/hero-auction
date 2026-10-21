@@ -1,3 +1,4 @@
+import {commanderEnergyPerRound} from './public/commander-ability-rules.js';
 // Server-owned atomic commander cast and snapshot update.
 // Keep this adapter isolated until hero attacks are driven by the same live session.
 import {grantLiveCommanderEnergy,castLiveCommanderAbility} from './commander-live-abilities.js';
@@ -18,7 +19,7 @@ export function castLiveCommanderCombat(combat,{side,ability,requestId,matchKey,
   return {duplicate:true,version:prior.version,events:[],teams:structuredClone(combat.teams)};
  }
  // Compute effects first, without changing energy or HP if the cast cannot apply.
- const effect=applyLiveCommanderEffect(combat.teams,{side,ability,commanderId:combat.commanders[side].commanderId,round:combat.round,targetIds});
+ const effect=applyLiveCommanderEffect(combat.teams,{side,ability,commanderId:combat.commanders[side].commanderId,commanderProfile:combat.commanders[side],round:combat.round,targetIds});
  const cast=castLiveCommanderAbility(combat.abilities,{side,ability,requestId,matchKey,now});
  combat.teams=effect.teams;
  combat.version++;
@@ -82,7 +83,7 @@ export function beginServerCombatRound(combat,round){
  if(!combat||combat.finished||!Number.isInteger(round)||round!==combat.round+1||round>15)throw Error('Invalid next combat round');
  combat.round=round;
  for(const team of combat.teams)for(const unit of team){if(unit.commanderWeaken&&Number.isInteger(unit.commanderWeakenUntilRound)&&round>unit.commanderWeakenUntilRound){delete unit.commanderWeaken;delete unit.commanderWeakenUntilRound;}}
- for(let side=0;side<2;side++)grantLiveCommanderEnergy(combat.abilities,side,12);
+ for(let side=0;side<2;side++)grantLiveCommanderEnergy(combat.abilities,side,commanderEnergyPerRound(combat.commanders[side]));
  combat.version++;
  const event={round,action:'round-start',energy:[...combat.abilities.energy],version:combat.version};
  combat.events.push(event);

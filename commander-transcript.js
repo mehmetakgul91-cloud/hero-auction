@@ -1,3 +1,4 @@
+import {commanderRoundEnergy} from './public/commander-ability-rules.js';
 // Deterministic command transcript validator for isolated commander battles.
 // The combat engine, not the client, is authoritative for energy and casualties.
 // This is not yet a real-time battle runner or a production endpoint.
@@ -18,9 +19,9 @@ export function replayCommanderTranscript(cardsA,cardsB,{commanders,turns,seed='
   for(let side=0;side<2;side++){
    const entry=t[side];
    if(!entry||!['pass','normal','ultimate',null].includes(entry.command))throw Error('Invalid commander command');
-   // At the start of each round, the engine adds 12 energy (capped at 100).
+   // Start energy and round regeneration use the same rules as the live arena.
    // Its previous result already includes casualty bonuses from that round.
-   const energy=Math.min(100,(previous?.commanderEnergy[side]??0)+12);
+   const energy=commanderRoundEnergy(previous?.commanderEnergy[side]??0,round,commanders[side]);
    submitTurnCommand(state,{side,round,command:entry.command,energy,commanderId:commanders[side].commanderId});
   }
   actions.push(...resolveTurnSubmissions(state));
