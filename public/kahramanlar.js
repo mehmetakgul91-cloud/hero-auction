@@ -1,3 +1,4 @@
+import {heroStoryParagraphs} from '/hero-stories.js?v=connected-lore-20261021';
 import {abilityName} from '/hero-ability-text.js?v=tr-abilities-20261021';
 const root=document.getElementById('hero-gallery'),status=document.getElementById('gallery-status'),filters=document.getElementById('hero-filters'),search=document.getElementById('hero-search');
 const categories=[['all','TÜMÜ'],['tank','🛡️ TANK'],['fighter','⚔️ SAVAŞÇI'],['assassin','🥷 SUİKASTÇI'],['energy','🔮 ENERJİ / BÜYÜCÜ'],['support','💚 DESTEK'],['legendary','🌟 EFSANEVİ'],['rare','💎 NADİR'],['advanced','🔷 GELİŞMİŞ'],['common','⚪ SIRADAN']];
@@ -64,8 +65,7 @@ function openHeroStory(hero){
  const dialog=document.getElementById('hero-story-dialog');
  document.getElementById('hero-story-title').textContent=hero.name;
  const text=document.getElementById('hero-story-text');text.replaceChildren();
- const sentences=heroStory(hero).match(/[^.!?]+[.!?]+/g)||[heroStory(hero)];
- for(let i=0;i<sentences.length;i+=4){const p=document.createElement('p');p.textContent=sentences.slice(i,i+4).join(' ').trim();text.append(p)}
+ for(const paragraph of heroStoryParagraphs(hero)){const p=document.createElement('p');p.textContent=paragraph;text.append(p)}
  dialog.showModal();
 }
 document.getElementById('hero-story-close').addEventListener('click',()=>document.getElementById('hero-story-dialog').close());
