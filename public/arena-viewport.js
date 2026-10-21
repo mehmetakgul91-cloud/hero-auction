@@ -1,3 +1,11 @@
+// Keep front/back lanes while removing unused rows from the fitted arena.
+export function getArenaLaneLayout(teams){
+ const counts=teams.map(team=>({front:team.filter(hero=>hero.lane==='front').length,back:team.filter(hero=>hero.lane!=='front').length}));
+ const rows=Math.max(1,...counts.flatMap(lanes=>[lanes.front,lanes.back]));
+ const place=count=>Array.from({length:count},(_,index)=>count===1?Math.ceil(rows/2):1+Math.round(index*(rows-1)/(count-1)));
+ return {rows,teams:counts.map(lanes=>({front:place(lanes.front),back:place(lanes.back)}))};
+}
+
 // Fit the active battle to the visible viewport, including mobile browser bars.
 export function mountArenaViewport({window,document}){
  const arena=document.getElementById('battle-arena');

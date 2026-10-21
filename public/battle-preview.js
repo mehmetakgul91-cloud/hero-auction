@@ -1,3 +1,4 @@
+import {getArenaLaneLayout} from '/arena-viewport.js?v=arena-viewport-20261021b';
 // Verify the current portal account before accessing any saved arena seat.
 if(window.HeroPlatform){
  const restart=()=>{localStorage.removeItem('hero-auction-session');sessionStorage.removeItem('hero-auction-formation');sessionStorage.removeItem('hero-auction-lanes');location.replace('/crazygames/')};
@@ -502,8 +503,10 @@ const arenaArtCache=new Map();
 let finalResult=null;
 function centeredLaneRows(count){const layouts={0:[],1:[3],2:[2,4],3:[2,3,4],4:[1,2,4,5],5:[1,2,3,4,5]};return layouts[Math.max(0,Math.min(5,count))].slice()}
 function render(flash){
+ const fittedLayout=getArenaLaneLayout(states);
  for(let side=0;side<2;side++){
   const parent=$(side?'team-b':'team-a');parent.replaceChildren();
+  parent.style.setProperty('--arena-row-count',String(fittedLayout.rows));
   const laneRows={front:centeredLaneRows(states[side].filter(u=>u.lane==='front').length),back:centeredLaneRows(states[side].filter(u=>u.lane!=='front').length)};
   for(const [unitIndex,u] of states[side].entries()){
    const card=document.createElement('article');card.dataset.heroId=u.id;card.className='hero arena-hero'+(u.lane==='front'?' frontline':' backline')+(u.hp<=0?' dead':'')+(flash?.actorId===u.id?' cast':'')+(flash?.targetId===u.id?' hit':'');
@@ -513,7 +516,8 @@ function render(flash){
    if(!arenaArtCache.has(artKey))arenaArtCache.set(artKey,fetch('/api/art?universe='+universe+'&name='+encodeURIComponent(u.name)).then(r=>r.ok?r.json():null).then(j=>j?.url||null).catch(()=>null));
    void arenaArtCache.get(artKey).then(url=>{if(!url||!portrait.isConnected)return;const img=document.createElement('img');img.className='arena-portrait-image';img.alt=u.name;img.src=url;img.onload=()=>{if(portrait.isConnected){fallback.remove();portrait.append(img)}}});
    const bar=document.createElement('div');bar.className='hp';bar.setAttribute('aria-label','Can '+u.hp+' / '+u.maxHp);const fill=document.createElement('span');fill.style.width=(100*u.hp/u.maxHp)+'%';bar.append(fill);
-   card.dataset.lane=u.lane==='front'?'front':'back';card.dataset.role=u.role||'';card.style.gridColumn=u.lane==='front'?(side?'1':'2'):(side?'2':'1');card.style.gridRow=String(laneRows[u.lane==='front'?'front':'back'][states[side].slice(0,unitIndex).filter(x=>(x.lane==='front')===(u.lane==='front')).length]);card.title=u.name+' · '+roleNames[u.role]+' · Can '+u.hp+'/'+u.maxHp;
+   const lane=u.lane==='front'?'front':'back',laneIndex=states[side].slice(0,unitIndex).filter(x=>(x.lane==='front')===(u.lane==='front')).length;
+   card.dataset.lane=lane;card.dataset.role=u.role||'';card.style.gridColumn=u.lane==='front'?(side?'1':'2'):(side?'2':'1');card.style.gridRow=String(laneRows[lane][laneIndex]);card.style.setProperty('--arena-fitted-row',String(fittedLayout.teams[side][lane][laneIndex]));card.title=u.name+' · '+roleNames[u.role]+' · Can '+u.hp+'/'+u.maxHp;
    const heroLabel=document.createElement('span');heroLabel.className='arena-hero-label';heroLabel.textContent=u.name;card.append(portrait,heroLabel,bar);parent.append(card);
    const healthKey=side+':'+u.id,previousHp=visualHealth.get(healthKey);visualHealth.set(healthKey,u.hp);if(previousHp>0&&u.hp<=0)showHeroSoul(card);
   }

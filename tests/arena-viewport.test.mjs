@@ -1,6 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mountArenaViewport} from '../public/arena-viewport.js';
+import {mountArenaViewport,getArenaLaneLayout} from '../public/arena-viewport.js';
+
+test('normal formations use three rows and every lane arrangement fits without collisions',()=>{
+ const team=front=>Array.from({length:5},(_,i)=>({lane:i<front?'front':'back'}));
+ assert.deepEqual(getArenaLaneLayout([team(2),team(2)]),{rows:3,teams:[{front:[1,3],back:[1,2,3]},{front:[1,3],back:[1,2,3]}]});
+ for(let a=0;a<=5;a++)for(let b=0;b<=5;b++){
+  const layout=getArenaLaneLayout([team(a),team(b)]);
+  assert.equal(layout.rows,Math.max(a,5-a,b,5-b));
+  for(const [side,front] of [a,b].entries()){
+   for(const [lane,count] of [['front',front],['back',5-front]]){
+    const positions=layout.teams[side][lane];
+    assert.equal(positions.length,count);
+    assert.equal(new Set(positions).size,count);
+    assert.ok(positions.every(row=>row>=1&&row<=layout.rows));
+   }
+  }
+ }
+});
 
 function fixture({width=390,height=700}={}){
  const classes=new Set(),properties=new Map(),frames=new Map(),scrolls=[];
