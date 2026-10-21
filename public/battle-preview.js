@@ -12,7 +12,7 @@ let states=[],events=[],cursor=0,timer=null,liveArenaMode=false;
 let arenaAudio=null,arenaMusicInterval=null,arenaMusicStep=0,arenaMusicEnabled=true;
 function updateMusicButton(){const b=$('arena-music-toggle');if(b){b.textContent=arenaMusicEnabled?'🔊':'🔇';b.setAttribute('aria-pressed',String(arenaMusicEnabled));b.setAttribute('aria-label',arenaMusicEnabled?'Arena sesini kapat':'Arena sesini aç');b.setAttribute('title',arenaMusicEnabled?'Sesi kapat':'Sesi aç')}}
 function arenaTone(freq,start,length,type='sawtooth',volume=.025){
- if(!arenaAudio)return;
+ if(!arenaAudio||window.HeroPlatform?.muteAudio)return;
  const oscillator=arenaAudio.createOscillator(),gain=arenaAudio.createGain();
  oscillator.type=type;oscillator.frequency.setValueAtTime(freq,start);
  gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(volume,start+.025);
@@ -37,14 +37,14 @@ arenaTrack.volume=.60;
 let arenaTrackAvailable=null;
 let arenaMusicSession=0;
 function startProceduralArenaMusic(){
- if(!arenaMusicEnabled||document.hidden||arenaMusicInterval!==null||(!arenaMode&&timer===null))return;
+ if(window.HeroPlatform?.muteAudio||!arenaMusicEnabled||document.hidden||arenaMusicInterval!==null||(!arenaMode&&timer===null))return;
  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
  if(!AudioContextClass)return;
  try{
   if(!arenaAudio)arenaAudio=new AudioContextClass();
   const resume=arenaAudio.state==='running'?Promise.resolve():arenaAudio.resume();
   void resume.then(()=>{
-   if(!arenaMusicEnabled||document.hidden||arenaMusicInterval!==null||(!arenaMode&&timer===null)||!arenaTrack.paused)return;
+   if(window.HeroPlatform?.muteAudio||!arenaMusicEnabled||document.hidden||arenaMusicInterval!==null||(!arenaMode&&timer===null)||!arenaTrack.paused)return;
    arenaMusicStep=0;arenaMusicBeat();arenaMusicInterval=setInterval(arenaMusicBeat,190);
   }).catch(()=>{});
  }catch(e){}
@@ -54,7 +54,7 @@ function stopProceduralArenaMusic(){
  if(arenaAudio&&arenaAudio.state==='running')void arenaAudio.suspend().catch(()=>{});
 }
 async function startArenaMusic(){
- if(!arenaMusicEnabled||document.hidden||(!arenaMode&&timer===null))return;
+ if(window.HeroPlatform?.muteAudio||!arenaMusicEnabled||document.hidden||(!arenaMode&&timer===null))return;
  const session=++arenaMusicSession;
  // Begin audio directly in the user's tap event; Safari blocks play after awaited network checks.
  try{
@@ -237,7 +237,7 @@ let prepTimer=null,prepDeadline=0,prepDone=false,auctionLoaded=false;
 // Keeping it playing in the same document preserves Safari's user-gesture permission.
 let arenaAudioPrimed=false;
 function primeArenaAudio(){
- if(arenaMode||arenaAudioPrimed||!arenaMusicEnabled)return;
+ if(window.HeroPlatform?.muteAudio||arenaMode||arenaAudioPrimed||!arenaMusicEnabled)return;
  arenaAudioPrimed=true;
  arenaTrack.volume=0;
  void arenaTrack.play().catch(()=>{arenaAudioPrimed=false;});
@@ -512,6 +512,7 @@ function podiumPortrait(hero,side){
  return arenaArtCache.get(key);
 }
 function showVictoryReveal(){
+ window.HeroPlatform?.gameplay(false);
  if(victoryRevealDone||!finalResult||victoryPendingTimer!==null)return;
  pauseArenaClock();
  const controls=$('experimental-commander-controls');
@@ -802,3 +803,8 @@ async function showAuctionRematch(){
  }catch(e){battleRematchShown=false;$('message').textContent='⚠ '+e.message}
 }
 
+
+
+if(window.HeroPlatform){window.HeroPlatform.ready.then(()=>{window.HeroPlatform.loaded();window.HeroPlatform.gameplay(true)});}
+
+window.addEventListener('hero:platform-settings',()=>{if(window.HeroPlatform?.muteAudio)stopArenaMusic();else if(arenaMusicEnabled&&arenaMode)void startArenaMusic()});

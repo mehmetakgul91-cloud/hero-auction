@@ -4,6 +4,7 @@ const world='mixed';
 let lastCardKey=null;
 let auctionSfxContext=null;
 function playAuctionActionSound(action){
+ if(window.HeroPlatform?.muteAudio)return;
  try{
   const Ctx=window.AudioContext||window.webkitAudioContext;
   if(!Ctx)return;
@@ -181,13 +182,14 @@ function showGold(value){walletGold=Math.max(0,Number(value)||0);if(commanderPro
 async function refreshGold(){if(!signedIn())return;try{const data=await post('/api/wallet',{});showGold(data.gold)}catch(e){console.warn('Gold balance unavailable:',e.message)}}
 function clearExpiredLogin(){login=null;session=null;room=null;stream?.close();localStorage.removeItem('hero-auction-login');localStorage.removeItem('hero-auction-session');showGold(0);commanderProfile=null;commanderLoaded=false;commanderProfileOpen=false;applyLogin();notify('Oturumun sona ermiş. Lütfen yeniden giriş yap.');}
 async function validateLogin(){if(!signedIn())return false;try{const result=await post('/api/auth/check',{});showGold(result.gold);if(!commanderLoaded)void loadCommander();return true}catch(e){if(/giriş yap|Oturumun sona erdi|401/.test(e.message)){clearExpiredLogin();return false}notify('Sunucuya bağlanılamadı. Tekrar dene.');return false}}
-function applyLogin(){const active=signedIn();const wallet=$('gold-wallet');if(wallet)wallet.hidden=!active;$('login-gate').hidden=active;$('home').hidden=!active||!!room;$('game').hidden=!active||!room;$('account-status').hidden=!active;$('google-logout').hidden=true;$('account-status').setAttribute('aria-expanded','false');if(active){$('name').value=login.user?.name||'Oyuncu';$('name').readOnly=login.type==='google';$('account-status').textContent=(login.type==='google'?'Google: ':'Misafir: ')+(login.user?.name||'Oyuncu');}else{$('account-status').textContent='';}commanderVisibility();}
+function applyLogin(){const active=signedIn();if(!room)window.HeroPlatform?.gameplay(false);const wallet=$('gold-wallet');if(wallet)wallet.hidden=!active;$('login-gate').hidden=active;$('home').hidden=!active||!!room;$('game').hidden=!active||!room;$('account-status').hidden=!active;$('google-logout').hidden=true;$('account-status').setAttribute('aria-expanded','false');if(active){$('name').value=login.user?.name||'Oyuncu';$('name').readOnly=login.type==='google';$('account-status').textContent=(login.type==='google'?'Google: ':'Misafir: ')+(login.user?.name||'Oyuncu');}else{$('account-status').textContent='';}commanderVisibility();}
 async function enterGuest(){try{const name=$('guest-name').value.trim()||'Oyuncu';const result=await post('/api/auth/guest',{name});login={type:'guest',user:result.user,authToken:result.authToken};localStorage.setItem('hero-auction-login',JSON.stringify(login));showGold(result.gold);applyLogin();void loadCommander();restoreGame()}catch(e){notify(e.message)}}
 $('guest-login').onclick=enterGuest;
-$('account-status').onclick=()=>{if(!signedIn())return;const button=$('google-logout');button.hidden=!button.hidden;$('account-status').setAttribute('aria-expanded',String(!button.hidden));};
+$('account-status').onclick=()=>{if(window.HeroPlatform||!signedIn())return;const button=$('google-logout');button.hidden=!button.hidden;$('account-status').setAttribute('aria-expanded',String(!button.hidden));};
 $('google-logout').onclick=()=>{login=null;localStorage.removeItem('hero-auction-login');localStorage.removeItem('hero-auction-session');session=null;room=null;stream?.close();stream=null;showGold(0);commanderProfile=null;commanderLoaded=false;commanderProfileOpen=false;window.google?.accounts?.id?.disableAutoSelect();applyLogin();window.scrollTo({top:0,behavior:'instant'})};
 window.heroGoogleCallback=async response=>{try{const result=await post('/api/auth/google',{credential:response.credential});login={type:'google',user:result.user,authToken:result.authToken};localStorage.setItem('hero-auction-login',JSON.stringify(login));showGold(result.gold);applyLogin();void loadCommander();restoreGame();notify('Google hesabınla giriş yaptın.')}catch(e){notify(e.message)}};
 function initGoogle(attempt=0){
+ if(window.HeroPlatform)return;
  const target=$('google-login');if(!target)return;
  if(!window.google?.accounts?.id){
   if(attempt<40){setTimeout(()=>initGoogle(attempt+1),500);return}
@@ -299,7 +301,7 @@ function animateWonAuctionCard(name,seat,roomCode,round,sourceSnapshot){
  ],{duration:720,easing:'cubic-bezier(.2,.8,.2,1)',fill:'forwards'});
  animation.finished.catch(()=>{}).finally(()=>{ghost.remove();destination.classList.add('auction-card-arrived');setTimeout(()=>destination.classList.remove('auction-card-arrived'),850)});
 }
-function show(r){if(!signedIn())return;const currentCardKey=r.phase==='auction'?r.code+':'+r.round+':'+r.card?.name:null;const isNewCard=!!currentCardKey&&currentCardKey!==lastCardKey;lastCardKey=currentCardKey;const wasFinished=room?.phase==='finished'&&room?.code===r.code;const previousArt=document.querySelector('#stage .card-art');const previousArtSnapshot=previousArt?{element:previousArt.cloneNode(true),rect:previousArt.getBoundingClientRect()}:null;const previousAuction=room?.phase==='auction'&&room?.code===r.code?{round:room.round,team:room.players?.[room.me]?.team?.map(x=>x.name)||[],me:room.me}:null;const enteredAuction=r.phase==='auction'&&(room?.phase!=='auction'||room?.code!==r.code||room?.round>r.round);room=r;if(enteredAuction)refreshGold();if(r.phase==='finished'&&!wasFinished){refreshGold();}
+function show(r){if(!signedIn())return;window.HeroPlatform?.gameplay(r.phase==='auction');const currentCardKey=r.phase==='auction'?r.code+':'+r.round+':'+r.card?.name:null;const isNewCard=!!currentCardKey&&currentCardKey!==lastCardKey;lastCardKey=currentCardKey;const wasFinished=room?.phase==='finished'&&room?.code===r.code;const previousArt=document.querySelector('#stage .card-art');const previousArtSnapshot=previousArt?{element:previousArt.cloneNode(true),rect:previousArt.getBoundingClientRect()}:null;const previousAuction=room?.phase==='auction'&&room?.code===r.code?{round:room.round,team:room.players?.[room.me]?.team?.map(x=>x.name)||[],me:room.me}:null;const enteredAuction=r.phase==='auction'&&(room?.phase!=='auction'||room?.code!==r.code||room?.round>r.round);room=r;if(enteredAuction)refreshGold();if(r.phase==='finished'&&!wasFinished){refreshGold();}
  if(r.phase==='finished'&&r.final?.length===2&&r.final.every(p=>p.team?.length===5)&&session?.token){
   renderChat(r);$('login-gate').hidden=true;$('home').hidden=true;$('game').hidden=false;
   $('room-title').textContent=r.code;$('phase').textContent='KAHRAMAN GÜÇLERİ · ARENA ONAYI';
@@ -325,9 +327,9 @@ stage.innerHTML=`<div class="auction-main"><div class="auction-hero"><div class=
 loadHeroInfo(card);
 if(canBid&&max>=min){$('bidrange').oninput=e=>$('bidview').textContent=e.target.value+' KREDİ';$('bidbutton').onclick=()=>{playAuctionActionSound('bid');void act('/api/bid',{amount:Number($('bidrange').value)})};$('minusbid').onclick=()=>{const el=$('bidrange');el.value=Math.max(min,Number(el.value)-1);el.oninput({target:el})};$('plusbid').onclick=()=>{const el=$('bidrange');el.value=Math.min(max,Number(el.value)+1);el.oninput({target:el})};$('passbutton').onclick=()=>{playAuctionActionSound('pass');void act('/api/pass',{})}}
 }
-function renderChat(r){const panel=$('chat-panel');if(!panel)return;panel.hidden=r.mode==='bot';if(panel.hidden)return;const list=$('chat-messages');const oldCount=Number(list.dataset.count||0);const messages=r.chat||[];if(oldCount!==messages.length||list.dataset.room!==r.code){const nearBottom=list.scrollHeight-list.scrollTop-list.clientHeight<80;list.innerHTML=messages.map(m=>`<div class="chat-line ${m.seat===r.me?'chat-mine':''}"><span class="chat-author">${esc(m.name)} · ${new Date(m.time).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</span><span class="chat-text">${esc(m.message)}</span></div>`).join('')||'<p class="status">Henüz mesaj yok. Rakibine merhaba de!</p>';list.dataset.count=String(messages.length);list.dataset.room=r.code;if(nearBottom||!oldCount)list.scrollTop=list.scrollHeight;}}
+function renderChat(r){const panel=$('chat-panel');if(!panel)return;panel.hidden=r.mode==='bot'||Boolean(window.HeroPlatform?.disableChat);if(panel.hidden)return;const list=$('chat-messages');const oldCount=Number(list.dataset.count||0);const messages=r.chat||[];if(oldCount!==messages.length||list.dataset.room!==r.code){const nearBottom=list.scrollHeight-list.scrollTop-list.clientHeight<80;list.innerHTML=messages.map(m=>`<div class="chat-line ${m.seat===r.me?'chat-mine':''}"><span class="chat-author">${esc(m.name)} · ${new Date(m.time).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</span><span class="chat-text">${esc(m.message)}</span></div>`).join('')||'<p class="status">Henüz mesaj yok. Rakibine merhaba de!</p>';list.dataset.count=String(messages.length);list.dataset.room=r.code;if(nearBottom||!oldCount)list.scrollTop=list.scrollHeight;}}
 let chatSending=false;
-$('chat-send').onclick=async()=>{if(!session||room?.mode==='bot'||chatSending)return;const input=$('chat-input');const message=input.value.trim();if(!message)return;chatSending=true;$('chat-send').disabled=true;try{const result=await post('/api/chat',{...session,message});input.value='';show(result.room);}catch(e){notify('Sohbet mesajı gönderilemedi: '+e.message)}finally{chatSending=false;$('chat-send').disabled=false}};
+$('chat-send').onclick=async()=>{if(!session||room?.mode==='bot'||chatSending||window.HeroPlatform?.disableChat)return;const input=$('chat-input');const message=input.value.trim();if(!message)return;chatSending=true;$('chat-send').disabled=true;try{const result=await post('/api/chat',{...session,message});input.value='';show(result.room);}catch(e){notify('Sohbet mesajı gönderilemedi: '+e.message)}finally{chatSending=false;$('chat-send').disabled=false}};
 // Keep chat synchronized even when a proxy interrupts the live event stream.
 setInterval(async()=>{if(!session||!room||room.mode==='bot'||document.hidden)return;try{const result=await post('/api/state',session);if(result.room?.chat?.length!==room.chat?.length||result.room?.code!==room.code)show(result.room)}catch{}},4000);
 // Delegate focus directly from the user's tap; iOS requires synchronous focus in the gesture.
@@ -366,7 +368,7 @@ if(invitedCode&&/^\d{3}$/.test(invitedCode)){
  $('join-invite-button').onclick=()=>$('join').click();
 }
 $('leave').onclick=()=>{if(!confirm('Bu cihazda odadan ayrılmak istiyor musun?'))return;localStorage.removeItem('hero-auction-session');stream?.close();session=null;room=null;applyLogin();refreshOnline()};
-(async()=>{try{const r=await fetch('/api/info');const j=await r.json();$('catalogue').textContent=`Şu anda ${j.catalogueCount} karakter hazır · Pokémon ${j.counts.pokemon} · Marvel ${j.counts.marvel} · DC ${j.counts.dc} · Yüzüklerin Efendisi ${j.counts.lotr}`;}catch{}await restoreGame();loadPokeMap();refreshOnline()})();
+(async()=>{try{const r=await fetch('/api/info');const j=await r.json();$('catalogue').textContent=`Şu anda ${j.catalogueCount} özgün kahraman hazır`;}catch{}if(window.HeroPlatform){await window.HeroPlatform.ready;if(!await validateLogin())await enterGuest();else await restoreGame();window.HeroPlatform.loaded();if(!room&&homePlayPanel.hidden)homePlayTab.click()}else await restoreGame();loadPokeMap();refreshOnline()})();
 
 async function loadHeroInfo(card){
  const key=card.universe+':'+card.name;
@@ -425,3 +427,6 @@ async function watchSocialMatch(code){
  await update();watchInterval=setInterval(update,3000);
 }
 for(const [id,type] of [['social-profile','profile'],['social-leaders','leaders'],['social-friends','friends'],['social-live','live']]){const b=$(id);if(b)b.onclick=()=>{clearInterval(watchInterval);socialView(type)}}
+
+
+window.addEventListener('hero:platform-settings',()=>{if(room)renderChat(room);if(window.HeroPlatform?.muteAudio&&auctionSfxContext)void auctionSfxContext.suspend().catch(()=>{})});
