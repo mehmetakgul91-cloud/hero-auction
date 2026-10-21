@@ -13,8 +13,8 @@ export function commanderAbilityStats(profile){
 export function commanderEnergyPerRound(profile){return profile?commanderAbilityStats(profile).energyPerRound:COMMANDER_ROUND_ENERGY;}
 export function commanderRoundEnergy(previous,round,profile){return round===1?COMMANDER_START_ENERGY:Math.min(100,previous+commanderEnergyPerRound(profile));}
 export function commanderAbilityDescription(profile){
- const stats=commanderAbilityStats(profile),percent=value=>(value*100).toLocaleString('tr-TR',{maximumFractionDigits:1});
+ const stats=commanderAbilityStats(profile),percent=value=>(value*100).toLocaleString('tr-TR',{maximumFractionDigits:2});
  const normal=percent(stats.normalRate),ultimate=percent(stats.ultimateRate);
- const text={attack:`Normal: takım saldırısının %${normal}'i; nihai: %${ultimate}'i kadar toplam hasar düşmanlara bölünür.`,defense:`Normal: yaşayan takımın azami canının %${normal}'i; nihai: %${ultimate}'i kadar toplam kalkan paylaşılır.`,support:`Normal: eksik canın %${normal}'i; nihai: %${ultimate}'i iyileştirilir. Can oranı en düşük kahraman önceliklidir.`,magic:`Normal: seçilen 1 hedefin saldırısı %${normal}; nihai: en fazla 2 hedefin saldırısı %${ultimate} azalır.`};
+ const text={attack:`Normal: savaş başındaki takım saldırısının %${normal}'i; nihai: %${ultimate}'i kadar toplam hasar düşmanlara bölünür.`,defense:`Normal: yaşayan takımın azami canının %${normal}'i; nihai: %${ultimate}'i kadar toplam kalkan paylaşılır.`,support:`Normal: eksik canın %${normal}'i; nihai: %${ultimate}'i iyileştirilir. Can oranı en düşük kahraman önceliklidir.`,magic:`Normal: seçilen 1 hedefin saldırısı %${normal}; nihai: en fazla 2 hedefin saldırısı %${ultimate} azalır.`};
  return text[profile.commanderId];
 }

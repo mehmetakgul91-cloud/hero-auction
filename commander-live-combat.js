@@ -3,11 +3,12 @@ import {commanderEnergyPerRound} from './public/commander-ability-rules.js';
 // Keep this adapter isolated until hero attacks are driven by the same live session.
 import {grantLiveCommanderEnergy,castLiveCommanderAbility} from './commander-live-abilities.js';
 import {applyLiveCommanderEffect} from './commander-live-effects.js';
+import {commanderAttackPower} from './commander-attack-damage.js';
 
 export function createLiveCommanderCombat({abilities,teams,commanders,round=1}){
  if(!abilities||!Array.isArray(teams)||teams.length!==2||!Array.isArray(commanders)||commanders.length!==2)throw Error('Invalid live combat');
  if(commanders.some(c=>!['attack','defense','magic','support'].includes(c?.commanderId)))throw Error('Invalid commander profiles');
- return {abilities,teams:structuredClone(teams),commanders:structuredClone(commanders),round,version:0,events:[],finished:false};
+ return {abilities,teams:structuredClone(teams),commanders:structuredClone(commanders),commanderAttackPower:teams.map(commanderAttackPower),round,version:0,events:[],finished:false};
 }
 export function castLiveCommanderCombat(combat,{side,ability,requestId,matchKey,now=Date.now(),targetIds}){
  if(!combat||combat.finished)throw Error('Battle already finished');
@@ -19,7 +20,7 @@ export function castLiveCommanderCombat(combat,{side,ability,requestId,matchKey,
   return {duplicate:true,version:prior.version,events:[],teams:structuredClone(combat.teams)};
  }
  // Compute effects first, without changing energy or HP if the cast cannot apply.
- const effect=applyLiveCommanderEffect(combat.teams,{side,ability,commanderId:combat.commanders[side].commanderId,commanderProfile:combat.commanders[side],round:combat.round,targetIds});
+ const effect=applyLiveCommanderEffect(combat.teams,{side,ability,commanderId:combat.commanders[side].commanderId,commanderProfile:combat.commanders[side],attackBasis:combat.commanderAttackPower[side],round:combat.round,targetIds});
  const cast=castLiveCommanderAbility(combat.abilities,{side,ability,requestId,matchKey,now});
  combat.teams=effect.teams;
  combat.version++;

@@ -1,4 +1,4 @@
-import {commanderAbilityStats,COMMANDER_START_ENERGY} from '/commander-ability-rules.js?v=commander-balance-20261021';
+import {commanderAbilityStats,COMMANDER_START_ENERGY} from '/commander-ability-rules.js?v=commander-attack-fix-20261021';
 import {abilityText} from '/hero-ability-text.js?v=tr-abilities-20261021';
 const $=id=>document.getElementById(id);
 let session=null,room=null,stream=null;
@@ -123,7 +123,7 @@ function renderCommanderProfile(){
  $('commander-effect-bonus').textContent='+%'+stats.bonusPercent+' BECERİ GÜCÜ';
  $('commander-active-detail').textContent=activeLevel>=40?'Ana uzmanlık tamamlandı.':activeLevel%2===0?'Her 2 ana dal seviyesinde tur enerjisi +1.':'Sonraki ana dal seviyesinde tur enerjisi +1.';
  const skillCopy={
-  attack:['Takım saldırısı oranında toplam hasar; yaşayan düşmanlara bölünür.','Takım saldırısı oranında toplam hasar; yaşayan düşmanlara bölünür.'],
+  attack:['Savaş başındaki takım saldırısı oranında toplam hasar; yaşayan düşmanlara bölünür.','Savaş başındaki takım saldırısı oranında toplam hasar; yaşayan düşmanlara bölünür.'],
   defense:['Yaşayan takımın azami canı oranında toplam kalkan paylaşılır.','Yaşayan takımın azami canı oranında toplam kalkan paylaşılır.'],
   magic:['1 hedefin saldırısını azaltır.','En fazla 2 hedefin saldırısını azaltır.'],
   support:['Eksik canı iyileştirir. Can oranı en düşük kahraman önceliklidir.','Eksik canı iyileştirir. Can oranı en düşük kahraman önceliklidir.']

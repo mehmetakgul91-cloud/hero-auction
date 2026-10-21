@@ -1,4 +1,4 @@
-import {commanderAbilityStats,commanderAbilityDescription} from '/commander-ability-rules.js?v=commander-balance-20261021';
+import {commanderAbilityStats,commanderAbilityDescription} from '/commander-ability-rules.js?v=commander-attack-fix-20261021';
 import {getArenaLaneLayout} from '/arena-viewport.js?v=arena-viewport-20261021b';
 // Verify the current portal account before accessing any saved arena seat.
 if(window.HeroPlatform){

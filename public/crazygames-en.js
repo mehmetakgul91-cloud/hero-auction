@@ -18,7 +18,7 @@ export const phrases = {
 "Ana uzmanlık tamamlandı.":"Main specialty complete.",
 "Her 2 ana dal seviyesinde tur enerjisi +1.":"Every 2 main branch levels add 1 energy per round.",
 "Sonraki ana dal seviyesinde tur enerjisi +1.":"The next main branch level adds 1 energy per round.",
-"Takım saldırısı oranında toplam hasar; yaşayan düşmanlara bölünür.":"Total damage based on team attack, split between living enemies.",
+"Savaş başındaki takım saldırısı oranında toplam hasar; yaşayan düşmanlara bölünür.":"Total damage based on starting team attack, split between living enemies.",
 "Yaşayan takımın azami canı oranında toplam kalkan paylaşılır.":"Total shield based on living allies’ max health, shared between them.",
 "1 hedefin saldırısını azaltır.":"Reduces one target’s attack.",
 "En fazla 2 hedefin saldırısını azaltır.":"Reduces the attack of up to two targets.",

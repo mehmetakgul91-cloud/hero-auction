@@ -1,7 +1,8 @@
 import {commanderAbilityStats} from './public/commander-ability-rules.js';
+import {commanderAttackPower,distributeCommanderAttack} from './commander-attack-damage.js';
 // Deterministic commander effects against an already initialized combat snapshot.
 // This is an isolated adapter; it does not advance the existing hero attack loop.
-export function applyLiveCommanderEffect(teams,{side,ability,commanderId,commanderProfile={commanderId},round=1,targetIds}){
+export function applyLiveCommanderEffect(teams,{side,ability,commanderId,commanderProfile={commanderId},attackBasis,round=1,targetIds}){
  if(!Array.isArray(teams)||teams.length!==2||teams.some(t=>!Array.isArray(t))||![0,1].includes(side))throw Error('Invalid battle snapshot');
  if(!['normal','ultimate'].includes(ability))throw Error('Invalid ability');
  if(!['attack','defense','magic','support'].includes(commanderId))throw Error('Invalid commander');
@@ -14,10 +15,9 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
  const log=[],impacts=[],strong=ability==='ultimate';
  let value=0;
  if(commanderId==='attack'){
-  const attack=allies.reduce((n,u)=>n+u.attack,0);
-  const total=Math.max(1,Math.round(attack*rate));
-  const each=Math.max(1,Math.floor(total/enemies.length));
-  for(const u of enemies){
+  const damageBudget=distributeCommanderAttack(attackBasis??commanderAttackPower(next[side]),rate,enemies.length);
+  for(const [index,u] of enemies.entries()){
+   const each=damageBudget[index];
    const absorbed=Math.min(u.shield||0,each);u.shield=(u.shield||0)-absorbed;
    const damage=Math.min(u.hp,each-absorbed);u.hp-=damage;value+=damage;
    impacts.push({target:u.id,kind:'damage',value:damage,absorbed});

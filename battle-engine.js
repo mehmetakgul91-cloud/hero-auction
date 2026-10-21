@@ -1,4 +1,5 @@
 import {commanderAbilityStats,commanderRoundEnergy} from './public/commander-ability-rules.js';
+import {commanderAttackPower,distributeCommanderAttack} from './commander-attack-damage.js';
 // Hero Auction 2.0 - isolated, deterministic automatic battle prototype.
 // Not connected to live matchmaking or wallet payouts.
 import crypto from 'node:crypto';
@@ -73,6 +74,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
     if(p.effect==='focus')u.attack=Math.round(u.attack*(1+p.value));
     if(p.effect==='evasion'||p.effect==='momentum')u.speed=Math.round(u.speed*(1+p.value));
   }
+  const commanderAttackBasis=teams.map(commanderAttackPower);
   const commanderEnergy=[0,0];
   if(!Array.isArray(commanderActions)||commanderActions.length>200)throw Error('Invalid commander actions');
   const actions=new Map();
@@ -91,13 +93,11 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
     commanderEnergy[side]-=cost;
     const allies=teams[side].filter(u=>u.hp>0),enemies=teams[1-side].filter(u=>u.hp>0);
     if(!allies.length||!enemies.length)return;
-    const totalAttack=allies.reduce((n,u)=>n+u.attack,0);
     const totalMaxHp=allies.reduce((n,u)=>n+u.maxHp,0);
     let value=0,absorbedTotal=0;
     if(id==='attack'){
-      const total=Math.max(1,Math.round(totalAttack*rate));
-      const each=Math.max(1,Math.floor(total/enemies.length));
-      for(const target of enemies){const raw=each,absorbed=Math.min(target.shield,raw);target.shield-=absorbed;const damage=Math.min(target.hp,raw-absorbed);target.hp-=damage;value+=damage;absorbedTotal+=absorbed;log.push({round,side,actor:'commander:'+side,action:'commander-hit',target:target.id,value:damage,absorbed,rawDamage:raw,damageType:'commander'}); }
+      const damageBudget=distributeCommanderAttack(commanderAttackBasis[side],rate,enemies.length);
+      for(const [index,target] of enemies.entries()){const raw=damageBudget[index],absorbed=Math.min(target.shield,raw);target.shield-=absorbed;const damage=Math.min(target.hp,raw-absorbed);target.hp-=damage;value+=damage;absorbedTotal+=absorbed;log.push({round,side,actor:'commander:'+side,action:'commander-hit',target:target.id,value:damage,absorbed,rawDamage:raw,damageType:'commander'}); }
     }else if(id==='defense'){
       const total=Math.max(1,Math.round(totalMaxHp*rate));
       const each=Math.max(1,Math.floor(total/allies.length));
