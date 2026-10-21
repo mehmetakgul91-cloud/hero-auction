@@ -50,6 +50,7 @@ const database=process.env.DATABASE_URL?new pg.Pool({connectionString:process.en
 // Rewarded advertising remains disabled until an approved, verifiable provider is integrated.
 const REWARDED_AD_DAILY_LIMIT=5;
 const REWARDED_AD_GOLD=100;
+const MATCH_WIN_GOLD=120;
 const rewardedAdsEnabled=false;
 const dirtyRooms=new Set();
 const pendingGold=new Map();
@@ -170,8 +171,8 @@ function settleFinishedMatch(r,winner,scores){
   r.series[winner]++;
   const accountId=r.players[winner].accountId;
   if(accountId&&r.entryPaid&&r.mode!=='bot'){
-   r.goldAward={id:r.code+':'+(r.matchNumber||1)+':'+(r.created||0),accountId,amount:100};queueGoldAward(r);
-   log(r,'🏆 Savaşı kazanan oyuncu 100 altın kazandı!');
+   r.goldAward={id:r.code+':'+(r.matchNumber||1)+':'+(r.created||0),accountId,amount:MATCH_WIN_GOLD};queueGoldAward(r);
+   log(r,`🏆 Savaşı kazanan oyuncu ${MATCH_WIN_GOLD} altın kazandı!`);
   }
  }else if(r.entryPaid&&r.mode!=='bot'){
   for(let i=0;i<2;i++){
