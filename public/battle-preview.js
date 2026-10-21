@@ -1,3 +1,4 @@
+import {createArenaTeamRenderer} from '/arena-team-renderer.js';
 import {summarizeBattle} from '/battle-summary-data.js?v=complete-results-20261021';
 import {commanderAbilityStats,commanderAbilityDescription} from '/commander-ability-rules.js?v=commander-attack-fix-20261021';
 import {getArenaLaneLayout} from '/arena-viewport.js?v=arena-viewport-20261021b';
@@ -34,7 +35,8 @@ const creditBonus=credits=>Math.max(-0.99,credits*0.01);
 const effectivePower=power=>Math.round(power*(1+creditBonus(previewCredits))*10)/10;
 let demoB=[["Altın Muhafız", "tank", 91, "original"], ["Alev Zırhı", "fighter", 84, "original"], ["Kadim Koruyucu", "fighter", 72, "original"], ["Morvan", "energy", 90, "original"], ["Brunn", "tank", 75, "original"]];
 const roleNames={tank:'TANK',fighter:'SAVAŞÇI',energy:'ENERJİ / MESAFELİ',assassin:'SUİKASTÇI',support:'DESTEK'};
-let states=[],events=[],cursor=0,timer=null,liveArenaMode=false;
+let states=[],events=[],cursor=0,timer=null,liveArenaMode=false,battlePresentationFinished=false;
+const arenaActive=()=>!battlePresentationFinished&&!leavingBattle&&(arenaMode||timer!==null);
 // Original procedural arena soundtrack; no external copyrighted audio assets.
 let arenaAudio=null,arenaMusicInterval=null,arenaMusicStep=0,arenaMusicEnabled=true;
 function updateMusicButton(){const b=$('arena-music-toggle');if(b){b.textContent=arenaMusicEnabled?'🔊':'🔇';b.setAttribute('aria-pressed',String(arenaMusicEnabled));b.setAttribute('aria-label',arenaMusicEnabled?'Arena sesini kapat':'Arena sesini aç');b.setAttribute('title',arenaMusicEnabled?'Sesi kapat':'Sesi aç')}}
@@ -44,6 +46,7 @@ function arenaTone(freq,start,length,type='sawtooth',volume=.025){
  oscillator.type=type;oscillator.frequency.setValueAtTime(freq,start);
  gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(volume,start+.025);
  gain.gain.exponentialRampToValueAtTime(.0001,start+length);
+ oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();};
  oscillator.connect(gain);gain.connect(arenaAudio.destination);oscillator.start(start);oscillator.stop(start+length+.03);
 }
 function arenaMusicBeat(){
@@ -64,14 +67,14 @@ arenaTrack.volume=.60;
 let arenaTrackAvailable=null;
 let arenaMusicSession=0;
 function startProceduralArenaMusic(){
- if(window.HeroPlatform?.muteAudio||!arenaMusicEnabled||document.hidden||arenaMusicInterval!==null||(!arenaMode&&timer===null))return;
+ if(window.HeroPlatform?.muteAudio||!arenaMusicEnabled||document.hidden||arenaMusicInterval!==null||!arenaActive())return;
  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
  if(!AudioContextClass)return;
  try{
   if(!arenaAudio)arenaAudio=new AudioContextClass();
   const resume=arenaAudio.state==='running'?Promise.resolve():arenaAudio.resume();
   void resume.then(()=>{
-   if(window.HeroPlatform?.muteAudio||!arenaMusicEnabled||document.hidden||arenaMusicInterval!==null||(!arenaMode&&timer===null)||!arenaTrack.paused)return;
+   if(window.HeroPlatform?.muteAudio||!arenaMusicEnabled||document.hidden||arenaMusicInterval!==null||!arenaActive()||!arenaTrack.paused)return;
    arenaMusicStep=0;arenaMusicBeat();arenaMusicInterval=setInterval(arenaMusicBeat,190);
   }).catch(()=>{});
  }catch(e){}
@@ -81,12 +84,12 @@ function stopProceduralArenaMusic(){
  if(arenaAudio&&arenaAudio.state==='running')void arenaAudio.suspend().catch(()=>{});
 }
 async function startArenaMusic(){
- if(window.HeroPlatform?.muteAudio||!arenaMusicEnabled||document.hidden||(!arenaMode&&timer===null))return;
+ if(window.HeroPlatform?.muteAudio||!arenaMusicEnabled||document.hidden||!arenaActive())return;
  const session=++arenaMusicSession;
  // Begin audio directly in the user's tap event; Safari blocks play after awaited network checks.
  try{
   await arenaTrack.play();
-  if(session!==arenaMusicSession||!arenaMusicEnabled||document.hidden||(!arenaMode&&timer===null)){arenaTrack.pause();return}
+  if(session!==arenaMusicSession||!arenaMusicEnabled||document.hidden||!arenaActive()){arenaTrack.pause();return}
   arenaTrackAvailable=true;
   stopProceduralArenaMusic();
  }catch(e){
@@ -294,13 +297,13 @@ function enterArenaWithoutReload(url){
  mountCommanderDock();
  window.dispatchEvent(new CustomEvent('heroarena:route-change',{detail:{url}}));
  void requestArenaWakeLock();
- startArenaVideoKeepAwake();
+
  revealArenaAudio();
  document.body.classList.add('arena-room');
  document.querySelector('.formation').hidden=true;
  $('battle-lobby').hidden=true;
  $('battle-arena').hidden=false;
- 
+
  $('play').textContent='▶ SAVAŞI BAŞLAT';
  $('play').disabled=true;
  if(prepTimer!==null){clearInterval(prepTimer);prepTimer=null}
@@ -348,7 +351,7 @@ function renderRolePickers(){const root=$('role-pickers');root.replaceChildren()
  })}
 $('apply-roles').onclick=lockFormation;
 if(arenaMode){document.body.classList.add('arena-room');document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;$('play').textContent='▶ SAVAŞI BAŞLAT';mountCommanderDock()}else{renderRolePickers();renderBoard();if(!auctionMode)startPreparation();else{$('apply-roles').disabled=true;$('prep-clock').textContent='--:--';$('prep-note').textContent='Açık artırma kartları doğrulanıyor…'}}
-const motion=()=> $('motion').checked&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const motion=()=> !document.hidden&&!document.body.classList.contains('arena-catching-up')&&$('motion').checked&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const duration=()=>Number($('speed').value);
 function comicBattleCue(e){
  if(!motion()||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
@@ -365,7 +368,7 @@ function comicBattleCue(e){
  setTimeout(()=>cue.remove(),750);
 }
 
-const visualHealth=new Map();
+const arenaTeamRenderer=createArenaTeamRenderer({document,loadArt:unit=>podiumPortrait(unit),onDefeated:card=>showHeroSoul(card)});
 function floatingArenaEffect(target,className,text,lifetime=1600){
  if(!target||document.hidden)return;
  const rect=target.getBoundingClientRect();
@@ -461,7 +464,7 @@ function renderArenaCommanderMatchup(profiles){
 }
 async function build(overrideResult){
  document.body.classList.remove('arena-results');document.querySelector('.controls').hidden=false;
- stop();if(victoryPendingTimer!==null){clearTimeout(victoryPendingTimer);victoryPendingTimer=null}resetArenaClock();visualHealth.clear();cursor=0;events=[];$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;victoryRevealDone=false;if(victoryRevealTimer!==null){clearTimeout(victoryRevealTimer);victoryRevealTimer=null}if($('arena-victory-reveal'))$('arena-victory-reveal').hidden=true;$('next').disabled=true;$('play').disabled=true;
+ stop();if(victoryPendingTimer!==null){clearTimeout(victoryPendingTimer);victoryPendingTimer=null}resetArenaClock();arenaTeamRenderer.reset();battlePresentationFinished=false;cursor=0;events=[];$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;victoryRevealDone=false;if(victoryRevealTimer!==null){clearTimeout(victoryRevealTimer);victoryRevealTimer=null}if($('arena-victory-reveal'))$('arena-victory-reveal').hidden=true;$('next').disabled=true;$('play').disabled=true;
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
  try{
   let result=overrideResult;
@@ -512,22 +515,9 @@ function centeredLaneRows(count){const layouts={0:[],1:[3],2:[2,4],3:[2,3,4],4:[
 function render(flash){
  const fittedLayout=getArenaLaneLayout(states);
  for(let side=0;side<2;side++){
-  const parent=$(side?'team-b':'team-a');parent.replaceChildren();
-  parent.style.setProperty('--arena-row-count',String(fittedLayout.rows));
+  const parent=$(side?'team-b':'team-a');
   const laneRows={front:centeredLaneRows(states[side].filter(u=>u.lane==='front').length),back:centeredLaneRows(states[side].filter(u=>u.lane!=='front').length)};
-  for(const [unitIndex,u] of states[side].entries()){
-   const card=document.createElement('article');card.dataset.heroId=u.id;card.className='hero arena-hero'+(u.lane==='front'?' frontline':' backline')+(u.hp<=0?' dead':'')+(flash?.actorId===u.id?' cast':'')+(flash?.targetId===u.id?' hit':'');
-   const portrait=document.createElement('div');portrait.className='arena-portrait';portrait.setAttribute('role','img');portrait.setAttribute('aria-label',u.name+' - '+roleNames[u.role]);
-   const fallback=document.createElement('span');fallback.className='portrait-fallback';fallback.textContent=u.name.slice(0,1);portrait.append(fallback);
-   const universe=String(u.id||'').split(':')[0]|| 'original';const artKey=universe+':'+u.name;
-   if(!arenaArtCache.has(artKey))arenaArtCache.set(artKey,fetch('/api/art?universe='+universe+'&name='+encodeURIComponent(u.name)).then(r=>r.ok?r.json():null).then(j=>j?.url||null).catch(()=>null));
-   void arenaArtCache.get(artKey).then(url=>{if(!url||!portrait.isConnected)return;const img=document.createElement('img');img.className='arena-portrait-image';img.alt=u.name;img.src=url;img.onload=()=>{img.classList.toggle('hero-portrait-wide',img.naturalWidth>img.naturalHeight);if(portrait.isConnected){fallback.remove();portrait.append(img)}}});
-   const bar=document.createElement('div');bar.className='hp';bar.setAttribute('aria-label','Can '+u.hp+' / '+u.maxHp);const fill=document.createElement('span');fill.style.width=(100*u.hp/u.maxHp)+'%';bar.append(fill);
-   const lane=u.lane==='front'?'front':'back',laneIndex=states[side].slice(0,unitIndex).filter(x=>(x.lane==='front')===(u.lane==='front')).length;
-   card.dataset.lane=lane;card.dataset.role=u.role||'';card.style.gridColumn=u.lane==='front'?(side?'1':'2'):(side?'2':'1');card.style.gridRow=String(laneRows[lane][laneIndex]);card.style.setProperty('--arena-fitted-row',String(fittedLayout.teams[side][lane][laneIndex]));card.title=u.name+' · '+roleNames[u.role]+' · Can '+u.hp+'/'+u.maxHp;
-   const heroLabel=document.createElement('span');heroLabel.className='arena-hero-label';heroLabel.textContent=u.name;card.append(portrait,heroLabel,bar);parent.append(card);
-   const healthKey=side+':'+u.id,previousHp=visualHealth.get(healthKey);visualHealth.set(healthKey,u.hp);if(previousHp>0&&u.hp<=0)showHeroSoul(card);
-  }
+  arenaTeamRenderer.update(parent,states[side],{side,rows:fittedLayout.rows,laneRows,fittedRows:fittedLayout.teams[side],flash,roleNames});
   $(side?'score-b':'score-a').textContent=states[side].filter(u=>u.hp>0).length+' / 5';
   const suffix=side?'b':'a';
   const maxHp=states[side].reduce((sum,u)=>sum+Math.max(0,Number(u.maxHp)||0),0);
@@ -721,51 +711,30 @@ function step(){
 let replayDueAt=0;
 // Keep the display awake while an arena replay is actively playing (where supported).
 let arenaWakeLock=null,arenaWakeRequestPending=false,arenaWakeRetryAt=0;
-let arenaKeepAwakeVideo=null;
-function startArenaVideoKeepAwake(){
- if((!arenaMode&&timer===null)||document.hidden||arenaKeepAwakeVideo)return;
- // iOS Safari fallback: a tiny muted inline video; no audio or visible UI.
- try{
-  const canvas=document.createElement('canvas');canvas.width=2;canvas.height=2;
-  const stream=canvas.captureStream?.(1);
-  if(!stream)return;
-  const video=document.createElement('video');
-  video.muted=true;video.defaultMuted=true;video.playsInline=true;
-  video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');
-  video.setAttribute('aria-hidden','true');
-  video.style.cssText='position:fixed;width:2px;height:2px;opacity:0.01;pointer-events:none;z-index:0';
-  video.srcObject=stream;document.body.append(video);
-  arenaKeepAwakeVideo=video;
-  const ctx=canvas.getContext('2d');let tick=0;
-  const draw=()=>{if(arenaKeepAwakeVideo!==video)return;ctx.fillStyle=(tick++%2)?'#000':'#010101';ctx.fillRect(0,0,2,2)};
-  draw();
-  video._arenaDrawTimer=setInterval(draw,250);
-  void video.play().catch(()=>{stopArenaVideoKeepAwake()});
- }catch(e){stopArenaVideoKeepAwake()}
-}
-function stopArenaVideoKeepAwake(){
- const video=arenaKeepAwakeVideo;arenaKeepAwakeVideo=null;
- if(!video)return;
- if(video._arenaDrawTimer)clearInterval(video._arenaDrawTimer);
- try{video.pause();video.srcObject?.getTracks().forEach(track=>track.stop());video.srcObject=null;video.remove()}catch(e){}
-}
-
 async function requestArenaWakeLock(){
- if((!arenaMode&&timer===null)||document.hidden||!('wakeLock' in navigator)||arenaWakeLock||arenaWakeRequestPending||Date.now()<arenaWakeRetryAt)return;
+ if(!arenaActive()||document.hidden||!('wakeLock' in navigator)||arenaWakeLock||arenaWakeRequestPending||Date.now()<arenaWakeRetryAt)return;
  arenaWakeRequestPending=true;
  try{
   const lock=await navigator.wakeLock.request('screen');
-  if((!arenaMode&&timer===null)||document.hidden){await lock.release();return}
+  if(!arenaActive()||document.hidden){await lock.release();return}
   arenaWakeLock=lock;
-  lock.addEventListener('release',()=>{if(arenaWakeLock===lock){arenaWakeLock=null;arenaWakeRetryAt=Date.now()+1200;if((arenaMode||timer!==null)&&!document.hidden)setTimeout(()=>{void requestArenaWakeLock()},1250)}},{once:true});
+  lock.addEventListener('release',()=>{if(arenaWakeLock===lock){arenaWakeLock=null;arenaWakeRetryAt=Date.now()+1200;if(arenaActive()&&!document.hidden)setTimeout(()=>{void requestArenaWakeLock()},1250)}},{once:true});
  }catch(e){arenaWakeRetryAt=Date.now()+5000;/* iOS Safari may deny wake lock; retry while playing. */}
  finally{arenaWakeRequestPending=false}
 }
+window.addEventListener('heroarena:battle-finished',()=>{
+ battlePresentationFinished=true;stopArenaMusic();releaseArenaWakeLock();
+});
+window.addEventListener('heroarena:connection-lost',()=>{
+ battlePresentationFinished=true;stop();stopArenaMusic();releaseArenaWakeLock();
+ $('message').textContent='Maç bağlantısı sona erdi. Maçtan ayrılıp yeni bir oyun başlatabilirsin.';
+ $('play').textContent='BAĞLANTI SONA ERDİ';$('play').disabled=true;
+});
 function releaseArenaWakeLock(){
  const lock=arenaWakeLock;arenaWakeLock=null;
  if(lock)void lock.release().catch(()=>{});
 }
-function stop(){if(timer!==null){clearInterval(timer);timer=null}replayDueAt=0;pauseArenaClock();if(!arenaMode){stopArenaMusic();releaseArenaWakeLock();stopArenaVideoKeepAwake()}}
+function stop(){if(timer!==null){clearInterval(timer);timer=null}replayDueAt=0;pauseArenaClock();if(!arenaMode){stopArenaMusic();releaseArenaWakeLock();}}
 function advanceReplay(){
  if(timer===null||!replayDueAt)return;
  if(!document.hidden&&!arenaWakeLock)void requestArenaWakeLock();
@@ -773,7 +742,7 @@ function advanceReplay(){
  const now=Date.now();
  // Skip animations for overdue moves; preserve the server-calculated event order/result.
  let steps=0;
- while(timer!==null&&cursor<events.length&&Date.now()>=replayDueAt&&steps<events.length+1){
+ while(timer!==null&&cursor<events.length&&Date.now()>=replayDueAt&&steps<4){
   const overdue=now-replayDueAt>=interval;
   if(overdue)document.body.classList.add('arena-catching-up');
   step();
@@ -789,7 +758,7 @@ function startReplay(){
  replayDueAt=Date.now()+Math.max(50,duration());
  timer=setInterval(advanceReplay,Math.min(200,Math.max(50,duration())));
  void requestArenaWakeLock();
- startArenaVideoKeepAwake();
+
  $('play').textContent='⏸ DURDUR';
 }
 $('play').onclick=()=>{if(timer!==null){stop();$('play').textContent='▶ DEVAM ET';return}startReplay()};
@@ -799,21 +768,20 @@ function syncArenaAudioVisibility(){
  if(document.hidden||document.visibilityState==='hidden'){
   arenaAudioSuspendedByBackground=true;
   stopArenaMusic();
-  releaseArenaWakeLock();stopArenaVideoKeepAwake();
+  releaseArenaWakeLock();
   return;
  }
  if(arenaAudioSuspendedByBackground){
   arenaAudioSuspendedByBackground=false;
-  if(arenaMusicEnabled&&(arenaMode||timer!==null))void startArenaMusic();
+  if(arenaMusicEnabled&&arenaActive())void startArenaMusic();
  }
  advanceReplay();
  void requestArenaWakeLock();
- if(arenaMode||timer!==null)startArenaVideoKeepAwake();
 }
 document.addEventListener('visibilitychange',syncArenaAudioVisibility);
-window.addEventListener('pagehide',()=>{arenaAudioSuspendedByBackground=true;stopArenaMusic();releaseArenaWakeLock();stopArenaVideoKeepAwake()});
+window.addEventListener('pagehide',()=>{arenaAudioSuspendedByBackground=true;stopArenaMusic();releaseArenaWakeLock();});
 window.addEventListener('focus',syncArenaAudioVisibility);
-document.addEventListener('pointerdown',()=>{if((arenaMode||timer!==null)&&!document.hidden){void requestArenaWakeLock();startArenaVideoKeepAwake()}},{passive:true});
+document.addEventListener('pointerdown',()=>{if(arenaActive()&&!document.hidden){void requestArenaWakeLock();}},{passive:true});
 window.addEventListener('pageshow',syncArenaAudioVisibility);
 // Entering the arena, rather than pressing Play, triggers the soundtrack.
 if(arenaMode){
@@ -822,9 +790,9 @@ if(arenaMode){
  void startArenaMusic();
  // Keep the screen on for live matches and while waiting for the opponent too.
  void requestArenaWakeLock();
- startArenaVideoKeepAwake();
+
 }
-$('arena-music-toggle').onclick=()=>{arenaMusicEnabled=!arenaMusicEnabled;updateMusicButton();if(arenaMusicEnabled&&(arenaMode||timer!==null))void startArenaMusic();else stopArenaMusic()};updateMusicButton();
+$('arena-music-toggle').onclick=()=>{arenaMusicEnabled=!arenaMusicEnabled;updateMusicButton();if(arenaMusicEnabled&&arenaActive())void startArenaMusic();else stopArenaMusic()};updateMusicButton();
 $('next').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';step()};
 $('reset').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';$('events').replaceChildren();$('message').textContent='Başlamak için savaşı oynat.';build()};
 if(multiplayerCode&&multiplayerToken){const check=async()=>{try{const response=await fetch('/api/battle-room?code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken),{cache:'no-store'});const v=await response.json();if(!response.ok)throw Error(v.error);if(v.started){clearInterval(battlePoll);battlePoll=null;document.body.classList.add('online-battle');if(!arenaMode){enterArenaWithoutReload('/battle-preview.html?room=arena&code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken));return}await build(v.result);if(events.length)$('play').click()}else{$('message').textContent='Rakibin hazırlanması bekleniyor… '+v.ready.filter(Boolean).length+'/2 hazır';if(arenaMode)$('play').disabled=true}}catch(e){$('message').textContent='⚠ '+e.message}};void check();battlePoll=setInterval(check,1800)}else if(arenaMode&&!auctionCode){void build().then(()=>{if(events.length)$('play').click()})}

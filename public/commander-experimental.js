@@ -29,18 +29,19 @@ function initializeCommanderControls(){
  async function request(method='GET',payload){
   const url='/api/experimental/commander-live'+(method==='GET'?'?code='+encodeURIComponent(code)+'&token='+encodeURIComponent(token)+'&sinceVersion='+lastVersion:'');
   const response=await fetch(url,{method,headers:method==='POST'?{'Content-Type':'application/json'}:{},body:payload?JSON.stringify({...payload,code,token,sinceVersion:lastVersion}):undefined,cache:'no-store',signal:AbortSignal.timeout(8000)});
-  const data=await response.json();if(!response.ok)throw Error(data.error||'Canlı savaş bağlantısı kurulamadı');return data;
+  const data=await response.json();if(!response.ok){const error=Error(data.error||'Canlı savaş bağlantısı kurulamadı');error.status=response.status;throw error;}return data;
  }
  function applySnapshot(data){
   if(stopped||Number(data.version)<lastVersion||state?.finished&&!data.finished)return;
+  const battleChanged=!state||!Number.isSafeInteger(data.version)||data.version!==state.version||data.finished!==state.finished;
   state=data;const own=data.abilities?.[data.side]||{};
   effectLockUntil=Date.now()+Math.max(0,Number(own.effectLockMs)||0);
   const value=Math.max(0,Math.min(100,Number(own.energy)||0));
   energy.textContent=value+' / 100';meter.setAttribute('aria-valuenow',String(value));fill.style.width=value+'%';renderControls();
-  if(Array.isArray(data.teams)){
+  if(battleChanged&&Array.isArray(data.teams)){
    window.dispatchEvent(new CustomEvent('heroarena:experimental-round-end',{detail:{round:data.round,teams:data.teams,finished:data.finished,winner:data.winner,summary:data.summary,version:data.version,events:data.events||[]}}));
    window.dispatchEvent(new CustomEvent('heroarena:commander-round',{detail:{round:data.round,events:data.events||[],teams:data.teams,finished:data.finished}}));
-   // The arena replaces its cards on every snapshot; restore selection afterwards.
+   // Preserve target selection while applying changed health snapshots.
    magicControls?.refresh(data.teams[1-data.side]);
   }
   lastVersion=Math.max(lastVersion,Number(data.version)||0);
@@ -51,7 +52,12 @@ function initializeCommanderControls(){
   if(stopped||busy||refreshing)return;
   refreshing=true;
   try{applySnapshot(await request())}
-  catch(e){if(!stopped){status.textContent='⚠ '+e.message;if(/bulunamadı|sona erdi/i.test(e.message))finish()}}
+  catch(e){if(!stopped){
+   status.textContent='⚠ '+e.message;
+   if([403,404,410].includes(e.status)||/bulunamadı|sona erdi/i.test(e.message)){
+    finish();window.dispatchEvent(new CustomEvent('heroarena:connection-lost'));
+   }
+  }}
   finally{refreshing=false}
  }
  async function sendCast({ability,targetIds}){

@@ -86,4 +86,5 @@ function resetEffects(){
 window.addEventListener('heroarena:move',showCommanderAbility);
 window.addEventListener('heroarena:commander-round',showCommanderAbility);
 window.addEventListener('heroarena:ready',()=>{resetEffects();seen.clear();});
+window.addEventListener('heroarena:connection-lost',resetEffects);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)resetEffects();});

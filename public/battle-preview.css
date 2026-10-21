@@ -414,3 +414,7 @@ body.arena-results .shell{height:auto;min-height:100dvh;padding-top:8px}
 .arena-results #arena-music-toggle{position:absolute;top:10px;right:14px;width:40px;height:40px;min-height:40px;border-radius:10px;font-size:19px}
 .arena-results .arena-prep-link{display:none!important}
 .battle-projectile.effect-arrow{width:25px;height:4px;border-radius:1px;background:#d4f5aa;box-shadow:0 0 10px #7be299;transform:translate(-50%,-50%)}
+
+/* Keep small portrait textures cheap to composite during melee and impact effects. */
+.arena-portrait-image{filter:none}
+@media(max-width:700px){.commander-cinematic,.arena-final-knockout{backdrop-filter:none}.commander-cinematic-portrait,.commander-cinematic.ultimate .commander-cinematic-portrait{filter:none}}
