@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {createHeroModel,createBoard,homePosition} from './arena-3d-models.js';
 import {primaryAction,snapshotChanges} from './arena-3d-timeline.js';
+import {SoftwareArenaRenderer} from './arena-3d-software.js';
 
 const ease=t=>t*t*(3-2*t),clamp=T.MathUtils.clamp;
 export class Arena3dScene{
@@ -8,7 +9,9 @@ export class Arena3dScene{
   this.canvas=canvas;this.labelLayer=labelLayer;this.floatLayer=floatLayer;this.onSelect=onSelect;
   this.models=new Map();this.effects=[];this.time=0;this.angle=0;this.economy=false;this.active=null;this.winner=null;
   this.reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  this.renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
+  const context=canvas.getContext('webgl2',{antialias:true,alpha:false,powerPreference:'high-performance'});
+  this.renderer=context?new T.WebGLRenderer({canvas,context,antialias:true,alpha:false}):new SoftwareArenaRenderer(canvas);
+  if(this.renderer.isSoftwareRenderer)this.economy=true;
   this.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
   this.renderer.setClearColor(0x0a1420);this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.25;
   this.scene=new T.Scene();this.scene.fog=new T.Fog(0x0a1420,30,70);

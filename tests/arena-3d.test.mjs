@@ -2,11 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {createServer} from 'node:net';
-import {Box3,Vector3} from 'three';
+import {Box3,Vector3,Scene,OrthographicCamera} from 'three';
 import {createArena3dDemo} from '../arena-3d-demo.js';
 import {battleOutcome} from '../battle-result.js';
 import {ArenaReplayClock,primaryAction,snapshotChanges} from '../public/arena-3d-timeline.js';
 import {createHeroModel,homePosition} from '../public/arena-3d-models.js';
+import {SoftwareArenaRenderer} from '../public/arena-3d-software.js';
 
 test('3D rehearsal uses five distinct roles, full authoritative snapshots and a terminal result',()=>{
  const d=createArena3dDemo(),roles=['tank','fighter','assassin','energy','support'];
@@ -56,6 +57,19 @@ test('five original articulated meshes fit their board cells and carry selectabl
   const p=homePosition(side,index);assert.ok(Math.abs(p.x)<3&&Math.abs(p.z)<4);
  }
  assert.ok(counts.size>=4,'role geometry must be visually distinct');
+});
+
+test('software fallback projects the same solid 3D model with occlusion and lighting',()=>{
+ let filled=0;const colors=new Set();
+ const context={setTransform(){},fillRect(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},stroke(){},fill(){filled++;colors.add(this.fillStyle);}};
+ const canvas={getContext:()=>context},renderer=new SoftwareArenaRenderer(canvas),scene=new Scene(),camera=new OrthographicCamera(-2,2,2,-2,.1,50);
+ renderer.setSize(400,400);camera.position.set(3,3,5);camera.lookAt(0,1,0);
+ const model=createHeroModel({id:'test',role:'tank'},0);scene.add(model.root);renderer.render(scene,camera);
+ assert.ok(filled>100);assert.ok(colors.size>5,'lit faces must differ, not a flat silhouette');
+ assert.ok(renderer.faces.every(f=>f.slice(0,7).every(Number.isFinite)));
+ const firstBounds=renderer.faces.flatMap(f=>[f[1],f[3],f[5]]);model.root.rotation.y=Math.PI/2;renderer.render(scene,camera);
+ assert.notDeepEqual(renderer.faces.flatMap(f=>[f[1],f[3],f[5]]),firstBounds,'camera sees actual depth when the model rotates');
+ model.root.visible=false;renderer.render(scene,camera);assert.equal(renderer.faces.length,0);
 });
 
 test('public rehearsal and pinned renderer load without login; vendor route only exposes required modules',{timeout:15000},async()=>{

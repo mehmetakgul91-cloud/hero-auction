@@ -51,6 +51,7 @@ async function boot(){
   const [module,response]=await Promise.all([import('./arena-3d-scene.js'),fetch('/api/arena-3d-demo')]);
   if(!response.ok)throw Error('Demo unavailable');data=await response.json();
   scene=new module.Arena3dScene($('arena-canvas'),$('hero-labels'),$('float-labels'),select);scene.setTeams(data.initial);currentTeams=data.initial;
+  if(scene.economy){$('quality').textContent='EKO';$('quality').setAttribute('aria-label','Görüntü kalitesi: ekonomik');}
   for(const hero of data.initial[0]){
    const meta=data.heroes.find(h=>h.id===hero.id),button=document.createElement('button'),img=document.createElement('img');
    button.dataset.hero=hero.id;button.setAttribute('aria-label',hero.name+' · '+roles[hero.role]);button.title=roles[hero.role];img.src=meta.portrait;img.alt='';button.append(img);button.addEventListener('click',()=>select('0:'+hero.id));$('hero-selector').append(button);
