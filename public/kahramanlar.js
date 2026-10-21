@@ -1,5 +1,5 @@
 import {heroStoryParagraphs} from '/hero-stories.js?v=connected-lore-20261021';
-import {abilityName,abilityEffects} from '/hero-ability-text.js?v=tr-abilities-20261021';
+import {abilityImpact} from '/hero-ability-text.js?v=short-effects-20261021';
 const $=id=>document.getElementById(id);
 const root=$('hero-gallery'),status=$('gallery-status'),filters=$('hero-filters'),search=$('hero-search'),roleFilter=$('hero-role'),reset=$('gallery-reset');
 const roleNames={tank:'Tank',fighter:'Savaşçı',assassin:'Suikastçı',energy:'Büyücü',support:'Destek'};
@@ -25,7 +25,7 @@ function makeCard(hero){
  const art=makePortrait(hero),power=el('div','gallery-power');power.setAttribute('aria-label','Güç '+hero.power+' / 100');power.append(el('small','','GÜÇ'),el('strong','',hero.power));art.append(power);
  const body=el('div','gallery-card-body');body.append(el('span','gallery-rarity',rarityNames[rarity]),el('h2','',hero.name),el('span','gallery-role',roleNames[hero.role]||hero.role));
  const skills=el('div','gallery-skills');
- for(const [label,ability] of [['Aktif',hero.active],['Pasif',hero.passive]]){const row=el('div','gallery-skill'),name=abilityName(ability?.name);row.append(el('small','',label),el('strong','',name));row.title=label+': '+name;skills.append(row)}
+ for(const [label,ability] of [['Aktif',hero.active],['Pasif',hero.passive]]){const row=el('div','gallery-skill'),effect=abilityImpact(ability);row.append(el('small','',label),el('strong','',effect));row.title=label+': '+effect;skills.append(row)}
  const link=el('div','gallery-card-link','İncele');link.append(el('span','','↗'));link.setAttribute('aria-hidden','true');
  body.append(skills,link);card.append(art,body);return card;
 }
@@ -71,8 +71,8 @@ function openHeroStory(hero){
  const skills=$('hero-detail-skills');skills.replaceChildren();
  for(const [kind,label,ability,icon] of [['active','Aktif yetenek',hero.active,'ϟ'],['passive','Pasif yetenek',hero.passive,'✦']]){
   const box=el('div','hero-ability-box hero-ability-box--'+kind),symbol=el('span','hero-ability-icon',icon);symbol.setAttribute('aria-hidden','true');
-  const body=el('div');body.append(el('small','',label),el('h3','',abilityName(ability?.name)));
-  const effect=abilityEffects[ability?.effect];if(effect)body.append(el('p','',effect));box.append(symbol,body);skills.append(box);
+  const body=el('div');body.append(el('small','',label),el('h3','',abilityImpact(ability)));
+  box.append(symbol,body);skills.append(box);
  }
  if(hero.laneModifiers){
   skills.append(el('h3','hero-detail-section-title','Saf bonusları'));

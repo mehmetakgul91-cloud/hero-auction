@@ -1,6 +1,17 @@
 // Presentation-only English locale for the CrazyGames entry point.
 // Do not translate stored values, hero IDs, requests, or game rules.
 export const phrases = {
+"Verdiği hasarın %15’i kadar can yeniler":"Heals for 15% of damage dealt",
+"Vuruş sonrası canı %12 altına ineni bitirir":"After hitting, finishes targets below 12% health",
+"Hızını 8 artırır":"Increases speed by 8",
+"Saldırısının %52’si kadar can yeniler":"Heals for 52% of own attack",
+"Hedefin savunmasının %40’ını yok sayar":"Ignores 40% of target defense",
+"Savunmasının %40’ı kadar kalkan kazanır":"Gains a shield equal to 40% of own defense",
+"Diğer düşmanlara vuruş hasarının %25’i kadar hasar":"Other enemies take 25% of the hit damage",
+"Hedefin savunmasını %15 azaltır":"Reduces target defense by 15%",
+"Hedefin saldırısını %10 azaltır":"Reduces target attack by 10%",
+"Tek vuruşta bitirir":"Eliminates with one hit",
+"Etki belirtilmemiş":"Effect not specified",
 "Takımına uygun kahramanı keşfet.":"Find the right hero for your team.",
 "Kahraman filtreleri":"Hero filters",
 "Kahraman detayları":"Hero details",
@@ -188,6 +199,13 @@ const pairs=Object.entries(phrases).sort((a,b)=>b[0].length-a[0].length);
 export function translate(text){
  if(text.trim()==='PAS')return text.replace('PAS','PASS');
  let out=text.replace(/Şu anda (\d+) özgün kahraman hazır/g,'$1 original heroes available').replace(/(\d+) kahraman/g,'$1 heroes');
+ out=out.replace(/Vuruş hasarı \+%([\d,]+)/g,(_,n)=>'Hit damage +'+n.replace(',','.')+'%')
+  .replace(/Savunmayı %([\d,]+) artırır/g,(_,n)=>'Increases defense by '+n.replace(',','.')+'%')
+  .replace(/Hızı %([\d,]+) artırır/g,(_,n)=>'Increases speed by '+n.replace(',','.')+'%')
+  .replace(/Saldırıyı %([\d,]+) artırır/g,(_,n)=>'Increases attack by '+n.replace(',','.')+'%')
+  .replace(/Can %50 altındayken saldırı \+%([\d,]+)/g,(_,n)=>'Below 50% health: attack +'+n.replace(',','.')+'%')
+  .replace(/Her tur %([\d,]+) can yeniler \(azami can\)/g,(_,n)=>'Restores '+n.replace(',','.')+'% of max health each round')
+  .replace(/Vuruş sonrası savunmanın %([\d,]+) kadarı kalkan/g,(_,n)=>'After attacking: shield equal to '+n.replace(',','.')+'% of defense');
  for(const [tr,en] of pairs)out=out.split(tr).join(en);
  return out;
 }
