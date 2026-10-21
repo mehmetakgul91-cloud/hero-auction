@@ -58,3 +58,6 @@
 }
 @media(max-width:360px){.shell>.lobby-header{padding:10px}.lobby-emblem{width:31px;height:39px}.lobby-wordmark strong{font-size:22px}.lobby-wordmark strong span{font-size:9px}.lobby-header .gold-wallet{gap:4px;padding:7px}.lobby-header .gold-icon{width:25px;height:25px}.lobby-header .gold-number{font-size:17px}#home .home-quick-nav{gap:3px!important}.account-copy small{font-size:8px}}
 @media(prefers-reduced-motion:reduce){#home .home-quick-nav .quick-nav-item{transition:none}}
+
+/* CrazyGames hides the contact action, so its four visible entries fill the row. */
+html[lang="en"] #home .home-quick-nav{grid-template-columns:repeat(4,minmax(0,1fr))!important}
