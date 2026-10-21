@@ -19,7 +19,7 @@ function impact(){
  damageAt=time;hp();
 }
 function tick(now){
- const dt=last?Math.min(.1,(now-last)/1000):0;last=now;time+=dt;
+ const dt=last?Math.max(0,(now-last)/1000):0;last=now;time+=dt;
  if(playing)elapsed+=dt;
  const duration=auto?sequence[step][1]:mode==='walk'?2:mode==='death'?1:1.2;
  const p=clamp(elapsed/duration,0,1);
