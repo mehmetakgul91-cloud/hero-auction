@@ -63,10 +63,10 @@ export class SoftwareArenaRenderer{
      const length=Math.hypot(nx,ny,nz)||1;nx/=length;ny/=length;nz/=length;
      shade=.45+Math.max(0,nx*this.keyLight.x+ny*this.keyLight.y+nz*this.keyLight.z)*.7+Math.max(0,nx*this.fillLight.x+ny*this.fillLight.y+nz*this.fillLight.z)*.25;
     }
-    const face=this.faces[faceCount]||(this.faces[faceCount]=[]);face[0]=(az+bz+cz)/3;face[1]=ax;face[2]=ay;face[3]=bx;face[4]=by;face[5]=cx;face[6]=cy;face[7]=this.color(material,shade);face[8]=material.wireframe;faceCount++;
+    const face=this.faces[faceCount]||(this.faces[faceCount]=[]);face[0]=(az+bz+cz)/3;face[1]=ax;face[2]=ay;face[3]=bx;face[4]=by;face[5]=cx;face[6]=cy;face[7]=this.color(material,shade);face[8]=material.wireframe;face[9]=object.userData.softwareLayer||0;faceCount++;
    }
   });
-  this.faces.length=faceCount;this.faces.sort((a,b)=>b[0]-a[0]);
+  this.faces.length=faceCount;this.faces.sort((a,b)=>a[9]-b[9]||b[0]-a[0]);
   const ctx=this.context;ctx.setTransform(this.pixelRatio,0,0,this.pixelRatio,0,0);ctx.fillStyle=this.clear;ctx.fillRect(0,0,width,height);ctx.lineWidth=.6;
   for(const f of this.faces){ctx.beginPath();ctx.moveTo(f[1],f[2]);ctx.lineTo(f[3],f[4]);ctx.lineTo(f[5],f[6]);ctx.closePath();if(f[8]){ctx.strokeStyle=f[7];ctx.stroke();}else{ctx.fillStyle=f[7];ctx.fill();}}
  }

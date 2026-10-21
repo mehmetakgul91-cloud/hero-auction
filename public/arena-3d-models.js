@@ -122,10 +122,14 @@ export function createHeroModel(hero,side){
 export function createBoard(scene){
  const board=new T.Group();scene.add(board);
  const basalt=material(0x172535,.4),edge=material(0x384656,.6),gold=material(0x9c855c,.7);
- box(board,8.5,.45,9.3,basalt,0,-.28);box(board,8.7,.12,9.5,edge,0,-.5);box(board,8.3,.12,9.1,gold,0,-.045);
+ // Layer the large horizontal surfaces below the miniatures in the CPU
+ // renderer; centroid sorting alone makes their triangles cover nearby tiles.
+ box(board,8.5,.45,9.3,basalt,0,-.28).userData.softwareLayer=-3;
+ box(board,8.7,.12,9.5,edge,0,-.5).userData.softwareLayer=-4;
+ box(board,8.3,.12,9.1,gold,0,-.045).userData.softwareLayer=-2;
  for(let row=0;row<6;row++)for(let col=0;col<6;col++){
   const tile=box(board,1.33,.11,1.46,material((col+row)%2?0x243544:0x2b3e4e,.35),(col-2.5)*1.35,.035,(row-2.5)*1.48);
-  tile.receiveShadow=true;tile.castShadow=false;
+  tile.receiveShadow=true;tile.castShadow=false;tile.userData.softwareLayer=-1;
  }
  for(const side of [-1,1]){
   box(board,8.1,.025,.035,material(side<0?0xda6c89:0x62c6db,0,true),0,.11,side*4.48);
@@ -139,7 +143,7 @@ export function createBoard(scene){
  for(let i=0;i<7;i++)box(board,.28,.021,.035,gold,(i-3)*.72,.12,0);
  const central=ring(board,.48,.02,gold,0,.12,0);central.scale.set(1,1,1);
  box(board,.035,.025,.6,gold,0,.125);box(board,.6,.025,.035,gold,0,.125);
- const floor=new T.Mesh(new T.PlaneGeometry(200,200),material(0x09111b,.05));floor.rotation.x=-Math.PI/2;floor.position.y=-.62;floor.receiveShadow=true;scene.add(floor);
+ const floor=new T.Mesh(new T.PlaneGeometry(200,200),material(0x09111b,.05));floor.rotation.x=-Math.PI/2;floor.position.y=-.62;floor.receiveShadow=true;floor.userData.softwareLayer=-5;scene.add(floor);
  return board;
 }
 

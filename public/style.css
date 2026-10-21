@@ -1052,3 +1052,9 @@ body:has(#game[data-phase="auction"]:not([hidden])) .shell{padding-top:8px}
  .guide-prize>span{font-size:24px}
 }
 @media(max-width:380px){.guide-mini-board{grid-template-columns:22px 78px;gap:5px}.guide-mini-board i{width:20px;height:24px}}
+
+/* Optional 3D rehearsal, separate from the live matchmaking flow. */
+#home .arena-3d-launch{display:flex;justify-content:center;align-items:center;gap:10px;min-height:40px;margin-top:8px;border:1px solid #856e46;border-radius:9px;background:linear-gradient(100deg,#302b22,#172230);color:#e9d2a5;text-decoration:none;font-size:10px;font-weight:800;letter-spacing:1px}
+#home .arena-3d-launch span{padding:3px 5px;background:#b0925d25;border-radius:4px;color:#dfbd7d;font-size:8px;letter-spacing:1px}
+#home .arena-3d-launch b{font-size:17px;font-weight:400}
+#home .arena-3d-launch:hover,#home .arena-3d-launch:focus-visible{border-color:#ead09d;background:#353124}
