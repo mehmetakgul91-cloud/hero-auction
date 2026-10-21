@@ -637,6 +637,7 @@ function showBattleSummary(){
   stats.append(section);
  }
  panel.append(stats);
+ document.body.classList.remove('arena-fit');
  panel.hidden=false;
  if(auctionMode)void showAuctionRematch();
  $('battle-arena').hidden=true;
