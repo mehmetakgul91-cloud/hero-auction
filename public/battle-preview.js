@@ -133,7 +133,7 @@ function setLane(slot,lane){if(prepDone)return;lanes[slot]=lane;renderBoard();re
 
 const heroArtCache=new Map();
 async function loadHeroArt(i){if(heroArtCache.has(i))return heroArtCache.get(i);const promise=fetch('/api/art?universe='+encodeURIComponent(demoA[i][3]||'original')+'&name='+encodeURIComponent(demoA[i][0])).then(r=>r.ok?r.json():null).then(data=>data?.url||null).catch(()=>null);heroArtCache.set(i,promise);return promise}
-function heroPortrait(i,container){const img=document.createElement('img');img.className='slot-portrait';img.alt=demoA[i][0];img.loading='lazy';const fallback=document.createElement('span');fallback.className='portrait-fallback';fallback.textContent=demoA[i][0].slice(0,1);container.append(fallback);void loadHeroArt(i).then(url=>{if(!url||!container.isConnected)return;img.src=url;img.onload=()=>{if(container.isConnected){fallback.remove();container.append(img)}};img.onerror=()=>img.remove()})}
+function heroPortrait(i,container){const img=document.createElement('img');img.className='slot-portrait';img.alt=demoA[i][0];img.loading='lazy';const fallback=document.createElement('span');fallback.className='portrait-fallback';fallback.textContent=demoA[i][0].slice(0,1);container.append(fallback);void loadHeroArt(i).then(url=>{if(!url||!container.isConnected)return;img.src=url;img.onload=()=>{img.classList.toggle('hero-portrait-wide',img.naturalWidth>img.naturalHeight);if(container.isConnected){fallback.remove();container.append(img)}};img.onerror=()=>img.remove()})}
 
 const query=new URLSearchParams(location.search);
 let arenaMode=query.get('room')==='arena';
@@ -499,7 +499,7 @@ window.addEventListener('heroarena:experimental-round-end',e=>{
  }
  render();
  $('round').textContent=String(e.detail.round||0);$('message').textContent=e.detail.finished?'Canlı savaş tamamlandı':'Canlı savaş · Tur '+e.detail.round;
- if(liveArenaMode&&e.detail.finished){const alive=states.map(team=>team.filter(u=>u.hp>0).length);finalResult={...finalResult,winner:alive[0]===alive[1]?null:alive[0]>alive[1]?0:1,rounds:Number(e.detail.round)||0,teams:states,log:[...(finalResult?.log||[]),...(e.detail.events||[])]};showVictoryReveal();}
+ if(liveArenaMode&&e.detail.finished){finalResult={...finalResult,winner:[0,1].includes(e.detail.winner)?e.detail.winner:null,rounds:Number(e.detail.round)||0,teams:states,log:[...(finalResult?.log||[]),...(e.detail.events||[])]};showVictoryReveal();}
 });
 const arenaArtCache=new Map();
 let finalResult=null;
@@ -516,7 +516,7 @@ function render(flash){
    const fallback=document.createElement('span');fallback.className='portrait-fallback';fallback.textContent=u.name.slice(0,1);portrait.append(fallback);
    const universe=String(u.id||'').split(':')[0]|| 'original';const artKey=universe+':'+u.name;
    if(!arenaArtCache.has(artKey))arenaArtCache.set(artKey,fetch('/api/art?universe='+universe+'&name='+encodeURIComponent(u.name)).then(r=>r.ok?r.json():null).then(j=>j?.url||null).catch(()=>null));
-   void arenaArtCache.get(artKey).then(url=>{if(!url||!portrait.isConnected)return;const img=document.createElement('img');img.className='arena-portrait-image';img.alt=u.name;img.src=url;img.onload=()=>{if(portrait.isConnected){fallback.remove();portrait.append(img)}}});
+   void arenaArtCache.get(artKey).then(url=>{if(!url||!portrait.isConnected)return;const img=document.createElement('img');img.className='arena-portrait-image';img.alt=u.name;img.src=url;img.onload=()=>{img.classList.toggle('hero-portrait-wide',img.naturalWidth>img.naturalHeight);if(portrait.isConnected){fallback.remove();portrait.append(img)}}});
    const bar=document.createElement('div');bar.className='hp';bar.setAttribute('aria-label','Can '+u.hp+' / '+u.maxHp);const fill=document.createElement('span');fill.style.width=(100*u.hp/u.maxHp)+'%';bar.append(fill);
    const lane=u.lane==='front'?'front':'back',laneIndex=states[side].slice(0,unitIndex).filter(x=>(x.lane==='front')===(u.lane==='front')).length;
    card.dataset.lane=lane;card.dataset.role=u.role||'';card.style.gridColumn=u.lane==='front'?(side?'1':'2'):(side?'2':'1');card.style.gridRow=String(laneRows[lane][laneIndex]);card.style.setProperty('--arena-fitted-row',String(fittedLayout.teams[side][lane][laneIndex]));card.title=u.name+' · '+roleNames[u.role]+' · Can '+u.hp+'/'+u.maxHp;

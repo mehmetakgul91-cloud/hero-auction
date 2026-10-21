@@ -345,7 +345,7 @@
         "taret-siperi",
         "mekanik-zirh"
       ],
-      "portrait": "/images/original/hero-10.png",
+      "portrait": "/images/original/hero-10-v2.webp",
       "proposedPower": 75,
       "active": {
         "name": "Taret Siperi",
@@ -381,7 +381,7 @@
         "buz-alan-hasari",
         "yavaslatma"
       ],
-      "portrait": "/images/original/hero-11.png",
+      "portrait": "/images/original/hero-11-v2.webp",
       "proposedPower": 92,
       "active": {
         "name": "buz-alan-hasari",
@@ -417,7 +417,7 @@
         "can-calma",
         "kacis"
       ],
-      "portrait": "/images/original/hero-12.png",
+      "portrait": "/images/original/hero-12-v2.webp",
       "proposedPower": 91,
       "active": {
         "name": "can-calma",
@@ -453,7 +453,7 @@
         "kritik-ok",
         "hareket"
       ],
-      "portrait": "/images/original/hero-13.png",
+      "portrait": "/images/original/hero-13-v2.webp",
       "proposedPower": 70,
       "active": {
         "name": "kritik-ok",
@@ -489,7 +489,7 @@
         "sersemletme",
         "yildirim"
       ],
-      "portrait": "/images/original/hero-14.png",
+      "portrait": "/images/original/hero-14-v2.webp",
       "proposedPower": 90,
       "active": {
         "name": "sersemletme",
@@ -525,7 +525,7 @@
         "ejderha-kalkani",
         "buz-direnci"
       ],
-      "portrait": "/images/original/hero-15.png",
+      "portrait": "/images/original/hero-15-v2.webp",
       "proposedPower": 92,
       "active": {
         "name": "Ejderha Kalkanı",

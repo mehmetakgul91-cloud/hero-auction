@@ -1,6 +1,9 @@
 // Presentation-only English locale for the CrazyGames entry point.
 // Do not translate stored values, hero IDs, requests, or game rules.
 export const phrases = {
+"Kalan krediler":"Remaining credits",
+"Senin kredin":"Your credits",
+"Rakibin kredisi":"Opponent credits",
 "Verdiği hasarın %15’i kadar can yeniler":"Heals for 15% of damage dealt",
 "Vuruş sonrası canı %12 altına ineni bitirir":"After hitting, finishes targets below 12% health",
 "Hızını 8 artırır":"Increases speed by 8",

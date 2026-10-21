@@ -9,6 +9,7 @@ import {selectBattleTarget} from './battle-target-selection.js';
 import {calculateHeroRawDamage} from './battle-damage-formula.js';
 import {calculateSplashRawDamage,calculateSpecialHeal} from './battle-special-formulas.js';
 import {applyCommanderSupport} from './arena-commanders.js';
+import {battleOutcome} from './battle-result.js';
 
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const roles=['tank','fighter','energy','assassin','support'];
@@ -167,13 +168,6 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
     }
     if(teams.some(team=>team.every(x=>x.hp<=0)))break;
   }
-  const hpRatio=teams.map(team=>team.reduce((n,x)=>n+x.hp/x.maxHp,0));
-  const damage=teams.map(team=>team.reduce((n,x)=>n+x.damage,0));
-  const survivors=teams.map(team=>team.filter(x=>x.hp>0).length);
-  let winner=null;
-  if(survivors[0]!==survivors[1]&&(survivors[0]===0||survivors[1]===0))winner=survivors[0]>survivors[1]?0:1;
-  else if(Math.abs(hpRatio[0]-hpRatio[1])>1e-9)winner=hpRatio[0]>hpRatio[1]?0:1;
-  else if(damage[0]!==damage[1])winner=damage[0]>damage[1]?0:1;
-  else if(survivors[0]!==survivors[1])winner=survivors[0]>survivors[1]?0:1;
+  const {winner,damage,survivors}=battleOutcome(teams);
   return {version:4,commanderEnergy,commanders:Array.isArray(commanders)?commanders.slice(0,2):[null,null],remainingCredits:[...remainingCredits],seed:String(seed),winner,rounds:Math.max(0,...log.map(x=>x.round)),teams,damage,survivors,log};
 }

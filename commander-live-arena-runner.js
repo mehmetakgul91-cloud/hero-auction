@@ -1,7 +1,7 @@
 // Experimental server-only runner. An injected scheduler keeps production timers
 // outside the combat engine and makes lifecycle behavior deterministic in tests.
 import {createLiveArenaPacer} from './commander-live-arena-pacer.js';
-export function createLiveArenaRunner({registry,matchKey,token,intervalMs=900,clock=()=>Date.now(),scheduler=setInterval,canceller=clearInterval,onError=()=>{}}){
+export function createLiveArenaRunner({registry,matchKey,token,intervalMs=900,clock=()=>Date.now(),scheduler=setInterval,canceller=clearInterval,onError=()=>{},onFinish=()=>{}}){
  if(typeof scheduler!=='function'||typeof canceller!=='function'||typeof onError!=='function')throw Error('Invalid live arena runner');
  const pacer=createLiveArenaPacer({registry,matchKey,token,intervalMs,clock});
  let handle=null,lastError=null;
@@ -14,7 +14,7 @@ export function createLiveArenaRunner({registry,matchKey,token,intervalMs=900,cl
   if(handle===null)return {advanced:false,running:false};
   try{
    const result=pacer.tick(clock());
-   if(result.finished)stop();
+   if(result.finished){stop();onFinish(registry.snapshot({matchKey,token,now:clock()}));}
    return result;
   }catch(error){
    lastError=error;

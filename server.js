@@ -17,6 +17,7 @@ import {createLiveArenaLifecycle} from './commander-live-arena-lifecycle.js';
 import {prepareLiveArenaTeams} from './commander-live-team-preparation.js';
 import {createLiveCommanderCombat} from './commander-live-combat.js';
 import {isLiveCommanderApiAvailable} from './commander-live-api-access.js';
+import {settleLiveBattle} from './live-battle-settlement.js';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
 const GOOGLE_CLIENT_ID=process.env.GOOGLE_CLIENT_ID||'742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
@@ -30,7 +31,10 @@ const rooms=new Map();
 const commanderTurnSessions=new Map();
 const liveCommanderAbilitySessions=new Map();
 const commanderTurnApiEnabled=process.env.EXPERIMENTAL_COMMANDER_TURNS==='1';
-const liveArenaLifecycle=createLiveArenaLifecycle({intervalMs:900,onError:(e,key)=>console.error('Live arena stopped:',key,e.message)});
+const liveArenaLifecycle=createLiveArenaLifecycle({intervalMs:900,onError:(e,key)=>console.error('Live arena stopped:',key,e.message),onFinish:(snapshot,key)=>{
+ const room=rooms.get(key.split(':')[0]);
+ if(settleLiveBattle(room,key,snapshot,settleFinishedMatch))publish(room);
+}});
 const liveArenaMatchKeys=new Map();
 // Standalone preview only: temporary, non-persistent guest credits without a database.
 const previewGuestWallets=new Map();
@@ -334,7 +338,29 @@ if(url==='/api/wallet'){return{gold:await goldBalance(readLogin(b.authToken).sub
 if(url==='/api/auth/google'){const credential=String(b.credential||'');if(credential.length<100||credential.length>8000)error('Geçersiz Google kimliği.');const response=await fetch('https://oauth2.googleapis.com/tokeninfo?id_token='+encodeURIComponent(credential),{signal:AbortSignal.timeout(8000)});if(!response.ok)error('Google kimliği doğrulanamadı.',401);const claims=await response.json();if(claims.aud!==GOOGLE_CLIENT_ID||!['accounts.google.com','https://accounts.google.com'].includes(claims.iss)||Number(claims.exp)*1000<Date.now()||!claims.sub||claims.email_verified!=='true')error('Google kimliği doğrulanamadı.',401);const user={sub:claims.sub,name:String(claims.name||claims.given_name||'Oyuncu').slice(0,24),email:String(claims.email||'').toLowerCase()};await rememberDisplayName(user);return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}
 if(url==='/api/create'){const name=chosenName(b,'Oyuncu 1');const universe='mixed';const pool=shuffle([...catalogue.values()].filter(x=>universe==='mixed'||x.universe===universe));if(pool.length<10)error('Bu evrende yeterli karakter yok.');const cards=pool.slice(0,10).map(x=>({...x,power:stablePower(x.id)}));let id;do{id=code()}while(rooms.has(id));const t=token();const accountId=readLogin(b.authToken).sub;const r={code:id,universe,cards,round:0,phase:'waiting',turn:0,topBid:0,topSeat:null,players:[{name,token:t,accountId,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],deadline:null,mode:'friend'};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/join'){const r=rooms.get(String(b.code||'').toUpperCase());if(!r)error('Oda bulunamadı.',404);if(r.players[1]||r.joinPending)error('Oda dolu.');r.joinPending=true;try{await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name:chosenName(b,'Oyuncu 2'),token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;log(r,`Oyun başladı. 1. kart için açılış: ${r.players[0].name}`);publish(r);return{token:t,room:publicRoom(r,1)}}finally{r.joinPending=false}}
-if(url==='/api/rematch'){const{r,seat}=authorize(b);if(r.battleSettlementPending&&!r.matchSettled)error('Savaş sonucu henüz kesinleşmedi.');if(r.players.every(p=>p?.team?.length===5)&&r.battleSync?.result&&!r.battleCompleted?.[seat])error('Önce 2.0 savaşını tamamlamalısın.');if(r.phase!=='finished')error('Maç henüz bitmedi.');r.rematch[seat]=true;if(r.mode==='bot')r.rematch[1]=true;if(r.rematch.every(Boolean)){if(r.mode!=='bot'){try{await chargeEntry(r.players.map(p=>p.accountId),r.code);}catch(e){r.rematch=[false,false];throw e}}r.entryPaid=r.mode!=='bot';r.goldRefunds=null;r.matchNumber=(r.matchNumber||1)+1;r.goldAward=null;r.rankChange=null;r.rankBefore=null;r.cards=newCards(r.universe);r.round=0;r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.topBid=0;r.topSeat=null;r.history=[];r.openingPassSeat=null;r.rematch=[false,false];r.battleCompleted=[false,false];r.matchSettled=false;r.battleSettlementPending=false;r.battleSync=null;r.created=Date.now();r.lastActivity=Date.now();for(const p of r.players){p.credits=20;p.team=[];}log(r,'Rövanş başladı!');}publish(r);return{room:publicRoom(r,seat)}}
+if(url==='/api/rematch'){
+ const{r,seat}=authorize(b);
+ if(r.rematchPending)error('Rövanş hazırlanıyor.',409);
+ if(r.battleSettlementPending&&!r.matchSettled)error('Savaş sonucu henüz kesinleşmedi.');
+ if(r.players.every(p=>p?.team?.length===5)&&r.battleSync?.result&&!r.battleCompleted?.[seat])error('Önce 2.0 savaşını tamamlamalısın.');
+ if(r.phase!=='finished')error('Maç henüz bitmedi.');
+ r.rematch[seat]=true;if(r.mode==='bot')r.rematch[1]=true;
+ if(r.rematch.every(Boolean)){
+  r.rematchPending=true;
+  try{
+   if(r.mode!=='bot'){try{await chargeEntry(r.players.map(p=>p.accountId),r.code);}catch(e){r.rematch=[false,false];throw e}}
+   liveArenaLifecycle.endRoom(r.code);liveArenaMatchKeys.delete(r.code);
+   r.entryPaid=r.mode!=='bot';r.goldRefunds=null;r.matchNumber=(r.matchNumber||1)+1;
+   r.goldAward=null;r.rankChange=null;r.rankBefore=null;r.cards=newCards(r.universe);
+   r.round=0;r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.topBid=0;r.topSeat=null;
+   r.history=[];r.openingPassSeat=null;r.rematch=[false,false];r.battleCompleted=[false,false];
+   r.matchSettled=false;r.battleSettlementPending=false;r.battleSync=null;r.created=Date.now();r.lastActivity=Date.now();
+   for(const p of r.players){p.credits=20;p.team=[];}
+   log(r,'Rövanş başladı!');
+  }finally{r.rematchPending=false}
+ }
+ publish(r);return{room:publicRoom(r,seat)};
+}
 if(url==='/api/bot'){const difficulty=['easy','medium','hard'].includes(b.difficulty)?b.difficulty:'medium';const universe='mixed';const name=chosenName(b,'Oyuncu');let id;do{id=code()}while(rooms.has(id));const t=token();const r={entryPaid:false,code:id,universe,cards:newCards(universe),round:0,phase:'auction',turn:0,deadline:Date.now()+20000,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},{name:'Bilgisayar',token:token(),credits:20,team:[]}],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'bot',difficulty};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/match'){const universe='mixed';const name=chosenName(b,'Oyuncu');for(const [key,item] of waiting){if(item.universe!==universe||Date.now()-item.created>60000)continue;const r=rooms.get(item.code);if(!r||r.players[1]){waiting.delete(key);continue;}await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.mode='random';waiting.delete(key);publish(r);return{token:t,room:publicRoom(r,1)}}let id;do{id=code()}while(rooms.has(id));const t=token();const r={code:id,universe,cards:newCards(universe),round:0,phase:'matching',turn:0,deadline:null,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'random'};rooms.set(id,r);markRoom(r);waiting.set(id,{code:id,universe,created:Date.now()});return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/chat'){const{r,seat}=authorize(b);if(r.mode==='bot')error('Sohbet yalnızca gerçek oyuncularla kullanılabilir.');const message=String(b.message||'').trim().replace(/[\u0000-\u001f\u007f]/g,' ');if(!message||message.length>240)error('Mesaj 1–240 karakter olmalı.');if(Date.now()-(r.lastChatAt?.[seat]||0)<1000)error('Yeni mesaj için bir saniye bekle.');r.lastChatAt??=[0,0];r.lastChatAt[seat]=Date.now();r.chat??=[];r.chat.push({seat,name:r.players[seat].name,message,time:Date.now()});if(r.chat.length>60)r.chat.shift();r.lastActivity=Date.now();publish(r);return{room:publicRoom(r,seat)}}
@@ -366,6 +392,12 @@ const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.w
  if(room.phase!=='finished')return send(409,{error:'Açık artırma bitmedi'});
  try{prepareBattleTeams(auctionRoomToBattleState(room))}catch(e){return send(422,{error:e.message})}
  if(!room.battleSync?.result)return send(409,{error:'Savaş henüz başlamadı'});
+ if(room.battleSync.result.live&&!room.battleSync.result.finished){
+  const key=liveArenaMatchKeys.get(room.code);
+  if(!key)return send(409,{error:'Canlı savaş sonucu henüz kesinleşmedi'});
+  try{if(!liveArenaLifecycle.snapshot({matchKey:key,token:body.token}).finished)return send(409,{error:'Canlı savaş henüz tamamlanmadı'});}
+  catch{return send(409,{error:'Canlı savaş sonucu henüz kesinleşmedi'});}
+ }
  room.battleCompleted??=[false,false];room.battleCompleted[seat]=true;markRoom(room);return send(200,{ok:true,completed:room.battleCompleted,series:room.series||[0,0],seat,players:room.players.map(p=>({name:p?.name||'Oyuncu'}))});
 }
 if(url.pathname==='/api/experimental/live-room-binding'&&req.method==='GET'){
@@ -395,7 +427,7 @@ if(url.pathname==='/api/experimental/commander-live'&&(req.method==='GET'||req.m
  const liveKey=activeLiveKey||matchKey;
  const sinceVersion=Number(req.method==='GET'?url.searchParams.get('sinceVersion')||0:body.sinceVersion||0);
  if(!Number.isSafeInteger(sinceVersion)||sinceVersion<0)return send(400,{error:'Geçersiz savaş sürümü'});
- const snapshot=()=>{const current=liveArenaLifecycle.snapshot({matchKey:liveKey,token:body.token,sinceVersion});return side===0?current:{...current,side:0,teams:[...current.teams].reverse(),abilities:[...current.abilities].reverse(),events:current.events.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side}))};};
+ const snapshot=()=>{const current=liveArenaLifecycle.snapshot({matchKey:liveKey,token:body.token,sinceVersion});return side===0?current:{...current,side:0,winner:current.winner===null?null:1-current.winner,teams:[...current.teams].reverse(),abilities:[...current.abilities].reverse(),events:current.events.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side}))};};
  try{
   if(req.method==='POST'){
    if(!['normal','ultimate'].includes(body?.ability))return send(422,{error:'Geçersiz komutan yeteneği'});
@@ -501,10 +533,12 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
   liveArenaLifecycle.begin({matchKey:liveKey,tokens:room.players.map(p=>p.token),combat,options:{parity:true,specialHealing:true,energySplash:true,shieldDrain:true,statSpecial:true,executeSpecial:true,thornsPassive:true,roundPassives:true,damageSpecial:true}});
   liveArenaMatchKeys.set(room.code,liveKey);
  }
- try{result=simulateRosterBattle(ordered[0],ordered[1],{seed:'auction-battle-'+room.code+'-'+matchKey,remainingCredits:[state.remainingCreditsA,state.remainingCreditsB],commanders:commanderProfiles});}
- catch(e){if(!liveArenaMatchKeys.has(room.code))throw e;const live=liveArenaLifecycle.snapshot({matchKey:liveArenaMatchKeys.get(room.code),token:room.players[0].token});result={winner:null,rounds:live.round,teams:live.teams,log:[]};}
- sync.result={winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log,live:liveArenaMatchKeys.has(room.code),commanders:commanderProfiles.map(profile=>profile?{commanderId:profile.commanderId,levels:{...profile.levels}}:null)};
- if(room.battleSettlementPending&&!room.matchSettled){settleFinishedMatch(room,result.winner);room.battleSettlementPending=false;}
+ if(liveArenaMatchKeys.get(room.code)===room.code+':'+matchKey){
+  const live=liveArenaLifecycle.snapshot({matchKey:liveArenaMatchKeys.get(room.code),token:room.players[0].token});
+  result={winner:null,rounds:live.round,teams:live.teams,log:[]};
+ }else result=simulateRosterBattle(ordered[0],ordered[1],{seed:'auction-battle-'+room.code+'-'+matchKey,remainingCredits:[state.remainingCreditsA,state.remainingCreditsB],commanders:commanderProfiles});
+ sync.result={winner:result.winner,rounds:result.rounds,teams:result.teams,log:result.log,live:liveArenaMatchKeys.get(room.code)===room.code+':'+matchKey,commanders:commanderProfiles.map(profile=>profile?{commanderId:profile.commanderId,levels:{...profile.levels}}:null)};
+ if(!sync.result.live&&room.battleSettlementPending&&!room.matchSettled){settleFinishedMatch(room,result.winner);room.battleSettlementPending=false;}
  }markRoom(room);
  }
  return send(200,{ready:sync.ready.map(Boolean),started:Boolean(sync.result),result:sync.result?{...sync.result,winner:sync.result.winner===null?null:sync.result.winner===seat?0:1,teams:seat===0?sync.result.teams:[...sync.result.teams].reverse(),commanders:seat===0?sync.result.commanders:[...sync.result.commanders].reverse(),log:seat===0?sync.result.log:sync.result.log.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side}))}:null});
