@@ -2,6 +2,7 @@ import * as T from 'three';
 import {createHeroModel,createBoard,homePosition} from './arena-3d-models.js';
 import {primaryAction,snapshotChanges} from './arena-3d-timeline.js';
 import {SoftwareArenaRenderer} from './arena-3d-software.js';
+import {heroCombatPresentation,stationaryArenaAction} from './hero-combat-presentation.js';
 
 const ease=t=>t*t*(3-2*t),clamp=T.MathUtils.clamp;
 export class Arena3dScene{
@@ -73,8 +74,11 @@ export class Arena3dScene{
   const targetSide=heal||action.action==='shield'?action.side:1-action.side;
   const target=this.models.get(targetSide+':'+(action.target||action.actor));
   this.active.actor=actor;this.active.target=target;this.active.heal=heal;
-  if(actor&&target&&(actor.hero.role==='energy'||actor.hero.role==='support'||heal)){
-   const projectile=new T.Mesh(new T.IcosahedronGeometry(.13,1),new T.MeshBasicMaterial({color:heal?0x8affc0:actor.hero.role==='support'?0xf4d58b:0xc4a0ff}));
+  this.active.stationary=actor?stationaryArenaAction(actor.hero,action):true;
+  if(actor&&target&&this.active.stationary){
+   const kind=heroCombatPresentation(actor.hero).projectile;
+   const projectile=new T.Mesh(kind==='arrow'&&!heal?new T.ConeGeometry(.055,.6,6):new T.IcosahedronGeometry(.13,1),new T.MeshBasicMaterial({color:heal?0x8affc0:kind==='arrow'?0xc1f797:kind==='light'?0xf4d58b:0xc4a0ff}));
+   projectile.userData.arrow=kind==='arrow'&&!heal;
    projectile.visible=false;this.scene.add(projectile);this.active.projectile=projectile;
   }
  }
@@ -144,10 +148,10 @@ export class Arena3dScene{
    if(active?.actor===m&&active.target){
     const target=active.target.base,dx=target.x-m.base.x,dz=target.z-m.base.z;
     m.root.rotation.y=Math.atan2(dx,dz);
-    const ranged=m.hero.role==='energy'||m.hero.role==='support'||active.heal;
+    const ranged=active.stationary;
     if(ranged){
      m.arms[1].rotation.x=-Math.sin(p*Math.PI)*1.3;m.arms[0].rotation.x=-Math.sin(p*Math.PI)*.65;
-     if(active.projectile){const travel=clamp((p-.17)/.33,0,1);active.projectile.visible=p>=.17&&p<.5;active.projectile.position.lerpVectors(m.base,active.target.base,travel);active.projectile.position.y=1.4+Math.sin(travel*Math.PI)*.6;active.projectile.rotation.y=this.time*4;}
+     if(active.projectile){const travel=clamp((p-.17)/.33,0,1);active.projectile.visible=p>=.17&&p<.5;active.projectile.position.lerpVectors(m.base,active.target.base,travel);active.projectile.position.y=1.4+Math.sin(travel*Math.PI)*.6;if(active.projectile.userData.arrow)active.projectile.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),new T.Vector3(dx,0,dz).normalize());else active.projectile.rotation.y=this.time*4;}
     }else{
      const move=this.reduced?0:p<.34?ease(p/.34):p<.58?1:1-ease((p-.58)/.42);
      const length=Math.hypot(dx,dz),distance=Math.max(0,length-1.1),ratio=length?distance/length:0;

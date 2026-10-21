@@ -1,6 +1,7 @@
 import {summarizeBattle} from '/battle-summary-data.js?v=complete-results-20261021';
 import {commanderAbilityStats,commanderAbilityDescription} from '/commander-ability-rules.js?v=commander-attack-fix-20261021';
 import {getArenaLaneLayout} from '/arena-viewport.js?v=arena-viewport-20261021b';
+import {heroCombatPresentation,stationaryArenaAction} from '/hero-combat-presentation.js';
 // Verify the current portal account before accessing any saved arena seat.
 if(window.HeroPlatform){
  const restart=()=>{localStorage.removeItem('hero-auction-session');sessionStorage.removeItem('hero-auction-formation');sessionStorage.removeItem('hero-auction-lanes');location.replace('/crazygames/')};
@@ -389,8 +390,9 @@ function animateMove(e){
  const action=String(e.action||'');
  const heal=/heal|regen/i.test(action),shield=/shield|guard|resist/i.test(action);
  const special=!splash&&(/special|burst|pierce|magic|energy|ultimate/i.test(action)||e.damageType==='special');
- const ranged=special||splash||heal||shield||actor.dataset.role==='energy'||actor.dataset.role==='support'||/thor|iron man|scarlet witch|doctor fate|storm|superman|vision|magneto/i.test(e.actorId);
- const style=heal?'heal':shield?'shield':/thor|lightning/i.test(e.actorId+' '+action)?'lightning':/witch|fate|magic/i.test(e.actorId+' '+action)?'magic':special?'special':'standard';
+ const hero={id:actor.dataset.heroId,role:actor.dataset.role},presentation=heroCombatPresentation(hero);
+ const ranged=splash||stationaryArenaAction(hero,e);
+ const style=heal?'heal':shield?'shield':presentation.projectile==='arrow'?'arrow':/lightning/i.test(action)?'lightning':presentation.projectile==='magic'?'magic':special?'special':'standard';
  const time=Math.max(320,Math.min(780,duration()*.72));
  if(target&&!heal&&!shield&&typeof target.animate==='function'){
   if(!splash&&typeof actor.animate==='function'){
@@ -416,6 +418,7 @@ function animateMove(e){
  if(target&&ranged&&!heal&&!shield&&!splash){
   const ar=actor.getBoundingClientRect(),tr=target.getBoundingClientRect();
   const orb=document.createElement('span');orb.className='battle-projectile effect-'+style;
+  if(style==='arrow')orb.style.rotate=Math.atan2((tr.top+tr.height/2)-(ar.top+ar.height/2),(tr.left+tr.width/2)-(ar.left+ar.width/2))+'rad';
   orb.style.setProperty('--from-x',ar.left+ar.width/2+'px');orb.style.setProperty('--from-y',ar.top+ar.height/2+'px');
   orb.style.setProperty('--to-x',tr.left+tr.width/2+'px');orb.style.setProperty('--to-y',tr.top+tr.height/2+'px');
   orb.style.setProperty('--duration',Math.min(600,duration()*.5)+'ms');document.body.append(orb);
