@@ -1,6 +1,32 @@
 // Presentation-only English locale for the CrazyGames entry point.
 // Do not translate stored values, hero IDs, requests, or game rules.
 export const phrases = {
+"Takımına uygun kahramanı keşfet.":"Find the right hero for your team.",
+"Kahraman filtreleri":"Hero filters",
+"Kahraman detayları":"Hero details",
+"KAHRAMAN DETAYI":"HERO DETAILS",
+"Toplam kahraman":"Total heroes",
+"Kahraman ara":"Search heroes",
+"İsim yaz…":"Enter a name…",
+"Tüm roller":"All roles",
+"Nadirlik":"Rarity",
+"Hepsi":"All",
+"Filtreleri temizle":"Clear filters",
+"Detaylar için karta dokun.":"Tap a hero for details.",
+"Kahraman bulunamadı":"No heroes found",
+"Başka bir isim veya filtre dene.":"Try another name or filter.",
+"Kahramanlar yüklenemedi. Tekrar deneyebilirsin.":"Could not load heroes. Please try again.",
+"Kahramanlar yükleniyor…":"Loading heroes…",
+"Tekrar dene":"Try again",
+"Detayları kapat":"Close details",
+"detaylarını gör":"view details",
+"İncele":"View details",
+"Yetenekler":"Abilities",
+"Hikâye":"Story",
+"Saf bonusları":"Formation bonuses",
+"Özellik puanları":"Attribute scores",
+"Ana menü":"Main menu",
+"Oyuna dön":"Back to game",
 "Büyüyü uygula":"Cast spell",
 "Vazgeç":"Cancel",
 "Normal büyü":"Normal spell",
@@ -161,7 +187,7 @@ export const phrases = {
 const pairs=Object.entries(phrases).sort((a,b)=>b[0].length-a[0].length);
 export function translate(text){
  if(text.trim()==='PAS')return text.replace('PAS','PASS');
- let out=text.replace(/Şu anda (\d+) özgün kahraman hazır/g,'$1 original heroes available');
+ let out=text.replace(/Şu anda (\d+) özgün kahraman hazır/g,'$1 original heroes available').replace(/(\d+) kahraman/g,'$1 heroes');
  for(const [tr,en] of pairs)out=out.split(tr).join(en);
  return out;
 }

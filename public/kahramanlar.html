@@ -1,1 +1,32 @@
-<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080e20"><title>Kahramanlar | Hero Auction</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/kahramanlar.css"></head><body><main class="gallery-shell"><header class="gallery-header"><a href="/" class="gallery-back">← GERİ DÖN</a><strong>✦ HERO<span>AUCTION</span></strong></header><div class="gallery-intro"><span class="gallery-kicker">✦ KAHRAMAN ARŞİVİ</span><h1>KAHRAMANLAR</h1><p>Kart türünü seç, kahramanları incele ve savaşta kullanacağın yetenekleri keşfet.</p></div><div class="gallery-toolbar"><div id="hero-filters" class="gallery-filters" role="group" aria-label="Kahraman türü"></div><label class="gallery-search-label" for="hero-search">KAHRAMAN ARA</label><input id="hero-search" type="search" placeholder="Kahraman adı..." autocomplete="off"></div><p id="gallery-status" class="gallery-status" role="status">Kahramanlar yükleniyor…</p><div id="hero-gallery" class="hero-gallery"></div><footer><a href="/">← Oyuna dön</a></footer><dialog id="hero-story-dialog" class="hero-story-dialog" aria-labelledby="hero-story-title"><div class="hero-story-top"><span>✦ KAHRAMAN HİKÂYESİ</span><button type="button" id="hero-story-close" aria-label="Hikâyeyi kapat">✕</button></div><h2 id="hero-story-title"></h2><div id="hero-story-text" class="hero-story-text"></div></dialog></main><script type="module" src="/kahramanlar.js?v=connected-lore-20261021"></script></body></html>
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b1220">
+<title>Kahramanlar | Hero Auction</title>
+<link rel="stylesheet" href="/kahramanlar.css?v=clear-gallery-20261021">
+</head>
+<body>
+<main class="gallery-shell">
+ <header class="gallery-header"><a href="/" class="gallery-back"><span aria-hidden="true">←</span> Ana menü</a><a href="/" class="gallery-brand" aria-label="Hero Auction ana menü">HERO<span>AUCTION</span></a></header>
+ <div class="gallery-intro"><div><h1>Kahramanlar</h1><p>Takımına uygun kahramanı keşfet.</p></div><span class="gallery-total" id="gallery-total" aria-label="Toplam kahraman">—</span></div>
+ <section class="gallery-toolbar" aria-label="Kahraman filtreleri">
+  <div class="gallery-search-row">
+   <div class="gallery-search-field"><label for="hero-search">Kahraman ara</label><div class="gallery-input-wrap"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="hero-search" type="search" placeholder="İsim yaz…" autocomplete="off" spellcheck="false"></div></div>
+   <div class="gallery-role-field"><label for="hero-role">Rol</label><select id="hero-role"><option value="all">Tüm roller</option><option value="tank">Tank</option><option value="fighter">Savaşçı</option><option value="assassin">Suikastçı</option><option value="energy">Büyücü</option><option value="support">Destek</option></select></div>
+  </div>
+  <div class="gallery-rarity-row"><span class="gallery-field-label" id="rarity-label">Nadirlik</span><div id="hero-filters" class="gallery-filters" role="group" aria-labelledby="rarity-label"></div></div>
+ </section>
+ <div class="gallery-results"><p id="gallery-status" role="status">Kahramanlar yükleniyor…</p><button type="button" id="gallery-reset" hidden>Filtreleri temizle</button></div>
+ <div id="hero-gallery" class="hero-gallery" aria-busy="true"></div>
+ <div id="gallery-empty" class="gallery-empty" hidden><span aria-hidden="true">◇</span><h2>Kahraman bulunamadı</h2><p>Başka bir isim veya filtre dene.</p></div>
+ <button type="button" id="gallery-retry" class="gallery-retry" hidden>Tekrar dene</button>
+ <footer class="gallery-footer"><span>HERO AUCTION</span><a href="/">Oyuna dön <span aria-hidden="true">→</span></a></footer>
+</main>
+<dialog id="hero-story-dialog" class="hero-story-dialog" aria-labelledby="hero-story-title">
+ <div class="hero-dialog-header"><span>KAHRAMAN DETAYI</span><button type="button" id="hero-story-close" aria-label="Detayları kapat" autofocus>✕</button></div>
+ <div class="hero-dialog-identity"><div id="hero-detail-portrait" class="hero-portrait-slot"></div><div class="hero-dialog-heading"><span id="hero-detail-rarity" class="gallery-rarity"></span><h2 id="hero-story-title"></h2><p id="hero-detail-role"></p></div><div class="hero-detail-power"><small>GÜÇ</small><strong id="hero-detail-power"></strong><span>/ 100</span></div></div>
+ <div class="hero-detail-tabs" role="tablist" aria-label="Kahraman detayları"><button type="button" id="hero-skills-tab" role="tab" aria-selected="true" aria-controls="hero-detail-skills">Yetenekler</button><button type="button" id="hero-lore-tab" role="tab" aria-selected="false" aria-controls="hero-story-text" tabindex="-1">Hikâye</button></div>
+ <div class="hero-detail-scroll" id="hero-detail-scroll"><section id="hero-detail-skills" role="tabpanel" aria-labelledby="hero-skills-tab" tabindex="0"></section><section id="hero-story-text" class="hero-story-text" role="tabpanel" aria-labelledby="hero-lore-tab" tabindex="0" hidden></section></div>
+</dialog>
+<script type="module" src="/kahramanlar.js?v=clear-gallery-20261021"></script>
+</body></html>
