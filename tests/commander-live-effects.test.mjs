@@ -31,3 +31,29 @@ test('rejects invalid commands and completed battles',()=>{
  const input=teams();for(const u of input[1])u.hp=0;
  assert.throws(()=>applyLiveCommanderEffect(input,{side:0,ability:'normal',commanderId:'attack'}),/finished/);
 });
+
+test('impact records report actual shield absorption and capped health loss',()=>{
+ const input=teams();input[1][0].shield=50;input[1][1].hp=2;
+ const out=applyLiveCommanderEffect(input,{side:0,ability:'normal',commanderId:'attack'}),impacts=out.log.at(-1).impacts;
+ assert.deepEqual(impacts[0],{target:'0',kind:'damage',value:0,absorbed:6});
+ assert.deepEqual(impacts[1],{target:'1',kind:'damage',value:2,absorbed:0});
+ for(const effect of impacts)assert.equal(effect.value,input[1][Number(effect.target)].hp-out.teams[1][Number(effect.target)].hp);
+});
+test('healing impact records only the injured recipients actually healed',()=>{
+ const input=teams();input[0][0].hp=20;input[0][1].hp=50;
+ const out=applyLiveCommanderEffect(input,{side:0,ability:'ultimate',commanderId:'support'});
+ assert.deepEqual(out.log.at(-1).impacts,[{target:'0',kind:'heal',value:39}]);
+ assert.deepEqual(applyLiveCommanderEffect(teams(),{side:0,ability:'normal',commanderId:'support'}).log.at(-1).impacts,[]);
+});
+test('shield impact records exclude dead heroes and report gained shield, not total shield',()=>{
+ const input=teams();input[1][0].hp=0;input[1][1].shield=100;
+ const out=applyLiveCommanderEffect(input,{side:1,ability:'ultimate',commanderId:'defense'});
+ assert.equal(out.log.at(-1).impacts.length,4);
+ for(const impact of out.log.at(-1).impacts){assert.equal(impact.kind,'shield');assert.equal(impact.value,20);assert.notEqual(impact.target,'0');}
+ assert.equal(out.teams[1][1].shield,120);
+});
+test('magic impact records only chosen targets and preserve an existing stronger weakening',()=>{
+ const input=teams();input[1][2].commanderWeaken=.4;
+ const out=applyLiveCommanderEffect(input,{side:0,ability:'normal',commanderId:'magic',targetIds:['2']});
+ assert.deepEqual(out.log.at(-1).impacts,[{target:'2',kind:'weaken',value:40}]);
+});

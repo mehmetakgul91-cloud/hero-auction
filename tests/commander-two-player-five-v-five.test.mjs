@@ -21,9 +21,9 @@ test('two player seats: 5v5 live arena with shared effect lock and independent e
  assert.equal(lifecycle.snapshot({matchKey,token:'seat-B',now}).side,1);
  assert.ok(lifecycle.cast({matchKey,token:'seat-A',ability:'normal',requestId:'cast_A_1234',now}).events.length);
  const before=lifecycle.snapshot({matchKey,token:'seat-A',now});
- assert.throws(()=>lifecycle.cast({matchKey,token:'seat-B',ability:'normal',requestId:'cast_B_1234',now:1999}),/Komutan efekti/);
+ assert.throws(()=>lifecycle.cast({matchKey,token:'seat-B',ability:'normal',requestId:'cast_B_1234',now:1199}),/Komutan efekti/);
  assert.deepEqual(lifecycle.snapshot({matchKey,token:'seat-A',now}),before);
- now=2000;
+ now=1200;
  assert.ok(lifecycle.cast({matchKey,token:'seat-B',ability:'normal',requestId:'cast_B_1234',now}).events.length);
  for(let i=0;i<170&&!combat.finished;i++){now+=100;tick();const state=lifecycle.status(matchKey);assert.equal(state.lastError,null);}
  assert.ok(combat.version>12);
@@ -41,9 +41,9 @@ test('auction 5v5 teams share one live server combat and commander casts mutate 
  let now=0,tick;const lifecycle=createLiveArenaLifecycle({intervalMs:100,clock:()=>now,scheduler:fn=>{tick=fn;return 1},canceller:()=>{}});
  lifecycle.begin({matchKey,tokens:['auction-seat-a','auction-seat-b'],combat,options:{parity:true,specialHealing:true,energySplash:true,shieldDrain:true,statSpecial:true,executeSpecial:true,thornsPassive:true,roundPassives:true,damageSpecial:true}});
  const first=lifecycle.cast({matchKey,token:'auction-seat-a',ability:'normal',requestId:'auction_cast_a_1',now});
- assert.throws(()=>lifecycle.cast({matchKey,token:'auction-seat-b',ability:'normal',requestId:'auction_cast_b_1',now:1999}),/Komutan efekti/);
+ assert.throws(()=>lifecycle.cast({matchKey,token:'auction-seat-b',ability:'normal',requestId:'auction_cast_b_1',now:1199}),/Komutan efekti/);
  assert.equal(combat.abilities.energy[1],100);
- now=2000;
+ now=1200;
  const second=lifecycle.cast({matchKey,token:'auction-seat-b',ability:'normal',requestId:'auction_cast_b_1',now});
  assert.ok(first.events.some(e=>e.action==='commander-hit'));
  assert.ok(second.events.some(e=>e.action==='commander-defense-normal'));

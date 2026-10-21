@@ -1,7 +1,7 @@
 // Experimental server-authoritative, on-demand commander ability controller.
 // The battle engine integration is separate: accepting a cast never fabricates combat damage.
 export const COMMANDER_COOLDOWN_MS=5000;
-export const COMMANDER_EFFECT_MS=2000;
+export const COMMANDER_EFFECT_MS=1200;
 export const COMMANDER_ABILITY_COSTS=Object.freeze({normal:40,ultimate:100});
 export function createLiveCommanderAbilities({matchKey,energy=[0,0],now=Date.now()}={}){
  if(!matchKey||!Array.isArray(energy)||energy.length!==2||energy.some(n=>!Number.isInteger(n)||n<0||n>100))throw Error('Invalid live commander session');
@@ -35,7 +35,7 @@ export function castLiveCommanderAbility(session,{side,ability,now=Date.now(),ma
  const cost=COMMANDER_ABILITY_COSTS[ability];
  if(!cost)throw Error('Invalid commander ability');
  if(!Number.isFinite(now))throw Error('Invalid time');
- if(now<(session.effectUntil||0))throw Error('Komutan efekti sürüyor. 2 saniyelik efektin bitmesini bekle.');
+ if(now<(session.effectUntil||0))throw Error('Komutan efekti sürüyor. 1,2 saniyelik efektin bitmesini bekle.');
  if(now<session.cooldownUntil[side])throw Error('Commander cooldown active');
  if(session.energy[side]<cost)throw Error('Insufficient commander energy');
  session.energy[side]-=cost;

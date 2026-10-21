@@ -5,7 +5,7 @@ function renderCommanderCooldown(){
  if(!label)return;
  const effect=Math.max(effectEnd,window.heroCommanderEffectUntil||0)-Date.now();
  const remaining=Math.max(0,Math.ceil((cooldownEnd-Date.now())/1000));
- label.textContent=finished?'Savaş tamamlandı':effect>0?'Komutan efekti · '+Math.ceil(effect/1000)+' saniye':remaining>0?'Yetenek bekleme süresi: '+remaining+' saniye':'Yeterli enerjin varsa becerini kullanabilirsin';
+ label.textContent=finished?'Savaş tamamlandı':effect>0?'Komutan efekti · '+(Math.ceil(effect/100)/10).toLocaleString('tr-TR',{minimumFractionDigits:1,maximumFractionDigits:1})+' saniye':remaining>0?'Yetenek bekleme süresi: '+remaining+' saniye':'Yeterli enerjin varsa becerini kullanabilirsin';
 }
 window.addEventListener('heroarena:commander-state',event=>{
  const data=event.detail,own=data.abilities?.[data.side]||{};

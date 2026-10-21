@@ -9,11 +9,11 @@ function harness(){
  return {label,window,snapshot:data=>events.get('heroarena:commander-state')({detail:data}),advance:time=>{now=time;tick();}};
 }
 test('cooldown uses the acting seat snapshot and prioritizes the shared effect',()=>{
- const h=harness();h.snapshot({side:1,abilities:[{}, {cooldownMs:5000,effectLockMs:2000}],finished:false});
- assert.match(h.label.textContent,/Komutan efekti · 2/);
- h.advance(2000);assert.match(h.label.textContent,/bekleme süresi: 3/);
+ const h=harness();h.snapshot({side:1,abilities:[{}, {cooldownMs:5000,effectLockMs:1200}],finished:false});
+ assert.match(h.label.textContent,/Komutan efekti · 1,2/);
+ h.advance(1200);assert.match(h.label.textContent,/bekleme süresi: 4/);
  h.advance(5000);assert.match(h.label.textContent,/becerini kullanabilirsin/);
- h.window.heroCommanderEffectUntil=6500;h.advance(5100);assert.match(h.label.textContent,/Komutan efekti · 2/);
+ h.window.heroCommanderEffectUntil=6500;h.advance(5100);assert.match(h.label.textContent,/Komutan efekti · 1,4/);
  h.snapshot({side:1,abilities:[{},{}],finished:true});assert.equal(h.label.textContent,'Savaş tamamlandı');
 });
 test('cooldown shares the control snapshot without extra network calls',()=>{

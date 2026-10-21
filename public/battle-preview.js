@@ -553,7 +553,7 @@ function showVictoryReveal(){
  finishCommanderControls();
  $('message').textContent='Son hamle tamamlandı · Savaş sonucu hazırlanıyor…';
  const finish=()=>{
-  const effectRemaining=Math.max(0,(window.heroCommanderEffectUntil||0)-Date.now());
+  const effectRemaining=Math.max(0,Math.max(window.heroCommanderEffectUntil||0,window.heroCommanderImpactUntil||0)-Date.now());
   if(effectRemaining>0||arenaFinaleActive){victoryPendingTimer=setTimeout(finish,Math.max(100,effectRemaining));return;}
   victoryPendingTimer=null;revealVictoryNow();
  };

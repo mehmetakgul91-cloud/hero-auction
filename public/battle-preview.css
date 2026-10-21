@@ -279,9 +279,9 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 @keyframes arenaSoulRise{0%{opacity:0;transform:translate(-50%,0) scale(.6)}18%{opacity:.95}70%{opacity:.5}100%{opacity:0;transform:translate(-50%,-165px) scale(1.25)}}
 @media(prefers-reduced-motion:reduce){.arena-rising-soul{display:none}.arena-floating-damage{animation:none;transform:translate(-50%,-20px)}}
 
-/* The casting commander takes the foreground for the shared two-second effect. */
+/* The casting commander takes the foreground for the shared 1.2-second effect. */
 .commander-cinematic{position:fixed;inset:0;z-index:10040;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at center,#264b7188,#040715dc);backdrop-filter:blur(3px);touch-action:none}
-.commander-cinematic-content{display:flex;align-items:center;flex-direction:column;gap:10px;text-align:center;color:#fff;max-width:90vw;animation:commanderEntrance 2s ease both}
+.commander-cinematic-content{display:flex;align-items:center;flex-direction:column;gap:10px;text-align:center;color:#fff;max-width:90vw;animation:commanderEntrance var(--commander-effect-duration,1200ms) ease both}
 .commander-cinematic-portrait{width:clamp(160px,42vw,310px);height:clamp(190px,48vh,390px);object-fit:contain;filter:drop-shadow(0 0 30px #72ddff);border-radius:24px}
 .commander-cinematic strong{font-size:clamp(15px,4vw,25px);letter-spacing:.06em;text-shadow:0 2px 8px #000}
 .commander-cinematic span{font-size:clamp(21px,5vw,32px);font-weight:900;color:#8aeaff;text-shadow:0 0 18px #29baff}
@@ -364,3 +364,11 @@ body.arena-fit{height:var(--arena-viewport-height,100vh);height:var(--arena-view
  .arena-fit .arena-commander-dock #experimental-commander-controls [data-live-cooldown]{grid-row:4}
  .arena-fit .arena-commander-dock #experimental-commander-controls [data-status]{grid-row:5}
 }
+
+/* Exact server-confirmed impact, shown on the affected portrait after the cast. */
+.commander-hero-impact{position:fixed;z-index:10025;pointer-events:none;display:grid;place-items:center;border:3px solid var(--impact-color);border-radius:14px;box-shadow:0 0 18px var(--impact-color),inset 0 0 16px var(--impact-color);animation:commanderImpact 1.2s ease-out both;color:var(--impact-color)}
+.commander-hero-impact.damage{--impact-color:#ff8c91}.commander-hero-impact.shield{--impact-color:#80dfff}.commander-hero-impact.heal{--impact-color:#85f8ae}.commander-hero-impact.weaken{--impact-color:#ddb0ff}
+.commander-impact-label{display:flex;align-items:center;flex-direction:column;justify-content:center;gap:2px;min-width:58px;max-width:100px;padding:4px 5px;border:1px solid currentColor;border-radius:8px;background:#081322f5;box-shadow:0 2px 8px #000b;text-align:center;font:800 9px/1.1 system-ui,sans-serif;white-space:nowrap}
+.commander-impact-label strong{font-size:clamp(15px,3.5vw,24px);line-height:1.05}.commander-impact-label small{font-size:9px}
+@keyframes commanderImpact{0%{opacity:0;transform:scale(.9)}12%,80%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.04)}}
+@media(prefers-reduced-motion:reduce){.commander-hero-impact{animation:none}}
