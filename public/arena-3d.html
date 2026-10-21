@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="tr">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <title>3D Deneme Arenası · Hero Auction</title><meta name="robots" content="noindex">
+ <meta name="theme-color" content="#080e18">
+ <link rel="stylesheet" href="/arena-3d.css?v=1">
+ <script type="importmap">{"imports":{"three":"/vendor/three-0.186.1/three.module.js"}}</script>
+</head>
+<body>
+ <main class="demo-shell">
+  <header class="demo-header"><a href="/" class="back-link" aria-label="Ana menüye dön">← <span>ANA MENÜ</span></a><div class="arena-wordmark"><b>HERO<span>AUCTION</span></b><small>3D DENEME ARENASI</small></div><span class="demo-badge"><i></i> ÜCRETSİZ</span></header>
+  <section class="match-hud" aria-label="Takım durumu">
+   <div class="team-hud blue"><div><span>MAVİ TAKIM</span><strong id="blue-alive">5 / 5</strong></div><progress id="blue-health" value="100" max="100" aria-label="Mavi takım canı"></progress><small id="blue-hp">Hazırlanıyor</small></div>
+   <div class="round-hud"><small id="phase-label">HAZIR</small><strong id="round-number">01</strong><span>TUR</span></div>
+   <div class="team-hud red"><div><span>KIRMIZI TAKIM</span><strong id="red-alive">5 / 5</strong></div><progress id="red-health" value="100" max="100" aria-label="Kırmızı takım canı"></progress><small id="red-hp">Hazırlanıyor</small></div>
+  </section>
+  <div class="arena-content">
+   <section class="board-wrap" aria-label="Üç boyutlu savaş tahtası">
+    <canvas id="arena-canvas" aria-label="Kahramana dokunarak bilgilerini görebilirsin"></canvas>
+    <div id="hero-labels" class="hero-labels"></div><div id="float-labels" class="float-labels" aria-hidden="true"></div>
+    <div class="board-caption"><span>OBSİDYEN ARENASI</span><small>5 SINIF · 5'E 5</small></div>
+    <div class="board-tools"><button id="camera" aria-label="Kamera açısını değiştir" title="Kamera açısı">◈</button><button id="quality" aria-label="Görüntü kalitesi: otomatik">OTO</button></div>
+    <div id="load-panel" class="load-panel" role="status"><span class="load-emblem">✦</span><strong>Arena hazırlanıyor</strong><p>Kahramanlar yerlerini alıyor…</p></div>
+    <div id="result-panel" class="result-panel" hidden><small>SAVAŞ TAMAMLANDI</small><h1 id="winner-title"></h1><p id="result-copy"></p><button id="result-replay">↻ TEKRAR İZLE</button></div>
+    <div class="board-hint" id="board-hint">Kahramana dokun · Hareketlerini izle</div>
+   </section>
+   <aside class="hero-inspector" aria-label="Seçili kahraman">
+    <div class="inspector-heading"><small>KAHRAMAN ODAĞI</small><span id="selected-side">MAVİ TAKIM</span></div>
+    <div class="inspector-hero"><img id="selected-portrait" alt=""><div><span id="selected-role" class="role-badge">TANK</span><h2 id="selected-name">Obsidyen Muhafız</h2><p id="selected-description">Ön safta durur, kalkanıyla darbeleri karşılar.</p></div></div>
+    <div class="selected-stats"><div><small>CAN</small><b id="selected-hp">—</b></div><div><small>KALKAN</small><b id="selected-shield">—</b></div><div><small>HASAR</small><b id="selected-damage">—</b></div></div>
+    <div class="roster-section"><small>BEŞ SINIFI KEŞFET</small><div id="hero-selector" class="hero-selector"></div></div>
+    <p class="demo-info">Sınıflara özel 3D minyatürler. Bu ücretsiz denemede altın ve lig puanı değişmez.</p>
+   </aside>
+  </div>
+  <footer class="playback-panel">
+   <div class="action-line" aria-live="polite"><span id="action-symbol">✦</span><div><small id="action-kicker">TAKIMLAR HAZIR</small><p id="action-text">Savaşı başlat, beş sınıfı hareket hâlinde gör.</p></div><span id="action-count">0 hamle</span></div>
+   <div class="playback-controls"><button id="play" class="primary-control" disabled>▶ SAVAŞI BAŞLAT</button><button id="speed" aria-label="Oynatma hızı">1×</button><button id="reset" aria-label="Savaşı başa sar">↻</button></div>
+  </footer>
+ </main>
+ <script type="module" src="/arena-3d.js?v=1"></script>
+</body></html>

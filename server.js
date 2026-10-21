@@ -5,6 +5,7 @@ import {awardUnbidCard} from './auction-passes.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import {gzipSync} from 'node:zlib';
 import {fileURLToPath} from 'node:url';
 import pg from 'pg';
 import {simulateRosterBattle,battleRoster} from './battle-roster.js';
@@ -19,6 +20,7 @@ import {createLiveCommanderCombat} from './commander-live-combat.js';
 import {isLiveCommanderApiAvailable} from './commander-live-api-access.js';
 import {settleLiveBattle} from './live-battle-settlement.js';
 import {orientBattleSummary} from './public/battle-summary-data.js';
+import {createArena3dDemo} from './arena-3d-demo.js';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
 const GOOGLE_CLIENT_ID=process.env.GOOGLE_CLIENT_ID||'742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
@@ -42,6 +44,8 @@ const previewGuestWallets=new Map();
 const previewCommanderProfiles=new Map();
 const previewGuestMode=process.env.COMMANDER_TEST_GUEST_MODE==='1';
 const artCache=new Map();
+const threeAssetCache=new Map();
+let arena3dDemo=null;
 
 const listeners=new Map();
 const waiting=new Map();
@@ -575,6 +579,18 @@ if(req.method==='POST'&&url.pathname==='/api/commander-manual-demo'){
  const commander={commanderId,levels:{attack:0,defense:0,magic:0,support:0}};
  try{const result=simulateRosterBattle(cards(idsA),cards(idsB),{seed:'manual-commander-training-v1',maxRounds:15,commanders:[commander,null],commanderActions:actions.map(a=>({side:0,round:a.round,ability:a.ability}))});return send(200,{rounds:result.rounds,winner:result.winner,teams:result.teams.map(team=>team.map(u=>({id:u.id,name:u.name,maxHp:u.maxHp}))),log:result.log});}
  catch(e){return send(400,{error:e.message})}
+}
+if(req.method==='GET'&&url.pathname==='/api/arena-3d-demo'){
+ // Fixed, public rehearsal. No supplied teams, rooms, identities or gold operations.
+ return send(200,arena3dDemo??=(createArena3dDemo()));
+}
+if(req.method==='GET'&&url.pathname.startsWith('/vendor/three-0.186.1/')){
+ const name=url.pathname.slice('/vendor/three-0.186.1/'.length);
+ if(!['three.module.js','three.core.js'].includes(name))return send(404,{error:'Bulunamadı'});
+ if(!threeAssetCache.has(name)){const raw=fs.readFileSync(path.join(root,'node_modules/three/build',name));threeAssetCache.set(name,{raw,gzip:gzipSync(raw)});}
+ const gzip=/\bgzip\b/.test(req.headers['accept-encoding']||'');
+ res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'public, max-age=31536000, immutable','Vary':'Accept-Encoding',...(gzip?{'Content-Encoding':'gzip'}:{})});
+ res.end(threeAssetCache.get(name)[gzip?'gzip':'raw']);return;
 }
 if(req.method==='GET'&&url.pathname==='/api/battle-preview'){
  // Fixed public demo teams. This endpoint never accesses rooms, accounts or wallets.
