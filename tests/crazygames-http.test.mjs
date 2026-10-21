@@ -53,5 +53,26 @@ test('verified portal accounts retain progress; invites join once and preserve a
   assert.equal((await post('/api/state',{...seat,authToken:b.authToken})).status,403);
   const unauthorizedEvents=await fetch(base+'/api/events?'+new URLSearchParams({...seat,authToken:b.authToken}));assert.equal(unauthorizedEvents.status,403);
   assert.equal((await post('/api/join',{authToken:loser.authToken,code:'not-a-room'})).status,404);
+  // Finish a real auction, then verify re-entry cannot replace a locked formation.
+  const joined=joins.find(r=>r.status===200).body;
+  const players=[{authToken:a.authToken,token:created.body.token},{authToken:winner.authToken,token:joined.token}];
+  let auction=(await post('/api/state',{code,...players[0]})).body.room;
+  for(let n=0;auction.phase==='auction'&&n<40;n++){
+   const passed=await post('/api/pass',{code,...players[auction.turn]});
+   assert.equal(passed.status,200);auction=passed.body.room;
+  }
+  assert.equal(auction.phase,'finished');
+  const teams=await (await fetch(base+'/api/battle-auction-team?'+new URLSearchParams({code,token:players[0].token}))).json();
+  const positions=[0,1,2,3,4],lanes=['front','front','back','back','back'];
+  const formation=i=>({code,token:players[i].token,positions,lanes,roles:teams.teams[i].map(h=>h.role)});
+  assert.equal((await post('/api/battle-auction-preview',formation(0))).status,200);
+  const duplicate=await post('/api/battle-auction-preview',{...formation(0),positions:[4,3,2,1,0]});
+  assert.equal(duplicate.status,200);assert.deepEqual(duplicate.body.ready,[true,false]);
+  const started=await post('/api/battle-auction-preview',formation(1));
+  assert.equal(started.status,200);assert.equal(started.body.started,true);
+  const resumed=await post('/api/battle-auction-preview',formation(1));
+  assert.equal(resumed.status,200);assert.deepEqual(resumed.body,started.body);
+  assert.equal((await post('/api/battle-auction-preview',{...formation(0),token:'invalid'})).status,403);
+
  }finally{child.kill('SIGTERM');await new Promise(resolve=>{if(child.exitCode!==null)return resolve();child.once('exit',resolve);setTimeout(resolve,2000).unref()})}
 });
