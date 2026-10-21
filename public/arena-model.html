@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="tr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1420"><meta name="robots" content="noindex">
+<title>Obsidyen · Hareketli 3D Deneme</title>
+<link rel="stylesheet" href="/arena-model.css?v=1">
+<script type="importmap">{"imports":{"three":"/vendor/three-0.186.1/three.module.js"}}</script>
+</head><body>
+<main class="model-shell">
+ <header><a class="back" href="/">← <span>HERO AUCTION</span></a><a class="battle-link" href="/arena-3d.html?v=obsidian1">5'e 5 arenada gör ↗</a></header>
+ <section class="heading"><div><span class="eyebrow">KAHRAMAN ATÖLYESİ · 01</span><h1>Obsidyen <em>Muhafız</em></h1></div><span class="live-badge"><i></i> HAREKETLİ 3D</span></section>
+ <section class="model-stage" aria-label="Obsidyen'in üç boyutlu hareket denemesi">
+  <canvas id="model-canvas" aria-label="Hareketli üç boyutlu Obsidyen modeli"></canvas>
+  <div class="stage-top"><span id="render-mode">MODEL YÜKLENİYOR</span><button id="view" aria-label="Kamera açısını değiştir" disabled>◈ Kamera</button></div>
+  <div class="unit-label hero-label" id="hero-tag"><b>OBSİDYEN</b><div><i id="hero-health"></i></div><small id="hero-health-text">100 / 100</small></div>
+  <div class="unit-label dummy-label" id="dummy-tag"><b>ANTRENMAN HEDEFİ</b><div><i id="dummy-health"></i></div><small id="dummy-health-text">100 / 100</small></div>
+  <div class="damage" id="damage" aria-hidden="true"></div>
+  <div class="stage-loader" id="model-loader" role="status"><span>✦</span><b>Obsidyen hazırlanıyor</b><p>3D model ve dokuları yükleniyor…</p></div>
+  <div class="stage-status"><i></i><span id="motion-label" role="status">Hazırlanıyor</span><span class="step-count" id="step-count">01 / 01</span></div>
+ </section>
+ <section class="controls" aria-label="Hareket kontrolleri">
+  <button id="demo" class="primary" disabled>▶ SAVAŞ DENEMESİNİ BAŞLAT</button>
+  <div class="motion-buttons"><button data-motion="idle" disabled>Bekle</button><button data-motion="walk" disabled>Yürü</button><button data-motion="attack" disabled>Saldır</button><button data-motion="hit" disabled>Darbe al</button><button data-motion="death" disabled>Yenil</button></div>
+ </section>
+ <footer><p>İlk model denemesi · Altın ve lig puanı değişmez.</p><small>Model: Meshy · <a href="/models/obsidian-NOTICE.txt">CC BY 4.0</a></small></footer>
+</main><script type="module" src="/arena-model.js?v=1"></script></body></html>

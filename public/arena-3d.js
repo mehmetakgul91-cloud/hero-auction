@@ -51,6 +51,8 @@ async function boot(){
   const [module,response]=await Promise.all([import('./arena-3d-scene.js'),fetch('/api/arena-3d-demo')]);
   if(!response.ok)throw Error('Demo unavailable');data=await response.json();
   scene=new module.Arena3dScene($('arena-canvas'),$('hero-labels'),$('float-labels'),select);scene.setTeams(data.initial);currentTeams=data.initial;
+  const {attachObsidian}=await import('./arena-3d-assets.js');
+  await attachObsidian(scene.models.get('0:original:01'));
   if(scene.economy){$('quality').textContent='EKO';$('quality').setAttribute('aria-label','Görüntü kalitesi: ekonomik');}
   for(const hero of data.initial[0]){
    const meta=data.heroes.find(h=>h.id===hero.id),button=document.createElement('button'),img=document.createElement('img');

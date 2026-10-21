@@ -8,6 +8,7 @@ export class SoftwareArenaRenderer{
   this.isSoftwareRenderer=true;this.shadowMap={enabled:false};this.pixelRatio=1;this.clear='#0a1420';this.cache=new WeakMap();this.colors=new WeakMap();this.faces=[];this.loop=null;this.frameId=null;
   this.mvp=new Matrix4();this.vp=new Matrix4();this.normal=new Matrix3();
   this.keyLight=new Vector3(-5,12,8).normalize();this.fillLight=new Vector3(6,5,-7).normalize();
+  this.textures=new WeakMap();this.skinned=new WeakMap();this.vertex=new Vector3();
  }
  setPixelRatio(ratio){this.pixelRatio=Math.min(1,ratio);if(this.width)this.setSize(this.width,this.height);}
  setClearColor(color){this.clear=new Color(color).getStyle();}
@@ -36,13 +37,28 @@ export class SoftwareArenaRenderer{
   }
   return colors.get(key);
  }
+ textureColors(material,geometry,indices){
+  if(!material.map?.image||!geometry.attributes.uv||typeof document==='undefined')return null;
+  let pixels=this.textures.get(material.map);
+  if(!pixels){const canvas=document.createElement('canvas'),image=material.map.image;canvas.width=image.width;canvas.height=image.height;const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(image,0,0);pixels={data:ctx.getImageData(0,0,canvas.width,canvas.height).data,width:canvas.width,height:canvas.height,faces:new WeakMap()};this.textures.set(material.map,pixels);}
+  let colors=pixels.faces.get(geometry);if(colors)return colors;
+  colors=new Uint8Array(indices.length);const uv=geometry.attributes.uv;
+  for(let i=0;i<indices.length;i+=3){let u=0,v=0;for(let k=0;k<3;k++){u+=uv.getX(indices[i+k])/3;v+=uv.getY(indices[i+k])/3;}if(material.map.flipY)v=1-v;const x=Math.min(pixels.width-1,Math.max(0,Math.round(u*(pixels.width-1)))),y=Math.min(pixels.height-1,Math.max(0,Math.round(v*(pixels.height-1)))),offset=(y*pixels.width+x)*4;colors.set(pixels.data.subarray(offset,offset+3),i);}
+  pixels.faces.set(geometry,colors);return colors;
+ }
  render(scene,camera){
   scene.updateMatrixWorld();camera.updateMatrixWorld();this.vp.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);
   const width=this.width,height=this.height;let faceCount=0;
   scene.traverseVisible(object=>{
    if(!object.isMesh||!object.geometry.attributes.position)return;
    const material=Array.isArray(object.material)?object.material[0]:object.material;if(!material||material.visible===false||material.opacity===0)return;
-   const {positions,indices,normals,projected}=this.geometryData(object.geometry);
+   let {positions,indices,normals,projected}=this.geometryData(object.geometry);
+   if(object.isSkinnedMesh){
+    object.skeleton.update();let deformed=this.skinned.get(object);if(!deformed){deformed=new Float32Array(positions.length);this.skinned.set(object,deformed);}
+    for(let i=0;i<positions.length/3;i++){object.getVertexPosition(i,this.vertex);this.vertex.toArray(deformed,i*3);}positions=deformed;
+    for(let i=0;i<indices.length;i+=3){const a=indices[i]*3,b=indices[i+1]*3,c=indices[i+2]*3,ux=positions[b]-positions[a],uy=positions[b+1]-positions[a+1],uz=positions[b+2]-positions[a+2],vx=positions[c]-positions[a],vy=positions[c+1]-positions[a+1],vz=positions[c+2]-positions[a+2];normals[i]=uy*vz-uz*vy;normals[i+1]=uz*vx-ux*vz;normals[i+2]=ux*vy-uy*vx;}
+   }
+   const texture=this.textureColors(material,object.geometry,indices);
    const m=this.mvp.multiplyMatrices(this.vp,object.matrixWorld).elements,n=this.normal.getNormalMatrix(object.matrixWorld).elements;
    for(let i=0;i<positions.length;i+=3){
     const x=positions[i],y=positions[i+1],z=positions[i+2],w=m[3]*x+m[7]*y+m[11]*z+m[15];
@@ -63,7 +79,7 @@ export class SoftwareArenaRenderer{
      const length=Math.hypot(nx,ny,nz)||1;nx/=length;ny/=length;nz/=length;
      shade=.45+Math.max(0,nx*this.keyLight.x+ny*this.keyLight.y+nz*this.keyLight.z)*.7+Math.max(0,nx*this.fillLight.x+ny*this.fillLight.y+nz*this.fillLight.z)*.25;
     }
-    const face=this.faces[faceCount]||(this.faces[faceCount]=[]);face[0]=(az+bz+cz)/3;face[1]=ax;face[2]=ay;face[3]=bx;face[4]=by;face[5]=cx;face[6]=cy;face[7]=this.color(material,shade);face[8]=material.wireframe;face[9]=object.userData.softwareLayer||0;faceCount++;
+    const face=this.faces[faceCount]||(this.faces[faceCount]=[]);face[0]=(az+bz+cz)/3;face[1]=ax;face[2]=ay;face[3]=bx;face[4]=by;face[5]=cx;face[6]=cy;face[7]=texture?`rgb(${Math.min(255,Math.round(texture[i]*shade))},${Math.min(255,Math.round(texture[i+1]*shade))},${Math.min(255,Math.round(texture[i+2]*shade))})`:this.color(material,shade);face[8]=material.wireframe;face[9]=object.userData.softwareLayer||0;faceCount++;
    }
   });
   this.faces.length=faceCount;this.faces.sort((a,b)=>a[9]-b[9]||b[0]-a[0]);

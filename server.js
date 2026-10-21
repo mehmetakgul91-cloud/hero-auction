@@ -586,8 +586,9 @@ if(req.method==='GET'&&url.pathname==='/api/arena-3d-demo'){
 }
 if(req.method==='GET'&&url.pathname.startsWith('/vendor/three-0.186.1/')){
  const name=url.pathname.slice('/vendor/three-0.186.1/'.length);
- if(!['three.module.js','three.core.js'].includes(name))return send(404,{error:'Bulunamadı'});
- if(!threeAssetCache.has(name)){const raw=fs.readFileSync(path.join(root,'node_modules/three/build',name));threeAssetCache.set(name,{raw,gzip:gzipSync(raw)});}
+ const allowed={'three.module.js':'build/three.module.js','three.core.js':'build/three.core.js','addons/loaders/GLTFLoader.js':'examples/jsm/loaders/GLTFLoader.js','addons/utils/BufferGeometryUtils.js':'examples/jsm/utils/BufferGeometryUtils.js','addons/utils/SkeletonUtils.js':'examples/jsm/utils/SkeletonUtils.js'};
+ if(!Object.hasOwn(allowed,name))return send(404,{error:'Bulunamadı'});
+ if(!threeAssetCache.has(name)){const raw=fs.readFileSync(path.join(root,'node_modules/three',allowed[name]));threeAssetCache.set(name,{raw,gzip:gzipSync(raw)});}
  const gzip=/\bgzip\b/.test(req.headers['accept-encoding']||'');
  res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'public, max-age=31536000, immutable','Vary':'Accept-Encoding',...(gzip?{'Content-Encoding':'gzip'}:{})});
  res.end(threeAssetCache.get(name)[gzip?'gzip':'raw']);return;

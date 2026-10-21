@@ -3,6 +3,7 @@ import {createHeroModel,createBoard,homePosition} from './arena-3d-models.js';
 import {primaryAction,snapshotChanges} from './arena-3d-timeline.js';
 import {SoftwareArenaRenderer} from './arena-3d-software.js';
 import {heroCombatPresentation,stationaryArenaAction} from './hero-combat-presentation.js';
+import {arenaRigState} from './arena-3d-rig.js';
 
 const ease=t=>t*t*(3-2*t),clamp=T.MathUtils.clamp;
 export class Arena3dScene{
@@ -141,6 +142,7 @@ export class Arena3dScene{
    if(m.aura){m.aura.rotation.y=this.time;m.aura.scale.setScalar(1+motion*.1);}
    if(m.bubble.visible){m.bubble.rotation.y=this.time*.25;m.bubble.material.opacity=.11+Math.sin(this.time*2)*.025;}
    if(m.selectRing.visible)m.selectRing.scale.setScalar(1+Math.sin(this.time*2)*.035);
+   if(m.rig)m.rig.apply(arenaRigState({active,model:m,time:this.time,progress:p,reduced:this.reduced}));
    if(m.dead){
     const death=clamp((this.time-(m.deathAt??-10))/.8,0,1);m.body.rotation.z=death*1.5;m.body.position.y=-death*.25;m.body.scale.setScalar(1-death*.35);m.body.visible=death<1;return;
    }

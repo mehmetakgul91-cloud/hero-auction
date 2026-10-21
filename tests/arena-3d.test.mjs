@@ -82,7 +82,10 @@ test('public rehearsal and pinned renderer load without login; vendor route only
   const page=await fetch(base+'/arena-3d.html');assert.equal(page.status,200);assert.match(await page.text(),/type="importmap"/);
   const first=await (await fetch(base+'/api/arena-3d-demo')).json(),second=await (await fetch(base+'/api/arena-3d-demo?room=ignored')).json();
   assert.equal(first.demo,true);assert.deepEqual(first,second);assert.equal(first.initial[0].length,5);assert.equal(first.token,undefined);assert.equal(first.goldAward,undefined);
-  for(const name of ['three.module.js','three.core.js']){const asset=await fetch(base+'/vendor/three-0.186.1/'+name);assert.equal(asset.status,200);assert.match(asset.headers.get('content-type'),/javascript/);assert.equal(asset.headers.get('content-encoding'),'gzip');assert.ok((await asset.text()).length>10000);}
+  for(const name of ['three.module.js','three.core.js','addons/loaders/GLTFLoader.js','addons/utils/BufferGeometryUtils.js','addons/utils/SkeletonUtils.js']){const asset=await fetch(base+'/vendor/three-0.186.1/'+name);assert.equal(asset.status,200);assert.match(asset.headers.get('content-type'),/javascript/);assert.equal(asset.headers.get('content-encoding'),'gzip');assert.ok((await asset.text()).length>10000);}
+  const model=await fetch(base+'/models/obsidian-v1.glb');assert.equal(model.status,200);assert.ok((await model.arrayBuffer()).byteLength<2_000_000);
+  const focus=await fetch(base+'/arena-model.html');assert.equal(focus.status,200);assert.match(await focus.text(),/data-motion="attack"/);
   assert.equal((await fetch(base+'/vendor/three-0.186.1/package.json')).status,404);
+  assert.equal((await fetch(base+'/vendor/three-0.186.1/addons/loaders/FBXLoader.js')).status,404);
  }finally{child.kill('SIGTERM');await new Promise(resolve=>{if(child.exitCode!==null)return resolve();child.once('exit',resolve);setTimeout(resolve,1500).unref();});}
 });
