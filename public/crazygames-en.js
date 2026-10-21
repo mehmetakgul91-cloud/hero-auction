@@ -1,6 +1,15 @@
 // Presentation-only English locale for the CrazyGames entry point.
 // Do not translate stored values, hero IDs, requests, or game rules.
 export const phrases = {
+"Büyüyü uygula":"Cast spell",
+"Vazgeç":"Cancel",
+"Normal büyü":"Normal spell",
+"Nihai büyü":"Ultimate spell",
+"Rakip kartına dokun":"Tap an enemy card",
+"Büyü komutu gönderiliyor…":"Casting spell…",
+"Büyü seçimi iptal edildi; enerji harcanmadı":"Spell selection cancelled; no energy spent",
+"Yetenek henüz hazır değil.":"Ability is not ready yet.",
+"Büyü komutu reddedildi":"Spell was rejected",
 "KOMUTA MERKEZİ":"COMMAND CENTER",
 "GÜCÜNÜ BİR ÜST SEVİYEYE TAŞI":"TAKE YOUR POWER TO THE NEXT LEVEL",
 "Komutan geliştirme":"Commander upgrades",

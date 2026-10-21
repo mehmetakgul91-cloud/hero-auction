@@ -1,5 +1,6 @@
 import {commanderAbilityStats} from './public/commander-ability-rules.js';
 import {commanderAttackPower,distributeCommanderAttack} from './commander-attack-damage.js';
+import {commanderShieldAmounts,commanderHealingBudget} from './commander-protection-budget.js';
 // Deterministic commander effects against an already initialized combat snapshot.
 // This is an isolated adapter; it does not advance the existing hero attack loop.
 export function applyLiveCommanderEffect(teams,{side,ability,commanderId,commanderProfile={commanderId},attackBasis,round=1,targetIds}){
@@ -24,13 +25,10 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
    log.push({round,side,actor:'commander:'+side,action:'commander-hit',target:u.id,value:damage,absorbed,rawDamage:each,damageType:'commander'});
   }
  }else if(commanderId==='defense'){
-  const maxHp=allies.reduce((n,u)=>n+u.maxHp,0);
-  const each=Math.max(1,Math.floor(Math.max(1,Math.round(maxHp*rate))/allies.length));
-  for(const u of allies){u.shield=(u.shield||0)+each;value+=each;impacts.push({target:u.id,kind:'shield',value:each})}
+  const amounts=commanderShieldAmounts(allies,rate);
+  for(const [index,u] of allies.entries()){const each=amounts[index];u.shield=(u.shield||0)+each;value+=each;if(each>0)impacts.push({target:u.id,kind:'shield',value:each})}
  }else if(commanderId==='support'){
-  const missing=allies.reduce((n,u)=>n+u.maxHp-u.hp,0);
-  let budget=Math.round(missing*rate);
-  if(budget<=0)throw Error('İyileştirilebilecek yaralı kahraman yok.');
+  let budget=commanderHealingBudget(allies,rate);
   for(const u of [...allies].sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp||(b.maxHp-b.hp)-(a.maxHp-a.hp))){
    const healed=Math.max(0,Math.min(budget,u.maxHp-u.hp));u.hp+=healed;budget-=healed;value+=healed;
    if(healed>0)impacts.push({target:u.id,kind:'heal',value:healed});

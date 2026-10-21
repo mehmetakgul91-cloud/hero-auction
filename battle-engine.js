@@ -1,5 +1,6 @@
 import {commanderAbilityStats,commanderRoundEnergy} from './public/commander-ability-rules.js';
 import {commanderAttackPower,distributeCommanderAttack} from './commander-attack-damage.js';
+import {commanderShieldAmounts,commanderHealingBudget} from './commander-protection-budget.js';
 // Hero Auction 2.0 - isolated, deterministic automatic battle prototype.
 // Not connected to live matchmaking or wallet payouts.
 import crypto from 'node:crypto';
@@ -93,19 +94,15 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
     commanderEnergy[side]-=cost;
     const allies=teams[side].filter(u=>u.hp>0),enemies=teams[1-side].filter(u=>u.hp>0);
     if(!allies.length||!enemies.length)return;
-    const totalMaxHp=allies.reduce((n,u)=>n+u.maxHp,0);
     let value=0,absorbedTotal=0;
     if(id==='attack'){
       const damageBudget=distributeCommanderAttack(commanderAttackBasis[side],rate,enemies.length);
       for(const [index,target] of enemies.entries()){const raw=damageBudget[index],absorbed=Math.min(target.shield,raw);target.shield-=absorbed;const damage=Math.min(target.hp,raw-absorbed);target.hp-=damage;value+=damage;absorbedTotal+=absorbed;log.push({round,side,actor:'commander:'+side,action:'commander-hit',target:target.id,value:damage,absorbed,rawDamage:raw,damageType:'commander'}); }
     }else if(id==='defense'){
-      const total=Math.max(1,Math.round(totalMaxHp*rate));
-      const each=Math.max(1,Math.floor(total/allies.length));
-      for(const ally of allies){ally.shield+=each;value+=each;}
+      const amounts=commanderShieldAmounts(allies,rate);
+      for(const [index,ally] of allies.entries()){ally.shield+=amounts[index];value+=amounts[index];}
     }else if(id==='support'){
-      const missing=allies.reduce((n,u)=>n+u.maxHp-u.hp,0);
-      let budget=Math.round(missing*rate);
-      if(budget<=0)throw Error('İyileştirilebilecek yaralı kahraman yok.');
+      let budget=commanderHealingBudget(allies,rate);
       for(const ally of [...allies].sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp||(b.maxHp-b.hp)-(a.maxHp-a.hp))){const healed=Math.min(budget,ally.maxHp-ally.hp);ally.hp+=healed;budget-=healed;value+=healed;}
     }else if(id==='magic'){
       const targets=[...enemies].sort((a,b)=>b.attack-a.attack).slice(0,ability==='ultimate'?2:1);

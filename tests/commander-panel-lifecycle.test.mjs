@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 
-const source=readFileSync(new URL('../public/commander-experimental.js',import.meta.url),'utf8');
+const source=readFileSync(new URL('../public/commander-experimental.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'');
 class Node extends EventTarget {
  hidden=false;disabled=false;textContent='';style={};
  setAttribute(){}
