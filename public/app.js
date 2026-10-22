@@ -338,7 +338,21 @@ function animateWonAuctionCard(name,seat,roomCode,round,sourceSnapshot){
  ],{duration:720,easing:'cubic-bezier(.2,.8,.2,1)',fill:'forwards'});
  animation.finished.catch(()=>{}).finally(()=>{ghost.remove();destination.classList.add('auction-card-arrived');setTimeout(()=>destination.classList.remove('auction-card-arrived'),850)});
 }
-function show(r){if(!signedIn())return;if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const tailAwards=collectTailAwards(room,r);cancelAuctionReveal($('stage'));window.HeroPlatform?.gameplay(r.phase==='auction');const currentCardKey=r.phase==='auction'?r.code+':'+r.round+':'+r.card?.name:null;const isNewCard=!!currentCardKey&&currentCardKey!==lastCardKey;lastCardKey=currentCardKey;const wasFinished=room?.phase==='finished'&&room?.code===r.code;const previousArt=document.querySelector('#stage .card-art');const previousArtSnapshot=previousArt?{element:previousArt.cloneNode(true),rect:previousArt.getBoundingClientRect()}:null;const previousAuction=room?.phase==='auction'&&room?.code===r.code?{round:room.round,team:room.players?.[room.me]?.team?.map(x=>x.name)||[],me:room.me}:null;const enteredAuction=r.phase==='auction'&&(room?.phase!=='auction'||room?.code!==r.code||room?.round>r.round);room=r;$('game').dataset.phase=r.phase;window.HeroPlatform?.setRoom(r);if(window.HeroPlatform)commanderVisibility();if(enteredAuction)refreshGold();if(r.phase==='finished'&&!wasFinished){refreshGold();}
+function show(r){if(!signedIn())return;if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const tailAwards=collectTailAwards(room,r);cancelAuctionReveal($('stage'));
+ // Keep the auction presentation until every already-awarded card has opened.
+ // Authoritative state still advances immediately; no bidding or server timers are paused.
+ if(tailAwards.length&&!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches){
+  room=r;window.HeroPlatform?.setRoom(r);window.HeroPlatform?.gameplay(false);refreshGold();
+  const stage=$('stage');stage.replaceChildren();$('game').dataset.phase='auction';
+  $('phase').textContent=document.documentElement.lang==='en'?'REMAINING HEROES':'KALAN KAHRAMANLAR';renderChat(r);
+  tailReveal=mountTailReveal(stage,null,tailAwards,{english:document.documentElement.lang==='en',me:r.me,onComplete:()=>{
+   tailReveal=null;show(room);
+  },loadArt:async card=>{
+   const response=await fetch('/api/art?universe='+encodeURIComponent(card.universe)+'&name='+encodeURIComponent(card.name));
+   return response.ok?(await response.json()).url:null;
+  }});tailReveal.signature=JSON.stringify(r.final);return;
+ }
+ window.HeroPlatform?.gameplay(r.phase==='auction');const currentCardKey=r.phase==='auction'?r.code+':'+r.round+':'+r.card?.name:null;const isNewCard=!!currentCardKey&&currentCardKey!==lastCardKey;lastCardKey=currentCardKey;const wasFinished=room?.phase==='finished'&&room?.code===r.code;const previousArt=document.querySelector('#stage .card-art');const previousArtSnapshot=previousArt?{element:previousArt.cloneNode(true),rect:previousArt.getBoundingClientRect()}:null;const previousAuction=room?.phase==='auction'&&room?.code===r.code?{round:room.round,team:room.players?.[room.me]?.team?.map(x=>x.name)||[],me:room.me}:null;const enteredAuction=r.phase==='auction'&&(room?.phase!=='auction'||room?.code!==r.code||room?.round>r.round);room=r;$('game').dataset.phase=r.phase;window.HeroPlatform?.setRoom(r);if(window.HeroPlatform)commanderVisibility();if(enteredAuction)refreshGold();if(r.phase==='finished'&&!wasFinished){refreshGold();}
  for(let i=0;i<2;i++){const seat=r.me===1?1-i:i;const p=r.players[seat];$('player'+i).className='player player-side'+(r.me===seat?' me':'')+(r.phase==='auction'&&r.turn===seat?' active-turn':'');$('player'+i).innerHTML=p?`<div class="name">${esc(p.name)} ${r.me===seat?'(SEN)':''}</div><div class="credit">${p.credits} <small>kalan kredi</small></div><div class="spent-credit">💸 ${20-p.credits} kredi kullanıldı</div><div class="side-team-title">🎴 KARTLAR (${p.team.length})</div><div class="teams">${p.team.map(x=>`<span class="side-hero"><span class="side-hero-name">${esc(x.name)} <small class="rarity rarity-${esc(x.rarity||'common')}">${rarityLabel(x.rarity)}</small></span><small class="side-hero-role">${esc(specialtyLabel(x))}</small><span class="side-hero-cost">${Number(x.cost)||0} <small>kredi</small></span></span>`).join('')||'Henüz karakter yok'}</div>`:'<div class="name">2. OYUNCU</div><p class="status">Katılması bekleniyor…</p>'}
  if(r.phase==='finished'&&r.final?.length===2&&r.final.every(p=>p.team?.length===5)&&session?.token){
   renderChat(r);$('login-gate').hidden=true;$('home').hidden=true;$('game').hidden=false;
@@ -348,10 +362,6 @@ function show(r){if(!signedIn())return;if(tailReveal?.active&&r.phase==='finishe
   stage.innerHTML=`<section class="victory-screen"><div class="victory-kicker">✦ AÇIK ARTIRMA TAMAMLANDI ✦</div><div class="victory-heading">TAKIM GÜÇLERİ AÇIKLANDI</div><p class="victory-subtitle">Her kalan kredi kahraman güçlerini %1 artırır; negatif kredi aynı oranda azaltır. Hazır olduğunda arenaya geç.</p><div class="final-teams victory-teams">${teamBlock(my,'SENİN TAKIMIN',r.me)}${teamBlock(opponent,'RAKİP TAKIM',1-r.me)}</div><p class="status">Bu ekran savaş sonucu değildir. Arena yalnızca onayından sonra açılır.</p><button type="button" id="confirm-arena-entry" class="primary">⚔ ONAYLA VE ARENAYA GEÇ</button></section>`;
   const entryButton=stage.querySelector('#confirm-arena-entry');
   entryButton.onclick=()=>{if(tailReveal?.active)return;const params=new URLSearchParams({auctionCode:r.code,auctionToken:session.token});location.assign('/battle-preview.html?'+params.toString())};
-  if(tailAwards.length){tailReveal=mountTailReveal(stage,entryButton,tailAwards,{english:document.documentElement.lang==='en',me:r.me,reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,loadArt:async card=>{
-   const response=await fetch('/api/art?universe='+encodeURIComponent(card.universe)+'&name='+encodeURIComponent(card.name));
-   return response.ok?(await response.json()).url:null;
-  }});tailReveal.signature=JSON.stringify(r.final);}
   return;
  }renderChat(r);$('login-gate').hidden=true;$('home').hidden=true;$('game').hidden=false;$('room-title').textContent=r.code;$('phase').textContent=['waiting','matching'].includes(r.phase)?'RAKİP BEKLENİYOR':r.phase==='finished'?'MAÇ TAMAMLANDI':`${worldNames[r.universe]} · KART ${r.round+1}/10`;
 
