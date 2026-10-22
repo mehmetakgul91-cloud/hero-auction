@@ -69,6 +69,9 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
   // Commander support is applied only when explicitly selected; null preserves legacy outcomes.
   for(let side=0;side<2;side++)applyCommanderSupport(teams[side],Array.isArray(commanders)?commanders[side]:null);
   const log=[];
+  let actionId=null;
+  const shieldSnapshot=()=>teams.map(team=>team.map(unit=>unit.shield));
+  const record=(...entries)=>log.push(...entries.map(entry=>({...entry,...(actionId?{actionId}:{}),shieldSnapshot:shieldSnapshot()})));
   // Passive effects are applied before the first round and each round's actions.
   for(const team of teams)for(const u of team){
     const p=u.passive;if(!p)continue;
@@ -76,6 +79,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
     if(p.effect==='focus')u.attack=Math.round(u.attack*(1+p.value));
     if(p.effect==='evasion'||p.effect==='momentum')u.speed=Math.round(u.speed*(1+p.value));
   }
+  const initialShields=shieldSnapshot();
   const commanderAttackBasis=teams.map(commanderAttackPower);
   const commanderEnergy=[0,0];
   if(!Array.isArray(commanderActions)||commanderActions.length>200)throw Error('Invalid commander actions');
@@ -98,7 +102,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
     let value=0,absorbedTotal=0;
     if(id==='attack'){
       const damageBudget=distributeCommanderAttack(commanderAttackBasis[side],rate,enemies.length);
-      for(const [index,target] of enemies.entries()){const raw=damageBudget[index],absorbed=Math.min(target.shield,raw);target.shield-=absorbed;const damage=Math.min(target.hp,raw-absorbed);target.hp-=damage;value+=damage;absorbedTotal+=absorbed;log.push({round,side,actor:'commander:'+side,action:'commander-hit',target:target.id,value:damage,absorbed,rawDamage:raw,damageType:'commander'}); }
+      for(const [index,target] of enemies.entries()){const raw=damageBudget[index],absorbed=Math.min(target.shield,raw);target.shield-=absorbed;const damage=Math.min(target.hp,raw-absorbed);target.hp-=damage;value+=damage;absorbedTotal+=absorbed;record({round,side,actor:'commander:'+side,action:'commander-hit',target:target.id,value:damage,absorbed,rawDamage:raw,damageType:'commander'}); }
     }else if(id==='defense'){
       const amounts=commanderShieldAmounts(allies,rate);
       for(const [index,ally] of allies.entries()){ally.shield+=amounts[index];value+=amounts[index];}
@@ -109,10 +113,11 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       const targets=[...enemies].sort((a,b)=>b.attack-a.attack).slice(0,ability==='ultimate'?2:1);
       for(const target of targets){target.commanderWeaken=Math.max(target.commanderWeaken||0,rate);value++;}
     }
-    log.push({round,side,actor:'commander:'+side,action:'commander-'+id+'-'+ability,value,absorbed:absorbedTotal,energy:commanderEnergy[side]});
+    record({round,side,actor:'commander:'+side,action:'commander-'+id+'-'+ability,value,absorbed:absorbedTotal,energy:commanderEnergy[side]});
   };
   const previousAlive=teams.map(team=>team.filter(u=>u.hp>0).length);
   for(let round=1;round<=maxRounds;round++){
+    actionId=null;
     for(let side=0;side<2;side++){
       commanderEnergy[side]=commanderRoundEnergy(commanderEnergy[side],round,commanders?.[side]);
       const ability=actions.get(round+':'+side);
@@ -121,23 +126,24 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
     for(const team of teams)for(const u of team){
       if(u.hp<=0||!u.passive)continue;
       const {effect,value}=u.passive;
-      if(effect==='regen'){const healed=Math.min(u.maxHp-u.hp,Math.max(1,Math.floor(u.maxHp*value)));u.hp+=healed;u.healing+=healed;if(healed)log.push({round,actor:u.id,action:'passive-heal',value:healed});}
-      if(effect==='rage'&&u.hp/u.maxHp<.5&&!u.rageActivated){u.attack=Math.min(180,u.attack+Math.max(1,Math.floor(u.attack*value)));u.rageActivated=true;log.push({round,actor:u.id,action:'rage',value:u.attack});}
+      if(effect==='regen'){const healed=Math.min(u.maxHp-u.hp,Math.max(1,Math.floor(u.maxHp*value)));u.hp+=healed;u.healing+=healed;if(healed)record({round,actor:u.id,action:'passive-heal',value:healed});}
+      if(effect==='rage'&&u.hp/u.maxHp<.5&&!u.rageActivated){u.attack=Math.max(u.attack,Math.min(180,u.attack+Math.max(1,Math.floor(u.attack*value))));u.rageActivated=true;record({round,actor:u.id,action:'rage',value:u.attack});}
     }
     const order=orderHeroActions(teams);
     for(const {unit,side} of order){
+      actionId=round+':'+side+':'+unit.id;
       if(unit.hp<=0)continue;
       const allies=teams[side],enemies=teams[1-side];
       if(!enemies.some(x=>x.hp>0))break;
       if(unit.role==='support'&&round%3===0){
         const ally=[...allies].filter(x=>x.hp>0&&x.hp<x.maxHp).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
-        if(ally){const heal=Math.min(ally.maxHp-ally.hp,Math.round(unit.attack*.52));ally.hp+=heal;unit.healing+=heal;log.push({round,side,actor:unit.id,action:'heal',target:ally.id,value:heal});continue}
+        if(ally){const heal=Math.min(ally.maxHp-ally.hp,Math.round(unit.attack*.52));ally.hp+=heal;unit.healing+=heal;record({round,side,actor:unit.id,action:'heal',target:ally.id,value:heal});continue}
       }
       const target=selectBattleTarget(enemies,unit,round);
       if(!target)break;
       const special=round%3===0;
       const skill=special?unit.active:null;
-      if(skill?.effect==='heal'&&unit.hp<unit.maxHp){const healed=calculateSpecialHeal({attack:unit.attack,missingHp:unit.maxHp-unit.hp});unit.hp+=healed;unit.healing+=healed;log.push({round,side,actor:unit.id,action:'heal',target:unit.id,value:healed});continue;}
+      if(skill?.effect==='heal'&&unit.hp<unit.maxHp){const healed=calculateSpecialHeal({attack:unit.attack,missingHp:unit.maxHp-unit.hp});unit.hp+=healed;unit.healing+=healed;record({round,side,actor:unit.id,action:'heal',target:unit.id,value:healed});continue;}
       const critical=random()<.08;
       const guarded=!isFront(target)&&enemies.some(x=>x.hp>0&&isFront(x));
       const weakened=unit.commanderWeaken||0;
@@ -148,19 +154,22 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       const damage=Math.min(target.hp,raw-absorbed);
       target.hp-=damage;unit.damage+=damage;
       if(target.hp===0)unit.kills++;
-      if(skill?.effect==='drain'){const healed=Math.min(unit.maxHp-unit.hp,Math.floor(damage*.15));unit.hp+=healed;unit.healing+=healed;if(healed)log.push({round,side,actor:unit.id,action:'heal',target:unit.id,value:healed});}
-      if(skill?.effect==='shield'){const amount=Math.round(unit.defense*.4);unit.shield+=amount;log.push({round,side,actor:unit.id,action:'shield',target:unit.id,value:amount});}
+      if(skill?.effect==='drain'){const healed=Math.min(unit.maxHp-unit.hp,Math.floor(damage*.15));unit.hp+=healed;unit.healing+=healed;if(healed)record({round,side,actor:unit.id,action:'heal',target:unit.id,value:healed});}
+      if(skill?.effect==='shield'){const amount=Math.round(unit.defense*.4);unit.shield+=amount;record({round,side,actor:unit.id,action:'shield',target:unit.id,value:amount});}
       // Tanks reinforce their whole front line during their special turns.
       if(unit.role==='tank'&&special)for(const ally of allies.filter(x=>x.hp>0&&isFront(x)))ally.shield+=Math.max(1,Math.round(unit.defense*.16));
-      if(skill?.effect==='sunder'){target.defense=Math.max(5,Math.floor(target.defense*.85));log.push({round,side,actor:unit.id,action:'armor-break',target:target.id,value:0});}
-      if(skill?.effect==='weaken'){target.attack=Math.max(5,Math.floor(target.attack*.9));log.push({round,side,actor:unit.id,action:'weaken',target:target.id,value:0});}
-      if(skill?.effect==='haste'){unit.speed=Math.min(150,unit.speed+8);log.push({round,side,actor:unit.id,action:'haste',target:unit.id,value:8});}
+      if(skill?.effect==='sunder'){target.defense=Math.max(5,Math.floor(target.defense*.85));record({round,side,actor:unit.id,action:'armor-break',target:target.id,value:0});}
+      if(skill?.effect==='weaken'){target.attack=Math.max(5,Math.floor(target.attack*.9));record({round,side,actor:unit.id,action:'weaken',target:target.id,value:0});}
+      if(skill?.effect==='haste'){const before=unit.speed;unit.speed=Math.max(before,Math.min(150,before+8));record({round,side,actor:unit.id,action:'haste',target:unit.id,value:unit.speed-before});}
       let executedDamage=0;
       if(skill?.effect==='execute'&&target.hp>0&&target.hp/target.maxHp<.12){executedDamage=target.hp;unit.damage+=executedDamage;target.hp=0;unit.kills++;}
-      if(skill?.effect==='splash'||unit.role==='energy'&&special)for(const other of enemies.filter(x=>x!==target&&x.hp>0)){const splashRaw=calculateSplashRawDamage(raw,{skill,role:unit.role,special});const splashAbsorbed=Math.min(other.shield,splashRaw);other.shield-=splashAbsorbed;const extra=Math.min(other.hp,splashRaw-splashAbsorbed);other.hp-=extra;unit.damage+=extra;if(other.hp===0)unit.kills++;log.push({round,side,actor:unit.id,action:'splash',target:other.id,value:extra,absorbed:splashAbsorbed,rawDamage:splashRaw,damageType:'splash'});}
+      if(skill?.effect==='splash'||unit.role==='energy'&&special)for(const other of enemies.filter(x=>x!==target&&x.hp>0)){const splashRaw=calculateSplashRawDamage(raw,{skill,role:unit.role,special});const splashAbsorbed=Math.min(other.shield,splashRaw);other.shield-=splashAbsorbed;const extra=Math.min(other.hp,splashRaw-splashAbsorbed);other.hp-=extra;unit.damage+=extra;if(other.hp===0)unit.kills++;record({round,side,actor:unit.id,action:'splash',target:other.id,value:extra,absorbed:splashAbsorbed,rawDamage:splashRaw,damageType:'splash'});}
       if(unit.passive?.effect==='thorns'&&unit.hp>0)unit.shield+=Math.floor(unit.defense*unit.passive.value);
-      log.push({round,side,actor:unit.id,action:skill?.name|| (special?'special':'attack'),target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:special?'special':'normal',executedDamage});
+      record({round,side,actor:unit.id,action:skill?.name|| (special?'special':'attack'),target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:special?'special':'normal',executedDamage});
       if(unit.role==='tank'&&special)unit.shield+=Math.round(unit.defense*.2);
+      // The final event represents the completed atomic hero action, including
+      // role/passive shield gains which do not have separate animation events.
+      log[log.length-1].shieldSnapshot=shieldSnapshot();
     }
     for(let side=0;side<2;side++){
       const alive=teams[side].filter(u=>u.hp>0).length;
@@ -170,5 +179,5 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
     if(teams.some(team=>team.every(x=>x.hp<=0)))break;
   }
   const {winner,damage,survivors}=battleOutcome(teams);
-  return {version:4,commanderEnergy,commanders:Array.isArray(commanders)?commanders.slice(0,2):[null,null],remainingCredits:[...remainingCredits],seed:String(seed),winner,rounds:Math.max(0,...log.map(x=>x.round)),teams,damage,survivors,log};
+  return {version:4,initialShields,commanderEnergy,commanders:Array.isArray(commanders)?commanders.slice(0,2):[null,null],remainingCredits:[...remainingCredits],seed:String(seed),winner,rounds:Math.max(0,...log.map(x=>x.round)),teams,damage,survivors,log};
 }

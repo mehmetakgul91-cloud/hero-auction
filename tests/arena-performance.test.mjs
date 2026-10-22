@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
-import {createArenaTeamRenderer} from '../public/arena-team-renderer.js';
+import {createArenaTeamRenderer,arenaShieldMeter} from '../public/arena-team-renderer.js';
 
 class Element {
  children=[];parent=null;dataset={};style={setProperty(key,value){this[key]=value;}};attributes={};classes=new Set();
@@ -13,6 +13,7 @@ class Element {
  replaceChildren(...nodes){for(const node of [...this.children])node.remove();this.append(...nodes);}
  insertBefore(node,before){node.remove();node.parent=this;this.children.splice(before?this.children.indexOf(before):this.children.length,0,node);}
  setAttribute(key,value){this.attributes[key]=value;}
+ removeAttribute(key){delete this.attributes[key];}
  set src(value){this.url=value;this.naturalWidth=100;this.naturalHeight=150;this.onload?.();}
 }
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
@@ -73,4 +74,45 @@ test('match completion releases wake lock, stops music, and never reacquires on 
  resolveRequest({release:async()=>released++,addEventListener(){}});await pending;
  assert.equal(released,1);await context.request();assert.equal(requested,1);
  assert.doesNotMatch(source,/captureStream|arenaKeepAwakeVideo/);
+});
+
+test('shield meter reads authoritative current shield, distinguishes uncapped reference and handles zero',()=>{
+ assert.deepEqual(arenaShieldMeter({shield:25,maxHp:100}),{current:25,reference:100,percent:25,label:'Kalkan 25 · ölçek: 100 can'});
+ assert.equal(arenaShieldMeter({shield:25,maxHp:100,shieldCap:50}).percent,50);
+ assert.equal(arenaShieldMeter({shield:25,maxHp:100,shieldKnown:false}).label,'Kalkan bilgisi bekleniyor');
+ assert.equal(arenaShieldMeter({shield:0,maxHp:100,shieldCap:0}).percent,0);
+ assert.equal(arenaShieldMeter({shield:200,maxHp:100}).percent,100);
+ for(const shield of [undefined,-1,NaN,Infinity])assert.equal(arenaShieldMeter({shield,maxHp:100}).current,0);
+});
+test('every hero has a stable distinct shield meter below unchanged HP across live and replay updates',()=>{
+ const h=fixture();
+ for(let side=0;side<2;side++){
+  h.teams[side].forEach((unit,index)=>{unit.shield=index*10;});h.update(side);
+  h.parents[side].children.forEach((card,index)=>{
+   const hp=card.children[2],shield=card.children[3];
+   assert.equal(hp.className,'hp');assert.equal(hp.children[0].style.width,'100%');
+   assert.equal(shield.className,'arena-shield');assert.equal(shield.attributes.role,'meter');
+   assert.equal(shield.children[0].style.width,index*10+'%');assert.equal(shield.attributes['aria-valuenow'],String(index*10));
+  });
+ }
+ const card=h.parents[0].children[1],meter=card.children[3];
+ h.teams[0][1].shield=7;h.update();assert.equal(parseFloat(meter.children[0].style.width),7);
+ h.teams[0][1].shield=0;h.update();assert.equal(card.children[3],meter);assert.equal(meter.children[0].style.width,'0%');
+ assert.equal(card.children[2].children[0].style.width,'100%');
+ h.teams[0][1].shieldKnown=false;h.update();assert.equal(meter.attributes['aria-valuenow'],undefined);assert.equal(meter.attributes['aria-valuetext'],'Kalkan bilgisi bekleniyor');
+});
+test('bot playback consumes server shield snapshots and live snapshots retain shield without guessing from event text',()=>{
+ assert.match(source,/initialShields/);assert.match(source,/last\.shieldSnapshot/);
+ assert.match(source,/Object\.assign\(unit,live\)/);
+ const css=readFileSync(new URL('../public/battle-preview.css',import.meta.url),'utf8');
+ assert.match(css,/grid-template-rows:minmax\(0,1fr\) 11px 5px 4px/);
+ assert.match(css,/prefers-reduced-motion:reduce\)\{\.arena-shield/);
+});
+test('replay groups authoritative hero actions so shield absorption and the hit appear together',()=>{
+ const code=source.slice(source.indexOf(' const first=events[cursor];'),source.indexOf(' const last=batch[batch.length-1];'));
+ const events=[{actionId:'3:0:a',action:'shield'},{actionId:'3:0:a',damageType:'special'},{actionId:'3:1:b',damageType:'normal'}];
+ const context={events,cursor:0};runInNewContext(code+';this.batch=batch;',context);
+ assert.equal(context.cursor,2);assert.equal(context.batch.length,2);
+ const old={events:[{actorId:'a',round:3,damageType:'splash'},{actorId:'a',round:3,damageType:'special'}],cursor:0};
+ runInNewContext(code+';this.batch=batch;',old);assert.equal(old.cursor,2);assert.equal(old.batch.length,2);
 });

@@ -36,12 +36,6 @@ export function prepareLiveArenaTeams(cardsA,cardsB,{remainingCredits=[0,0],comm
    u.speed=Math.round(u.speed*creditMultiplier);
   }
  }
- // Keep role-specific legacy skills from reaching an unsupported live scheduler path.
- // These combinations make an ordinary attack, matching the current roster adapter.
- for(const team of teams)for(const unit of team){
-  const effect=unit.active?.effect;
-  if((['shield','drain'].includes(effect)&&unit.role==='energy')||(['sunder','weaken','haste'].includes(effect)&&['tank','energy'].includes(unit.role))||(effect==='execute'&&['tank','energy'].includes(unit.role)))unit.active=null;
- }
  for(let side=0;side<2;side++)applyCommanderSupport(teams[side],commanders[side]);
  return applyLegacyStartPassives(teams);
 }
