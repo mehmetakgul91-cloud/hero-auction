@@ -2,7 +2,7 @@ import http from 'node:http';
 import { randomBytes, randomUUID, createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { transport, validateDraft, composeMessage, archiveMessage } from './mail.js';
+import { transport, validateDraft, composeMessage, archiveMessage, validateAttachment } from './mail.js';
 
 const HOUR = 3600000;
 const token = () => randomBytes(32).toString('hex');
@@ -23,7 +23,15 @@ export function createApp(config, makeTransport = transport, saveCopy = archiveM
     while (sends.length && sends[0] < now-HOUR) sends.shift();
   };
   const timer = setInterval(clean, 60000); timer.unref();
-  const publicDraft = d => ({ id:d.id, to:d.to, subject:d.subject, text:d.text, state:d.state, created:d.created, sentAt:d.sentAt, messageId:d.messageId, archiveState:d.archiveState, archiveFolder:d.archiveFolder });
+  const attachmentMeta=a=>a?{id:a.id,filename:a.filename,contentType:a.contentType,size:a.size}:null;
+  const publicDraft = d => ({ id:d.id, to:d.to, subject:d.subject, text:d.text, state:d.state, created:d.created, sentAt:d.sentAt, messageId:d.messageId, archiveState:d.archiveState, archiveFolder:d.archiveFolder, attachment:attachmentMeta(d.attachment) });
+  function addAttachment(s,input) {
+    let a;try {a=validateAttachment(input);}catch(e){throw fail(400,e.message);}
+    const existing=s.attachments.get(a.id);if(existing)return existing;
+    const total=[...s.attachments.values()].reduce((n,a)=>n+a.size,0);
+    if(total+a.size>20*1024*1024)throw fail(400,'Bu oturumda en fazla 20 MB farklı ek tutulabilir.');
+    s.attachments.set(a.id,a);return a;
+  }
   function quota() {
     clean();
     return {limit:10,remaining:Math.max(0,10-sends.length),nextAt:sends.length>=10?sends[0]+HOUR+1:null,serverNow:Date.now()};
@@ -47,10 +55,10 @@ export function createApp(config, makeTransport = transport, saveCopy = archiveM
     const s = sessions.get(id); if (!s || s.expires < Date.now()) throw fail(401,'Oturum kapalı. Lütfen yeniden giriş yap.');
     return { id, s };
   }
-  async function readBody(req) {
+  async function readBody(req,max=65536) {
     if (!(req.headers['content-type'] || '').startsWith('application/json')) throw fail(415,'JSON gerekli.');
     let size=0; const chunks=[];
-    for await (const chunk of req) { size += chunk.length; if (size > 65536) throw fail(413,'İstek çok büyük.'); chunks.push(chunk); }
+    for await (const chunk of req) { size += chunk.length; if (size > max) throw fail(413,'İstek çok büyük.'); chunks.push(chunk); }
     try { return JSON.parse(Buffer.concat(chunks).toString()); } catch { throw fail(400,'İstek okunamadı.'); }
   }
   const json = (res,status,data) => { res.writeHead(status, {'Content-Type':'application/json; charset=utf-8'}); res.end(JSON.stringify(data)); };
@@ -86,6 +94,12 @@ export function createApp(config, makeTransport = transport, saveCopy = archiveM
       if(req.method==='GET' && path==='/api/session') {
         const {s}=session(req); return json(res,200,{account:config.user,csrf:s.csrf,expires:s.expires,quota:quota(),drafts:[...s.drafts.values()].map(publicDraft)});
       }
+      if(req.method==='GET' && path==='/api/export') {
+        const {s}=session(req), records=[...s.drafts.values()].filter(d=>d.state!=='draft');
+        const ids=new Set(records.map(d=>d.attachment?.id).filter(Boolean));
+        const attachmentFiles=[...ids].map(id=>{const a=s.attachments.get(id);return {...attachmentMeta(a),base64:a.content.toString('base64')};});
+        return json(res,200,{account:config.user,exportedAt:new Date().toISOString(),records:records.map(publicDraft),attachmentFiles});
+      }
       if(req.method!=='POST') throw fail(404,'Sayfa bulunamadı.');
       const origin=config.origin || `http://127.0.0.1:${server.address().port}`;
       if(req.headers.origin!==origin || req.headers['sec-fetch-site']==='cross-site') throw fail(403,'İstek kaynağı doğrulanamadı.');
@@ -104,17 +118,20 @@ export function createApp(config, makeTransport = transport, saveCopy = archiveM
         let previous;try {previous=session(req).id;}catch{}
         if(previous) {sessions.get(previous).password='';sessions.delete(previous);}
         if(sessions.size>=5) {b.password='';throw fail(429,'Açık oturum sınırına ulaşıldı.');}
-        const id=token(), s={password:b.password,csrf:token(),expires:Date.now()+6*HOUR,drafts:new Map()}; b.password='';
+        const id=token(), s={password:b.password,csrf:token(),expires:Date.now()+6*HOUR,drafts:new Map(),attachments:new Map()}; b.password='';
         sessions.set(id,s);setCookie(res,id);return json(res,200,{ok:true});
       }
       const {id,s}=session(req);
       if(req.headers['x-csrf-token']!==s.csrf) throw fail(403,'Güvenlik doğrulaması geçersiz. Sayfayı yenile.');
-      const b=await readBody(req);
+      const b=await readBody(req,['/api/attachments','/api/import-receipt'].includes(path)?7*1024*1024+65536:65536);
       if(path==='/api/logout') {s.password='';sessions.delete(id);setCookie(res,'',0);return json(res,200,{ok:true});}
+      if(path==='/api/attachments')return json(res,201,attachmentMeta(addAttachment(s,b)));
       if(path==='/api/drafts') {
         if(s.drafts.size>=100) throw fail(429,'Bu oturumun taslak sınırına ulaşıldı.');
         let data;try {data=validateDraft(b);}catch(e){throw fail(400,e.message);}
-        const d={...data,id:randomUUID(),state:'draft',created:Date.now()};s.drafts.set(d.id,d);return json(res,201,publicDraft(d));
+        const attachment=b.attachmentId?s.attachments.get(b.attachmentId):null;
+        if(b.attachmentId&&!attachment)throw fail(400,'Sunum eki bulunamadı. PDF dosyasını tekrar seç.');
+        const d={...data,attachment,id:randomUUID(),state:'draft',created:Date.now()};s.drafts.set(d.id,d);return json(res,201,publicDraft(d));
       }
       if(path==='/api/import-receipt') {
         if(b.account!==config.user)throw fail(400,'Kayıt başka bir hesaba ait.');
@@ -127,7 +144,9 @@ export function createApp(config, makeTransport = transport, saveCopy = archiveM
         const existing=[...s.drafts.values()].find(d=>d.messageId===r.messageId);
         if(existing)return json(res,200,publicDraft(existing));
         if(s.drafts.size>=100)throw fail(429,'Bu oturumun kayıt sınırına ulaşıldı.');
-        const d={...data,id:randomUUID(),state:'accepted',created:r.sentAt,sentAt:r.sentAt,messageId:r.messageId,archiveState:'pending'};
+        let attachment=null;
+        if(r.attachment){attachment=addAttachment(s,b.attachmentFile);if(attachment.id!==r.attachment.id)throw fail(400,'Ek dosyası gönderim kaydıyla eşleşmiyor.');}
+        const d={...data,attachment,id:randomUUID(),state:'accepted',created:r.sentAt,sentAt:r.sentAt,messageId:r.messageId,archiveState:'pending'};
         s.drafts.set(d.id,d);
         return json(res,201,publicDraft(d));
       }
@@ -139,7 +158,7 @@ export function createApp(config, makeTransport = transport, saveCopy = archiveM
         const d=s.drafts.get(b.id);if(!d)throw fail(404,'Önizlenen taslak bulunamadı.');
         if(d.state!=='draft')return json(res,200,publicDraft(d));
         clean();
-        const hash=createHash('sha256').update(JSON.stringify([d.to,d.subject,d.text])).digest('hex');
+        const hash=createHash('sha256').update(JSON.stringify([d.to,d.subject,d.text,d.attachment?.id||null])).digest('hex');
         if(fingerprints.has(hash))throw fail(409,'Bu mail için zaten gönderim denendi. Tekrar göndermeden önce alıcıyla durumu kontrol et.');
         if(sends.length>=10)throw fail(429,'Saatlik 10 mail sınırına ulaşıldı. İlk hakkın açılacağı saat: '+new Date(sends[0]+HOUR+1).toLocaleTimeString('tr-TR',{timeZone:'Europe/Istanbul'})+' (Türkiye).');
         // Claim synchronously before awaiting SMTP: parallel clicks cannot send twice.
@@ -157,6 +176,7 @@ export function createApp(config, makeTransport = transport, saveCopy = archiveM
           d.state=(e.code==='EAUTH' || e.code==='EENVELOPE' || Number(e.responseCode)>=400)?'rejected':'unknown';
         } finally {t.close();}
         if(d.state==='accepted')await archive(s,d);
+        delete d.raw;
         return json(res,200,publicDraft(d));
       }
       throw fail(404,'İşlem bulunamadı.');

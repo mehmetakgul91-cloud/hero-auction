@@ -8,7 +8,7 @@ Node 22–24; `npm ci`, `npm test`, then `npm start`.
 
 Required environment: `SMTP_HOST`, `SMTP_PORT` (587 or 465), `SMTP_USER`. Optional `SMTP_FROM_NAME`. In production set `NODE_ENV=production` and use Render's `RENDER_EXTERNAL_URL` or an explicit HTTPS `APP_ORIGIN`. HTTP server binds to `0.0.0.0:$PORT`; `/healthz` is a side-effect-free health endpoint.
 
-The operator enters the mailbox password in the HTTPS form. SMTP requires TLS 1.2+ with certificate validation; no plaintext fallback. The password is held only in process memory for a maximum six-hour session. There is no stored password, open relay, arbitrary SMTP host, attachment/URL fetching, automatic send, or automatic retry. All messages require an immutable preview then an explicit send. Per-process send limit: 10/hour; login limit: 8/15 minutes.
+The operator enters the mailbox password in the HTTPS form. SMTP requires TLS 1.2+ with certificate validation; no plaintext fallback. The password is held only in process memory for a maximum six-hour session. There is no stored password, open relay, arbitrary SMTP host, arbitrary file/URL fetching, automatic send, or automatic retry. All messages require an immutable preview then an explicit send. Per-process send limit: 10/hour; login limit: 8/15 minutes.
 
 SMTP acceptance does not confirm inbox delivery. Ambiguous SMTP failures are marked unknown and never retried automatically. Double submissions of a draft are idempotent; repeated content is blocked for 24 hours within the same running process. Restarting loses sessions, draft/receipt history, and deduplication state. Export receipts before logout. This release intentionally does not claim durable CRM history or scheduled background sending.
 
@@ -21,3 +21,7 @@ Accepted messages are appended over strict TLS IMAP (port 993, `IMAP_HOST` defau
 IMAP failures never change an accepted SMTP result and never trigger SMTP retries. The archive-only retry searches by Message-ID first, so a lost APPEND response does not create another copy. Previous exported accepted receipts can be imported for archive-only actions, retaining original date and Message-ID. No password, raw message, or credentials are exported. IMAP errors and message contents are not logged.
 
 The authenticated panel reports the remaining rolling-hour allowance and next available slot in Turkey time. The 10/hour cap is unchanged. Importing a receipt does not send mail or consume quota. Restarting still loses the in-memory send ledger; never restart to bypass the hourly limit.
+
+## PDF presentation attachments
+
+A reviewed draft may include one uploaded PDF, up to 5 MB. Only bytes supplied through the authenticated upload form are used, never paths or URLs. The UI shows its filename and size before sending. Attachments are deduplicated by SHA-256 in the session with a 20 MB total limit. The identical MIME message including the attachment goes to SMTP and Sent. Receipt exports include each attachment once; imports require a matching attachment hash before archive-only recovery.

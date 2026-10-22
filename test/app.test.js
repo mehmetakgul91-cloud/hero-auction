@@ -102,3 +102,21 @@ test('lost APPEND acknowledgement retries by Message-ID without duplicating the 
   assert.deepEqual(await archiveMessage(config,'test-only-password',d,Buffer.from('message'),make),{folder:'Sent',existing:true});
   assert.equal(appends,1);assert.equal(locksReleased,2);assert.equal(logouts,2);
 });
+test('PDF attachment survives SMTP, Sent copy and export/import; changing upload cannot change preview',async t=>{
+  const f=await fixture(t);await f.login();
+  const bytes=Buffer.from('%PDF-1.4\nFixture presentation bytes\n%%EOF');
+  const a=await f.request('/api/attachments',{filename:'ENKA.pdf',base64:bytes.toString('base64')});assert.equal(a.status,201);
+  const d=await f.request('/api/drafts',{to:'recipient@example.test',subject:'Presentation',text:'See attached',attachmentId:a.data.id});
+  await f.request('/api/attachments',{filename:'Other.pdf',base64:Buffer.from('%PDF-1.4\nOther deck\n%%EOF').toString('base64')});
+  const sent=await f.request('/api/send',{id:d.data.id});assert.equal(sent.data.attachment.id,a.data.id);assert.equal(sent.data.archiveState,'saved');
+  const raw=f.calls[0].raw.toString();assert.match(raw,/Content-Type: application\/pdf; name=ENKA.pdf/);assert.ok(raw.replace(/\r\n/g,'').includes(bytes.toString('base64')));assert.deepEqual(f.calls[0].raw,f.copies[0][3]);
+  const exported=(await f.request('/api/export')).data;assert.equal(exported.attachmentFiles.length,1);assert.equal(exported.attachmentFiles[0].base64,bytes.toString('base64'));
+  const g=await fixture(t);await g.login();const receipt=exported.records[0];
+  assert.equal((await g.request('/api/import-receipt',{account:config.user,record:receipt})).status,400);
+  const imported=await g.request('/api/import-receipt',{account:config.user,record:receipt,attachmentFile:exported.attachmentFiles[0]});assert.equal(imported.status,201);
+  await g.request('/api/archive',{id:imported.data.id});assert.equal(g.calls.length,0);assert.ok(g.copies[0][3].toString().replace(/\r\n/g,'').includes(bytes.toString('base64')));
+});
+test('attachment rejects arbitrary paths, executable content and over-limit files',async t=>{
+  const f=await fixture(t);await f.login();
+  for(const a of [{filename:'../../secret.pdf',base64:'JVBERi0xLjQ='},{filename:'x.pdf',base64:Buffer.from('executable').toString('base64')},{filename:'x.pdf',base64:Buffer.alloc(5*1024*1024+1,65).toString('base64')},{filename:'x.pdf',base64:'abc*'}])assert.equal((await f.request('/api/attachments',a)).status,400);
+});

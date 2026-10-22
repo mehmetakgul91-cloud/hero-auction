@@ -1,12 +1,24 @@
 import nodemailer from 'nodemailer';
 import { ImapFlow } from 'imapflow';
+import { createHash } from 'node:crypto';
+
+export function validateAttachment(input) {
+  if (!input || typeof input.filename !== 'string' || !/^[^\\/\r\n\x00-\x1f\x7f]{1,150}\.pdf$/i.test(input.filename) ||
+      typeof input.base64 !== 'string' || input.base64.length > 7*1024*1024 || /[^A-Za-z0-9+/=]/.test(input.base64))
+    throw new Error('En fazla 5 MB boyutunda bir PDF sunum seç.');
+  const content=Buffer.from(input.base64,'base64');
+  if(content.toString('base64')!==input.base64||content.length>5*1024*1024||content.length<8||!content.subarray(0,5).equals(Buffer.from('%PDF-')))
+    throw new Error('Ek, en fazla 5 MB boyutunda geçerli bir PDF olmalı.');
+  return {id:createHash('sha256').update(content).digest('hex'),filename:input.filename,contentType:'application/pdf',size:content.length,content};
+}
 
 export async function composeMessage(config, draft) {
   const t = nodemailer.createTransport({ streamTransport: true, buffer: true, newline: 'windows' });
   const result = await t.sendMail({
     from: { name: config.fromName, address: config.user }, to: draft.to,
     subject: draft.subject, text: draft.text, messageId: draft.messageId,
-    date: new Date(draft.sentAt), disableFileAccess: true, disableUrlAccess: true
+    date: new Date(draft.sentAt), disableFileAccess: true, disableUrlAccess: true,
+    ...(draft.attachment?{attachments:[{filename:draft.attachment.filename,content:draft.attachment.content,contentType:draft.attachment.contentType}]}:{})
   });
   return result.message;
 }
