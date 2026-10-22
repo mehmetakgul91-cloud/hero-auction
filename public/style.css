@@ -978,3 +978,8 @@ body:has(#game[data-phase="auction"]:not([hidden])) .shell{padding-top:8px}
 @media(max-width:650px){.auction-tail-holder{min-height:205px}.auction-tail-sequence .card-art{height:185px}}
 
 .auction-tail-sequence .auction-drawing .card-art,.auction-tail-sequence .auction-drawing .auction-draw-back,.auction-tail-sequence .auction-final-draw::after{animation-duration:.95s}
+
+/* Auction calculation view: no duplicate purchased-card panels above/beside it. */
+#game.auction-results-only .player-side{display:none}
+#game.auction-results-only .arena-layout{grid-template-columns:minmax(0,1fr)}
+#game.auction-results-only .arena-stage{grid-column:1;grid-row:1;width:100%;min-width:0}
