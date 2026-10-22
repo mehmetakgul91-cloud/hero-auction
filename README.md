@@ -22,3 +22,13 @@ Node.js 18 veya üzeri gerekir. `npm install` ve `npm start` komutlarından sonr
 ## Açık artırma kart havuzu
 
 Her maçta aktif havuzdan 10 farklı kahraman rastgele seçilir; efsanevi, nadir veya diğer nadirlikler için sabit adet kotası yoktur. Aynı kahraman aynı açık artırmada tekrar etmez. Son kartların eksik takıma verilmesi, mevcut otomatik ücret/eksi kredi kuralları ve kalan kredi güç bonusu değişmemiştir.
+
+## Bilgisayar antrenmanı
+
+Bot da oyuncuyla aynı canlı savaş motorunu, enerji maliyetlerini ve bekleme sürelerini kullanır. Her yeni maç/rövanşta bir önceki komutandan farklı, geçici ve sıfır seviyeli bir komutan alır; kahramanları yalnızca normal açık artırmadan edinir. Oyuncunun kayıtlı komutanı ve gelişimi değişmez. Eski, komutan seçilmemiş hesaplarda yalnızca o antrenman için sıfır seviyeli saldırı komutanı kullanılır.
+
+- **Kolay:** düşük teklif bütçesi, basit diziliş ve daha seyrek normal beceriler.
+- **Orta:** kredi rezervi ve kart değeri, role uygun ön saf ve düzenli beceri kullanımı.
+- **Zor:** takım eksiklerine göre alışveriş, dayanıklı ön saf, duruma göre enerji biriktirme, iyileştirme/kalkan zamanlama ve büyücü hedef seçimi.
+
+Zorluk güç veya altın hilesi eklemez; henüz açılmamış kartlar ve rakibin gizli enerjisi karar girdisi değildir. Zor botun kazanması garanti değildir. Antrenman giriş ücreti, altın ödülü ve lig puanı değişimi yoktur.
