@@ -234,10 +234,88 @@ export const phrases = {
 'Seviye':'Level','SEVİYE':'LEVEL','Komutan':'Commander','Uzmanlık':'Specialty','Enerji':'Energy','Normal':'Normal','Hızlı':'Fast','Yavaş':'Slow','Boş':'Empty',' bölgesi:':' slot:',
 '(SEN)':'(YOU)','GÖNDER':'SEND','İptal':'Cancel','Kapat':'Close'
 };
-const pairs=Object.entries(phrases).sort((a,b)=>b[0].length-a[0].length);
+// Arena, formation, and role labels rendered after the initial page load.
+Object.assign(phrases, {
+ "Savaşçı": "Fighter",
+ "Suikastçı": "Assassin",
+ "Şifacı": "Healer",
+ "Büyücü": "Mage",
+ "Saldırı": "Attack",
+ "Savunma": "Defense",
+ "Can": "Health",
+ "Hız": "Speed",
+ "Tur": "Round",
+ "KRİTİK": "CRITICAL",
+ "ÖZEL GÜÇ": "SPECIAL POWER",
+ "ALAN HASARI": "AREA DAMAGE",
+ "AYAKTA": "STANDING",
+ "ELENDİ": "ELIMINATED",
+ "BERABERLİK": "DRAW",
+ "ZAFER SENİN": "VICTORY",
+ "RAKİP KAZANDI": "OPPONENT WINS",
+ "ONURLU MÜCADELE": "A WORTHY CONTEST",
+ "ŞAMPİYONLAR PODYUMU": "CHAMPIONS PODIUM",
+ "ŞAMPİYON TAKIMIN LİDERİ": "LEADER OF THE CHAMPION TEAM",
+ "TAKIM KOMUTANI": "TEAM COMMANDER",
+ "SALDIRI KOMUTANI": "ATTACK COMMANDER",
+ "SAVUNMA KOMUTANI": "DEFENSE COMMANDER",
+ "BÜYÜ KOMUTANI": "MAGIC COMMANDER",
+ "DESTEK KOMUTANI": "SUPPORT COMMANDER",
+ "İki takım da sonuna kadar mücadele etti.": "Both teams fought to the end.",
+ "Kahramanların ve komutanın savaştaki katkısı.": "Your heroes’ and commander’s contributions to the battle.",
+ "Son hamle tamamlandı · Savaş sonucu hazırlanıyor…": "Final action complete · Preparing battle results…",
+ "SON DARBE": "FINAL BLOW",
+ "ARENADAN ELENDİ": "ELIMINATED FROM THE ARENA",
+ "SON VURUŞ": "FINAL HIT",
+ "SAVAŞ SONA ERDİ": "BATTLE ENDED",
+ "Maç bağlantısı sona erdi. Maçtan ayrılıp yeni bir oyun başlatabilirsin.": "The match connection ended. Leave the match to start a new game.",
+ "BAĞLANTI SONA ERDİ": "CONNECTION ENDED",
+ "DURDUR": "PAUSE",
+ "DEVAM ET": "RESUME",
+ "Sesi kapat": "Mute audio",
+ "Sesi aç": "Unmute audio",
+ "Ön saf": "Front row",
+ "Arka saf": "Back row",
+ "Kahramanları dizilişe yerleştirdiğinde bonuslar burada görünecek.": "Place heroes in your formation to see their bonuses here.",
+ "Temel kart gücü": "Base hero power",
+ "Saf / rol / kredi etkisi": "Row / role / credit effect",
+ "Komutan önizleme katkısı": "Commander preview contribution",
+ "Tahmini güç göstergesi": "Estimated power",
+ "Gerçek savaş etkisi:": "Actual battle effect:",
+ "Saldırı istatistiğine yüzdesel uygulanır": "Applied as a percentage of attack",
+ "Maksimum cana uygulanır": "Applied to maximum health",
+ "Temel güce göre ilgili savaş istatistiğine eklenir": "Added to the relevant battle stat based on base power",
+ ". Bu güç değeri önizlemedir; savaş motorunda bonus rolüne göre saldırı, savunma veya can istatistiğine uygulanır ve tam sayıya yuvarlanır.": ". This power is a preview; in battle, the role bonus applies to attack, defense, or health and is rounded to an integer.",
+ "Açık artırma kartların yüklendi": "Auction heroes loaded",
+ "Kartlar doğrulandı. Diziliş için 60 saniyen var.": "Heroes verified. You have 60 seconds to arrange your formation.",
+ "Savaş durumu alınamadı": "Could not load battle status",
+ "Savaş verisi alınamadı": "Could not load battle data",
+ "Rövanş gönderilemedi": "Could not request a rematch",
+ "Açık artırmada seçilen kahramanlar yüklenemedi:": "Could not load heroes selected in the auction:",
+ "2. OYUNCU": "PLAYER 2",
+ "Katılması bekleniyor…": "Waiting to join…",
+ "Kahraman": "Hero",
+ "DÖVÜŞ USTASI": "COMBAT MASTER",
+ "GÜÇ SAVAŞÇISI": "POWER FIGHTER",
+ "YILDIRIM SAVAŞÇISI": "LIGHTNING FIGHTER",
+ "KARANLIK SAVAŞÇI": "DARK FIGHTER",
+ "KOZMİK GÜÇ": "COSMIC POWER",
+ "ENERJİ KONTROLÜ": "ENERGY CONTROL",
+ "HIZ USTASI": "SPEED MASTER",
+ "ÇEVİK DÖVÜŞÇÜ": "AGILE FIGHTER",
+ "TEKNOLOJİ USTASI": "TECH MASTER",
+ "ZİHİN USTASI": "MIND MASTER",
+ "DESTEK / HİLE": "SUPPORT / TRICKERY"
+});
+const pairs=Object.entries(phrases).sort((a,b)=>b[0].length-a[0].length).map(([tr,en])=>{
+ const escaped=tr.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+ const left=/^[\p{L}\p{N}]/u.test(tr)?'(?<![\\p{L}\\p{N}])':'';
+ const right=/[\p{L}\p{N}]$/u.test(tr)?'(?![\\p{L}\\p{N}])':'';
+ return [new RegExp(left+escaped+right,'gu'),en];
+});
 export function translate(text){
  if(text.trim()==='PAS')return text.replace('PAS','PASS');
- let out=text.replace(/Şu anda (\d+) özgün kahraman hazır/g,'$1 original heroes available').replace(/(\d+) kahraman/g,'$1 heroes');
+ let out=text.replace(/(\d+) beceri/g,'$1 abilities').replace(/(\d+) hasar/g,'$1 damage').replace(/(\d+) şifa/g,'$1 healing').replace(/(\d+) kalkan/g,'$1 shield').replace(/(\d+)\/2 hazır/g,'$1/2 ready').replace(/ için rol seçimi/g,' role selection').replace(/Şu anda (\d+) özgün kahraman hazır/g,'$1 original heroes available').replace(/(\d+) kahraman/g,'$1 heroes');
  out=out.replace(/Vuruş hasarı \+%([\d,]+)/g,(_,n)=>'Hit damage +'+n.replace(',','.')+'%')
   .replace(/Savunmayı %([\d,]+) artırır/g,(_,n)=>'Increases defense by '+n.replace(',','.')+'%')
   .replace(/Hızı %([\d,]+) artırır/g,(_,n)=>'Increases speed by '+n.replace(',','.')+'%')
@@ -245,19 +323,35 @@ export function translate(text){
   .replace(/Can %50 altındayken saldırı \+%([\d,]+)/g,(_,n)=>'Below 50% health: attack +'+n.replace(',','.')+'%')
   .replace(/Her tur %([\d,]+) can yeniler \(azami can\)/g,(_,n)=>'Restores '+n.replace(',','.')+'% of max health each round')
   .replace(/Vuruş sonrası savunmanın %([\d,]+) kadarı kalkan/g,(_,n)=>'After attacking: shield equal to '+n.replace(',','.')+'% of defense');
- for(const [tr,en] of pairs)out=out.split(tr).join(en);
+ for(const [pattern,en] of pairs)out=out.replace(pattern,()=>en);
  return out;
+}
+// Names and chat are user/game data, not UI copy. Protect their own text nodes
+// while still localizing nested rarity labels in the sidebar.
+const skip='script,style,textarea,[contenteditable="true"],[translate="no"],.chat-text,.chat-author';
+const identity='.card-name,.side-hero-name,.board-hero-name,.victory-podium-name,.arena-final-knockout-hero,.victory-player-name,#hero-modal-name,#account-name,.battle-hero-stat-row > strong';
+export function localizeNode(node){
+ if(node.nodeType===3){
+  const parent=node.parentElement;
+  if(parent?.closest(skip)||parent?.matches(identity))return;
+  let value;
+  if(parent?.matches('.player .name')){
+   value=node.nodeValue==='2. OYUNCU'?'PLAYER 2':node.nodeValue.replace(/ \(SEN\)$/, ' (YOU)');
+  }else value=translate(node.nodeValue);
+  if(value!==node.nodeValue)node.nodeValue=value;
+  return;
+ }
+ if(node.nodeType!==1||node.closest(skip))return;
+ for(const key of ['aria-label','title','placeholder','alt'])if(node.hasAttribute(key)){
+  // Portrait alt text is a hero identity, not a status label.
+  if(key==='alt'&&node.tagName==='IMG')continue;
+  const old=node.getAttribute(key),value=translate(old);if(old!==value)node.setAttribute(key,value);
+ }
+ for(const child of node.childNodes)localizeNode(child);
 }
 if(typeof document!=='undefined'){
  document.documentElement.lang='en';
  document.title='Hero Auction | Hero Auctions and Arena Battles';
- const skip='script,style,textarea,[contenteditable="true"]';
- function localize(node){
-  if(node.nodeType===3){if(node.parentElement?.closest(skip))return;const value=translate(node.nodeValue);if(value!==node.nodeValue)node.nodeValue=value;return;}
-  if(node.nodeType!==1||node.matches(skip))return;
-  for(const key of ['aria-label','title','placeholder','alt'])if(node.hasAttribute(key)){const old=node.getAttribute(key),value=translate(old);if(old!==value)node.setAttribute(key,value);}
-  for(const child of node.childNodes)localize(child);
- }
- const start=()=>{localize(document.body);new MutationObserver(records=>{for(const record of records){if(record.type==='childList')record.addedNodes.forEach(localize);else if(record.type==='characterData')localize(record.target);else localize(record.target);}}).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['aria-label','title','placeholder','alt']});};
+ const start=()=>{localizeNode(document.body);new MutationObserver(records=>{for(const record of records){if(record.type==='childList')record.addedNodes.forEach(localizeNode);else localizeNode(record.target);}}).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['aria-label','title','placeholder','alt']});};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 }
