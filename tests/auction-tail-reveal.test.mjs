@@ -61,13 +61,13 @@ test('actual show transition keeps auction visible through all tails and dedupli
   const full=Array.from({length:5},(_,i)=>card(i));
   const final=seat===0?[{team:Array.from({length:5},(_,i)=>card(5+i))},{team:full}]:[{team:full},{team:Array.from({length:5},(_,i)=>card(5+i))}];
   const previous={code:'123',phase:'auction',card:card(4),players:final.map((p,i)=>({team:p.team.slice(0,i===seat?5-count:4)}))};
-  const elements={stage:{replaceChildren(){}},game:{dataset:{phase:'auction'},classList:{remove(){}}},phase:{}};
+  const elements={stage:{replaceChildren(){},querySelectorAll:()=>[],children:[]},game:{dataset:{phase:'auction'},classList:{remove(){},add(){},contains:()=>false}},player0:{},player1:{},phase:{}};
   let mounts=0,options;
-  const context={room:previous,tailReveal:null,awardFlights:new Set(),collectTailAwards,collectOfferedAwards,cancelAwardFlights:()=>{},animateWonAuctionCard:()=>Promise.resolve(),Promise,signedIn:()=>true,cancelAuctionReveal:()=>{},renderChat:()=>{},refreshGold:()=>{},$:id=>elements[id],window:{matchMedia:()=>({matches:false})},document:{documentElement:{lang:'en'},querySelector:()=>null},results:0,mountTailReveal:(root,button,items,opts)=>{
+  const context={esc:String,displaySeat:(seat,me)=>seat===me?0:1,room:previous,tailReveal:null,awardFlights:new Set(),collectTailAwards,collectOfferedAwards,cancelAwardFlights:()=>{},animateWonAuctionCard:()=>Promise.resolve(),Promise,signedIn:()=>true,cancelAuctionReveal:()=>{},renderChat:()=>{},refreshGold:()=>{},$:id=>elements[id],window:{matchMedia:()=>({matches:false})},document:{documentElement:{lang:'en'},querySelector:()=>null},results:0,mountTailReveal:(root,button,items,opts)=>{
    mounts++;assert.equal(items.length,count);options=opts;return {active:true,cancel:()=>{}};
   }};
   vm.createContext(context);vm.runInContext(app.slice(start,end)+" results++;room=r;$('game').dataset.phase=r.phase;}",context);
-  const next={code:'123',phase:'finished',final};context.show(next);
+  const next={code:'123',phase:'finished',final,me:seat};context.show(next);
   assert.equal(context.results,0);assert.equal(elements.game.dataset.phase,'auction');assert.equal(context.room,next);
   context.show({...next});assert.equal(mounts,1);assert.equal(context.results,0);
   options.onComplete();assert.equal(context.results,1);assert.equal(elements.game.dataset.phase,'finished');
@@ -99,12 +99,16 @@ test('prior offered-card flight completes before tail starts, including skip/can
  }
 });
 import {awardFlightGeometry,flyAwardCard} from '../public/auction-card-flight.js';
-test('flight ends at visible clamped receiver anchor for left/right/offscreen panels',()=>{
+test('flight fits actual receiver interior without viewport-clamping its endpoint',()=>{
  const source={left:140,top:200,width:240,height:320};
- for(const left of [-200,0,350,900])for(const top of [-400,30,1800]){
-  const g=awardFlightGeometry(source,{left,top,width:120,height:60},{width:390,height:844});
-  const x=g.left+g.width/2+g.dx,y=g.top+g.height/2+g.dy;
-  assert.ok(x>=20&&x<=370);assert.ok(y>=20&&y<=824);assert.ok(g.scale>=.12&&g.scale<=.42);
+ for(const left of [-200,0,350,900])for(const top of [-400,30,1800])for(const width of [12,60,120]){
+  const target={left,top,width,height:40};
+  const g=awardFlightGeometry(source,target,{width:390,height:844});
+  assert.equal(g.left+g.width/2+g.dx,target.left+target.width/2);
+  assert.equal(g.top+g.height/2+g.dy,target.top+target.height/2);
+  assert.ok(g.width*g.scale<=target.width-8+.00001);
+  assert.ok(g.height*g.scale<=target.height-8+.00001);
+  assert.ok(g.scale<=1);
  }
 });
 test('flight without visual target and reduced motion finish safely',async()=>{
@@ -120,7 +124,7 @@ test('flight cleans up ghost and resolves on arrival or cancellation',async()=>{
   const handle=flyAwardCard({element:source,rect:{left:60,top:120,width:200,height:280}},{getBoundingClientRect:()=>({left:300,top:60,width:80,height:50})});
   assert.ok(ghost);assert.equal(removed,0);
   if(cancel)handle.cancel();else resolveAnimation();
-  await handle.finished;assert.equal(removed,1);assert.equal(cancelled,cancel?1:0);
+  assert.deepEqual(await handle.finished,{arrived:!cancel});assert.equal(removed,1);assert.equal(cancelled,cancel?1:0);
   handle.cancel();assert.equal(removed,1);
  }
 });
@@ -139,4 +143,69 @@ test('results wait for all outstanding purchase flights, not just the final one'
  const queue=createTailQueue({show:()=>assert.fail('no tail'),finish:x=>ends.push(x)});
  queue.start([],{startAfter:Promise.all([one,two])});first();await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(ends,[]);assert.equal(queue.active,true);
  second();await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(ends,[true]);assert.equal(queue.active,false);
+});
+
+test('actual flight arrival pulses real receiver and reports each landed tail only once',async()=>{
+ const targets=[0,1].map(()=>({pulses:0,isConnected:true,getBoundingClientRect:()=>({left:300,top:60,width:58,height:44}),animate(){this.pulses++;return {finished:Promise.resolve(),cancel(){}}}}));
+ const flightEnds=[],frames=[],tasks=[],landed=[],ends=[];
+ const doc={defaultView:{innerWidth:390,innerHeight:844},body:{append(){}},createElement:()=>({})};
+ const source={ownerDocument:doc,cloneNode(){return {style:{},classList:{add(){}},removeAttribute(){},querySelectorAll:()=>[],setAttribute(){},remove(){},animate(keyframes){frames.push(keyframes);let done;const finished=new Promise(r=>done=r);flightEnds.push(done);return {finished,cancel(){done()}}}}}};
+ const items=[{card:card(1),seat:0},{card:card(2),seat:1}];
+ const queue=createTailQueue({show(){},finish:x=>ends.push(x),schedule:fn=>(tasks.push(fn),tasks.length),unschedule(){},onArrive:item=>landed.push(item),arrive:item=>flyAwardCard({element:source,rect:{left:60,top:120,width:200,height:280}},targets[item.seat])});
+ queue.start(items);tasks.shift()();assert.deepEqual(landed,[]);assert.equal(frames[0].at(-1).opacity,1);
+ flightEnds.shift()();await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(landed,[items[0]]);assert.equal(targets[0].pulses,1);
+ tasks.shift()();tasks.shift()();flightEnds.shift()();await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(landed,items);assert.equal(targets[1].pulses,1);assert.deepEqual(ends,[]);assert.equal(queue.active,true);tasks.shift()();assert.deepEqual(ends,[true]);
+});
+test('failed, skipped, cancelled and replaced flights cannot report stale arrivals',async()=>{
+ for(const mode of ['skip','cancel','replace','failed']){
+  const tasks=[],landed=[];let resolve;
+  const queue=createTailQueue({show(){},finish(){},schedule:fn=>(tasks.push(fn),tasks.length),unschedule(){},onArrive:item=>landed.push(item),arrive:()=>({finished:new Promise(r=>resolve=r),cancel(){}})});
+  queue.start([{card:card(1),seat:0}]);tasks.shift()();
+  if(mode==='replace')queue.start([]);else if(mode!=='failed')queue[mode]();
+  resolve({arrived:mode!=='failed'});await new Promise(done=>setImmediate(done));assert.deepEqual(landed,[]);
+ }
+});
+
+test('last receiver arrival is painted during cancellable 550ms dwell before results',async()=>{
+ for(const mode of ['complete','cancel','skip','replace']){
+  const tasks=[],ends=[],landed=[];let resolve;
+  const queue=createTailQueue({show(){},finish:x=>ends.push(x),onArrive:item=>landed.push(item),schedule:(fn,ms)=>(tasks.push({fn,ms}),tasks.length),unschedule(){},arrive:()=>({finished:new Promise(r=>resolve=r),cancel(){}})});
+  queue.start([{card:card(1),seat:0}]);tasks.shift().fn();resolve({arrived:true});await new Promise(done=>setImmediate(done));
+  assert.equal(landed.length,1);assert.deepEqual(ends,[]);assert.equal(queue.active,true);
+  const dwell=tasks.shift();assert.equal(dwell.ms,550);
+  if(mode==='replace')queue.start([]);else if(mode!=='complete')queue[mode]();
+  dwell.fn();assert.deepEqual(ends,[mode!=='cancel']);assert.equal(queue.active,false);assert.equal(landed.length,1);
+ }
+});
+
+test('actual app arrival inserts each of 1–5 receipts into correct receiver box for either local seat',async()=>{
+ const app=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
+ const start=app.indexOf('function show(r)'),end=app.indexOf(" window.HeroPlatform?.gameplay(r.phase==='auction')",start);
+ for(const me of [0,1])for(const receiver of [0,1])for(let count=1;count<=5;count++){
+  const final=[0,1].map(seat=>({name:'Player '+seat,team:Array.from({length:5},(_,i)=>card(seat*5+i))}));
+  const offered=final[1-receiver].team[4];
+  const previous={code:'receipts',me,phase:'auction',card:offered,players:final.map((p,seat)=>({...p,team:p.team.slice(0,seat===receiver?5-count:4)}))};
+  const makeBox=()=>({markup:'',count:{textContent:''},slot:{innerHTML:''},set innerHTML(html){this.markup=html;this.count.textContent=html.match(/class="delivery-count">([^<]+)/)?.[1]||'';this.slot.innerHTML='Receiving cards'},get innerHTML(){return this.markup},querySelector(selector){return selector==='.delivery-count'?this.count:this.slot}});
+  const classes=new Set(),elements={stage:{children:[],querySelectorAll:()=>[]},game:{dataset:{phase:'auction'},classList:{remove:(...xs)=>xs.forEach(x=>classes.delete(x)),add:x=>classes.add(x),contains:x=>classes.has(x)}},phase:{},player0:makeBox(),player1:makeBox()};
+  let options,items;
+  const context={esc:String,displaySeat:(seat,local)=>seat===local?0:1,room:previous,tailReveal:null,awardFlights:new Set(),collectTailAwards,collectOfferedAwards,cancelAwardFlights(){},animateWonAuctionCard:()=>Promise.resolve(),Promise,signedIn:()=>true,cancelAuctionReveal(){},renderChat(){},refreshGold(){},$:id=>elements[id],window:{matchMedia:()=>({matches:false})},document:{documentElement:{lang:'en'},querySelector:()=>null},results:0,mountTailReveal(root,button,awards,opts){items=awards;options=opts;return {active:true,cancel(){}}}};
+  vm.createContext(context);vm.runInContext(app.slice(start,end)+" results++;room=r;$('game').dataset.phase=r.phase;}",context);
+  context.show({code:'receipts',me,phase:'finished',final});
+  await options.startAfter;
+  assert.equal(classes.has('auction-delivery-active'),true);
+  assert.equal(items.length,count);
+  const target=elements['player'+(receiver===me?0:1)],other=elements['player'+(receiver===me?1:0)];
+  assert.equal(target.count.textContent,(5-count)+' / 5');assert.equal(other.count.textContent,'5 / 5');
+  const otherMarkup=other.slot.innerHTML;
+  assert.equal(options.resolveDestination(receiver),target.slot);
+  for(let index=0;index<items.length;index++){
+   options.onArrive(items[index]);
+   assert.equal(target.count.textContent,(6-count+index)+' / 5');
+   assert.ok(target.slot.innerHTML.includes('✓ '+items[index].card.name));
+   assert.equal(other.count.textContent,'5 / 5');assert.equal(other.slot.innerHTML,otherMarkup);
+   assert.equal(context.results,0);assert.equal(elements.game.dataset.phase,'auction');
+  }
+  assert.equal(target.count.textContent,'5 / 5');
+  options.onComplete();assert.equal(context.results,1);assert.equal(elements.game.dataset.phase,'finished');
+ }
 });

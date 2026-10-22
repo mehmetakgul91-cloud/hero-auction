@@ -9,7 +9,7 @@ export function collectTailAwards(previous,next){
    .map(card=>({card:{...card},seat}));
  });
 }
-export function createTailQueue({show,arrive,finish,schedule=setTimeout,unschedule=clearTimeout,duration=1800}){
+export function createTailQueue({show,arrive,onArrive,finish,schedule=setTimeout,unschedule=clearTimeout,duration=1800,arrivalDuration=550}){
  let timer=null,flight=null,items=[],index=0,generation=0,active=false;
  function stop(){generation++;if(timer!==null)unschedule(timer);timer=null;flight?.cancel?.();flight=null;items=[];active=false;}
  function complete(){stop();finish(true);}
@@ -25,7 +25,7 @@ export function createTailQueue({show,arrive,finish,schedule=setTimeout,unschedu
      timer=null;if(current!==generation)return;
      if(!arrive){advance();return;}
      try{flight=arrive(item,position,items.length);}catch{advance();return;}
-     Promise.resolve(flight?.finished).catch(()=>{}).then(()=>{if(current!==generation)return;flight=null;advance();});
+     Promise.resolve(flight?.finished).catch(()=>{}).then(result=>{if(current!==generation)return;flight=null;if(result?.arrived===true){try{onArrive?.(item);}catch{}timer=schedule(()=>{timer=null;if(current===generation)advance();},arrivalDuration);}else advance();});
     },duration);
    };if(startAfter)Promise.resolve(startAfter).catch(()=>{}).then(()=>{if(current===generation)advance();});else advance();
   },
@@ -33,7 +33,7 @@ export function createTailQueue({show,arrive,finish,schedule=setTimeout,unschedu
   cancel(){stop();finish(false);}
  };
 }
-export function mountTailReveal(root,button,items,{english=false,me=0,reducedMotion=false,loadArt,onComplete,resolveDestination,startAfter}={}){
+export function mountTailReveal(root,button,items,{english=false,me=0,reducedMotion=false,loadArt,onComplete,onArrive,resolveDestination,startAfter}={}){
  const doc=root.ownerDocument;
  const panel=doc.createElement('section');panel.className='auction-tail-sequence';panel.setAttribute('translate','no');
  const heading=doc.createElement('p');heading.className='auction-tail-progress';heading.setAttribute('role','status');heading.textContent=english?'Card moving to team':'Kart takımına gidiyor';
@@ -42,7 +42,7 @@ export function mountTailReveal(root,button,items,{english=false,me=0,reducedMot
  panel.append(heading,holder,skip);root.prepend(panel);root.classList.add('auction-tail-playing');if(button)button.disabled=true;
  const cleanup=(completed)=>{const restoreFocus=doc.activeElement===skip;panel.remove();root.classList.remove('auction-tail-playing');if(button)button.disabled=false;if(restoreFocus&&button?.isConnected)button.focus();if(completed)onComplete?.();};
  let activeArt=null,activeScene=null;
- const queue=createTailQueue({finish:cleanup,arrive:({seat})=>{
+ const queue=createTailQueue({finish:cleanup,onArrive,arrive:({seat})=>{
   if(!activeArt?.isConnected)return null;
   const snapshot={element:activeArt,rect:activeArt.getBoundingClientRect()};
   const flight=flyAwardCard(snapshot,resolveDestination?.(seat),{duration:1400,doc,label:seat===me?(english?'Your team':'Senin takımın'):(english?'Opponent team':'Rakip takım')});

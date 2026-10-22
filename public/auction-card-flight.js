@@ -4,19 +4,25 @@ export function awardFlightGeometry(from,to,{width,height}){
  const w=Math.min(Math.max(1,from.width),Math.max(1,width-16));
  const h=Math.min(Math.max(1,from.height),Math.max(1,height-16));
  const left=clamp(from.left,8,width-w-8),top=clamp(from.top,8,height-h-8);
- const x=clamp(to.left+to.width/2,20,width-20),y=clamp(to.top+to.height/2,20,height-20);
- return {left,top,width:w,height:h,dx:x-(left+w/2),dy:y-(top+h/2),scale:Math.min(.42,Math.max(.12,Math.min(to.width/w,to.height/h)))};
+ const x=to.left+to.width/2,y=to.top+to.height/2;
+ return {left,top,width:w,height:h,dx:x-(left+w/2),dy:y-(top+h/2),scale:Math.max(0,Math.min(1,Math.max(0,to.width-8)/w,Math.max(0,to.height-8)/h))};
 }
 export function flyAwardCard(sourceSnapshot,destination,{duration=1400,reducedMotion=false,label='',doc=sourceSnapshot?.element?.ownerDocument}={}){
- let resolve,animation=null,ghost=null,settled=false;
+ let resolve,animation=null,pulse=null,ghost=null,settled=false;
  const finished=new Promise(done=>resolve=done);
- const settle=()=>{if(settled)return;settled=true;ghost?.remove();resolve();};
- const cancel=()=>{animation?.cancel();settle();};
+ const settle=(arrived=false)=>{if(settled)return;settled=true;
+  if(arrived&&typeof destination?.animate==='function'){
+   try{pulse=destination.animate([{boxShadow:'0 0 0 0 #8be9ff00'},{boxShadow:'0 0 0 3px #8be9ffcc, 0 0 18px #62d6ff99',offset:.4},{boxShadow:'0 0 0 0 #8be9ff00'}],{duration:420,easing:'ease-out'});Promise.resolve(pulse.finished).catch(()=>{});}catch{}
+  }
+  ghost?.remove();resolve({arrived});
+ };
+ const cancel=()=>{animation?.cancel();pulse?.cancel();settle(false);};
  const handle={cancel,finished};
  const source=sourceSnapshot?.element,view=doc?.defaultView;
  if(reducedMotion||!source||!destination||!doc?.body){settle();return handle;}
- let to=destination.getBoundingClientRect();
- if(!to.width||!to.height)to=destination.closest?.('.player-side')?.getBoundingClientRect()||to;
+ if(typeof destination==='function')destination=destination();
+ if(!destination){settle();return handle;}
+ const to=destination.getBoundingClientRect();
  const from=sourceSnapshot.rect||source.getBoundingClientRect();
  if(!from.width||!from.height||!to.width||!to.height){settle();return handle;}
  const geometry=awardFlightGeometry(from,to,{width:view?.innerWidth||doc.documentElement.clientWidth,height:view?.innerHeight||doc.documentElement.clientHeight});
@@ -30,9 +36,9 @@ export function flyAwardCard(sourceSnapshot,destination,{duration=1400,reducedMo
   animation=ghost.animate([
    {transform:'translate(0,0) scale(1)',opacity:1},
    {transform:`translate(${geometry.dx*.45}px,${geometry.dy*.45-18}px) scale(.8) rotate(-3deg)`,opacity:1,offset:.5},
-   {transform:`translate(${geometry.dx}px,${geometry.dy}px) scale(${geometry.scale}) rotate(0deg)`,opacity:.35}
+   {transform:`translate(${geometry.dx}px,${geometry.dy}px) scale(${geometry.scale}) rotate(0deg)`,opacity:1}
   ],{duration,easing:'cubic-bezier(.3,.1,.2,1)',fill:'forwards'});
-  Promise.resolve(animation.finished).then(settle,settle);
+  Promise.resolve(animation.finished).then(()=>settle(destination.isConnected!==false),()=>settle(false));
  }catch{settle();}
  return handle;
 }

@@ -10,12 +10,27 @@ test('only auction calculation view hides duplicate player cards and uses full-w
  assert.match(css,/#game\.auction-results-only \.arena-stage\{grid-column:1;grid-row:1;width:100%;min-width:0\}/);
 });
 test('auction/rematch transitions restore cards; calculation rows and arena confirmation stay intact',()=>{
- const reset=app.indexOf("classList.remove('auction-results-only')");
+ const reset=app.indexOf("classList.remove('auction-results-only','auction-delivery-active')");
  const tail=app.indexOf("if(r.phase==='finished'&&(tailAwards.length");assert.ok(reset>0&&reset<tail);
  const result=app.slice(app.indexOf("classList.add('auction-results-only')"),app.indexOf(" }renderChat(r);"));
- assert.match(result,/hero.power\*\(1\+rate\/100\)/);
- assert.match(result,/base\*\(1\+rate\/100\)/);
- assert.match(result,/hero.power\} → \$\{updated/);
+ assert.match(result,/auctionCalculationMarkup\(r.final,r.me/);
+ assert.doesNotMatch(result,/p.team.map|hero.name|final-hero/);
  assert.match(result,/id="confirm-arena-entry"/);
  assert.match(result,/location.assign\('\/battle-preview.html\?'/);
+});
+
+import {teamCalculation,auctionCalculationMarkup} from '../public/auction-calculation.js';
+test('rendered results contain only team calculations, not acquired hero list',()=>{
+ const players=[{name:'Local <safe>',credits:12,team:[{name:'SecretHeroA',power:77},{name:'SecretHeroB',power:69}]},{name:'Opponent',credits:-3,team:[{name:'SecretHeroC',power:80}]}];
+ assert.deepEqual(teamCalculation(players[0]),{base:146,credits:12,multiplier:1.12,total:146*1.12});
+ const markup=auctionCalculationMarkup(players,0);
+ assert.equal((markup.match(/<table /g)||[]).length,1);
+ assert.equal((markup.match(/<tr/g)||[]).length,5);
+ assert.equal((markup.match(/<td>/g)||[]).length,8);
+ for(const name of ['SecretHeroA','SecretHeroB','SecretHeroC'])assert.ok(!markup.includes(name));
+ assert.ok(markup.includes('163.52'));assert.ok(markup.includes('77.60'));assert.ok(markup.includes('-3%'));
+ assert.ok(markup.includes('Local &lt;safe&gt;'));assert.ok(!markup.includes('<safe>'));
+ const reversed=auctionCalculationMarkup(players,1,{english:true});
+ assert.ok(reversed.indexOf('Opponent')<reversed.indexOf('Local &lt;safe&gt;'));
+ assert.ok(reversed.includes('FINAL TEAM POWER'));
 });
