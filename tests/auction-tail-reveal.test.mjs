@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {collectOfferedAwards} from '../public/auction-awards.js';
 import {collectTailAwards,createTailQueue} from '../public/auction-tail-reveal.js';
 import {readFileSync} from 'node:fs';
 const card=n=>({name:'Hero '+n,universe:'original',cost:4,rarity:'rare'});
@@ -39,11 +40,11 @@ test('entry waits for queue and repeated snapshots do not restart it; deck revea
  assert.doesNotMatch(module,/credits\s*[-+]=|\/api\/(bid|pass|rematch)|deadline\s*=/);
 });
 
-test('slower queue gives every card 1900ms and only completion or skip opens results',()=>{
+test('slower queue gives every card 1800ms before arrival and only completion or skip opens results',()=>{
  const timers=[],completed=[];
  const queue=createTailQueue({show:()=>{},finish:value=>completed.push(value),schedule:(fn,ms)=>(timers.push({fn,ms}),timers.length),unschedule:()=>{}});
- queue.start([1,2]);assert.equal(timers[0].ms,1900);assert.deepEqual(completed,[]);
- timers.shift().fn();assert.deepEqual(completed,[]);assert.equal(timers[0].ms,1900);
+ queue.start([1,2]);assert.equal(timers[0].ms,1800);assert.deepEqual(completed,[]);
+ timers.shift().fn();assert.deepEqual(completed,[]);assert.equal(timers[0].ms,1800);
  timers.shift().fn();assert.deepEqual(completed,[true]);
  queue.start([3,4]);queue.cancel();assert.deepEqual(completed,[true,false]);
  timers.shift().fn();assert.deepEqual(completed,[true,false]);
@@ -56,13 +57,13 @@ test('actual show transition keeps auction visible through all tails and dedupli
  const start=app.indexOf('function show(r)');
  const end=app.indexOf(" window.HeroPlatform?.gameplay(r.phase==='auction')",start);
  assert.ok(end>start);
- for(let count=1;count<=5;count++)for(const seat of [0,1]){
+ for(let count=0;count<=5;count++)for(const seat of [0,1]){
   const full=Array.from({length:5},(_,i)=>card(i));
   const final=seat===0?[{team:Array.from({length:5},(_,i)=>card(5+i))},{team:full}]:[{team:full},{team:Array.from({length:5},(_,i)=>card(5+i))}];
   const previous={code:'123',phase:'auction',card:card(4),players:final.map((p,i)=>({team:p.team.slice(0,i===seat?5-count:4)}))};
   const elements={stage:{replaceChildren(){}},game:{dataset:{phase:'auction'},classList:{remove(){}}},phase:{}};
   let mounts=0,options;
-  const context={room:previous,tailReveal:null,collectTailAwards,signedIn:()=>true,cancelAuctionReveal:()=>{},renderChat:()=>{},refreshGold:()=>{},$:id=>elements[id],window:{matchMedia:()=>({matches:false})},document:{documentElement:{lang:'en'}},results:0,mountTailReveal:(root,button,items,opts)=>{
+  const context={room:previous,tailReveal:null,awardFlights:new Set(),collectTailAwards,collectOfferedAwards,cancelAwardFlights:()=>{},animateWonAuctionCard:()=>Promise.resolve(),Promise,signedIn:()=>true,cancelAuctionReveal:()=>{},renderChat:()=>{},refreshGold:()=>{},$:id=>elements[id],window:{matchMedia:()=>({matches:false})},document:{documentElement:{lang:'en'},querySelector:()=>null},results:0,mountTailReveal:(root,button,items,opts)=>{
    mounts++;assert.equal(items.length,count);options=opts;return {active:true,cancel:()=>{}};
   }};
   vm.createContext(context);vm.runInContext(app.slice(start,end)+" results++;room=r;$('game').dataset.phase=r.phase;}",context);
@@ -72,4 +73,70 @@ test('actual show transition keeps auction visible through all tails and dedupli
   options.onComplete();assert.equal(context.results,1);assert.equal(elements.game.dataset.phase,'finished');
   context.show(next);assert.equal(mounts,1);
  }
+});
+
+
+test('next card and results wait for actual flight completion',async()=>{
+ const shown=[],tasks=[],flights=[],finished=[];
+ const queue=createTailQueue({show:x=>shown.push(x),finish:x=>finished.push(x),schedule:fn=>(tasks.push(fn),tasks.length),unschedule:()=>{},arrive:()=>{let done;const finished=new Promise(resolve=>done=resolve);const flight={finished,done,cancel(){done()}};flights.push(flight);return flight;}});
+ queue.start([1,2]);assert.deepEqual(shown,[1]);tasks.shift()();assert.deepEqual(shown,[1]);assert.equal(queue.active,true);
+ flights[0].done();await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(shown,[1,2]);assert.deepEqual(finished,[]);
+ tasks.shift()();assert.deepEqual(finished,[]);flights[1].done();await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(finished,[true]);
+});
+test('cancel during flight never advances stale queue or opens results',async()=>{
+ let cancelCount=0,done;const tasks=[],shown=[],ends=[];
+ const queue=createTailQueue({show:x=>shown.push(x),finish:x=>ends.push(x),schedule:fn=>(tasks.push(fn),tasks.length),unschedule:()=>{},arrive:()=>({finished:new Promise(r=>done=r),cancel(){cancelCount++;done()}})});
+ queue.start([1,2]);tasks.shift()();queue.cancel();await new Promise(resolve=>setImmediate(resolve));
+ assert.deepEqual(shown,[1]);assert.deepEqual(ends,[false]);assert.equal(cancelCount,1);
+});
+test('prior offered-card flight completes before tail starts, including skip/cancel while waiting',async()=>{
+ for(const mode of ['complete','skip','cancel']){
+  let release;const before=new Promise(r=>release=r),shown=[],ends=[];
+  const queue=createTailQueue({show:x=>shown.push(x),finish:x=>ends.push(x),schedule:()=>1,unschedule:()=>{}});
+  queue.start([1],{startAfter:before});assert.equal(queue.active,true);assert.deepEqual(shown,[]);
+  if(mode!=='complete')queue[mode]();release();await new Promise(resolve=>setImmediate(resolve));
+  assert.deepEqual(shown,mode==='complete'?[1]:[]);assert.deepEqual(ends,mode==='complete'?[]:[mode==='skip']);queue.cancel();
+ }
+});
+import {awardFlightGeometry,flyAwardCard} from '../public/auction-card-flight.js';
+test('flight ends at visible clamped receiver anchor for left/right/offscreen panels',()=>{
+ const source={left:140,top:200,width:240,height:320};
+ for(const left of [-200,0,350,900])for(const top of [-400,30,1800]){
+  const g=awardFlightGeometry(source,{left,top,width:120,height:60},{width:390,height:844});
+  const x=g.left+g.width/2+g.dx,y=g.top+g.height/2+g.dy;
+  assert.ok(x>=20&&x<=370);assert.ok(y>=20&&y<=824);assert.ok(g.scale>=.12&&g.scale<=.42);
+ }
+});
+test('flight without visual target and reduced motion finish safely',async()=>{
+ await flyAwardCard(null,null).finished;
+ await flyAwardCard({element:{}},{},{reducedMotion:true}).finished;
+});
+
+test('flight cleans up ghost and resolves on arrival or cancellation',async()=>{
+ for(const cancel of [false,true]){
+  let resolveAnimation,cancelled=0,removed=0,ghost;
+  const doc={defaultView:{innerWidth:390,innerHeight:844},body:{append(node){ghost=node}},createElement:()=>({})};
+  const source={ownerDocument:doc,cloneNode(){return {style:{},classList:{add(){}},removeAttribute(){},querySelectorAll:()=>[],setAttribute(){},remove(){removed++},animate(){return {finished:new Promise(r=>resolveAnimation=r),cancel(){cancelled++;resolveAnimation()}}}}}};
+  const handle=flyAwardCard({element:source,rect:{left:60,top:120,width:200,height:280}},{getBoundingClientRect:()=>({left:300,top:60,width:80,height:50})});
+  assert.ok(ghost);assert.equal(removed,0);
+  if(cancel)handle.cancel();else resolveAnimation();
+  await handle.finished;assert.equal(removed,1);assert.equal(cancelled,cancel?1:0);
+  handle.cancel();assert.equal(removed,1);
+ }
+});
+
+test('empty tail waits for final offered flight and cancel invalidates pending completion',async()=>{
+ for(const mode of ['arrive','cancel','skip']){
+  let release;const startAfter=new Promise(r=>release=r),ends=[],shown=[];
+  const queue=createTailQueue({show:item=>shown.push(item),finish:x=>ends.push(x)});
+  queue.start([],{startAfter});assert.equal(queue.active,true);assert.deepEqual(ends,[]);
+  if(mode!=='arrive')queue[mode]();release();await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(queue.active,false);assert.deepEqual(shown,[]);assert.deepEqual(ends,[mode!=='cancel']);
+ }
+});
+test('results wait for all outstanding purchase flights, not just the final one',async()=>{
+ let first,second;const one=new Promise(r=>first=r),two=new Promise(r=>second=r),ends=[];
+ const queue=createTailQueue({show:()=>assert.fail('no tail'),finish:x=>ends.push(x)});
+ queue.start([],{startAfter:Promise.all([one,two])});first();await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(ends,[]);assert.equal(queue.active,true);
+ second();await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(ends,[true]);assert.equal(queue.active,false);
 });
