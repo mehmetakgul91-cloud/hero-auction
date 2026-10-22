@@ -41,7 +41,11 @@ export function createApp(config, makeTransport = transport) {
     probeBusy=(async()=>{
       const t=makeTransport(config);
       try { await t.verify(); smtpState={ready:true,code:'TLS_READY'}; }
-      catch(e) { smtpState={ready:false,code:safeCode(e)}; console.info('smtp_probe', safeCode(e)); }
+      catch(e) {
+        smtpState={ready:false,code:safeCode(e)};
+        // This probe has no credentials or message content. Keep connection diagnostics in operator logs only.
+        console.info('smtp_probe', JSON.stringify({code:safeCode(e),detail:String(e.message||'').slice(0,1000)}));
+      }
       finally { t.close(); }
       return smtpState;
     })();
@@ -69,7 +73,6 @@ export function createApp(config, makeTransport = transport) {
       if(req.headers.origin!==origin || req.headers['sec-fetch-site']==='cross-site') throw fail(403,'İstek kaynağı doğrulanamadı.');
       if(path==='/api/login') {
         clean();
-        const ip=req.socket.remoteAddress || 'unknown';
         // A global cap also protects the one configured mailbox behind reverse proxies.
         const a=attempts.get('global') || {count:0,until:Date.now()+15*60000};
         if(a.count>=8 || loginBusy>=2) throw fail(429,'Çok fazla giriş denemesi. 15 dakika sonra tekrar dene.');
