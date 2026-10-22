@@ -60,7 +60,7 @@ test('actual show transition keeps auction visible through all tails and dedupli
   const full=Array.from({length:5},(_,i)=>card(i));
   const final=seat===0?[{team:Array.from({length:5},(_,i)=>card(5+i))},{team:full}]:[{team:full},{team:Array.from({length:5},(_,i)=>card(5+i))}];
   const previous={code:'123',phase:'auction',card:card(4),players:final.map((p,i)=>({team:p.team.slice(0,i===seat?5-count:4)}))};
-  const elements={stage:{replaceChildren(){}},game:{dataset:{phase:'auction'}},phase:{}};
+  const elements={stage:{replaceChildren(){}},game:{dataset:{phase:'auction'},classList:{remove(){}}},phase:{}};
   let mounts=0,options;
   const context={room:previous,tailReveal:null,collectTailAwards,signedIn:()=>true,cancelAuctionReveal:()=>{},renderChat:()=>{},refreshGold:()=>{},$:id=>elements[id],window:{matchMedia:()=>({matches:false})},document:{documentElement:{lang:'en'}},results:0,mountTailReveal:(root,button,items,opts)=>{
    mounts++;assert.equal(items.length,count);options=opts;return {active:true,cancel:()=>{}};
