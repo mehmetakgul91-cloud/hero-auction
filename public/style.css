@@ -761,212 +761,101 @@ header{gap:14px;flex-wrap:wrap}
 @media(max-width:520px){.commander-profile-v2 .commander-upgrades.commander-fishbone{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.commander-profile-v2 .ability-art{min-height:120px}.commander-profile-v2 .ability-info{padding:11px 9px;gap:8px}.commander-profile-v2 .ability-info .ability-title{font-size:15px}.commander-profile-v2 .ability-desc{font-size:10px;min-height:28px}.commander-profile-v2 .ability-values{gap:4px}.commander-profile-v2 .ability-values>span{padding:6px 4px}.commander-profile-v2 .ability-values small{font-size:8px}.commander-profile-v2 .ability-values b{font-size:16px}.commander-profile-v2 .ability-type-tag{font-size:8px;padding:5px}.commander-profile-v2 .ability-info .ability-upgrade-button{font-size:10px}}
 
 
-/* Play lobby refresh: brighter, readable, arena-inspired without changing gameplay. */
-#home-play-panel{
-  position:relative;
-  isolation:isolate;
-  overflow:hidden;
-  padding:clamp(14px,3vw,34px);
-  border:1px solid rgba(101,205,255,.56);
-  border-radius:24px;
-  background:
-    radial-gradient(ellipse at 52% 2%,rgba(52,153,255,.40),transparent 53%),
-    radial-gradient(ellipse at 95% 42%,rgba(143,84,255,.23),transparent 48%),
-    radial-gradient(ellipse at 4% 70%,rgba(15,214,206,.18),transparent 45%),
-    linear-gradient(150deg,#163b6c 0%,#112947 47%,#17213f 100%);
-  box-shadow:0 0 0 1px rgba(82,196,255,.13),0 24px 70px rgba(0,0,0,.35),inset 0 1px rgba(255,255,255,.18);
-}
-#home-play-panel::before{
-  content:"";pointer-events:none;position:absolute;inset:0;z-index:-1;
-  background:repeating-linear-gradient(115deg,transparent 0 88px,rgba(140,218,255,.035) 89px 90px);
-}
-#home-play-panel .cinema-sky{opacity:.85;pointer-events:none}
-#home-play-panel .cinema-hero{position:relative;text-align:center;padding:clamp(16px,3vw,32px) 8px}
-#home-play-panel .cinema-hero h1{
-  color:#fff1bb;text-shadow:0 3px 0 #815b24,0 0 32px rgba(255,195,71,.48);
-}
-#home-play-panel .cinema-hero h1 em{color:#fff9dc;text-shadow:0 0 24px rgba(89,219,255,.8)}
-#home-play-panel .cinema-hero p{color:#e4f3ff}
-#home-play-panel .cinema-dashboard{position:relative}
-#home-play-panel .cinema-command{
-  background:linear-gradient(150deg,rgba(20,54,100,.97),rgba(16,37,70,.97));
-  border:1px solid rgba(110,204,255,.58);
-  box-shadow:0 12px 38px rgba(0,0,0,.25),inset 0 1px rgba(255,255,255,.13);
-  border-radius:18px;
-}
-#home-play-panel .cinema-command-top{
-  background:linear-gradient(90deg,rgba(18,123,191,.32),rgba(69,82,174,.28));
-  color:#e7f7ff;
-}
-#home-play-panel .panel-heading h2{color:#fff4cb}
-#home-play-panel .cinema-play-grid{gap:12px}
-#home-play-panel .cinema-play-grid button{
-  min-height:60px;border-radius:14px;font-weight:900;letter-spacing:.4px;
-  box-shadow:0 7px 19px rgba(0,0,0,.24);
-  transition:transform .15s ease,filter .15s ease,box-shadow .15s ease;
-}
-#home-play-panel .cinema-play-grid button:hover{transform:translateY(-2px);filter:brightness(1.14)}
-#home-play-panel #match{
-  color:#fff;background:linear-gradient(135deg,#098a56,#0bc98b);
-  border:2px solid #70ffd0;box-shadow:0 0 22px rgba(24,225,146,.30);
-}
-#home-play-panel #create{
-  background:linear-gradient(135deg,#1767c6,#229de9);border:2px solid #85dfff;color:white;
-}
-#home-play-panel #bot{
-  background:linear-gradient(135deg,#6235ae,#9253dc);border:2px solid #cda7ff;color:white;
-}
-#home-play-panel input,#home-play-panel select{
-  background:#16345b!important;color:#fff!important;border:1px solid #83b7e2!important;
-}
-#home-play-panel .hint,#home-play-panel .or{color:#d2eaff}
-#home-play-panel .cinema-extras .panel{
-  background:linear-gradient(150deg,rgba(24,55,98,.97),rgba(18,39,75,.96));
-  border-color:rgba(117,190,244,.40);
-}
-@media(max-width:600px){
-  #home-play-panel{padding:12px;border-radius:16px}
-  #home-play-panel .cinema-hero{padding:16px 4px}
-  #home-play-panel .cinema-play-grid button{min-height:56px}
-}
-
 /* Keep all five home navigation tabs in one horizontal row on every screen. */
 #home .home-quick-nav{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:clamp(3px,1vw,12px)!important;width:100%;align-items:stretch}
 #home .home-quick-nav .quick-nav-item{min-width:0;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;white-space:normal;overflow-wrap:anywhere;padding:clamp(7px,1.5vw,14px) 2px;font-size:clamp(9px,1.2vw,14px);line-height:1.15}
 #home .home-quick-nav .quick-nav-icon{font-size:clamp(18px,2.5vw,29px);line-height:1.1}
 @media(max-width:480px){#home .home-quick-nav{gap:3px!important}#home .home-quick-nav .quick-nav-item{font-size:9px;padding:9px 1px;letter-spacing:0}}
 
-/* Compact play lobby — focused on quick matchmaking, no oversized splash. */
-#home-play-panel{max-width:1040px;margin:0 auto;padding:clamp(12px,2vw,24px);background:linear-gradient(155deg,#173c69,#10243e 65%,#1b2444);border:1px solid #477fa6;border-radius:18px}
-#home-play-panel .play-compact-heading{text-align:center;margin:0 0 14px}
-#home-play-panel .play-compact-heading span{font-size:11px;letter-spacing:1.8px;font-weight:900;color:#8cdeff}
-#home-play-panel .play-compact-heading h2{margin:3px 0;color:#ffd784;font-size:clamp(29px,4vw,42px);line-height:1.1}
-#home-play-panel .play-compact-heading p{margin:0;color:#e1ecfa;font-size:13px}
-#home-play-panel .cinema-dashboard{display:block}
-#home-play-panel .cinema-command{padding:clamp(12px,2vw,20px);background:#102947ed;border:1px solid #548bb1;border-radius:15px}
-#home-play-panel .play-compact-name{display:flex;align-items:center;gap:12px;margin-bottom:15px}
-#home-play-panel .play-compact-name label{font-size:11px;font-weight:900;white-space:nowrap}
-#home-play-panel .play-compact-name input{max-width:280px;min-height:40px}
-#home-play-panel .play-compact-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-#home-play-panel .play-compact-mode{display:flex;flex-direction:column;align-items:stretch;gap:9px;min-width:0;padding:16px;border:1px solid #5fbce9;border-radius:14px;background:linear-gradient(155deg,#185687,#102e52);text-align:center}
-#home-play-panel .play-compact-friend{border-color:#d5a653;background:linear-gradient(155deg,#54452f,#2a2d43)}
-#home-play-panel .play-compact-bot{border-color:#a99bfa;background:linear-gradient(155deg,#433c79,#252544)}
-#home-play-panel .play-compact-icon{font-size:34px;line-height:1.1}
-#home-play-panel .play-compact-mode h3{margin:0;font-size:18px;color:white}
-#home-play-panel .play-compact-mode p{margin:0;color:#d8e9f9;font-size:12px;min-height:19px}
-#home-play-panel .play-compact-action{margin-top:auto;width:100%;min-height:44px;border:1px solid #9fe2ff;border-radius:9px;background:#1176ba;color:#fff;font-weight:900;font-size:12px;cursor:pointer}
-#home-play-panel .play-compact-match .play-compact-action{background:#078f6e;border-color:#7dffca}
-#home-play-panel .play-compact-friend .play-compact-action{background:#b77e2a;border-color:#ffdf9c}
-#home-play-panel .play-compact-bot .play-compact-action{background:#7349b8;border-color:#cfb6ff}
-#home-play-panel .play-compact-join{display:flex;gap:5px;min-width:0}
-#home-play-panel .play-compact-join input{flex:1;min-width:0;width:0;font-size:11px}
-#home-play-panel .play-compact-join button{flex:0 0 auto;padding:8px;border-radius:8px;font-size:11px}
-#home-play-panel .play-compact-bot select{min-height:42px;width:100%;padding:7px;border-radius:8px}
-#home-play-panel .play-compact-note{text-align:center;margin:13px 0 5px;font-size:12px;color:#c8e7fa}
-@media(max-width:680px){#home-play-panel .play-compact-modes{grid-template-columns:1fr;gap:8px}#home-play-panel .play-compact-mode{display:grid;grid-template-columns:45px minmax(0,1fr);align-items:center;text-align:left;padding:12px;gap:5px 10px}#home-play-panel .play-compact-icon{grid-row:span 2;font-size:30px;text-align:center}#home-play-panel .play-compact-mode h3{font-size:15px}#home-play-panel .play-compact-mode p{font-size:11px}#home-play-panel .play-compact-action,#home-play-panel .play-compact-join,#home-play-panel .play-compact-bot select{grid-column:1/-1}#home-play-panel .play-compact-name{flex-direction:column;align-items:stretch;gap:6px}#home-play-panel .play-compact-name input{max-width:none}}
-
-/* Play layout: one full-width opponent card, one equally wide shared lower box. */
-#home-play-panel .play-compact-modes{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:12px!important}
-#home-play-panel .play-compact-match{width:100%;min-height:148px;display:grid;grid-template-columns:48px minmax(0,1fr) auto;grid-template-rows:auto auto;align-content:center;align-items:center;text-align:left;column-gap:14px;padding:18px}
-#home-play-panel .play-compact-match .play-compact-icon{grid-column:1;grid-row:1/3;font-size:34px}
-#home-play-panel .play-compact-match h3{grid-column:2;grid-row:1}
-#home-play-panel .play-compact-match p{grid-column:2;grid-row:2;min-height:0}
-#home-play-panel .play-compact-match .play-compact-action{grid-column:3;grid-row:1/3;margin:0;min-width:175px;width:auto}
-#home-play-panel .play-compact-secondary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;min-height:148px;border:1px solid #748eb7;border-radius:14px;overflow:hidden;background:#172e4a}
-#home-play-panel .play-compact-secondary .play-compact-mode{border:0;border-radius:0;box-shadow:none;min-width:0}
-#home-play-panel .play-compact-secondary .play-compact-mode+.play-compact-mode{border-left:1px solid #7285ac}
-#home-play-panel .play-compact-secondary .play-compact-icon{font-size:25px}
-#home-play-panel .play-compact-secondary .play-compact-mode{gap:7px;padding:13px}
-#home-play-panel .play-compact-secondary .play-compact-mode h3{font-size:15px}
-#home-play-panel .play-compact-secondary .play-compact-mode p{font-size:11px;min-height:0}
-@media(max-width:680px){
- #home-play-panel .play-compact-match{grid-template-columns:38px minmax(0,1fr);grid-template-rows:auto auto auto;gap:4px 10px;min-height:138px}
- #home-play-panel .play-compact-match .play-compact-icon{grid-column:1;grid-row:1/3}
- #home-play-panel .play-compact-match h3{grid-column:2;grid-row:1}
- #home-play-panel .play-compact-match p{grid-column:2;grid-row:2}
- #home-play-panel .play-compact-match .play-compact-action{grid-column:1/-1;grid-row:3;width:100%;margin-top:7px}
- #home-play-panel .play-compact-secondary{grid-template-columns:repeat(2,minmax(0,1fr));min-height:0}
- #home-play-panel .play-compact-secondary .play-compact-mode{display:flex;flex-direction:column;text-align:center;gap:6px;padding:10px 7px}
- #home-play-panel .play-compact-secondary .play-compact-icon{font-size:23px}
- #home-play-panel .play-compact-secondary .play-compact-mode h3{font-size:12px}
- #home-play-panel .play-compact-secondary .play-compact-mode p{font-size:10px}
- #home-play-panel .play-compact-secondary .play-compact-action{min-height:39px;font-size:10px}
- #home-play-panel .play-compact-secondary .play-compact-join{flex-direction:column}
- #home-play-panel .play-compact-secondary .play-compact-join input{width:100%;min-height:38px}
- #home-play-panel .play-compact-secondary .play-compact-join button{min-height:35px}
+/* Play lobby: compact controls, one featured duel and two equal secondary modes. */
+#home #home-play-panel{position:relative;isolation:isolate;max-width:760px;margin:0 auto;padding:20px;border:1px solid #35465f;border-radius:20px;background:radial-gradient(ellipse at 100% 0,#1d334b66,transparent 55%),#0d1729;box-shadow:0 18px 50px #0003;scroll-margin-top:12px}
+#home-play-panel .play-lobby-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+#home #home-play-panel #play-lobby-back{margin:0;min-height:44px;padding:10px 12px;background:#142338;border:1px solid #3e526c;border-radius:10px;color:#cbd9e9;font-size:11px;letter-spacing:.3px;box-shadow:none}
+#home-play-panel .play-compact-heading{text-align:right}
+#home-play-panel .play-compact-heading span{color:#8198b3;font-size:9px;font-weight:700;letter-spacing:1.5px}
+#home-play-panel .play-compact-heading h2{margin:2px 0 0;color:#f4e1b2;font-size:27px;line-height:1;font-weight:900;letter-spacing:1px}
+#home #home-play-panel .cinema-dashboard{display:block;padding:0}
+#home #home-play-panel .cinema-command{margin:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none}
+#home #home-play-panel .play-compact-name{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:0 12px;border:1px solid #314259;border-radius:10px;background:#111f32}
+#home #home-play-panel .play-compact-name label{flex:0 0 auto;margin:0;color:#93a8c0;font-size:10px;letter-spacing:1px}
+#home #home-play-panel .play-compact-name input{flex:1;min-width:0;max-width:none;min-height:44px;margin:0;padding:8px 0;border:0;border-radius:0;background:transparent;color:#edf5ff;font-size:16px;box-shadow:none}
+#home-play-panel .play-compact-name:focus-within{outline:2px solid #77d9e4;outline-offset:2px}
+#home-play-panel .play-compact-modes{display:grid;gap:12px}
+#home-play-panel .play-compact-mode{min-width:0;position:relative;overflow:hidden;border:1px solid #3a516b;border-radius:14px}
+#home-play-panel .play-compact-match{padding:20px;background:linear-gradient(90deg,#102d43 26%,#102d43df 49%,#102d4322),url('/images/original/hero-11-v2.webp') right 23%/56% auto no-repeat,#102d43;border-color:#417887}
+#home-play-panel .play-match-copy{position:relative;max-width:73%}
+#home-play-panel .play-mode-eyebrow{font-size:9px;letter-spacing:1.8px;font-weight:800;color:#86e5e7}
+#home-play-panel .play-compact-match h3{margin:4px 0;color:#f2f8ff;font-size:30px;line-height:1.15;letter-spacing:-.8px}
+#home-play-panel .play-compact-mode p{margin:0;color:#aabdd0;font-size:12px;line-height:1.4}
+#home-play-panel .play-match-footer{display:flex;align-items:center;gap:12px;position:relative;margin-top:16px}
+#home #home-play-panel .play-compact-action,#home #home-play-panel .play-compact-join button{min-width:0;min-height:44px;margin:0;padding:10px 12px;display:flex;align-items:center;justify-content:center;gap:12px;border:1px solid #556981;border-radius:9px;background:#1e3149;color:#eef5ff;font-size:12px;font-weight:800;letter-spacing:.3px;line-height:1.2;white-space:normal;box-shadow:none}
+#home #home-play-panel #match{min-width:190px;background:linear-gradient(110deg,#85ebee,#46bed5);color:#072433;border-color:#97ebee}
+#home-play-panel .play-compact-action span[aria-hidden]{font-size:19px;font-weight:500;line-height:1}
+#home-play-panel .play-search-time{color:#c8e2e8;font-size:11px;white-space:nowrap}
+#home-play-panel .play-compact-secondary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#home-play-panel .play-compact-secondary .play-compact-mode{display:grid;grid-template-rows:auto auto 44px auto 44px;align-content:start;gap:8px;padding:16px}
+#home-play-panel .play-compact-friend{background:linear-gradient(135deg,#c79d4712,transparent 65%),#152033;border-color:#726044}
+#home-play-panel .play-compact-bot{background:linear-gradient(135deg,#a995ed12,transparent 65%),#172035;border-color:#554d77}
+#home-play-panel .play-mode-heading{display:flex;align-items:center;gap:10px;min-width:0}
+#home-play-panel .play-mode-symbol{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;color:#e3c17d}
+#home-play-panel .play-mode-symbol svg{display:block;width:28px;height:28px}
+#home-play-panel .play-compact-bot .play-mode-symbol{color:#b8a8ee}
+#home-play-panel .play-mode-heading h3{margin:0;font-size:15px;font-weight:800;line-height:1.2;letter-spacing:.3px;color:#eef4fc;overflow-wrap:normal}
+#home #home-play-panel #create{width:100%;min-height:44px;background:#dec28a;color:#251f12;border-color:#ebd29e;font-size:12px;box-shadow:none}
+#home #home-play-panel #bot{width:100%;min-height:44px;background:#3e355d;color:#ede6ff;border-color:#8374aa;font-size:12px}
+#home #home-play-panel .play-field-label{margin:2px 0 0;color:#97abc1;font-size:9px;font-weight:600;line-height:1.3;letter-spacing:.7px}
+#home #home-play-panel .play-compact-join{display:flex;flex-direction:row;align-items:stretch;gap:6px;min-width:0;width:100%;margin:0}
+#home #home-play-panel .play-compact-join input{flex:1;min-width:0;width:0;min-height:44px;margin:0;padding:8px 4px;text-align:center;font-size:16px;letter-spacing:2px;border:1px solid #48566c;border-radius:9px;background:#0f192b;color:#f4f7ff}
+#home #home-play-panel .play-compact-join button{flex:0 0 auto;padding:8px 12px;font-size:11px}
+#home #home-play-panel .play-compact-bot select{width:100%;min-width:0;min-height:44px;margin:0;padding:8px 10px;border:1px solid #615778;border-radius:9px;background:#131c31;color:#ede6ff;font:inherit;font-size:16px;color-scheme:dark}
+#home-play-panel .play-practice-note{text-align:center}
+#home-play-panel .play-compact-note{display:flex;align-items:center;justify-content:center;gap:8px;margin:14px 0 0;padding:10px 0;border-top:1px solid #2c3b50;color:#92a9c0;font-size:11px;line-height:1.3}
+#home-play-panel .play-compact-note img{flex:0 0 24px}
+#home-play-panel .play-compact-note strong{margin-left:3px;color:#e9d3a1;font-weight:800;white-space:nowrap}
+#home-play-panel .play-reward{padding-left:10px;border-left:1px solid #485267}
+#home #home-play-panel #catalogue{margin:0 0 12px;text-align:center;color:#8da2ba;font-size:10px}
+#home #home-play-panel .cinema-extras{display:flex;flex-direction:column;gap:10px}
+#home #home-play-panel .cinema-extras .panel{margin:0;padding:0 12px;background:#111e32;border:1px solid #32445d;border-radius:11px;box-shadow:none}
+#home #home-play-panel .social-panel summary{min-height:44px;align-content:center;padding:12px 0;color:#c6d4e6;font-size:11px;letter-spacing:.7px}
+#home #home-play-panel .social-panel[open]{padding-bottom:12px}
+#home #home-play-panel .rewarded-ad-panel{padding:12px}
+#home #home-play-panel :is(button,input,select,summary):focus-visible{outline:2px solid #8ce8ef;outline-offset:3px}
+#home #home-play-panel button:not(:disabled):hover{filter:brightness(1.09)}
+@media(max-width:520px){
+ #home #home-play-panel{padding:12px;border-radius:16px}
+ #home-play-panel .play-lobby-header{margin-bottom:12px}
+ #home-play-panel .play-compact-heading span{font-size:8px;letter-spacing:.7px}
+ #home-play-panel .play-compact-heading h2{font-size:24px}
+ #home #home-play-panel .play-compact-name{gap:10px;margin-bottom:10px;padding:0 10px}
+ #home #home-play-panel .play-compact-name label{font-size:9px;letter-spacing:.7px}
+ #home-play-panel .play-compact-modes,#home-play-panel .play-compact-secondary{gap:9px}
+ #home-play-panel .play-compact-match{padding:14px;background-size:auto,58% auto}
+ #home-play-panel .play-compact-match h3{font-size:26px}
+ #home-play-panel .play-compact-match p{font-size:11px;max-width:180px}
+ #home-play-panel .play-match-footer{gap:10px;margin-top:14px}
+ #home #home-play-panel #match{min-width:0;flex:1}
+ #home-play-panel .play-search-time{font-size:10px}
+ #home-play-panel .play-compact-secondary .play-compact-mode{padding:12px 10px;gap:7px}
+ #home-play-panel .play-mode-heading{gap:6px}
+ #home-play-panel .play-mode-symbol{flex-basis:26px;width:26px}
+ #home-play-panel .play-mode-heading h3{font-size:12px;letter-spacing:0}
+ #home-play-panel .play-compact-secondary p{font-size:10px}
+ #home #home-play-panel #create,#home #home-play-panel #bot{font-size:10px;padding:9px 6px;gap:8px}
+ #home #home-play-panel .play-field-label{font-size:8px;letter-spacing:.2px}
+ #home #home-play-panel .play-compact-join button{padding:8px;font-size:10px}
+ #home-play-panel .play-compact-note{gap:6px;font-size:10px;margin-top:12px}
+ #home-play-panel .play-reward{padding-left:6px}
+}
+@media(max-width:360px){
+ #home #home-play-panel{padding:9px}
+ #home-play-panel .play-compact-secondary .play-compact-mode{padding:10px 7px}
+ #home-play-panel .play-mode-heading{gap:4px}
+ #home-play-panel .play-mode-symbol{flex-basis:24px;width:24px}
+ #home-play-panel .play-mode-symbol svg{width:23px;height:23px}
+ #home-play-panel .play-mode-heading h3{font-size:11px}
+ #home-play-panel .play-compact-note img{display:none}
 }
 
-/* Alignment pass: keep the two halves symmetric and controls consistently centered. */
-#home-play-panel .play-compact-secondary{align-items:stretch}
-#home-play-panel .play-compact-secondary .play-compact-mode{height:100%;justify-content:flex-start;align-items:stretch}
-#home-play-panel .play-compact-secondary .play-compact-mode h3,
-#home-play-panel .play-compact-secondary .play-compact-mode p,
-#home-play-panel .play-compact-secondary .play-compact-icon{text-align:center}
-#home-play-panel .play-compact-secondary .play-compact-mode .play-compact-action{margin-top:auto}
-#home-play-panel .play-compact-secondary .play-compact-mode select{width:100%;box-sizing:border-box}
-#home-play-panel .play-compact-secondary .play-compact-join{width:100%;box-sizing:border-box}
-#home-play-panel .play-compact-match .play-compact-action{justify-self:center}
-@media(max-width:680px){
- #home-play-panel .play-compact-secondary .play-compact-mode{justify-content:flex-start}
- #home-play-panel .play-compact-secondary .play-compact-mode h3{min-height:29px;display:flex;align-items:center;justify-content:center}
- #home-play-panel .play-compact-secondary .play-compact-mode p{min-height:28px;display:flex;align-items:center;justify-content:center}
- #home-play-panel .play-compact-match .play-compact-action{justify-self:stretch}
-}
-
-/* Stronger separation and crisp edges between play choices. */
-#home-play-panel .play-compact-modes{gap:16px!important}
-#home-play-panel .play-compact-match{border:2px solid #66dfff;box-shadow:0 0 0 1px #0c385a,0 6px 18px #030d20a6,inset 0 1px 0 #b5efff55;background:linear-gradient(145deg,#145783,#092943)}
-#home-play-panel .play-compact-secondary{border:2px solid #a5b8d8;box-shadow:0 6px 18px #030d20a6;gap:3px;background:#071b31;overflow:hidden}
-#home-play-panel .play-compact-secondary .play-compact-friend{background:linear-gradient(150deg,#65441c,#342b2d)}
-#home-play-panel .play-compact-secondary .play-compact-bot{background:linear-gradient(150deg,#4a397e,#252340)}
-#home-play-panel .play-compact-secondary .play-compact-mode+.play-compact-mode{border-left:2px solid #a5b8d8}
-#home-play-panel .play-compact-secondary .play-compact-mode h3{color:#fff;text-shadow:0 1px 3px #0009}
-#home-play-panel .play-compact-secondary .play-compact-mode .play-compact-action{border-width:2px;box-shadow:0 3px 8px #0006}
-#home-play-panel .play-compact-match .play-compact-action{border-width:2px;box-shadow:0 3px 8px #0006}
-@media(max-width:680px){#home-play-panel .play-compact-modes{gap:12px!important}#home-play-panel .play-compact-secondary{gap:2px}}
-
-/* High-contrast mode selection: visibly independent cards inside the lower group. */
-#home-play-panel .play-compact-modes{gap:20px!important}
-#home-play-panel .play-compact-match{border:3px solid #52e5ff!important;border-radius:16px!important;background:linear-gradient(135deg,#096ba1 0%,#063253 100%)!important;box-shadow:0 0 0 3px #05233c,0 0 18px #28d9ff77,0 10px 20px #0009!important}
-#home-play-panel .play-compact-secondary{border:0!important;box-shadow:none!important;background:transparent!important;gap:14px!important;overflow:visible!important;border-radius:0!important}
-#home-play-panel .play-compact-secondary .play-compact-friend{border:3px solid #ffca65!important;border-radius:15px!important;background:linear-gradient(145deg,#815218,#382713)!important;box-shadow:0 0 0 2px #30200d,0 7px 16px #0009!important}
-#home-play-panel .play-compact-secondary .play-compact-bot{border:3px solid #bf9cff!important;border-radius:15px!important;background:linear-gradient(145deg,#6945a4,#2a1c52)!important;box-shadow:0 0 0 2px #23143f,0 7px 16px #0009!important}
-#home-play-panel .play-compact-secondary .play-compact-mode+.play-compact-mode{border-left-width:3px!important}
-#home-play-panel .play-compact-mode h3{font-weight:900!important;letter-spacing:.5px;text-shadow:0 2px 5px #000a!important}
-#home-play-panel .play-compact-secondary .play-compact-mode{padding:16px!important}
-#home-play-panel .play-compact-action{font-weight:900!important;outline-offset:2px;box-shadow:0 4px 0 #0007!important}
-#home-play-panel .play-compact-mode:focus-within{outline:3px solid #fff9;outline-offset:3px}
-@media(max-width:680px){
- #home-play-panel .play-compact-modes{gap:16px!important}
- #home-play-panel .play-compact-secondary{gap:9px!important}
- #home-play-panel .play-compact-secondary .play-compact-mode{padding:10px 6px!important}
- #home-play-panel .play-compact-secondary .play-compact-mode h3{font-size:11px!important;letter-spacing:0}
- #home-play-panel .play-compact-secondary .play-compact-mode .play-compact-action{font-size:10px!important}
-}
-
-/* Compact spacing for the finalized play lobby. */
-#home-play-panel{padding:12px!important}
-#home-play-panel .play-compact-heading{margin-bottom:8px!important}
-#home-play-panel .play-compact-heading h2{margin:1px 0!important}
-#home-play-panel .cinema-command{padding:12px!important}
-#home-play-panel .play-compact-name{margin-bottom:9px!important}
-#home-play-panel .play-compact-modes{gap:11px!important}
-#home-play-panel .play-compact-match{min-height:100px!important;padding:12px!important}
-#home-play-panel .play-compact-secondary{gap:9px!important;min-height:0!important}
-#home-play-panel .play-compact-secondary .play-compact-mode{padding:10px!important;gap:5px!important}
-#home-play-panel .play-compact-secondary .play-compact-icon{font-size:23px!important}
-#home-play-panel .play-compact-secondary .play-compact-mode p{min-height:0}
-#home-play-panel .play-compact-note{margin:8px 0 3px!important}
-@media(max-width:680px){
- #home-play-panel{padding:9px!important}
- #home-play-panel .cinema-command{padding:9px!important}
- #home-play-panel .play-compact-modes{gap:10px!important}
- #home-play-panel .play-compact-match{min-height:112px!important;padding:10px!important}
- #home-play-panel .play-compact-secondary{gap:7px!important}
- #home-play-panel .play-compact-secondary .play-compact-mode{padding:8px 5px!important;gap:4px!important}
- #home-play-panel .play-compact-secondary .play-compact-mode h3{min-height:24px!important}
- #home-play-panel .play-compact-secondary .play-compact-mode p{min-height:22px!important}
-}
 
 /* Keep the budget at the bidding controls; collected cards grow underneath on phones. */
 /* During bidding the card and budget are the page header. Account tools stay on the home screen. */

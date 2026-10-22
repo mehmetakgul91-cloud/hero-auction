@@ -1,6 +1,17 @@
 // Presentation-only English locale for the CrazyGames entry point.
 // Do not translate stored values, hero IDs, requests, or game rules.
 export const phrases = {
+"ÇEVRİMİÇİ DÜELLO":"ONLINE DUEL",
+"Rakibini bul.":"Find your rival.",
+"Takımını kur, arenada gücünü göster.":"Build your team. Prove your strength.",
+"En fazla 60 sn":"Up to 60 sec",
+"ODA KODUYLA KATIL":"JOIN WITH A CODE",
+"KENDİNİ GELİŞTİR":"HONE YOUR SKILLS",
+"Canlı maç":"Online match",
+"Kazanan":"Winner",
+"Kolay":"Easy",
+"Orta":"Medium",
+"Zor":"Hard",
 "NASIL OYNANIR?":"HOW TO PLAY",
 "Arenaya giden yol":"Your path to the arena",
 "Topla. Yerleştir. Komutanını yönet.":"Collect. Position. Lead your commander.",
