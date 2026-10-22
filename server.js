@@ -1,3 +1,4 @@
+import {selectAuctionCards,rarityForPower} from './auction-card-pool.js';
 import {crazyGamesSource} from './crazygames-build.js';
 import {verifyCrazyGamesToken} from './crazygames-auth.js';
 import http from 'node:http';
@@ -116,20 +117,10 @@ function onlineStats(){
 }
 
 const stablePower=id=>battleRoster.find(hero=>hero.id===id)?.proposedPower||70;
-const rarityForPower=(power)=>power>=90?'legendary':power>=70?'rare':power>=50?'advanced':'common';
 const liveBattleIds=new Set(battleRoster.map(x=>x.id));
-const AUCTION_RARITY_COUNTS=Object.freeze({common:2,advanced:3,rare:3,legendary:2});
 function newCards(universe){
  const eligible=[...catalogue.values()].filter(x=>liveBattleIds.has(x.id)&&(universe==='mixed'||x.universe===universe));
- const byRarity=new Map(Object.keys(AUCTION_RARITY_COUNTS).map(rarity=>[rarity,[]]));
- for(const hero of eligible)byRarity.get(rarityForPower(stablePower(hero.id))).push(hero);
- const selected=[];
- for(const [rarity,count] of Object.entries(AUCTION_RARITY_COUNTS)){
-  const candidates=byRarity.get(rarity);
-  if(candidates.length<count)throw Error('Açık artırma için yeterli '+rarity+' kahraman yok.');
-  selected.push(...shuffle(candidates).slice(0,count));
- }
- return shuffle(selected).map(hero=>({...hero,power:stablePower(hero.id)}));
+ return selectAuctionCards(eligible,{shuffle,powerFor:stablePower});
 }
 // Only original Hero Auction characters are part of the active catalogue.
 const catalogue=new Map(battleRoster.filter(hero=>hero.universe==='original').map(hero=>[hero.id,{id:hero.id,name:hero.name,universe:hero.universe,role:hero.role,rarity:hero.rarity,portrait:hero.portrait}]));

@@ -1,3 +1,4 @@
+import {describeBattleEvent} from '/battle-event-text.js';
 import {createArenaTeamRenderer} from '/arena-team-renderer.js';
 import {summarizeBattle} from '/battle-summary-data.js?v=complete-results-20261021';
 import {commanderAbilityStats,commanderAbilityDescription} from '/commander-ability-rules.js?v=commander-attack-fix-20261021';
@@ -496,6 +497,22 @@ async function build(overrideResult){
   render();window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position})));window.dispatchEvent(new CustomEvent('heroarena:ready',{detail:{teams:window.heroArenaTeams}}));
  }catch(e){$('message').textContent='⚠ '+e.message}
 }
+function battleEventText(event){
+ const names=new Map(states.flat().map(unit=>[unit.id,unit.name]));
+ return describeBattleEvent(event,{english:document.documentElement.lang==='en',names});
+}
+function showBattleFeedback(event){
+ const text=document.createElement('span');text.setAttribute('translate','no');text.textContent=battleEventText(event);
+ $('message').replaceChildren(text);
+}
+function appendBattleFeedback(event){
+ const li=document.createElement('li');li.setAttribute('translate','no');
+ li.textContent=(document.documentElement.lang==='en'?'Round ':'Tur ')+(event.round||0)+' · '+battleEventText(event);
+ $('events').prepend(li);
+ while($('events').children.length>120)$('events').lastElementChild.remove();
+}
+let feedbackVersion=0;
+window.addEventListener('heroarena:ready',()=>{feedbackVersion=0;});
 // Experimental round-end HP is server-owned. Do not interfere with manual replay.
 window.addEventListener('heroarena:experimental-round-end',e=>{
  if(timer!==null||!Array.isArray(e.detail?.teams)||states.length!==2)return;
@@ -505,8 +522,11 @@ window.addEventListener('heroarena:experimental-round-end',e=>{
   const hpById=new Map((snapshot[side]||[]).map(u=>[u.id,u.hp]));
   for(const unit of states[side])if(hpById.has(unit.id)){const live=snapshot[side].find(u=>u.id===unit.id);Object.assign(unit,live);unit.hp=Math.max(0,Math.min(unit.maxHp,Number(live.hp)||0));unit.shield=Number(live.shield)||0;}
  }
+ const fresh=(e.detail.events||[]).filter(entry=>Number.isSafeInteger(entry.version)&&entry.version>feedbackVersion);
+ for(const entry of fresh){appendBattleFeedback(entry);feedbackVersion=Math.max(feedbackVersion,entry.version);}
  render();
  $('round').textContent=String(e.detail.round||0);$('message').textContent=e.detail.finished?'Canlı savaş tamamlandı':'Canlı savaş · Tur '+e.detail.round;
+ if(!e.detail.finished&&fresh.length)showBattleFeedback(fresh[fresh.length-1]);
  if(liveArenaMode&&e.detail.finished){finalResult={...finalResult,winner:[0,1].includes(e.detail.winner)?e.detail.winner:null,rounds:Number(e.detail.round)||0,teams:states,summary:e.detail.summary,log:[...(finalResult?.log||[]),...(e.detail.events||[])]};showVictoryReveal();}
 });
 const arenaArtCache=new Map();
@@ -690,14 +710,10 @@ function step(){
  const defeatedSide=states.findIndex((team,side)=>previous[side].some(hp=>hp>0)&&team.every(u=>u.hp<=0));
  const lastFallen=defeatedSide<0?null:states[defeatedSide].find((u,i)=>previous[defeatedSide][i]>0&&u.hp<=0);
  for(const e of batch){
-  const li=document.createElement('li');
-  const hitInfo=e.absorbed>0?' · Kalkan '+e.absorbed+' engelledi':'';
-  const hitKind=e.critical?' · KRİTİK':e.damageType==='special'?' · ÖZEL GÜÇ':e.damageType==='splash'?' · ALAN HASARI':'';
-  li.textContent='Tur '+e.round+' · '+e.actor+' · '+e.action+(e.target?' → '+e.target:'')+' · '+e.value+(e.damageType?' hasar':'')+hitKind+hitInfo;
-  $('events').prepend(li);
+  appendBattleFeedback(e);
  }
  const primary=batch.find(e=>e.damageType!=='splash')||last;
- $('message').textContent=primary.actor+' · '+primary.action+(primary.target?' → '+primary.target:'');
+ showBattleFeedback(primary);
  render(primary);
  // Main target and all secondary splash targets are animated together.
  animateMove(primary);
