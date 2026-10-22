@@ -1,3 +1,4 @@
+import {auctionCalculationMarkup} from '/auction-calculation.js';
 import {flyAwardCard} from '/auction-card-flight.js';
 import {collectOfferedAwards,displaySeat} from '/auction-awards.js';
 import {collectTailAwards,mountTailReveal} from '/auction-tail-reveal.js';
@@ -329,23 +330,44 @@ function animateWonAuctionCard(award,me,sourceSnapshot){
 }
 function show(r){if(!signedIn())return;if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const tailAwards=collectTailAwards(room,r);
  if(room?.code!==r.code||(r.phase==='auction'&&room?.phase!=='auction')||(r.phase==='auction'&&r.round<room?.round))cancelAwardFlights();
+ const deliveryCounts=(room?.players||[]).map(p=>p?.team?.length||0);
  const offeredAwards=collectOfferedAwards(room,r),offeredArt=document.querySelector('#stage .card-art');
  const offeredSnapshot=offeredArt?{element:offeredArt.cloneNode(true),rect:offeredArt.getBoundingClientRect()}:null;
- cancelAuctionReveal($('stage'));$('game').classList.remove('auction-results-only');
+ cancelAuctionReveal($('stage'));$('game').classList.remove('auction-results-only','auction-delivery-active');
  // Keep the auction presentation until every already-awarded card has opened.
  // Authoritative state still advances immediately; no bidding or server timers are paused.
  if(r.phase==='finished'&&(tailAwards.length||offeredAwards.length||awardFlights.size)&&!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches){
   room=r;window.HeroPlatform?.setRoom(r);window.HeroPlatform?.gameplay(false);refreshGold();
   offeredAwards.forEach(award=>animateWonAuctionCard(award,r.me,offeredSnapshot));
-  const startAfter=Promise.all([...awardFlights].map(flight=>flight.finished));
-  const stage=$('stage');stage.replaceChildren();$('game').dataset.phase='auction';
+  let deliveryController;
+  const previousFlights=Promise.all([...awardFlights].map(flight=>flight.finished));
+  const stage=$('stage');$('game').dataset.phase='auction';
+  stage.querySelectorAll('button,input').forEach(control=>control.disabled=true);
+  if(offeredArt)offeredArt.style.visibility='hidden';
+  const receiveCard=({card,seat})=>{
+   const box=$('player'+displaySeat(seat,r.me));deliveryCounts[seat]++;
+   box.querySelector('.delivery-count').textContent=deliveryCounts[seat]+' / 5';
+   box.querySelector('.delivery-slot').innerHTML=`<span translate="no" class="delivered-card rarity-${esc(card.rarity||'common')}">✓ ${esc(card.name)}</span>`;
+  };
+  // The already-open offered card was allocated too; reflect it when its flight arrives.
+  const startAfter=previousFlights.then(()=>{
+   if(tailReveal!==deliveryController||!tailReveal?.active||room?.code!==r.code||room?.phase!=='finished')return;
+   for(const child of [...stage.children])if(!child.classList.contains('auction-tail-sequence'))child.remove();
+   $('game').classList.add('auction-delivery-active');
+   for(let visual=0;visual<2;visual++){
+    const seat=visual===0?r.me:1-r.me,p=r.final[seat];
+    $('player'+visual).innerHTML=`<div class="name">${esc(p.name)}</div><div class="delivery-count">${deliveryCounts[seat]} / 5</div><div class="delivery-slot" role="status">${document.documentElement.lang==='en'?'Receiving cards':'Kartlar geliyor'}</div>`;
+   }
+   offeredAwards.forEach(receiveCard);
+  });
+
   $('phase').textContent=document.documentElement.lang==='en'?'REMAINING HEROES':'KALAN KAHRAMANLAR';renderChat(r);
-  tailReveal=mountTailReveal(stage,null,tailAwards,{english:document.documentElement.lang==='en',me:r.me,startAfter,resolveDestination:seat=>awardDestination(seat,r.me),onComplete:()=>{
+  tailReveal=mountTailReveal(stage,null,tailAwards,{english:document.documentElement.lang==='en',me:r.me,startAfter,resolveDestination:seat=>$('player'+displaySeat(seat,r.me)).querySelector('.delivery-slot'),onArrive:receiveCard,onComplete:()=>{
    cancelAwardFlights();tailReveal=null;show(room);
   },loadArt:async card=>{
    const response=await fetch('/api/art?universe='+encodeURIComponent(card.universe)+'&name='+encodeURIComponent(card.name));
    return response.ok?(await response.json()).url:null;
-  }});tailReveal.signature=JSON.stringify(r.final);return;
+  }});deliveryController=tailReveal;tailReveal.signature=JSON.stringify(r.final);return;
  }
  window.HeroPlatform?.gameplay(r.phase==='auction');const currentCardKey=r.phase==='auction'?r.code+':'+r.round+':'+r.card?.name:null;const isNewCard=!!currentCardKey&&currentCardKey!==lastCardKey;lastCardKey=currentCardKey;const wasFinished=room?.phase==='finished'&&room?.code===r.code;const enteredAuction=r.phase==='auction'&&(room?.phase!=='auction'||room?.code!==r.code||room?.round>r.round);room=r;$('game').dataset.phase=r.phase;window.HeroPlatform?.setRoom(r);if(window.HeroPlatform)commanderVisibility();if(enteredAuction)refreshGold();if(r.phase==='finished'&&!wasFinished){refreshGold();}
  for(let i=0;i<2;i++){const seat=r.me===1?1-i:i;const p=r.players[seat];$('player'+i).className='player player-side'+(r.me===seat?' me':'')+(r.phase==='auction'&&r.turn===seat?' active-turn':'');$('player'+i).innerHTML=p?`<div class="name">${esc(p.name)} ${r.me===seat?'(SEN)':''}</div><div class="credit">${p.credits} <small>kalan kredi</small></div><div class="spent-credit">💸 ${20-p.credits} kredi kullanıldı</div><div class="side-team-title">🎴 KARTLAR (${p.team.length})</div><div class="teams">${p.team.map(x=>`<span class="side-hero"><span class="side-hero-name">${esc(x.name)} <small class="rarity rarity-${esc(x.rarity||'common')}">${rarityLabel(x.rarity)}</small></span><small class="side-hero-role">${esc(specialtyLabel(x))}</small><span class="side-hero-cost">${Number(x.cost)||0} <small>kredi</small></span></span>`).join('')||'Henüz karakter yok'}</div>`:'<div class="name">2. OYUNCU</div><p class="status">Katılması bekleniyor…</p>'}
@@ -354,9 +376,8 @@ function show(r){if(!signedIn())return;if(tailReveal?.active&&r.phase==='finishe
   $('game').classList.add('auction-results-only');
   renderChat(r);$('login-gate').hidden=true;$('home').hidden=true;$('game').hidden=false;
   $('room-title').textContent=r.code;$('phase').textContent='KAHRAMAN GÜÇLERİ · ARENA ONAYI';
-  const stage=$('stage'),my=r.final[r.me],opponent=r.final[1-r.me];
-  const teamBlock=(p,title,seat)=>{const base=p.team.reduce((sum,hero)=>sum+hero.power,0),rate=p.credits,adjusted=base*(1+rate/100);return `<section class="final-team"><h3>${title} · ${esc(p.name)}</h3>${p.team.map(hero=>{const updated=(hero.power*(1+rate/100)).toFixed(2);return `<div class="final-hero "><span><span class="mini-hero-icon">${emojis[hero.universe]||'✦'}</span>${esc(hero.name)} <small class="rarity rarity-${esc(hero.rarity||'common')}">${rarityLabel(hero.rarity)}</small></span><b>${hero.power} → ${updated}</b></div>`}).join('')}<div class="final-hero"><span>Kahramanların temel gücü</span><b>${base}</b></div><div class="final-hero"><span>Kalan kredi: ${p.credits} · Güç değişimi</span><b>${rate>=0?'+':''}${rate}%</b></div><div class="final-hero total"><span>BONUS DAHİL TAKIM GÜCÜ</span><b>${adjusted.toFixed(2)}</b></div></section>`};
-  stage.innerHTML=`<section class="victory-screen"><div class="victory-kicker">✦ AÇIK ARTIRMA TAMAMLANDI ✦</div><div class="victory-heading">TAKIM GÜÇLERİ AÇIKLANDI</div><p class="victory-subtitle">Her kalan kredi kahraman güçlerini %1 artırır; negatif kredi aynı oranda azaltır. Hazır olduğunda arenaya geç.</p><div class="final-teams victory-teams">${teamBlock(my,'SENİN TAKIMIN',r.me)}${teamBlock(opponent,'RAKİP TAKIM',1-r.me)}</div><p class="status">Bu ekran savaş sonucu değildir. Arena yalnızca onayından sonra açılır.</p><button type="button" id="confirm-arena-entry" class="primary">⚔ ONAYLA VE ARENAYA GEÇ</button></section>`;
+  const stage=$('stage');
+  stage.innerHTML=`<section class="auction-summary"><h2>${document.documentElement.lang==='en'?'Auction calculation':'Açık artırma hesaplaması'}</h2>${auctionCalculationMarkup(r.final,r.me,{english:document.documentElement.lang==='en'})}<button type="button" id="confirm-arena-entry" class="primary">${document.documentElement.lang==='en'?'CONFIRM AND ENTER ARENA':'ONAYLA VE ARENAYA GEÇ'}</button></section>`;
   const entryButton=stage.querySelector('#confirm-arena-entry');
   entryButton.onclick=()=>{if(tailReveal?.active)return;const params=new URLSearchParams({auctionCode:r.code,auctionToken:session.token});location.assign('/battle-preview.html?'+params.toString())};
   return;
