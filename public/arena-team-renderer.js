@@ -1,3 +1,12 @@
+// Shield is always taken from the server snapshot, never inferred from damage text.
+// Uncapped shields use HP as a visual reference, not as a gameplay maximum.
+export function arenaShieldMeter(unit){
+ const current=Number.isFinite(Number(unit.shield))?Math.max(0,Number(unit.shield)):0;
+ const capped=Number.isFinite(unit.shieldCap)&&unit.shieldCap>=0;
+ const reference=capped?unit.shieldCap:Math.max(1,Number.isFinite(Number(unit.maxHp))?Number(unit.maxHp):0,current);
+ return {current,reference,percent:reference>0?Math.min(100,100*current/reference):0,
+  label:unit.shieldKnown===false?'Kalkan bilgisi bekleniyor':'Kalkan '+current+(capped?' / '+reference:' · ölçek: '+reference+' can')};
+}
 // Keep decoded portraits and running animations alive between server snapshots.
 // Each team owns its cards: the same hero ID can exist on both sides.
 export function createArenaTeamRenderer({document,loadArt,onDefeated=()=>{}}){
@@ -18,8 +27,10 @@ export function createArenaTeamRenderer({document,loadArt,onDefeated=()=>{}}){
     const fallback=document.createElement('span');fallback.className='portrait-fallback';fallback.textContent=unit.name.slice(0,1);portrait.append(fallback);
     const label=document.createElement('span');label.className='arena-hero-label';label.textContent=unit.name;
     const bar=document.createElement('div');bar.className='hp';const fill=document.createElement('span');bar.append(fill);
-    card.append(portrait,label,bar);parent.append(card);
-    entry={card,portrait,bar,fill,name:unit.name,hp:unit.hp};cards.set(unit.id,entry);
+    const shieldBar=document.createElement('div');shieldBar.className='arena-shield';shieldBar.setAttribute('role','meter');shieldBar.setAttribute('aria-valuemin','0');
+    const shieldFill=document.createElement('span');shieldBar.append(shieldFill);
+    card.append(portrait,label,bar,shieldBar);parent.append(card);
+    entry={card,portrait,bar,fill,shieldBar,shieldFill,name:unit.name,hp:unit.hp};cards.set(unit.id,entry);
     Promise.resolve(loadArt(unit)).then(url=>{
      if(!url||!portrait.isConnected)return;
      const image=document.createElement('img');image.className='arena-portrait-image';image.alt=unit.name;image.decoding='async';
@@ -27,7 +38,7 @@ export function createArenaTeamRenderer({document,loadArt,onDefeated=()=>{}}){
      image.src=url;
     }).catch(()=>{});
    }
-   const {card,portrait,bar,fill}=entry,lane=unit.lane==='front'?'front':'back',laneIndex=laneIndices[lane]++;
+   const {card,portrait,bar,fill,shieldBar,shieldFill}=entry,lane=unit.lane==='front'?'front':'back',laneIndex=laneIndices[lane]++;
    if(parent.children[index]!==card)parent.insertBefore(card,parent.children[index]||null);
    card.classList.toggle('frontline',lane==='front');card.classList.toggle('backline',lane==='back');card.classList.toggle('dead',unit.hp<=0);
    card.classList.toggle('cast',flash?.actorId===unit.id);card.classList.toggle('hit',flash?.targetId===unit.id);
@@ -36,6 +47,12 @@ export function createArenaTeamRenderer({document,loadArt,onDefeated=()=>{}}){
    card.title=unit.name+' · '+roleNames[unit.role]+' · Can '+unit.hp+'/'+unit.maxHp;
    portrait.setAttribute('aria-label',unit.name+' - '+roleNames[unit.role]);bar.setAttribute('aria-label','Can '+unit.hp+' / '+unit.maxHp);
    fill.style.width=(unit.maxHp>0?Math.max(0,Math.min(100,100*unit.hp/unit.maxHp)):0)+'%';
+   const shield=arenaShieldMeter(unit);
+   shieldFill.style.width=(unit.shieldKnown===false?0:shield.percent)+'%';shieldBar.title=shield.label;
+   shieldBar.setAttribute('aria-label',unit.name+' · Kalkan');
+   if(unit.shieldKnown===false)shieldBar.removeAttribute('aria-valuenow');else shieldBar.setAttribute('aria-valuenow',String(shield.current));
+   shieldBar.setAttribute('aria-valuemax',String(Math.max(shield.current,shield.reference,1)));shieldBar.setAttribute('aria-valuetext',shield.label);
+   card.title+=' · '+shield.label;
    if(entry.hp>0&&unit.hp<=0)onDefeated(card);
    entry.hp=unit.hp;
   });

@@ -473,7 +473,7 @@ async function build(overrideResult){
   if(!result){const response=await fetch('/api/battle-preview?roles='+encodeURIComponent(positions.map((i,slot)=>roleAt(slot)).join(','))+'&positions='+encodeURIComponent(positions.join(','))+'&lanes='+encodeURIComponent(lanes.join(',')),{cache:'no-store'});if(!response.ok)throw Error('Savaş verisi alınamadı ('+response.status+')');result=await response.json()}
   renderArenaCommanderMatchup(result.commanders);
   liveArenaMode=!!result.live;
-  states=result.teams.map(team=>team.map(u=>({...u,hp:u.maxHp,shield:0})));
+  states=result.teams.map((team,side)=>team.map((u,index)=>({...u,hp:u.maxHp,shieldKnown:liveArenaMode||Number.isFinite(result.initialShields?.[side]?.[index]),shield:liveArenaMode?(Number(u.shield)||0):(Number(result.initialShields?.[side]?.[index])||0)})));
   const lookup=new Map(states.flat().map(u=>[u.id,u.name]));
   const health=states.map(team=>team.map(u=>u.maxHp));
   events=(liveArenaMode?[]:result.log).map(entry=>{
@@ -520,7 +520,7 @@ window.addEventListener('heroarena:experimental-round-end',e=>{
  const snapshot=e.detail.teams;
  for(let side=0;side<2;side++){
   const hpById=new Map((snapshot[side]||[]).map(u=>[u.id,u.hp]));
-  for(const unit of states[side])if(hpById.has(unit.id)){const live=snapshot[side].find(u=>u.id===unit.id);Object.assign(unit,live);unit.hp=Math.max(0,Math.min(unit.maxHp,Number(live.hp)||0));unit.shield=Number(live.shield)||0;}
+  for(const unit of states[side])if(hpById.has(unit.id)){const live=snapshot[side].find(u=>u.id===unit.id);Object.assign(unit,live);unit.hp=Math.max(0,Math.min(unit.maxHp,Number(live.hp)||0));unit.shield=Number(live.shield)||0;unit.shieldKnown=true;}
  }
  const fresh=(e.detail.events||[]).filter(entry=>Number.isSafeInteger(entry.version)&&entry.version>feedbackVersion);
  for(const entry of fresh){appendBattleFeedback(entry);feedbackVersion=Math.max(feedbackVersion,entry.version);}
@@ -691,11 +691,14 @@ function showFinalKnockout(loser,attacker){
 }
 function step(){
  if(cursor>=events.length){stop();if(events.length)showVictoryReveal();return}
- // The engine logs splash hits before the primary hit. Show all hits from one cast
+ // Shield/heal effects and hits from a server-owned action share one snapshot frame.
+ // Older logs put splash hits before the primary hit. Show all hits from one cast
  // in the same animation frame, without changing any damage or the server result.
  const first=events[cursor];
  const batch=[];
- if(first.damageType==='splash'){
+ if(first.actionId){
+  while(cursor<events.length&&events[cursor].actionId===first.actionId)batch.push(events[cursor++]);
+ }else if(first.damageType==='splash'){
   let end=cursor;
   while(end<events.length&&events[end].damageType==='splash'&&events[end].actorId===first.actorId&&events[end].round===first.round)end++;
   const primary=events[end];
@@ -706,7 +709,7 @@ function step(){
  if(!batch.length){batch.push(events[cursor++])}
  const last=batch[batch.length-1];
  const previous=states.map(team=>team.map(unit=>unit.hp));
- states.forEach((t,side)=>t.forEach((u,i)=>u.hp=last.snapshot[side][i]));
+ states.forEach((t,side)=>t.forEach((u,i)=>{u.hp=last.snapshot[side][i];u.shieldKnown=Number.isFinite(last.shieldSnapshot?.[side]?.[i]);if(u.shieldKnown)u.shield=Math.max(0,last.shieldSnapshot[side][i]);}));
  const defeatedSide=states.findIndex((team,side)=>previous[side].some(hp=>hp>0)&&team.every(u=>u.hp<=0));
  const lastFallen=defeatedSide<0?null:states[defeatedSide].find((u,i)=>previous[defeatedSide][i]>0&&u.hp<=0);
  for(const e of batch){

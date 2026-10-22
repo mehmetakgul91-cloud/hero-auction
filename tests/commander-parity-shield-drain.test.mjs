@@ -31,10 +31,36 @@ test('tank special shields living frontline allies and itself',()=>{
  assert.equal(r.events.filter(e=>e.action==='tank-front-shield').length,2);
  assert.equal(r.events.filter(e=>e.action==='tank-self-shield').length,1);
 });
-test('energy role still rejects without changing combat',()=>{
- const c=make('shield');c.teams[0][0].role='energy';
- const before=structuredClone(c.teams);
- assert.throws(()=>stepParityShieldDrain(c,{side:0,actorId:'a'}),/Role special mechanics/);
- assert.deepEqual(c.teams,before);
- assert.equal(c.version,0);
+test('energy active preserves its effect and adds authoritative role splash',()=>{
+ const c=make('shield');c.teams[0][0].role='energy';c.teams[0][0].position=1;
+ c.teams[1].push({...c.teams[1][0],id:'secondary',position:1,shield:2});
+ const r=stepParityShieldDrain(c,{side:0,actorId:'a'});
+ assert.equal(c.teams[0][0].shield,20);
+ const primary=r.events.find(e=>e.action==='Ability');
+ const splash=r.events.find(e=>e.action==='splash');
+ assert.equal(splash.rawDamage,Math.max(1,Math.floor(primary.rawDamage*.15)));
+ assert.equal(splash.absorbed,2);
+ assert.equal(c.teams[1][1].hp,100-splash.value);
+ assert.equal(c.version,1);
+});
+test('energy drain splash deaths grant energy once per death and never heal from shield damage',()=>{
+ const c=make('drain');c.teams[0][0].role='energy';c.teams[0][0].position=1;
+ c.teams[1][0].shield=10000;
+ c.teams[1].push({...c.teams[1][0],id:'secondary',position:1,shield:0,hp:1});
+ const r=stepParityShieldDrain(c,{side:0,actorId:'a'});
+ assert.equal(c.teams[0][0].hp,60);
+ assert.equal(c.teams[1][1].hp,0);
+ assert.equal(c.teams[0][0].kills,1);
+ assert.equal(c.abilities.energy[1],10);
+ assert.ok(!r.events.some(e=>e.action==='heal'));
+ assert.equal(r.events.find(e=>e.action==='splash').value,1);
+});
+test('energy primary plus splash kills each grant energy once while a shielded survivor remains',()=>{
+ const c=make('drain');c.teams[0][0].role='energy';c.teams[1][0].hp=1;
+ c.teams[1].push({...c.teams[1][0],id:'splash-kill',position:1});
+ c.teams[1].push({...c.teams[1][0],id:'shielded',position:2,hp:100,shield:10000});
+ const r=stepParityShieldDrain(c,{side:0,actorId:'a'});
+ assert.equal(c.teams[0][0].kills,2);assert.equal(c.abilities.energy[1],20);
+ assert.deepEqual(c.teams[1].map(u=>u.hp),[0,0,100]);assert.equal(c.finished,false);
+ const shielded=r.events.find(e=>e.target==='shielded');assert.equal(shielded.value,0);assert.equal(shielded.absorbed,shielded.rawDamage);
 });
