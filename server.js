@@ -2,13 +2,13 @@ import http from 'node:http';
 import { randomBytes, randomUUID, createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { transport, validateDraft } from './mail.js';
+import { transport, validateDraft, composeMessage, archiveMessage } from './mail.js';
 
 const HOUR = 3600000;
 const token = () => randomBytes(32).toString('hex');
 const fail = (status, message) => Object.assign(new Error(message), { status });
 const safeCode = e => /^[A-Z0-9_]{1,60}$/.test(e.code || '') ? e.code : 'CONNECTION_FAILED';
-export function createApp(config, makeTransport = transport) {
+export function createApp(config, makeTransport = transport, saveCopy = archiveMessage) {
   if (!config.host || ![465,587].includes(config.port) || !config.user) throw new Error('SMTP configuration is required.');
   if (config.production && !/^https:\/\//.test(config.origin || '')) throw new Error('HTTPS origin is required.');
   const sessions = new Map(), attempts = new Map(), sends = [], fingerprints = new Map();
@@ -23,7 +23,25 @@ export function createApp(config, makeTransport = transport) {
     while (sends.length && sends[0] < now-HOUR) sends.shift();
   };
   const timer = setInterval(clean, 60000); timer.unref();
-  const publicDraft = d => ({ id:d.id, to:d.to, subject:d.subject, text:d.text, state:d.state, created:d.created, sentAt:d.sentAt, messageId:d.messageId });
+  const publicDraft = d => ({ id:d.id, to:d.to, subject:d.subject, text:d.text, state:d.state, created:d.created, sentAt:d.sentAt, messageId:d.messageId, archiveState:d.archiveState, archiveFolder:d.archiveFolder });
+  function quota() {
+    clean();
+    return {limit:10,remaining:Math.max(0,10-sends.length),nextAt:sends.length>=10?sends[0]+HOUR+1:null,serverNow:Date.now()};
+  }
+  // Serialize archive operations, including imported duplicates from different sessions.
+  let archiveTail = Promise.resolve();
+  async function archive(s,d) {
+    if(d.archiveState==='saved'||d.archiveState==='saving') return;
+    d.archiveState='saving';
+    const work=archiveTail.then(async()=>{
+      try {
+        const raw=d.raw || await composeMessage(config,d);
+        const result=await saveCopy(config,s.password,d,raw);
+        d.archiveState='saved';d.archiveFolder=result.folder;
+      } catch { d.archiveState='failed'; }
+    });
+    archiveTail=work.catch(()=>{});await work;
+  }
   function session(req) {
     const id = (req.headers.cookie || '').split(';').map(x=>x.trim()).find(x=>x.startsWith(cookieName+'='))?.slice(cookieName.length+1);
     const s = sessions.get(id); if (!s || s.expires < Date.now()) throw fail(401,'Oturum kapalı. Lütfen yeniden giriş yap.');
@@ -66,7 +84,7 @@ export function createApp(config, makeTransport = transport) {
       }
       if(req.method==='GET' && path==='/api/status') return json(res,200,{account:config.user,fromName:config.fromName,smtp:smtpState});
       if(req.method==='GET' && path==='/api/session') {
-        const {s}=session(req); return json(res,200,{account:config.user,csrf:s.csrf,expires:s.expires,drafts:[...s.drafts.values()].map(publicDraft)});
+        const {s}=session(req); return json(res,200,{account:config.user,csrf:s.csrf,expires:s.expires,quota:quota(),drafts:[...s.drafts.values()].map(publicDraft)});
       }
       if(req.method!=='POST') throw fail(404,'Sayfa bulunamadı.');
       const origin=config.origin || `http://127.0.0.1:${server.address().port}`;
@@ -98,25 +116,47 @@ export function createApp(config, makeTransport = transport) {
         let data;try {data=validateDraft(b);}catch(e){throw fail(400,e.message);}
         const d={...data,id:randomUUID(),state:'draft',created:Date.now()};s.drafts.set(d.id,d);return json(res,201,publicDraft(d));
       }
+      if(path==='/api/import-receipt') {
+        if(b.account!==config.user)throw fail(400,'Kayıt başka bir hesaba ait.');
+        const r=b.record;
+        let data;try {data=validateDraft(r);}catch(e){throw fail(400,e.message);}
+        const domain=config.user.split('@')[1];
+        if(r.state!=='accepted'||!Number.isSafeInteger(r.sentAt)||r.sentAt<1577836800000||r.sentAt>Date.now()+60000||
+          typeof r.messageId!=='string'||!/^<[A-Za-z0-9._-]+@[A-Za-z0-9.-]+>$/.test(r.messageId)||!r.messageId.endsWith('@'+domain+'>'))
+          throw fail(400,'Kayıt, doğrulanabilir gönderim tarihi ve Message-ID içermeli.');
+        const existing=[...s.drafts.values()].find(d=>d.messageId===r.messageId);
+        if(existing)return json(res,200,publicDraft(existing));
+        if(s.drafts.size>=100)throw fail(429,'Bu oturumun kayıt sınırına ulaşıldı.');
+        const d={...data,id:randomUUID(),state:'accepted',created:r.sentAt,sentAt:r.sentAt,messageId:r.messageId,archiveState:'pending'};
+        s.drafts.set(d.id,d);
+        return json(res,201,publicDraft(d));
+      }
+      if(path==='/api/archive') {
+        const d=s.drafts.get(b.id);if(!d||d.state!=='accepted')throw fail(400,'Yalnızca kabul edilmiş gönderimlerin kopyası kaydedilebilir.');
+        await archive(s,d);return json(res,200,publicDraft(d));
+      }
       if(path==='/api/send') {
         const d=s.drafts.get(b.id);if(!d)throw fail(404,'Önizlenen taslak bulunamadı.');
         if(d.state!=='draft')return json(res,200,publicDraft(d));
         clean();
         const hash=createHash('sha256').update(JSON.stringify([d.to,d.subject,d.text])).digest('hex');
         if(fingerprints.has(hash))throw fail(409,'Bu mail için zaten gönderim denendi. Tekrar göndermeden önce alıcıyla durumu kontrol et.');
-        if(sends.length>=10)throw fail(429,'Saatlik 10 mail sınırına ulaşıldı.');
+        if(sends.length>=10)throw fail(429,'Saatlik 10 mail sınırına ulaşıldı. İlk hakkın açılacağı saat: '+new Date(sends[0]+HOUR+1).toLocaleTimeString('tr-TR',{timeZone:'Europe/Istanbul'})+' (Türkiye).');
         // Claim synchronously before awaiting SMTP: parallel clicks cannot send twice.
         d.state='sending';fingerprints.set(hash,d);sends.push(Date.now());
         d.messageId=`<${randomUUID()}@${config.user.split('@')[1]}>`;
+        d.sentAt=Date.now();
         const t=makeTransport(config,s.password);
         try {
-          const result=await t.sendMail({from:{name:config.fromName,address:config.user},to:d.to,subject:d.subject,text:d.text,messageId:d.messageId,
+          d.raw=await composeMessage(config,d);
+          const result=await t.sendMail({raw:d.raw,
             envelope:{from:config.user,to:[d.to]},disableFileAccess:true,disableUrlAccess:true});
-          d.state=result.accepted?.length===1?'accepted':'rejected';d.sentAt=Date.now();
+          d.state=result.accepted?.length===1?'accepted':'rejected';
         } catch(e) {
           // A lost SMTP response can mean delivery succeeded. Never automatically retry.
           d.state=(e.code==='EAUTH' || e.code==='EENVELOPE' || Number(e.responseCode)>=400)?'rejected':'unknown';
         } finally {t.close();}
+        if(d.state==='accepted')await archive(s,d);
         return json(res,200,publicDraft(d));
       }
       throw fail(404,'İşlem bulunamadı.');
@@ -127,7 +167,7 @@ export function createApp(config, makeTransport = transport) {
   return {server,probe};
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)) {
-  const config={host:process.env.SMTP_HOST,port:Number(process.env.SMTP_PORT||587),user:process.env.SMTP_USER,fromName:process.env.SMTP_FROM_NAME||'Mehmet AKGÜL · ENKA Plastik',production:process.env.NODE_ENV==='production',origin:process.env.APP_ORIGIN||process.env.RENDER_EXTERNAL_URL};
+  const config={host:process.env.SMTP_HOST,imapHost:process.env.IMAP_HOST||process.env.SMTP_HOST,port:Number(process.env.SMTP_PORT||587),user:process.env.SMTP_USER,fromName:process.env.SMTP_FROM_NAME||'Mehmet AKGÜL · ENKA Plastik',production:process.env.NODE_ENV==='production',origin:process.env.APP_ORIGIN||process.env.RENDER_EXTERNAL_URL};
   const {server,probe}=createApp(config);
   server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>{console.info('ENKA mail service ready');void probe();});
   process.on('SIGTERM',()=>{server.close(()=>process.exit(0));setTimeout(()=>process.exit(0),25000).unref();});

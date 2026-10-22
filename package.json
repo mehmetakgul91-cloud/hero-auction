@@ -1,6 +1,17 @@
 {
-  "name": "enka-mail", "version": "1.0.0", "private": true, "type": "module",
-  "engines": { "node": ">=22 <25" },
-  "scripts": { "start": "node server.js", "test": "node --test" },
-  "dependencies": { "nodemailer": "10.2.0" }
+  "name": "enka-mail",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22 <25"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "imapflow": "2.9.0",
+    "nodemailer": "10.2.0"
+  }
 }
