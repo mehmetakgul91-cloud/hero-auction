@@ -1,3 +1,5 @@
+import {createWebInvite,renderWebInvite} from '/web-invite.js';
+let webInvite=null;
 import {auctionCalculationMarkup} from '/auction-calculation.js';
 import {flyAwardCard} from '/auction-card-flight.js';
 import {collectOfferedAwards,displaySeat} from '/auction-awards.js';
@@ -58,6 +60,7 @@ function commanderVisibility(){
  $('commander-profile').hidden=!logged||!commanderProfileOpen||!commanderProfile;
  $('home').hidden=!logged||!!room||!commanderLoaded||needSelection||commanderProfileOpen;
  $('commander-open-profile').hidden=!commanderProfile;
+ webInvite?.sync();
 }
 function renderCommanderOnboarding(){
  const root=$('commander-onboarding-options');root.replaceChildren();
@@ -244,10 +247,53 @@ function initGoogle(attempt=0){
  }catch(e){target.textContent='Google giriş düğmesi başlatılamadı. Lütfen tekrar deneyin.';console.error('Google sign-in initialization:',e)}
 }
 function gameIdentity(){return signedIn()?{authToken:login.authToken}:{}}
-async function restoreGame(){if(!signedIn()||!await validateLogin())return;try{session=JSON.parse(localStorage.getItem('hero-auction-session'));if(session){const j=await post('/api/state',{...session,...gameIdentity()});show(j.room);connect()}}catch(e){if(e.message.includes('giriş yap')||e.message.includes('Oturumun sona erdi')){login=null;localStorage.removeItem('hero-auction-login');localStorage.removeItem('hero-auction-session');session=null;room=null;applyLogin();notify('Oturum süren doldu. Yeniden giriş yap.')}else if(e.message==='Oda bulunamadı.'||e.message==='Oyuncu yetkisi geçersiz.'){localStorage.removeItem('hero-auction-session');session=null;room=null;applyLogin();notify('Önceki oda artık mevcut değil. Yeni bir maç oluşturabilirsin.')}else{notify('Bağlantı kurulamadı. Biraz sonra tekrar dene.')}}}
+let restorePending=null;
+function restoreGame(){
+ if(webInvite?.pending){webInvite.sync();return signedIn()?validateLogin().then(()=>webInvite.sync()):Promise.resolve();}
+ if(restorePending)return restorePending;
+ restorePending=restoreSavedGame().finally(()=>{restorePending=null});return restorePending;
+}
+async function readSavedRoom(){
+ let stored;try{stored=JSON.parse(localStorage.getItem('hero-auction-session')||'null')}catch{return null}
+ if(!stored?.token||!stored?.code)return null;
+ try{const j=await post('/api/state',stored);return {token:stored.token,room:j.room};}
+ catch(e){
+  if(e.message==='Oda bulunamadı.'||e.message==='Oyuncu yetkisi geçersiz.'){
+   // Do not erase a different seat written while this request was pending.
+   if(localStorage.getItem('hero-auction-session')===JSON.stringify(stored))localStorage.removeItem('hero-auction-session');
+   return null;
+  }
+  throw e;
+ }
+}
+async function restoreSavedGame(){
+ const auth=login?.authToken,initialSession=session,initialRoom=room;
+ if(!signedIn()||!await validateLogin()||webInvite?.pending||login?.authToken!==auth)return;
+ try{
+  const previous=await readSavedRoom();
+  if(webInvite?.pending||login?.authToken!==auth||session!==initialSession||room!==initialRoom)return;
+  if(previous)save(previous.token,previous.room);
+ }catch(e){
+  if(login?.authToken!==auth)return;
+  if(/giriş yap|Oturumun sona erdi|401/.test(e.message))clearExpiredLogin();
+  else notify('Bağlantı kurulamadı. Biraz sonra tekrar dene.');
+ }
+}
 const homePlayTab=$('home-play-tab'),homePlayPanel=$('home-play-panel');
 const homeGuidePlay=$('home-guide-play');if(homeGuidePlay)homeGuidePlay.onclick=()=>{if(homePlayPanel.hidden)homePlayTab.click();else homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'});};
-if(homePlayTab&&homePlayPanel){homePlayTab.onclick=()=>{homePlayPanel.hidden=false;homePlayTab.setAttribute('aria-expanded','true');homePlayTab.classList.add('selected');homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'});};const lobbyBack=$('play-lobby-back');if(lobbyBack)lobbyBack.onclick=()=>{homePlayPanel.hidden=true;homePlayTab.setAttribute('aria-expanded','false');homePlayTab.classList.remove('selected');homePlayTab.scrollIntoView({behavior:'smooth',block:'start'});};}
+if(homePlayTab&&homePlayPanel){homePlayTab.onclick=()=>{homePlayPanel.hidden=false;homePlayTab.setAttribute('aria-expanded','true');homePlayTab.classList.add('selected');homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'});};const lobbyBack=$('play-lobby-back');if(lobbyBack)lobbyBack.onclick=()=>{webInvite?.cancel();homePlayPanel.hidden=true;homePlayTab.setAttribute('aria-expanded','false');homePlayTab.classList.remove('selected');homePlayTab.scrollIntoView({behavior:'smooth',block:'start'});};}
+webInvite=createWebInvite({
+ url:location.href,platform:!!window.HeroPlatform,
+ view:state=>{if(!window.HeroPlatform)renderWebInvite(document,state);},
+ identity:()=>({authToken:login?.authToken,ready:signedIn()&&commanderLoaded&&!!commanderProfile&&!commanderProfileOpen&&!room}),
+ validate:validateLogin,savedRoom:readSavedRoom,
+ join:code=>post('/api/join',{name:$('name').value,code}),save,
+ clearUrl:()=>{const url=new URL(location.href);url.searchParams.delete('join');history.replaceState(history.state,'',url.pathname+url.search+url.hash);},
+ restore:()=>restoreGame()
+});
+$('join-invite-button').onclick=()=>void webInvite.accept();
+$('join-invite-cancel').onclick=()=>webInvite.cancel();
+$('join-invite-notice-cancel').onclick=()=>webInvite.cancel();
 applyLogin();initGoogle();
 // Isolated test service only: create a fresh guest seat automatically.
 // Production deployments do not set this flag.
@@ -416,7 +462,7 @@ function pokemonId(name){return pokeMap[name.toLowerCase()]||null}
 async function act(url,extra){try{const j=await post(url,{...session,...extra});show(j.room)}catch(e){notify(e.message)}}
 
 $('create').onclick=async()=>{if(!await validateLogin())return;try{const j=await post('/api/create',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
-$('join').onclick=async()=>{if(!await validateLogin())return;try{const j=await post('/api/join',{...gameIdentity(),name:$('name').value,code:$('roomcode').value.trim().toUpperCase()});save(j.token,j.room)}catch(e){notify(e.message)}};
+$('join').onclick=async()=>{if(webInvite?.pending)return;if(!await validateLogin())return;try{const j=await post('/api/join',{...gameIdentity(),name:$('name').value,code:$('roomcode').value.trim().toUpperCase()});save(j.token,j.room)}catch(e){notify(e.message)}};
 $('bot').onclick=async()=>{if(!await validateLogin())return;try{const j=await post('/api/bot',{...gameIdentity(),name:$('name').value,universe:world,difficulty:$('bot-difficulty').value});save(j.token,j.room)}catch(e){notify(e.message)}};
 $('match').onclick=async()=>{if(!await validateLogin())return;try{const j=await post('/api/match',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
 setInterval(()=>{if(room?.phase==='auction'&&room.deadline){const el=$('turntimer');if(el)el.textContent='⏱ '+Math.max(0,Math.ceil((room.deadline-Date.now())/1000))+' saniye'}},250);
@@ -428,13 +474,6 @@ async function shareInvite(code){
 }
 $('share').textContent='📲 ARKADAŞINI DAVET ET';
 $('share').onclick=()=>{if(room)shareInvite(room.code)};
-const invitedCode=new URLSearchParams(location.search).get('join');
-if(invitedCode&&/^\d{3}$/.test(invitedCode)){
- $('roomcode').value=invitedCode.toUpperCase();
- $('join-invite').hidden=false;
- $('join-invite-code').textContent=invitedCode.toUpperCase();
- $('join-invite-button').onclick=()=>$('join').click();
-}
 $('leave').onclick=()=>{if(!confirm('Bu cihazda odadan ayrılmak istiyor musun?'))return;window.HeroPlatform?.setRoom(null);localStorage.removeItem('hero-auction-session');stream?.close();session=null;room=null;applyLogin();refreshOnline()};
 
 // CrazyGames session bridge: authenticate before restoring any device-local seat.
