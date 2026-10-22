@@ -38,3 +38,38 @@ test('entry waits for queue and repeated snapshots do not restart it; deck revea
  assert.match(module,/button.disabled=true/);assert.match(module,/button.disabled=false/);
  assert.doesNotMatch(module,/credits\s*[-+]=|\/api\/(bid|pass|rematch)|deadline\s*=/);
 });
+
+test('slower queue gives every card 1900ms and only completion or skip opens results',()=>{
+ const timers=[],completed=[];
+ const queue=createTailQueue({show:()=>{},finish:value=>completed.push(value),schedule:(fn,ms)=>(timers.push({fn,ms}),timers.length),unschedule:()=>{}});
+ queue.start([1,2]);assert.equal(timers[0].ms,1900);assert.deepEqual(completed,[]);
+ timers.shift().fn();assert.deepEqual(completed,[]);assert.equal(timers[0].ms,1900);
+ timers.shift().fn();assert.deepEqual(completed,[true]);
+ queue.start([3,4]);queue.cancel();assert.deepEqual(completed,[true,false]);
+ timers.shift().fn();assert.deepEqual(completed,[true,false]);
+ queue.start([5]);queue.skip();assert.deepEqual(completed,[true,false,true]);
+});
+
+import vm from 'node:vm';
+test('actual show transition keeps auction visible through all tails and deduplicates snapshots',()=>{
+ const app=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
+ const start=app.indexOf('function show(r)');
+ const end=app.indexOf(" window.HeroPlatform?.gameplay(r.phase==='auction')",start);
+ assert.ok(end>start);
+ for(let count=1;count<=5;count++)for(const seat of [0,1]){
+  const full=Array.from({length:5},(_,i)=>card(i));
+  const final=seat===0?[{team:Array.from({length:5},(_,i)=>card(5+i))},{team:full}]:[{team:full},{team:Array.from({length:5},(_,i)=>card(5+i))}];
+  const previous={code:'123',phase:'auction',card:card(4),players:final.map((p,i)=>({team:p.team.slice(0,i===seat?5-count:4)}))};
+  const elements={stage:{replaceChildren(){}},game:{dataset:{phase:'auction'}},phase:{}};
+  let mounts=0,options;
+  const context={room:previous,tailReveal:null,collectTailAwards,signedIn:()=>true,cancelAuctionReveal:()=>{},renderChat:()=>{},refreshGold:()=>{},$:id=>elements[id],window:{matchMedia:()=>({matches:false})},document:{documentElement:{lang:'en'}},results:0,mountTailReveal:(root,button,items,opts)=>{
+   mounts++;assert.equal(items.length,count);options=opts;return {active:true,cancel:()=>{}};
+  }};
+  vm.createContext(context);vm.runInContext(app.slice(start,end)+" results++;room=r;$('game').dataset.phase=r.phase;}",context);
+  const next={code:'123',phase:'finished',final};context.show(next);
+  assert.equal(context.results,0);assert.equal(elements.game.dataset.phase,'auction');assert.equal(context.room,next);
+  context.show({...next});assert.equal(mounts,1);assert.equal(context.results,0);
+  options.onComplete();assert.equal(context.results,1);assert.equal(elements.game.dataset.phase,'finished');
+  context.show(next);assert.equal(mounts,1);
+ }
+});
