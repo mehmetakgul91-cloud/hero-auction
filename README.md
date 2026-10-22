@@ -1,20 +1,15 @@
-# Hero Auction
+# ENKA Mail Merkezi
 
-50 özgün kahramanla açık artırma ve beşe beş arena oyunu. İki oyuncu 20 krediyle 10 kart için yarışır, ardından dizilişini seçer. Canlı savaş ve komutan becerileri sunucu tarafından yürütülür. Bilgisayara karşı, özel oda, eşleştirme ve rövanş desteklenir.
+Single-account, review-before-send SMTP app. Deploy this independent `enka-mail` branch only. It does not run the Hero Auction game.
 
-## Çalıştırma
+## Run
 
-Node.js 18 veya üzeri gerekir. `npm install` ve `npm start` komutlarından sonra `http://localhost:3000` açılır. Kalıcı hesap, altın ve komutan verileri için `DATABASE_URL`, Google oturumu için mevcut OAuth yapılandırması kullanılır.
+Node 22–24; `npm ci`, `npm test`, then `npm start`.
 
-## Yapı
+Required environment: `SMTP_HOST`, `SMTP_PORT` (587 or 465), `SMTP_USER`. Optional `SMTP_FROM_NAME`. In production set `NODE_ENV=production` and use Render's `RENDER_EXTERNAL_URL` or an explicit HTTPS `APP_ORIGIN`. HTTP server binds to `0.0.0.0:$PORT`; `/healthz` is a side-effect-free health endpoint.
 
-- `server.js`: HTTP/SSE, odalar, hesaplar ve PostgreSQL bağlantısı.
-- `battle-engine.js`, `battle-roster.json`: savaş kuralları ve 50 özgün kahraman.
-- `public/app.js`: ana oyun arayüzü.
-- `public/battle-preview.js`, `public/battle-preview.css`: aktif arena, diziliş ve savaş efektleri.
-- `crazygames-build.js`, `public/platform.js`, `crazygames-auth.js`: `/crazygames/` sürümü ve platform hesabı doğrulaması.
-- `docs/crazygames-submission.md`: CrazyGames başvuru notları.
+The operator enters the mailbox password in the HTTPS form. SMTP requires TLS 1.2+ with certificate validation; no plaintext fallback. The password is held only in process memory for a maximum six-hour session. There is no stored password, open relay, arbitrary SMTP host, attachment/URL fetching, automatic send, or automatic retry. All messages require an immutable preview then an explicit send. Per-process send limit: 10/hour; login limit: 8/15 minutes.
 
-## Kontroller
+SMTP acceptance does not confirm inbox delivery. Ambiguous SMTP failures are marked unknown and never retried automatically. Double submissions of a draft are idempotent; repeated content is blocked for 24 hours within the same running process. Restarting loses sessions, draft/receipt history, and deduplication state. Export receipts before logout. This release intentionally does not claim durable CRM history or scheduled background sending.
 
-`node --test *.test.js tests/*.test.* test/*.test.js` savaş, hesap, komutan ve platform kontrollerini çalıştırır. `npm run audit:strict` aktif kahraman görsellerini ve güçlerini denetler.
+Run one service instance. Do not scale horizontally without shared sessions, durable send claims, and shared rate limits. Do not deploy while a send is pending. Add durable storage with explicit approval before introducing CRM or unattended scheduling.

@@ -1,20 +1,6 @@
 {
-  "name": "hero-auction-live",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js",
-    "audit": "node tools/audit-cards.mjs",
-    "audit:strict": "node tools/audit-cards.mjs --strict",
-    "battle:balance": "node tools/battle-balance.mjs"
-  },
-  "engines": {
-    "node": ">=18"
-  },
-  "dependencies": {
-    "pg": "^8.16.3",
-    "three": "0.186.1"
-  }
+  "name": "enka-mail", "version": "1.0.0", "private": true, "type": "module",
+  "engines": { "node": ">=22 <25" },
+  "scripts": { "start": "node server.js", "test": "node --test" },
+  "dependencies": { "nodemailer": "10.2.0" }
 }
