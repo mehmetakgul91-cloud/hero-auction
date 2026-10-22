@@ -118,7 +118,19 @@ function onlineStats(){
 const stablePower=id=>battleRoster.find(hero=>hero.id===id)?.proposedPower||70;
 const rarityForPower=(power)=>power>=90?'legendary':power>=70?'rare':power>=50?'advanced':'common';
 const liveBattleIds=new Set(battleRoster.map(x=>x.id));
-const newCards=(universe)=>shuffle([...catalogue.values()].filter(x=>liveBattleIds.has(x.id)&&(universe==="mixed"||x.universe===universe))).slice(0,10).map(x=>({...x,power:stablePower(x.id)}));
+const AUCTION_RARITY_COUNTS=Object.freeze({common:2,advanced:3,rare:3,legendary:2});
+function newCards(universe){
+ const eligible=[...catalogue.values()].filter(x=>liveBattleIds.has(x.id)&&(universe==='mixed'||x.universe===universe));
+ const byRarity=new Map(Object.keys(AUCTION_RARITY_COUNTS).map(rarity=>[rarity,[]]));
+ for(const hero of eligible)byRarity.get(rarityForPower(stablePower(hero.id))).push(hero);
+ const selected=[];
+ for(const [rarity,count] of Object.entries(AUCTION_RARITY_COUNTS)){
+  const candidates=byRarity.get(rarity);
+  if(candidates.length<count)throw Error('Açık artırma için yeterli '+rarity+' kahraman yok.');
+  selected.push(...shuffle(candidates).slice(0,count));
+ }
+ return shuffle(selected).map(hero=>({...hero,power:stablePower(hero.id)}));
+}
 // Only original Hero Auction characters are part of the active catalogue.
 const catalogue=new Map(battleRoster.filter(hero=>hero.universe==='original').map(hero=>[hero.id,{id:hero.id,name:hero.name,universe:hero.universe,role:hero.role,rarity:hero.rarity,portrait:hero.portrait}]));
 const rand=n=>crypto.randomInt(n);
@@ -342,7 +354,7 @@ if(url==='/api/rewarded/status'){return await rewardedAdStatus(readLogin(b.authT
 if(url==='/api/rewarded/claim'){error('Ödüllü reklam sistemi henüz etkin değil.',503)}
 if(url==='/api/wallet'){return{gold:await goldBalance(readLogin(b.authToken).sub)}}
 if(url==='/api/auth/google'){const credential=String(b.credential||'');if(credential.length<100||credential.length>8000)error('Geçersiz Google kimliği.');const response=await fetch('https://oauth2.googleapis.com/tokeninfo?id_token='+encodeURIComponent(credential),{signal:AbortSignal.timeout(8000)});if(!response.ok)error('Google kimliği doğrulanamadı.',401);const claims=await response.json();if(claims.aud!==GOOGLE_CLIENT_ID||!['accounts.google.com','https://accounts.google.com'].includes(claims.iss)||Number(claims.exp)*1000<Date.now()||!claims.sub||claims.email_verified!=='true')error('Google kimliği doğrulanamadı.',401);const user={sub:claims.sub,name:String(claims.name||claims.given_name||'Oyuncu').slice(0,24),email:String(claims.email||'').toLowerCase()};await rememberDisplayName(user);return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}
-if(url==='/api/create'){const name=chosenName(b,'Oyuncu 1');const universe='mixed';const pool=shuffle([...catalogue.values()].filter(x=>universe==='mixed'||x.universe===universe));if(pool.length<10)error('Bu evrende yeterli karakter yok.');const cards=pool.slice(0,10).map(x=>({...x,power:stablePower(x.id)}));let id;do{id=code()}while(rooms.has(id));const t=token();const accountId=readLogin(b.authToken).sub;const r={code:id,universe,cards,round:0,phase:'waiting',turn:0,topBid:0,topSeat:null,players:[{name,token:t,accountId,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],deadline:null,mode:'friend'};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
+if(url==='/api/create'){const name=chosenName(b,'Oyuncu 1');const universe='mixed';const cards=newCards(universe);let id;do{id=code()}while(rooms.has(id));const t=token();const accountId=readLogin(b.authToken).sub;const r={code:id,universe,cards,round:0,phase:'waiting',turn:0,topBid:0,topSeat:null,players:[{name,token:t,accountId,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],deadline:null,mode:'friend'};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/join'){const r=rooms.get(String(b.code||'').toUpperCase());if(!r)error('Oda bulunamadı.',404);if(r.players[1]||r.joinPending)error('Oda dolu.');r.joinPending=true;try{await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name:chosenName(b,'Oyuncu 2'),token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;log(r,`Oyun başladı. 1. kart için açılış: ${r.players[0].name}`);publish(r);return{token:t,room:publicRoom(r,1)}}finally{r.joinPending=false}}
 if(url==='/api/rematch'){
  const{r,seat}=authorize(b);
