@@ -969,3 +969,10 @@ body:has(#game[data-phase="auction"]:not([hidden])) .shell{padding-top:8px}
 .auction-tail-card{border-radius:8px;animation:auctionTailReveal .75s ease-out both}
 @keyframes auctionTailReveal{0%{opacity:.4;transform:perspective(600px) rotateX(-20deg);background:transparent}45%{opacity:1;transform:perspective(600px) rotateX(0deg);background:var(--rarity-glow,#c4d6e722);box-shadow:inset 3px 0 var(--rarity-frame,#c4d6e7)}100%{opacity:1;transform:none;background:transparent;box-shadow:inset 0 0 transparent}}
 @media(prefers-reduced-motion:reduce){.auction-tail-card{animation:none!important}}
+
+/* Already-awarded tail cards reveal one by one before the optional arena entry. */
+.auction-tail-sequence{padding:12px 8px;text-align:center;border:1px solid #526d87;border-radius:16px;background:#101f32;margin-bottom:16px}
+.auction-tail-progress{color:#ffe3a0;font-weight:700;margin:4px 0}.auction-tail-holder{min-height:235px}.auction-tail-sequence .card-art{height:215px;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:48px;background:#172a40}
+.auction-tail-sequence .card-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.auction-tail-name{position:absolute;bottom:0;left:0;right:0;padding:14px 5px 9px;background:linear-gradient(transparent,#07111af2);color:white;font-size:15px;line-height:1.25;z-index:1}
+.auction-tail-sequence .outline{min-height:44px}.auction-tail-playing .final-teams{display:none}.auction-tail-playing #confirm-arena-entry{opacity:.55}
+@media(max-width:650px){.auction-tail-holder{min-height:205px}.auction-tail-sequence .card-art{height:185px}}
