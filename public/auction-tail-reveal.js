@@ -8,32 +8,32 @@ export function collectTailAwards(previous,next){
    .map(card=>({card:{...card},seat}));
  });
 }
-export function createTailQueue({show,finish,schedule=setTimeout,unschedule=clearTimeout,duration=1100}){
+export function createTailQueue({show,finish,schedule=setTimeout,unschedule=clearTimeout,duration=1900}){
  let timer=null,items=[],index=0,generation=0,active=false;
  function stop(){generation++;if(timer!==null)unschedule(timer);timer=null;items=[];active=false;}
- function complete(){stop();finish();}
+ function complete(){stop();finish(true);}
  return {
   get active(){return active},
   start(next,{reducedMotion=false}={}){
    stop();items=next.slice();index=0;
-   if(reducedMotion||!items.length){finish();return;}
+   if(reducedMotion||!items.length){finish(true);return;}
    active=true;const current=generation;
    const advance=()=>{if(current!==generation)return;if(index>=items.length){complete();return;}
     show(items[index],index,items.length);index++;timer=schedule(advance,duration);
    };advance();
   },
   skip:complete,
-  cancel(){stop();finish();}
+  cancel(){stop();finish(false);}
  };
 }
-export function mountTailReveal(root,button,items,{english=false,me=0,reducedMotion=false,loadArt}={}){
+export function mountTailReveal(root,button,items,{english=false,me=0,reducedMotion=false,loadArt,onComplete}={}){
  const doc=root.ownerDocument;
  const panel=doc.createElement('section');panel.className='auction-tail-sequence';panel.setAttribute('translate','no');
  const heading=doc.createElement('p');heading.className='auction-tail-progress';heading.setAttribute('role','status');
  const holder=doc.createElement('div');holder.className='auction-tail-holder';
  const skip=doc.createElement('button');skip.type='button';skip.className='outline';skip.textContent=english?'Show all cards':'Tüm kartları göster';
- panel.append(heading,holder,skip);root.prepend(panel);root.classList.add('auction-tail-playing');button.disabled=true;
- const cleanup=()=>{const restoreFocus=doc.activeElement===skip;panel.remove();root.classList.remove('auction-tail-playing');button.disabled=false;if(restoreFocus&&button.isConnected)button.focus();};
+ panel.append(heading,holder,skip);root.prepend(panel);root.classList.add('auction-tail-playing');if(button)button.disabled=true;
+ const cleanup=(completed)=>{const restoreFocus=doc.activeElement===skip;panel.remove();root.classList.remove('auction-tail-playing');if(button)button.disabled=false;if(restoreFocus&&button?.isConnected)button.focus();if(completed)onComplete?.();};
  const queue=createTailQueue({finish:cleanup,show:({card,seat},index,total)=>{
   heading.textContent=(seat===me?(english?'Your team':'Senin takımın'):(english?'Opponent team':'Rakip takım'))+' · '+(index+1)+' / '+total;
   const scene=doc.createElement('div');scene.className='auction-deck-scene auction-drawing auction-final-draw rarity-frame-'+(['common','advanced','rare','legendary'].includes(card.rarity)?card.rarity:'common');
