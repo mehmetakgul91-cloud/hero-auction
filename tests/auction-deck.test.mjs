@@ -31,6 +31,6 @@ test('deck is cosmetic with reduced-motion fallback and final snapshot reveals',
  assert.match(css,/@media\(prefers-reduced-motion:reduce\).*auction-drawing/s);
  assert.match(css,/\.auction-deck-backs\{[^}]*pointer-events:none/);
  assert.doesNotMatch(js,/fetch\(|setTimeout|deadline|credits|topBid/);
- assert.match(app,/previousTeamNames\[seat\]\.has\(hero.name\)/);
+ assert.match(app,/collectTailAwards\(room,r\)/);
  assert.match(app,/pagehide.*cancelAuctionReveal/);
 });
