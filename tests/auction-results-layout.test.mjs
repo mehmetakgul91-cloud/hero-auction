@@ -11,7 +11,7 @@ test('only auction calculation view hides duplicate player cards and uses full-w
 });
 test('auction/rematch transitions restore cards; calculation rows and arena confirmation stay intact',()=>{
  const reset=app.indexOf("classList.remove('auction-results-only')");
- const tail=app.indexOf('if(tailAwards.length');assert.ok(reset>0&&reset<tail);
+ const tail=app.indexOf("if(r.phase==='finished'&&(tailAwards.length");assert.ok(reset>0&&reset<tail);
  const result=app.slice(app.indexOf("classList.add('auction-results-only')"),app.indexOf(" }renderChat(r);"));
  assert.match(result,/hero.power\*\(1\+rate\/100\)/);
  assert.match(result,/base\*\(1\+rate\/100\)/);
