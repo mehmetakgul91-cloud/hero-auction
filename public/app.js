@@ -1,5 +1,8 @@
+import {flyAwardCard} from '/auction-card-flight.js';
+import {collectOfferedAwards,displaySeat} from '/auction-awards.js';
 import {collectTailAwards,mountTailReveal} from '/auction-tail-reveal.js';
 let tailReveal=null;
+const awardFlights=new Set(),seenAwardFlights=new Set();
 import {auctionDeckMarkup,revealAuctionCard,cancelAuctionReveal} from '/auction-deck.js';
 import {commanderAbilityStats,COMMANDER_START_ENERGY} from '/commander-ability-rules.js?v=commander-attack-fix-20261021';
 import {abilityImpact} from '/hero-ability-text.js?v=ability-amounts-20261021';
@@ -219,7 +222,7 @@ function renderLobbyIdentity(){
  if($('account-avatar').getAttribute('src')!==portrait)$('account-avatar').src=portrait;
  if(chosen&&$('nav-commander-portrait').getAttribute('src')!==portrait)$('nav-commander-portrait').src=portrait;
 }
-function applyLogin(){if(!room){tailReveal?.cancel();tailReveal=null;cancelAuctionReveal($('stage'));}const active=signedIn();if(!room)window.HeroPlatform?.gameplay(false);if(!room)window.HeroPlatform?.setRoom(null);const wallet=$('gold-wallet');if(wallet)wallet.hidden=!active;$('login-gate').hidden=active;$('home').hidden=!active||!!room;$('game').hidden=!active||!room;$('account-status').hidden=!active;$('google-logout').hidden=true;$('account-status').setAttribute('aria-expanded','false');if(active){$('name').value=login.user?.name||'Oyuncu';$('name').readOnly=login.type==='google'||login.type==='crazygames';}renderLobbyIdentity();commanderVisibility();}
+function applyLogin(){if(!room){cancelAwardFlights();tailReveal?.cancel();tailReveal=null;cancelAuctionReveal($('stage'));}const active=signedIn();if(!room)window.HeroPlatform?.gameplay(false);if(!room)window.HeroPlatform?.setRoom(null);const wallet=$('gold-wallet');if(wallet)wallet.hidden=!active;$('login-gate').hidden=active;$('home').hidden=!active||!!room;$('game').hidden=!active||!room;$('account-status').hidden=!active;$('google-logout').hidden=true;$('account-status').setAttribute('aria-expanded','false');if(active){$('name').value=login.user?.name||'Oyuncu';$('name').readOnly=login.type==='google'||login.type==='crazygames';}renderLobbyIdentity();commanderVisibility();}
 async function enterGuest(){try{const name=$('guest-name').value.trim()||'Oyuncu';const result=await post('/api/auth/guest',{name});login={type:'guest',user:result.user,authToken:result.authToken};localStorage.setItem('hero-auction-login',JSON.stringify(login));showGold(result.gold);applyLogin();void loadCommander();restoreGame()}catch(e){notify(e.message)}}
 $('guest-login').onclick=()=>window.HeroPlatform?startPlatform():enterGuest();
 $('account-status').onclick=()=>{if(window.HeroPlatform||!signedIn())return;const button=$('google-logout');button.hidden=!button.hidden;$('account-status').setAttribute('aria-expanded',String(!button.hidden));};
@@ -315,46 +318,40 @@ const notify=msg=>{const t=$('toast');t.textContent=msg;t.style.display='block';
 async function post(url,data){const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...gameIdentity(),...data})});const j=await res.json();if(!res.ok)throw Error(j.error||'İşlem başarısız');return j}
 function save(token,r){session={token,code:r.code};localStorage.setItem('hero-auction-session',JSON.stringify(session));show(r);connect();refreshOnline()}
 function connect(){stream?.close();if(!session)return;stream=new EventSource(`/api/events?code=${encodeURIComponent(session.code)}&token=${encodeURIComponent(session.token)}&authToken=${encodeURIComponent(login?.authToken||'')}`);stream.onmessage=e=>{try{show(JSON.parse(e.data))}catch{}};stream.onerror=()=>{if(session&&!stream?.__rechecking){stream.__rechecking=true;setTimeout(async()=>{if(!session)return;try{await post('/api/state',session)}catch(e){if(e.message==='Oda bulunamadı.'||e.message==='Oyuncu yetkisi geçersiz.'){stream?.close();localStorage.removeItem('hero-auction-session');session=null;room=null;applyLogin();notify('Oyun odası artık mevcut değil. Yeni bir oyun oluşturabilirsin.')}}if(stream)stream.__rechecking=false},3000)}};}
-let lastAwardAnimationKey=null;
-function animateWonAuctionCard(name,seat,roomCode,round,sourceSnapshot){
- if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
- const key=roomCode+':'+round+':'+seat+':'+name;
- if(lastAwardAnimationKey===key)return;
- lastAwardAnimationKey=key;
- const source=sourceSnapshot?.element;
- const destination=document.querySelector('#player'+seat+' .side-hero:last-child');
- if(!source||!destination)return;
- const from=sourceSnapshot.rect,to=destination.getBoundingClientRect();
- if(!from.width||!to.width)return;
- const ghost=source.cloneNode(true);
- ghost.classList.add('auction-card-flight');
- Object.assign(ghost.style,{position:'fixed',left:from.left+'px',top:from.top+'px',width:from.width+'px',height:from.height+'px',margin:'0',pointerEvents:'none',zIndex:'9999'});
- document.body.append(ghost);
- const dx=to.left+to.width/2-(from.left+from.width/2),dy=to.top+to.height/2-(from.top+from.height/2);
- const animation=ghost.animate([
-  {transform:'translate(0,0) scale(1)',opacity:1,filter:'brightness(1)'},
-  {transform:`translate(${dx*.55}px,${dy*.55-28}px) scale(.72) rotate(-5deg)`,opacity:.98,filter:'brightness(1.6)'},
-  {transform:`translate(${dx}px,${dy}px) scale(.15) rotate(6deg)`,opacity:0,filter:'brightness(1.8)'}
- ],{duration:720,easing:'cubic-bezier(.2,.8,.2,1)',fill:'forwards'});
- animation.finished.catch(()=>{}).finally(()=>{ghost.remove();destination.classList.add('auction-card-arrived');setTimeout(()=>destination.classList.remove('auction-card-arrived'),850)});
+function cancelAwardFlights(){for(const flight of awardFlights)flight.cancel();awardFlights.clear();seenAwardFlights.clear();}
+function awardDestination(seat,me){return document.querySelector('#player'+displaySeat(seat,me)+' .teams')||$('player'+displaySeat(seat,me));}
+function animateWonAuctionCard(award,me,sourceSnapshot){
+ const key=award.code+':'+award.round+':'+award.seat+':'+award.card.universe+':'+award.card.name;
+ if(seenAwardFlights.has(key)||!sourceSnapshot)return Promise.resolve();
+ seenAwardFlights.add(key);
+ const flight=flyAwardCard(sourceSnapshot,awardDestination(award.seat,me),{duration:1400,reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,label:award.seat===me?(document.documentElement.lang==='en'?'Your team':'Senin takımın'):(document.documentElement.lang==='en'?'Opponent team':'Rakip takım')});
+ awardFlights.add(flight);return flight.finished.finally(()=>awardFlights.delete(flight));
 }
-function show(r){if(!signedIn())return;if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const tailAwards=collectTailAwards(room,r);cancelAuctionReveal($('stage'));
+function show(r){if(!signedIn())return;if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const tailAwards=collectTailAwards(room,r);
+ if(room?.code!==r.code||(r.phase==='auction'&&room?.phase!=='auction')||(r.phase==='auction'&&r.round<room?.round))cancelAwardFlights();
+ const offeredAwards=collectOfferedAwards(room,r),offeredArt=document.querySelector('#stage .card-art');
+ const offeredSnapshot=offeredArt?{element:offeredArt.cloneNode(true),rect:offeredArt.getBoundingClientRect()}:null;
+ cancelAuctionReveal($('stage'));$('game').classList.remove('auction-results-only');
  // Keep the auction presentation until every already-awarded card has opened.
  // Authoritative state still advances immediately; no bidding or server timers are paused.
- if(tailAwards.length&&!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches){
+ if(r.phase==='finished'&&(tailAwards.length||offeredAwards.length||awardFlights.size)&&!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches){
   room=r;window.HeroPlatform?.setRoom(r);window.HeroPlatform?.gameplay(false);refreshGold();
+  offeredAwards.forEach(award=>animateWonAuctionCard(award,r.me,offeredSnapshot));
+  const startAfter=Promise.all([...awardFlights].map(flight=>flight.finished));
   const stage=$('stage');stage.replaceChildren();$('game').dataset.phase='auction';
   $('phase').textContent=document.documentElement.lang==='en'?'REMAINING HEROES':'KALAN KAHRAMANLAR';renderChat(r);
-  tailReveal=mountTailReveal(stage,null,tailAwards,{english:document.documentElement.lang==='en',me:r.me,onComplete:()=>{
-   tailReveal=null;show(room);
+  tailReveal=mountTailReveal(stage,null,tailAwards,{english:document.documentElement.lang==='en',me:r.me,startAfter,resolveDestination:seat=>awardDestination(seat,r.me),onComplete:()=>{
+   cancelAwardFlights();tailReveal=null;show(room);
   },loadArt:async card=>{
    const response=await fetch('/api/art?universe='+encodeURIComponent(card.universe)+'&name='+encodeURIComponent(card.name));
    return response.ok?(await response.json()).url:null;
   }});tailReveal.signature=JSON.stringify(r.final);return;
  }
- window.HeroPlatform?.gameplay(r.phase==='auction');const currentCardKey=r.phase==='auction'?r.code+':'+r.round+':'+r.card?.name:null;const isNewCard=!!currentCardKey&&currentCardKey!==lastCardKey;lastCardKey=currentCardKey;const wasFinished=room?.phase==='finished'&&room?.code===r.code;const previousArt=document.querySelector('#stage .card-art');const previousArtSnapshot=previousArt?{element:previousArt.cloneNode(true),rect:previousArt.getBoundingClientRect()}:null;const previousAuction=room?.phase==='auction'&&room?.code===r.code?{round:room.round,team:room.players?.[room.me]?.team?.map(x=>x.name)||[],me:room.me}:null;const enteredAuction=r.phase==='auction'&&(room?.phase!=='auction'||room?.code!==r.code||room?.round>r.round);room=r;$('game').dataset.phase=r.phase;window.HeroPlatform?.setRoom(r);if(window.HeroPlatform)commanderVisibility();if(enteredAuction)refreshGold();if(r.phase==='finished'&&!wasFinished){refreshGold();}
+ window.HeroPlatform?.gameplay(r.phase==='auction');const currentCardKey=r.phase==='auction'?r.code+':'+r.round+':'+r.card?.name:null;const isNewCard=!!currentCardKey&&currentCardKey!==lastCardKey;lastCardKey=currentCardKey;const wasFinished=room?.phase==='finished'&&room?.code===r.code;const enteredAuction=r.phase==='auction'&&(room?.phase!=='auction'||room?.code!==r.code||room?.round>r.round);room=r;$('game').dataset.phase=r.phase;window.HeroPlatform?.setRoom(r);if(window.HeroPlatform)commanderVisibility();if(enteredAuction)refreshGold();if(r.phase==='finished'&&!wasFinished){refreshGold();}
  for(let i=0;i<2;i++){const seat=r.me===1?1-i:i;const p=r.players[seat];$('player'+i).className='player player-side'+(r.me===seat?' me':'')+(r.phase==='auction'&&r.turn===seat?' active-turn':'');$('player'+i).innerHTML=p?`<div class="name">${esc(p.name)} ${r.me===seat?'(SEN)':''}</div><div class="credit">${p.credits} <small>kalan kredi</small></div><div class="spent-credit">💸 ${20-p.credits} kredi kullanıldı</div><div class="side-team-title">🎴 KARTLAR (${p.team.length})</div><div class="teams">${p.team.map(x=>`<span class="side-hero"><span class="side-hero-name">${esc(x.name)} <small class="rarity rarity-${esc(x.rarity||'common')}">${rarityLabel(x.rarity)}</small></span><small class="side-hero-role">${esc(specialtyLabel(x))}</small><span class="side-hero-cost">${Number(x.cost)||0} <small>kredi</small></span></span>`).join('')||'Henüz karakter yok'}</div>`:'<div class="name">2. OYUNCU</div><p class="status">Katılması bekleniyor…</p>'}
+ for(const award of offeredAwards)animateWonAuctionCard(award,r.me,offeredSnapshot);
  if(r.phase==='finished'&&r.final?.length===2&&r.final.every(p=>p.team?.length===5)&&session?.token){
+  $('game').classList.add('auction-results-only');
   renderChat(r);$('login-gate').hidden=true;$('home').hidden=true;$('game').hidden=false;
   $('room-title').textContent=r.code;$('phase').textContent='KAHRAMAN GÜÇLERİ · ARENA ONAYI';
   const stage=$('stage'),my=r.final[r.me],opponent=r.final[1-r.me];
@@ -367,11 +364,6 @@ function show(r){if(!signedIn())return;if(tailReveal?.active&&r.phase==='finishe
 
 $('log').innerHTML=[...r.history].reverse().map(x=>`<div class="event">${esc(x)}</div>`).join('')||'<div class="event">Oyun henüz başlamadı.</div>';
 const stage=$('stage');
-if(previousAuction&&r.players?.[r.me]?.team?.length>previousAuction.team.length){
- const gained=r.players[r.me].team.find(x=>!previousAuction.team.includes(x.name));
- if(gained){const gainedName=gained.name,seat=r.me,code=r.code,round=previousAuction.round;
- requestAnimationFrame(()=>animateWonAuctionCard(gainedName,seat,code,round,previousArtSnapshot));}
-}
 if(['waiting','matching'].includes(r.phase)){stage.innerHTML='<div class="card-art">⌛</div><h2>ARKADAŞINI DAVET ET</h2><p class="status">Arkadaşına davet bağlantısını gönder. Bağlantıyı açtığında oda kodu hazır olacak.</p><div class="big-bid">'+esc(r.code)+'</div><div class="controls"><button class="primary" id="invite-room">📲 WHATSAPP İLE DAVET ET</button></div>';$('invite-room').onclick=()=>shareInvite(r.code);return}
 if(r.phase==='finished'){const [a,b]=r.final;const tied=a.score===b.score;const winnerIndex=tied?-1:(a.score>b.score?0:1);const winner=winnerIndex<0?'BERABERE':r.final[winnerIndex].name;const iWon=winnerIndex===r.me;const emblem='<div class="victory-emblem" aria-hidden="true"><span class="victory-rays"></span><svg viewBox="0 0 180 180" role="presentation" focusable="false"><defs><linearGradient id="victoryGradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4af4f1"/><stop offset=".5" stop-color="#bca0ff"/><stop offset="1" stop-color="#ff6ec3"/></linearGradient></defs><path d="M90 10 154 47 154 122 90 160 26 122 26 47Z" fill="#101a36" stroke="url(#victoryGradient)" stroke-width="4"/><path d="M90 26 140 55 140 113 90 143 40 113 40 55Z" fill="none" stroke="#5ceef0" stroke-opacity=".32" stroke-width="2"/><path d="M90 40 104 75 139 77 111 99 121 134 90 114 59 134 69 99 41 77 76 75Z" fill="url(#victoryGradient)" stroke="#d7faff" stroke-width="2"/><path d="M90 2v17M90 161v17M2 90h19M159 90h19" stroke="#64edf6" stroke-width="3" stroke-linecap="round"/></svg></div>';stage.innerHTML=`<section class="victory-screen"><div class="victory-kicker">✦ ARENA SONUCU ✦</div>${emblem}<div class="victory-heading">${tied?'MÜCADELE BERABERE BİTTİ':iWon?'ZAFER SENİN!':'MAÇ TAMAMLANDI'}</div><p class="victory-subtitle">${tied?'İki takım aynı güce ulaştı.':esc(winner)+' bu mücadeleyi kazandı.'}</p><div class="results victory-results"><div class="${winnerIndex===0?'victory-leader':''}"><span class="victory-player-label">${winnerIndex===0?'✦ KAZANAN':'OYUNCU 1'}</span><span class="victory-player-name">${esc(a.name)}</span><strong>${a.score}</strong><small>TOPLAM PUAN</small></div><div class="${winnerIndex===1?'victory-leader':''}"><span class="victory-player-label">${winnerIndex===1?'✦ KAZANAN':'OYUNCU 2'}</span><span class="victory-player-name">${esc(b.name)}</span><strong>${b.score}</strong><small>TOPLAM PUAN</small></div></div><div class="victory-reward ${iWon?'reward-earned':''}"><span class="reward-coin">🪙</span><div><strong>${r.mode==='bot'?'ANTRENMAN · 0 ALTIN':tied?'BERABERLİK':iWon?'+120 ALTIN KAZANDIN':'+120 ALTIN ÖDÜLÜ'}</strong><small>${r.mode==='bot'?'Bilgisayara karşı altın kazanılmaz veya kaybedilmez.':tied?'Bu maçta altın ödülü verilmedi.':iWon?'120 altınlık zafer ödülünü kazandın.':'Kazanan oyuncuya 120 altın verilir.'}</small></div></div>${r.mode==='bot'?'<div class="victory-rank">🤖 Antrenman maçı · Lig puanı değişmez</div>':`<div class="victory-rank">🏅 LİG PUANI ${r.rankChange?.map((d,i)=>`<span>${esc(r.players[i]?.name||"Oyuncu")} <b class="${d>=0?"rank-plus":"rank-minus"}">${d>=0?"+":""}${d}</b> (${(r.rankBefore?.[i]??1000)+d})</span>`).join(" · ")||"Hesaplanıyor"}</div>`}<p class="victory-scoreline">PUAN FARKI <b>${Math.abs(a.score-b.score)}</b> <span>•</span> SERİ <b>${r.series[0]} - ${r.series[1]}</b></p><div class="final-teams victory-teams">${[a,b].map(p=>`<section class="final-team"><h3>${esc(p.name)}</h3>${p.team.map(c=>`<div class="final-hero"><span><span class="mini-hero-icon">${emojis[c.universe]||'✦'}</span>${esc(c.name)} <small class="rarity rarity-${esc(c.rarity||'common')}">${rarityLabel(c.rarity)}</small></span><b>${c.power}/100</b></div>`).join('')}<div class="final-hero"><span>Kalan kredi bonusu (${p.credits} × 10)</span><b>+${p.credits*10}</b></div><div class="final-hero total"><span>GENEL TOPLAM</span><b>${p.score}</b></div></section>`).join('')}</div><p class="status victory-rematch-note">${r.mode==='bot'?'Bilgisayara karşı hemen yeniden oynayabilirsin.':r.rematch[r.me]?'Rövanş isteğin gönderildi. Rakibin onayı bekleniyor.':r.rematch[1-r.me]?'Rakibin rövanş istiyor. Onaylarsan yeni maç başlayacak.':'Yeni maç için iki oyuncunun da onayı gerekiyor.'}</p><div class="controls victory-controls"><button class="primary" id="rematch">${r.rematch[r.me]?'ONAYIN GÖNDERİLDİ':r.rematch[1-r.me]?'RÖVANŞI KABUL ET':'⚔ AYNI RAKİPLE TEKRAR OYNA'}</button></div><div id="rematch-series" class="victory-scoreline" role="status" aria-label="Rövanş serisi" style="display:block!important;visibility:visible!important;margin:18px auto;padding:18px;border:2px solid #58dfff;border-radius:14px;background:#11233b;color:#fff;text-align:center;font-size:1.12rem;font-weight:700">🏆 RÖVANŞ SERİSİ <div style="margin-top:10px">${esc(r.players[r.me]?.name||"Sen")} &nbsp; <strong style="font-size:1.7rem">${Number(r.series?.[r.me]||0)} – ${Number(r.series?.[1-r.me]||0)}</strong> &nbsp; ${esc(r.players[1-r.me]?.name||"Rakip")}</div></div></section>`; $('rematch').disabled=!!r.rematch[r.me];$('rematch').onclick=()=>act('/api/rematch',{});return}
 const card=r.card;const canBid=r.turn===r.me;const min=r.topBid+1;const max=r.players[r.me].credits;const art=`<div class="hero-art-placeholder">${emojis[card.universe]}<small>Görsel yükleniyor…</small></div>`;
@@ -542,4 +534,4 @@ for(const [id,type] of [['social-profile','profile'],['social-leaders','leaders'
 
 window.addEventListener('hero:platform-settings',()=>{if(room)renderChat(room);if(window.HeroPlatform?.muteAudio&&auctionSfxContext)void auctionSfxContext.suspend().catch(()=>{})});
 
-window.addEventListener('pagehide',()=>{tailReveal?.cancel();tailReveal=null;cancelAuctionReveal($('stage'));});
+window.addEventListener('pagehide',()=>{cancelAwardFlights();tailReveal?.cancel();tailReveal=null;cancelAuctionReveal($('stage'));});
