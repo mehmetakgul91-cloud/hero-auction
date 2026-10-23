@@ -1,3 +1,6 @@
+import {createRoomInvitesUI} from '/room-invites.js';
+import {createFriendsUI} from '/friends.js';
+import {translate} from '/crazygames-en.js';
 import {describeBattleEvent} from '/battle-event-text.js';
 import {createArenaTeamRenderer} from '/arena-team-renderer.js';
 import {summarizeBattle} from '/battle-summary-data.js?v=complete-results-20261021';
@@ -146,6 +149,42 @@ let arenaMode=query.get('room')==='arena';
 const auctionCode=query.get('auctionCode');
 const auctionToken=query.get('auctionToken');
 const auctionMode=Boolean(auctionCode&&auctionToken);
+// Reuse authenticated friendships/presence across the separate preparation/arena page.
+// Mount within the existing navigation row: never add a row over the combat controls.
+let arenaFriends=null,arenaInvites=null;
+if(auctionMode){
+ const nav=document.querySelector('.arena-room-nav');
+ const friendButton=document.createElement('button');friendButton.type='button';friendButton.id='arena-friend-opponent';friendButton.hidden=true;friendButton.setAttribute('aria-live','polite');
+ const title=nav?.querySelector('strong');nav?.append(friendButton);
+ if(nav){nav.classList.add('arena-social-nav');nav.hidden=false;}
+ const inviteBox=document.createElement('details');inviteBox.id='room-invites-inbox';inviteBox.className='room-invites-inbox arena-invites-inbox';inviteBox.hidden=true;
+ const inviteSummary=document.createElement('summary');inviteSummary.id='room-invites-summary';inviteSummary.textContent=document.documentElement.lang==='en'?'Invitations':'Davetler';
+ const inviteContent=document.createElement('div');inviteContent.className='room-invites-popover';
+ const inviteList=document.createElement('div');inviteList.id='room-invites-list';
+ const inviteMessage=document.createElement('p');inviteMessage.id='room-invites-message';inviteMessage.setAttribute('role','status');
+ inviteContent.append(inviteList,inviteMessage);inviteBox.append(inviteSummary,inviteContent);nav?.append(inviteBox);
+ arenaInvites=createRoomInvitesUI({inboxRoot:inviteBox,translate:text=>document.documentElement.lang==='en'?translate(text):text,
+  onJoined:({token,room})=>{
+   // The server returns a seat only after the accepted source match has settled.
+   localStorage.setItem('hero-auction-session',JSON.stringify({token,code:room.code}));
+   return ()=>{const home=window.HeroPlatform?'/crazygames/':'/';window.HeroPlatform?.beforeNavigate(home);location.replace(home);};
+  }
+ });
+
+ arenaFriends=createFriendsUI({opponentRoot:friendButton,translate:text=>document.documentElement.lang==='en'?translate(text):text,
+  notify:text=>{friendButton.title=text;friendButton.setAttribute('aria-label',text);const message=document.getElementById('message');if(message)message.textContent=text;}
+ });
+ try{
+  const auth=JSON.parse(localStorage.getItem('hero-auction-login')||'null');
+  if(auth?.authToken){
+   arenaFriends.setLogin(auth);arenaInvites.setLogin(auth);
+   void fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,authToken:auth.authToken})})
+    .then(async response=>{if(!response.ok)return;const result=await response.json();arenaFriends.setRoom(result.room);arenaInvites.setRoom(result.room,auctionToken);if(title)title.hidden=!friendButton.hidden;})
+    .catch(()=>{});
+  }
+ }catch{/* Missing or expired account must never interrupt battle playback. */}
+}
+
 function mountCommanderDock(){
  const current=new URLSearchParams(location.search);
  if(!arenaMode||!auctionMode||current.get('commanderTest')!=='1')return;
@@ -171,7 +210,15 @@ async function leaveBattleAndGoHome(event){
  event?.preventDefault();
  if(leavingBattle)return;
  leavingBattle=true;
+ const leavingStoredSeat=localStorage.getItem('hero-auction-session');
  const button=event?.currentTarget;if(button){button.textContent='Ayrılıyor…';button.style.pointerEvents='none'}
+ if(auctionMode){
+  try{
+   const auth=JSON.parse(localStorage.getItem('hero-auction-login')||'null');
+   const response=await fetch('/api/room/detach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,authToken:auth?.authToken})});
+   if(!response.ok){const result=await response.json();throw Error(result.error||'Odadan ayrılamadın. Tekrar dene.')}
+  }catch(error){leavingBattle=false;if(button){button.style.pointerEvents='';button.textContent=document.documentElement.lang==='en'?'Leave match':'Maçtan Ayrıl'}$('message').textContent=document.documentElement.lang==='en'?translate(error.message):error.message;return;}
+ }
  if(battlePoll&&battlePoll!==-1)clearInterval(battlePoll);
  if(timer){clearInterval(timer);timer=null}
  try{
@@ -181,6 +228,8 @@ async function leaveBattleAndGoHome(event){
    finally{clearTimeout(timeout)}
   }
  }catch(error){console.warn('Battle leave request failed:',error)}
+ // A consented transfer may complete while the explicit leave request is in flight.
+ if(localStorage.getItem('hero-auction-session')!==leavingStoredSeat)return;
  try{sessionStorage.removeItem('hero-auction-formation');sessionStorage.removeItem('hero-auction-lanes');localStorage.removeItem('hero-auction-session')}catch{}
  window.HeroPlatform?.beforeNavigate('https://heroauction.com.tr/');location.replace('https://heroauction.com.tr/');
 }

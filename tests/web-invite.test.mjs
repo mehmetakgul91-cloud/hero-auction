@@ -86,7 +86,7 @@ function app({storedLogin=false,profile=null,saved=null,commanderGate=null,state
  const document={getElementById:$,createElement:()=>element(),documentElement:{lang:'tr'},querySelector:()=>null};
  const context=createContext({document,localStorage,sessionStorage:localStorage,location,history:{state:null,replaceState(_,__,url){location.href=new URL(url,location).href}},
   window:{location,addEventListener(){},scrollTo(){},matchMedia:()=>({matches:true})},URL,URLSearchParams,console,fetch,crypto:{randomUUID:()=> 'visitor'},
-  setTimeout(){},setInterval(){},clearInterval(){},cancelAuctionReveal(){},commanderAbilityStats,COMMANDER_START_ENERGY,createWebInvite,renderWebInvite,createInviteSharer,navigator:{},
+  setTimeout(){},setInterval(){},clearInterval(){},cancelAuctionReveal(){},commanderAbilityStats,COMMANDER_START_ENERGY,createWebInvite,renderWebInvite,createInviteSharer,createRoomInvitesUI:()=>({setLogin(){},setRoom(){},refresh(){},cancelRoomInvites:async()=>{}}),createFriendsUI:()=>({setLogin(){},setRoom(){},open(){},close(){}}),navigator:{},
   EventSource:class{close(){}},collectTailAwards:()=>[],collectOfferedAwards:()=>[],confirm:()=>true});
  runInContext(source,context);
  // Rendering a battle is outside this fixture; retain actual save/connect/storage.

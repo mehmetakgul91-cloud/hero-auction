@@ -32,3 +32,20 @@ Bot da oyuncuyla aynı canlı savaş motorunu, enerji maliyetlerini ve bekleme s
 - **Zor:** takım eksiklerine göre alışveriş, dayanıklı ön saf, duruma göre enerji biriktirme, iyileştirme/kalkan zamanlama ve büyücü hedef seçimi.
 
 Zorluk güç veya altın hilesi eklemez; henüz açılmamış kartlar ve rakibin gizli enerjisi karar girdisi değildir. Zor botun kazanması garanti değildir. Antrenman giriş ücreti, altın ödülü ve lig puanı değişimi yoktur.
+
+## Arkadaşlar ve çevrimiçi durum
+
+Lobideki **Arkadaşlar** sekmesinden kendi `HA-…` oyuncu kimliğini kopyalayabilir, tam kimlik ile arkadaşlık isteği gönderebilirsin. Gerçek rakibi açık artırma, diziliş, arena veya sonuç ekranından da ekleyebilirsin; bilgisayar rakipleri eklenemez. Gelen istek kabul edilmeden çevrimiçi durum paylaşılmaz. İstek reddedilebilir/iptal edilebilir ve arkadaşlık iki taraftan da kaldırılabilir.
+
+- Oyuncu kimlikleri rastgele üretilir; giriş anahtarı, e-posta veya sağlayıcı hesap kimliği değildir. Kimlikler ve arkadaşlıklar mevcut PostgreSQL sosyal kaydında saklanır. Veritabanısız geliştirme modunda sunucu yeniden başlatılınca silinir.
+- Mevcut misafir oturumu korunurken arkadaşlık kullanılabilir. Misafir çıkışı veya oturum süresi dolması sonrasında aynı misafir kimliğine geri dönüş garantisi yoktur; kalıcı hesapla giriş önerilir.
+- Çevrimiçi durumu ayrı sekme oturumlarıyla doğrulanır, 45 saniye yenilenmezse kapanır; çıkış/sayfa kapanışında bildirim gönderilir. Ağ veya tarayıcı kapanışında durum kısa süre gecikebilir. Tam son görülme zamanı paylaşılmaz, presence verisi kalıcı kayda yazılmaz.
+- Eski tek taraflı arkadaş kayıtları isteğe, karşılıklı eski kayıtlar kabul edilmiş arkadaşlığa dönüştürülür. Yeni istekler için hız ve liste sınırları uygulanır.
+
+### Maç davetleri
+
+**Rakip bul → Davet et** ile kabul edilmiş bir arkadaşına özel odana davet gönderebilirsin. Davet 30 dakika geçerlidir; gönderen oyuncu yanıtı takip edebilir veya daveti iptal edebilir. Davet edilen oyuncu başka maçtayken de **Geleceğim / Gelmeyeceğim** yanıtını verebilir. “Geleceğim” yanıtı 50 altın giriş ücretine açık onaydır; mevcut maçın sunucudaki nihai sonucu kesinleşmeden yeni odaya geçilmez. Açık artırmanın bitmesi tek başına maçın bitmesi sayılmaz.
+
+Kabul edilmiş davet iptal edilebilir. Oda dolmuş/kapanmışsa, davet sona ermişse veya giriş ücreti karşılanamıyorsa otomatik katılım yapılmaz ve hata gösterilir. Davetin açılması veya yanıt beklemesi ücret kesmez. İki oyuncunun normal giriş ücreti ancak gerçek oda katılımında, kalıcı oda/davet kaydıyla birlikte uygulanır. Testler yalnızca yalıtılmış hesaplar ve geliştirme bakiyeleri kullanır.
+
+Sosyal oda koordinasyonu mevcut tek sunucu süreci modeliyle çalışır; çoklu uygulama örneğine ölçekleme için dağıtık oda kilidi ayrıca gerekir. Kalıcılık testleri anlık görüntü geri yükleme ve sahte SQL işlem/hata enjeksiyonu içerir; üretim PostgreSQL üzerinde yeniden başlatma testi yerine geçmez.

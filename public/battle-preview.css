@@ -438,3 +438,23 @@ body.arena-results .shell{height:auto;min-height:100dvh;padding-top:8px}
 .arena-room.arena-fit .arena-hero .arena-shield{width:min(100%,64px);height:4px;margin:0}
 @media(max-width:600px){.arena-hero .arena-shield{width:47px}}
 @media(prefers-reduced-motion:reduce){.arena-shield>span{transition:none}}
+
+/* Friend action shares the existing navigation row; no overlay or combat-grid change. */
+.arena-social-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-right:52px;margin:8px 0}
+#arena-friend-opponent{min-width:0;min-height:44px;max-width:190px;padding:6px 9px;font-size:11px;line-height:1.2;overflow-wrap:anywhere;background:#173d55;border:1px solid #69c8d9}
+#arena-friend-opponent[hidden]{display:none}
+@media(max-width:600px){.arena-social-nav .arena-prep-link{display:none}.arena-room.arena-fit #arena-friend-opponent{max-width:160px;flex:0 1 160px}}
+
+/* Inbox is collapsed by default and opens only on request, away from commander actions. */
+.arena-social-nav{position:relative}
+.arena-invites-inbox{font-size:11px;flex:0 0 auto}
+.arena-invites-inbox[hidden]{display:none}
+.arena-invites-inbox summary{display:flex;align-items:center;min-height:44px;padding:6px 8px;cursor:pointer;border:1px solid #80d9c3;border-radius:9px;background:#153c3b;color:#d9fff6;list-style:none}
+.arena-invites-inbox .room-invites-popover{position:absolute;z-index:20;top:100%;right:0;width:min(420px,calc(100vw - 24px));max-height:32dvh;overflow:auto;padding:12px;background:#10243a;border:1px solid #80d9c3;border-radius:12px;box-shadow:0 8px 24px #0009}
+.arena-invites-inbox button{font-size:11px;min-height:44px;padding:7px;margin:3px}
+.arena-invites-inbox p{line-height:1.4}
+@media(max-width:600px){.arena-social-nav:has(.arena-invites-inbox:not([hidden])) #arena-friend-opponent{max-width:90px;font-size:10px}.arena-social-nav:has(.arena-invites-inbox:not([hidden]))>strong{display:none}}
+.arena-invites-inbox .room-invite-row{padding:8px 0;border-top:1px solid #34516b;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.arena-invites-inbox .room-invite-copy{flex:1 1 100%;min-width:0;overflow-wrap:anywhere}
+.arena-invites-inbox .room-invite-copy strong,.arena-invites-inbox .room-invite-copy small{display:block;line-height:1.5}
+.arena-invites-inbox .room-invite-copy small{color:#c2d5e8;margin-top:4px}
