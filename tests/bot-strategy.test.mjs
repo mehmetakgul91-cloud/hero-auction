@@ -8,11 +8,11 @@ const unit=(id,props={})=>({id,hp:100,maxHp:100,attack:100,shield:0,...props});
 const state=(props={})=>({finished:false,round:2,teams:[[unit('enemy-a'),unit('enemy-b',{attack:180})],[unit('ally')]],abilities:[{}, {energy:60,canUseNormal:true,canUseUltimate:false}],...props});
 const options={now:10000,startedAt:0,lastCastAt:0};
 
-test('commander varies without upgrades and can select each of the four archetypes',()=>{
+test('commander varies with default medium upgrades and can select each of the four archetypes',()=>{
  const ids=new Set();let previous;
  for(let i=0;i<16;i++){
   const p=chooseBotCommander(previous,()=>i%4/4);
-  assert.notEqual(p.commanderId,previous);assert.deepEqual(p.levels,{attack:0,defense:0,magic:0,support:0});
+  assert.notEqual(p.commanderId,previous);assert.deepEqual(p.levels,{attack:10,defense:10,magic:10,support:10});
   previous=p.commanderId;ids.add(previous);
  }
  assert.equal(ids.size,4);

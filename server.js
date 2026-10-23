@@ -1,6 +1,6 @@
 import {requireModerationForInteraction} from './moderation-availability.js';
 import {createModerationService,assertModeratedText} from './moderation-service.js';
-import {chooseBotBid,chooseBotFormation,chooseBotCommander,chooseBotCast} from './bot-strategy.js';
+import {chooseBotBid,chooseBotFormation,chooseBotCommander,chooseBotCast,createBotCommanderProfile} from './bot-strategy.js';
 import {selectAuctionCards,rarityForPower} from './auction-card-pool.js';
 import {crazyGamesSource} from './crazygames-build.js';
 import {verifyCrazyGamesToken} from './crazygames-auth.js';
@@ -45,14 +45,14 @@ const liveArenaLifecycle=createLiveArenaLifecycle({intervalMs:900,onError:(e,key
  if(settleLiveBattle(room,key,snapshot,settleFinishedMatch))publish(room);
 }});
 const liveArenaMatchKeys=new Map();
-// Ephemeral training opponents: no account, progression, or extra auction heroes.
+// Match-scoped training opponents: no account progression or extra auction heroes.
 const lastBotCommanders=new Map();
 function assignBotCommander(room){
  const accountId=room.players[0]?.accountId;
  const previous=room.botCommander?.commanderId||lastBotCommanders.get(accountId);
- room.botCommander=chooseBotCommander(previous);
+ room.botCommander=chooseBotCommander(previous,Math.random,room.difficulty);
  // Concurrent training rooms must not make a rematch repeat its own commander either.
- if(room.botCommander.commanderId===lastBotCommanders.get(accountId))room.botCommander=createCommanderProfile(COMMANDER_STATS.find(id=>id!==previous&&id!==lastBotCommanders.get(accountId)));
+ if(room.botCommander.commanderId===lastBotCommanders.get(accountId))room.botCommander=createBotCommanderProfile(COMMANDER_STATS.find(id=>id!==previous&&id!==lastBotCommanders.get(accountId)),room.difficulty);
  if(accountId){lastBotCommanders.delete(accountId);lastBotCommanders.set(accountId,room.botCommander.commanderId);}
  while(lastBotCommanders.size>2000)lastBotCommanders.delete(lastBotCommanders.keys().next().value);
  room.botBattle=null;
