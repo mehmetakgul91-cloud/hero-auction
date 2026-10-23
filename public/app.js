@@ -406,7 +406,7 @@ function show(r){if(!signedIn())return;if(tailReveal?.active&&r.phase==='finishe
    $('game').classList.add('auction-delivery-active');
    for(let visual=0;visual<2;visual++){
     const seat=visual===0?r.me:1-r.me,p=r.final[seat];
-    $('player'+visual).innerHTML=`<div class="name">${esc(p.name)}</div><div class="delivery-count">${deliveryCounts[seat]} / 5</div><div class="delivery-slot" role="status">${document.documentElement.lang==='en'?'Receiving cards':'Kartlar geliyor'}</div>`;
+    $('player'+visual).innerHTML=`<div class="name">${esc(displayPlayerName(p,r.mode==='bot'&&seat===1))}</div><div class="delivery-count">${deliveryCounts[seat]} / 5</div><div class="delivery-slot" role="status">${document.documentElement.lang==='en'?'Receiving cards':'Kartlar geliyor'}</div>`;
    }
    offeredAwards.forEach(receiveCard);
   });

@@ -1,5 +1,6 @@
 // Presentation copy only. Shared Turkish source, account data and game rules stay unchanged.
 export const uiPhrases = {
+'Kalkan bilgisi bekleniyor':'Waiting for shield information','Rol':'Role','ölçek:':'scale:',
 'Komut reddedildi':'Command rejected',
 
 "Hero Auction | Online Kahraman Açık Artırma ve Arena Oyunu":"Hero Auction | Hero Auctions and Arena Battles",

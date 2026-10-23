@@ -312,8 +312,11 @@ Object.assign(phrases, {
 // One longest-match pass: translations must never feed shorter source fragments.
 // Apply complete sentences before numeric templates (including split DOM labels).
 Object.assign(phrases, uiPhrases, battlePhrases);
+// Match at word content, not leading whitespace: otherwise a short ' kredi'
+// steals the earlier space from a longer 'kredi kullanıldı' phrase.
+const dictionary=Object.fromEntries(Object.entries(phrases).map(([tr,en])=>[tr.trim(),en.trim()]));
 const escapePattern=text=>text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-const phrasePattern=new RegExp(Object.keys(phrases).sort((a,b)=>b.length-a.length).map(tr=>{
+const phrasePattern=new RegExp(Object.keys(dictionary).sort((a,b)=>b.length-a.length).map(tr=>{
  const left=/^[\p{L}\p{N}]/u.test(tr)?'(?<![\\p{L}\\p{N}])':'';
  const right=/[\p{L}\p{N}]$/u.test(tr)?'(?![\\p{L}\\p{N}])':'';
  return left+escapePattern(tr)+right;
@@ -323,15 +326,15 @@ export function translate(text){
  const chunks=[];let cursor=0;
  for(const match of String(text).matchAll(phrasePattern)){
   // Reserve complete multi-word instructions before dynamic substitutions.
-  if(match[0].length<25)continue;
-  chunks.push(translatePart(String(text).slice(cursor,match.index)),phrases[match[0]]);cursor=match.index+match[0].length;
+  if(!/\s/u.test(match[0]))continue;
+  chunks.push(translatePart(String(text).slice(cursor,match.index)),dictionary[match[0]]);cursor=match.index+match[0].length;
  }
  chunks.push(translatePart(String(text).slice(cursor)));return chunks.join('');
 }
 function translatePart(text){
  if(text.trim()==='PAS')return text.replace('PAS','PASS');
- if(Object.hasOwn(phrases,text.trim()))return text.replace(text.trim(),()=>phrases[text.trim()]);
- let out=text.replace(/(\d+) tur\b/g,'$1 rounds').replace(/(\d+) sn\b/g,'$1 sec').replace(/(\d+) beceri/g,'$1 abilities').replace(/(\d+) hasar/g,'$1 damage').replace(/(\d+) şifa/g,'$1 healing').replace(/(\d+) kalkan/g,'$1 shield').replace(/(\d+)\/2 hazır/g,'$1/2 ready').replace(/ için rol seçimi/g,' role selection').replace(/Şu anda (\d+) özgün kahraman hazır/g,'$1 original heroes available').replace(/(\d+) kahraman(?![\p{L}\p{N}])/gu,'$1 heroes');
+ if(Object.hasOwn(dictionary,text.trim()))return text.replace(text.trim(),()=>dictionary[text.trim()]);
+ let out=text.replace(/(\d+) can\b/g,'$1 health').replace(/(\d+) tur\b/g,'$1 rounds').replace(/(\d+) sn\b/g,'$1 sec').replace(/(\d+) beceri/g,'$1 abilities').replace(/(\d+) hasar/g,'$1 damage').replace(/(\d+) şifa/g,'$1 healing').replace(/(\d+) kalkan/g,'$1 shield').replace(/(\d+)\/2 hazır/g,'$1/2 ready').replace(/ için rol seçimi/g,' role selection').replace(/Şu anda (\d+) özgün kahraman hazır/g,'$1 original heroes available').replace(/(\d+) kahraman(?![\p{L}\p{N}])/gu,'$1 heroes');
  out=out.replace(/Vuruş hasarı \+%([\d,]+)/g,(_,n)=>'Hit damage +'+n.replace(',','.')+'%')
   .replace(/Savunmayı %([\d,]+) artırır/g,(_,n)=>'Increases defense by '+n.replace(',','.')+'%')
   .replace(/Hızı %([\d,]+) artırır/g,(_,n)=>'Increases speed by '+n.replace(',','.')+'%')
@@ -340,12 +343,12 @@ function translatePart(text){
   .replace(/Her tur %([\d,]+) can yeniler \(azami can\)/g,(_,n)=>'Restores '+n.replace(',','.')+'% of max health each round')
   .replace(/Vuruş sonrası savunmanın %([\d,]+) kadarı kalkan/g,(_,n)=>'After attacking: shield equal to '+n.replace(',','.')+'% of defense');
 
- return out.replace(phrasePattern,match=>phrases[match]);
+ return out.replace(phrasePattern,match=>dictionary[match]);
 }
 // Names and chat are user/game data, not UI copy. Protect their own text nodes
 // while still localizing nested rarity labels in the sidebar.
 const skip='script,style,textarea,[contenteditable="true"],[translate="no"],.chat-text,.chat-author';
-const identity='.card-name,.auction-tail-name,.side-hero-name,.board-hero-name,.victory-podium-name,.arena-final-knockout-hero,.victory-player-name,#hero-modal-name,#account-name,.gallery-card-body > h2,#hero-story-title,.battle-hero-stat-row > strong';
+const identity='.card-name,.arena-hero-label,.auction-tail-name,.side-hero-name,.board-hero-name,.victory-podium-name,.arena-final-knockout-hero,.victory-player-name,#hero-modal-name,#account-name,.gallery-card-body > h2,#hero-story-title,.battle-hero-stat-row > strong';
 export function localizeNode(node){
  if(node.nodeType===3){
   const parent=node.parentElement;
@@ -359,9 +362,9 @@ export function localizeNode(node){
   return;
  }
  if(node.nodeType!==1||node.closest(skip))return;
- for(const key of ['aria-label','title','placeholder','alt'])if(node.hasAttribute(key)){
+ for(const key of ['aria-label','aria-valuetext','title','placeholder','alt'])if(node.hasAttribute(key)){
   // Portrait alt text is a hero identity, not a status label.
-  if(key==='alt'&&node.tagName==='IMG'&&!node.matches('.arena-commander-portrait,.victory-commander-image,#commander-active-portrait,#account-avatar,#nav-commander-portrait'))continue;
+  if(key==='alt'&&node.tagName==='IMG'&&!node.matches('.arena-commander-portrait,.commander-cinematic-portrait,.victory-commander-image,#commander-active-portrait,#account-avatar,#nav-commander-portrait'))continue;
   const old=node.getAttribute(key),value=translate(old);if(old!==value)node.setAttribute(key,value);
  }
  for(const child of node.childNodes)localizeNode(child);
@@ -369,6 +372,6 @@ export function localizeNode(node){
 if(typeof document!=='undefined'&&document.documentElement.lang==='en'){
  document.documentElement.lang='en';
  document.title='Hero Auction | Hero Auctions and Arena Battles';
- const start=()=>{localizeNode(document.body);new MutationObserver(records=>{for(const record of records){if(record.type==='childList')record.addedNodes.forEach(localizeNode);else localizeNode(record.target);}}).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['aria-label','title','placeholder','alt']});};
+ const start=()=>{localizeNode(document.body);new MutationObserver(records=>{for(const record of records){if(record.type==='childList')record.addedNodes.forEach(localizeNode);else localizeNode(record.target);}}).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['aria-label','aria-valuetext','title','placeholder','alt']});};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 }
