@@ -7,7 +7,7 @@ const validId=value=>/^HA-[A-F0-9]{16}$/.test(value);
 
 // One serialized durable social store, matching the game's single-server room model.
 // Presence is deliberately ephemeral and is never included in a saved snapshot.
-export function createFriendsService({now=Date.now,persist=async()=>{},profile=()=>({})}={}){
+export function createFriendsService({now=Date.now,persist=async()=>{},profile=()=>({}),canInteract=()=>true}={}){
  let players=new Map(),ids=new Map(),links=new Map(),requests=new Map();
  const presence=new Map(),attempts=new Map();
  let queue=Promise.resolve();
@@ -55,6 +55,7 @@ export function createFriendsService({now=Date.now,persist=async()=>{},profile=(
    return mutate(()=>{
     if(!players.has(actor))fail('Oturumun sona erdi. Yeniden giriş yap.',401);
     const other=target(actor,value);
+    if(['add','accept'].includes(action)&&!canInteract(actor,other))fail('Bu oyuncuyla etkileşim kullanılamıyor.',403);
     if(action==='add'){
      if(accepted(actor,other)||requests.get(actor)?.has(other))return{ok:true};
      if((requests.get(actor)?.size||0)>=50||[...requests.values()].filter(s=>s.has(other)).length>=50)fail('Arkadaş isteği sınırına ulaşıldı.',409);

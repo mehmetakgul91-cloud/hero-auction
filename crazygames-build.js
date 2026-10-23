@@ -10,6 +10,8 @@ export function crazyGamesSource(source, extension){
   .replace(/location\.(replace|assign)\((['"])\/\2\)/g,"location.$1('/crazygames/')");
  if(extension!=='.html')return source;
  return source
+  .replace(/<script\b[^>]*src=["']\/moderation\.js["'][^>]*><\/script>/gi,'')
+  .replace(/<link\b[^>]*href=["']\/moderation\.css["'][^>]*>/gi,'')
   .replace(/<a class="arena-3d-launch"[^>]*>[\s\S]*?<\/a>/g,'')
   .replace(/<html lang="tr">/, '<html lang="en">')
   // Remove external login/ads before parsing: hiding them after load is insufficient.
