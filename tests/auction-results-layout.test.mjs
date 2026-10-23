@@ -13,7 +13,7 @@ test('auction/rematch transitions restore cards; calculation rows and arena conf
  const reset=app.indexOf("classList.remove('auction-results-only','auction-delivery-active')");
  const tail=app.indexOf("if(r.phase==='finished'&&(tailAwards.length");assert.ok(reset>0&&reset<tail);
  const result=app.slice(app.indexOf("classList.add('auction-results-only')"),app.indexOf(" }renderChat(r);"));
- assert.match(result,/auctionCalculationMarkup\(r.final,r.me/);
+ assert.match(result,/auctionCalculationMarkup\(r.final\.map\(/);
  assert.doesNotMatch(result,/p.team.map|hero.name|final-hero/);
  assert.match(result,/id="confirm-arena-entry"/);
  assert.match(result,/location.assign\('\/battle-preview.html\?'/);

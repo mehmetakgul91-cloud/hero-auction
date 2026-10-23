@@ -1,3 +1,4 @@
+import {heroStoryOverview} from '/hero-stories-en.js';
 import {heroStoryParagraphs} from '/hero-stories.js?v=connected-lore-20261021';
 import {abilityImpact} from '/hero-ability-text.js?v=short-effects-20261021';
 const $=id=>document.getElementById(id);
@@ -55,6 +56,7 @@ async function loadHeroes(){
 }
 $('gallery-retry').addEventListener('click',loadHeroes);void loadHeroes();
 
+if(document.documentElement.lang==='en')$('hero-lore-tab').textContent='Story overview';
 const dialog=$('hero-story-dialog'),tabs=[$('hero-skills-tab'),$('hero-lore-tab')];
 function selectTab(index){
  tabs.forEach((tab,i)=>{tab.setAttribute('aria-selected',String(i===index));tab.tabIndex=i===index?0:-1});
@@ -88,7 +90,7 @@ function openHeroStory(hero){
   }
   skills.append(stats);
  }
- const story=$('hero-story-text');story.replaceChildren();for(const paragraph of heroStoryParagraphs(hero))story.append(el('p','',paragraph));
+ const story=$('hero-story-text');story.replaceChildren();for(const paragraph of (document.documentElement.lang==='en'?heroStoryOverview(hero):heroStoryParagraphs(hero)))story.append(el('p','',paragraph));
  selectTab(0);dialog.showModal();
 }
 $('hero-story-close').addEventListener('click',()=>dialog.close());
