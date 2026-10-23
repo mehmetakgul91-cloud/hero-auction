@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createContext,runInContext} from 'node:vm';
 import {createWebInvite,renderWebInvite} from '../public/web-invite.js';
+import {createInviteSharer} from '../public/invite-share.js';
 import {commanderAbilityStats,COMMANDER_START_ENERGY} from '../public/commander-ability-rules.js';
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};};
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
@@ -58,7 +59,7 @@ function app({storedLogin=false,profile=null,saved=null,commanderGate=null,state
  function element(id=''){
   const e={id,hidden:false,disabled:false,value:'',dataset:{},style:{},children:[],attrs:{},textContent:'',
    classList:{add(){},remove(){},toggle(){}},setAttribute(k,v){this.attrs[k]=v},getAttribute(k){return this.attrs[k]},
-   append(...a){this.children.push(...a)},replaceChildren(...a){this.children=a},addEventListener(){},scrollIntoView(){},querySelector(){return null},querySelectorAll(){return []},
+   after(...a){this.children.push(...a)},append(...a){this.children.push(...a)},replaceChildren(...a){this.children=a},addEventListener(){},scrollIntoView(){},querySelector(){return null},querySelectorAll(){return []},
    click(){if(!this.disabled)return this.onclick?.()}};return e;
  }
  for(const tag of html.matchAll(/<[^>]+\bid="([^"]+)"[^>]*>/g)){
@@ -85,7 +86,7 @@ function app({storedLogin=false,profile=null,saved=null,commanderGate=null,state
  const document={getElementById:$,createElement:()=>element(),documentElement:{lang:'tr'},querySelector:()=>null};
  const context=createContext({document,localStorage,sessionStorage:localStorage,location,history:{state:null,replaceState(_,__,url){location.href=new URL(url,location).href}},
   window:{location,addEventListener(){},scrollTo(){},matchMedia:()=>({matches:true})},URL,URLSearchParams,console,fetch,crypto:{randomUUID:()=> 'visitor'},
-  setTimeout(){},setInterval(){},clearInterval(){},cancelAuctionReveal(){},commanderAbilityStats,COMMANDER_START_ENERGY,createWebInvite,renderWebInvite,
+  setTimeout(){},setInterval(){},clearInterval(){},cancelAuctionReveal(){},commanderAbilityStats,COMMANDER_START_ENERGY,createWebInvite,renderWebInvite,createInviteSharer,navigator:{},
   EventSource:class{close(){}},collectTailAwards:()=>[],collectOfferedAwards:()=>[],confirm:()=>true});
  runInContext(source,context);
  // Rendering a battle is outside this fixture; retain actual save/connect/storage.
