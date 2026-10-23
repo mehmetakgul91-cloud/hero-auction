@@ -76,10 +76,9 @@ test('commander controls initialize after the single page arena route changes',(
  assert.match(controls,/panel\.hidden=false/);
 });
 
-test('arena omits training shortcut and reports unsupported bot rooms clearly',()=>{
- const server=readFileSync(new URL('../server.js',import.meta.url),'utf8');
+test('arena omits the old manual training shortcut',()=>{
  assert.doesNotMatch(html,/MANUEL KOMUTAN EĞİTİM ARENASI/);
- assert.match(server,/Komutan enerjisi ve becerileri yalnızca iki gerçek oyunculu odalarda kullanılabilir/);
+ // Bot rooms now use the same authenticated live API (behavior covered by bot-live-http).
 });
 
 test('experimental committed round feeds commander visuals without altering replay',()=>{

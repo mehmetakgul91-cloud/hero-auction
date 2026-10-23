@@ -1,3 +1,4 @@
+import {chooseBotBid,chooseBotFormation,chooseBotCommander,chooseBotCast} from './bot-strategy.js';
 import {selectAuctionCards,rarityForPower} from './auction-card-pool.js';
 import {crazyGamesSource} from './crazygames-build.js';
 import {verifyCrazyGamesToken} from './crazygames-auth.js';
@@ -40,6 +41,31 @@ const liveArenaLifecycle=createLiveArenaLifecycle({intervalMs:900,onError:(e,key
  if(settleLiveBattle(room,key,snapshot,settleFinishedMatch))publish(room);
 }});
 const liveArenaMatchKeys=new Map();
+// Ephemeral training opponents: no account, progression, or extra auction heroes.
+const lastBotCommanders=new Map();
+function assignBotCommander(room){
+ const accountId=room.players[0]?.accountId;
+ const previous=room.botCommander?.commanderId||lastBotCommanders.get(accountId);
+ room.botCommander=chooseBotCommander(previous);
+ // Concurrent training rooms must not make a rematch repeat its own commander either.
+ if(room.botCommander.commanderId===lastBotCommanders.get(accountId))room.botCommander=createCommanderProfile(COMMANDER_STATS.find(id=>id!==previous&&id!==lastBotCommanders.get(accountId)));
+ if(accountId){lastBotCommanders.delete(accountId);lastBotCommanders.set(accountId,room.botCommander.commanderId);}
+ while(lastBotCommanders.size>2000)lastBotCommanders.delete(lastBotCommanders.keys().next().value);
+ room.botBattle=null;
+}
+function tickBotBattle(room){
+ const key=liveArenaMatchKeys.get(room.code),state=room.botBattle;
+ if(room.mode!=='bot'||!key||!state||room.matchSettled)return;
+ const now=Date.now(),token=room.players[1].token;
+ try{
+  // The bot sees exactly its authenticated snapshot, including only its own energy.
+  const snapshot=liveArenaLifecycle.snapshot({matchKey:key,token,now});
+  const action=chooseBotCast(snapshot,room.botCommander.commanderId,room.difficulty||'medium',{now,lastCastAt:state.lastCastAt,startedAt:state.startedAt,side:1});
+  if(!action)return;
+  liveArenaLifecycle.cast({matchKey:key,token,...action,requestId:'bot-cast-'+(++state.sequence),now});
+  state.lastCastAt=now;
+ }catch(e){console.error('Bot commander action:',key,e.message)}
+}
 // Standalone preview only: temporary, non-persistent guest credits without a database.
 const previewGuestWallets=new Map();
 const previewCommanderProfiles=new Map();
@@ -359,6 +385,7 @@ if(url==='/api/rematch'){
   try{
    if(r.mode!=='bot'){try{await chargeEntry(r.players.map(p=>p.accountId),r.code);}catch(e){r.rematch=[false,false];throw e}}
    liveArenaLifecycle.endRoom(r.code);liveArenaMatchKeys.delete(r.code);
+   if(r.mode==='bot')assignBotCommander(r);
    r.entryPaid=r.mode!=='bot';r.goldRefunds=null;r.matchNumber=(r.matchNumber||1)+1;
    r.goldAward=null;r.rankChange=null;r.rankBefore=null;r.cards=newCards(r.universe);
    r.round=0;r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.topBid=0;r.topSeat=null;
@@ -370,7 +397,7 @@ if(url==='/api/rematch'){
  }
  publish(r);return{room:publicRoom(r,seat)};
 }
-if(url==='/api/bot'){const difficulty=['easy','medium','hard'].includes(b.difficulty)?b.difficulty:'medium';const universe='mixed';const name=chosenName(b,'Oyuncu');let id;do{id=code()}while(rooms.has(id));const t=token();const r={entryPaid:false,code:id,universe,cards:newCards(universe),round:0,phase:'auction',turn:0,deadline:Date.now()+20000,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},{name:'Bilgisayar',token:token(),credits:20,team:[]}],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'bot',difficulty};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
+if(url==='/api/bot'){const difficulty=['easy','medium','hard'].includes(b.difficulty)?b.difficulty:'medium';const universe='mixed';const name=chosenName(b,'Oyuncu');let id;do{id=code()}while(rooms.has(id));const t=token();const r={entryPaid:false,code:id,universe,cards:newCards(universe),round:0,phase:'auction',turn:0,deadline:Date.now()+20000,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},{name:'Bilgisayar',token:token(),credits:20,team:[]}],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'bot',difficulty};assignBotCommander(r);rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/match'){const universe='mixed';const name=chosenName(b,'Oyuncu');for(const [key,item] of waiting){if(item.universe!==universe||Date.now()-item.created>60000)continue;const r=rooms.get(item.code);if(!r||r.players[1]){waiting.delete(key);continue;}await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.mode='random';waiting.delete(key);publish(r);return{token:t,room:publicRoom(r,1)}}let id;do{id=code()}while(rooms.has(id));const t=token();const r={code:id,universe,cards:newCards(universe),round:0,phase:'matching',turn:0,deadline:null,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'random'};rooms.set(id,r);markRoom(r);waiting.set(id,{code:id,universe,created:Date.now()});return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/chat'){const{r,seat}=authorize(b);if(r.mode==='bot')error('Sohbet yalnızca gerçek oyuncularla kullanılabilir.');const message=String(b.message||'').trim().replace(/[\u0000-\u001f\u007f]/g,' ');if(!message||message.length>240)error('Mesaj 1–240 karakter olmalı.');if(Date.now()-(r.lastChatAt?.[seat]||0)<1000)error('Yeni mesaj için bir saniye bekle.');r.lastChatAt??=[0,0];r.lastChatAt[seat]=Date.now();r.chat??=[];r.chat.push({seat,name:r.players[seat].name,message,time:Date.now()});if(r.chat.length>60)r.chat.shift();r.lastActivity=Date.now();publish(r);return{room:publicRoom(r,seat)}}
 if(url==='/api/state'){const{r,seat}=authorize(b);r.lastActivity=Date.now();return{room:publicRoom(r,seat)}}
@@ -428,7 +455,6 @@ if(url.pathname==='/api/experimental/commander-live'&&(req.method==='GET'||req.m
  const room=rooms.get(String(body?.code||'').toUpperCase());
  const side=room?.players?.findIndex(p=>p?.token===body?.token)??-1;
  if(!room||side<0)return send(403,{error:'Oda veya oyuncu oturumu geçersiz'});
- if(room.mode==='bot')return send(409,{error:'Komutan enerjisi ve becerileri yalnızca iki gerçek oyunculu odalarda kullanılabilir'});
  if(room.phase!=='finished'||!room.battleSync?.result||!room.battleSync?.commanderInput)return send(409,{error:'Arena henüz hazır değil'});
  const matchKey=room.code+':'+String(room.matchNumber||1)+':'+String(room.created);
  const activeLiveKey=liveArenaMatchKeys.get(room.code);
@@ -490,24 +516,7 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
  const sync=room.battleSync;
  // Computer opponent uses an automatic, server-owned formation.
  if(room.mode==='bot'&&!sync.ready[1]){
-  const botCards=teams[1].map((card,index)=>({...card,index,hero:battleRoster.find(hero=>hero.id===card.id)}));
-  const hard=room.difficulty==='hard';
-  const score=(card,lane)=>{
-   const role=card.hero?.role||'fighter',power=Number(card.power)||0;
-   const modifier=Number(card.hero?.laneModifiers?.[lane]);
-   const bonus=Number.isFinite(modifier)?Math.max(-.10,Math.min(.10,modifier)):0;
-   const survival=lane==='front'?(role==='tank'?18:role==='fighter'?7:role==='support'?-9:role==='energy'?-12:-5):0;
-   return power*(1+bonus)+survival;
-  };
-  let frontIndices=[];
-  if(hard){
-   // Choose a resilient front line while respecting each hero's own lane modifiers.
-   const ranked=botCards.map(c=>({index:c.index,advantage:score(c,'front')-score(c,'back')})).sort((a,b)=>b.advantage-a.advantage);
-   const count=ranked[1]?.advantage>0?2:ranked[0]?.advantage>0?1:1;
-   frontIndices=ranked.slice(0,count).map(c=>c.index);
-  }else frontIndices=[0,1];
-  const order=[...frontIndices,...botCards.map(c=>c.index).filter(i=>!frontIndices.includes(i))];
-  sync.ready[1]={positions:order,lanes:order.map(i=>frontIndices.includes(i)?'front':'back'),roles:order.map(i=>botCards[i].hero?.role||'fighter')};
+  sync.ready[1]=chooseBotFormation(teams[1],room.difficulty||'medium');
  }
  // Re-entering a confirmed formation returns the existing battle without changing it.
  if(req.method==='POST'&&!sync.ready[seat]){
@@ -533,14 +542,21 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
  }else if(previewGuestMode){
   for(let i=0;i<2;i++){const accountId=room.players[i]?.accountId;const profile=accountId&&previewCommanderProfiles.get(accountId);if(profile)commanderProfiles[i]=validateCommanderProfile(profile);}
  }
+ if(room.mode==='bot'){
+  if(!room.botCommander)assignBotCommander(room);
+  commanderProfiles[1]=validateCommanderProfile(room.botCommander);
+  // Older accounts without a selected profile can train; this never writes progression.
+  commanderProfiles[0]??=createCommanderProfile('attack');
+ }
  sync.commanderInput={cards:ordered,commanders:commanderProfiles,remainingCredits:[state.remainingCreditsA,state.remainingCreditsB]};
  let result;
- if(room.mode!=='bot'&&commanderProfiles.every(Boolean)){
+ if(commanderProfiles.every(Boolean)){
   const liveKey=room.code+':'+matchKey;
   const liveTeams=prepareLiveArenaTeams(ordered[0],ordered[1],{remainingCredits:[state.remainingCreditsA,state.remainingCreditsB],commanders:commanderProfiles,cardAdapter:'auction'});
   const combat=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:liveKey}),teams:liveTeams,commanders:commanderProfiles});
   liveArenaLifecycle.begin({matchKey:liveKey,tokens:room.players.map(p=>p.token),combat,options:{parity:true,specialHealing:true,energySplash:true,shieldDrain:true,statSpecial:true,executeSpecial:true,thornsPassive:true,roundPassives:true,damageSpecial:true}});
   liveArenaMatchKeys.set(room.code,liveKey);
+  if(room.mode==='bot')room.botBattle={startedAt:Date.now(),lastCastAt:0,sequence:0};
  }
  if(liveArenaMatchKeys.get(room.code)===room.code+':'+matchKey){
   const live=liveArenaLifecycle.snapshot({matchKey:liveArenaMatchKeys.get(room.code),token:room.players[0].token});
@@ -650,7 +666,8 @@ if(req.method==='GET'&&(url.pathname==='/crazygames'||url.pathname.startsWith('/
 }
 if(req.method==='GET'){const staticPath=url.pathname==='/'?'index.html':url.pathname==='/privacy'?'privacy.html':url.pathname==='/admin'?'admin.html':decodeURIComponent(url.pathname);const file=path.join(root,'public',staticPath);if(!file.startsWith(path.join(root,'public')+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile())return send(404,{error:'Bulunamadı'});res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});fs.createReadStream(file).pipe(res);return}send(405,{error:'İzin verilmeyen yöntem'});}catch(e){send(e.status||500,{error:e.status?e.message:'Sunucu hatası'})}});
 setInterval(()=>{for(const r of rooms.values()){
-if(r.phase==='matching'&&Date.now()-r.created>=60000){waiting.delete(r.code);r.players[1]={name:'Bilgisayar',token:token(),credits:20,team:[]};r.mode='bot';r.entryPaid=false;r.phase='auction';r.deadline=Date.now()+20000;publish(r);}
+if(r.phase==='matching'&&Date.now()-r.created>=60000){waiting.delete(r.code);r.players[1]={name:'Bilgisayar',token:token(),credits:20,team:[]};r.mode='bot';assignBotCommander(r);r.entryPaid=false;r.phase='auction';r.deadline=Date.now()+20000;publish(r);}
+tickBotBattle(r);
 if(r.phase!=='auction')continue;
 // A new round must start with a fresh timer and must never be deleted mid-match.
 if(!r.deadline)r.deadline=Date.now()+20000;
@@ -658,39 +675,9 @@ if(r.players[r.turn].credits<=r.topBid&&r.topSeat!==null){finishAuction(r);publi
 if(r.mode==='bot'&&r.turn===1){
  const card=r.cards[r.round],bot=r.players[1],human=r.players[0];
  const offer=r.topBid+1,difficulty=r.difficulty||'medium';
- const slots=Math.max(0,5-bot.team.length),cardsLeft=r.cards.length-r.round;
- const future=r.cards.slice(r.round+1);
- const power=Number(card.power)||0;
- const futurePowers=future.map(c=>Number(c.power)||0).sort((x,y)=>y-x);
- const replacementPower=futurePowers[Math.min(Math.max(0,slots-1),futurePowers.length-1)]||0;
- const humanPower=human.team.reduce((n,c)=>n+(Number(c.power)||0),0);
- const botPower=bot.team.reduce((n,c)=>n+(Number(c.power)||0),0);
- // Preserve credits for future forced purchases and prioritize valuable cards.
- const reserve=Math.max(0,(slots-1)*3);
- const freeCredits=Math.max(0,bot.credits-reserve);
- const scarcity=cardsLeft<=slots;
- const advantage=Math.max(-15,Math.min(15,(humanPower-botPower)/Math.max(1,5-slots)));
- const strategicValue=power-replacementPower+advantage*.30;
- const idealPrice=Math.max(1,Math.min(bot.credits,
-   Math.round(3+(power-55)*.14+Math.max(0,strategicValue)*.15)));
- const hardCap=scarcity?bot.credits:Math.max(1,Math.min(bot.credits,freeCredits,idealPrice));
- let willBid=false;
- if(offer<=bot.credits&&slots>0){
-  if(difficulty==='easy'){
-   willBid=(offer<=1&&Math.random()<.6)||(offer<=3&&Math.random()<.18);
-  }else if(difficulty==='hard'){
-   // Hard mode is deterministic: evaluate card quality, remaining opportunities,
-   // opponent strength, credit reserve and the current auction price.
-   const strongCard=power>=Math.max(65,replacementPower-3);
-   const denyStrongOpponent=human.team.length<5&&power>=83&&human.credits<=offer+2;
-   const qualityPremium=power>=90?3:power>=82?2:power>=74?1:0;
-   const needed=slots>=3&&cardsLeft<=slots+3;
-   const cap=Math.min(bot.credits,Math.max(1,hardCap+qualityPremium+(denyStrongOpponent?2:0)));
-   willBid=(scarcity||strongCard||denyStrongOpponent||needed)&&offer<=cap;
-  }else{
-   willBid=offer<=2||Math.random()<.45;
-  }
- }
+ // Do not pass hidden exact powers or unrevealed cards to auction decisions.
+ const publicPlayer=p=>({credits:p.credits,team:p.team.map(c=>({id:c.id,role:catalogue.get(c.id)?.role,rarity:rarityForPower(c.power)}))});
+ const willBid=chooseBotBid({difficulty,card:{id:card.id,role:catalogue.get(card.id)?.role,rarity:rarityForPower(card.power)},bot:publicPlayer(bot),human:publicPlayer(human),round:r.round,topBid:r.topBid});
  if(willBid){r.topBid=offer;r.topSeat=1;r.openingPassSeat=null;log(r,`Bilgisayar ${offer} kredi teklif etti.`);if(human.credits<=offer)finishAuction(r);else{r.turn=0;r.deadline=Date.now()+20000;}}
  else if(r.topSeat!==null){log(r,'Bilgisayar pas geçti.');finishAuction(r);}
  else if(r.openingPassSeat===0){finishUnbidCard(r);}
@@ -698,6 +685,6 @@ if(r.mode==='bot'&&r.turn===1){
  r.lastActivity=Date.now();publish(r);continue;
 }
 if(r.deadline&&Date.now()>=r.deadline){const expiredSeat=r.turn;log(r,`${r.players[expiredSeat].name} süresi dolduğu için otomatik pas geçti.`);if(r.topSeat!==null){finishAuction(r);}else if(r.openingPassSeat===1-expiredSeat){finishUnbidCard(r);}else{r.openingPassSeat=expiredSeat;r.turn=1-expiredSeat;r.deadline=Date.now()+20000;log(r,`Sıra ${r.players[r.turn].name} oyuncusuna geçti.`);}r.lastActivity=Date.now();publish(r);}
-}for(const [id,r]of rooms){const age=Date.now()-(r.lastActivity||r.created);const expiry=r.phase==='finished'?24*3600_000:r.phase==='waiting'?2*3600_000:r.phase==='matching'?5*60_000:r.phase==='auction'?6*3600_000:24*3600_000;if(age>expiry){rooms.delete(id);dirtyRooms.add(id);waiting.delete(id);const clients=listeners.get(id);if(clients){for(const c of clients){try{c.res.end()}catch{}}listeners.delete(id)}}}for(const [id,w]of waiting)if(!rooms.has(w.code)||Date.now()-w.created>60000)waiting.delete(id)},500).unref();
+}for(const [id,r]of rooms){const age=Date.now()-(r.lastActivity||r.created);const expiry=r.phase==='finished'?24*3600_000:r.phase==='waiting'?2*3600_000:r.phase==='matching'?5*60_000:r.phase==='auction'?6*3600_000:24*3600_000;if(age>expiry){liveArenaLifecycle.endRoom(id);liveArenaMatchKeys.delete(id);rooms.delete(id);dirtyRooms.add(id);waiting.delete(id);const clients=listeners.get(id);if(clients){for(const c of clients){try{c.res.end()}catch{}}listeners.delete(id)}}}for(const [id,w]of waiting)if(!rooms.has(w.code)||Date.now()-w.created>60000)waiting.delete(id)},500).unref();
 setInterval(()=>{flushRooms().catch(e=>console.error('Database flush:',e.message));flushGold().catch(e=>console.error('Gold flush:',e.message))},1000).unref();
 initializeDatabase().then(()=>{server.listen(PORT,'0.0.0.0',()=>console.log(`Hero Auction http://localhost:${PORT} | characters: ${catalogue.size}`));});
