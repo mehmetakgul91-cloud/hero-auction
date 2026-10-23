@@ -1,3 +1,5 @@
+import {uiPhrases, translateAuctionHistory} from './crazygames-ui-phrases.js';
+import {battlePhrases, translateCommanderDescription} from './crazygames-battle-phrases.js';
 // Presentation-only English locale for the CrazyGames entry point.
 // Do not translate stored values, hero IDs, requests, or game rules.
 export const phrases = {
@@ -162,7 +164,7 @@ export const phrases = {
 'İki misafir oyuncu aynı odada beşer kahraman seçer. Arena savaşını sunucu gerçek zamanlı yürütür; komutan yetenekleri savaş sonucunu etkiler.':'Build a five-hero formation. The server runs the battle; in online matches, time your commander abilities to influence it.',
 'İstersen oda kur veya mevcut bir odaya katıl. Oda kodunu arkadaşınla paylaş.':'Create a room or join an existing one. Share the room code with your friend.',
 'Açık artırma gücü, diziliş ve kahraman yetenekleri savaş sonucunu belirledi.':'Auction power, formation, and hero abilities determined the outcome.',
-'Komutan enerjisi ve becerileri yalnızca iki gerçek oyunculu odalarda kullanılabilir':'Commander energy and active abilities are available in online two-player matches.',
+'Komutan enerjisi ve becerileri yalnızca iki gerçek oyunculu odalarda kullanılabilir':'Build energy and use commander abilities in online matches and computer practice.',
 'Yeterli enerjin varsa becerini kullanabilirsin':'Use an ability when you have enough energy.',
 'ÖN / ARKA SAF BONUSLARI YÜKLENİYOR…':'LOADING POSITION BONUSES…',
 'KAHRAMAN GÜÇLERİ · ARENA ONAYI':'HERO POWER · ARENA CONFIRMATION',
@@ -307,15 +309,29 @@ Object.assign(phrases, {
  "ZİHİN USTASI": "MIND MASTER",
  "DESTEK / HİLE": "SUPPORT / TRICKERY"
 });
-const pairs=Object.entries(phrases).sort((a,b)=>b[0].length-a[0].length).map(([tr,en])=>{
- const escaped=tr.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+// One longest-match pass: translations must never feed shorter source fragments.
+// Apply complete sentences before numeric templates (including split DOM labels).
+Object.assign(phrases, uiPhrases, battlePhrases);
+const escapePattern=text=>text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const phrasePattern=new RegExp(Object.keys(phrases).sort((a,b)=>b.length-a.length).map(tr=>{
  const left=/^[\p{L}\p{N}]/u.test(tr)?'(?<![\\p{L}\\p{N}])':'';
  const right=/[\p{L}\p{N}]$/u.test(tr)?'(?![\\p{L}\\p{N}])':'';
- return [new RegExp(left+escaped+right,'gu'),en];
-});
+ return left+escapePattern(tr)+right;
+}).join('|'),'gu');
 export function translate(text){
+ text=translateCommanderDescription(String(text));
+ const chunks=[];let cursor=0;
+ for(const match of String(text).matchAll(phrasePattern)){
+  // Reserve complete multi-word instructions before dynamic substitutions.
+  if(match[0].length<25)continue;
+  chunks.push(translatePart(String(text).slice(cursor,match.index)),phrases[match[0]]);cursor=match.index+match[0].length;
+ }
+ chunks.push(translatePart(String(text).slice(cursor)));return chunks.join('');
+}
+function translatePart(text){
  if(text.trim()==='PAS')return text.replace('PAS','PASS');
- let out=text.replace(/(\d+) beceri/g,'$1 abilities').replace(/(\d+) hasar/g,'$1 damage').replace(/(\d+) şifa/g,'$1 healing').replace(/(\d+) kalkan/g,'$1 shield').replace(/(\d+)\/2 hazır/g,'$1/2 ready').replace(/ için rol seçimi/g,' role selection').replace(/Şu anda (\d+) özgün kahraman hazır/g,'$1 original heroes available').replace(/(\d+) kahraman/g,'$1 heroes');
+ if(Object.hasOwn(phrases,text.trim()))return text.replace(text.trim(),()=>phrases[text.trim()]);
+ let out=text.replace(/(\d+) tur\b/g,'$1 rounds').replace(/(\d+) sn\b/g,'$1 sec').replace(/(\d+) beceri/g,'$1 abilities').replace(/(\d+) hasar/g,'$1 damage').replace(/(\d+) şifa/g,'$1 healing').replace(/(\d+) kalkan/g,'$1 shield').replace(/(\d+)\/2 hazır/g,'$1/2 ready').replace(/ için rol seçimi/g,' role selection').replace(/Şu anda (\d+) özgün kahraman hazır/g,'$1 original heroes available').replace(/(\d+) kahraman(?![\p{L}\p{N}])/gu,'$1 heroes');
  out=out.replace(/Vuruş hasarı \+%([\d,]+)/g,(_,n)=>'Hit damage +'+n.replace(',','.')+'%')
   .replace(/Savunmayı %([\d,]+) artırır/g,(_,n)=>'Increases defense by '+n.replace(',','.')+'%')
   .replace(/Hızı %([\d,]+) artırır/g,(_,n)=>'Increases speed by '+n.replace(',','.')+'%')
@@ -323,17 +339,18 @@ export function translate(text){
   .replace(/Can %50 altındayken saldırı \+%([\d,]+)/g,(_,n)=>'Below 50% health: attack +'+n.replace(',','.')+'%')
   .replace(/Her tur %([\d,]+) can yeniler \(azami can\)/g,(_,n)=>'Restores '+n.replace(',','.')+'% of max health each round')
   .replace(/Vuruş sonrası savunmanın %([\d,]+) kadarı kalkan/g,(_,n)=>'After attacking: shield equal to '+n.replace(',','.')+'% of defense');
- for(const [pattern,en] of pairs)out=out.replace(pattern,()=>en);
- return out;
+
+ return out.replace(phrasePattern,match=>phrases[match]);
 }
 // Names and chat are user/game data, not UI copy. Protect their own text nodes
 // while still localizing nested rarity labels in the sidebar.
 const skip='script,style,textarea,[contenteditable="true"],[translate="no"],.chat-text,.chat-author';
-const identity='.card-name,.side-hero-name,.board-hero-name,.victory-podium-name,.arena-final-knockout-hero,.victory-player-name,#hero-modal-name,#account-name,.battle-hero-stat-row > strong';
+const identity='.card-name,.auction-tail-name,.side-hero-name,.board-hero-name,.victory-podium-name,.arena-final-knockout-hero,.victory-player-name,#hero-modal-name,#account-name,.gallery-card-body > h2,#hero-story-title,.battle-hero-stat-row > strong';
 export function localizeNode(node){
  if(node.nodeType===3){
   const parent=node.parentElement;
   if(parent?.closest(skip)||parent?.matches(identity))return;
+  if(parent?.closest('#log')){const value=translateAuctionHistory(node.nodeValue);if(value!==node.nodeValue)node.nodeValue=value;return;}
   let value;
   if(parent?.matches('.player .name')){
    value=node.nodeValue==='2. OYUNCU'?'PLAYER 2':node.nodeValue.replace(/ \(SEN\)$/, ' (YOU)');
@@ -344,12 +361,12 @@ export function localizeNode(node){
  if(node.nodeType!==1||node.closest(skip))return;
  for(const key of ['aria-label','title','placeholder','alt'])if(node.hasAttribute(key)){
   // Portrait alt text is a hero identity, not a status label.
-  if(key==='alt'&&node.tagName==='IMG')continue;
+  if(key==='alt'&&node.tagName==='IMG'&&!node.matches('.arena-commander-portrait,.victory-commander-image,#commander-active-portrait,#account-avatar,#nav-commander-portrait'))continue;
   const old=node.getAttribute(key),value=translate(old);if(old!==value)node.setAttribute(key,value);
  }
  for(const child of node.childNodes)localizeNode(child);
 }
-if(typeof document!=='undefined'){
+if(typeof document!=='undefined'&&document.documentElement.lang==='en'){
  document.documentElement.lang='en';
  document.title='Hero Auction | Hero Auctions and Arena Battles';
  const start=()=>{localizeNode(document.body);new MutationObserver(records=>{for(const record of records){if(record.type==='childList')record.addedNodes.forEach(localizeNode);else localizeNode(record.target);}}).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['aria-label','title','placeholder','alt']});};

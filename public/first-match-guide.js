@@ -8,7 +8,7 @@ export const guideSteps = {
  en: [
   ['Win your heroes', 'Take turns bidding or passing on 10 cards with 20 credits. Each player recruits 5 heroes. Your remaining credits affect your team’s power.', '1 · AUCTION', '20 credits → 5 heroes'],
   ['Set your formation', 'Tap a hero, then a slot; occupied slots swap heroes. Use the front / back buttons to compare positioning bonuses, then tap Ready. Watch the timer.', '2 · FORMATION', 'Select hero → Tap slot → Ready'],
-  ['Time your commander ability', 'Heroes fight automatically. In matches between two real players, build energy and use a normal or ultimate ability when its button is ready. For the Magic Commander, select targets and confirm. Computer matches are free practice: gold and league points do not change.', '3 · ARENA', 'Build energy → Use a ready ability']
+  ['Time your commander ability', 'Heroes fight automatically. Build energy and use a normal or ultimate ability when its button is ready, in both online and computer matches. For the Magic Commander, select targets and confirm. Computer matches are free practice: gold and league points do not change.', '3 · ARENA', 'Build energy → Use a ready ability']
  ]
 };
 export function guideCanAutoOpen({seen,homeVisible,invited}) { return !seen && homeVisible && !invited; }
