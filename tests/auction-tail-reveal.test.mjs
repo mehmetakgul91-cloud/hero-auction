@@ -66,7 +66,7 @@ test('actual show transition keeps auction visible through all tails and dedupli
   const context={esc:String,displaySeat:(seat,me)=>seat===me?0:1,room:previous,tailReveal:null,awardFlights:new Set(),collectTailAwards,collectOfferedAwards,cancelAwardFlights:()=>{},animateWonAuctionCard:()=>Promise.resolve(),Promise,signedIn:()=>true,cancelAuctionReveal:()=>{},renderChat:()=>{},refreshGold:()=>{},$:id=>elements[id],window:{matchMedia:()=>({matches:false})},document:{documentElement:{lang:'en'},querySelector:()=>null},results:0,mountTailReveal:(root,button,items,opts)=>{
    mounts++;assert.equal(items.length,count);options=opts;return {active:true,cancel:()=>{}};
   }};
-  vm.createContext(context);vm.runInContext(app.slice(start,end)+" results++;room=r;$('game').dataset.phase=r.phase;}",context);
+  vm.createContext(context);vm.runInContext(app.match(/const displayPlayerName=[^;]+;/)[0],context);vm.runInContext(app.slice(start,end)+" results++;room=r;$('game').dataset.phase=r.phase;}",context);
   const next={code:'123',phase:'finished',final,me:seat};context.show(next);
   assert.equal(context.results,0);assert.equal(elements.game.dataset.phase,'auction');assert.equal(context.room,next);
   context.show({...next});assert.equal(mounts,1);assert.equal(context.results,0);
@@ -189,7 +189,7 @@ test('actual app arrival inserts each of 1–5 receipts into correct receiver bo
   const classes=new Set(),elements={stage:{children:[],querySelectorAll:()=>[]},game:{dataset:{phase:'auction'},classList:{remove:(...xs)=>xs.forEach(x=>classes.delete(x)),add:x=>classes.add(x),contains:x=>classes.has(x)}},phase:{},player0:makeBox(),player1:makeBox()};
   let options,items;
   const context={esc:String,displaySeat:(seat,local)=>seat===local?0:1,room:previous,tailReveal:null,awardFlights:new Set(),collectTailAwards,collectOfferedAwards,cancelAwardFlights(){},animateWonAuctionCard:()=>Promise.resolve(),Promise,signedIn:()=>true,cancelAuctionReveal(){},renderChat(){},refreshGold(){},$:id=>elements[id],window:{matchMedia:()=>({matches:false})},document:{documentElement:{lang:'en'},querySelector:()=>null},results:0,mountTailReveal(root,button,awards,opts){items=awards;options=opts;return {active:true,cancel(){}}}};
-  vm.createContext(context);vm.runInContext(app.slice(start,end)+" results++;room=r;$('game').dataset.phase=r.phase;}",context);
+  vm.createContext(context);vm.runInContext(app.match(/const displayPlayerName=[^;]+;/)[0],context);vm.runInContext(app.slice(start,end)+" results++;room=r;$('game').dataset.phase=r.phase;}",context);
   context.show({code:'receipts',me,phase:'finished',final});
   await options.startAfter;
   assert.equal(classes.has('auction-delivery-active'),true);
