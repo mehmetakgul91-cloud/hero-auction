@@ -1,3 +1,5 @@
+import {createRoomInvitesUI} from '/room-invites.js';
+import {createFriendsUI} from '/friends.js';
 import {heroDescriptionEnglish} from '/hero-stories-en.js';
 import {translate} from '/crazygames-en.js';
 const uiText=text=>document.documentElement.lang==='en'?translate(text):text;
@@ -48,6 +50,9 @@ let login=null;try{login=JSON.parse(localStorage.getItem('hero-auction-login')||
 let platformStoredLogin=window.HeroPlatform?login:null;
 if(window.HeroPlatform)login=null;
 const signedIn=()=>!!login?.authToken;
+const friendsUI=createFriendsUI({translate:uiText,notify:message=>notify(message),onOpen:()=>{const panel=$('home-play-panel');if(panel)panel.hidden=true;$('home-play-tab')?.setAttribute('aria-expanded','false');$('home-play-tab')?.classList.remove('selected');}});
+
+const roomInvitesUI=createRoomInvitesUI({translate:uiText,onHosted:({token,room:r})=>{save(token,r);commanderVisibility();},onJoined:({token,room:r})=>{save(token,r);commanderVisibility();notify(uiText('Davet edilen odaya katıldın.'));}});
 
 const commanderOptions=[
  {id:'attack',icon:'⚔️',name:'Saldırı Komutanı',detail:'Savaşçı / Suikastçı'},
@@ -231,7 +236,7 @@ function renderLobbyIdentity(){
  if($('account-avatar').getAttribute('src')!==portrait)$('account-avatar').src=portrait;
  if(chosen&&$('nav-commander-portrait').getAttribute('src')!==portrait)$('nav-commander-portrait').src=portrait;
 }
-function applyLogin(){if(!room){cancelAwardFlights();tailReveal?.cancel();tailReveal=null;cancelAuctionReveal($('stage'));}const active=signedIn();if(!room)window.HeroPlatform?.gameplay(false);if(!room)window.HeroPlatform?.setRoom(null);const wallet=$('gold-wallet');if(wallet)wallet.hidden=!active;$('login-gate').hidden=active;$('home').hidden=!active||!!room;$('game').hidden=!active||!room;$('account-status').hidden=!active;$('google-logout').hidden=true;$('account-status').setAttribute('aria-expanded','false');if(active){$('name').value=login.user?.name||'Oyuncu';$('name').readOnly=login.type==='google'||login.type==='crazygames';}renderLobbyIdentity();commanderVisibility();}
+function applyLogin(){roomInvitesUI.setLogin(login);roomInvitesUI.setRoom(room,session?.token);friendsUI.setLogin(login);friendsUI.setRoom(room);if(!room){cancelAwardFlights();tailReveal?.cancel();tailReveal=null;cancelAuctionReveal($('stage'));}const active=signedIn();if(!room)window.HeroPlatform?.gameplay(false);if(!room)window.HeroPlatform?.setRoom(null);const wallet=$('gold-wallet');if(wallet)wallet.hidden=!active;$('login-gate').hidden=active;$('home').hidden=!active||!!room;$('game').hidden=!active||!room;$('account-status').hidden=!active;$('google-logout').hidden=true;$('account-status').setAttribute('aria-expanded','false');if(active){$('name').value=login.user?.name||'Oyuncu';$('name').readOnly=login.type==='google'||login.type==='crazygames';}renderLobbyIdentity();commanderVisibility();}
 async function enterGuest(){try{const name=$('guest-name').value.trim()||'Oyuncu';const result=await post('/api/auth/guest',{name});login={type:'guest',user:result.user,authToken:result.authToken};localStorage.setItem('hero-auction-login',JSON.stringify(login));showGold(result.gold);applyLogin();void loadCommander();restoreGame()}catch(e){notify(e.message)}}
 $('guest-login').onclick=()=>window.HeroPlatform?startPlatform():enterGuest();
 $('account-status').onclick=()=>{if(window.HeroPlatform||!signedIn())return;const button=$('google-logout');button.hidden=!button.hidden;$('account-status').setAttribute('aria-expanded',String(!button.hidden));};
@@ -286,7 +291,7 @@ async function restoreSavedGame(){
 }
 const homePlayTab=$('home-play-tab'),homePlayPanel=$('home-play-panel');
 const homeGuidePlay=$('home-guide-play');if(homeGuidePlay)homeGuidePlay.onclick=()=>{if(homePlayPanel.hidden)homePlayTab.click();else homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'});};
-if(homePlayTab&&homePlayPanel){homePlayTab.onclick=()=>{homePlayPanel.hidden=false;homePlayTab.setAttribute('aria-expanded','true');homePlayTab.classList.add('selected');homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'});};const lobbyBack=$('play-lobby-back');if(lobbyBack)lobbyBack.onclick=()=>{webInvite?.cancel();homePlayPanel.hidden=true;homePlayTab.setAttribute('aria-expanded','false');homePlayTab.classList.remove('selected');homePlayTab.scrollIntoView({behavior:'smooth',block:'start'});};}
+if(homePlayTab&&homePlayPanel){homePlayTab.onclick=()=>{friendsUI.close();homePlayPanel.hidden=false;homePlayTab.setAttribute('aria-expanded','true');homePlayTab.classList.add('selected');homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'});};const lobbyBack=$('play-lobby-back');if(lobbyBack)lobbyBack.onclick=()=>{webInvite?.cancel();homePlayPanel.hidden=true;homePlayTab.setAttribute('aria-expanded','false');homePlayTab.classList.remove('selected');homePlayTab.scrollIntoView({behavior:'smooth',block:'start'});};}
 webInvite=createWebInvite({
  url:location.href,platform:!!window.HeroPlatform,
  view:state=>{if(!window.HeroPlatform)renderWebInvite(document,state);},
@@ -379,7 +384,7 @@ function animateWonAuctionCard(award,me,sourceSnapshot){
  const flight=flyAwardCard(sourceSnapshot,awardDestination(award.seat,me),{duration:1400,reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,label:award.seat===me?(document.documentElement.lang==='en'?'Your team':'Senin takımın'):(document.documentElement.lang==='en'?'Opponent team':'Rakip takım')});
  awardFlights.add(flight);return flight.finished.finally(()=>awardFlights.delete(flight));
 }
-function show(r){if(!signedIn())return;if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const tailAwards=collectTailAwards(room,r);
+function show(r){if(!signedIn())return;roomInvitesUI.setRoom(r,session?.token);friendsUI.setRoom(r);if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const tailAwards=collectTailAwards(room,r);
  if(room?.code!==r.code||(r.phase==='auction'&&room?.phase!=='auction')||(r.phase==='auction'&&r.round<room?.round))cancelAwardFlights();
  const deliveryCounts=(room?.players||[]).map(p=>p?.team?.length||0);
  const offeredAwards=collectOfferedAwards(room,r),offeredArt=document.querySelector('#stage .card-art');
@@ -485,7 +490,7 @@ if(!window.HeroPlatform){
 }
 $('share').textContent='📲 ARKADAŞINI DAVET ET';
 $('share').onclick=()=>{if(room)shareInvite(room.code)};
-$('leave').onclick=()=>{if(!confirm(uiText('Bu cihazda odadan ayrılmak istiyor musun?')))return;window.HeroPlatform?.setRoom(null);localStorage.removeItem('hero-auction-session');stream?.close();session=null;room=null;applyLogin();refreshOnline()};
+$('leave').onclick=async()=>{if(!confirm(uiText('Bu cihazda odadan ayrılmak istiyor musun?')))return;const leaving=session,auth=login?.authToken;$('leave').disabled=true;try{if(leaving)await post('/api/room/detach',leaving);if(session!==leaving||login?.authToken!==auth)return;window.HeroPlatform?.setRoom(null);localStorage.removeItem('hero-auction-session');stream?.close();session=null;room=null;applyLogin();refreshOnline();void roomInvitesUI.refresh(true)}catch(e){notify(e.message)}finally{$('leave').disabled=false}};
 
 // CrazyGames session bridge: authenticate before restoring any device-local seat.
 let platformStarting=false,platformJoinQueue=Promise.resolve();
@@ -575,6 +580,7 @@ async function loadHeroInfo(card){
 
 const socialEsc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function socialView(type){
+ if(type==='friends'){friendsUI.open();return;}
  const el=$('social-content');if(!el)return;
  el.textContent='Yükleniyor…';
  try{
@@ -584,10 +590,6 @@ async function socialView(type){
    const p=data.profile;el.innerHTML='<h3>'+('<span translate="no">'+socialEsc(p.name)+'</span>')+' · '+socialEsc(p.tier)+'</h3><p>Lig puanı: '+p.rating+' · Galibiyet: '+p.wins+' · Mağlubiyet: '+p.losses+' · Beraberlik: '+p.draws+'</p><h4>Son 20 maç</h4>'+((data.history||[]).map(m=>'<p>'+new Date(m.at).toLocaleDateString('tr-TR')+' · '+socialEsc(m.universe)+' · '+('<span translate="no">'+socialEsc(m.participants.map(p=>p.name+' ('+p.score+')').join(' - '))+'</span>')+'</p>').join('')||'<p>Henüz maç yok.</p>');
   }else if(type==='leaders'){
    el.innerHTML='<h3>Lig sıralaması</h3>'+((data.players||[]).map((p,i)=>'<p>'+(i+1)+'. '+('<span translate="no">'+socialEsc(p.name)+'</span>')+' · '+socialEsc(p.tier)+' · '+p.rating+' puan</p>').join('')||'<p>Henüz sıralama yok.</p>');
-  }else if(type==='friends'){
-   el.innerHTML='<h3>Arkadaşlarım</h3><p>Arkadaş eklemek için sıralamadaki oyuncu kimliğini kullan.</p><input id="friend-id" placeholder="Oyuncu hesap kimliği"><button class="outline" id="friend-add">EKLE</button>'+((data.friends||[]).map(p=>'<p>'+('<span translate="no">'+socialEsc(p.name)+'</span>')+' · '+socialEsc(p.tier)+' <button class="outline friend-remove" data-id="'+socialEsc(p.id)+'">ÇIKAR</button></p>').join('')||'<p>Henüz arkadaş yok.</p>');
-   $('friend-add').onclick=async()=>{try{await post('/api/friend/add',{accountId:$('friend-id').value});socialView('friends')}catch(e){notify(e.message)}};
-   el.querySelectorAll('.friend-remove').forEach(b=>b.onclick=async()=>{await post('/api/friend/remove',{accountId:b.dataset.id});socialView('friends')});
   }else{
    el.innerHTML='<h3>Canlı maçlar</h3>'+((data.matches||[]).map(m=>'<p>'+('<span translate="no">'+socialEsc(m.players.join(' - '))+'</span>')+' · '+socialEsc(m.universe)+' · Kart '+(m.round+1)+'/10 <button class="outline watch-match" data-code="'+socialEsc(m.code)+'">İZLE</button></p>').join('')||'<p>Şu anda izlenebilir maç yok.</p>')+'<div id="watch-content"></div>';
    el.querySelectorAll('.watch-match').forEach(b=>b.onclick=()=>watchSocialMatch(b.dataset.code));
