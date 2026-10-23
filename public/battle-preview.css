@@ -279,16 +279,29 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 @keyframes arenaSoulRise{0%{opacity:0;transform:translate(-50%,0) scale(.6)}18%{opacity:.95}70%{opacity:.5}100%{opacity:0;transform:translate(-50%,-165px) scale(1.25)}}
 @media(prefers-reduced-motion:reduce){.arena-rising-soul{display:none}.arena-floating-damage{animation:none;transform:translate(-50%,-20px)}}
 
-/* The casting commander takes the foreground for the shared 1.2-second effect. */
-.commander-cinematic{position:fixed;inset:0;z-index:10040;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at center,#264b7188,#040715dc);backdrop-filter:blur(3px);touch-action:none}
-.commander-cinematic-content{display:flex;align-items:center;flex-direction:column;gap:10px;text-align:center;color:#fff;max-width:90vw;animation:commanderEntrance var(--commander-effect-duration,1200ms) ease both}
-.commander-cinematic-portrait{width:clamp(160px,42vw,310px);height:clamp(190px,48vh,390px);object-fit:contain;filter:drop-shadow(0 0 30px #72ddff);border-radius:24px}
-.commander-cinematic strong{font-size:clamp(15px,4vw,25px);letter-spacing:.06em;text-shadow:0 2px 8px #000}
-.commander-cinematic span{font-size:clamp(21px,5vw,32px);font-weight:900;color:#8aeaff;text-shadow:0 0 18px #29baff}
-.commander-cinematic.ultimate span{color:#ffdf81}.commander-cinematic.ultimate .commander-cinematic-portrait{filter:drop-shadow(0 0 38px #ffce69)}
-@keyframes commanderEntrance{0%{opacity:0;transform:translateY(35px) scale(.8)}15%{opacity:1;transform:translateY(0) scale(1.03)}75%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translateY(-20px) scale(1.05)}}
-@media(prefers-reduced-motion:reduce){.commander-cinematic-content{animation:none}}
-
+/* Commander casts stay inside their caster heading and actual target portraits.
+   No viewport veil, layout shifts, pointer interception or gameplay timing changes. */
+.arena-side h2,.arena-commander-card{position:relative}
+.arena-commander-card>.commander-cast-cue{inset:0;justify-content:center;padding:2px;min-width:0}
+.arena-commander-card>.commander-cast-cue strong{font-size:clamp(8px,1.3vw,10px)}
+.commander-cast-cue,.commander-target-fx,.commander-target-fx *{pointer-events:none!important}
+.commander-cast-cue{--cast-color:#ff8579;position:absolute;inset:-5px 0 auto;z-index:5;display:flex;flex-direction:column;align-items:center;gap:1px;padding:3px 4px;border:1px solid var(--cast-color);border-radius:7px;background:#101e30;color:var(--cast-color);letter-spacing:0;line-height:1.15;animation:commanderCue 1.2s ease both}
+.commander-cast-cue.defense{--cast-color:#7bdfff}.commander-cast-cue.magic{--cast-color:#d0a2ff}.commander-cast-cue.support{--cast-color:#95ecc0}
+.commander-cast-cue strong{font:600 clamp(8px,1.3vw,10px)/1.15 system-ui;color:#e0eaf4}.commander-cast-cue>span{font:800 clamp(10px,1.6vw,12px)/1.15 system-ui;overflow-wrap:anywhere}.commander-cast-cue.ultimate{border-color:#f4d68e}
+.commander-target-fx{position:absolute;inset:1px;z-index:3;border-radius:inherit;overflow:hidden;color:#ff7665;animation:commanderTarget 1.2s ease both}
+.commander-target-fx::before,.commander-target-fx::after,.commander-target-fx i{content:'';position:absolute;box-sizing:border-box}
+.commander-target-fx.attack i{left:calc(12% + var(--particle)*26%);top:-20%;width:3px;height:125%;background:linear-gradient(transparent,#ffdbb5 25%,#ff5349 65%,transparent);box-shadow:0 0 6px #ff695e;transform:rotate(32deg);animation:commanderStreak .6s ease both;animation-delay:calc(var(--particle)*85ms)}
+.commander-target-fx.defense{color:#6cd7ff}.commander-target-fx.defense::before{inset:6%;border:2px solid currentColor;border-radius:40% 40% 48% 48%;box-shadow:inset 0 0 10px #4cbaff66,0 0 7px #4cbaff66;animation:commanderShield 1.2s ease both}.commander-target-fx.defense::after{inset:16%;border:1px solid #c0efff;border-radius:40% 40% 48% 48%}
+.commander-target-fx.magic{color:#c193ff}.commander-target-fx.magic::before{inset:8%;border:2px dashed currentColor;border-radius:50%;animation:commanderRune 1.2s ease both}.commander-target-fx.magic::after{inset:25%;border:1px solid #e7caff;transform:rotate(45deg);box-shadow:0 0 12px #9c69ec88}.commander-target-fx.magic i{width:4px;height:4px;left:calc(18% + var(--particle)*29%);top:calc(22% + var(--particle)*21%);background:#e6cbff;transform:rotate(45deg)}
+.commander-target-fx.support{color:#72e3a9}.commander-target-fx.support::before{inset:5%;border:1px solid #74e1ad99;border-radius:50%;box-shadow:inset 0 -8px 15px #66d9a144}.commander-target-fx.support i{left:calc(18% + var(--particle)*29%);bottom:12%;width:5px;height:5px;border-radius:50%;background:#f6d888;box-shadow:0 0 7px #76e8b2;animation:commanderMote 1.1s ease-out both;animation-delay:calc(var(--particle)*70ms)}
+.commander-target-fx.ultimate{outline:1px solid #f4d68e;outline-offset:-2px}.commander-target-fx.ultimate::before{border-width:3px}
+@keyframes commanderCue{0%{opacity:0;transform:translateY(3px)}15%,82%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes commanderTarget{0%{opacity:0}18%,75%{opacity:1}100%{opacity:0}}
+@keyframes commanderStreak{0%{opacity:0;translate:-12px -10px}35%,70%{opacity:1}100%{opacity:0;translate:12px 10px}}
+@keyframes commanderShield{0%{transform:scale(.8);opacity:0}28%,75%{transform:scale(1);opacity:1}100%{transform:scale(1.07);opacity:0}}
+@keyframes commanderRune{from{transform:rotate(-35deg)}to{transform:rotate(35deg)}}
+@keyframes commanderMote{0%{opacity:0;transform:translateY(4px) scale(.6)}25%{opacity:1}100%{opacity:0;transform:translateY(-35px) scale(1.1)}}
+@media(prefers-reduced-motion:reduce){.commander-cast-cue,.commander-target-fx,.commander-target-fx::before,.commander-target-fx::after,.commander-target-fx i{animation:none!important}.commander-target-fx.attack i{height:80%;top:10%}.commander-target-fx.support i{bottom:calc(22% + var(--particle)*20%)}}
 
 /* Clear, compact preparation board and directly selectable hero cards. */
 .formation{max-width:860px;margin-inline:auto;padding:12px}.formation::after{display:none}.formation>p:first-of-type{text-align:center;font-size:13px;color:#d6e9ff}.formation .ready-status{margin:8px 0;padding:8px}.formation-power-summary{margin:8px 0;padding:5px;gap:5px}.formation-power-summary>div{padding:6px}.formation-power-summary strong{font-size:18px}.formation-power-explanation{display:none}
@@ -417,7 +430,7 @@ body.arena-results .shell{height:auto;min-height:100dvh;padding-top:8px}
 
 /* Keep small portrait textures cheap to composite during melee and impact effects. */
 .arena-portrait-image{filter:none}
-@media(max-width:700px){.commander-cinematic,.arena-final-knockout{backdrop-filter:none}.commander-cinematic-portrait,.commander-cinematic.ultimate .commander-cinematic-portrait{filter:none}}
+@media(max-width:700px){.arena-final-knockout{backdrop-filter:none}}
 
 /* Distinct shield track below health; zero remains an empty track. */
 .arena-hero .arena-shield{flex:none;width:58px;height:4px;min-height:4px;margin:2px 0 0;border-radius:5px;background:#142638;box-shadow:inset 0 0 0 1px #83d9ff40;overflow:hidden}
