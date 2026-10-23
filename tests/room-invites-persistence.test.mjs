@@ -1,3 +1,4 @@
+import {requireModerationForInteraction} from '../moderation-availability.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -44,7 +45,7 @@ test('unconfirmed commit reserves room and surfaces uncertainty instead of charg
 
 test('uncertain invitation blocks either actor entry and detach before mutation',async()=>{
  const wrapper=source.slice(source.indexOf('async function api(url,b)'),source.indexOf('async function apiAction(url,b)'));
- const ctx={rooms:new Map([['123',{inviteUncertain:true}]]),roomInvites:{items:new Map([['i',{from:'host',to:'guest',code:'123',status:'queued'}]])},readLogin:value=>({sub:value,name:value}),friends:{register:async()=>{},afterMutations:fn=>fn()},error:(message,status)=>{throw Object.assign(Error(message),{status})},apiAction:()=>{throw Error('must not mutate')},authorize:()=>{throw Error('must not detach')}};
+ const ctx={requireModerationForInteraction,moderationReady:true,rooms:new Map([['123',{inviteUncertain:true}]]),roomInvites:{items:new Map([['i',{from:'host',to:'guest',code:'123',status:'queued'}]])},readLogin:value=>({sub:value,name:value}),friends:{register:async()=>{},afterMutations:fn=>fn()},error:(message,status)=>{throw Object.assign(Error(message),{status})},apiAction:()=>{throw Error('must not mutate')},authorize:()=>{throw Error('must not detach')}};
  vm.createContext(ctx);vm.runInContext(wrapper,ctx);
  for(const actor of ['host','guest'])for(const path of ['/api/create','/api/join','/api/match','/api/bot','/api/rematch','/api/room/detach'])await assert.rejects(ctx.api(path,{authToken:actor}),e=>e.status===503);
 });
