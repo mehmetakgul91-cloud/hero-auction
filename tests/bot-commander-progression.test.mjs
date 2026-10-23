@@ -1,0 +1,79 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createBotCommanderProfile,chooseBotCommander} from '../bot-strategy.js';
+import {COMMANDER_STATS,createCommanderProfile,previewCommanderUpgrade,commanderUpgradeCost} from '../arena-commanders.js';
+import {commanderAbilityStats,commanderAbilityDescription} from '../public/commander-ability-rules.js';
+import {prepareLiveArenaTeams} from '../commander-live-team-preparation.js';
+import {battleRoster} from '../battle-roster.js';
+import {createLiveCommanderAbilities} from '../commander-live-abilities.js';
+import {createLiveCommanderCombat,castLiveCommanderCombat,beginServerCombatRound} from '../commander-live-combat.js';
+const teams=()=>[0,1].map(side=>Array.from({length:5},(_,i)=>({id:side+'-'+i,hp:2500,maxHp:5000,attack:1000,defense:100,shield:0,speed:50,position:i,lane:i<2?'front':'back'})));
+for(const [difficulty,level,gain] of [['easy',5,14],['medium',10,17],['hard',15,19]])for(const id of COMMANDER_STATS){
+ test(`${difficulty} ${id}: legal independent branches, UI rules, live energy and all abilities`,()=>{
+  const profile=createBotCommanderProfile(id,difficulty);
+  let earned=createCommanderProfile(id),cost=0;
+  for(const stat of COMMANDER_STATS)for(let n=0;n<level;n++){
+   cost+=commanderUpgradeCost(n);
+   earned=previewCommanderUpgrade(earned,stat,commanderUpgradeCost(n)).profile;
+  }
+  assert.deepEqual(profile,earned,'exactly reachable through human branch upgrade rules');
+  assert.equal(cost,4*100*level*(level+1));
+  assert.equal(commanderAbilityStats(profile).level,level);
+  assert.equal(commanderAbilityStats(profile).energyPerRound,gain);
+  assert.equal(commanderAbilityStats(profile).bonusPercent,level);
+  assert.ok(commanderAbilityDescription(profile).length>20);
+  const cards=['fighter','assassin','tank','energy','support'].map(role=>({...battleRoster.find(h=>h.role===role),power:80}));
+  const baseline=prepareLiveArenaTeams(cards,cards,{commanders:[createCommanderProfile('attack'),createCommanderProfile(id)],cardAdapter:'auction'});
+  const prepared=prepareLiveArenaTeams(cards,cards,{commanders:[createCommanderProfile('attack'),profile],cardAdapter:'auction'});
+  assert.deepEqual(prepared[0],baseline[0],'human team receives no bot upgrades');
+  for(let i=0;i<5;i++){
+   const stat=['attack','attack','defense','attack','maxHp'][i];
+   assert.ok(prepared[1][i][stat]>baseline[1][i][stat],cards[i].role+' has its real branch bonus');
+  }
+  const combat=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'energy',now:0}),teams:teams(),commanders:[createCommanderProfile('attack'),profile]});
+  assert.deepEqual(combat.abilities.energy,[30,30]);beginServerCombatRound(combat,2);
+  assert.deepEqual(combat.abilities.energy,[42,30+gain]);
+  for(const ability of ['normal','ultimate']){
+   const castAt=p=>{
+    const c=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'cast',energy:[100,100],now:0}),teams:teams(),commanders:[createCommanderProfile('attack'),p]});
+    const out=castLiveCommanderCombat(c,{side:1,ability,requestId:'test-cast-01',matchKey:'cast',now:1000,targetIds:ability==='normal'?['0-0']:['0-0','0-1']});
+    assert.equal(c.abilities.energy[1],ability==='normal'?60:0);assert.equal(c.abilities.cooldownUntil[1],6000);
+    return out;
+   };
+   const base=castAt(createCommanderProfile(id)),upgraded=castAt(profile);
+   assert.equal(upgraded.events.at(-1).commanderLevel,level);
+   assert.equal(upgraded.events.at(-1).abilityBonusPercent,level);
+   if(id==='magic')assert.equal(upgraded.teams[0][0].commanderWeaken,commanderAbilityStats(profile)[ability+'Rate']);
+   else assert.ok(upgraded.events.at(-1).value>base.events.at(-1).value,'real effect scales, not only displayed profile');
+  }
+ });
+}
+test('selection applies difficulty to every archetype, excludes previous, and returns independent profiles',()=>{
+ for(const difficulty of ['easy','medium','hard']){
+  const ids=new Set();
+  for(let n=0;n<4;n++){
+   const p=chooseBotCommander(undefined,()=>n/4,difficulty);ids.add(p.commanderId);
+   assert.deepEqual(p,createBotCommanderProfile(p.commanderId,difficulty));
+   assert.notEqual(chooseBotCommander(p.commanderId,()=>0,difficulty).commanderId,p.commanderId);
+   p.levels.attack=40;assert.notEqual(createBotCommanderProfile(p.commanderId,difficulty).levels.attack,40);
+  }
+  assert.equal(ids.size,4);
+ }
+ assert.deepEqual(createBotCommanderProfile('magic','invalid'),createBotCommanderProfile('magic','medium'));
+});
+test('nonzero human profile and its prepared stats survive bot creation, difficulty changes and rematch rotation',()=>{
+ const human={commanderId:'support',levels:{attack:3,defense:8,magic:2,support:11}};
+ const saved=structuredClone(human);
+ const cards=['fighter','assassin','tank','energy','support'].map(role=>({...battleRoster.find(h=>h.role===role),power:80}));
+ const baseline=prepareLiveArenaTeams(cards,cards,{commanders:[human,createCommanderProfile('attack')],cardAdapter:'auction'})[0];
+ let previous;
+ for(const difficulty of ['easy','medium','hard','hard']){
+  const bot=chooseBotCommander(previous,()=>.5,difficulty);previous=bot.commanderId;
+  const prepared=prepareLiveArenaTeams(cards,cards,{commanders:[human,bot],cardAdapter:'auction'});
+  assert.deepEqual(human,saved);assert.deepEqual(prepared[0],baseline);
+  const combat=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'human',now:0}),teams:prepared,commanders:[human,bot]});
+  assert.deepEqual(combat.commanders[0],saved);
+  beginServerCombatRound(combat,2);assert.equal(combat.abilities.energy[0],47);
+  assert.deepEqual(human,saved);
+ }
+});

@@ -58,7 +58,9 @@ test('bot matches run authoritative live combat, accept human casts, settle with
    const started=await post('/api/battle-auction-preview',formation);
    assert.deepEqual(started.ready,[true,true]);assert.equal(started.result.live,true);assert.equal(started.result.winner,null);
    const commander=started.result.commanders[1];assert.ok(['attack','defense','magic','support'].includes(commander.commanderId));
-   assert.deepEqual(commander.levels,{attack:0,defense:0,magic:0,support:0},'difficulty does not create stat bonuses');
+   const level={easy:5,medium:10,hard:15}[room.difficulty];
+   assert.deepEqual(commander.levels,{attack:level,defense:level,magic:level,support:level},'difficulty develops all four temporary commander branches');
+   if(match<3)assert.deepEqual(started.result.commanders[0],{commanderId:'defense',levels:{attack:0,defense:0,magic:0,support:0}},'human progression is unchanged');
    if(previousCommander)assert.notEqual(commander.commanderId,previousCommander,'rematches and new bot rooms select a different commander');
    if(match===3)assert.deepEqual(started.result.commanders[0],{commanderId:'attack',levels:{attack:0,defense:0,magic:0,support:0}},'a guest without a saved commander can still play live training');
    previousCommander=commander.commanderId;
@@ -102,7 +104,7 @@ test('bot matches run authoritative live combat, accept human casts, settle with
      const fresh=await post('/api/auth/guest',{name:'No Commander Bot Test'});
      player={authToken:fresh.authToken};previousCommander=null;
     }
-    const next=await post('/api/bot',{...player,difficulty:match===2?'easy':'hard'});
+    const next=await post('/api/bot',{...player,difficulty:match===2?'easy':'medium'});
     code=next.room.code;player.token=next.token;expectedSeries[0]=0;expectedSeries[1]=0;
     assert.deepEqual(next.room.players.map(p=>[p.credits,p.team.length]),[[20,0],[20,0]]);
    }

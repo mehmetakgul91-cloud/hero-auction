@@ -1,6 +1,7 @@
 // Server-owned decisions, restricted to information a player can observe.
-// Difficulty changes choices and reaction time, never stats, energy or credits.
-import {COMMANDERS,createCommanderProfile} from './arena-commanders.js';
+// Difficulty changes choices, reaction time and the temporary commander profile.
+// Combat bonuses/energy still follow the same progression rules as human profiles.
+import {COMMANDERS,COMMANDER_STATS,createCommanderProfile,commanderLevelCap} from './arena-commanders.js';
 import {battleRoster} from './battle-roster.js';
 
 const difficultyOf=value=>['easy','medium','hard'].includes(value)?value:'medium';
@@ -9,9 +10,19 @@ const heroFor=card=>battleRoster.find(hero=>hero.id===card.id||hero.name===card.
 const roleFor=card=>heroFor(card)?.role||card.role||'fighter';
 const sample=(rng,count)=>Math.min(count-1,Math.max(0,Math.floor(rng()*count)));
 
-export function chooseBotCommander(previousId,rng=Math.random){
+export const BOT_COMMANDER_LEVELS=Object.freeze({easy:5,medium:10,hard:15});
+export function createBotCommanderProfile(commanderId,difficulty){
+ const profile=createCommanderProfile(commanderId);
+ const level=BOT_COMMANDER_LEVELS[difficultyOf(difficulty)];
+ // Branches are independent gold upgrades, not a shared talent-point budget.
+ // Training grants no gold and never persists this profile to a human account.
+ for(const stat of COMMANDER_STATS)profile.levels[stat]=Math.min(level,commanderLevelCap(commanderId,stat));
+ return profile;
+}
+
+export function chooseBotCommander(previousId,rng=Math.random,difficulty){
  const available=COMMANDERS.filter(c=>c.id!==previousId);
- return createCommanderProfile(available[sample(rng,available.length)].id);
+ return createBotCommanderProfile(available[sample(rng,available.length)].id,difficulty);
 }
 
 export function chooseBotBid({difficulty,card,bot,human,round=0,topBid=0},rng=Math.random){

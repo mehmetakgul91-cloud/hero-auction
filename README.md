@@ -25,13 +25,13 @@ Her maçta aktif havuzdan 10 farklı kahraman rastgele seçilir; efsanevi, nadir
 
 ## Bilgisayar antrenmanı
 
-Bot da oyuncuyla aynı canlı savaş motorunu, enerji maliyetlerini ve bekleme sürelerini kullanır. Her yeni maç/rövanşta bir önceki komutandan farklı, geçici ve sıfır seviyeli bir komutan alır; kahramanları yalnızca normal açık artırmadan edinir. Oyuncunun kayıtlı komutanı ve gelişimi değişmez. Eski, komutan seçilmemiş hesaplarda yalnızca o antrenman için sıfır seviyeli saldırı komutanı kullanılır.
+Bot da oyuncuyla aynı canlı savaş motorunu, enerji maliyetlerini ve bekleme sürelerini kullanır. Her yeni maç/rövanşta bir önceki komutandan farklı, geçici bir komutan alır. Komutanın ana uzmanlığı ve dört gelişim dalı kolayda 5, ortada 10, zorda 15 seviyedir; mevcut 40/20 dal sınırları ve normal beceri/enerji kuralları geçerlidir. Kahramanları yalnızca normal açık artırmadan edinir. Oyuncunun kayıtlı komutanı ve gelişimi değişmez. Eski, komutan seçilmemiş hesaplarda yalnızca o antrenman için sıfır seviyeli saldırı komutanı kullanılır.
 
 - **Kolay:** düşük teklif bütçesi, basit diziliş ve daha seyrek normal beceriler.
 - **Orta:** kredi rezervi ve kart değeri, role uygun ön saf ve düzenli beceri kullanımı.
 - **Zor:** takım eksiklerine göre alışveriş, dayanıklı ön saf, duruma göre enerji biriktirme, iyileştirme/kalkan zamanlama ve büyücü hedef seçimi.
 
-Zorluk güç veya altın hilesi eklemez; henüz açılmamış kartlar ve rakibin gizli enerjisi karar girdisi değildir. Zor botun kazanması garanti değildir. Antrenman giriş ücreti, altın ödülü ve lig puanı değişimi yoktur.
+Geçici komutanın sınıf bonusu kolay/orta/zor için %2,5 / %5 / %7,5, beceri güç artışı %5 / %10 / %15 ve tur enerjisi 14 / 17 / 19 olur. Dallar bağımsız altın geliştirmeleridir; ortak yetenek puanı havuzu yoktur. Bot için altın harcanmaz veya hesap kaydı yazılmaz; ek güç/enerji çarpanı uygulanmaz. Henüz açılmamış kartlar ve rakibin gizli enerjisi karar girdisi değildir. Zor botun kazanması garanti değildir. Antrenman giriş ücreti, altın ödülü ve lig puanı değişimi yoktur.
 
 ## Arkadaşlar ve çevrimiçi durum
 
