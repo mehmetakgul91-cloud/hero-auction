@@ -1,12 +1,35 @@
 // Cosmetic presentation; the shared ability lock is enforced by the server.
-const names={attack:'SALDIRI',defense:'SAVUNMA',magic:'BÜYÜ',support:'DESTEK'};
-const symbols={attack:'⚔',defense:'🛡',magic:'✦',support:'✚'};
-const commanderPortraits={attack:'/images/Ate%C5%9Fler%20%C4%B0%C3%A7inde%20Sava%C5%9F%C3%A7%C4%B1%20Komutan.png',defense:'/images/Alt%C4%B1n%20Aslan%C4%B1n%20Kale%20Muhaf%C4%B1z%C4%B1.png',magic:'/images/Kozmik%20R%C3%BCnlerin%20B%C3%BCy%C3%BCc%C3%BC%20Komutan%C4%B1.png',support:'/images/Z%C3%BCmr%C3%BCt%20I%C5%9F%C4%B1%C4%9F%C4%B1n%20%C5%9Eifac%C4%B1%20Krali%C3%A7esi.png'};
+const english=()=>document.documentElement?.lang==='en';
+const text=(tr,en)=>english()?en:tr;
+const names={attack:['Saldırı','Attack'],defense:['Savunma','Defense'],magic:['Büyü','Magic'],support:['Destek','Support']};
+const skills={attack:['Vuruş','Strike'],defense:['Kalkan','Shield'],magic:['Saldırı azaltma','Attack reduction'],support:['Şifa','Healing']};
+const symbols={attack:'⚔',defense:'◇',magic:'✦',support:'✧'};
 const EFFECT_MS=1200;
-const seen=new Set(),pending=[],waitingImpacts=[],impactElements=new Set(),timers=new Set();
+const seen=new Set(),pending=[],waitingImpacts=[],impactElements=new Set(),castElements=new Set(),timers=new Set();
 let playing=false,activeUntil=0,activeOverlay=null;
 function later(callback,delay){const id=setTimeout(()=>{timers.delete(id);callback()},delay);timers.add(id);return id;}
 function notifyLock(){window.heroCommanderEffectUntil=playing?activeUntil+EFFECT_MS*pending.length:0;if(playing)window.heroCommanderImpactUntil=window.heroCommanderEffectUntil+EFFECT_MS;window.dispatchEvent(new CustomEvent('heroarena:commander-effect-lock'));}
+function targetSide(entry,impact){return ['heal','shield','buff'].includes(impact.kind)?entry.side:1-entry.side;}
+function validImpact(impact){return ['damage','shield','heal','weaken','buff'].includes(impact.kind)&&Number.isFinite(impact.value)&&impact.value>=0&&(impact.value>0||(impact.kind==='damage'&&impact.absorbed>0));}
+function targetPortrait(entry,impact){
+ const team=document.getElementById(targetSide(entry,impact)===0?'team-a':'team-b');
+ return [...(team?.querySelectorAll('.hero')||[])].find(el=>el.dataset.heroId===impact.target)?.querySelector('.arena-portrait');
+}
+function clearCastEffects(){for(const element of castElements)element.remove();castElements.clear();}
+function showTargetEffects(entry,kind,ability){
+ const marked=new Set();
+ for(const impact of entry.impacts||[]){
+  if(!validImpact(impact))continue;
+  const portrait=targetPortrait(entry,impact);if(!portrait||marked.has(portrait))continue;
+  marked.add(portrait);
+  const effect=document.createElement('span');
+  effect.className='commander-target-fx '+kind+(ability==='ultimate'?' ultimate':'');
+  effect.setAttribute('data-effect',impact.kind);effect.setAttribute('aria-hidden','true');
+  // Shapes are cosmetic only: no inferred targets, health or combat state changes.
+  for(let i=0;i<3;i++){const particle=document.createElement('i');particle.style.setProperty('--particle',i);effect.append(particle);}
+  portrait.append(effect);castElements.add(effect);
+ }
+}
 function showHeroImpacts(){
  if(document.hidden||document.body.classList.contains('arena-catching-up')){waitingImpacts.length=0;return;}
  const targets=new Map();
@@ -14,7 +37,7 @@ function showHeroImpacts(){
   if(!['damage','shield','heal','weaken'].includes(impact.kind)||!Number.isFinite(impact.value)||impact.value<0)continue;
   if(impact.value===0&&!(impact.kind==='damage'&&impact.absorbed>0))continue;
   // Side is relative to this viewer; target IDs can occur on both teams.
-  const side=['heal','shield'].includes(impact.kind)?entry.side:1-entry.side;
+  const side=targetSide(entry,impact);
   const key=side+':'+impact.target;
   if(!targets.has(key))targets.set(key,{side,target:impact.target,impacts:new Map()});
   const values=targets.get(key).impacts,previous=values.get(impact.kind);
@@ -30,14 +53,14 @@ function showHeroImpacts(){
   effect.setAttribute('role','status');effect.setAttribute('aria-live','polite');
   const descriptions=[];
   for(const impact of impacts.values()){
-   const labels={damage:'CAN HASARI',heal:'ŞİFA',shield:'KALKAN',weaken:'SALDIRI'};
+   const labels={damage:text('CAN HASARI','HP DAMAGE'),heal:text('ŞİFA','HEALING'),shield:text('KALKAN','SHIELD'),weaken:text('SALDIRI','ATTACK')};
    const signs={damage:'−',heal:'+',shield:'+',weaken:'−%'};
    const label=document.createElement('span');label.className='commander-impact-label';
    const title=document.createElement('span');title.textContent=labels[impact.kind];
-   const value=document.createElement('strong');value.textContent=signs[impact.kind]+(impact.kind==='weaken'?impact.value:Math.round(impact.value)).toLocaleString('tr-TR',{maximumFractionDigits:1});
+   const value=document.createElement('strong');value.textContent=signs[impact.kind]+(impact.kind==='weaken'?impact.value:Math.round(impact.value)).toLocaleString(english()?'en-US':'tr-TR',{maximumFractionDigits:1});
    label.append(title,value);
-   if(impact.absorbed>0){const blocked=document.createElement('small');blocked.textContent='🛡 '+Math.round(impact.absorbed)+' engellendi';label.append(blocked);}
-   descriptions.push(title.textContent+' '+value.textContent+(impact.absorbed>0?', kalkan '+impact.absorbed+' engelledi':''));
+   if(impact.absorbed>0){const blocked=document.createElement('small');blocked.textContent='🛡 '+Math.round(impact.absorbed)+text(' engellendi',' blocked');label.append(blocked);}
+   descriptions.push(title.textContent+' '+value.textContent+(impact.absorbed>0?text(', kalkan ',', shield blocked ')+impact.absorbed+text(' engelledi',''):''));
    effect.append(label);
   }
   effect.setAttribute('aria-label',(card.querySelector('.arena-hero-label')?.textContent||target)+': '+descriptions.join(', '));
@@ -52,17 +75,22 @@ function playNext(){
  const [,kind,ability]=match;
  playing=true;activeUntil=Date.now()+EFFECT_MS;notifyLock();
  const overlay=document.createElement('div');activeOverlay=overlay;
- overlay.id='commander-ability-flash';overlay.className='commander-cinematic '+kind+(ability==='ultimate'?' ultimate':'');
- overlay.style.setProperty('--commander-effect-duration',EFFECT_MS+'ms');
+ overlay.id='commander-ability-flash';overlay.className='commander-cast-cue '+kind+(ability==='ultimate'?' ultimate':'');
  overlay.setAttribute('role','status');overlay.setAttribute('aria-live','polite');
- const content=document.createElement('div');content.className='commander-cinematic-content';
- const portrait=document.createElement('img');portrait.src=commanderPortraits[kind];portrait.alt=names[kind]+' komutanı';portrait.className='commander-cinematic-portrait';
- portrait.onerror=()=>{portrait.hidden=true;};
- const label=document.createElement('strong');label.textContent=(entry.side===0?'SENİN':'RAKİBİN')+' '+names[kind]+' KOMUTANI';
- const skill=document.createElement('span');skill.textContent=symbols[kind]+' '+(ability==='ultimate'?'NİHAİ YETENEK':'NORMAL YETENEK');
- content.append(portrait,label,skill);overlay.append(content);document.body.append(overlay);
+ const label=document.createElement('strong');label.textContent=(entry.side===0?text('Senin','Your'):text('Rakibin','Opponent’s'))+' '+text(...names[kind])+text(entry.side===0?' komutanın':' komutanı',' commander');
+ const skill=document.createElement('span');
+ // Current support restores HP; if a future committed support buff arrives, never call it healing.
+ const skillName=kind==='support'&&entry.impacts?.some(impact=>impact.kind==='buff')?text('Güçlendirme','Empower'):text(...skills[kind]);
+ skill.textContent=symbols[kind]+' '+(ability==='ultimate'?text('Nihai · ','Ultimate · '):'')+skillName;
+ overlay.append(label,skill);
+ const team=document.getElementById(entry.side===0?'team-a':'team-b');
+ const commander=document.getElementById(entry.side===0?'arena-commander-left':'arena-commander-right');
+ // Fitted live arenas hide team headings; use the visible caster card in its dock.
+ const host=commander?.getBoundingClientRect?.().width>0?commander:team?.parentElement?.querySelector('h2');
+ host?.append(overlay);
+ showTargetEffects(entry,kind,ability);
  later(()=>{
-  overlay.remove();activeOverlay=null;playing=false;waitingImpacts.push(entry);
+  overlay.remove();clearCastEffects();activeOverlay=null;playing=false;waitingImpacts.push(entry);
   if(pending.length)playNext();else{notifyLock();showHeroImpacts();}
  },EFFECT_MS);
 }
@@ -79,7 +107,7 @@ function showCommanderAbility(event){
 }
 function resetEffects(){
  for(const timer of timers)clearTimeout(timer);timers.clear();
- activeOverlay?.remove();activeOverlay=null;
+ activeOverlay?.remove();activeOverlay=null;clearCastEffects();
  for(const element of impactElements)element.remove();impactElements.clear();
  playing=false;activeUntil=0;window.heroCommanderImpactUntil=0;pending.length=0;waitingImpacts.length=0;notifyLock();
 }
@@ -88,3 +116,8 @@ window.addEventListener('heroarena:commander-round',showCommanderAbility);
 window.addEventListener('heroarena:ready',()=>{resetEffects();seen.clear();});
 window.addEventListener('heroarena:connection-lost',resetEffects);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)resetEffects();});
+// Do not cancel on battle-finished: a lethal committed cast can arrive just after
+// that signal, and victory already waits for these original cast/impact windows.
+window.addEventListener('pagehide',resetEffects);
+window.addEventListener('popstate',resetEffects);
+window.addEventListener('heroarena:route-change',()=>{resetEffects();seen.clear();});
