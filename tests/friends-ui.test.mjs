@@ -48,3 +48,9 @@ test('request failure is shown and form can retry',async()=>{
  const f=fixture({fetcher:path=>path==='/api/friend/add'?{ok:false,json:async()=>({error:'Oyuncu bulunamadı.'})}:{ok:true,json:async()=>snapshot}});
  f.ui.setLogin({authToken:'secret'});await tick();f.ui.open();await tick();f.nodes['friend-id'].value='bad';f.nodes['friend-add-form'].onsubmit({preventDefault(){}});await tick();assert.equal(f.nodes['friends-message'].textContent,'Oyuncu bulunamadı.');assert.equal(f.nodes['friend-add'].disabled,false);assert.equal(f.nodes['friend-id'].value,'bad');
 });
+test('friend ID row overrides global full-width primary button without squeezing input',async()=>{
+ const {readFile}=await import('node:fs/promises');
+ const css=await readFile(new URL('../public/friends.css',import.meta.url),'utf8');
+ assert.match(css,/\.friends-input-row button\{[^}]*flex:0 0 auto;[^}]*width:auto/);
+ assert.match(css,/\.friends-input-row input\{[^}]*min-width:0;[^}]*flex:1;[^}]*margin-bottom:0/);
+});
