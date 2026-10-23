@@ -52,7 +52,7 @@ async function loadHeroes(){
   const data=await response.json();heroes=Array.isArray(data.heroes)?data.heroes:[];loaded=true;
   $('gallery-total').textContent=heroes.length+' kahraman';render();
  }catch{status.textContent='Kahramanlar yüklenemedi. Tekrar deneyebilirsin.';root.replaceChildren();$('gallery-retry').hidden=false}
- finally{root.setAttribute('aria-busy','false')}
+ finally{root.setAttribute('aria-busy','false');window.HeroPlatform?.loaded()}
 }
 $('gallery-retry').addEventListener('click',loadHeroes);void loadHeroes();
 

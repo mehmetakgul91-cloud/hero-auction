@@ -6,7 +6,7 @@ import {getArenaLaneLayout} from '/arena-viewport.js?v=arena-viewport-20261021b'
 import {heroCombatPresentation,stationaryArenaAction} from '/hero-combat-presentation.js';
 // Verify the current portal account before accessing any saved arena seat.
 if(window.HeroPlatform){
- const restart=()=>{localStorage.removeItem('hero-auction-session');sessionStorage.removeItem('hero-auction-formation');sessionStorage.removeItem('hero-auction-lanes');location.replace('/crazygames/')};
+ const restart=()=>{localStorage.removeItem('hero-auction-session');sessionStorage.removeItem('hero-auction-formation');sessionStorage.removeItem('hero-auction-lanes');window.HeroPlatform.beforeNavigate?.('/crazygames/');location.replace('/crazygames/')};
  window.addEventListener('hero:platform-auth',restart);window.HeroPlatform.watchAccount();
  try{
   const identity=await window.HeroPlatform.identity();
@@ -23,9 +23,9 @@ if(window.HeroPlatform){
  if(portalCode&&portalSeat){
   try{const saved=JSON.parse(localStorage.getItem('hero-auction-login')||'null');const response=await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:portalCode,token:portalSeat,authToken:saved?.authToken})});if(response.ok)window.HeroPlatform.setRoom((await response.json()).room)}catch{}
  }
- window.HeroPlatform.onJoin(code=>location.assign('/crazygames/?join='+encodeURIComponent(code)));
+ window.HeroPlatform.onJoin(code=>{const url='/crazygames/?join='+encodeURIComponent(code);window.HeroPlatform.beforeNavigate?.(url);location.assign(url)});
  const invite=window.HeroPlatform.takeInviteCode();
- if(invite){location.replace('/crazygames/?join='+encodeURIComponent(invite));await new Promise(()=>{})}
+ if(invite){window.HeroPlatform.beforeNavigate?.('/crazygames/?join='+encodeURIComponent(invite));location.replace('/crazygames/?join='+encodeURIComponent(invite));await new Promise(()=>{})}
 }
 // Browser-only battle replay preview. No wallet or live room mutations.
 const $=id=>document.getElementById(id);
@@ -182,11 +182,11 @@ async function leaveBattleAndGoHome(event){
   }
  }catch(error){console.warn('Battle leave request failed:',error)}
  try{sessionStorage.removeItem('hero-auction-formation');sessionStorage.removeItem('hero-auction-lanes');localStorage.removeItem('hero-auction-session')}catch{}
- location.replace('https://heroauction.com.tr/');
+ window.HeroPlatform?.beforeNavigate('https://heroauction.com.tr/');location.replace('https://heroauction.com.tr/');
 }
 document.querySelectorAll('.arena-home-link').forEach(link=>link.addEventListener('click',leaveBattleAndGoHome));
 
-async function battleLobby(action){try{const code=$('join-battle-code').value.trim();const response=await fetch('/api/battle-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,code})});const v=await response.json();if(!response.ok)throw Error(v.error);location.href='/battle-preview.html?code='+encodeURIComponent(v.code)+'&token='+encodeURIComponent(v.token)}catch(e){$('battle-lobby-status').textContent='⚠ '+e.message}}
+async function battleLobby(action){try{const code=$('join-battle-code').value.trim();const response=await fetch('/api/battle-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,code})});const v=await response.json();if(!response.ok)throw Error(v.error);window.HeroPlatform?.beforeNavigate('/battle-preview.html?code='+encodeURIComponent(v.code)+'&token='+encodeURIComponent(v.token));location.href='/battle-preview.html?code='+encodeURIComponent(v.code)+'&token='+encodeURIComponent(v.token)}catch(e){$('battle-lobby-status').textContent='⚠ '+e.message}}
 $('create-battle-room').onclick=()=>battleLobby('create');
 $('join-battle-room').onclick=()=>battleLobby('join');
 if(multiplayerCode){$('battle-lobby-status').textContent='Oda kodu: '+multiplayerCode+' · Arkadaşınla paylaş. Dizilişini hazırlayıp Hazırım düğmesine bas.';$('battle-lobby').classList.add('lobby-connected')}if(arenaMode||auctionMode)$('battle-lobby').hidden=true;
@@ -292,6 +292,7 @@ function revealArenaAudio(){
  if(arenaMusicEnabled&&!document.hidden&&arenaTrack.paused)void startArenaMusic();
 }
 function enterArenaWithoutReload(url){
+ window.HeroPlatform?.gameplay(false);
  // Preserve the user-unlocked HTMLAudioElement across the formation-to-arena transition.
  history.replaceState(null,'',url);
  arenaMode=true;
@@ -494,7 +495,7 @@ async function build(overrideResult){
   if(liveArenaMode)startArenaClock();
   $('arena-score').hidden=false;$('battle-arena').hidden=false;
   $('message').textContent=liveArenaMode?'Canlı savaş başladı · Komutanını yönet':'Gerçek savaş motoru hazır · '+result.rounds+' tur';
-  render();window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position})));window.dispatchEvent(new CustomEvent('heroarena:ready',{detail:{teams:window.heroArenaTeams}}));
+  render();window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(true);window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position})));window.dispatchEvent(new CustomEvent('heroarena:ready',{detail:{teams:window.heroArenaTeams}}));
  }catch(e){$('message').textContent='⚠ '+e.message}
 }
 function battleEventText(event){
@@ -825,7 +826,7 @@ if(auctionCode&&auctionToken){void (async()=>{try{
  demoA=own.map(c=>[c.name,c.role||'fighter',c.power,c.universe]);demoB=rival.map(c=>[c.name,c.role||'fighter',c.power,c.universe]);
  previewCredits=data.credits[data.seat];assignedRoles=demoA.map(c=>c[1]);auctionLaneModifiers=own.map(c=>c.laneModifiers||{});heroArtCache.clear();void loadArenaCommander();
  $('battle-lobby-status').textContent='Açık artırma kartların yüklendi · Kalan kredi: '+previewCredits+' · Bonus: %'+(creditBonus(previewCredits)*100).toFixed(1);
- if(!arenaMode){auctionLoaded=true;renderBoard();renderRolePickers();$('apply-roles').disabled=false;startPreparation();$('prep-note').textContent='Kartlar doğrulandı. Diziliş için 60 saniyen var.'}else{let auctionBattleStarted=false;const check=async()=>{if(auctionBattleStarted)return;try{const response=await fetch('/api/battle-auction-preview?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});const data=await response.json();if(!response.ok)throw Error(data.error||'Savaş durumu alınamadı');if(data.started){auctionBattleStarted=true;if(battlePoll!==null){clearInterval(battlePoll);battlePoll=null}await build(data.result);if(data.result?.live){$('play').textContent='⚡ CANLI SAVAŞ SÜRÜYOR';await import('/commander-experimental.js?live='+encodeURIComponent(auctionCode))}else if(events.length)startReplay()}else $('message').textContent='Rakibin dizilişi bekleniyor… '+data.ready.filter(Boolean).length+'/2 hazır'}catch(e){$('message').textContent='⚠ '+e.message}};await check();if(!auctionBattleStarted&&battlePoll===null)battlePoll=setInterval(check,1800)}
+ if(!arenaMode){auctionLoaded=true;renderBoard();renderRolePickers();$('apply-roles').disabled=false;startPreparation();$('prep-note').textContent='Kartlar doğrulandı. Diziliş için 60 saniyen var.';window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(true)}else{window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(false);let auctionBattleStarted=false;const check=async()=>{if(auctionBattleStarted)return;try{const response=await fetch('/api/battle-auction-preview?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});const data=await response.json();if(!response.ok)throw Error(data.error||'Savaş durumu alınamadı');if(data.started){auctionBattleStarted=true;if(battlePoll!==null){clearInterval(battlePoll);battlePoll=null}await build(data.result);if(data.result?.live){$('play').textContent='⚡ CANLI SAVAŞ SÜRÜYOR';await import('/commander-experimental.js?live='+encodeURIComponent(auctionCode))}else if(events.length)startReplay()}else $('message').textContent='Rakibin dizilişi bekleniyor… '+data.ready.filter(Boolean).length+'/2 hazır'}catch(e){$('message').textContent='⚠ '+e.message}};await check();if(!auctionBattleStarted&&battlePoll===null)battlePoll=setInterval(check,1800)}
  }catch(e){$('prep-note').textContent='⚠ '+e.message;$('message').textContent='⚠ '+e.message;$('battle-lobby-status').textContent='⚠ Açık artırmada seçilen kahramanlar yüklenemedi: '+e.message;$('apply-roles').disabled=true;$('play').disabled=true}})()}
 
 let battleRematchShown=false;
@@ -846,12 +847,12 @@ async function showAuctionRematch(){
  scoreline.append(own,score,rival);series.append(caption,scoreline);
 
  button.after(series);
- button.onclick=async()=>{button.disabled=true;try{const auth=JSON.parse(localStorage.getItem('hero-auction-login')||'null');const response=await fetch('/api/rematch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,authToken:auth?.authToken})});const result=await response.json();if(!response.ok)throw Error(result.error||'Rövanş gönderilemedi');button.textContent='✓ RÖVANŞ İSTEĞİ GÖNDERİLDİ';const watch=setInterval(async()=>{try{const response=await fetch('/api/battle-auction-team?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});if(response.status===409){clearInterval(watch);location.replace('/')} }catch{}},2500);}catch(e){button.disabled=false;$('message').textContent='⚠ '+e.message}};
+ button.onclick=async()=>{button.disabled=true;try{const auth=JSON.parse(localStorage.getItem('hero-auction-login')||'null');const response=await fetch('/api/rematch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,authToken:auth?.authToken})});const result=await response.json();if(!response.ok)throw Error(result.error||'Rövanş gönderilemedi');button.textContent='✓ RÖVANŞ İSTEĞİ GÖNDERİLDİ';const watch=setInterval(async()=>{try{const response=await fetch('/api/battle-auction-team?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});if(response.status===409){clearInterval(watch);window.HeroPlatform?.beforeNavigate('/crazygames/');location.replace('/')} }catch{}},2500);}catch(e){button.disabled=false;$('message').textContent='⚠ '+e.message}};
  }catch(e){battleRematchShown=false;$('message').textContent='⚠ '+e.message}
 }
 
 
 
-if(window.HeroPlatform){window.HeroPlatform.ready.then(()=>{window.HeroPlatform.loaded();window.HeroPlatform.gameplay(true)});}
+if(!auctionMode&&!arenaMode){window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(true)}
 
 window.addEventListener('hero:platform-settings',()=>{if(window.HeroPlatform?.muteAudio)stopArenaMusic();else if(arenaMusicEnabled&&arenaMode)void startArenaMusic()});
