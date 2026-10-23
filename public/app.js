@@ -429,7 +429,7 @@ function show(r){if(!signedIn())return;if(tailReveal?.active&&r.phase==='finishe
   const stage=$('stage');
   stage.innerHTML=`<section class="auction-summary"><h2>${document.documentElement.lang==='en'?'Auction calculation':'Açık artırma hesaplaması'}</h2>${auctionCalculationMarkup(r.final.map((p,seat)=>({...p,name:displayPlayerName(p,r.mode==='bot'&&seat===1)})),r.me,{english:document.documentElement.lang==='en'})}<button type="button" id="confirm-arena-entry" class="primary">${document.documentElement.lang==='en'?'CONFIRM AND ENTER ARENA':'ONAYLA VE ARENAYA GEÇ'}</button></section>`;
   const entryButton=stage.querySelector('#confirm-arena-entry');
-  entryButton.onclick=()=>{if(tailReveal?.active)return;const params=new URLSearchParams({auctionCode:r.code,auctionToken:session.token});location.assign('/battle-preview.html?'+params.toString())};
+  entryButton.onclick=()=>{if(tailReveal?.active)return;const params=new URLSearchParams({auctionCode:r.code,auctionToken:session.token});window.HeroPlatform?.beforeNavigate('/battle-preview.html?'+params.toString());location.assign('/battle-preview.html?'+params.toString())};
   return;
  }renderChat(r);$('login-gate').hidden=true;$('home').hidden=true;$('game').hidden=false;$('room-title').textContent=r.code;$('phase').textContent=['waiting','matching'].includes(r.phase)?'RAKİP BEKLENİYOR':r.phase==='finished'?'MAÇ TAMAMLANDI':`${worldNames[r.universe]} · KART ${r.round+1}/10`;
 
@@ -527,7 +527,7 @@ async function startPlatform(){
 }
 window.addEventListener('hero:platform-auth',()=>{
  // Re-enter through the verified account flow; never reuse another user's room.
- discardPlatformSeat();location.replace('/crazygames/');
+ discardPlatformSeat();window.HeroPlatform.beforeNavigate?.('/crazygames/');location.replace('/crazygames/');
 });
 // End CrazyGames session bridge.
 
