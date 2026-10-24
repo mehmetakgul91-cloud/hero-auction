@@ -21,13 +21,13 @@ test('replays a round-four attack commander command',()=>{
  const result=replayCommanderTranscript(cards('a'),cards('b'),{commanders,turns});
  assert.ok(result.log.some(e=>e.action==='commander-attack-normal'));
 });
-test('engine rejects a normal skill before sufficient energy',()=>{
+test('engine rejects ultimate before sufficient energy',()=>{
  const turns=Array.from({length:4},(_,i)=>[pass(),pass()]);
- turns[0][0]={command:'normal'};
+ turns[0][0]={command:'ultimate'};
  assert.throws(()=>replayCommanderTranscript(cards('a'),cards('b'),{commanders,turns}),/Insufficient commander energy/);
 });
 
 test('client-provided energy is ignored by transcript replay',()=>{
- const turns=[[{command:'normal',energy:1000},pass()]];
+ const turns=[[{command:'ultimate',energy:1000},pass()]];
  assert.throws(()=>replayCommanderTranscript(cards('a'),cards('b'),{commanders,turns}),/Insufficient commander energy/);
 });

@@ -1,3 +1,4 @@
+import {commanderRoundEnergy} from './public/commander-ability-rules.js';
 // Experimental room-bound commander sessions. Does not change the live battle path.
 // A player seat is always resolved from the room token; client-provided seat is ignored.
 import {createCommanderMatchSession,submitCommanderMatchTurn} from './commander-match-session.js';
@@ -30,7 +31,7 @@ export function viewRoomCommanderSession(room,bound,token){
  const side=roomCommanderSeat(room,token);
  if(side<0)throw Error('Unauthorized commander player');
  const session=bound.session;
- const energy=session.finished?(session.result?.commanderEnergy?.[side]??0):Math.min(100,(session.result?.commanderEnergy?.[side]??0)+12);
+ const energy=session.finished?(session.result?.commanderEnergy?.[side]??0):commanderRoundEnergy(session.result?.commanderEnergy?.[side]??0,session.round,session.commanders[side]);
  const completedRound=session.turns.length;
  const roundEvents=Array.isArray(session.result?.log)?session.result.log.filter(event=>event.round===completedRound):[];
  const roundTeams=completedRound&&Array.isArray(session.result?.teams)?session.result.teams.map(team=>team.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position}))):null;

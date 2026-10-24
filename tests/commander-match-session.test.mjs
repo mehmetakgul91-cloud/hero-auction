@@ -21,7 +21,7 @@ test('rejects stale turns and allows changing a pending choice',()=>{
 });
 test('invalid ability is rejected immediately without mutating the session',()=>{
  const session=make();
- assert.throws(()=>submitCommanderMatchTurn(session,{side:0,round:1,command:'normal'}),/Insufficient commander energy/);
+ assert.throws(()=>submitCommanderMatchTurn(session,{side:0,round:1,command:'ultimate'}),/Insufficient commander energy/);
  assert.equal(session.turns.length,0);
  assert.equal(session.pending[0],undefined);
  assert.equal(session.round,1);

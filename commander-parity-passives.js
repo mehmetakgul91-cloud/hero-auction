@@ -26,7 +26,7 @@ export function applyLegacyRoundPassives(combat){
    if(healed)events.push({round:combat.round,actor:u.id,action:'passive-heal',value:healed});
   }
   if(effect==='rage'&&u.hp/u.maxHp<.5&&!u.rageActivated){
-   u.attack=Math.min(180,u.attack+Math.max(1,Math.floor(u.attack*value)));
+   u.attack=Math.max(u.attack,Math.min(180,u.attack+Math.max(1,Math.floor(u.attack*value))));
    u.rageActivated=true;
    events.push({round:combat.round,actor:u.id,action:'rage',value:u.attack});
   }

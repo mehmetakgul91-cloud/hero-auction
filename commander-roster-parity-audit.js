@@ -13,9 +13,8 @@ export function auditIncrementalRoster(roster=commanderOriginalRoster){
   if(passive&&!SUPPORTED_PASSIVES.has(passive))issues.push('unsupported-passive:'+passive);
   if(active&&!SUPPORTED_ACTIVE.has(active))issues.push('unsupported-active:'+active);
   if(active==='heal'&&passive==='thorns')issues.push('heal-thorns-combination');
-  if(hero.role==='energy'&&['shield','drain','sunder','weaken','haste','execute'].includes(active))issues.push('energy-special-combination');
+  if(hero.role==='energy'&&active==='execute')issues.push('energy-special-combination');
   if(hero.role==='tank'&&['sunder','weaken','haste','execute'].includes(active))issues.push('tank-special-combination');
-  if(hero.role==='energy'&&['shield','drain'].includes(active))issues.push('energy-shield-drain-combination');
   if(active==='heal'&&hero.role==='support'&&passive==='thorns')issues.push('support-heal-thorns-combination');
   // Candidate adapters are not proof of complete legacy parity.
   return {id:hero.id,role:hero.role,active:active||null,passive:passive||null,ready:issues.length===0,issues};

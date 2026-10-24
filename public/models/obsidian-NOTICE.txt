@@ -1,0 +1,13 @@
+Obsidyen Muhafız — first animated model evaluation, 2026-10-22.
+Generated with Meshy (Meshy 6 Lite text-to-3D, PBR textures, Smart Rig).
+Attribution: 3D character generated with Meshy, CC BY 4.0.
+https://www.meshy.ai/
+https://creativecommons.org/licenses/by/4.0/
+
+Geometry reduced from 197,602 to 28,000 triangles with meshoptimizer.
+Texture sizes reduced to 1024px base color / 512px normal and material maps.
+Source: user-authorized generation in the user's Meshy account.
+Joint animation authored in arena-3d-rig.js; no Meshy motion presets used.
+
+Evaluation only. The generated axe and hair differ from the original card.
+The original high-detail GLB is retained in the delivered model archive.

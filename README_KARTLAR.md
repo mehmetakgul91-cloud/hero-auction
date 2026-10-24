@@ -1,9 +1,7 @@
-# Hero Auction — Kart bilgileri V4 (ilk aşama)
+# Güncel kahraman havuzu
 
-`public/cards.json` dosyasında 100+ karakter için elle yazılmış, birbirinden farklı Türkçe açıklamalar bulunmaktadır.
-`server.js` önce bu açıklamaları kullanır; geri kalan karakterlerde önceki Wikipedia bilgi araması devam eder.
-Pokémon görselleri PokeAPI resmi çizim adreslerinden, diğer görseller Wikipedia/Wikimedia üzerinden alınmaya çalışılır. Görseller henüz yerel klasöre indirilmiş değildir ve her kartta doğru görsel garantisi yoktur.
+Aktif oyun havuzu `battle-roster.json` içindeki 50 özgün kahramandan oluşur. `commander-original-roster.json` komutan savaşları için kullanılan özgün havuzdur. Kimlik, rol, nadirlik, güç, aktif/pasif yetenek ve saf etkileri bu kayıtlardan alınır.
 
-Yeni bir kart tanıtımı eklemek için `public/cards.json` dosyasına `evren:karakter adı küçük harfle` anahtarıyla `{ "description": "..." }` kaydı ekleyin.
+Görseller `public/images/original/` içindedir. Yeni kahraman eklenirken iki havuzun savaş uyumu ve görsel yolu doğrulanmalıdır. `npm run audit:strict` aktif havuzun yerel görsellerini ve güçlerini denetler.
 
-Kurulum: ZIP içeriğini proje köküne yerleştirin. `public/cards.json` dahil tüm dosyalar GitHub'a yüklenmelidir.
+Eski Pokémon, Marvel, DC ve LOTR kart arşivleri, indirme araçları ve kullanılmayan 3D sahne kaldırılmıştır. Güncel arena `public/battle-preview.js` ve `public/battle-preview.css` ile çalışır.

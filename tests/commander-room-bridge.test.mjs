@@ -35,14 +35,14 @@ test('room view exposes only caller pending command',()=>{
 test('current turn energy and skill availability are server owned',()=>{
  const r=room(),bound=make(r);
  const initial=viewRoomCommanderSession(r,bound,'alice');
- assert.equal(initial.energy,12);
+ assert.equal(initial.energy,30);
  assert.equal(initial.canUseNormal,false);
  assert.equal(initial.canUseUltimate,false);
  submitRoomCommanderTurn(r,bound,{token:'alice',round:1,command:'pass'});
  submitRoomCommanderTurn(r,bound,{token:'bob',round:1,command:'pass'});
  const second=viewRoomCommanderSession(r,bound,'alice');
- assert.equal(second.energy,24);
- assert.equal(second.canUseNormal,false);
+ assert.equal(second.energy,42);
+ assert.equal(second.canUseNormal,true);
 });
 test('unfinished battle view does not expose premature winner',()=>{
  const r=room(),bound=make(r);

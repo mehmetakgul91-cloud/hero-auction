@@ -23,10 +23,13 @@ test('ultimate costs 100 and never fires without enough energy',()=>{
  grantLiveCommanderEnergy(s,1,50);
  assert.equal(viewLiveCommanderAbilities(s,1,7000).canUseNormal,true);
 });
-test('cooldown belongs to one player and persists in session',()=>{
+test('personal cooldown stays independent after the shared 1.2-second effect lock',()=>{
  const s=setup();
  castLiveCommanderAbility(s,{side:0,ability:'normal',matchKey:'583:1',now:2000,requestId:'request_001'});
- assert.equal(viewLiveCommanderAbilities(s,1,2001).canUseUltimate,true);
+ assert.equal(viewLiveCommanderAbilities(s,1,2001).canUseUltimate,false);
+ assert.equal(viewLiveCommanderAbilities(s,1,3199).effectLockMs,1);
+ assert.equal(viewLiveCommanderAbilities(s,1,3200).canUseUltimate,true);
+ assert.equal(viewLiveCommanderAbilities(s,0,4000).canUseNormal,false);
  assert.throws(()=>castLiveCommanderAbility(s,{side:0,ability:'normal',matchKey:'583:2',now:9000,requestId:'request_003'}),/expired/);
  assert.equal(s.casts.length,1);
 });

@@ -19,8 +19,8 @@ for(const id of ['attack','defense','magic','support']){
   assert.equal(result.commanders[0].commanderId,id);
   assert.equal(result.log.some(x=>String(x.action).startsWith('commander-'+id+'-')),false);
  });
- test(id+' cannot use a skill before reaching 40 energy',()=>{
-  assert.throws(()=>run(id,[{side:0,round:1,ability:'normal'}]),/Insufficient commander energy/);
+ test(id+' cannot use ultimate before reaching 100 energy',()=>{
+  assert.throws(()=>run(id,[{side:0,round:2,ability:'ultimate'}]),/Insufficient commander energy/);
  });
  test(id+' cannot use ultimate at round one',()=>{
   assert.throws(()=>run(id,[{side:0,round:1,ability:'ultimate'}]),/Insufficient commander energy/);
@@ -49,8 +49,8 @@ test('rejects commands with an invalid side',()=>{
 });
 
 
-test('ultimate ability becomes available after nine rounds of charging',()=>{
- // High HP and full regeneration prevent early elimination before round nine.
+test('ultimate ability becomes available by the seventh round at level zero',()=>{
+ // High HP and full regeneration prevent early elimination before round seven.
  const durable=(prefix)=>Array.from({length:5},(_,i)=>({
   id:prefix+i,name:prefix+i,power:100,role:'tank',lane:'front',
   passive:{effect:'regen',value:1}
@@ -58,15 +58,15 @@ test('ultimate ability becomes available after nine rounds of charging',()=>{
  const result=simulateBattle(durable('alpha'),durable('beta'),{
   seed:'commander-ultimate-long-match',maxRounds:15,
   commanders:[createCommanderProfile('attack'),createCommanderProfile('defense')],
-  commanderActions:[{side:0,round:9,ability:'ultimate'}]
+  commanderActions:[{side:0,round:7,ability:'ultimate'}]
  });
  assert.ok(result.log.some(x=>x.action==='commander-attack-ultimate'),
-  'Expected ultimate in round nine; battle ended at round '+result.rounds);
+  'Expected ultimate in round seven; battle ended at round '+result.rounds);
 });
 test('energy cannot be spent twice before recharging',()=>{
  assert.throws(()=>run('attack',[
-  {side:0,round:4,ability:'normal'},
-  {side:0,round:5,ability:'normal'}
+  {side:0,round:2,ability:'normal'},
+  {side:0,round:3,ability:'normal'}
  ]),/Insufficient commander energy/);
 });
 test('energy cannot exceed 100 even with no ability use',()=>{

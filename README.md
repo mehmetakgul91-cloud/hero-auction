@@ -1,42 +1,55 @@
-# Hero Auction — Çevrimiçi iki kişilik açık artırma
+# Hero Auction
 
-## Hızlı başlatma
+50 özgün kahramanla açık artırma ve beşe beş arena oyunu. İki oyuncu 20 krediyle 10 kart için yarışır, ardından dizilişini seçer. Canlı savaş ve komutan becerileri sunucu tarafından yürütülür. Bilgisayara karşı, özel oda, eşleştirme ve rövanş desteklenir.
 
-Node.js 18 veya üzeri gerekir. Ek npm paketi gerektirmez.
+## Çalıştırma
 
-```bash
-npm start
-```
+Node.js 18 veya üzeri gerekir. `npm install` ve `npm start` komutlarından sonra `http://localhost:3000` açılır. Kalıcı hesap, altın ve komutan verileri için `DATABASE_URL`, Google oturumu için mevcut OAuth yapılandırması kullanılır.
 
-Tarayıcıda `http://localhost:3000` açın. Aynı Wi-Fi'daki iki telefondan denemek için bilgisayarın yerel IP'siyle `http://IP_ADRESI:3000` adresine girin. Farklı ağlardan canlı oynamak için projeyi Node.js destekli bir sunucuya (ör. Render, Railway, Fly.io) yükleyin ve HTTPS adresini paylaşın. **Bu ZIP tek başına internette yayımlanmış bir site değildir.**
+## Yapı
 
-## Oynanış
+- `server.js`: HTTP/SSE, odalar, hesaplar ve PostgreSQL bağlantısı.
+- `battle-engine.js`, `battle-roster.json`: savaş kuralları ve 50 özgün kahraman.
+- `public/app.js`: ana oyun arayüzü.
+- `public/battle-preview.js`, `public/battle-preview.css`: aktif arena, diziliş ve savaş efektleri.
+- `crazygames-build.js`, `public/platform.js`, `crazygames-auth.js`: `/crazygames/` sürümü ve platform hesabı doğrulaması.
+- `docs/crazygames-submission.md`: CrazyGames başvuru notları.
 
-- 2 oyuncu, 20'şer kredi, 10 rastgele kart.
-- İlk teklif sırası karttan karta dönüşümlüdür (1. kart oyuncu 1, 2. kart oyuncu 2, vb.).
-- Teklifler en az 1 artar; yalnızca ihaleyi kazanan öder.
-- Rakip en yüksek tekliften daha fazla veremiyorsa sunucu ihaleyi otomatik kapatır.
-- İhale kazanılınca karakter takıma eklenir.
-- Her kartın 1–100 arası puanı sunucuda gizlidir. API bu puanları hiçbir aşamada istemciye göndermez.
-- Finalde yalnızca takımın **toplam puanı** gösterilir (güçler toplamı + kalan kredi × 10). Tekil karakter puanları asla açıklanmaz.
+## Kontroller
 
-## Karakter havuzu
+`node --test *.test.js tests/*.test.* test/*.test.js` savaş, hesap, komutan ve platform kontrollerini çalıştırır. `npm run audit:strict` aktif kahraman görsellerini ve güçlerini denetler.
 
-Sunucu açılışında PokeAPI'den 1025 Pokémon türünü almayı dener. İnternet erişimi yoksa paket içindeki Kanto listesi kullanılır. Ayrıca Marvel, DC ve Yüzüklerin Efendisi için küratörlü isim listeleri bulunur. **1000+ karakter hedefi PokeAPI'ye başarılı erişim olduğunda karşılanır; internet erişimi olmayan ilk açılışta havuz daha küçüktür.** `GET /api/info` gerçek sayıları gösterir. Karma evren ve tek evren seçenekleri vardır.
+## Açık artırma kart havuzu
 
-Pokémon resimleri, istemcide PokeAPI'nin resmî çizim depolarından yüklenmeye çalışılır. İnternet yoksa simge gösterilir. Marvel, DC ve LOTR için şimdilik evren simgesi kullanılır. Telifli görselleri izin almadan pakete eklemiyoruz.
+Her maçta aktif havuzdan 10 farklı kahraman rastgele seçilir; efsanevi, nadir veya diğer nadirlikler için sabit adet kotası yoktur. Aynı kahraman aynı açık artırmada tekrar etmez. Son kartların eksik takıma verilmesi, mevcut otomatik ücret/eksi kredi kuralları ve kalan kredi güç bonusu değişmemiştir.
 
-## İlk prototipin sınırları
+## Bilgisayar antrenmanı
 
-- Oyun odaları **sunucu belleğinde** tutulur. Sunucu yeniden başlarsa aktif odalar silinir. 24 saatlik eski odalar temizlenir.
-- Tek sunucu örneğinde çalışır; yatay ölçeklendirme için Redis/Postgres gerekir.
-- Misafir oda kodu ve gizli oturum anahtarı kullanılır. Ticari yayına geçmeden önce hız sınırlaması, kötüye kullanım önlemleri, kalıcı veri tabanı ve erişim kontrolü güçlendirilmelidir.
-- Harici PokeAPI erişimi gerektiren geniş karakter listesi ve Pokémon görselleri için sunucunun/oyuncunun interneti olmalıdır.
-- Bu proje Pokémon/Marvel/DC/LOTR hak sahipleriyle ilişkili değildir. Ticari kullanımda isim/görsel/marka haklarını ayrıca değerlendirin.
+Bot da oyuncuyla aynı canlı savaş motorunu, enerji maliyetlerini ve bekleme sürelerini kullanır. Her yeni maç/rövanşta bir önceki komutandan farklı, geçici bir komutan alır. Komutanın ana uzmanlığı ve dört gelişim dalı kolayda 5, ortada 10, zorda 15 seviyedir; mevcut 40/20 dal sınırları ve normal beceri/enerji kuralları geçerlidir. Kahramanları yalnızca normal açık artırmadan edinir. Oyuncunun kayıtlı komutanı ve gelişimi değişmez. Eski, komutan seçilmemiş hesaplarda yalnızca o antrenman için sıfır seviyeli saldırı komutanı kullanılır.
 
-## Dosyalar
+- **Kolay:** düşük teklif bütçesi, basit diziliş ve daha seyrek normal beceriler.
+- **Orta:** kredi rezervi ve kart değeri, role uygun ön saf ve düzenli beceri kullanımı.
+- **Zor:** takım eksiklerine göre alışveriş, dayanıklı ön saf, duruma göre enerji biriktirme, iyileştirme/kalkan zamanlama ve büyücü hedef seçimi.
 
-- `server.js`: HTTP sunucusu, oyun motoru, SSE canlı güncellemeler, gizli skorlar.
-- `public/index.html`: arayüz.
-- `public/style.css`: mobil tasarım.
-- `public/app.js`: oyuncu arayüzü, teklif etkileşimleri ve canlı senkronizasyon.
+Geçici komutanın sınıf bonusu kolay/orta/zor için %2,5 / %5 / %7,5, beceri güç artışı %5 / %10 / %15 ve tur enerjisi 14 / 17 / 19 olur. Dallar bağımsız altın geliştirmeleridir; ortak yetenek puanı havuzu yoktur. Bot için altın harcanmaz veya hesap kaydı yazılmaz; ek güç/enerji çarpanı uygulanmaz. Henüz açılmamış kartlar ve rakibin gizli enerjisi karar girdisi değildir. Zor botun kazanması garanti değildir. Antrenman giriş ücreti, altın ödülü ve lig puanı değişimi yoktur.
+
+## Arkadaşlar ve çevrimiçi durum
+
+Lobideki **Arkadaşlar** sekmesinden kendi `HA-…` oyuncu kimliğini kopyalayabilir, tam kimlik ile arkadaşlık isteği gönderebilirsin. Gerçek rakibi açık artırma, diziliş, arena veya sonuç ekranından da ekleyebilirsin; bilgisayar rakipleri eklenemez. Gelen istek kabul edilmeden çevrimiçi durum paylaşılmaz. İstek reddedilebilir/iptal edilebilir ve arkadaşlık iki taraftan da kaldırılabilir.
+
+- Oyuncu kimlikleri rastgele üretilir; giriş anahtarı, e-posta veya sağlayıcı hesap kimliği değildir. Kimlikler ve arkadaşlıklar mevcut PostgreSQL sosyal kaydında saklanır. Veritabanısız geliştirme modunda sunucu yeniden başlatılınca silinir.
+- Mevcut misafir oturumu korunurken arkadaşlık kullanılabilir. Misafir çıkışı veya oturum süresi dolması sonrasında aynı misafir kimliğine geri dönüş garantisi yoktur; kalıcı hesapla giriş önerilir.
+- Çevrimiçi durumu ayrı sekme oturumlarıyla doğrulanır, 45 saniye yenilenmezse kapanır; çıkış/sayfa kapanışında bildirim gönderilir. Ağ veya tarayıcı kapanışında durum kısa süre gecikebilir. Tam son görülme zamanı paylaşılmaz, presence verisi kalıcı kayda yazılmaz.
+- Eski tek taraflı arkadaş kayıtları isteğe, karşılıklı eski kayıtlar kabul edilmiş arkadaşlığa dönüştürülür. Yeni istekler için hız ve liste sınırları uygulanır.
+
+### Maç davetleri
+
+**Rakip bul → Davet et** ile kabul edilmiş bir arkadaşına özel odana davet gönderebilirsin. Davet 30 dakika geçerlidir; gönderen oyuncu yanıtı takip edebilir veya daveti iptal edebilir. Davet edilen oyuncu başka maçtayken de **Geleceğim / Gelmeyeceğim** yanıtını verebilir. “Geleceğim” yanıtı 50 altın giriş ücretine açık onaydır; mevcut maçın sunucudaki nihai sonucu kesinleşmeden yeni odaya geçilmez. Açık artırmanın bitmesi tek başına maçın bitmesi sayılmaz.
+
+Kabul edilmiş davet iptal edilebilir. Oda dolmuş/kapanmışsa, davet sona ermişse veya giriş ücreti karşılanamıyorsa otomatik katılım yapılmaz ve hata gösterilir. Davetin açılması veya yanıt beklemesi ücret kesmez. İki oyuncunun normal giriş ücreti ancak gerçek oda katılımında, kalıcı oda/davet kaydıyla birlikte uygulanır. Testler yalnızca yalıtılmış hesaplar ve geliştirme bakiyeleri kullanır.
+
+Sosyal oda koordinasyonu mevcut tek sunucu süreci modeliyle çalışır; çoklu uygulama örneğine ölçekleme için dağıtık oda kilidi ayrıca gerekir. Kalıcılık testleri anlık görüntü geri yükleme ve sahte SQL işlem/hata enjeksiyonu içerir; üretim PostgreSQL üzerinde yeniden başlatma testi yerine geçmez.
+
+## Android test uygulaması (ayrı hazırlık)
+
+Canlı web oyunundan bağımsız Capacitor test paketi `mobile/` içindedir. Varsayılan sürüm sunucuya bağlı olmayan **arayüz önizlemesidir**, oynanabilir sürüm değildir. Kurulum, izole test sunucusu ve cihaz kontrol listesi: [Android test notları](docs/android-test.md).

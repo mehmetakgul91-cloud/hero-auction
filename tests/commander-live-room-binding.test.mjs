@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {deriveLiveArenaRoomBinding,verifyLiveArenaRoomBinding} from '../commander-live-room-binding.js';
+import {isLiveCommanderApiAvailable} from '../commander-live-api-access.js';
 function room(){return {code:'123',mode:'pvp',phase:'finished',created:100,matchNumber:2,players:[{token:'privateA'},{token:'privateB'}],battleSync:{result:{winner:0},commanderInput:{}}}}
 test('valid room binds seats to exact match identity',()=>{
  const r=room(),binding=deriveLiveArenaRoomBinding(r);
@@ -23,4 +24,10 @@ test('bot and unfinished rooms cannot bind',()=>{
  assert.throws(()=>deriveLiveArenaRoomBinding(r),/not ready/);
  r.mode='pvp';r.phase='auction';
  assert.throws(()=>deriveLiveArenaRoomBinding(r),/not ready/);
+});
+test('production commander API opens only for the room active live match',()=>{
+ assert.equal(isLiveCommanderApiAvailable({currentMatchKey:'123:2:100'}),false);
+ assert.equal(isLiveCommanderApiAvailable({activeMatchKey:'123:1:100',currentMatchKey:'123:2:100'}),false);
+ assert.equal(isLiveCommanderApiAvailable({activeMatchKey:'123:2:100',currentMatchKey:'123:2:100'}),true);
+ assert.equal(isLiveCommanderApiAvailable({previewGuestMode:true}),true);
 });

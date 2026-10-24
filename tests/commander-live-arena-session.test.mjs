@@ -25,6 +25,6 @@ test('commander cast between hero actions updates the same snapshot',()=>{
 test('cooldown rejects immediate second cast without consuming energy',()=>{
  const session=setup();
  castDuringLiveArena(session,{side:0,ability:'normal',requestId:'live_cast_0001',matchKey:'live:arena',now:1000});
- assert.throws(()=>castDuringLiveArena(session,{side:0,ability:'normal',requestId:'live_cast_0002',matchKey:'live:arena',now:1001}),/cooldown/);
+ assert.throws(()=>castDuringLiveArena(session,{side:0,ability:'normal',requestId:'live_cast_0002',matchKey:'live:arena',now:1001}),/Komutan efekti/);
  assert.equal(session.combat.abilities.energy[0],60);
 });

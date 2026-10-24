@@ -1,0 +1,166 @@
+/* Commander development: one portrait, readable battle effects, clear upgrade costs. */
+#commander-profile{--cp-accent:#7cddff;--cp-tint:#183c54;max-width:1180px;margin:20px auto;padding:22px;border:1px solid #75889f66;border-radius:22px;background:radial-gradient(ellipse at 0 0,#17394a99,transparent 48%),linear-gradient(135deg,#0e1c30,#0d1223);box-shadow:0 22px 70px #0005;color:#edf5ff}
+#commander-profile[data-type=attack],#commander-profile [data-type=attack]{--cp-accent:#ffb18b;--cp-tint:#593027}
+#commander-profile[data-type=defense],#commander-profile [data-type=defense]{--cp-accent:#83ceff;--cp-tint:#183e5f}
+#commander-profile[data-type=magic],#commander-profile [data-type=magic]{--cp-accent:#d4a4ff;--cp-tint:#3d295b}
+#commander-profile[data-type=support],#commander-profile [data-type=support]{--cp-accent:#8ce6b9;--cp-tint:#1c483d}
+#commander-profile *{box-sizing:border-box}
+#commander-profile button{font-family:inherit;cursor:pointer;touch-action:manipulation}
+#commander-profile button:focus-visible{outline:2px solid #f6d591;outline-offset:4px}
+#commander-profile button:disabled{cursor:default}
+#commander-profile .cp-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:15px;border-bottom:1px solid #afc9e21b}
+#commander-profile .cp-back{min-height:40px;padding:9px 12px;border:1px solid #88bbd333;background:#16304688;border-radius:9px;color:#d9eafa;font-size:11px;font-weight:800}
+#commander-profile .cp-eyebrow{font-size:9px;letter-spacing:1.8px;font-weight:800;color:#8babbf}
+#commander-profile .cp-wallet{display:flex;align-items:center;gap:8px;color:#ffe2a2;font-size:18px;font-variant-numeric:tabular-nums}
+#commander-profile .cp-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:19px 0}
+#commander-profile .cp-heading h2{font-family:inherit;font-size:clamp(22px,3vw,30px);letter-spacing:-.6px;color:#f1f6ff;text-shadow:none;margin:4px 0 0}
+#commander-profile .cp-save-note{font-size:9px;font-weight:700;letter-spacing:1px;color:#9fb4c5}
+#commander-profile .cp-layout{display:grid;grid-template-columns:290px minmax(0,1fr);gap:22px;align-items:start}
+#commander-profile .cp-identity{min-width:0;border:1px solid #9bc7d52e;border-radius:16px;background:#101f2e;overflow:hidden;box-shadow:0 12px 25px #0003}
+#commander-profile .cp-portrait{height:280px;position:relative;background:var(--cp-tint);isolation:isolate;overflow:hidden}
+#commander-profile .cp-portrait>img{position:absolute;inset:0;width:100%;height:100%;max-height:none;object-fit:cover;object-position:center 24%}
+#commander-profile .cp-portrait-shade{position:absolute;inset:0;background:linear-gradient(0deg,#0b1826 0%,#0b182644 47%,#08142322 100%);pointer-events:none}
+#commander-profile .cp-active-tag{position:absolute;left:16px;top:14px;padding:6px 8px;border:1px solid #e0f8ee44;border-radius:5px;background:#081a21bd;color:#d9f8e7;font-size:8px;font-weight:800;letter-spacing:1.2px}
+#commander-profile .cp-active-tag:before{content:"";display:inline-block;width:5px;height:5px;margin-right:6px;border-radius:50%;background:#8ce6b9;box-shadow:0 0 8px #8ce6b9}
+#commander-profile .cp-portrait-title{position:absolute;bottom:20px;left:18px;right:65px;display:flex;flex-direction:column;gap:6px}
+#commander-profile .cp-portrait-title strong{font:700 25px/1.08 Georgia,serif;color:#fff0cd;text-shadow:0 2px 12px #000}
+#commander-profile .cp-portrait-title small{font-size:11px;color:#d3e7ee}
+#commander-profile .cp-level-medal{position:absolute;bottom:20px;right:15px;width:48px;height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1px solid #d8b66b99;border-radius:11px 11px 18px 18px;background:linear-gradient(135deg,#5b4826,#16242e);box-shadow:0 0 0 3px #e0b96313;color:#ffe3a4}
+#commander-profile .cp-level-medal small{font-size:7px;letter-spacing:1px}
+#commander-profile .cp-level-medal b{font-size:25px;line-height:1}
+#commander-profile .cp-level{padding:15px 16px 0}
+#commander-profile .cp-level>div:first-child{display:flex;justify-content:space-between;gap:8px;font-size:10px;letter-spacing:.5px;color:#abc0d2}
+#commander-profile .cp-level strong{color:#e8f3ff;font-size:12px}
+#commander-profile .cp-progress{height:5px;border-radius:5px;overflow:hidden;background:#ffffff12}
+#commander-profile .cp-progress>span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--cp-tint),var(--cp-accent));transition:width .25s ease}
+#commander-profile .cp-level .cp-progress{margin-top:9px}
+#commander-profile .cp-level p{margin:10px 0 0;font-size:11px;line-height:1.5;color:#99b1c4}
+#commander-profile .cp-energy{display:flex;align-items:center;gap:12px;margin:15px 16px;padding:12px 10px;background:#77cfed08;border:1px solid #6cbfda25;border-radius:10px}
+#commander-profile .cp-energy .cp-energy-symbol{display:grid;place-items:center;width:30px;height:36px;border-radius:8px;background:#76d8f31c;color:#91e6ff;font-size:32px}
+#commander-profile .cp-energy>div{display:flex;flex-direction:column;gap:5px}
+#commander-profile .cp-energy small{font-size:8px;letter-spacing:1px;color:#89bad0;font-weight:700}
+#commander-profile .cp-energy span{font-size:11px;color:#b8cfdf}
+#commander-profile .cp-energy b{font-size:18px;color:#d9f5ff}
+#commander-profile .cp-energy i{font-style:normal;padding:0 4px;color:#526e84}
+#commander-profile .cp-switch{display:flex;align-items:center;justify-content:space-between;gap:6px;width:calc(100% - 32px);margin:0 16px 16px;padding:12px 10px;min-height:42px;border:1px solid #91adc333;border-radius:9px;background:#16293b;color:#d2e1ec;font-weight:700;font-size:11px}
+#commander-profile .cp-switch small{font-size:9px;color:#ddc68f;white-space:nowrap}
+#commander-profile .cp-development{min-width:0}
+#commander-profile .cp-section-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 10px}
+#commander-profile .cp-section-heading h3{margin:0;text-align:left;font-family:inherit;font-weight:700;font-size:16px;line-height:1.3;letter-spacing:0;color:#e9f1fb;text-shadow:none}
+#commander-profile .cp-section-heading p{margin:5px 0 0;color:#92acc1;font-size:11px}
+#commander-profile .cp-effect-tag{font-size:8px;font-weight:800;letter-spacing:.5px;padding:6px 8px;border-radius:5px;color:var(--cp-accent);background:var(--cp-tint);white-space:nowrap}
+#commander-profile .cp-skills{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#commander-profile .cp-skill{padding:13px 14px;border:1px solid #7bacc137;border-radius:12px;background:linear-gradient(135deg,#18374c88,#111f31)}
+#commander-profile .cp-skill.ultimate{border-color:#d4b87650;background:linear-gradient(135deg,#5c422c44,#181b2c)}
+#commander-profile .cp-skill-top{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#9bbacd;font-size:8px;letter-spacing:.7px}
+#commander-profile .cp-skill-top b{color:#86d7f5;white-space:nowrap;font-size:8px;letter-spacing:0}
+#commander-profile .ultimate .cp-skill-top{color:#d8bf8f}
+#commander-profile .cp-skill-main{display:flex;align-items:center;gap:10px;margin:10px 0 7px}
+#commander-profile .cp-skill-main strong{font-size:27px;letter-spacing:-1px;color:#e1f4ff;font-variant-numeric:tabular-nums}
+#commander-profile .ultimate .cp-skill-main strong{color:#ffe5ad}
+#commander-profile .cp-skill-main span{font-size:12px;font-weight:700;color:#d2e1ee}
+#commander-profile .cp-skill p{font-size:10px;line-height:1.5;color:#a0b5c7;margin:0}
+#commander-profile .cp-branches-heading{margin-top:21px}
+#commander-profile .cp-branch-count{color:#8da6b9;font-size:9px;letter-spacing:1px;white-space:nowrap}
+#commander-profile .cp-upgrades{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+#commander-profile .cp-upgrade{min-width:0;display:flex;flex-direction:column;padding:12px;border:1px solid #90abc332;border-radius:13px;background:linear-gradient(135deg,var(--cp-tint),#111e30 68%);box-shadow:0 7px 15px #0002}
+#commander-profile .cp-upgrade.specialty{border-color:#cfb5728c;box-shadow:inset 0 1px #ead49224,0 0 18px #d4bb6510}
+#commander-profile .cp-upgrade-head{display:flex;align-items:center;gap:12px;min-height:62px}
+#commander-profile .cp-branch-art{width:60px;height:66px;flex-shrink:0;object-fit:cover;object-position:center 20%;border:1px solid #adc3cf55;border-radius:9px;background:var(--cp-tint)}
+#commander-profile .cp-branch-title{min-width:0}
+#commander-profile .cp-branch-tag{font-size:7px;font-weight:800;letter-spacing:.8px;color:#9fb7c7}
+#commander-profile .specialty .cp-branch-tag{color:#ebd090}
+#commander-profile .cp-branch-title h4{font:700 17px/1.3 Georgia,serif;color:#f4eddf;margin:4px 0}
+#commander-profile .cp-branch-title small{font-size:10px;color:#b5cada}
+#commander-profile .cp-bonus{display:flex;align-items:center;gap:13px;background:#08132066;border:1px solid #bccde215;border-radius:8px;padding:9px 11px;margin:12px 0 10px}
+#commander-profile .cp-bonus>span:not(.cp-arrow){display:flex;flex:1;flex-direction:column;gap:4px}
+#commander-profile .cp-bonus small{font-size:7px;font-weight:600;letter-spacing:.4px;color:#829fb5}
+#commander-profile .cp-bonus b{font-size:20px;color:#e6eff9;font-variant-numeric:tabular-nums;line-height:1.1}
+#commander-profile .cp-bonus .cp-next b{color:var(--cp-accent)}
+#commander-profile .cp-arrow{color:#8098aa;font-size:18px}
+#commander-profile .cp-branch-progress{display:flex;justify-content:space-between;color:#97afc1;font-size:8px;letter-spacing:.5px;margin-bottom:6px}
+#commander-profile .cp-upgrade-benefit{font-size:10px;line-height:1.5;margin:9px 0;color:#b0c6d6;min-height:30px}
+#commander-profile .cp-upgrade-button{display:flex;justify-content:space-between;align-items:center;gap:6px;min-height:42px;width:100%;margin-top:auto;padding:10px 12px;border:1px solid #a1cee450;border-radius:8px;background:linear-gradient(110deg,#285474,#1c3c57);color:#edf7ff;font-weight:800;font-size:10px;letter-spacing:.3px;transition:filter .15s}
+#commander-profile .cp-upgrade-button b{font-size:10px;color:#ffe4a6;white-space:nowrap;letter-spacing:0}
+#commander-profile .specialty .cp-upgrade-button{background:linear-gradient(110deg,#ebd297,#c4a261);color:#1b2533;border-color:#efdba7}
+#commander-profile .specialty .cp-upgrade-button b{color:#3e341f}
+#commander-profile .cp-upgrade-button:hover:enabled,#commander-profile .cp-back:hover,#commander-profile .cp-switch:hover{filter:brightness(1.2)}
+#commander-profile .cp-upgrade-button:disabled{opacity:.55;filter:saturate(.3)}
+#commander-profile .maxed .cp-upgrade-button{opacity:1;background:#143d35;color:#a7e8c6;border-color:#7cbb9c44}
+#commander-profile .cp-help{font-size:10px;color:#829bae;margin:12px 0 0;line-height:1.6}
+#commander-upgrade-message:empty{display:none}
+#commander-profile #commander-upgrade-message:not(:empty){margin:16px 0 0;padding:12px 16px;background:#213b4c;border:1px solid #88c6dc55;border-radius:10px;color:#e2f5ff}
+@media(max-width:900px){
+ #commander-profile{padding:16px;margin:12px}
+ #commander-profile .cp-layout{grid-template-columns:235px minmax(0,1fr);gap:15px}
+ #commander-profile .cp-portrait{height:250px}
+ #commander-profile .cp-portrait-title strong{font-size:21px}
+ #commander-profile .cp-upgrade-head{gap:8px}
+ #commander-profile .cp-branch-art{width:46px;height:58px}
+ #commander-profile .cp-branch-title h4{font-size:15px}
+ #commander-profile .cp-upgrade{padding:10px}
+ #commander-profile .cp-skill-main{align-items:flex-start;flex-direction:column;gap:3px}
+}
+@media(max-width:680px){
+ #commander-profile{padding:12px;margin:10px 0;border-radius:16px}
+ #commander-profile .cp-topbar{padding-bottom:11px}
+ #commander-profile .cp-topbar>.cp-eyebrow{font-size:8px;letter-spacing:1px}
+ #commander-profile .cp-back{font-size:9px;min-height:38px;padding:8px}
+ #commander-profile .cp-wallet{font-size:15px;gap:5px}
+ #commander-profile .cp-wallet img{width:21px;height:21px}
+ #commander-profile .cp-heading{padding:14px 0}
+ #commander-profile .cp-heading>.cp-save-note{display:none}
+ #commander-profile .cp-heading .cp-eyebrow{font-size:7px;letter-spacing:1.1px}
+ #commander-profile .cp-layout{grid-template-columns:1fr;gap:18px}
+ #commander-profile .cp-identity{display:grid;grid-template-columns:130px minmax(0,1fr);align-items:start}
+ #commander-profile .cp-portrait{grid-row:1 / 4;height:100%;min-height:205px}
+ #commander-profile .cp-portrait>img{object-position:50% 15%}
+ #commander-profile .cp-portrait-title{left:10px;right:10px;bottom:15px;gap:5px}
+ #commander-profile .cp-portrait-title strong{font-size:17px}
+ #commander-profile .cp-portrait-title small{font-size:9px}
+ #commander-profile .cp-active-tag{left:7px;top:8px;padding:5px;font-size:6px;letter-spacing:.6px}
+ #commander-profile .cp-level-medal{width:33px;height:39px;right:8px;bottom:77px;border-radius:8px 8px 12px 12px}
+ #commander-profile .cp-level-medal small{font-size:5px}
+ #commander-profile .cp-level-medal b{font-size:19px}
+ #commander-profile .cp-level{padding:12px 12px 0}
+ #commander-profile .cp-level>div:first-child{font-size:8px}
+ #commander-profile .cp-level p{font-size:10px;line-height:1.4;margin-top:7px}
+ #commander-profile .cp-energy{margin:10px 12px;padding:8px;gap:7px}
+ #commander-profile .cp-energy .cp-energy-symbol{display:none}
+ #commander-profile .cp-energy span{font-size:10px}
+ #commander-profile .cp-energy b{font-size:17px}
+ #commander-profile .cp-switch{width:calc(100% - 24px);margin:0 12px 12px;padding:8px;min-height:38px;flex-wrap:wrap;font-size:10px}
+ #commander-profile .cp-switch small{font-size:8px}
+ #commander-profile .commander-change-panel{grid-column:1 / -1;margin:0 12px 12px}
+ #commander-profile .cp-skill{padding:11px}
+ #commander-profile .cp-skill-top{font-size:7px;letter-spacing:.3px;gap:5px}
+ #commander-profile .cp-skill-top b{font-size:7px}
+ #commander-profile .cp-skill-main{flex-direction:row;align-items:center;gap:8px}
+ #commander-profile .cp-skill-main span{font-size:10px}
+ #commander-profile .cp-skill-main strong{font-size:24px}
+ #commander-profile .cp-skills,#commander-profile .cp-upgrades{gap:8px}
+ #commander-profile .cp-section-heading h3{font-size:15px}
+ #commander-profile .cp-branches-heading{margin-top:18px}
+ #commander-profile .cp-section-heading p{font-size:10px}
+ #commander-profile .cp-upgrade-head{gap:8px}
+ #commander-profile .cp-branch-art{width:43px;height:57px}
+ #commander-profile .cp-branch-title h4{font-size:14px}
+ #commander-profile .cp-branch-title small{font-size:8px}
+ #commander-profile .cp-branch-tag{font-size:6px;letter-spacing:.2px}
+ #commander-profile .cp-bonus{padding:8px;gap:6px}
+ #commander-profile .cp-bonus small{font-size:6px;letter-spacing:0}
+ #commander-profile .cp-bonus b{font-size:18px}
+ #commander-profile .cp-upgrade-button{font-size:8px;padding:9px 7px;letter-spacing:0}
+ #commander-profile .cp-upgrade-button b{font-size:8px}
+ #commander-profile .cp-upgrade-benefit{font-size:9px}
+}
+@media(max-width:360px){
+ #commander-profile .cp-identity{grid-template-columns:110px minmax(0,1fr)}
+ #commander-profile .cp-branch-art{width:34px;height:49px}
+ #commander-profile .cp-branch-title h4{font-size:12px}
+ #commander-profile .cp-upgrade{padding:8px}
+ #commander-profile .cp-bonus{padding:7px 5px;gap:4px}
+ #commander-profile .cp-upgrade-button{flex-wrap:wrap;justify-content:center;gap:4px}
+ #commander-profile .cp-skill-main{flex-direction:column;align-items:flex-start}
+}
+@media(prefers-reduced-motion:reduce){#commander-profile .cp-progress>span,#commander-profile .cp-upgrade-button{transition:none}}
