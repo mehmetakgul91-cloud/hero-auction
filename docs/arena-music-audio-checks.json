@@ -13,6 +13,16 @@
       "note": "Creator advertises this source as loopable."
     },
     {
+      "id": "japanese-fight",
+      "decoded_seconds": 63.913,
+      "integrated_lufs": -18.45,
+      "true_peak_dbtp": -2.32,
+      "first_100ms_rms_dbfs": -16.58,
+      "last_100ms_rms_dbfs": -34.14,
+      "boundary_sample_delta_dbfs": -38.55,
+      "note": "Creator advertises this source as loopable."
+    },
+    {
       "id": "eternal-sands",
       "decoded_seconds": 115.2,
       "integrated_lufs": -18.44,
@@ -21,6 +31,26 @@
       "last_100ms_rms_dbfs": -25.82,
       "boundary_sample_delta_dbfs": -19.58,
       "note": "Creator advertises this source as loopable."
+    },
+    {
+      "id": "monkoto",
+      "decoded_seconds": 76.225,
+      "integrated_lufs": -18.46,
+      "true_peak_dbtp": -1.9,
+      "first_100ms_rms_dbfs": -10.58,
+      "last_100ms_rms_dbfs": -126.84,
+      "boundary_sample_delta_dbfs": -100.01,
+      "note": "Full composition repeats at its natural ending. No claim of seamless loop; no composition edits."
+    },
+    {
+      "id": "ragnarok",
+      "decoded_seconds": 143.475,
+      "integrated_lufs": -18.42,
+      "true_peak_dbtp": -7.48,
+      "first_100ms_rms_dbfs": -240.0,
+      "last_100ms_rms_dbfs": -240.0,
+      "boundary_sample_delta_dbfs": -240.0,
+      "note": "Full composition repeats at its natural ending. No claim of seamless loop; no composition edits."
     },
     {
       "id": "atlas-kazakhstan",
@@ -32,6 +62,5 @@
       "boundary_sample_delta_dbfs": -134.48,
       "note": "Full composition repeats at its natural ending. No claim of seamless loop; no composition edits."
     }
-  ],
-  "release_note": "First music release: three uploaded tracks only. Historical license evidence is retained; Japanese Fight, Monkoto and Ragnarok remain pending a later release."
+  ]
 }
