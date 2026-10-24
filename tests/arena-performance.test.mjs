@@ -116,3 +116,21 @@ test('replay groups authoritative hero actions so shield absorption and the hit 
  const old={events:[{actorId:'a',round:3,damageType:'splash'},{actorId:'a',round:3,damageType:'special'}],cursor:0};
  runInNewContext(code+';this.batch=batch;',old);assert.equal(old.cursor,2);assert.equal(old.batch.length,2);
 });
+
+test('rarity remains roster-correct on both teams through live stat changes, death and rematch',()=>{
+ const h=fixture();
+ for(let side=0;side<2;side++){
+  Object.assign(h.teams[side][0],{id:'original:01',name:'Obsidyen Muhafız',power:1,rarity:'common'});
+  h.update(side);
+  const portrait=h.parents[side].children[0].children[0];
+  assert.equal(portrait.dataset.rarity,'legendary');
+  assert.match(portrait.attributes['aria-label'],/Efsanevi/);
+  assert.equal(portrait._rarityBadge.attributes['aria-hidden'],'true');
+ }
+ const portrait=h.parents[0].children[0].children[0],badge=portrait._rarityBadge;
+ h.teams[0][0].hp=0;h.teams[0][0].power=1000;h.update();
+ assert.equal(portrait._rarityBadge,badge);assert.equal(portrait.dataset.rarity,'legendary');
+ assert.match(portrait.attributes['aria-label'],/Yenildi/);
+ h.renderer.reset();h.update();assert.notEqual(h.parents[0].children[0].children[0],portrait);
+ assert.equal(h.parents[0].children[0].children[0].dataset.rarity,'legendary');
+});

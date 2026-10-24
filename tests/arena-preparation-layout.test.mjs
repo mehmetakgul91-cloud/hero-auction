@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
+import {applyHeroRarity} from '../public/hero-rarity.js';
 import {translate} from '../public/crazygames-en.js';
 import {buildDefaultFormation} from '../public/preparation-formation.js';
 const read=name=>readFileSync(new URL('../public/'+name,import.meta.url),'utf8');
@@ -39,7 +40,7 @@ class Element {
 function harness({loaded=true}={}){
  const ids=Object.fromEntries([...html.matchAll(/\bid="([^"]+)"/g)].map(([,id])=>[id,new Element()]));
  const saved=[];
- const context={document:{createElement:()=>new Element(),querySelector:()=>null},$:id=>ids[id],heroPortrait(){},creditBonus:()=>0,commanderBonusForRole:()=>0,savePreviewDraft(){saved.push('saved')},buildDefaultFormation};
+ const context={applyHeroRarity,document:{createElement:()=>new Element(),querySelector:()=>null},$:id=>ids[id],heroPortrait(){},creditBonus:()=>0,commanderBonusForRole:()=>0,savePreviewDraft(){saved.push('saved')},buildDefaultFormation};
  const code=source.slice(source.indexOf('function displayedLanePower('),source.indexOf('let prepTimer='));
  const laneCode=source.slice(source.indexOf('function roleAt('),source.indexOf('const heroArtCache='));
  runInNewContext(`const demoA=[['Hero A','tank',90],['Hero B','fighter',69],['Hero C','energy',80],['Hero D','fighter',83],['Hero E','support',90]];
