@@ -63,3 +63,13 @@ Odaya katılınca veya açık artırma başlayınca eski davet geçmişi oyun ü
 Kabul edilmiş davet iptal edilebilir. Oda dolmuş/kapanmışsa, davet sona ermişse veya giriş ücreti karşılanamıyorsa otomatik katılım yapılmaz ve hata gösterilir. Davetin açılması veya yanıt beklemesi ücret kesmez. İki oyuncunun normal giriş ücreti ancak gerçek oda katılımında, kalıcı oda/davet kaydıyla birlikte uygulanır. Testler yalnızca yalıtılmış hesaplar ve geliştirme bakiyeleri kullanır.
 
 Sosyal oda koordinasyonu mevcut tek sunucu süreci modeliyle çalışır; çoklu uygulama örneğine ölçekleme için dağıtık oda kilidi ayrıca gerekir. Kalıcılık testleri anlık görüntü geri yükleme ve sahte SQL işlem/hata enjeksiyonu içerir; üretim PostgreSQL üzerinde yeniden başlatma testi yerine geçmez.
+
+## Arena müzikleri
+
+İlk müzik sürümünde yüklenmiş üç parça seçilir: Determined Pursuit (orkestra), The Eternal Sands (Orta Doğu fantastik) ve Atlas • Kazakhstan (AI üretimi Kazak/Orta Asya esintili). Diğer üç parça yükleme tamamlandığında ayrı güncellemeyle eklenecektir. Latin parça dahil değildir. Her tarayıcı sekmesinde üç parçalık rastgele sıra tamamlanmadan parça tekrarlanmaz; sıra sınırında da son parça hemen tekrar etmez. Gerçek maç anahtarı değişmeden yenileme, sesi kapat/aç veya arka plandan dönme parça seçimini değiştirmez. Web ve CrazyGames kayıtları ayrıdır.
+
+Tek bir `HTMLAudioElement` yalnız seçilen parçayı yükler. Hazırlıkta kullanıcı dokunuşuyla sessizce açılır; maç başladığında mevcut %60 ses düzeyi kullanılır. Sekme gizlenince/platform sesi kapatınca durur, maç bitiminde kaynak bırakılır. Otomatik oynatma engeli aynı parçayı bir sonraki dokunuşta yeniden dener. Gerçek yükleme hatasında yalnız bir kez eski davul-bas parçasına, o da başarısızsa prosedürel sese döner. İndirme takılması başına 15 saniyelik sınırlı zaman aşımı vardır; bütün liste arka planda yüklenmez.
+
+`/music-credits.html` eser sahibi, kaynak, lisans ve dönüşüm bilgilerini gösterir; oyun ve arena altındaki bağlantılardan erişilir. Kaynak/lisans kanıtları `docs/arena-music-license-evidence/`, dosya hashleri `docs/arena-music-provenance.json`, teknik ses ölçümleri `docs/arena-music-audio-checks.json` içindedir. Atlas yalnız oyuna gömülü kullanım içindir; bağımsız MP3/soundtrack paketi olarak yayımlanmaz. Oyun yedeği kod ve oyun varlıklarıyla birlikte tutulmalıdır.
+
+Test: `node --test tests/arena-music.test.mjs tests/static-audio.test.mjs tests/arena-performance.test.mjs`. Gerçek iPhone/Safari oynatma ve işitsel döngü birleşimleri ayrıca cihazda dinlenmelidir; teknik ölçümler bir dinleme testi değildir.

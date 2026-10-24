@@ -1,0 +1,50 @@
+[
+  {
+    "file": "README.txt",
+    "sha256": "482b5111fba3ffaca7161829bfd798a3568356e7180e5c160389b8f4a24b2801"
+  },
+  {
+    "file": "atlas-acquisition.json",
+    "sha256": "637ad3fab1df984a6fcf62dab93522832510485233d810d3ea72154a2f6f53a2"
+  },
+  {
+    "file": "atlas-download-page.txt",
+    "sha256": "108df2a5443250555ee1b2f8e0db6d63d95d280d59d22aaa296c7e5423eb38da"
+  },
+  {
+    "file": "determined-pursuit.html",
+    "sha256": "dcefe1e491b54449cdf1e84a2a47479fac2b3ccba49f772130a3c43dc8d2062e"
+  },
+  {
+    "file": "eternal-sands.html",
+    "sha256": "cfe469f0d64cb2887dcdf62cd4c022f8f2df2f52d5e44086c175fe7328b4dc91"
+  },
+  {
+    "file": "japanese-fight.html",
+    "sha256": "0d5aa4f7b3e1d6c09e8d6266917b7a1fe80708875f5c7263bbbe062b2d823408"
+  },
+  {
+    "file": "monkoto-official-catalog-row.json",
+    "sha256": "2421c4ca297fbebce52169685c7f2be98904f4a8b16daa4828b23ee7ff6f017d"
+  },
+  {
+    "file": "monkoto.html",
+    "sha256": "0aaccc3d496fc4ae189e27e3fe2d4f5216266e3bcccf2e0ba77fb1b57a28fa94"
+  },
+  {
+    "file": "pixabay-faq-web-source.json",
+    "sha256": "9520dd27cfbbfb10bca6188887ed6181dccd323bd2e3af78dbbd43e76d1a7689"
+  },
+  {
+    "file": "pixabay-license-summary.txt",
+    "sha256": "c15483284aef2f67ead5560928e854beb5799d858c5edc11698307cb7d0afab2"
+  },
+  {
+    "file": "pixabay-terms.txt",
+    "sha256": "91fda319d8c8fbff7310ddd6088d4e7c8f99578991141fd38d0a11600885f414"
+  },
+  {
+    "file": "ragnarok.html",
+    "sha256": "7af6ce04be1ad9a542b8a8f7874af0db8c2ddcd992a2a8bf009b6d6d971a0e31"
+  }
+]

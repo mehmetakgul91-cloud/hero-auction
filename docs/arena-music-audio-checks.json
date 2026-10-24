@@ -1,0 +1,37 @@
+{
+  "checked_at": "2026-10-24",
+  "method": "Full ffmpeg decode; loudnorm measurement; mono 22050Hz first/last 100ms RMS and endpoint sample delta. These are technical checks, not listening or a seamless-loop guarantee.",
+  "tracks": [
+    {
+      "id": "determined-pursuit",
+      "decoded_seconds": 108.0,
+      "integrated_lufs": -18.4,
+      "true_peak_dbtp": -6.7,
+      "first_100ms_rms_dbfs": -21.56,
+      "last_100ms_rms_dbfs": -16.54,
+      "boundary_sample_delta_dbfs": -37.75,
+      "note": "Creator advertises this source as loopable."
+    },
+    {
+      "id": "eternal-sands",
+      "decoded_seconds": 115.2,
+      "integrated_lufs": -18.44,
+      "true_peak_dbtp": -5.3,
+      "first_100ms_rms_dbfs": -10.9,
+      "last_100ms_rms_dbfs": -25.82,
+      "boundary_sample_delta_dbfs": -19.58,
+      "note": "Creator advertises this source as loopable."
+    },
+    {
+      "id": "atlas-kazakhstan",
+      "decoded_seconds": 153.192,
+      "integrated_lufs": -18.43,
+      "true_peak_dbtp": -8.7,
+      "first_100ms_rms_dbfs": -76.81,
+      "last_100ms_rms_dbfs": -47.89,
+      "boundary_sample_delta_dbfs": -134.48,
+      "note": "Full composition repeats at its natural ending. No claim of seamless loop; no composition edits."
+    }
+  ],
+  "release_note": "First music release: three uploaded tracks only. Historical license evidence is retained; Japanese Fight, Monkoto and Ragnarok remain pending a later release."
+}

@@ -3,6 +3,7 @@ import {battlePhrases, translateCommanderDescription} from './crazygames-battle-
 // Presentation-only English locale for the CrazyGames entry point.
 // Do not translate stored values, hero IDs, requests, or game rules.
 export const phrases = {
+"♫ Müzik kredileri":"♫ Music credits",
 "Diziliş başka bir maça ait.":"This formation belongs to another match.",
 "Hazır diziliş değiştirilemez.":"A confirmed formation cannot be changed.",
 "Geçersiz diziliş veya kart türü":"Invalid formation or hero type",

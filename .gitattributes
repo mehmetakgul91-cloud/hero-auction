@@ -1,0 +1,2 @@
+# Preserve captured source/license evidence verbatim, including source whitespace.
+docs/arena-music-license-evidence/* -whitespace

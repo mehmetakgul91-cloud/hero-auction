@@ -1,0 +1,105 @@
+{
+  "verified_at": "2026-10-24",
+  "base_commit": "cf1e1012e7ecb89c24e8f50187b24b215d7733c2",
+  "scope": "Integrated Hero Auction game assets; not a standalone soundtrack pack. Latin track excluded by user. No outreach.",
+  "license_evidence": "Primary creator track pages and linked licenses reviewed 2026-10-24. Atlas acquired through visible official Download button without signup, CAPTCHA or a separate agreement checkbox. Pixabay Terms effective 2026-10-20; section 5 supports incorporation in games, forbids standalone redistribution.",
+  "audition_status": "Decoded and technically measured; no actual listening or seamless-loop claim.",
+  "tracks": [
+    {
+      "id": "determined-pursuit",
+      "title": "Determined Pursuit (epic orchestra loop)",
+      "author": "Emma_MA",
+      "label": "Avrupa orkestra esintili",
+      "style": "Frantic strings, horns and busy drums; European-orchestral categorization is editorial, not a creator nationality claim.",
+      "page": "https://opengameart.org/content/determined-pursuit-epic-orchestra-loop",
+      "license": "CC0 1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "changes": "Converted to 128 kb/s MP3, 44.1 kHz; loudness normalized to target -18 LUFS / -1.5 dBTP for comparison. Full source duration retained; no cuts, repetitions, or composition changes.",
+      "source_sha256": "e4f3be098b50213b56a60aefe60fffae79cd9f7c9008088f93c187ef1bbc856b",
+      "source_probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 2
+          }
+        ],
+        "format": {
+          "duration": "108.000000",
+          "size": "19052830"
+        }
+      },
+      "src": "/audio/arena/determined-pursuit.mp3",
+      "game_asset_sha256": "6c64166faf4ccfa0bde14825973f9b0e2af79243808d637e400954cdccec930f",
+      "game_asset_bytes": 1729715,
+      "loop_note": "Creator advertises this source as loopable."
+    },
+    {
+      "id": "eternal-sands",
+      "title": "Fantasy Music - The Eternal Sands",
+      "author": "HitCtrl",
+      "label": "Orta Dogu fantastik savas",
+      "style": "Creator tags middle eastern, battle theme and percussion; not a claim of traditional authenticity.",
+      "page": "https://opengameart.org/content/fantasy-music-the-eternal-sands",
+      "license": "CC BY 3.0",
+      "license_url": "https://creativecommons.org/licenses/by/3.0/",
+      "changes": "Converted to 128 kb/s MP3, 44.1 kHz; loudness normalized to target -18 LUFS / -1.5 dBTP for comparison. Full source duration retained; no cuts, repetitions, or composition changes.",
+      "source_sha256": "27740c7a6334d9dc3c92236adf797bbb408cf1fdc0025299d5465f9a900a5e4e",
+      "source_probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "vorbis",
+            "sample_rate": "44100",
+            "channels": 2
+          }
+        ],
+        "format": {
+          "duration": "115.200000",
+          "size": "6420590"
+        }
+      },
+      "src": "/audio/arena/eternal-sands.mp3",
+      "game_asset_sha256": "7359b1478bf4b3a24c78c2a21f2cedf443873779d357b2df58df03198167c206",
+      "game_asset_bytes": 1844624,
+      "loop_note": "Creator advertises this source as loopable."
+    },
+    {
+      "id": "atlas-kazakhstan",
+      "title": "Atlas • Kazakhstan",
+      "author": "Vadim_Makes_Sound",
+      "label": "Türkî Orta Asya / Kazak esintili (AI üretimi)",
+      "style": "AI-generated Kazakhstan-inspired music. Not a historical or authentic traditional recording.",
+      "page": "https://pixabay.com/music/orchestral-atlas-kazakhstan-562527/",
+      "license": "Pixabay Content License",
+      "license_url": "https://pixabay.com/service/terms/",
+      "changes": "Converted to 128 kb/s MP3, 44.1 kHz; loudness normalized to target -18 LUFS / -1.5 dBTP. Full source duration retained; no cuts, repetitions, or composition changes.",
+      "source_sha256": "b89c048d18582fbb5117f6196a371e31cff4cdd2af0ba3e8ac21dccb2b5ac6d8",
+      "source_probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "48000",
+            "channels": 2
+          }
+        ],
+        "format": {
+          "duration": "153.192000",
+          "size": "4902144"
+        }
+      },
+      "src": "/audio/arena/atlas-kazakhstan.mp3",
+      "game_asset_sha256": "85e5f6be7efa5d7a24b4747dff63a63c7e7c06b7e455194cbb3d7c9c93f59c25",
+      "game_asset_bytes": 2453340,
+      "ai_generated": true,
+      "standalone_redistribution": false,
+      "loop_note": "Full composition repeats at its natural ending. No claim of seamless loop; no composition edits."
+    }
+  ],
+  "release_note": "First music release: three uploaded tracks only. Historical license evidence is retained; Japanese Fight, Monkoto and Ragnarok remain pending a later release."
+}
