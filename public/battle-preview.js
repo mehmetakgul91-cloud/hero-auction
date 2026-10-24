@@ -405,7 +405,7 @@ function renderRolePickers(){const root=$('role-pickers');root.replaceChildren()
  })}
 if(!arenaMode)preparationDock=createPreparationThumbDock({getState:()=>({heroes:demoA.map(([name,role,,universe])=>({name,role,artKey:name+'|'+universe})),positions,lanes,selectedHero,locked:prepDone||arenaMode,loading:auctionMode&&!auctionLoaded}),
  onSelect:index=>{if(prepDone||arenaMode||auctionMode&&!auctionLoaded)return;selectedHero=selectedHero===index?null:index;clearHover();renderBoard();renderRolePickers();},
- onPlace:placeHero,onLane:setLane,renderPortrait:heroPortrait,translate:value=>document.documentElement.lang==='en'?translate(value):value});
+ renderPortrait:heroPortrait,translate:value=>document.documentElement.lang==='en'?translate(value):value});
 $('apply-roles').onclick=lockFormation;
 if(arenaMode){document.body.classList.add('arena-room');document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;$('play').textContent='▶ SAVAŞI BAŞLAT';mountCommanderDock()}else{renderRolePickers();renderBoard();if(!auctionMode)startPreparation();else{$('apply-roles').disabled=true;$('prep-clock').textContent='--:--';$('prep-note').textContent='Açık artırma kartları doğrulanıyor…'}}
 const motion=()=> !document.hidden&&!document.body.classList.contains('arena-catching-up')&&$('motion').checked&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;

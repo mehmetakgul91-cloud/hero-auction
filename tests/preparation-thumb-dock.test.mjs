@@ -31,9 +31,11 @@ class Element extends Events{
  contains(el){return !!el&&(this===el||this.children.some(child=>child.contains(el)));}
  setAttribute(k,v){this.attributes[k]=String(v);}
  matches(selector){if(selector.includes('input,textarea'))return ['INPUT','TEXTAREA','SELECT'].includes(this.tagName)||this.attributes.contenteditable==='true';return selector.startsWith('.')?this.classList.contains(selector.slice(1)):this.tagName===selector.toUpperCase();}
+ closest(selector){return this.matches(selector)?this:this.parentNode?.closest(selector)||null;}
  querySelector(selector){return this.children.find(child=>child.matches(selector))||this.children.map(child=>child.querySelector(selector)).find(Boolean)||null;}
  getBoundingClientRect(){return {height:this.doc.dockHeight||270};}
  getClientRects(){return this.hidden?[]:[{}];}
+ scrollIntoView(options){this.scrollOptions=options;}
  focus(){this.doc.activeElement=this;}
  click(){if(!this.disabled)this.onclick?.();}
 }
@@ -55,10 +57,11 @@ function harness({compact=true}={}){
  runInNewContext(source.slice(source.indexOf('function placeHero('),source.indexOf('function displayedLanePower('))+source.slice(source.indexOf('function setLane('),source.indexOf('const heroArtCache=')),context);
  controller=createPreparationThumbDock({document:doc,window:win,getState:()=>state,
   onSelect:index=>{calls.push(['select',index]);state.selectedHero=state.selectedHero===index?null:index;context.selectedHero=state.selectedHero;controller.update();},
-  onPlace:(hero,slot)=>{calls.push(['place',hero,slot]);context.placeHero(hero,slot);},onLane:(slot,lane)=>{calls.push(['lane',slot,lane]);context.setLane(slot,lane);},renderPortrait:(index,container)=>portraits.push({index,container})});
+  renderPortrait:(index,container)=>portraits.push({index,container})});
  function flush(){let count=0;while(pending.length){assert.ok(count++<10,'layout must settle');const batch=pending;pending=[];batch.forEach(fn=>fn());}}
- flush();const dock=formation.querySelector('.prep-thumb-dock'),heroButtons=dock.querySelector('.prep-thumb-heroes').children,slotButtons=dock.querySelector('.prep-thumb-slots').children,actions=dock.querySelector('.prep-thumb-actions').children;
- return {doc,win,media,state,controller,formation,board,ready,note,clock,details,roster,dock,heroButtons,slotButtons,actions,calls,portraits,observers,flush};
+ flush();const dock=formation.querySelector('.prep-thumb-dock'),heroButtons=dock.querySelector('.prep-thumb-heroes').children;
+ const boardPlace=slot=>context.placeHero(state.selectedHero,slot),boardLane=(slot,lane)=>context.setLane(slot,lane);
+ return {doc,win,media,state,controller,formation,board,ready,note,clock,details,roster,dock,heroButtons,boardPlace,boardLane,calls,portraits,observers,flush};
 }
 
 test('model is an exact five-slot projection and never mutates or auto-fills formation',()=>{
@@ -73,38 +76,62 @@ test('small height, large dock, overlays, editable focus and narrow width fall b
  for(const patch of [{viewportHeight:559},{height:321},{viewportWidth:299},{overlay:true},{editing:true,viewportHeight:650}])assert.equal(preparationDockLayout({...base,...patch}),'inline');
  for(const patch of [{compact:false},{active:false}])assert.equal(preparationDockLayout({...base,...patch}),'off');
 });
-test('hero then exact target places, moves and swaps using the unchanged game callbacks',()=>{
- const h=harness();assert.ok(h.slotButtons.every(button=>button.disabled));
- h.heroButtons[0].click();assert.deepEqual(h.state.positions,[null,null,null,null,null]);h.slotButtons[3].click();h.flush();
- assert.deepEqual(h.state.positions,[null,null,null,0,null]);assert.equal(h.doc.activeElement,h.heroButtons[0]);
- h.heroButtons[1].click();h.slotButtons[1].click();h.heroButtons[0].click();h.slotButtons[1].click();
- assert.deepEqual(h.state.positions,[null,0,null,1,null]);
- h.heroButtons[0].click();assert.equal(h.slotButtons[1].disabled,true);h.actions[1].click();assert.equal(h.state.lanes[1],'back');assert.deepEqual(h.state.positions,[null,0,null,1,null]);
- assert.deepEqual(h.calls.filter(([kind])=>kind==='place'),[['place',0,3],['place',1,1],['place',0,1]]);
- assert.equal(h.heroButtons.length,5);assert.equal(h.slotButtons.length,5);assert.ok(h.heroButtons.every(button=>button.tagName==='BUTTON'&&button.type==='button'));
+test('minimal dock contains only five hero controls and the original Ready button',()=>{
+ const h=harness();assert.equal(h.dock.children.length,2);
+ assert.equal(h.heroButtons.length,5);assert.deepEqual(h.dock.querySelector('.prep-thumb-actions').children,[h.ready]);
+ for(const selector of ['.prep-thumb-slots','.prep-thumb-status','.prep-thumb-clock','.prep-thumb-instruction'])assert.equal(h.dock.querySelector(selector),null);
+ assert.equal(h.note.parentNode,h.formation);assert.equal(h.note.attributes.role,'status');
+ assert.ok(h.heroButtons.every(button=>button.tagName==='BUTTON'&&button.type==='button'&&button.children.length===2));
+ assert.doesNotMatch(h.dock.textContent,/Konum|Ön|Arka|Yerleşmedi|Kahraman seç/);
+});
+test('hero selection never auto-places; original board callbacks keep exact move, swap and lane strategy',()=>{
+ const h=harness();h.heroButtons[0].click();assert.deepEqual(h.state.positions,[null,null,null,null,null]);
+ assert.equal(h.heroButtons[0].attributes['aria-pressed'],'true');h.boardPlace(3);h.flush();
+ assert.deepEqual(h.state.positions,[null,null,null,0,null]);assert.equal(h.heroButtons[0].attributes['aria-pressed'],'false');
+ assert.match(h.heroButtons[0].attributes['aria-label'],/Konum 4 · Arka/);
+ h.heroButtons[1].click();h.boardPlace(1);h.heroButtons[0].click();h.boardPlace(1);
+ assert.deepEqual(h.state.positions,[null,0,null,1,null]);h.boardLane(1,'back');
+ assert.equal(h.state.lanes[1],'back');assert.deepEqual(h.state.positions,[null,0,null,1,null]);
+ assert.match(h.heroButtons[0].title,/Konum 2 · Arka/);
+});
+test('board placement restores only lost focus to the selected dock hero, including pending teardown',()=>{
+ for(const outcome of ['lost','moved','destroyed']){
+  const h=harness(),target=h.doc.createElement('button');target.className='board-slot';h.board.append(target);
+  h.heroButtons[0].click();target.focus();h.board.fire('click',{target});h.boardPlace(3);target.remove();h.doc.activeElement=h.doc.body;
+  if(outcome==='moved')h.ready.focus();if(outcome==='destroyed')h.controller.destroy();h.flush();
+  assert.equal(h.doc.activeElement,outcome==='lost'?h.heroButtons[0]:outcome==='moved'?h.ready:h.doc.body);
+ }
 });
 test('Ready, warnings, disclosure state and control identity survive repeated renders and timer ticks',()=>{
  const h=harness(),hero=h.heroButtons[2];let readyCalls=0;h.ready.onclick=()=>readyCalls++;
- assert.equal(h.ready.parentNode,h.dock.querySelector('.prep-thumb-actions'));assert.equal(h.note.parentNode,h.dock);
+ assert.equal(h.ready.parentNode,h.dock.querySelector('.prep-thumb-actions'));assert.equal(h.note.parentNode,h.formation);
  h.details.open=true;const rosterDetails=h.formation.querySelector('.prep-thumb-roster');rosterDetails.open=true;
  hero.focus();for(let i=0;i<20;i++){h.controller.update();h.flush();}
  assert.equal(h.doc.activeElement,hero);assert.equal(h.heroButtons[2],hero);assert.equal(h.details.open,true);assert.equal(rosterDetails.open,true);
  assert.equal(h.roster.parentNode,rosterDetails);assert.equal(h.note.textContent,'Warnings stay here');
- h.clock.textContent='00:01';h.observers[0].fn();h.flush();assert.equal(h.dock.querySelector('.prep-thumb-clock').textContent,'00:01');
+ h.clock.textContent='00:01';h.controller.update();h.flush();assert.equal(h.clock.textContent,'00:01');assert.equal(h.dock.querySelector('.prep-thumb-clock'),null);
  h.ready.click();assert.equal(readyCalls,1);h.note.textContent='⚠ Request failed';h.controller.update();assert.equal(h.note.textContent,'⚠ Request failed');
  assert.equal(h.portraits.length,5,'timer updates must not re-request portraits');
 });
+test('Ready errors reveal the original board note without adding dock text or stealing focus',()=>{
+ const h=harness(),feedback=h.observers.find(observer=>observer.target===h.note);h.ready.focus();
+ feedback.fn();assert.equal(h.note.scrollOptions,undefined);
+ h.note.textContent='⚠ Diziliş gönderilemedi';feedback.fn();
+ assert.deepEqual(h.note.scrollOptions,{block:'nearest',behavior:'auto'});assert.equal(h.doc.activeElement,h.ready);
+ assert.equal(h.note.parentNode,h.formation);assert.equal(h.dock.children.length,2);
+ h.note.scrollOptions=undefined;h.controller.destroy();feedback.fn();assert.equal(h.note.scrollOptions,undefined);
+});
 test('loading and locked guards prevent additional actions and unlock without rebuilding controls',()=>{
- const h=harness();h.state.loading=true;h.controller.update();h.heroButtons[0].onclick();h.slotButtons[0].onclick();h.actions[0].onclick();assert.equal(h.calls.length,0);
+ const h=harness();h.state.loading=true;h.controller.update();h.heroButtons[0].onclick();assert.equal(h.calls.length,0);
  h.state.loading=false;h.controller.update();h.heroButtons[0].click();assert.equal(h.calls.length,1);
  h.state.locked=true;h.controller.update();h.flush();assert.equal(h.dock.hidden,true);assert.equal(h.ready.parentNode,h.formation);assert.equal(h.note.parentNode,h.formation);
  assert.equal(h.doc.documentElement.classList.contains('prep-thumb-fixed'),false);
 });
 test('last hero, rapid taps and all-front manual formation retain five unique positions',()=>{
- const h=harness();h.heroButtons[4].click();h.heroButtons[4].click();assert.equal(h.state.selectedHero,null);assert.ok(h.slotButtons.every(button=>button.disabled));
- for(let i=0;i<5;i++){h.heroButtons[i].click();h.slotButtons[i].click();h.slotButtons[i].onclick();}
- assert.deepEqual(h.state.positions,[0,1,2,3,4]);assert.equal(h.calls.filter(([kind])=>kind==='place').length,5);
- for(let i=2;i<5;i++){h.heroButtons[i].click();h.actions[0].click();assert.equal(h.doc.activeElement,h.heroButtons[i]);}
+ const h=harness();h.heroButtons[4].click();h.heroButtons[4].click();assert.equal(h.state.selectedHero,null);assert.deepEqual(h.state.positions,[null,null,null,null,null]);
+ for(let i=0;i<5;i++){h.heroButtons[i].click();h.boardPlace(i);}
+ assert.deepEqual(h.state.positions,[0,1,2,3,4]);
+ for(let i=2;i<5;i++)h.boardLane(i,'front');
  assert.deepEqual(h.state.lanes,['front','front','front','front','front']);assert.equal(new Set(h.state.positions).size,5);
 });
 test('Ready focus and authoritative node survive repeated compact/desktop crossings',()=>{
@@ -128,7 +155,7 @@ test('replacing verified hero identity detaches stale async portrait targets',()
 test('destroy restores authoritative nodes and disconnects every observer/listener even with queued layout',()=>{
  const h=harness();h.controller.update();h.controller.destroy();h.flush();
  assert.equal(h.formation.querySelector('.prep-thumb-dock'),null);assert.equal(h.roster.parentNode,h.formation);assert.equal(h.ready.parentNode,h.formation);assert.equal(h.note.parentNode,h.formation);
- assert.ok(h.observers.every(observer=>observer.disconnected));assert.ok([...h.doc.listeners.values(),...h.win.listeners.values(),...h.media.listeners.values(),...h.win.visualViewport.listeners.values()].every(set=>set.size===0));
+ assert.ok(h.observers.every(observer=>observer.disconnected));assert.ok([...h.board.listeners.values(),...h.doc.listeners.values(),...h.win.listeners.values(),...h.media.listeners.values(),...h.win.visualViewport.listeners.values()].every(set=>set.size===0));
  assert.equal(h.doc.documentElement.style.values['--prep-thumb-clearance'],undefined);h.controller.update();h.flush();
 });
 test('integration is prep-only, keeps combat cleanup, and portal imports stay platform-relative',()=>{
@@ -137,7 +164,7 @@ test('integration is prep-only, keeps combat cleanup, and portal imports stay pl
  assert.match(crazyGamesSource(source,'.js'),/from '\/crazygames\/preparation-thumb-dock.js'/);
  assert.match(source,/aria-label','Konum '\+\(slot\+1\)/);
  const block=css.slice(css.indexOf('/* One-hand preparation'));
- assert.match(block,/min-width:44px;min-height:44px/);assert.match(block,/\.prep-thumb-fixed body\{padding-bottom:var\(--prep-thumb-clearance/);
+ assert.match(block,/min-width:44px;min-height:44px/);assert.match(block,/\.prep-thumb-fixed #prep-note\{scroll-margin-bottom:/);assert.match(block,/button.selected::after\{content:"✓"/);assert.match(block,/\.prep-thumb-actions\{display:grid;grid-template-columns:1fr\}/);assert.match(block,/\.prep-thumb-fixed body\{padding-bottom:var\(--prep-thumb-clearance/);
  assert.match(block,/\.prep-thumb-dock\{[^}]*padding-bottom:max\(8px,env\(safe-area-inset-bottom\)\)/);
  assert.doesNotMatch(block,/\.is-fixed\{[^}]*padding-bottom/,'safe-area padding must not change between fixed/inline and trigger resize oscillation');
  assert.doesNotMatch(block,/overflow\s*:\s*(?:hidden|clip).*body|height\s*:\s*100(?:d?vh|%)/);
