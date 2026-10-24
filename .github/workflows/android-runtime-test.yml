@@ -1,0 +1,53 @@
+name: Android device gameplay verification
+on:
+  push:
+    branches: [fix/android-runtime-sync-20261024]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  device:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Prepare native game
+        run: |
+          npm ci --no-audit --no-fund
+          npm --prefix mobile ci --no-audit --no-fund
+          node --input-type=module <<'JS'
+          import {writeFileSync} from 'node:fs';
+          const origin='https://hero-auction-commander-test.onrender.com';
+          writeFileSync('mobile/config.local.json',JSON.stringify({apiOrigin:origin,publicOrigin:origin}));
+          JS
+          npm --prefix mobile run sync
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Android 15 WebView gameplay
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          disable-animations: true
+          script: bash mobile/scripts/device-test.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-device-diagnostics
+          path: |
+            artifacts/
+            mobile/android/app/build/reports/androidTests/
+            mobile/android/app/build/outputs/androidTest-results/
+          retention-days: 14
