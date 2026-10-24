@@ -1,3 +1,4 @@
+import {applyHeroRarity,createSummaryHeroIdentity} from '/hero-rarity.js';
 import {ARENA_TRACKS} from '/arena-music-tracks.js';
 import {createArenaPlaylist} from '/arena-playlist.js';
 import {createArenaAudio} from '/arena-audio.js';
@@ -344,7 +345,9 @@ function renderBoard(){
    const wrap=document.createElement('article');wrap.className='slot-wrap';wrap.dataset.heroIndex=heroIndex;
    const label=document.createElement('span');label.className='slot-role';label.textContent=roleIcons[role]+' '+roleNames[role];
    const portrait=document.createElement('button');portrait.type='button';portrait.className='board-slot circle-slot filled';portrait.dataset.slot=slot;
-   portrait.disabled=prepDone||prepSubmitting;portrait.setAttribute('aria-label',demoA[heroIndex][0]+' · '+roleNames[role]+' · '+(lane==='front'?'Ön saf':'Arka saf'));
+   const rarityLabel=applyHeroRarity(document,portrait,{name:demoA[heroIndex][0],rarity:demoA[heroIndex][4]});
+   portrait.title=demoA[heroIndex][0]+' · '+rarityLabel;
+   portrait.disabled=prepDone||prepSubmitting;portrait.setAttribute('aria-label',demoA[heroIndex][0]+' · '+rarityLabel+' · '+roleNames[role]+' · '+(lane==='front'?'Ön saf':'Arka saf'));
    portrait.setAttribute('aria-pressed',String(selectedHero===heroIndex));portrait.classList.toggle('selected',selectedHero===heroIndex);
    heroPortrait(heroIndex,portrait);
    // Portrait selection only inspects bonuses; it cannot move/swap individual positions.
@@ -758,8 +761,7 @@ function showBattleSummary(){
   const rankedHeroes=summary.teams[side].map((stats,index)=>({...stats,hero:finalResult.teams[side].find(hero=>hero.id===stats.id),index})).sort((a,b)=>b.dealt-a.dealt||a.index-b.index);
   for(const {hero,dealt,taken,blocked,healing} of rankedHeroes){
    const line=document.createElement('div');line.className='battle-hero-stat-row';
-   const name=document.createElement('strong');name.textContent=hero.name;
-   line.append(name);
+   line.append(createSummaryHeroIdentity(document,hero));
    for(const [label,value] of [['Hasar',dealt],['Alınan',taken],['Kalkan',blocked],['Şifa',healing]]){
     const number=document.createElement('span');number.textContent=Number(value).toLocaleString('tr-TR');number.setAttribute('aria-label',label+': '+value);line.append(number);
    }
@@ -931,7 +933,7 @@ if(auctionCode&&auctionToken){void (async()=>{try{
  const own=data.teams[data.seat],rival=data.teams[1-data.seat];
  if(!Array.isArray(own)||own.length!==5||!Array.isArray(rival)||rival.length!==5)throw Error('Her oyuncunun beş kahramanı olmalı');
  if(own.some(c=>!c.id||!c.name)||rival.some(c=>!c.id||!c.name)||new Set(own.map(c=>c.id)).size!==5||new Set(rival.map(c=>c.id)).size!==5)throw Error('Açık artırma kahramanları doğrulanamadı');
- demoA=own.map(c=>[c.name,c.role||'fighter',c.power,c.universe]);demoB=rival.map(c=>[c.name,c.role||'fighter',c.power,c.universe]);
+ demoA=own.map(c=>[c.name,c.role||'fighter',c.power,c.universe,c.rarity]);demoB=rival.map(c=>[c.name,c.role||'fighter',c.power,c.universe,c.rarity]);
  previewCredits=data.credits[data.seat];assignedRoles=demoA.map(c=>c[1]);auctionLaneModifiers=own.map(c=>c.laneModifiers||{});heroArtCache.clear();void loadArenaCommander();
  const preparation=data.preparation;
  if(!preparation?.matchKey||!validateFormation(preparation,own))throw Error('Diziliş doğrulanamadı');
