@@ -44,7 +44,7 @@ test('prep controls keep touch targets, focus cues and separate sizing from fitt
  assert.match(css,/\.formation \.battle-board \.slot-wrap\{flex:1 1 80px;min-width:80px;max-width:104px\}/);
  assert.match(css,/\.preparation-detail \.formation-power-explanation\{display:block/);
  const compact=css.slice(css.indexOf('/* Preparation prioritizes'));
- assert.doesNotMatch(compact,/\.arena-fit|body\s*\{|\.arena-room\s/);
+ assert.doesNotMatch(compact,/\.arena-fit|(?:^|})\s*body\s*\{|\.arena-room\s/);
  assert.match(compact,/body:not\(\.arena-room\) #arena-music-toggle/);
  assert.match(compact,/body:not\(\.arena-room\) \.arena-room-nav>\.arena-prep-link\{display:none\}/);
 });
@@ -66,7 +66,7 @@ function preparationHarness(){
  runInNewContext(`const demoA=[['Hero A','tank',90],['Hero B','fighter',69],['Hero C','energy',80],['Hero D','fighter',83],['Hero E','support',90]];
  const assignedRoles=demoA.map(hero=>hero[1]),positions=[null,null,null,null,null],lanes=['front','front','back','back','back'];
  const roleNames={tank:'TANK',fighter:'FIGHTER',energy:'ENERGY',support:'SUPPORT'},roleIcons={};
- let prepDone=false,selectedHero=null,lastFormationDrag=0,auctionMode=false,auctionLaneModifiers=[],previewCredits=0;
+ let preparationDock=null,prepDone=false,selectedHero=null,lastFormationDrag=0,auctionMode=false,auctionLaneModifiers=[],previewCredits=0;
  ${laneCode}${code}
  this.actions={renderBoard,placeHero,setLane,completeSlots,select(hero){selectedHero=hero},snapshot(){return [...positions]}};`,context);
  return {ids,help,actions:context.actions};
@@ -96,4 +96,6 @@ test('new prep labels translate for the existing English portal',()=>{
  assert.equal(translate('Hazırlık için kalan süre'),'Preparation time remaining');
  assert.equal(translate('Yerleştirilecek kahramanlar'),'Heroes to place');
  assert.equal(translate('Nasıl oynanır?'),'How to play?');
+ assert.equal(translate('Öne al'),'Move to front');assert.equal(translate('Arkaya al'),'Move to back');
+ assert.equal(translate('Kahraman bilgileri ve roller'),'Hero details and roles');
 });
