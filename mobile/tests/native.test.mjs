@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, access } from 'node:fs/promises';
+import sharp from 'sharp';
 import { apiUrl, linkAction, readConfig } from '../src/policy.js';
 import { adaptSource, buildNative } from '../scripts/build.mjs';
 const local='https://localhost',api='https://api.example.com',pub='https://heroauction.com.tr';
@@ -45,5 +46,18 @@ test('complete native assets build with no admin/development distribution',async
   await access(new URL('../www/index.html',import.meta.url));
   await access(new URL('../www/images/lobby-crest.svg',import.meta.url));
   await access(new URL('../www/moderation.js',import.meta.url));
-  for(const file of ['admin.html','admin.js','platform.js','arena-3d.html'])await assert.rejects(access(new URL('../www/'+file,import.meta.url)));
+  for(const file of ['admin.html','admin.js','platform.js','arena-3d.html','original-heroes.html','commander-training.html','images/original/hero-10.png','images/original/expansion-09.webp'])await assert.rejects(access(new URL('../www/'+file,import.meta.url)));
+  const roster=JSON.parse(await readFile(new URL('../../commander-original-roster.json',import.meta.url),'utf8'));
+  assert.equal(roster.characters.length,50);
+  for(const hero of roster.characters){
+    const image=await sharp(await readFile(new URL('../www'+hero.portrait,import.meta.url))).metadata();
+    assert.ok(image.width>0&&image.width<=640&&image.height>0&&image.height<=640,hero.id);
+    assert.equal(image.format,hero.portrait.endsWith('.png')?'png':'webp',hero.id);
+  }
+  const music='audio/hero-auction-senkron-davul-bas-2dk.mp3';
+  assert.deepEqual(await readFile(new URL('../www/'+music,import.meta.url)),await readFile(new URL('../../public/'+music,import.meta.url)));
+  const report=JSON.parse(await readFile(new URL('../package-report.json',import.meta.url),'utf8'));
+  assert.ok(report.webBytes<20_000_000,JSON.stringify(report));
+  assert.equal(report.omitted.filter(file=>/\.(png|webp|svg)$/.test(file)).length,7);
+  assert.equal(report.retained.filter(image=>image.path.endsWith('.png')).length,13);
 });

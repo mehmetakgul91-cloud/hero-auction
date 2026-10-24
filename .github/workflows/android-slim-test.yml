@@ -1,0 +1,67 @@
+name: Android slim test APK
+on:
+  push:
+    branches: [fix/android-package-size-20261024]
+    paths: ['mobile/**', '.github/workflows/android-slim-test.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: android-slim-test
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install locked dependencies
+        run: |
+          npm ci --no-audit --no-fund
+          npm --prefix mobile ci --no-audit --no-fund
+      - name: Game and native regressions
+        run: |
+          node --test *.test.js tests/*.test.* test/*.test.js
+          npm run audit:strict
+          npm --prefix mobile test
+      - name: Configure existing isolated test backend
+        run: |
+          node --input-type=module <<'JS'
+          import {writeFileSync} from 'node:fs';
+          const origin='https://hero-auction-commander-test.onrender.com';
+          writeFileSync('mobile/config.local.json',JSON.stringify({apiOrigin:origin,publicOrigin:origin}));
+          JS
+      - name: Build with runner's installed Android SDK
+        run: |
+          npm --prefix mobile run doctor
+          npm --prefix mobile run apk:debug
+      - name: Verify signature and exact packaged assets
+        run: |
+          mkdir -p artifacts
+          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk artifacts/Hero-Auction-Android-Slim-0.1.2.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs artifacts/Hero-Auction-Android-Slim-0.1.2.apk
+          python3 mobile/scripts/verify-apk.py artifacts/Hero-Auction-Android-Slim-0.1.2.apk > artifacts/apk-verification.json
+          cp mobile/package-report.json artifacts/package-report.json
+          sha256sum artifacts/Hero-Auction-Android-Slim-0.1.2.apk > artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hero-auction-android-slim-0.1.2
+          path: artifacts/
+          retention-days: 30
+      - name: Publish the smaller test download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v0.1.2-android-slim-test-20261024 artifacts/* \
+            --target "$GITHUB_SHA" --prerelease \
+            --title 'Hero Auction — Android Slim Test 0.1.2' \
+            --notes-file mobile/SLIM-RELEASE.md

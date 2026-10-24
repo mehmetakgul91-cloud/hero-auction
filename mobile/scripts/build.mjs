@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 import { readConfig } from '../src/policy.js';
+import { packageImages, checkPackageSize } from './package-assets.mjs';
 export const mobile = fileURLToPath(new URL('..', import.meta.url));
 const root = path.resolve(mobile, '..');
 export function adaptSource(source, filename) {
@@ -37,7 +38,7 @@ export async function buildNative() {
   const out=path.join(mobile,'www');
   await rm(out,{recursive:true,force:true});await mkdir(out,{recursive:true});
   for (const item of await readdir(path.join(root,'public'),{withFileTypes:true})) {
-    if (/^(?:admin(?:\.|$)|arena-3d|arena-model|models$|platform\.js$|crazygames-privacy\.html$|ad-rewards\.js$|ads\.txt$|robots\.txt$|sitemap\.xml$)/.test(item.name)) continue;
+    if (/^(?:images$|original$|original-heroes\.html$|commander-training\.html$|admin(?:\.|$)|arena-3d|arena-model|models$|platform\.js$|crazygames-privacy\.html$|ad-rewards\.js$|ads\.txt$|robots\.txt$|sitemap\.xml$)/.test(item.name)) continue;
     const src=path.join(root,'public',item.name),dest=path.join(out,item.name);
     if (item.isDirectory()) await cp(src,dest,{recursive:true});
     else if (/\.(html|js)$/.test(item.name)) await writeFile(dest,adaptSource(await readFile(src,'utf8'),item.name));
@@ -47,6 +48,10 @@ export async function buildNative() {
   await cp(path.join(mobile,'src/native.css'),path.join(out,'native.css'));
   await build({entryPoints:[path.join(mobile,'src/runtime.js')],outfile:path.join(out,'native-runtime.js'),bundle:true,format:'iife',target:'chrome100',legalComments:'eof'});
   await writeFile(path.join(out,'native-build.json'),JSON.stringify({app:'Hero Auction Test',apiOrigin:config.apiOrigin,configured:config.configured,mode:config.configured?'network-test-unverified':'ui-preview-no-backend'},null,2)+'\n');
+  const images=await packageImages(root,out);
+  const report=await checkPackageSize(out,images);
+  await writeFile(path.join(mobile,'package-report.json'),JSON.stringify(report,null,2)+'\n');
+  console.log(`Android package: ${(report.webBytes/1e6).toFixed(2)} MB web assets; ${report.heroCount} hero portraits; ${report.omitted.length} unused image-directory files excluded.`);
   console.log(config.configured?'Android assets prepared; backend connectivity is NOT yet verified.':'Android UI preview assets prepared; no backend configured, gameplay unavailable.');
   return config;
 }
