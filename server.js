@@ -4,7 +4,9 @@ import {requireModerationForInteraction} from './moderation-availability.js';
 import {createModerationService,assertModeratedText} from './moderation-service.js';
 import {chooseBotBid,chooseBotFormation,chooseBotCommander,chooseBotCast,createBotCommanderProfile} from './bot-strategy.js';
 import {selectAuctionCards,rarityForPower} from './auction-card-pool.js';
+import {auctionRevealSnapshot,recordTailAward} from './auction-reveal-events.js';
 import {crazyGamesSource} from './crazygames-build.js';
+import {serveStaticAudio} from './static-audio.js';
 import {verifyCrazyGamesToken} from './crazygames-auth.js';
 import http from 'node:http';
 import {createFriendsService} from './friends-service.js';
@@ -206,13 +208,14 @@ const rand=n=>crypto.randomInt(n);
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
 const code=()=>String(crypto.randomInt(100,1000));
 const token=()=>crypto.randomBytes(24).toString('hex');
-const publicRoom=(r,seat)=>({code:r.code,universe:r.universe,phase:r.phase,round:r.round,turn:r.turn,deadline:r.deadline||null,series:r.series||[0,0],rematch:r.rematch||[false,false],mode:r.mode||"friend",difficulty:r.mode==='bot'?(r.difficulty||'medium'):null,rankChange:r.phase==='finished'?(r.rankChange||[0,0]):null,rankBefore:r.phase==='finished'?(r.rankBefore||[null,null]):null,topBid:r.topBid,topSeat:r.topSeat,history:r.history,chat:(r.chat||[]).filter(message=>moderationReady&&seat>=0&&!moderation.blocked(r.players[seat]?.accountId,r.players[message.seat]?.accountId)),players:r.players.map((p,i)=>p?{name:p.name,credits:p.credits,team:p.team.map(x=>({name:x.name,universe:x.universe,cost:x.cost,rarity:rarityForPower(x.power)})),connected:true,seat:i,playerId:seat>=0&&p.accountId?friends.playerId(p.accountId):null}:null),card:r.phase==='auction'?{name:r.cards[r.round].name,universe:r.cards[r.round].universe,rarity:rarityForPower(r.cards[r.round].power)}:null,final:r.phase==='finished'?r.players.map(p=>({name:p.name,score:Math.round(p.team.reduce((a,c)=>a+c.power,0)*(1+p.credits*0.01)*100)/100,credits:p.credits,team:p.team.map(c=>({name:c.name,universe:c.universe,cost:c.cost,power:c.power,rarity:rarityForPower(c.power)}))})):null,me:seat,catalogueCount:catalogue.size});
-function publish(r){markRoom(r);for(const client of listeners.get(r.code)||[]){try{client.res.write(`data: ${JSON.stringify(publicRoom(r,client.seat))}\n\n`)}catch{}}}
+const publicRoom=(r,seat)=>({...auctionRevealSnapshot(r),code:r.code,universe:r.universe,phase:r.phase,round:r.round,turn:r.turn,deadline:r.deadline||null,series:r.series||[0,0],rematch:r.rematch||[false,false],mode:r.mode||"friend",difficulty:r.mode==='bot'?(r.difficulty||'medium'):null,rankChange:r.phase==='finished'?(r.rankChange||[0,0]):null,rankBefore:r.phase==='finished'?(r.rankBefore||[null,null]):null,topBid:r.topBid,topSeat:r.topSeat,history:r.history,chat:(r.chat||[]).filter(message=>moderationReady&&seat>=0&&!moderation.blocked(r.players[seat]?.accountId,r.players[message.seat]?.accountId)),players:r.players.map((p,i)=>p?{name:p.name,credits:p.credits,team:p.team.map(x=>({name:x.name,universe:x.universe,cost:x.cost,rarity:rarityForPower(x.power)})),connected:true,seat:i,playerId:seat>=0&&p.accountId?friends.playerId(p.accountId):null}:null),card:r.phase==='auction'?{name:r.cards[r.round].name,universe:r.cards[r.round].universe,rarity:rarityForPower(r.cards[r.round].power)}:null,final:r.phase==='finished'?r.players.map(p=>({name:p.name,score:Math.round(p.team.reduce((a,c)=>a+c.power,0)*(1+p.credits*0.01)*100)/100,credits:p.credits,team:p.team.map(c=>({name:c.name,universe:c.universe,cost:c.cost,power:c.power,rarity:rarityForPower(c.power)}))})):null,me:seat,catalogueCount:catalogue.size});
+function publish(r){r.revision=(Number.isSafeInteger(r.revision)?r.revision:0)+1;markRoom(r);for(const client of listeners.get(r.code)||[]){try{client.res.write(`data: ${JSON.stringify(publicRoom(r,client.seat))}\n\n`)}catch{}}}
 function log(r,msg){r.history.push(msg);if(r.history.length>30)r.history.shift();}
 function forcedCardCost(card){return ({common:2,advanced:3,rare:4,legendary:5})[rarityForPower(card.power)]||2}
 function finishUnbidCard(r){const {seat,card,cost}=awardUnbidCard(r,forcedCardCost);log(r,`${r.players[seat].name} ${card.name} karakterini iki pas sonrası ${cost} krediye aldı.`);advanceRound(r)}
 function advanceRound(r){
  r.deadline=null;
+ r.tailAwards??=[];
  while(r.round<10){
   const open=r.players.map((p,i)=>p.team.length<5?i:-1).filter(i=>i>=0);
   if(!open.length)break;
@@ -220,6 +223,7 @@ function advanceRound(r){
    const seat=open[0],card=r.cards[r.round],cost=forcedCardCost(card);
    r.players[seat].credits-=cost;
    r.players[seat].team.push({...card,cost});
+   recordTailAward(r,seat,card,cost);
    log(r,`${r.players[seat].name} ${card.name} karakterini zorunlu alımda ${cost} krediye aldı.`);
    r.round++;continue;
   }
@@ -228,12 +232,14 @@ function advanceRound(r){
    const seat=open.reduce((best,i)=>best<0||r.players[i].team.length<r.players[best].team.length?i:best,-1);
    const card=r.cards[r.round],cost=forcedCardCost(card);
    r.players[seat].credits-=cost;r.players[seat].team.push({...card,cost});
+   recordTailAward(r,seat,card,cost);
    log(r,`${r.players[seat].name} ${card.name} karakterini ${cost} krediye aldı (eksi bakiye uygulanabilir).`);
    r.round++;continue;
   }
   if(funded.length===1){
    const seat=funded[0],card=r.cards[r.round],cost=forcedCardCost(card);
    r.players[seat].credits-=cost;r.players[seat].team.push({...card,cost});
+   recordTailAward(r,seat,card,cost);
    log(r,`${r.players[seat].name} ${card.name} karakterini ${cost} krediye aldı.`);
    r.round++;continue;
   }
@@ -581,6 +587,7 @@ if(url==='/api/rematch'){
    r.goldAward=null;r.rankChange=null;r.rankBefore=null;r.cards=newCards(r.universe);
    r.round=0;r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.topBid=0;r.topSeat=null;
    r.history=[];r.openingPassSeat=null;r.rematch=[false,false];r.battleCompleted=[false,false];
+   r.tailAwards=[];r.revision=0;
    r.matchSettled=false;r.battleSettlementPending=false;r.battleSync=null;r.created=Date.now();r.lastActivity=Date.now();
    for(const p of r.players){p.credits=20;p.team=[];}
    log(r,'Rövanş başladı!');
@@ -878,17 +885,19 @@ if(req.method==='GET'&&url.pathname==='/api/online'){
 }
 if(req.method==='GET'&&url.pathname==='/api/info')return send(200,{catalogueCount:catalogue.size,counts:Object.fromEntries(['original'].map(k=>[k,[...catalogue.values()].filter(x=>x.universe===k).length]))});
 if(req.method==='POST'&&url.pathname.startsWith('/api/')){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>12000)error('İstek çok büyük.')}let body;try{body=JSON.parse(raw)}catch{error('Geçersiz JSON')}return send(200,await api(url.pathname,body))}
-if(req.method==='GET'&&(url.pathname==='/crazygames'||url.pathname.startsWith('/crazygames/'))){
+const audioHead=req.method==='HEAD'&&path.extname(decodeURIComponent(url.pathname)).toLowerCase()==='.mp3';
+if((req.method==='GET'||audioHead)&&(url.pathname==='/crazygames'||url.pathname.startsWith('/crazygames/'))){
  if(url.pathname==='/crazygames'){res.writeHead(302,{Location:'/crazygames/'});res.end();return}
  const relative=decodeURIComponent(url.pathname.slice('/crazygames/'.length))||'index.html';
  // Public game assets only; admin and development screens are not submission pages.
  if(/(?:^|\/)(?:admin|commander-training)(?:\.|$)/.test(relative))return send(404,{error:'Bulunamadı'});
  const file=path.resolve(root,'public',relative==='privacy'?'privacy.html':relative);
  if(!file.startsWith(path.join(root,'public')+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile())return send(404,{error:'Bulunamadı'});
- const ext=path.extname(file);res.writeHead(200,{'Content-Type':mime[ext]||'application/octet-stream','Cache-Control':'no-store'});
+ const ext=path.extname(file);if(ext.toLowerCase()==='.mp3')return serveStaticAudio(req,res,file);
+ res.writeHead(200,{'Content-Type':mime[ext]||'application/octet-stream','Cache-Control':'no-store'});
  if(ext==='.html'||ext==='.js')res.end(crazyGamesSource(fs.readFileSync(file,'utf8'),ext));else fs.createReadStream(file).pipe(res);return;
 }
-if(req.method==='GET'){const staticPath=url.pathname==='/'?'index.html':url.pathname==='/privacy'?'privacy.html':url.pathname==='/admin'?'admin.html':decodeURIComponent(url.pathname);const file=path.join(root,'public',staticPath);if(!file.startsWith(path.join(root,'public')+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile())return send(404,{error:'Bulunamadı'});res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});fs.createReadStream(file).pipe(res);return}send(405,{error:'İzin verilmeyen yöntem'});}catch(e){send(e.status||500,{error:e.status?e.message:'Sunucu hatası'})}});
+if(req.method==='GET'||audioHead){const staticPath=url.pathname==='/'?'index.html':url.pathname==='/privacy'?'privacy.html':url.pathname==='/admin'?'admin.html':decodeURIComponent(url.pathname);const file=path.join(root,'public',staticPath);if(!file.startsWith(path.join(root,'public')+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile())return send(404,{error:'Bulunamadı'});if(path.extname(file).toLowerCase()==='.mp3')return serveStaticAudio(req,res,file);res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});fs.createReadStream(file).pipe(res);return}send(405,{error:'İzin verilmeyen yöntem'});}catch(e){send(e.status||500,{error:e.status?e.message:'Sunucu hatası'})}});
 setInterval(()=>{for(const r of rooms.values()){
 if(r.phase==='matching'&&Date.now()-r.created>=60000){waiting.delete(r.code);r.players[1]={name:'Bilgisayar',token:token(),credits:20,team:[]};r.mode='bot';assignBotCommander(r);r.entryPaid=false;r.phase='auction';r.deadline=Date.now()+20000;publish(r);}
 tickBotBattle(r);

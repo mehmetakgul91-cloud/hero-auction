@@ -9,9 +9,11 @@ import {createWebInvite,renderWebInvite} from '/web-invite.js';
 import {createInviteSharer} from '/invite-share.js';
 let webInvite=null;
 import {auctionCalculationMarkup} from '/auction-calculation.js';
-import {flyAwardCard} from '/auction-card-flight.js';
+import {flyAwardCard} from '/auction-card-flight.js?v=every-player-20261024';
 import {collectOfferedAwards,displaySeat} from '/auction-awards.js';
-import {collectTailAwards,mountTailReveal} from '/auction-tail-reveal.js';
+import {collectTailAwards,mountTailReveal} from '/auction-tail-reveal.js?v=every-player-20261024';
+import {auctionMatchKey,isStaleAuctionSnapshot,createTailReceipts} from '/auction-delivery-state.js';
+const tailReceipts=createTailReceipts({storage:()=>window.sessionStorage,scope:location.pathname.startsWith('/crazygames/')?'crazygames':'web'});
 let tailReveal=null;
 const awardFlights=new Set(),seenAwardFlights=new Set();
 import {auctionDeckMarkup,revealAuctionCard,cancelAuctionReveal} from '/auction-deck.js';
@@ -382,7 +384,29 @@ async function post(url,data){
  finally{if(entry)roomEntryPending--;}
 }
 function save(token,r){session={token,code:r.code};localStorage.setItem('hero-auction-session',JSON.stringify(session));show(r);connect();refreshOnline()}
-function connect(){stream?.close();if(!session)return;stream=new EventSource(`/api/events?code=${encodeURIComponent(session.code)}&token=${encodeURIComponent(session.token)}&authToken=${encodeURIComponent(login?.authToken||'')}`);stream.onmessage=e=>{try{show(JSON.parse(e.data))}catch{}};stream.onerror=()=>{if(session&&!stream?.__rechecking){stream.__rechecking=true;setTimeout(async()=>{if(!session)return;try{await post('/api/state',session)}catch(e){if(e.message==='Oda bulunamadı.'||e.message==='Oyuncu yetkisi geçersiz.'){stream?.close();localStorage.removeItem('hero-auction-session');session=null;room=null;applyLogin();notify('Oyun odası artık mevcut değil. Yeni bir oyun oluşturabilirsin.')}}if(stream)stream.__rechecking=false},3000)}};}
+async function syncRoomSnapshot({force=false}={}){
+ const current=session,auth=login?.authToken;if(!current)return;
+ const result=await post('/api/state',current);
+ if(session!==current||login?.authToken!==auth)return;
+ const next=result.room;
+ if(force||next?.revision!==room?.revision||next?.matchKey!==room?.matchKey||next?.phase!==room?.phase||next?.round!==room?.round||next?.chat?.length!==room?.chat?.length)show(next);
+}
+// Guard reconnects against stale room and account sessions.
+function connect(){stream?.close();if(!session)return;
+ const current=session,auth=login?.authToken,source=new EventSource(`/api/events?code=${encodeURIComponent(current.code)}&token=${encodeURIComponent(current.token)}&authToken=${encodeURIComponent(auth||'')}`);stream=source;
+ source.onmessage=e=>{if(stream!==source||session!==current||login?.authToken!==auth)return;try{show(JSON.parse(e.data))}catch{}};
+ source.onerror=()=>{
+  if(stream!==source||source.__rechecking)return;source.__rechecking=true;
+  setTimeout(async()=>{
+   if(stream!==source||session!==current||login?.authToken!==auth)return;
+   try{await syncRoomSnapshot();}catch(e){
+    if(stream===source&&session===current&&login?.authToken===auth&&(e.message==='Oda bulunamadı.'||e.message==='Oyuncu yetkisi geçersiz.')){
+     source.close();localStorage.removeItem('hero-auction-session');session=null;room=null;applyLogin();notify('Oyun odası artık mevcut değil. Yeni bir oyun oluşturabilirsin.');
+    }
+   }finally{source.__rechecking=false;}
+  },3000);
+ };
+}
 function cancelAwardFlights(){for(const flight of awardFlights)flight.cancel();awardFlights.clear();seenAwardFlights.clear();}
 function awardDestination(seat,me){return document.querySelector('#player'+displaySeat(seat,me)+' .teams')||$('player'+displaySeat(seat,me));}
 function animateWonAuctionCard(award,me,sourceSnapshot){
@@ -392,20 +416,22 @@ function animateWonAuctionCard(award,me,sourceSnapshot){
  const flight=flyAwardCard(sourceSnapshot,awardDestination(award.seat,me),{duration:1400,reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,label:award.seat===me?(document.documentElement.lang==='en'?'Your team':'Senin takımın'):(document.documentElement.lang==='en'?'Opponent team':'Rakip takım')});
  awardFlights.add(flight);return flight.finished.finally(()=>awardFlights.delete(flight));
 }
-function show(r){if(!signedIn())return;roomInvitesUI.setRoom(r,session?.token);friendsUI.setRoom(r);if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const tailAwards=collectTailAwards(room,r);
+function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAuctionSnapshot(room,r))return;roomInvitesUI.setRoom(r,session?.token);friendsUI.setRoom(r);if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.matchKey===auctionMatchKey(r)&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const tailAwards=tailReceipts.pending(r,collectTailAwards(room,r));
  if(room?.code!==r.code||(r.phase==='auction'&&room?.phase!=='auction')||(r.phase==='auction'&&r.round<room?.round))cancelAwardFlights();
- const deliveryCounts=(room?.players||[]).map(p=>p?.team?.length||0);
  const offeredAwards=collectOfferedAwards(room,r),offeredArt=document.querySelector('#stage .card-art');
+ const deliveryCounts=r.phase==='finished'?(r.final||[]).map((p,seat)=>p.team.length-tailAwards.filter(a=>a.seat===seat).length-offeredAwards.filter(a=>a.seat===seat).length):[];
  const offeredSnapshot=offeredArt?{element:offeredArt.cloneNode(true),rect:offeredArt.getBoundingClientRect()}:null;
  cancelAuctionReveal($('stage'));$('game').classList.remove('auction-results-only','auction-delivery-active');
+ // A background tab must not consume unseen receipts; visibility resumes them.
+ if(document.hidden&&r.phase==='finished'&&tailAwards.length){room=r;return;}
  // Keep the auction presentation until every already-awarded card has opened.
  // Authoritative state still advances immediately; no bidding or server timers are paused.
- if(r.phase==='finished'&&(tailAwards.length||offeredAwards.length||awardFlights.size)&&!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches){
+ if(r.phase==='finished'&&(tailAwards.length||offeredAwards.length||awardFlights.size)){
   room=r;window.HeroPlatform?.setRoom(r);window.HeroPlatform?.gameplay(false);refreshGold();
   offeredAwards.forEach(award=>animateWonAuctionCard(award,r.me,offeredSnapshot));
   let deliveryController;
   const previousFlights=Promise.all([...awardFlights].map(flight=>flight.finished));
-  const stage=$('stage');$('game').dataset.phase='auction';
+  const stage=$('stage');$('game').dataset.phase='auction';$('login-gate').hidden=true;$('home').hidden=true;$('game').hidden=false;$('room-title').textContent=r.code;
   stage.querySelectorAll('button,input').forEach(control=>control.disabled=true);
   if(offeredArt)offeredArt.style.visibility='hidden';
   const receiveCard=({card,seat})=>{
@@ -426,13 +452,15 @@ function show(r){if(!signedIn())return;roomInvitesUI.setRoom(r,session?.token);f
   });
 
   $('phase').textContent=document.documentElement.lang==='en'?'REMAINING HEROES':'KALAN KAHRAMANLAR';renderChat(r);
-  tailReveal=mountTailReveal(stage,null,tailAwards,{english:document.documentElement.lang==='en',me:r.me,startAfter,resolveDestination:seat=>$('player'+displaySeat(seat,r.me)).querySelector('.delivery-slot'),onArrive:receiveCard,onComplete:()=>{
-   cancelAwardFlights();tailReveal=null;show(room);
+  tailReveal=mountTailReveal(stage,null,tailAwards,{english:document.documentElement.lang==='en',me:r.me,reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,startAfter,resolveDestination:seat=>$('player'+displaySeat(seat,r.me)).querySelector('.delivery-slot'),onArrive:award=>{receiveCard(award);tailReceipts.received(r,[award]);},onComplete:({restoreFocus}={})=>{
+   tailReceipts.received(r,tailAwards);cancelAwardFlights();tailReveal=null;show(room);
+   if(restoreFocus)$('confirm-arena-entry')?.focus({preventScroll:true});
   },loadArt:async card=>{
    const response=await fetch('/api/art?universe='+encodeURIComponent(card.universe)+'&name='+encodeURIComponent(card.name));
    return response.ok?(await response.json()).url:null;
-  }});deliveryController=tailReveal;tailReveal.signature=JSON.stringify(r.final);return;
+  }});deliveryController=tailReveal;tailReveal.matchKey=auctionMatchKey(r);tailReveal.signature=JSON.stringify(r.final);return;
  }
+ if(r.phase==='finished')tailReceipts.received(r,tailAwards);
  window.HeroPlatform?.gameplay(r.phase==='auction');const currentCardKey=r.phase==='auction'?r.code+':'+r.round+':'+r.card?.name:null;const isNewCard=!!currentCardKey&&currentCardKey!==lastCardKey;lastCardKey=currentCardKey;const wasFinished=room?.phase==='finished'&&room?.code===r.code;const enteredAuction=r.phase==='auction'&&(room?.phase!=='auction'||room?.code!==r.code||room?.round>r.round);room=r;$('game').dataset.phase=r.phase;window.HeroPlatform?.setRoom(r);if(window.HeroPlatform)commanderVisibility();if(enteredAuction)refreshGold();if(r.phase==='finished'&&!wasFinished){refreshGold();}
  for(let i=0;i<2;i++){const seat=r.me===1?1-i:i;const p=r.players[seat];$('player'+i).className='player player-side'+(r.me===seat?' me':'')+(r.phase==='auction'&&r.turn===seat?' active-turn':'');$('player'+i).innerHTML=p?`<div class="name">${esc(displayPlayerName(p,r.mode==='bot'&&seat===1))} ${r.me===seat?'(SEN)':''}</div><div class="credit">${p.credits} <small>kalan kredi</small></div><div class="spent-credit">💸 ${20-p.credits} kredi kullanıldı</div><div class="side-team-title">🎴 KARTLAR (${p.team.length})</div><div class="teams">${p.team.map(x=>`<span class="side-hero"><span class="side-hero-name">${esc(x.name)} <small class="rarity rarity-${esc(x.rarity||'common')}">${rarityLabel(x.rarity)}</small></span><small class="side-hero-role">${esc(specialtyLabel(x))}</small><span class="side-hero-cost">${Number(x.cost)||0} <small>kredi</small></span></span>`).join('')||'Henüz karakter yok'}</div>`:'<div class="name">2. OYUNCU</div><p class="status">Katılması bekleniyor…</p>'}
  for(const award of offeredAwards)animateWonAuctionCard(award,r.me,offeredSnapshot);
@@ -461,8 +489,13 @@ if(canBid&&max>=min){$('bidrange').oninput=e=>$('bidview').textContent=e.target.
 function renderChat(r){const panel=$('chat-panel');if(!panel)return;panel.hidden=r.mode==='bot'||Boolean(window.HeroPlatform?.disableChat);if(panel.hidden)return;const list=$('chat-messages');const oldCount=Number(list.dataset.count||0);const messages=r.chat||[];if(oldCount!==messages.length||list.dataset.room!==r.code){const nearBottom=list.scrollHeight-list.scrollTop-list.clientHeight<80;list.innerHTML=messages.map(m=>`<div class="chat-line ${m.seat===r.me?'chat-mine':''}"><span class="chat-author">${esc(m.name)} · ${new Date(m.time).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</span><span class="chat-text">${esc(m.message)}</span></div>`).join('')||'<p class="status">Henüz mesaj yok. Rakibine merhaba de!</p>';list.dataset.count=String(messages.length);list.dataset.room=r.code;if(nearBottom||!oldCount)list.scrollTop=list.scrollHeight;}}
 let chatSending=false;
 $('chat-send').onclick=async()=>{if(!session||room?.mode==='bot'||chatSending||window.HeroPlatform?.disableChat)return;const input=$('chat-input');const message=input.value.trim();if(!message)return;chatSending=true;$('chat-send').disabled=true;try{const result=await post('/api/chat',{...session,message});input.value='';show(result.room);}catch(e){notify('Sohbet mesajı gönderilemedi: '+e.message)}finally{chatSending=false;$('chat-send').disabled=false}};
-// Keep chat synchronized even when a proxy interrupts the live event stream.
-setInterval(async()=>{if(!session||!room||room.mode==='bot'||document.hidden)return;try{const result=await post('/api/state',session);if(result.room?.chat?.length!==room.chat?.length||result.room?.code!==room.code)show(result.room)}catch{}},4000);
+// Recover game progress as well as chat when a proxy drops SSE (also in bot games).
+setInterval(()=>{if(!session||!room||document.hidden)return;void syncRoomSnapshot().catch(()=>{});},4000);
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden){cancelAwardFlights();tailReveal?.cancel();tailReveal=null;cancelAuctionReveal($('stage'));return;}
+ if(room?.phase==='finished')show(room);
+ void syncRoomSnapshot().catch(()=>{});
+});
 // Delegate focus directly from the user's tap; iOS requires synchronous focus in the gesture.
 const chatPanel=$('chat-panel');
 const chatInput=$('chat-input');
@@ -477,7 +510,7 @@ $('chat-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){
 // PokeAPI species are indexed by national Pokédex number; name mapping is loaded lazily.
 let pokeMap={};async function loadPokeMap(){try{const r=await fetch('https://pokeapi.co/api/v2/pokemon-species?limit=1025');const j=await r.json();j.results.forEach((x,i)=>pokeMap[x.name.replaceAll('-',' ').toLowerCase()]=i+1);if(room)show(room)}catch{}}
 function pokemonId(name){return pokeMap[name.toLowerCase()]||null}
-async function act(url,extra){try{const j=await post(url,{...session,...extra});show(j.room)}catch(e){notify(e.message)}}
+async function act(url,extra){const current=session,auth=login?.authToken;try{const j=await post(url,{...current,...extra});if(session===current&&login?.authToken===auth)show(j.room)}catch(e){if(session===current&&login?.authToken===auth)notify(e.message)}}
 
 $('create').onclick=async()=>{if(!await validateLogin())return;try{const j=await post('/api/create',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
 $('join').onclick=async()=>{if(webInvite?.pending)return;if(!await validateLogin())return;try{const j=await post('/api/join',{...gameIdentity(),name:$('name').value,code:$('roomcode').value.trim().toUpperCase()});save(j.token,j.room)}catch(e){notify(e.message)}};
@@ -616,3 +649,5 @@ for(const [id,type] of [['social-profile','profile'],['social-leaders','leaders'
 window.addEventListener('hero:platform-settings',()=>{if(room)renderChat(room);if(window.HeroPlatform?.muteAudio&&auctionSfxContext)void auctionSfxContext.suspend().catch(()=>{})});
 
 window.addEventListener('pagehide',()=>{cancelAwardFlights();tailReveal?.cancel();tailReveal=null;cancelAuctionReveal($('stage'));});
+
+window.addEventListener('pageshow',event=>{if(event.persisted&&session){if(room)show(room);void syncRoomSnapshot({force:true}).catch(()=>{});}});

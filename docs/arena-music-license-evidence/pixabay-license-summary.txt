@@ -1,0 +1,91 @@
+Browser tab: 7, Title: "Content License - Pixabay", URL: "https://pixabay.com/service/license-summary/".
+1 AXWebArea Content License - Pixabay, URL: pixabay.com/service/license-summary/
+	2 container app
+		3 container
+			4 link Description: Pixabay, Value: pixabay.com/
+			5 container
+				6 button Search Pixabay
+					7 container Search
+				8 search text field (settable)
+			9 button Join
+			10 button Hamburger
+				11 container Hamburger
+		12 container
+			13 link Description: FAQ, Value: pixabay.com/service/faq/
+			14 link Description: License Summary, Value: pixabay.com/service/license-summary/
+			15 link Description: Terms of Service, Value: pixabay.com/service/terms/
+			16 link Description: Acceptable Use Policy, Value: pixabay.com/service/acceptable-use-policy/
+			17 link Description: Privacy Policy, Value: pixabay.com/service/privacy/
+			18 link Description: Cookies Policy, Value: pixabay.com/service/cookies/
+			19 link Description: Content Safety and Compliance, Value: pixabay.com/service/content-safety-and-compliance/
+			20 link Description: Report Content, Value: pixabay.com/content-reports/
+		21 heading Content License Summary, Value: 1
+			22 text Content License Summary
+		23 container
+			24 text Welcome to Pixabay! Pixabay is a vibrant community of authors, artists and creators sharing royalty-free images, video, audio and other media. We refer to this collectively as " Content ". By accessing and using Content, or by contributing Content, you agree to comply with our Content License.
+		25 container
+			26 text At Pixabay, we like to keep things as simple as possible. For this reason, we have created this short summary of our Content License which is available in full
+			27 link Description: here, Value: pixabay.com/service/terms/
+			28 text . Please keep in mind that only the full Content License is legally binding.
+		29 heading What are you allowed to do with Content?, Value: 4
+			30 text What are you allowed to do with Content?
+		31 text Subject to the Prohibited Uses (see below), the Content License allows users to:
+		32 container
+			33 container ✓
+				34 text ✓
+			35 container Use Content for free
+				36 text Use Content for free
+			37 container ✓
+				38 text ✓
+			39 container Use Content without having to attribute the author (although giving credit is always appreciated by our community!)
+				40 text Use Content without having to attribute the author (although giving credit is always appreciated by our community!)
+			41 container ✓
+				42 text ✓
+			43 container Modify or adapt Content into new works
+				44 text Modify or adapt Content into new works
+		45 heading What are you not allowed to do with Content?, Value: 4
+			46 text What are you not allowed to do with Content?
+		47 text We refer to these as Prohibited Uses which include:
+		48 container
+			49 container ✕
+				50 text ✕
+			51 container You cannot sell or distribute Content (either in digital or physical form) on a Standalone basis. Standalone means where no creative effort has been applied to the Content and it remains in substantially the same form as it exists on our website.
+				52 text You cannot sell or distribute Content (either in digital or physical form) on a Standalone basis. Standalone means where no creative effort has been applied to the Content and it remains in substantially the same form as it exists on our website.
+			53 container ✕
+				54 text ✕
+			55 container If Content contains any recognisable trademarks, logos or brands, you cannot use that Content for commercial purposes in relation to goods and services. In particular, you cannot print that Content on merchandise or other physical products for sale.
+				56 text If Content contains any recognisable trademarks, logos or brands, you cannot use that Content for commercial purposes in relation to goods and services. In particular, you cannot print that Content on merchandise or other physical products for sale.
+			57 container ✕
+				58 text ✕
+			59 container You cannot use Content in any immoral or illegal way, especially Content which features recognisable people.
+				60 text You cannot use Content in any immoral or illegal way, especially Content which features recognisable people.
+			61 container ✕
+				62 text ✕
+			63 container You cannot use Content in a misleading or deceptive way.
+				64 text You cannot use Content in a misleading or deceptive way.
+			65 container ✕
+				66 text ✕
+			67 container You cannot use any of the Content as part of a trade-mark, design-mark, trade-name, business name or service mark.
+				68 text You cannot use any of the Content as part of a trade-mark, design-mark, trade-name, business name or service mark.
+		69 text Please be aware that certain Content may be subject to additional intellectual property rights (such as copyrights, trademarks, design rights), moral rights, proprietary rights, property rights, privacy rights or similar. It is your responsibility to check whether you require the consent of a third party or a license to use Content.
+		70 container
+			71 image
+			72 text Over 6.3 million+ high quality stock images, videos and music shared by our talented community.
+			73 link Description: Instagram, Value: instagram.com/pixabay/
+			74 link Description: Facebook, Value: facebook.com/pixabay
+			75 link Description: TikTok, Value: tiktok.com/@pixabaymedia
+			76 link Description: Twitter, Value: x.com/pixabay
+			77 link Description: LinkedIn, Value: linkedin.com/company/pixabay/
+			78 link Description: YouTube, Value: youtube.com/@pixabaymedia
+			79 link Description: Pinterest, Value: pinterest.com/pixabay/
+			80 text Discover
+			81 button (collapsed) ChevronDown, Secondary Actions: Expand
+				82 container ChevronDown
+			83 text Community
+			84 button (collapsed) ChevronDown, Secondary Actions: Expand
+				85 container ChevronDown
+			86 text About
+			87 button (collapsed) ChevronDown, Secondary Actions: Expand
+				88 container ChevronDown
+
+The focused UI element is 1 AXWebArea Content License - Pixabay, URL: pixabay.com/service/license-summary/

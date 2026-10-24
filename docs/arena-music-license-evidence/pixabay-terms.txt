@@ -1,0 +1,368 @@
+Browser tab: 7, Title: "Terms of Service - Pixabay", URL: "https://pixabay.com/service/terms/".
+0 AXWebArea Terms of Service - Pixabay, URL: pixabay.com/service/terms/
+	1 container app
+		2 container
+			3 link Description: Pixabay, Value: pixabay.com/
+			4 container
+				5 button Search Pixabay
+					6 container Search
+				7 search text field (settable)
+			8 button Join
+			9 button Hamburger
+				10 container Hamburger
+		11 container
+			12 link Description: FAQ, Value: pixabay.com/service/faq/
+			13 link Description: License Summary, Value: pixabay.com/service/license-summary/
+			14 link Description: Terms of Service, Value: pixabay.com/service/terms/
+			15 link Description: Acceptable Use Policy, Value: pixabay.com/service/acceptable-use-policy/
+			16 link Description: Privacy Policy, Value: pixabay.com/service/privacy/
+			17 link Description: Cookies Policy, Value: pixabay.com/service/cookies/
+			18 link Description: Content Safety and Compliance, Value: pixabay.com/service/content-safety-and-compliance/
+			19 link Description: Report Content, Value: pixabay.com/content-reports/
+		20 heading Pixabay Terms of Service, Value: 1
+			21 text Pixabay Terms of Service
+		22 text Last updated: 20 October, 2026
+		23 content list
+			24 container
+				25 heading 1. The basics., Value: 4, ID: section-1-basics
+					26 text 1.  The basics.
+				27 text Welcome to Pixabay! Pixabay is a vibrant community of creatives sharing royalty-free content. These Terms of Service (" Terms ") apply to the pixabay.com website, related websites, software, mobile apps, plug-ins and other Pixabay-operated services (collectively, the " Service(s) "). These Terms govern the relationship between Pixabay, a Canva Germany GmbH brand (" we ", " our " or " Pixabay ") and any user of the Service (" you ", " your " or " User "), including in certain circumstances, the relationship between Users. By using the Service (including by downloading and using Content from the Service, or contributing Content or Communications to the Service):
+				28 content list
+					29 container
+						30 AXListMarker • 
+						31 text you agree that you are entering into these Terms with us which will become a legally binding agreement between you and us; and
+					32 container
+						33 AXListMarker • 
+						34 text you represent and warrant that you have the full right, power and authority to agree to and be bound by these Terms and to fully perform all of your obligations listed in these Terms.
+				35 text If you don’t agree to these Terms, please don’t use the Service. Children may not access or use the Service. For the purposes of these Terms, a child is a person under the age of 13 (or the minimum legal age required to provide consent for processing of personal data in the country where the child is located, noting 16 is the minimum legal age in Germany). We reserve the right, at our sole discretion, to change or modify these Terms at any time, including the right to cancel or change the licenses granted by these Terms. If we do this, we will post the most current version of these Terms on this page. We will seek to provide you with reasonable notice of any change to the Terms that, in our sole determination, materially adversely affect your rights or your use of the Service. We may provide you with this notice via the Service and/or by direct message on the Service and/or by posting on Pixabay’s public forum. By continuing to use the Service after any revised Terms become effective, you agree to be bound by the new Terms.
+			36 container
+				37 heading 2. Content., Value: 4, ID: section-2-content
+					38 text 2.  Content.
+				39 text In these Terms when we refer to " Content " we are referring to the content which is available on, or uploaded to, the Service, but excluding any third party paid advertising or sponsored content (over which Pixabay has no control and we do not grant any license). Content includes, but isn’t limited to the following items:
+				40 content list
+					41 container
+						42 AXListMarker • 
+						43 text " Images ", which means photographs, vector graphics, drawings and illustrations.
+					44 container
+						45 AXListMarker • 
+						46 text " Videos ", which means moving images, animations, film footage and other audio-visual representations and content.
+					47 container
+						48 AXListMarker • 
+						49 text " Audio ", which means music, sounds, sound effects and other audio representations and content.
+					50 container
+						51 AXListMarker • 
+						52 text " Other Media ", which means any other media or content which is visual or audio in nature, or a combination of these,
+				53 text and includes in each case any associated text, captions, descriptions or metadata.
+			54 container
+				55 heading 3. Communications., Value: 4, ID: section-3-communications
+					56 text 3.  Communications.
+				57 text Pixabay also makes available various functionality across the Service which allows you to interact and communicate with the Service and with other Users, for example by:
+				58 content list
+					59 container
+						60 AXListMarker • 
+						61 text selecting a username, uploading a profile photo and creating a profile page;
+					62 container
+						63 AXListMarker • 
+						64 text making contributions in our Pixabay forum and discussion rooms;
+					65 container
+						66 AXListMarker • 
+						67 text leaving comments on any Content or blog articles;
+					68 container
+						69 AXListMarker • 
+						70 text sending messages to other users via our messaging functionality; and/or
+					71 container
+						72 AXListMarker • 
+						73 text any other communications submitted by you through the Service, together, “ Communication(s) ”.
+			74 container
+				75 heading 4. CC0 license., Value: 4, ID: section-4-cc0-license
+					76 text 4.  CC0 license.
+				77 text Some of the Content made available for download on the Service is subject to and licensed under the Creative Commons Zero (CC0) license (" CC0 Content "). CC0 Content on the Service is any content which lists a "Published date" prior to January 9, 2019. This means that to the greatest extent permitted by applicable law, the authors of that work have dedicated the work to the public domain by waiving all of his or her rights to the CC0 Content worldwide under copyright law, including all related and neighboring rights. Subject to the CC0 License Terms, the CC0 Content can be used for all personal and commercial purposes without attributing the author/ content owner of the CC0 Content or Pixabay.
+			78 container
+				79 heading 5. Content License granted to you for Content (other than CC0 Content)., Value: 4, ID: section-5-content-license
+					80 text 5.  Content License granted to you for Content (other than CC0 Content).
+				81 text Subject to the Prohibited Uses described below (which you agree and acknowledge you are not entitled to engage in), when you download any Content that is not CC0 Content from the Service, we grant you an irrevocable, worldwide, perpetual (or as long as allowed by law), non-exclusive and royalty-free right to download, use, copy, modify or adapt the Content for commercial or non-commercial purposes ( 'Content License' ). The rights granted are non-exclusive, meaning that we may also grant other users the same rights in the same Content. For the avoidance of doubt, you do not obtain any rights in any other users’ Communications. You agree and acknowledge that the following items are " Prohibited Uses " and the Content License which we grant to you is conditional on you not engaging in any of the Prohibited Uses.
+				82 content list
+					83 container
+						84 AXListMarker • 
+						85 text You cannot sell or distribute the Content (either in digital or physical form) on a Standalone basis. This includes selling or distributing Content on a Standalone basis as an image, audio, video, NFT or other digital file (including through a stock media platform), as well as a print, wallpaper, poster or on merchandise or on other physical products. When we refer to " Standalone " we mean where no creative effort has been applied to the Content and it remains in substantially the same form as it exists on the Service. To help illustrate this, here are some examples:
+						86 content list
+							87 container
+								88 AXListMarker ■ 
+								89 text using the Content in its original form or  solely  using a filter, changing colors, resizing  or  cropping the Content remains  Standalone use .
+							90 container
+								91 AXListMarker ■ 
+								92 text using the Content with a  combination  of images, videos, audio files, other media, text, illustrations, background features and editing techniques is not Standalone use , so long as the combined effect is to make a "new" creative work.
+					93 container
+						94 AXListMarker • 
+						95 text If Content depicts any trademarks, logos or brands (whether two- or three-dimensional), you cannot use that Content for commercial purposes in relation to goods and services, in particular not print that Content on merchandise or other physical products for sale.
+					96 container
+						97 AXListMarker • 
+						98 text You cannot use Content in any immoral or illegal way, especially Content which features a recognisable person. You cannot use any Content on or in conjunction with anything pornographic, obscene, offensive (including but not limited to in relation to adult entertainment venues, escort services, drug use, dating services, in a way which portrays someone as suffering from, or medicating for, a physical or mental ailment), illegal, immoral, infringing, defamatory, hateful, threatening or libellous in nature, in a political context (such as the promotion, advertisement or endorsement of any party, candidate, or elected official or in connection with any political party or viewpoint) or in breach of any law, regulation or industry code, or in any way which infringes the rights of any person or entity.
+					99 container
+						100 AXListMarker • 
+						101 text You cannot use Content in a misleading or deceptive way.  You cannot use Content in a way that is misleading or deceptive, including without limit:
+						102 content list
+							103 container
+								104 AXListMarker i. 
+								105 text by suggesting that any depicted person, brand, organisation or other third party endorses or is affiliated with you or your goods or services, unless permission has been granted; or
+							106 container
+								107 AXListMarker ii. 
+								108 text by giving the impression that Content was created by you, or a person other than the intellectual property rights holder of the Content (including without limitation, by claiming or giving the impression that you hold ownership of, or exclusive rights to, the Content).
+					109 container
+						110 AXListMarker • 
+						111 text You cannot use any of the Content as part of a trade-mark, design-mark, trade-name, business name or service mark.
+				112 text In addition to the Prohibited Uses, please be aware that certain Content (including CC0 Content) may be subject to additional intellectual property rights (such as copyrights, trademarks, design rights), moral rights, proprietary rights, property rights, privacy rights or similar. This includes but is not limited to identifiable people, logos, brands of all kinds (whether two- or three- dimensional), goods or services, buildings and architecture, audio or video samples and organisations. Before using any Content (including CC0 Content), you must consider whether you require the consent of a third party or a license to use the Content. If your use of the Content is for commercial purposes (e.g. in conjunction with the sale or promotion of a product or service) then it is likely that you will need consent or a license. Responsibility for determining whether permissions are needed always rests solely and exclusively with you. We do not warrant that any consents or licenses have been obtained in relation to any Content, and we expressly disclaim any and all responsibility and liability in relation to such matters.
+			113 container
+				114 heading 6. Attribution., Value: 4, ID: section-6-attribution
+					115 text 6.  Attribution.
+				116 text You do not need to credit Pixabay or the contributor of Content when you use it, but it is certainly appreciated when you do so - especially when the use is of an editorial nature, where photo credits are more customary. You can provide credit in the following format: " by [Contributor] via 
+				117 link Description: Pixabay, Value: pixabay.com/
+				118 text ".
+			119 container
+				120 heading 7A. Uploading Content or Communications., Value: 4, ID: section-7-uploading
+					121 text 7A.  Uploading Content or Communications.
+				122 text We are always grateful when you choose to contribute Content or Communications to our Service. For us to be able to make the Content and Communications available for other users, it is important that we receive specific rights and promises from you as a contributor. You are responsible for the Content and Communications you upload to the Service and you do so subject to the following terms and conditions:
+				123 content list
+					124 container
+						125 AXListMarker • 
+						126 text Content:  When you upload any Content to the Service you grant Pixabay an irrevocable, perpetual (or as long as allowed by law), worldwide, non-exclusive, royalty-free license (with the right to sub-license) to use, store, market, reproduce, display, exhibit, broadcast, publicly perform, enhance, alter, adapt, modify or download the Content (in whole or in part) for any purpose whether now known or created in the future, including both commercial and non-commercial purposes. This includes the right to redistribute the Content under the Content License, or any other license or terms offered by Pixabay now or in the future, including via an API.
+					127 container
+						128 AXListMarker • 
+						129 text Communications:  When you upload any Communications to the Service you grant Pixabay an irrevocable, perpetual (or as long as allowed by law), worldwide, non-exclusive, royalty-free license (with the right to sub-license) to use, store, reproduce, display, exhibit, broadcast, publicly perform, enhance, alter, adapt, modify or download the Communications (in whole or in part) for the purpose of operating the Service and displaying the Communications to other Users.
+					130 container
+						131 AXListMarker • 
+						132 text You expressly represent and warrant that:
+						133 content list
+							134 container
+								135 AXListMarker i. 
+								136 text you and you alone own all rights, title and interest in and to any Content or Communications you upload to the Service; and
+							137 container
+								138 AXListMarker ii. 
+								139 text the Content or Communications do not, and use of the Content or Communications in accordance with these Terms will not, infringe the intellectual property rights, moral rights, proprietary rights, property rights, privacy rights or similar of any person or entity; and
+							140 container
+								141 AXListMarker iii. 
+								142 text you have obtained (and shall retain a copy of) any and all releases, permissions or licenses necessary to enable the use of the Content or Communications in accordance with these Terms. This includes non-exclusive, perpetual (or as long as allowed by law), irrevocable, worldwide, and royalty-free model and/or property releases, and/or any other permissions necessary concerning the use of the Content for any purpose, without any conditions, unless such conditions are required by law; and
+							143 container
+								144 AXListMarker iv. 
+								145 text you agree to execute such further documents as may be reasonably required to give effect to Pixabay’s rights.
+					146 container
+						147 AXListMarker • 
+						148 text You acknowledge and agree that:
+						149 content list
+							150 container
+								151 AXListMarker i. 
+								152 text your Content will be made available to the public for personal and commercial use of third parties subject to these Terms, without providing you attribution or compensation. You acknowledge and agree that your Communications will be made available to the public, without providing you attribution or compensation.
+							153 container
+								154 AXListMarker ii. 
+								155 text Pixabay, its affiliates, and any third party partners specifically authorised by Pixabay may use your Content, your Communications and your general usage and activity data from Pixabay (which includes things like your analytic events and search queries) to develop, improve and provide their services, including through the use of machine learning technology. If you don’t want your Content to be used for machine learning, you can manage how we use your Content by opting out of future AI training by updating your preferences in your
+								156 link Description: account settings, Value: pixabay.com/accounts/settings/?tab=account#id_no_ai_training
+								157 text at any time.
+					158 container
+						159 AXListMarker • 
+						160 text You agree not to upload Content or Communications that contains signatures, watermarks or are advertisements.
+					161 container
+						162 AXListMarker • 
+						163 text Your use of the Service and your Content must comply with Pixabay’s
+						164 link Description: Acceptable Use Policy, Value: pixabay.com/service/acceptable-use-policy/
+						165 text . Your Content and Communications are also subject to the following guidelines (collectively, the “Guidelines”):
+						166 content list
+							167 container
+								168 AXListMarker ■ 
+								169 text Content
+							170 container
+								171 AXListMarker i. 
+								172 text Photo Quality:
+								173 link Description: https://pixabay.com/blog/posts/image-quality-guidelines-22/, Value: pixabay.com/blog/posts/image-quality-guidelines-22/
+							174 container
+								175 AXListMarker ii. 
+								176 text Audio Quality:
+								177 link Description: https://pixabay.com/blog/posts/audio-quality-guidelines-182/, Value: pixabay.com/blog/posts/audio-quality-guidelines-182/
+							178 container
+								179 AXListMarker iii. 
+								180 text Illustrations Quality:
+								181 link Description: https://pixabay.com/blog/posts/illustration-quality-guidelines-271/, Value: pixabay.com/blog/posts/illustration-quality-guidelines-271/
+							182 container
+								183 AXListMarker iv. 
+								184 text GIF Quality:
+								185 link Description: https://pixabay.com/blog/posts/gif-quality-guidelines-232/, Value: pixabay.com/blog/posts/gif-quality-guidelines-232/
+							186 container
+								187 AXListMarker v. 
+								188 text Video Quality:
+								189 link Description: https://pixabay.com/blog/posts/video-quality-guidelines-68/, Value: pixabay.com/blog/posts/video-quality-guidelines-68/
+							190 container
+								191 AXListMarker vi. 
+								192 text 3D Model Quality:
+								193 link Description: https://pixabay.com/blog/posts/3d-has-landed-on-pixabay-418/, Value: pixabay.com/blog/posts/3d-has-landed-on-pixabay-418/
+							194 container
+								195 AXListMarker vii. 
+								196 text AI Quality:
+								197 link Description: https://pixabay.com/blog/posts/ai-quality-guidelines-479/, Value: pixabay.com/blog/posts/ai-quality-guidelines-479/
+							198 container
+								199 AXListMarker ■ 
+								200 text Communications
+							201 container
+								202 AXListMarker i. 
+								203 text Forum Rules and Communication Guidelines:
+								204 link Description: https://pixabay.com/blog/posts/forum-rules-and-communication-guidelines-on-pixaba-159/, Value: pixabay.com/blog/posts/forum-rules-and-communication-guidelines-on-pixaba-159/
+				205 text We reserve the right to remove any Content or Communications from the Service at any time and for any reason, at our discretion. This applies in particular to defective files, inferior quality content, Content or Communications in violation of these Terms, the
+				206 link Description: Acceptable Use Policy, Value: pixabay.com/service/acceptable-use-policy/
+				207 text , the Guidelines, or any other terms or guidelines Pixabay makes available to you. Where your Content or Communications are found to be in violation, Pixabay may also suspend or terminate your account with immediate effect. For more information about how we moderate Content and Communications, and our complaints procedures, please see
+				208 link Description: here, Value: pixabay.com/service/digital-services-act/
+				209 text .
+			210 container
+				211 heading 7B. Uploading Content created with generative AI technology., Value: 4, ID: section-7b-uploading-ai
+					212 text 7B.  Uploading Content created with generative AI technology.
+				213 text You may upload Content you have created with generative AI technology (i.e. machine learning tools that generate content from text prompts or other inputs) to the Service. If you do, the following specific conditions apply, in addition to section 7A.
+				214 content list
+					215 container
+						216 AXListMarker • 
+						217 text You are responsible for ensuring that the terms of the generative AI technology you have used permit you to grant the license and give the warranties outlined in section 7A.
+					218 container
+						219 AXListMarker • 
+						220 text You must clearly label any Content which is AI-generated by selecting the "AI-generated" checkbox on the upload page.
+					221 container
+						222 AXListMarker • 
+						223 text You must not tag any Content which is AI-generated with the names of any real people, artists, trademarks or brands.
+					224 container
+						225 AXListMarker • 
+						226 text You must not upload any Content which is AI-generated that mimics the style of another artist or attempts to reproduce copyright or trademark protected material, or the image of a real person.
+			227 container
+				228 heading 8. Use of the Service., Value: 4, ID: section-8-use
+					229 text 8.  Use of the Service.
+				230 text You may be required to register with us to access and use certain features of the Service. If you choose to register for the Service, you agree to provide and maintain true, accurate, and current information as prompted by the Service's registration form. Registration data and other information you provide through the Service is subject to our
+				231 link Description: Privacy Policy, Value: pixabay.com/service/privacy/
+				232 text . You are responsible for any activity conducted on your account. You may not allow any other party to access or use the Service with your unique username, password, or other security code. Your username must not infringe any third party rights or be offensive, vulgar or obscene. In using the Service, you acknowledge and agree that:
+				233 content list
+					234 container
+						235 AXListMarker • 
+						236 text Data mining, extraction, scraping and the use of programs or robots for automatic data collection and/or extraction of digital data on the Service and/or the content available therein is strictly prohibited for all unauthorised purposes, including without limitation for machine learning purposes.
+					237 container
+						238 AXListMarker • 
+						239 text The technology and software underlying or distributed in connection with the Service is owned by us and our licensors, affiliates and partners. We do not grant any rights in such software to you. You must not copy, modify, create a derivative work from, reverse engineer, reverse assemble or otherwise attempt to discover any source code, sell, assign, sublicense, or otherwise transfer any right in such technology or software, unless we grant our express permission in advance.
+					240 container
+						241 AXListMarker • 
+						242 text Bulk, large-scale or systematic copying of Content is strictly prohibited unless explicit permission has been granted by us.
+					243 container
+						244 AXListMarker • 
+						245 text You will not yourself or through any third party:
+						246 content list
+							247 container
+								248 AXListMarker i. 
+								249 text copy, replicate, decompile, reverse-engineer, attempt to derive the source code of, modify, or create derivative works of the Service, or any part thereof;
+							250 container
+								251 AXListMarker ii. 
+								252 text use or compile any Content to replicate a similar or competing service to the Service, or copy the look or feel or the Service;
+							253 container
+								254 AXListMarker iii. 
+								255 text use the Service to transmit unsolicited messages or engage in spamming;
+							256 container
+								257 AXListMarker iv. 
+								258 text use the Service to store or transmit any virus or malicious code;
+							259 container
+								260 AXListMarker v. 
+								261 text impersonate any other person or entity on the Service, or impersonate any non-existent relationship with such persons;
+							262 container
+								263 AXListMarker vi. 
+								264 text use or exploit any metatags or other hidden texts containing our name or any of our trademarks without our express written consent;
+							265 container
+								266 AXListMarker vii. 
+								267 text collect, store or use any personal information, including member names or profiles, about other users;
+							268 container
+								269 AXListMarker viii. 
+								270 text access the Service for purposes of performance benchmarking or for building or marketing a competitive product; or
+							271 container
+								272 AXListMarker ix. 
+								273 text bypass any measures we may use to prevent or restrict access to the Service, including without limitation features that prevent or restrict use or copying of any content or enforce limitations on use of the Service or the Content.
+					274 container
+						275 AXListMarker • 
+						276 text The compilation of the Content is copyrighted as a collective work and/or compilation in accordance with copyright laws, international conventions and other intellectual property laws.
+			277 container
+				278 heading 9. Term and termination., Value: 4, ID: section-9-termination
+					279 text 9.  Term and termination.
+				280 text These Terms shall take effect the first time you access the Service and shall continue in full force and effect until your account is deleted or terminated. If Pixabay, in its reasonable discretion, determines that you, your Content, your Communications or your use of the Service violate these Terms, Pixabay may take one of the following actions: delete the prohibited Content or Communications; (ii) suspend your access to the Service; (iii) terminate and delete your account; (iv) permanently ban you from using the Service; and/or (v) disclose the prohibited Content, Communication or activity to appropriate government authorities. Upon termination, your right to use the Service will immediately cease. The Service may not be accessed by any Users previously removed from the Service by Pixabay.
+			281 container
+				282 heading 10. Reporting and takedown policies., Value: 4, ID: section-10-reporting
+					283 text 10.  Reporting and takedown policies.
+				284 text Pixabay respects the rights of creatives. If you believe that your intellectual property rights have been infringed by Content or Communications accessible through the Service, please report this via Pixabay’s in-product reporting features or use this
+				285 link Description: form, Value: pixabay.com/content-reports/
+				286 text . Please include the following information in your report:
+				287 content list
+					288 container
+						289 AXListMarker • 
+						290 text Identification of the intellectual property right you believe has been infringed.
+					291 container
+						292 AXListMarker • 
+						293 text Identification of the Content or Communication that you believe is infringing your rights, including a URL link to where that Content or Communication appears on the Service.
+					294 container
+						295 AXListMarker • 
+						296 text Your contact information, such as your email address.
+					297 container
+						298 AXListMarker • 
+						299 text A statement that you have a good faith belief that use of the Content or Communication in the manner complained of is not authorised by the intellectual property rights owner, its agent, or the law.
+					300 container
+						301 AXListMarker • 
+						302 text A declaration that the above information is accurate and that you are (or are authorised to act on behalf of) the intellectual property rights owner.
+				303 text If you believe that any Content or Communication made available on or via the Service contains a violation of the law, please report this Content or Communication via Pixabay’s in-product reporting features or use this 
+				304 link Description: form, Value: pixabay.com/content-reports/
+				305 text . Nothing in this section constitutes legal advice. We suggest you consult an attorney regarding your rights and obligations under applicable laws.
+			306 container
+				307 heading 11. Infringement claims., Value: 4, ID: section-11-infringement
+					308 text 11.  Infringement claims.
+				309 text If you find out – from Pixabay or somewhere else – that there is a claim relating to any Content and Pixabay might be liable, you have to stop using the Content immediately, at your own expense. This applies whether the claim is threatened, potential or actual. You also have to immediately delete or remove the Content from your premises, computer systems and storage (electronic or physical); ensure that your clients, printers or ISPs do likewise; and let Pixabay know as soon as possible by emailing
+				310 link Description: info@pixabay.com, Value: mailto:info@pixabay.com
+				311 text .
+			312 container
+				313 heading 12. Indemnification., Value: 4, ID: section-12-indemnification
+					314 text 12.  Indemnification.
+				315 text You agree to indemnify, release and hold harmless Pixabay and its affiliates from and against any and all loss, expenses, damages, and costs, including without limitation reasonable attorneys fees, resulting from:
+				316 content list
+					317 container
+						318 AXListMarker • 
+						319 text your violation of the Terms (whether directly or indirectly); and
+					320 container
+						321 AXListMarker • 
+						322 text claims brought by any third parties arising out of your use of the Service.
+				323 text If a claim is brought by any third party, you must immediately provide us with all information that is necessary for an examination of the claim and defence. Any further claims for damages by us against you remain unaffected.
+			324 container
+				325 heading 13. Dispute resolution and applicable law. https://ec.europa.eu/consumers/odr/., Value: 4, ID: section-13-dispute-resolution
+					326 text 13.  Dispute resolution and applicable law.
+					327 link Description: https://ec.europa.eu/consumers/odr/, Value: ec.europa.eu/consumers/odr/
+					328 text .
+				329 text Pixabay is neither obliged nor willing to participate in an arbitration procedure within the meaning of the German Consumer Dispute Resolution Act (VSBG). Pixabay will endeavour to resolve any disagreements amicably. Our email address is
+				330 link Description: info@pixabay.com, Value: mailto:info@pixabay.com
+				331 text . The law of the Federal Republic of Germany applies to the contractual relationship between the users and Pixabay. As far as permissible, Berlin is agreed as the place of jurisdiction.
+			332 container
+				333 heading 14. Warranty and liability., Value: 4, ID: section-14-warranty-and-liability
+					334 text 14.  Warranty and liability.
+				335 text THE SERVICE CONTENT AND COMMUNICATIONS ARE PROVIDED "AS IS". WE OFFER NO WARRANTY, EXPLICIT OR IMPLIED, REGARDING ANY CONTENT OR COMMUNICATION (INCLUDING ANY THIRD PARTY OR SPONSORED CONTENT OR ANY LINKS), THE SERVICE, THE ACCURACY OF ANY INFORMATION, OR ANY RIGHTS OR LICENSES UNDER THIS AGREEMENT INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. PIXABAY DOES NOT REPRESENT OR WARRANT THAT THE SERVICE, ANY CONTENT OR COMMUNICATION WILL MEET YOUR REQUIREMENTS OR THAT THEIR USE WILL BE UNINTERRUPTED OR ERROR FREE. ALTHOUGH PIXABAY DOES ITS BEST TO ENSURE THAT UPLOADED CONTENT OR COMMUNICATIONS ARE NOT MISUSED OR USED CONTRARY TO THE TERMS, PIXABAY CANNOT BE HELD RESPONSIBLE FOR THE ACTS OR OMISSIONS OF ITS USERS, INCLUDING ANY MISUSE OR ABUSE OF ANY CONTENT OR COMMUNICATION YOU UPLOAD. PIXABAY SHALL NOT BE LIABLE TO YOU OR TO ANY OTHER PERSON OR ENTITY FOR ANY GENERAL, PUNITIVE, SPECIAL, INDIRECT, CONSEQUENTIAL OR INCIDENTAL DAMAGES, OR LOST PROFITS OR ANY OTHER DAMAGES, COSTS OR LOSSES ARISING OUT OF YOUR USE OF THE SERVICE, THE COMMUNICATIONS OR ANY CONTENT.
+			336 container
+				337 heading 15. Versions and severability., Value: 4, ID: section-15-severability
+					338 text 15.  Versions and severability.
+				339 text These Terms supersede any prior representations, agreements, or understandings between you and Pixabay, whether written or oral, with respect to the Service including previous versions of the Terms. Any non-English translations of these Terms are provided for convenience only. The English version of these Terms will control. If one or more of the provisions in this agreement is found to be invalid, illegal or unenforceable in any respect, the validity, legality and enforceability of the remaining provisions should not be affected. Such provisions should be revised only to the extent necessary to make them enforceable.
+			340 container
+				341 heading 16. Prize draws and Promotions., Value: 4, ID: section-16-prizes-promotions
+					342 text 16.  Prize draws and Promotions.
+				343 text From time to time, Pixabay may conduct prize draws, contests or promotions (“ Promotion ”), which will be governed by separate additional terms and conditions, which will be published on the Service or otherwise notified to you by Pixabay. By participating in any Promotion, you agree to those additional terms and acknowledge our
+				344 link Description: Privacy Policy, Value: pixabay.com/service/privacy/
+				345 text .
+		346 container
+			347 image
+			348 text Over 6.3 million+ high quality stock images, videos and music shared by our talented community.
+			349 link Description: Instagram, Value: instagram.com/pixabay/
+			350 link Description: Facebook, Value: facebook.com/pixabay
+			351 link Description: TikTok, Value: tiktok.com/@pixabaymedia
+			352 link Description: Twitter, Value: x.com/pixabay
+			353 link Description: LinkedIn, Value: linkedin.com/company/pixabay/
+			354 link Description: YouTube, Value: youtube.com/@pixabaymedia
+			355 link Description: Pinterest, Value: pinterest.com/pixabay/
+			356 text Discover
+			357 button (collapsed) ChevronDown, Secondary Actions: Expand
+				358 container ChevronDown
+			359 text Community
+			360 button (collapsed) ChevronDown, Secondary Actions: Expand
+				361 container ChevronDown
+			362 text About
+			363 button (collapsed) ChevronDown, Secondary Actions: Expand
+				364 container ChevronDown
+
+The focused UI element is 0 AXWebArea Terms of Service - Pixabay, URL: pixabay.com/service/terms/
