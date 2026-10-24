@@ -309,9 +309,11 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 .battle-board{margin:10px 0;padding:8px}.battle-board .board-label{letter-spacing:1px;margin:5px auto;padding:6px}.battle-board .board-row{padding:8px 3px;border-radius:12px;min-height:90px;margin-bottom:7px}.battle-board .board-row.front{border:1px solid #d89c58;background:#65402030}.battle-board .board-row.back{border:1px solid #48bfd7;background:#13647d30}.battle-board .slot-wrap{max-width:125px}.board-slot.draggable-hero{touch-action:none}.battle-board .board-slot.selected{border:3px solid #ffe491;box-shadow:0 0 18px #ffd46066}.board-help{min-height:30px;color:#f5de98!important}.formation-portrait{position:relative;width:52px;height:52px;margin:0 auto 7px;border-radius:50%;overflow:hidden}.formation-pick-hint{display:block;font-size:10px;text-align:center;color:#aed8ef;margin-top:7px}.formation-card.selected{border:2px solid #ffe491;background:#283c50;box-shadow:0 0 12px #ffda5933}.formation-card:focus-visible,.board-slot:focus-visible{outline:3px solid #ffe491;outline-offset:3px}.formation-card .formation-stats{display:none}.formation-card .formation-hero{font-size:12px;text-align:center;min-height:30px}.formation-card .formation-role{text-align:center}#role-pickers .formation-card{touch-action:pan-x}.formation-card{cursor:grab}#apply-roles{min-height:48px;font-size:16px;border:1px solid #6fe3ff}
 @media(max-width:600px){#role-pickers .formation-card{flex:0 0 112px;padding:8px 6px}.battle-board .slot-wrap{flex:1 1 0;max-width:115px}.battle-board .board-row{flex-wrap:nowrap}.battle-board .board-hero-name{font-size:10px}.battle-board .board-hero-power{font-size:9px}.battle-board .lane-switch{min-height:36px}.formation{padding:9px}.slot-role{min-height:22px}.formation-portrait{width:44px;height:44px}}
 
-/* One visible screen during combat; preparation and results keep normal scrolling. */
-body.arena-fit{height:var(--arena-viewport-height,100vh);height:var(--arena-viewport-height,100dvh);overflow:hidden;overscroll-behavior:none}
-.arena-room.arena-fit .shell{height:100%;min-height:0;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:44px 64px minmax(0,1fr) auto 44px;gap:4px;padding:max(4px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(4px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));overflow:hidden}
+/* Fit combat when possible; small screens can scroll to every control.
+   Keep a definite grid height for portrait container queries, but let minimum
+   tracks overflow into the document instead of clipping or shrinking to zero. */
+body.arena-fit{height:auto;min-height:var(--arena-viewport-height,100vh);min-height:var(--arena-viewport-height,100dvh);overflow-x:hidden;overflow-y:auto;overscroll-behavior-x:none;overscroll-behavior-y:auto}
+.arena-room.arena-fit .shell{height:var(--arena-viewport-height,100vh);height:var(--arena-viewport-height,100dvh);min-height:0;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:44px 64px minmax(280px,1fr) auto 44px;gap:4px;padding:max(4px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(4px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));overflow:visible}
 .arena-fit .shell>*{min-width:0}
 .arena-room.arena-fit .arena-room-nav{grid-row:1;grid-column:1;height:44px;min-height:0;margin:0;padding:0 48px 0 0;border:0;gap:6px}
 .arena-room.arena-fit .arena-room-nav a{min-height:44px;padding:6px 8px;font-size:11px}
@@ -356,7 +358,7 @@ body.arena-fit{height:var(--arena-viewport-height,100vh);height:var(--arena-view
 .arena-room.arena-fit .controls .buttons{margin:0;flex-wrap:nowrap}
 .arena-fit .controls #play{width:110px;max-width:100%;min-height:44px;height:44px;padding:4px;font-size:10px;line-height:12px}
 @media(max-height:600px){
- .arena-room.arena-fit .shell{grid-template-rows:44px 56px minmax(0,1fr) auto 44px;gap:3px}
+ .arena-room.arena-fit .shell{grid-template-rows:44px 56px minmax(280px,1fr) auto 44px;gap:3px}
  .arena-room.arena-fit #battle-arena{padding:2px}
  .arena-room.arena-fit .arena-side{padding:2px}
  .arena-room.arena-fit .arena-side .team{gap:2px}
@@ -364,7 +366,7 @@ body.arena-fit{height:var(--arena-viewport-height,100vh);height:var(--arena-view
 }
 /* On short, wide screens the controls sit beside the arena. */
 @media(min-width:600px) and (max-height:600px){
- .arena-room.arena-fit .shell{grid-template-columns:minmax(0,1fr) clamp(190px,28vw,270px);grid-template-rows:44px 56px minmax(0,1fr) 44px}
+ .arena-room.arena-fit .shell{grid-template-columns:minmax(0,1fr) clamp(190px,28vw,270px);grid-template-rows:44px 56px minmax(180px,1fr) 44px}
  .arena-room.arena-fit .arena-room-nav{grid-column:1/-1}
  .arena-room.arena-fit #arena-music-toggle{grid-column:2}
  .arena-room.arena-fit #battle-arena{grid-row:3/5}
