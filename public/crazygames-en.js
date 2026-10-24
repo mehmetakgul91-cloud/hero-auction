@@ -282,6 +282,7 @@ export const phrases = {
 'ÖN SAF':'FRONT ROW','ARKA SAF':'BACK ROW','ÖN SIRA':'FRONT ROW','ARKA SIRA':'BACK ROW','ÖN ':'FRONT ','ARKA ':'BACK ',
 'TAKIM DİZİLİŞİ':'TEAM FORMATION','YERLEŞTİRİLEN KAHRAMAN':'HEROES PLACED','BAZ TAKIM GÜCÜ':'BASE TEAM POWER',
 'GÜNCEL TAKIM GÜCÜ':'CURRENT TEAM POWER','SAF / ROL / KREDİ / KOMUTAN ETKİSİ':'ROW / ROLE / CREDIT / COMMANDER BONUS',
+'Hazırlık için kalan süre':'Preparation time remaining','Yerleştirilecek kahramanlar':'Heroes to place','Nasıl oynanır?':'How to play?',
 'Güç ve komutan bonusu detayları':'Power and commander bonus details','BOŞ KONUM':'EMPTY SLOT','Arka safa':'To back row','Ön safa':'To front row',
 'Bu safta kahraman yok':'No heroes in this row','Dokun veya sürükle':'Select or drag','kahramanını seç':'select hero',
 'HAZIRIM':'READY','Sen:':'You:','Örnek rakip:':'Opponent:','Hazırlanıyor':'Preparing','Hazır':'Ready',

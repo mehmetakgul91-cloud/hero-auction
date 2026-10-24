@@ -460,3 +460,43 @@ body.arena-results .shell{height:auto;min-height:100dvh;padding-top:8px}
 .arena-invites-inbox .room-invite-copy{flex:1 1 100%;min-width:0;overflow-wrap:anywhere}
 .arena-invites-inbox .room-invite-copy strong,.arena-invites-inbox .room-invite-copy small{display:block;line-height:1.5}
 .arena-invites-inbox .room-invite-copy small{color:#c2d5e8;margin-top:4px}
+
+/* Preparation prioritizes selecting and placing heroes. Combat selectors above stay unchanged. */
+body:not(.arena-room) .shell{position:relative;padding-top:6px}
+body:not(.arena-room) .arena-room-nav{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 8px;min-height:44px;margin:0 auto 6px;padding:0 52px 0 0;max-width:860px}
+body:not(.arena-room) .arena-room-nav>a{display:inline-flex;align-items:center;min-height:44px;font-size:12px}
+body:not(.arena-room) .arena-room-nav>strong,body:not(.arena-room) .arena-room-nav>.arena-prep-link{display:none}
+body:not(.arena-room) #arena-music-toggle{position:absolute;top:6px;right:max(8px,env(safe-area-inset-right));width:44px;height:44px;min-height:44px;font-size:21px}
+body:not(.arena-room) .formation{margin-top:6px;padding:10px}
+.formation #preparation-title{text-align:left;font-size:18px;line-height:1.3;letter-spacing:0;margin:0 0 6px}
+.formation .ready-status{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 12px;padding:6px 9px;margin:6px 0;font-size:12px;line-height:1.35}
+.formation #prep-clock{grid-row:1 / 3;align-self:center;font-size:25px}
+.formation .ready-status span{min-width:0;overflow-wrap:anywhere}
+.formation .formation-power-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:6px 0;padding:6px 9px}
+.formation .formation-power-summary>div{flex-direction:row;align-items:center;justify-content:space-between;gap:6px;padding:0;background:none}
+.formation .formation-power-summary small{font-size:9px;line-height:1.3;letter-spacing:0}
+.formation .formation-power-summary strong{font-size:18px;white-space:nowrap}
+.formation #prep-note{margin:6px 0;font-size:11px;line-height:1.4;text-align:left}
+.formation p.board-help{min-height:0;margin:8px 0 4px;text-align:left;font-size:12px;line-height:1.4}
+.formation #role-pickers{margin:4px 0 6px}
+.formation .battle-board{margin:6px auto 10px}
+.formation .battle-board .board-slot{min-width:44px;min-height:44px}
+.formation .battle-board .board-row{flex-wrap:wrap}
+.formation .battle-board .slot-wrap{flex:1 1 80px;min-width:80px;max-width:104px}
+.formation .battle-board .lane-switch{min-height:44px;margin-top:3px}
+.preparation-detail{margin:8px 0 0;border:1px solid #4e8aab;border-radius:10px;background:#10243a;color:#eaf8ff}
+.preparation-detail>summary{min-height:44px;padding:12px;cursor:pointer;font-size:12px;font-weight:750;line-height:1.5}
+.preparation-detail>summary:focus-visible{outline:3px solid #ffe491;outline-offset:2px;border-radius:10px}
+.preparation-detail>p,.preparation-detail>div,.preparation-detail>header{margin:8px 12px 12px}
+.preparation-detail .formation-power-explanation{display:block;font-size:11px;line-height:1.5}
+.preparation-detail .intro{text-align:left}
+.preparation-detail header{font-size:11px}
+.preparation-detail header strong{font-size:13px}
+.preparation-detail header a{display:inline-flex;align-items:center;min-height:44px}
+.preparation-detail .preparation-preview-title{font-size:12px;font-weight:700}
+.formation-power-breakdown{display:grid;gap:8px}
+.formation-power-breakdown>div{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.formation-power-breakdown small{font-size:10px;color:#b4cde7}
+.formation-power-breakdown strong{font-size:14px;color:#aaf1e2;font-variant-numeric:tabular-nums;white-space:nowrap}
+.formation-power-breakdown .negative{color:#ff9a9a}
+@media(min-width:600px){.formation .ready-status{grid-template-columns:auto minmax(0,1fr) minmax(0,1fr)}.formation #prep-clock{grid-row:auto}}
