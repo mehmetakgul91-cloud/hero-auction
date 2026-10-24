@@ -1,6 +1,9 @@
-import {flyAwardCard} from './auction-card-flight.js';
+import {flyAwardCard} from './auction-card-flight.js?v=every-player-20261024';
 // Cosmetic only. Inputs come from already-awarded authoritative final teams.
 export function collectTailAwards(previous,next){
+ // The server records hidden allocations in deck order. Both seats receive the
+ // same manifest, including after reconnect when no previous snapshot exists.
+ if(next?.phase==='finished'&&Array.isArray(next.tailAwards))return next.tailAwards.map(award=>({...award,card:{...award.card}}));
  if(previous?.code!==next?.code||previous?.phase!=='auction'||next?.phase!=='finished')return [];
  const offered=previous.card;
  return (next.final||[]).flatMap((player,seat)=>{
@@ -40,9 +43,11 @@ export function mountTailReveal(root,button,items,{english=false,me=0,reducedMot
  const holder=doc.createElement('div');holder.className='auction-tail-holder';holder.hidden=true;
  const skip=doc.createElement('button');skip.type='button';skip.className='outline';skip.textContent=english?'Show all cards':'Tüm kartları göster';
  panel.append(heading,holder,skip);root.prepend(panel);root.classList.add('auction-tail-playing');if(button)button.disabled=true;
- const cleanup=(completed)=>{const restoreFocus=doc.activeElement===skip;panel.remove();root.classList.remove('auction-tail-playing');if(button)button.disabled=false;if(restoreFocus&&button?.isConnected)button.focus();if(completed)onComplete?.();};
+ const cleanup=(completed)=>{const restoreFocus=doc.activeElement===skip;panel.remove();root.classList.remove('auction-tail-playing');if(button)button.disabled=false;if(restoreFocus&&button?.isConnected)button.focus();if(completed)onComplete?.({restoreFocus});};
  let activeArt=null,activeScene=null;
- const queue=createTailQueue({finish:cleanup,onArrive,arrive:({seat})=>{
+ const queue=createTailQueue({finish:cleanup,onArrive,duration:reducedMotion?700:1800,arrivalDuration:reducedMotion?200:550,arrive:({seat})=>{
+  // Reduced motion still opens every card, but never translates/scales the art.
+  if(reducedMotion)return {finished:Promise.resolve({arrived:true}),cancel(){}};
   if(!activeArt?.isConnected)return null;
   const snapshot={element:activeArt,rect:activeArt.getBoundingClientRect()};
   const flight=flyAwardCard(snapshot,resolveDestination?.(seat),{duration:1400,doc,label:seat===me?(english?'Your team':'Senin takımın'):(english?'Opponent team':'Rakip takım')});
@@ -61,6 +66,6 @@ export function mountTailReveal(root,button,items,{english=false,me=0,reducedMot
   // Late artwork can only update its own connected card, never the next reveal.
   if(loadArt)Promise.resolve(loadArt(card)).then(url=>{if(!url||!art.isConnected)return;const img=doc.createElement('img');img.alt='';img.src=url;img.onerror=()=>img.remove();art.prepend(img)}).catch(()=>{});
  }});
- skip.onclick=()=>queue.skip();queue.start(items,{reducedMotion,startAfter});
+ skip.onclick=()=>queue.skip();queue.start(items,{startAfter});
  return queue;
 }

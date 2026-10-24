@@ -63,3 +63,12 @@ Sosyal oda koordinasyonu mevcut tek sunucu süreci modeliyle çalışır; çoklu
 ## Android test uygulaması (ayrı hazırlık)
 
 Canlı web oyunundan bağımsız Capacitor test paketi `mobile/` içindedir. Varsayılan sürüm sunucuya bağlı olmayan **arayüz önizlemesidir**, oynanabilir sürüm değildir. Kurulum, izole test sunucusu ve cihaz kontrol listesi: [Android test notları](docs/android-test.md).
+## Arena müzikleri
+
+İlk TEST sürümünde yüklenmiş üç parça seçilir: Determined Pursuit (orkestra), The Eternal Sands (Orta Doğu fantastik) ve Atlas • Kazakhstan (AI üretimi Kazak/Orta Asya esintili). Diğer üç parça yükleme tamamlandığında ayrı güncellemeyle eklenecektir. Latin parça dahil değildir. Her tarayıcı sekmesinde üç parçalık rastgele sıra tamamlanmadan parça tekrarlanmaz; sıra sınırında da son parça hemen tekrar etmez. Gerçek maç anahtarı değişmeden yenileme, sesi kapat/aç veya arka plandan dönme parça seçimini değiştirmez. Web ve CrazyGames kayıtları ayrıdır.
+
+Tek bir `HTMLAudioElement` yalnız seçilen parçayı yükler. Hazırlıkta kullanıcı dokunuşuyla sessizce açılır; maç başladığında mevcut %60 ses düzeyi kullanılır. Sekme gizlenince/platform sesi kapatınca durur, maç bitiminde kaynak bırakılır. Otomatik oynatma engeli aynı parçayı bir sonraki dokunuşta yeniden dener. Gerçek yükleme hatasında yalnız bir kez eski davul-bas parçasına, o da başarısızsa prosedürel sese döner. İndirme takılması başına 15 saniyelik sınırlı zaman aşımı vardır; bütün liste arka planda yüklenmez.
+
+`/music-credits.html` eser sahibi, kaynak, lisans ve dönüşüm bilgilerini gösterir; oyun ve arena altındaki bağlantılardan erişilir. Kaynak/lisans kanıtları `docs/arena-music-license-evidence/`, dosya hashleri `docs/arena-music-provenance.json`, teknik ses ölçümleri `docs/arena-music-audio-checks.json` içindedir. Atlas yalnız oyuna gömülü kullanım içindir; bağımsız MP3/soundtrack paketi olarak yayımlanmaz. Oyun yedeği kod ve oyun varlıklarıyla birlikte tutulmalıdır.
+
+Test: `node --test tests/arena-music.test.mjs tests/static-audio.test.mjs tests/arena-performance.test.mjs`. Gerçek iPhone/Safari oynatma ve işitsel döngü birleşimleri ayrıca cihazda dinlenmelidir; teknik ölçümler bir dinleme testi değildir.

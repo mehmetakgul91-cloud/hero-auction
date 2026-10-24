@@ -1,3 +1,6 @@
+import {ARENA_TRACKS} from '/arena-music-tracks.js';
+import {createArenaPlaylist} from '/arena-playlist.js';
+import {createArenaAudio} from '/arena-audio.js';
 import {buildDefaultFormation,validateFormation} from '/preparation-formation.js';
 import {createPreparationDraft} from '/preparation-draft.js';
 import {createRoomInvitesUI} from '/room-invites.js';
@@ -43,8 +46,10 @@ let demoB=[["Altın Muhafız", "tank", 91, "original"], ["Alev Zırhı", "fighte
 const roleNames={tank:'TANK',fighter:'SAVAŞÇI',energy:'ENERJİ / MESAFELİ',assassin:'SUİKASTÇI',support:'DESTEK'};
 let states=[],events=[],cursor=0,timer=null,liveArenaMode=false,battlePresentationFinished=false;
 const arenaActive=()=>!battlePresentationFinished&&!leavingBattle&&(arenaMode||timer!==null);
-// Original procedural arena soundtrack; no external copyrighted audio assets.
+// Original procedural fallback; the primary playlist uses credited licensed assets.
 let arenaAudio=null,arenaMusicInterval=null,arenaMusicStep=0,arenaMusicEnabled=true;
+let arenaMusicStorage;try{arenaMusicStorage=sessionStorage;arenaMusicEnabled=arenaMusicStorage.getItem('hero-auction-arena-audio-enabled')!=='0'}catch{}
+const arenaPlaylist=createArenaPlaylist(ARENA_TRACKS,{storage:arenaMusicStorage});
 function updateMusicButton(){const b=$('arena-music-toggle');if(b){b.textContent=arenaMusicEnabled?'🔊':'🔇';b.setAttribute('aria-pressed',String(arenaMusicEnabled));b.setAttribute('aria-label',arenaMusicEnabled?'Arena sesini kapat':'Arena sesini aç');b.setAttribute('title',arenaMusicEnabled?'Sesi kapat':'Sesi aç')}}
 function arenaTone(freq,start,length,type='sawtooth',volume=.025){
  if(!arenaAudio||window.HeroPlatform?.muteAudio)return;
@@ -64,14 +69,19 @@ function arenaMusicBeat(){
  if(step===0||step===8){const chord=[220,261.63,329.63];chord.forEach((n,i)=>arenaTone(n,now+i*.03,.7,'sine',.012))}
  if(step===4||step===12)arenaTone(73.42,now,.13,'sawtooth',.019);
 }
-// The approved 120-second track plays when the MP3 has been uploaded.
-// Until then, retain the existing procedural music as a safe fallback.
-const arenaTrack=new Audio('/audio/hero-auction-senkron-davul-bas-2dk.mp3');
-arenaTrack.loop=true;
-arenaTrack.preload='none';
-arenaTrack.volume=.60;
-let arenaTrackAvailable=null;
-let arenaMusicSession=0;
+// Keep the already gesture-unlocked element across preparation, battle and resume.
+// Only the current match's asset is loaded. Old music is a bounded error fallback.
+const arenaTrack=new Audio();
+const arenaMusic=createArenaAudio({audio:arenaTrack,volume:.60,
+ canPlay:()=>!window.HeroPlatform?.muteAudio&&arenaMusicEnabled&&!document.hidden&&arenaActive(),
+ canPrime:()=>!window.HeroPlatform?.muteAudio&&arenaMusicEnabled&&!document.hidden&&!arenaMode&&!leavingBattle,
+ fallbackSrc:'/audio/hero-auction-senkron-davul-bas-2dk.mp3',
+ startProcedural:startProceduralArenaMusic,stopProcedural:stopProceduralArenaMusic});
+function selectArenaMusic(activate){
+ const matchKey=auctionMode?(preparationMatchKey?'auction:'+auctionCode+':'+preparationMatchKey:null):previewMusicMatchKey;
+ if(!matchKey)return false;
+ arenaMusic.setTrack(arenaPlaylist.select(matchKey,{activate}));return true;
+}
 function startProceduralArenaMusic(){
  if(window.HeroPlatform?.muteAudio||!arenaMusicEnabled||document.hidden||arenaMusicInterval!==null||!arenaActive())return;
  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
@@ -89,25 +99,13 @@ function stopProceduralArenaMusic(){
  if(arenaMusicInterval!==null){clearInterval(arenaMusicInterval);arenaMusicInterval=null}
  if(arenaAudio&&arenaAudio.state==='running')void arenaAudio.suspend().catch(()=>{});
 }
-async function startArenaMusic(){
- if(window.HeroPlatform?.muteAudio||!arenaMusicEnabled||document.hidden||!arenaActive())return;
- const session=++arenaMusicSession;
- // Begin audio directly in the user's tap event; Safari blocks play after awaited network checks.
- try{
-  await arenaTrack.play();
-  if(session!==arenaMusicSession||!arenaMusicEnabled||document.hidden||!arenaActive()){arenaTrack.pause();return}
-  arenaTrackAvailable=true;
-  stopProceduralArenaMusic();
- }catch(e){
-  if(session!==arenaMusicSession)return;
-  arenaTrackAvailable=false;
-  startProceduralArenaMusic();
- }
+function startArenaMusic(){
+ if(window.HeroPlatform?.muteAudio||!arenaMusicEnabled||document.hidden||!arenaActive()||!selectArenaMusic(true))return Promise.resolve(false);
+ return arenaMusic.play();
 }
-function stopArenaMusic(){
- ++arenaMusicSession;
- arenaTrack.pause();
- stopProceduralArenaMusic();
+function stopArenaMusic(release=false){
+ arenaAudioPrimed=false;
+ if(release)arenaMusic.release();else arenaMusic.stop();
 }
 
 let arenaElapsedMs=0,arenaClockStartedAt=0,arenaClockTicker=null;
@@ -230,7 +228,7 @@ let leavingBattle=false;
 async function leaveBattleAndGoHome(event){
  event?.preventDefault();
  if(leavingBattle)return;
- leavingBattle=true;
+ leavingBattle=true;stopArenaMusic(true);
  const leavingStoredSeat=localStorage.getItem('hero-auction-session');
  const button=event?.currentTarget;if(button){button.textContent='Ayrılıyor…';button.style.pointerEvents='none'}
  if(auctionMode){
@@ -238,7 +236,7 @@ async function leaveBattleAndGoHome(event){
    const auth=JSON.parse(localStorage.getItem('hero-auction-login')||'null');
    const response=await fetch('/api/room/detach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,authToken:auth?.authToken})});
    if(!response.ok){const result=await response.json();throw Error(result.error||'Odadan ayrılamadın. Tekrar dene.')}
-  }catch(error){leavingBattle=false;if(button){button.style.pointerEvents='';button.textContent=document.documentElement.lang==='en'?'Leave match':'Maçtan Ayrıl'}$('message').textContent=document.documentElement.lang==='en'?translate(error.message):error.message;return;}
+  }catch(error){leavingBattle=false;if(arenaActive())void startArenaMusic();if(button){button.style.pointerEvents='';button.textContent=document.documentElement.lang==='en'?'Leave match':'Maçtan Ayrıl'}$('message').textContent=document.documentElement.lang==='en'?translate(error.message):error.message;return;}
  }
  if(battlePoll&&battlePoll!==-1)clearInterval(battlePoll);
  if(timer){clearInterval(timer);timer=null}
@@ -263,6 +261,18 @@ if(multiplayerCode){$('battle-lobby-status').textContent='Oda kodu: '+multiplaye
 // A complete formation is shown once verified; old unscoped saves are read only for legacy previews.
 const previewTeam=()=>demoA.map((hero,index)=>({id:'preview-'+index,role:hero[1],laneModifiers:auctionLaneModifiers[index]}));
 const positions=[0,1,2,3,4];let selectedHero=null,preparationDraft=null,preparationMatchKey=null;
+let previewMusicMatchKey=null;
+if(!auctionMode){
+ // The production path uses the authoritative match number + creation time.
+ // Preview/test rooms have no rematch API; a reload of their arena keeps its key.
+ if(multiplayerCode)previewMusicMatchKey='preview-room:'+multiplayerCode;
+ else{
+  try{if(arenaMode)previewMusicMatchKey=arenaMusicStorage?.getItem('hero-auction-preview-music-match')}catch{}
+  if(!previewMusicMatchKey)previewMusicMatchKey='preview:'+Date.now()+':'+Math.random().toString(36).slice(2);
+  try{arenaMusicStorage?.setItem('hero-auction-preview-music-match',previewMusicMatchKey)}catch{}
+ }
+}
+
 if(!auctionMode){
  const defaults=buildDefaultFormation(previewTeam());lanes.splice(0,5,...defaults.lanes);
  try{
@@ -356,10 +366,9 @@ let prepTimer=null,prepDeadline=0,prepDone=false,prepSubmitting=false,auctionLoa
 // Keeping it playing in the same document preserves Safari's user-gesture permission.
 let arenaAudioPrimed=false;
 function primeArenaAudio(){
- if(window.HeroPlatform?.muteAudio||arenaMode||arenaAudioPrimed||!arenaMusicEnabled)return;
+ if(window.HeroPlatform?.muteAudio||document.hidden||arenaMode||arenaAudioPrimed||!arenaMusicEnabled||!selectArenaMusic(false))return;
  arenaAudioPrimed=true;
- arenaTrack.volume=0;
- void arenaTrack.play().catch(()=>{arenaAudioPrimed=false;});
+ void arenaMusic.prime().then(started=>{if(!started)arenaAudioPrimed=false;});
 }
 document.addEventListener('pointerdown',e=>{
  if(!arenaMode&&e.target.closest('.formation'))primeArenaAudio();
@@ -367,9 +376,11 @@ document.addEventListener('pointerdown',e=>{
 document.addEventListener('touchstart',e=>{
  if(!arenaMode&&e.target.closest('.formation'))primeArenaAudio();
 },{capture:true,passive:true});
+document.addEventListener('click',e=>{
+ if(!arenaMode&&e.target.closest('.formation'))primeArenaAudio();
+},{capture:true,passive:true});
 function revealArenaAudio(){
- arenaTrack.volume=.60;
- if(arenaMusicEnabled&&!document.hidden&&arenaTrack.paused)void startArenaMusic();
+ if(arenaMusicEnabled&&!document.hidden)void startArenaMusic();
 }
 function enterArenaWithoutReload(url){
  window.HeroPlatform?.gameplay(false);
@@ -587,6 +598,7 @@ async function build(overrideResult){
   // The server is authoritative for winner; the UI reconstructs interim HP from logs.
   finalResult=result;
   if(liveArenaMode)startArenaClock();
+  if(arenaMode)void startArenaMusic();
   $('arena-score').hidden=false;$('battle-arena').hidden=false;
   $('message').textContent=liveArenaMode?'Canlı savaş başladı · Komutanını yönet':'Gerçek savaş motoru hazır · '+result.rounds+' tur';
   render();window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(true);window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position})));window.dispatchEvent(new CustomEvent('heroarena:ready',{detail:{teams:window.heroArenaTeams}}));
@@ -837,10 +849,10 @@ async function requestArenaWakeLock(){
  finally{arenaWakeRequestPending=false}
 }
 window.addEventListener('heroarena:battle-finished',()=>{
- battlePresentationFinished=true;stopArenaMusic();releaseArenaWakeLock();
+ battlePresentationFinished=true;stopArenaMusic(true);releaseArenaWakeLock();
 });
 window.addEventListener('heroarena:connection-lost',()=>{
- battlePresentationFinished=true;stop();stopArenaMusic();releaseArenaWakeLock();
+ battlePresentationFinished=true;stop();stopArenaMusic(true);releaseArenaWakeLock();
  $('message').textContent='Maç bağlantısı sona erdi. Maçtan ayrılıp yeni bir oyun başlatabilirsin.';
  $('play').textContent='BAĞLANTI SONA ERDİ';$('play').disabled=true;
 });
@@ -893,9 +905,11 @@ function syncArenaAudioVisibility(){
  void requestArenaWakeLock();
 }
 document.addEventListener('visibilitychange',syncArenaAudioVisibility);
-window.addEventListener('pagehide',()=>{arenaAudioSuspendedByBackground=true;stopArenaMusic();releaseArenaWakeLock();});
+window.addEventListener('pagehide',event=>{arenaAudioSuspendedByBackground=true;stopArenaMusic(!event.persisted);if(!event.persisted)arenaMusic.destroy();releaseArenaWakeLock();});
 window.addEventListener('focus',syncArenaAudioVisibility);
-document.addEventListener('pointerdown',()=>{if(arenaActive()&&!document.hidden){void requestArenaWakeLock();}},{passive:true});
+document.addEventListener('pointerdown',event=>{if(arenaActive()&&!document.hidden){void requestArenaWakeLock();if(arenaMusicEnabled&&arenaTrack.paused&&!event.target.closest('#arena-music-toggle'))void startArenaMusic();}},{passive:true});
+// A click is also a WebKit-recognized gesture if touch pointerdown was denied.
+document.addEventListener('click',event=>{if(arenaActive()&&!document.hidden&&arenaMusicEnabled&&arenaTrack.paused&&!event.target.closest('#arena-music-toggle'))void startArenaMusic();},{passive:true});
 window.addEventListener('pageshow',syncArenaAudioVisibility);
 // Entering the arena, rather than pressing Play, triggers the soundtrack.
 if(arenaMode){
@@ -906,7 +920,7 @@ if(arenaMode){
  void requestArenaWakeLock();
 
 }
-$('arena-music-toggle').onclick=()=>{arenaMusicEnabled=!arenaMusicEnabled;updateMusicButton();if(arenaMusicEnabled&&arenaActive())void startArenaMusic();else stopArenaMusic()};updateMusicButton();
+$('arena-music-toggle').onclick=()=>{arenaMusicEnabled=!arenaMusicEnabled;try{arenaMusicStorage?.setItem('hero-auction-arena-audio-enabled',arenaMusicEnabled?'1':'0')}catch{}updateMusicButton();if(arenaMusicEnabled&&arenaActive())void startArenaMusic();else stopArenaMusic()};updateMusicButton();
 $('next').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';step()};
 $('reset').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';$('events').replaceChildren();$('message').textContent='Başlamak için savaşı oynat.';build()};
 if(multiplayerCode&&multiplayerToken){const check=async()=>{try{const response=await fetch('/api/battle-room?code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken),{cache:'no-store'});const v=await response.json();if(!response.ok)throw Error(v.error);if(v.started){clearInterval(battlePoll);battlePoll=null;document.body.classList.add('online-battle');if(!arenaMode){enterArenaWithoutReload('/battle-preview.html?room=arena&code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken));return}await build(v.result);if(events.length)$('play').click()}else{$('message').textContent='Rakibin hazırlanması bekleniyor… '+v.ready.filter(Boolean).length+'/2 hazır';if(arenaMode)$('play').disabled=true}}catch(e){$('message').textContent='⚠ '+e.message}};void check();battlePoll=setInterval(check,1800)}else if(arenaMode&&!auctionCode){void build().then(()=>{if(events.length)$('play').click()})}
@@ -922,6 +936,7 @@ if(auctionCode&&auctionToken){void (async()=>{try{
  const preparation=data.preparation;
  if(!preparation?.matchKey||!validateFormation(preparation,own))throw Error('Diziliş doğrulanamadı');
  preparationMatchKey=preparation.matchKey;
+ if(arenaMode)void startArenaMusic();
  let draftStorage;try{draftStorage=sessionStorage}catch{}
  preparationDraft=createPreparationDraft({matchKey:auctionCode+':'+auctionToken+':'+preparationMatchKey,team:own,storage:draftStorage,
   save:async formation=>{

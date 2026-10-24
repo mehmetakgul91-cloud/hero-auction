@@ -1,0 +1,174 @@
+Browser tab: 6, Title: "Atlas • Kazakhstan by Vadim_Makes_Sound | Royalty-free Music - Pixabay", URL: "https://pixabay.com/music/orchestral-atlas-kazakhstan-562527/".
+0 AXWebArea Atlas • Kazakhstan by Vadim_Makes_Sound | Royalty-free Music - Pixabay, URL: pixabay.com/music/orchestral-atlas-kazakhstan-562527/
+	1 container app
+		2 container
+			3 link Description: Pixabay, Value: pixabay.com/
+			4 container
+				5 button Search Pixabay
+					6 container Search
+				7 search text field (settable)
+			8 button Join
+			9 button Hamburger
+				10 container Hamburger
+		11 container
+			12 container Check
+			13 text Free for use under the Pixabay 
+			14 link Description: Content License, Value: pixabay.com/service/license-summary/
+			15 button Download
+			16 button (collapsed) Secondary Actions: Expand
+			17 button Download
+			18 button (collapsed) Secondary Actions: Expand
+			19 text Atlas • Kazakhstan
+			20 link Description: Vadim_Makes_Sound, Value: pixabay.com/users/vadim_makes_sound-54823268/
+			21 text 0:00
+			22 slider 0
+			23 text 2:33
+			24 button paused
+				25 container Play
+			26 button volume
+				27 container Volume
+			28 container
+				29 slider (settable, integer) Description: volume, Value: 1
+			30 button HeartOutline 10
+				31 container HeartOutline
+				32 text 10
+			33 button BookmarkOutline
+				34 container BookmarkOutline
+			35 button CommentOutline
+				36 container CommentOutline
+			37 button Share
+				38 container Share
+			39 button Info
+				40 container Info
+			41 link Description: Auto-match your soundtrack to your footage with one-click Beat Sync. Try Canva Pro for free, Value: canva.com/features/beat-sync/?utm_medium=partner&utm_source=pixabay&utm_campaign=canva_brand&utm_content=beat_sync_v1
+			42 container AI
+			43 text AI generated
+			44 container Question
+			45 heading Kazakh, Kazakhstan, Dombra music. Free for use., Value: 1
+				46 text Kazakh, Kazakhstan, Dombra music. Free for use.
+			47 link Description: Vadim_Makes_Sound, Value: pixabay.com/users/vadim_makes_sound-54823268/
+			48 link Description: Vadim_Makes_Sound, Value: pixabay.com/users/vadim_makes_sound-54823268/
+			49 text 396 followers
+			50 button Follow
+			51 container
+				52 text I'm Vadim, a designer from Ukraine 📍 Pixabay and I met when I was starting a YouTube channel. I needed free sounds, and she had them. It was love at first sight, spending whole nights together with music and SFXs. She kept giving, and I kept downloading. This account is me trying to be a better partner. I made a distinct music track for every country on Earth — go find yours 🌍 Ko-fi/PayPal helps me keep making them if you feel like it 🤘
+			53 button Show more
+			54 button (collapsed) Donate, Secondary Actions: Expand
+			55 text Comments
+			56 container CommentFilled
+			57 text The community are waiting to hear from you!
+			58 text Log in or Join Pixabay to view comments
+			59 button Log in
+			60 button Join Pixabay
+			61 link Description: Kazakh, Value: pixabay.com/music/search/kazakh/
+			62 link Description: Kazakhstan, Value: pixabay.com/music/search/kazakhstan/
+			63 link Description: Dombra, Value: pixabay.com/music/search/dombra/
+			64 link Description: Central Asian, Value: pixabay.com/music/search/central%20asian/
+			65 link Description: Steppe, Value: pixabay.com/music/search/steppe/
+			66 link Description: Kobyz, Value: pixabay.com/music/search/kobyz/
+			67 link Description: Nomadic, Value: pixabay.com/music/search/nomadic/
+			68 link Description: Turkic, Value: pixabay.com/music/search/turkic/
+			69 link Description: Folk, Value: pixabay.com/music/search/folk/
+			70 link Description: Ethnic, Value: pixabay.com/music/search/ethnic/
+			71 link Description: World, Value: pixabay.com/music/search/world/
+			72 link Description: Galloping, Value: pixabay.com/music/search/galloping/
+			73 link Description: Epic, Value: pixabay.com/music/search/epic/
+			74 link Description: Plucked, Value: pixabay.com/music/search/plucked/
+			75 link Description: Virtuosic, Value: pixabay.com/music/search/virtuosic/
+			76 link Description: Ancient, Value: pixabay.com/music/search/ancient/
+			77 link Description: Traditional, Value: pixabay.com/music/search/traditional/
+			78 link Description: Atmospheric, Value: pixabay.com/music/search/atmospheric/
+			79 link Description: Instrumental, Value: pixabay.com/music/search/instrumental/
+			80 link Description: Cinematic, Value: pixabay.com/music/search/cinematic/
+			81 link Description: Silk Road, Value: pixabay.com/music/search/silk%20road/
+			82 link Description: Travel, Value: pixabay.com/music/search/travel/
+			83 link Description: Documentary, Value: pixabay.com/music/search/documentary/
+			84 link Description: Eurasian, Value: pixabay.com/music/search/eurasian/
+			85 link Description: Background Music, Value: pixabay.com/music/search/background%20music/
+			86 link Description: Ai Generated, Value: pixabay.com/music/search/ai%20generated/
+			87 heading Related free music, Value: 2
+				88 text Related free music
+			89 container
+				90 button Play
+					91 button Play
+						92 container Play
+				93 link Description: Cinematic Background, Value: pixabay.com/music/orchestral-cinematic-background-621553/
+				94 link Description: AtlasAudio, Value: pixabay.com/users/atlasaudio-54514918/
+				95 button Download
+					96 container Download
+				97 button Dots
+					98 container Dots
+			99 container
+				100 button Play
+					101 button Play
+						102 container Play
+				103 link Description: Emotional, Value: pixabay.com/music/orchestral-emotional-621566/
+				104 link Description: AtlasAudio, Value: pixabay.com/users/atlasaudio-54514918/
+				105 button Download
+					106 container Download
+				107 button Dots
+					108 container Dots
+			109 container
+				110 button Play
+					111 button Play
+						112 container Play
+				113 link Description: Inspirational Nature, Value: pixabay.com/music/adventure-inspirational-nature-621577/
+				114 link Description: AtlasAudio, Value: pixabay.com/users/atlasaudio-54514918/
+				115 button Download
+					116 container Download
+				117 button Dots
+					118 container Dots
+			119 button Load more
+			120 text Genre
+			121 link Description: Orchestral, Value: pixabay.com/music/search/genre/orchestral/
+			122 text Mood
+			123 link Description: Energetic, Value: pixabay.com/music/search/mood/energetic/
+			124 link Description: Epic, Value: pixabay.com/music/search/mood/epic/
+			125 text Movement
+			126 link Description: Medium, Value: pixabay.com/music/search/movement/medium/
+			127 text Theme
+			128 link Description: Music For Videos, Value: pixabay.com/music/search/theme/music%20for%20videos/
+			129 link Description: Music For Youtube Videos, Value: pixabay.com/music/search/theme/music%20for%20youtube%20videos/
+			130 link Description: Background Music, Value: pixabay.com/music/search/theme/background%20music/
+		131 container
+			132 image
+			133 text Over 6.3 million+ high quality stock images, videos and music shared by our talented community.
+			134 link Description: Instagram, Value: instagram.com/pixabay/
+			135 link Description: Facebook, Value: facebook.com/pixabay
+			136 link Description: TikTok, Value: tiktok.com/@pixabaymedia
+			137 link Description: Twitter, Value: x.com/pixabay
+			138 link Description: LinkedIn, Value: linkedin.com/company/pixabay/
+			139 link Description: YouTube, Value: youtube.com/@pixabaymedia
+			140 link Description: Pinterest, Value: pinterest.com/pixabay/
+			141 text Discover
+			142 button (collapsed) ChevronDown, Secondary Actions: Expand
+				143 container ChevronDown
+			144 text Community
+			145 button (collapsed) ChevronDown, Secondary Actions: Expand
+				146 container ChevronDown
+			147 text About
+			148 button (collapsed) ChevronDown, Secondary Actions: Expand
+				149 container ChevronDown
+	150 container
+		151 heading Nice one!, Value: 3
+			152 text Nice one!
+		153 button Close
+			154 container Close
+		155 text Say 'thanks' to 
+		156 link Description: Vadim_Makes_Sound, Value: pixabay.com/users/vadim_makes_sound-54823268/
+		157 text ! This helps keep the creative spirit going! By downloading, you agree to our 
+		158 link Description: License, Value: pixabay.com/service/license-summary/
+		159 text .
+		160 link Description: View profile, Value: pixabay.com/users/vadim_makes_sound-54823268/
+		161 button (collapsed) Donate, Secondary Actions: Expand
+		162 button Follow
+		163 container
+			164 text Music by 
+			165 link Description: Vadim, Value: pixabay.com/users/vadim_makes_sound-54823268/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=562527
+			166 text  from 
+			167 link Description: Pixabay, Value: pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=562527
+		168 button Copy
+			169 container Copy
+		170 link Description: Canva Effortlessly create your next video with trending templates Explore the collection, Value: canva.com/video-editor/templates/?utm_medium=partner&utm_source=pixabay&utm_campaign=canva_attribution&utm_content=social_templates
+
+The focused UI element is 15 button Download

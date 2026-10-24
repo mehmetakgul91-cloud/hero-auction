@@ -508,3 +508,7 @@ body:not(.arena-room) .formation{margin-top:6px;padding:10px}
 .formation .board-row:empty{min-height:16px}
 .preparation-ready-bar{position:sticky;bottom:0;z-index:4;padding:8px 0 max(8px,env(safe-area-inset-bottom));background:linear-gradient(0deg,#101c32 80%,#101c3200)}
 .formation .preparation-ready-bar #apply-roles{width:100%;min-height:48px;margin:0}
+
+/* Credits stay reachable below the arena; never cover combat or mute controls. */
+.arena-audio-credits{padding:4px 16px 16px;text-align:center;font-size:12px}
+.arena-audio-credits a{display:inline-flex;align-items:center;min-height:44px;color:#a6d5ff;text-underline-offset:3px}
