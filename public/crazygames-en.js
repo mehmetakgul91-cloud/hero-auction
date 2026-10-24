@@ -3,6 +3,18 @@ import {battlePhrases, translateCommanderDescription} from './crazygames-battle-
 // Presentation-only English locale for the CrazyGames entry point.
 // Do not translate stored values, hero IDs, requests, or game rules.
 export const phrases = {
+"Diziliş başka bir maça ait.":"This formation belongs to another match.",
+"Hazır diziliş değiştirilemez.":"A confirmed formation cannot be changed.",
+"Geçersiz diziliş veya kart türü":"Invalid formation or hero type",
+
+"TAKIMDAKİ KAHRAMAN":"HEROES IN TEAM",
+"Kahramanların uygun safa yerleşir. İstersen ön/arka safı değiştir.":"Your heroes are placed in their preferred row. Change FRONT/BACK if you like.",
+"Kahramanların otomatik yerleşir. Ön/arka safı değiştirebilir, ardından Hazırım düğmesine basabilirsin.":"Your heroes are placed automatically. Change FRONT/BACK if you like, then press Ready.",
+"Kahramanların hazır. İstersen ön/arka safı değiştir, sonra Hazırım.":"Your heroes are ready. Change FRONT/BACK if you like, then press Ready.",
+"Saf değişikliği bu cihazda saklandı. Hazırım ile tekrar gönderilecek.":"Your row change is saved on this device. Press Ready to send it again.",
+"Diziliş doğrulanamadı":"Formation could not be verified",
+"Diziliş kaydedilemedi":"Formation could not be saved",
+
 "Çok fazla davet. Bir dakika bekle.":"Too many invitations. Wait one minute.",
 "Oyuncunun bekleyen davet listesi dolu.":"The player’s pending invitation list is full.",
 "Davet odasına geçiş tamamlanıyor. Biraz sonra tekrar dene.":"Your invitation transfer is finishing. Try again shortly.",

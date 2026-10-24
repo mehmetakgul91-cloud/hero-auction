@@ -1,3 +1,4 @@
+import {buildDefaultFormation,validateFormation} from './public/preparation-formation.js';
 import {androidTestMemoryMode} from './android-test-mode.js';
 import {requireModerationForInteraction} from './moderation-availability.js';
 import {createNativeCors} from './native-cors.js';
@@ -611,6 +612,23 @@ setInterval(()=>{for(const [code,s] of battleSessions)if(Date.now()-s.created>2*
 const battleIdsA=["original:01", "original:02", "original:03", "original:04", "original:05"];
 const battleIdsB=["original:06", "original:07", "original:08", "original:09", "original:10"];
 function battleSessionView(session,token){const seat=session.players.findIndex(p=>p?.token===token);if(seat<0||session.players[seat].left)return null;return {code:session.code,seat,ready:session.players.map(p=>Boolean(p?.ready)),joined:session.players.map(Boolean),started:Boolean(session.result),result:session.result,created:session.created};}
+// Draft formation belongs to the completed auction, not a browser or account profile.
+// Creation does not imply Ready; both existing confirmation gates remain unchanged.
+function preparationTeams(teams){return teams.map(team=>team.map(card=>{const hero=battleRoster.find(hero=>hero.id===card.id);return {...card,role:hero.role,laneModifiers:hero.laneModifiers}}))}
+function ensureBattlePreparation(room,teams){
+ const matchKey=String(room.matchNumber||1)+':'+String(room.created);
+ let changed=false;
+ if(room.battleSync?.key!==matchKey){room.battleSync={key:matchKey,ready:[null,null],result:null};changed=true;}
+ const sync=room.battleSync;
+ if(!Array.isArray(sync.drafts)){sync.drafts=[null,null];changed=true;}
+ for(let seat=0;seat<2;seat++)if(!sync.drafts[seat]){sync.drafts[seat]=sync.ready[seat]||buildDefaultFormation(teams[seat]);changed=true;}
+ if(changed)markRoom(room);
+ return sync;
+}
+function preparationView(sync,seat){
+ const formation=sync.ready[seat]||sync.drafts[seat];
+ return {matchKey:sync.key,positions:[...formation.positions],lanes:[...formation.lanes],roles:[...formation.roles],ready:Boolean(sync.ready[seat])};
+}
 function battleSessionResult(session){const cards=(ids,formation)=>formation.map((index,slot)=>({id:ids[index],power:stablePower(ids[index]),lane:session.players[ids===battleIdsA?0:1].lanes?.[slot]||(slot<2?'front':'back'),role:session.players[ids===battleIdsA?0:1].roles?.[slot]||((slot<2)?'tank':'energy')}));const a=cards(battleIdsA,session.players[0].positions),b=cards(battleIdsB,session.players[1].positions);const result=simulateRosterBattle(a,b,{seed:'battle-room-'+session.code+'-'+session.created});return {winner:result.winner,rounds:result.rounds,teams:result.teams,initialShields:result.initialShields,log:result.log};}
 function validBattlePositions(v){return Array.isArray(v)&&v.length===5&&new Set(v).size===5&&v.every(x=>Number.isInteger(x)&&x>=0&&x<5)}
 const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data))};try{const url=new URL(req.url,'http://localhost');if(nativeCors(req,res,url.pathname))return;if(req.method==='POST'&&url.pathname==='/api/battle-auction-complete'){
@@ -704,18 +722,17 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
  if(!room||seat<0)return send(403,{error:'Yetkisiz oda'});
  if(room.phase!=='finished')return send(409,{error:'Açık artırma tamamlanmadı'});
  try{const state=auctionRoomToBattleState(room),teams=prepareBattleTeams(state);
- const matchKey=String(room.matchNumber||1)+':'+String(room.created);
- if(room.battleSync?.key!==matchKey)room.battleSync={key:matchKey,ready:[null,null],result:null};
- const sync=room.battleSync;
+ const metadata=preparationTeams(teams),sync=ensureBattlePreparation(room,metadata),matchKey=sync.key;
+ if(req.method==='POST'&&body.matchKey!==undefined&&body.matchKey!==matchKey)return send(409,{error:'Diziliş başka bir maça ait.'});
  // Computer opponent uses an automatic, server-owned formation.
  if(room.mode==='bot'&&!sync.ready[1]){
   sync.ready[1]=chooseBotFormation(teams[1],room.difficulty||'medium');
  }
  // Re-entering a confirmed formation returns the existing battle without changing it.
  if(req.method==='POST'&&!sync.ready[seat]){
- if(!validBattlePositions(body.positions)||!Array.isArray(body.lanes)||body.lanes.length!==5||body.lanes.some(l=>!['front','back'].includes(l)))return send(400,{error:'Geçersiz diziliş'});
- if(!Array.isArray(body.roles)||body.roles.length!==5||body.roles.some((v,i)=>v!==(battleRoster.find(hero=>hero.id===teams[seat][body.positions[i]].id)?.role)))return send(400,{error:'Kart türü değiştirilemez'});
- sync.ready[seat]={positions:body.positions,lanes:body.lanes,roles:body.roles};
+ if(!validateFormation(body,metadata[seat]))return send(400,{error:'Geçersiz diziliş veya kart türü'});
+ sync.ready[seat]={positions:[...body.positions],lanes:[...body.lanes],roles:[...body.roles]};
+ sync.drafts[seat]=sync.ready[seat];
  if(sync.ready.every(Boolean)){
  const ordered=teams.map((team,i)=>sync.ready[i].positions.map((index,slot)=>({...team[index],lane:sync.ready[i].lanes[slot],role:sync.ready[i].roles[slot]})));
  // Read both commanders from authenticated room account IDs, never from client payloads.
@@ -762,6 +779,22 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
  return send(200,{ready:sync.ready.map(Boolean),started:Boolean(sync.result),result:sync.result?{...sync.result,summary:orientBattleSummary(sync.result.summary,seat),winner:sync.result.winner===null?null:sync.result.winner===seat?0:1,teams:seat===0?sync.result.teams:[...sync.result.teams].reverse(),initialShields:seat===0?sync.result.initialShields:sync.result.initialShields?.slice().reverse(),commanders:seat===0?sync.result.commanders:[...sync.result.commanders].reverse(),log:seat===0?sync.result.log:sync.result.log.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side,shieldSnapshot:e.shieldSnapshot?.slice().reverse()}))}:null});
  }catch(e){return send(422,{error:e.message})}
 }
+if(req.method==='POST'&&url.pathname==='/api/battle-auction-formation'){
+ let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>4000)return send(413,{error:'İstek çok büyük'})}
+ let body;try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz JSON'})}
+ const room=rooms.get(String(body?.code||'').toUpperCase()),seat=room?.players?.findIndex(p=>p?.token===body?.token)??-1;
+ if(!room||seat<0)return send(403,{error:'Yetkisiz oda'});
+ if(room.phase!=='finished')return send(409,{error:'Açık artırma tamamlanmadı'});
+ try{
+  const teams=preparationTeams(prepareBattleTeams(auctionRoomToBattleState(room))),sync=ensureBattlePreparation(room,teams);
+  if(body.matchKey!==sync.key)return send(409,{error:'Diziliş başka bir maça ait.'});
+  if(sync.ready[seat]||sync.result)return send(409,{error:'Hazır diziliş değiştirilemez.'});
+  if(!validateFormation(body,teams[seat]))return send(400,{error:'Geçersiz diziliş veya kart türü'});
+  sync.drafts[seat]={positions:[...body.positions],lanes:[...body.lanes],roles:[...body.roles]};
+  markRoom(room);
+  return send(200,{preparation:preparationView(sync,seat)});
+ }catch(e){return send(422,{error:e.message})}
+}
 if(req.method==='GET'&&url.pathname==='/api/battle-auction-team'){
  const room=rooms.get(String(url.searchParams.get('code')||'').toUpperCase());
  const seat=room?.players?.findIndex(p=>p?.token===url.searchParams.get('token'))??-1;
@@ -770,7 +803,8 @@ if(req.method==='GET'&&url.pathname==='/api/battle-auction-team'){
  try{
   const state=auctionRoomToBattleState(room);
   const teams=prepareBattleTeams(state);
-  return send(200,{ready:true,seat,credits:[state.remainingCreditsA,state.remainingCreditsB],teams:teams.map(team=>team.map(card=>{const hero=battleRoster.find(h=>h.id===card.id);return {...card,name:hero.name,universe:hero.universe,role:hero.role,laneModifiers:hero.laneModifiers}}))});
+  const sync=ensureBattlePreparation(room,preparationTeams(teams));
+  return send(200,{ready:true,seat,preparation:preparationView(sync,seat),credits:[state.remainingCreditsA,state.remainingCreditsB],teams:teams.map(team=>team.map(card=>{const hero=battleRoster.find(h=>h.id===card.id);return {...card,name:hero.name,universe:hero.universe,role:hero.role,laneModifiers:hero.laneModifiers}}))});
  }catch(e){return send(422,{error:'Bu açık artırma 2.0 savaşına uygun değil: '+e.message})}
 }
 if(req.method==='GET'&&url.pathname==='/api/battle-room'){const session=battleSessions.get(String(url.searchParams.get('code')||'').toUpperCase());const view=session&&battleSessionView(session,url.searchParams.get('token'));return view?send(200,view):send(404,{error:'Oda veya oturum bulunamadı.'})}

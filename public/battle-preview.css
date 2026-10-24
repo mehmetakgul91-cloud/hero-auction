@@ -501,27 +501,10 @@ body:not(.arena-room) .formation{margin-top:6px;padding:10px}
 .formation-power-breakdown .negative{color:#ff9a9a}
 @media(min-width:600px){.formation .ready-status{grid-template-columns:auto minmax(0,1fr) minmax(0,1fr)}.formation #prep-clock{grid-row:auto}}
 
-/* One-hand preparation controls. No combat sizing or document scroll lock. */
-.prep-thumb-dock{margin:8px 0;padding:8px;padding-bottom:max(8px,env(safe-area-inset-bottom));border:1px solid #5693b4;border-radius:14px;background:#0b1b2ff7;box-shadow:0 -5px 22px #0005;color:#eaf8ff}
-.prep-thumb-dock[hidden]{display:none!important}
-.prep-thumb-dock.is-fixed{position:fixed;z-index:25;left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));bottom:0;margin:0;max-width:684px;margin-inline:auto}
-.prep-thumb-heroes{display:grid;grid-template-columns:repeat(5,minmax(44px,1fr));gap:4px;margin-bottom:6px}
-.prep-thumb-dock button{min-width:44px;min-height:44px;padding:5px 3px;border:1px solid #426783;background:#18344d;color:#eff9ff;font:700 11px/1.2 system-ui;border-radius:8px;touch-action:manipulation;overflow-wrap:anywhere}
-.prep-thumb-dock button:focus-visible{outline:3px solid #ffe491;outline-offset:2px}
-.prep-thumb-dock button.selected{border-color:#ffe491;background:#4b422d}
-.prep-thumb-heroes button.selected::after{content:"✓";position:absolute;top:3px;right:4px;font-size:12px;color:#ffe491}
-.prep-thumb-heroes button{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px}
-.prep-thumb-portrait{position:relative;display:block;width:24px;height:24px;border-radius:50%;overflow:hidden}
-.prep-thumb-portrait .portrait-fallback{font-size:14px}
-.prep-thumb-hero-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:2.4em;font-size:10px}
-.prep-thumb-dock button:disabled{opacity:.55;cursor:default}
-.prep-thumb-actions{display:grid;grid-template-columns:1fr}
-.prep-thumb-actions #apply-roles{min-height:48px;font-size:12px;background:#0f89d3}
-.prep-thumb-roster[hidden]{display:none!important}
-.prep-thumb-roster>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:13px;color:#bed5e8}
-.prep-thumb-roster>summary:focus-visible{outline:3px solid #ffe491;outline-offset:2px}
-.prep-thumb-roster #role-pickers{margin-top:8px}
-.prep-thumb-fixed{scroll-padding-bottom:calc(var(--prep-thumb-clearance,0px) + 12px)}
-.prep-thumb-fixed body{padding-bottom:var(--prep-thumb-clearance,0px)}
-.prep-thumb-fixed .formation button,.prep-thumb-fixed .formation summary,.prep-thumb-fixed #prep-note{scroll-margin-bottom:calc(var(--prep-thumb-clearance,0px) + 12px)}
-@media(max-width:299px){.prep-thumb-heroes{grid-template-columns:repeat(3,minmax(44px,1fr))}}
+/* One board, five automatically placed heroes, and one reachable Ready action. */
+.formation .battle-board{margin-bottom:8px}
+.formation .battle-board .board-slot{touch-action:pan-y;cursor:pointer}
+.formation .battle-board .lane-switch:focus-visible,.formation .battle-board .board-slot:focus-visible{outline:3px solid #bdf8ff;outline-offset:3px}
+.formation .board-row:empty{min-height:16px}
+.preparation-ready-bar{position:sticky;bottom:0;z-index:4;padding:8px 0 max(8px,env(safe-area-inset-bottom));background:linear-gradient(0deg,#101c32 80%,#101c3200)}
+.formation .preparation-ready-bar #apply-roles{width:100%;min-height:48px;margin:0}
