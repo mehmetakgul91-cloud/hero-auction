@@ -2,11 +2,16 @@ name: Hero Auction 2.0 Battle Tests
 on:
   push:
     branches:
+      - main
       - feature/hero-auction-2-auto-battle
   pull_request:
+    branches:
+      - main
     paths:
       - 'battle-*'
+      - 'tests/battle-tactics.test.js'
       - '.github/workflows/battle-tests.yml'
+  workflow_dispatch:
 jobs:
   battle-tests:
     runs-on: ubuntu-latest
