@@ -19,6 +19,14 @@ Node.js 18 veya üzeri gerekir. `npm install` ve `npm start` komutlarından sonr
 
 `node --test *.test.js tests/*.test.* test/*.test.js` savaş, hesap, komutan ve platform kontrollerini çalıştırır. `npm run audit:strict` aktif kahraman görsellerini ve güçlerini denetler.
 
+## Arena hazırlığı
+
+Açık artırmada edinilen beş kahraman, kendi ön/arka saf tercihine (kahramanın kayıtlı saf bonuslarına) göre tahtaya otomatik yerleşir. Oyuncu yalnızca **Ön saf / Arka saf** değişikliği yapar; boş yuva seçme, sürükleme veya kahramanları yeniden sıralama gerekmez. Saf değişikliği kahramanların edinilme/savaş sırasını değiştirmez. Mevcut kurallarda iki safın her biri sıfır ile beş kahraman içerebilir.
+
+Saf tercihleri maç ve oyuncuya özel taslak olarak sunucuda saklanır; yenilemede korunur, rövanşta yeni kadro için yeniden oluşturulur. Henüz sunucuya ulaşmayan değişiklik aynı sekmede maç/kadro anahtarıyla saklanır ve yeniden gönderilir. Web ve CrazyGames tarayıcı kayıtları ayrıdır; hesapta kayıtlı komutan/diziliş verilerine toplu dönüşüm uygulanmaz.
+
+Otomatik yerleşim **Hazırım** sayılmaz. Mevcut 60 saniyelik hazırlık süresi veya oyuncunun Hazırım düğmesi dizilişi onaylar; savaş için her iki tarafın da hazır olması gerekir. Sunucu beş farklı kahramanı, değiştirilemeyen gerçek rollerini ve saf değerlerini doğrular. Onaylanmış diziliş ve eski maça ait istekler değişiklik kabul etmez.
+
 ## Komutan seçimi ve değişimi
 
 İlk komutan seçimi ücretsizdir. Daha sonra farklı bir komutana geçiş 1000 altındır; gelişim seviyeleri korunur. Ücret sunucuda bakiye kontrolüyle birlikte tek işlemde kesilir. Aynı komutanı yeniden seçme isteği ücret kesmeden reddedilir. Geliştirme ücretleri ve diğer oyun ekonomisi değişmez.

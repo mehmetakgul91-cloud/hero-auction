@@ -1,3 +1,5 @@
+import {buildDefaultFormation,validateFormation} from '/preparation-formation.js';
+import {createPreparationDraft} from '/preparation-draft.js';
 import {createRoomInvitesUI} from '/room-invites.js';
 import {createFriendsUI} from '/friends.js';
 import {translate} from '/crazygames-en.js';
@@ -113,7 +115,6 @@ function updateArenaClock(){const elapsed=arenaElapsedMs+(arenaClockStartedAt?Da
 function startArenaClock(){if(arenaClockStartedAt)return;arenaClockStartedAt=Date.now();arenaClockTicker=setInterval(updateArenaClock,250);updateArenaClock()}
 function pauseArenaClock(){if(arenaClockStartedAt){arenaElapsedMs+=Date.now()-arenaClockStartedAt;arenaClockStartedAt=0}if(arenaClockTicker!==null){clearInterval(arenaClockTicker);arenaClockTicker=null}updateArenaClock()}
 function resetArenaClock(){pauseArenaClock();arenaElapsedMs=0;updateArenaClock()}
-const roleOptions=['tank','fighter','energy'];
 let auctionLaneModifiers=[];
 let arenaCommanderProfile=null;
 function commanderBonusForRole(role){
@@ -130,19 +131,39 @@ async function loadArenaCommander(){
   const response=await fetch('/api/commander/get',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({authToken:login.authToken})});
   if(!response.ok)return;
   const data=await response.json();arenaCommanderProfile=data.profile||null;
-  if(!prepDone){renderBoard();renderRolePickers()}
+  if(!prepDone){renderBoard()}
  }catch(error){console.warn('Komutan önizlemesi yüklenemedi:',error)}
 }
 
 let assignedRoles=demoA.map(x=>roleNames[x[1]]?x[1]:'fighter');
-const slotRoles=['tank','fighter','energy','energy','energy'];
 const lanes=['front','front','back','back','back'];
 function roleAt(slot){return positions[slot]===null?'fighter':assignedRoles[positions[slot]]||'fighter'}
-function setLane(slot,lane){if(prepDone)return;lanes[slot]=lane;renderBoard();renderRolePickers()}
+function setLane(slot,lane){
+ if(prepDone||prepSubmitting||arenaMode||auctionMode&&!auctionLoaded||!Number.isInteger(slot)||!['front','back'].includes(lane)||positions[slot]===undefined||lanes[slot]===lane)return;
+ lanes[slot]=lane;renderBoard();
+ // The hero keeps its immutable roster index: moving rows never reorders combat.
+ if(preparationDraft)void preparationDraft.save(formationSnapshot());
+ else savePreviewDraft();
+ document.querySelector('.lane-switch[data-slot="'+slot+'"]')?.focus({preventScroll:true});
+}
+function formationSnapshot(){return {positions:[...positions],lanes:[...lanes],roles:positions.map((_,slot)=>roleAt(slot))}}
+
 
 const heroArtCache=new Map();
 async function loadHeroArt(i){if(heroArtCache.has(i))return heroArtCache.get(i);const promise=fetch('/api/art?universe='+encodeURIComponent(demoA[i][3]||'original')+'&name='+encodeURIComponent(demoA[i][0])).then(r=>r.ok?r.json():null).then(data=>data?.url||null).catch(()=>null);heroArtCache.set(i,promise);return promise}
-function heroPortrait(i,container){const img=document.createElement('img');img.className='slot-portrait';img.alt=demoA[i][0];img.loading='lazy';const fallback=document.createElement('span');fallback.className='portrait-fallback';fallback.textContent=demoA[i][0].slice(0,1);container.append(fallback);void loadHeroArt(i).then(url=>{if(!url||!container.isConnected)return;img.src=url;img.onload=()=>{img.classList.toggle('hero-portrait-wide',img.naturalWidth>img.naturalHeight);if(container.isConnected){fallback.remove();container.append(img)}};img.onerror=()=>img.remove()})}
+function heroPortrait(i,container){
+ const img=document.createElement('img');img.className='slot-portrait';img.alt=demoA[i][0];
+ // The portrait is attached only after load; detached lazy images never become visible.
+ img.loading='eager';
+ const fallback=document.createElement('span');fallback.className='portrait-fallback';fallback.textContent=demoA[i][0].slice(0,1);container.append(fallback);
+ void loadHeroArt(i).then(url=>{
+  if(!url||!container.isConnected)return;
+  img.onload=()=>{img.classList.toggle('hero-portrait-wide',img.naturalWidth>img.naturalHeight);if(container.isConnected){fallback.remove();container.append(img)}};
+  img.onerror=()=>img.remove();
+  // Register both handlers before src, including cached-image completion.
+  img.src=url;
+ });
+}
 
 const query=new URLSearchParams(location.search);
 let arenaMode=query.get('room')==='arena';
@@ -239,15 +260,23 @@ async function battleLobby(action){try{const code=$('join-battle-code').value.tr
 $('create-battle-room').onclick=()=>battleLobby('create');
 $('join-battle-room').onclick=()=>battleLobby('join');
 if(multiplayerCode){$('battle-lobby-status').textContent='Oda kodu: '+multiplayerCode+' · Arkadaşınla paylaş. Dizilişini hazırlayıp Hazırım düğmesine bas.';$('battle-lobby').classList.add('lobby-connected')}if(arenaMode||auctionMode)$('battle-lobby').hidden=true;
-const savedFormation=(()=>{try{return JSON.parse(sessionStorage.getItem('hero-auction-formation')||'null')}catch{return null}})();
-if(arenaMode){try{const savedLanes=JSON.parse(sessionStorage.getItem('hero-auction-lanes')||'null');if(Array.isArray(savedLanes)&&savedLanes.length===5&&savedLanes.every(x=>x==='front'||x==='back'))lanes.splice(0,5,...savedLanes)}catch{}}
-const positions=arenaMode&&Array.isArray(savedFormation)&&savedFormation.length===5&&new Set(savedFormation).size===5&&savedFormation.every(x=>Number.isInteger(x)&&x>=0&&x<5)?savedFormation:[null,null,null,null,null];let selectedHero=null,dragHero=null,dragGhost=null,dragOrigin=null,nativeDragAvatar=null;let lastFormationDrag=0;
-function clearNativeDragAvatar(){if(nativeDragAvatar){nativeDragAvatar.remove();nativeDragAvatar=null}}
-function makeNativeDragAvatar(i){clearNativeDragAvatar();const avatar=document.createElement('div');avatar.className='drag-ghost native-drag-avatar';heroPortrait(i,avatar);document.body.append(avatar);nativeDragAvatar=avatar;return avatar}
-let hoverSlot=null,hoverHero=null,hoverTimer=null;
-function clearHover(){if(hoverTimer!==null)clearTimeout(hoverTimer);hoverTimer=null;hoverSlot=null;hoverHero=null;document.querySelectorAll('.board-slot').forEach(x=>x.classList.remove('hover-preview'));document.querySelectorAll('.formation-card').forEach(x=>{x.classList.remove('previewing');const stats=x.querySelector('.formation-stats');if(stats&&x.dataset.baseStats)stats.textContent=x.dataset.baseStats})}
-function previewHover(hero,slot){if(prepDone||hero===null||!Number.isInteger(slot)){clearHover();return}if(hoverSlot===slot&&hoverHero===hero)return;clearHover();hoverSlot=slot;hoverHero=hero;hoverTimer=setTimeout(()=>{if(prepDone||hoverSlot!==slot||hoverHero!==hero)return;const card=[...document.querySelectorAll('.formation-card')].find(x=>Number(x.dataset.heroIndex)===hero);const role=roleAt(slot),v=roleStats(demoA[hero][2],role);if(card){const stats=card.querySelector('.formation-stats');if(stats){card.dataset.baseStats=stats.textContent;stats.textContent='❤️ '+v[2]+'   ⚔ '+v[0]+'   🛡 '+v[1]+'   ⚡ '+v[3];card.classList.add('previewing')}}document.querySelector('.board-slot[data-slot="'+slot+'"]')?.classList.add('hover-preview')},2000)}
-function placeHero(hero,slot){clearHover();if(prepDone||hero===null)return;const old=positions.indexOf(hero);if(old===slot)return;const displaced=positions[slot];if(old>=0)positions[old]=displaced;positions[slot]=hero;selectedHero=null;const help=document.querySelector('.board-help');if(help)help.textContent='Kahraman yerleştirildi. Taşımak için kahramana, ardından başka yuvaya dokun.';renderBoard();renderRolePickers()}
+// A complete formation is shown once verified; old unscoped saves are read only for legacy previews.
+const previewTeam=()=>demoA.map((hero,index)=>({id:'preview-'+index,role:hero[1],laneModifiers:auctionLaneModifiers[index]}));
+const positions=[0,1,2,3,4];let selectedHero=null,preparationDraft=null,preparationMatchKey=null;
+if(!auctionMode){
+ const defaults=buildDefaultFormation(previewTeam());lanes.splice(0,5,...defaults.lanes);
+ try{
+  const saved=JSON.parse(sessionStorage.getItem('hero-auction-preview-draft')||'null');
+  const key=multiplayerCode?multiplayerCode+':'+multiplayerToken:'preview';
+  if(saved?.key===key&&validateFormation(saved,previewTeam())){positions.splice(0,5,...saved.positions);lanes.splice(0,5,...saved.lanes)}
+  else if(arenaMode){
+   const legacy={positions:JSON.parse(sessionStorage.getItem('hero-auction-formation')||'null'),lanes:JSON.parse(sessionStorage.getItem('hero-auction-lanes')||'null')};
+   if(Array.isArray(legacy.positions))legacy.roles=legacy.positions.map(i=>demoA[i]?.[1]);
+   if(validateFormation(legacy,previewTeam())){positions.splice(0,5,...legacy.positions);lanes.splice(0,5,...legacy.lanes)}
+  }
+ }catch{}
+}
+function savePreviewDraft(){try{sessionStorage.setItem('hero-auction-preview-draft',JSON.stringify({key:multiplayerCode?multiplayerCode+':'+multiplayerToken:'preview',...formationSnapshot()}))}catch{}}
 function displayedLanePower(heroIndex,lane){
  const base=Number(demoA[heroIndex]?.[2])||0;
  const credit=auctionMode?creditBonus(previewCredits):0;
@@ -265,7 +294,7 @@ function displayedLanePower(heroIndex,lane){
  return {base,bonus:laneBonus,commanderBonus,power:Math.round((tacticalPower+base*commanderBonus)*100)/100};
 }
 function updateFormationPowerSummary(){
- const placed=positions.map((heroIndex,slot)=>({heroIndex,slot})).filter(item=>Number.isInteger(item.heroIndex));
+ const placed=auctionMode&&!auctionLoaded?[]:positions.map((heroIndex,slot)=>({heroIndex,slot})).filter(item=>Number.isInteger(item.heroIndex));
  const base=placed.reduce((sum,{heroIndex})=>sum+(Number(demoA[heroIndex]?.[2])||0),0);
  const current=placed.reduce((sum,{heroIndex,slot})=>sum+displayedLanePower(heroIndex,lanes[slot]).power,0);
  const delta=current-base;
@@ -280,6 +309,7 @@ function updateFormationPowerSummary(){
 }
 function renderCommanderBonusDetail(){
  const el=$('commander-bonus-content');if(!el)return;
+ if(auctionMode&&!auctionLoaded){el.textContent='Açık artırma kartları doğrulanıyor…';return}
  const slot=positions.findIndex(index=>index===selectedHero&&index!==null);
  const chosen=slot>=0?slot:positions.findIndex(index=>index!==null);
  if(chosen<0){el.textContent='Kahramanları dizilişe yerleştirdiğinde bonuslar burada görünecek.';return}
@@ -294,33 +324,34 @@ function renderCommanderBonusDetail(){
  for(const [label,value] of [['Temel kart gücü',base.toFixed(2)],['Saf / rol / kredi etkisi',format(tactical-base)],['Komutan önizleme katkısı ('+(rate*100).toFixed(1)+'%)',format(commanderPoints)],['Tahmini güç göstergesi',power.power.toFixed(2)]]){const row=document.createElement('div');row.style.cssText='display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid #294760';const left=document.createElement('span');left.textContent=label;const right=document.createElement('strong');right.textContent=value;row.append(left,right);el.append(row)}
  const note=document.createElement('small');note.style.cssText='display:block;margin-top:8px;opacity:.85';note.textContent='Gerçek savaş etkisi: '+stat+' · '+(rate*100).toFixed(1)+'% · '+commanderStat+'. Bu güç değeri önizlemedir; savaş motorunda bonus rolüne göre saldırı, savunma veya can istatistiğine uygulanır ve tam sayıya yuvarlanır.';el.append(note);
 }
-function renderBoard(){for(const [container,indices] of [['front-slots',[0,1,2,3,4].filter(i=>lanes[i]==='front')],['back-slots',[0,1,2,3,4].filter(i=>lanes[i]==='back')]]){const root=$(container);root.replaceChildren();for(const slot of indices){const heroIndex=positions[slot];const wrap=document.createElement('div');wrap.className='slot-wrap';const label=document.createElement('span');label.className='slot-role';label.textContent=heroIndex===null?'BOŞ KONUM':(roleIcons[roleAt(slot)]+' '+roleNames[roleAt(slot)]);const btn=document.createElement('button');btn.type='button';btn.className='board-slot circle-slot'+(heroIndex===null?' empty':' filled');btn.dataset.slot=slot;btn.disabled=prepDone;btn.classList.toggle('selected',heroIndex!==null&&selectedHero===heroIndex);if(heroIndex!==null)attachDrag(btn,heroIndex);const name=document.createElement('strong');if(heroIndex===null){name.textContent='+';btn.append(name)}else {heroPortrait(heroIndex,btn);const powerBadge=document.createElement('span');powerBadge.className='board-power';powerBadge.textContent='GÜÇ '+displayedLanePower(heroIndex,lanes[slot]).power.toFixed(2);btn.append(powerBadge);if(auctionMode){const bonus=Number(auctionLaneModifiers[heroIndex]?.[lanes[slot]]);if(Number.isFinite(bonus)){const bonusBadge=document.createElement('span');bonusBadge.className='board-lane-bonus';bonusBadge.textContent=(lanes[slot]==='front'?'ÖN ':'ARKA ')+(bonus>=0?'+':'')+Math.round(bonus*100)+'%';bonusBadge.style.cssText='display:block;font-size:11px;font-weight:800;color:'+(bonus>=0?'#83f4b6':'#ff9a9a');btn.append(bonusBadge)}}const commanderBonus=commanderBonusForRole(roleAt(slot));if(commanderBonus>0){const commanderBadge=document.createElement('span');commanderBadge.className='board-lane-bonus';commanderBadge.textContent='♛ KOMUTAN +'+(commanderBonus*100).toFixed(1)+'%';commanderBadge.style.cssText='display:block;font-size:11px;font-weight:800;color:#ffd778';btn.append(commanderBadge)}};btn.setAttribute('aria-label',roleNames[roleAt(slot)]+' bölgesi: '+(heroIndex===null?'Boş':demoA[heroIndex][0]));btn.onclick=()=>{if(Date.now()-lastFormationDrag<350)return;if(selectedHero!==null)placeHero(selectedHero,slot);else if(heroIndex!==null){selectedHero=heroIndex;renderBoard();renderRolePickers()}};const identity=document.createElement('div');identity.className='board-hero-identity';if(heroIndex!==null){const heroName=document.createElement('strong');heroName.className='board-hero-name';heroName.textContent=demoA[heroIndex][0];const heroPower=document.createElement('span');heroPower.className='board-hero-power';heroPower.textContent='⚡ GÜÇ '+displayedLanePower(heroIndex,lanes[slot]).power.toFixed(2);heroPower.style.color=displayedLanePower(heroIndex,lanes[slot]).power>=displayedLanePower(heroIndex,lanes[slot]).base?'#83f4b6':'#ff9a9a';identity.append(heroName,heroPower)}const move=document.createElement('button');move.type='button';move.className='lane-switch';move.textContent=lanes[slot]==='front'?'↓ Arka safa':'↑ Ön safa';move.disabled=prepDone;move.onclick=()=>setLane(slot,lanes[slot]==='front'?'back':'front');wrap.append(label,btn,identity,move);root.append(wrap)}}updateFormationPowerSummary();renderCommanderBonusDetail()}
-function completeSlots(){const used=new Set(positions.filter(x=>x!==null));const remaining=[0,1,2,3,4].filter(x=>!used.has(x));for(let i=0;i<5;i++)if(positions[i]===null)positions[i]=remaining.shift();renderBoard()}
-function attachDrag(card,i){
- card.classList.add('draggable-hero');
- card.draggable=true;
- card.addEventListener('dragstart',e=>{if(prepDone){e.preventDefault();return}lastFormationDrag=Date.now();dragHero=i;e.dataTransfer.setData('text/plain',String(i));e.dataTransfer.effectAllowed='move';e.dataTransfer.setDragImage(makeNativeDragAvatar(i),36,36)});
- card.addEventListener('dragend',()=>{lastFormationDrag=Date.now();clearNativeDragAvatar();clearHover();dragHero=null;document.querySelectorAll('.board-slot').forEach(x=>x.classList.remove('drop-target'))});
- // On touch devices, horizontal gestures belong to the scrollable roster.
- // Only a clearly vertical gesture initiates dragging a hero to a slot.
- card.addEventListener('pointerdown',e=>{if(prepDone||e.pointerType==='mouse'||(e.target.closest('button')&&e.target.closest('button')!==card))return;dragOrigin={x:e.clientX,y:e.clientY,i,scrolling:false}});
- card.addEventListener('pointermove',e=>{
-  if(!dragOrigin||dragOrigin.i!==i||prepDone||dragOrigin.scrolling)return;
-  const dx=e.clientX-dragOrigin.x,dy=e.clientY-dragOrigin.y;
-  if(!dragGhost&&Math.abs(dx)>8&&Math.abs(dx)>Math.abs(dy)){dragOrigin.scrolling=true;return}
-  if(!dragGhost&&(Math.abs(dy)<12||Math.abs(dy)<Math.abs(dx)*1.2))return;
-  if(!dragGhost){dragGhost=document.createElement('div');dragGhost.className='drag-ghost';heroPortrait(i,dragGhost);document.body.append(dragGhost);document.body.classList.add('dragging-formation')}
-  dragGhost.style.left=e.clientX+'px';dragGhost.style.top=(e.clientY-94)+'px';
-  document.querySelectorAll('.board-slot').forEach(x=>x.classList.remove('drop-target'));
-  const slot=document.elementFromPoint(e.clientX,e.clientY)?.closest('.board-slot');
-  if(slot){slot.classList.add('drop-target');previewHover(i,Number(slot.dataset.slot))}else clearHover();
- });
- card.addEventListener('pointerup',e=>{if(!dragOrigin)return;const slot=dragGhost?document.elementFromPoint(e.clientX,e.clientY)?.closest('.board-slot'):null;if(dragGhost)lastFormationDrag=Date.now();clearDrag();if(slot)placeHero(i,Number(slot.dataset.slot))});
- card.addEventListener('pointercancel',clearDrag);
+function renderBoard(){
+ for(const [container,lane] of [['front-slots','front'],['back-slots','back']]){
+  const root=$(container);root.replaceChildren();
+  // No empty slot targets or duplicate roster: these are the five acquired heroes.
+  if(auctionMode&&!auctionLoaded)continue;
+  for(const slot of positions.map((_,i)=>i).filter(i=>lanes[i]===lane)){
+   const heroIndex=positions[slot],role=roleAt(slot),power=displayedLanePower(heroIndex,lane);
+   const wrap=document.createElement('article');wrap.className='slot-wrap';wrap.dataset.heroIndex=heroIndex;
+   const label=document.createElement('span');label.className='slot-role';label.textContent=roleIcons[role]+' '+roleNames[role];
+   const portrait=document.createElement('button');portrait.type='button';portrait.className='board-slot circle-slot filled';portrait.dataset.slot=slot;
+   portrait.disabled=prepDone||prepSubmitting;portrait.setAttribute('aria-label',demoA[heroIndex][0]+' · '+roleNames[role]+' · '+(lane==='front'?'Ön saf':'Arka saf'));
+   portrait.setAttribute('aria-pressed',String(selectedHero===heroIndex));portrait.classList.toggle('selected',selectedHero===heroIndex);
+   heroPortrait(heroIndex,portrait);
+   // Portrait selection only inspects bonuses; it cannot move/swap individual positions.
+   portrait.onclick=()=>{selectedHero=heroIndex;renderBoard()};
+   const identity=document.createElement('div');identity.className='board-hero-identity';
+   const name=document.createElement('strong');name.className='board-hero-name';name.textContent=demoA[heroIndex][0];
+   const powerLabel=document.createElement('span');powerLabel.className='board-hero-power';powerLabel.textContent='⚡ GÜÇ '+power.power.toFixed(2);powerLabel.style.color=power.power>=power.base?'#83f4b6':'#ff9a9a';
+   identity.append(name,powerLabel);
+   const move=document.createElement('button');move.type='button';move.className='lane-switch';move.dataset.slot=slot;
+   move.textContent=lane==='front'?'↓ Arka safa':'↑ Ön safa';move.setAttribute('aria-label',demoA[heroIndex][0]+' · '+move.textContent);
+   move.disabled=prepDone||prepSubmitting;move.onclick=()=>setLane(slot,lane==='front'?'back':'front');
+   wrap.append(label,portrait,identity,move);root.append(wrap);
+  }
+ }
+ updateFormationPowerSummary();renderCommanderBonusDetail();
 }
-function clearDrag(){clearNativeDragAvatar();clearHover();dragOrigin=null;if(dragGhost){dragGhost.remove();dragGhost=null}document.body.classList.remove('dragging-formation');document.querySelectorAll('.board-slot').forEach(x=>x.classList.remove('drop-target'))}
-document.addEventListener('dragover',e=>{const slot=e.target.closest('.board-slot');if(slot){e.preventDefault();if(dragHero!==null)previewHover(dragHero,Number(slot.dataset.slot))}else clearHover()});document.addEventListener('drop',e=>{const slot=e.target.closest('.board-slot');if(!slot||prepDone)return;e.preventDefault();const i=Number(e.dataTransfer.getData('text/plain'));if(Number.isInteger(i)&&i>=0&&i<5)placeHero(i,Number(slot.dataset.slot))});
-let prepTimer=null,prepDeadline=0,prepDone=false,auctionLoaded=false;
+let prepTimer=null,prepDeadline=0,prepDone=false,prepSubmitting=false,auctionLoaded=false;
 // Start the actual media element silently on the first trusted preparation gesture.
 // Keeping it playing in the same document preserves Safari's user-gesture permission.
 let arenaAudioPrimed=false;
@@ -378,30 +409,44 @@ function enterArenaWithoutReload(url){
   void check();if(battlePoll===null)battlePoll=setInterval(check,1800);
  }else if(!multiplayerCode){void build().then(()=>{if(events.length)startReplay()})}
 }
-function lockFormation(){if(prepDone||auctionMode&&!auctionLoaded)return;if(!arenaMode&&arenaMusicEnabled){if(!arenaAudioPrimed)primeArenaAudio()}clearHover();completeSlots();if(!arenaMode){try{sessionStorage.setItem('hero-auction-arena-music','1')}catch{};sessionStorage.setItem('hero-auction-formation',JSON.stringify(positions));sessionStorage.setItem('hero-auction-lanes',JSON.stringify(lanes));if(multiplayerCode&&multiplayerToken){void fetch('/api/battle-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ready',code:multiplayerCode,token:multiplayerToken,positions,lanes,roles:positions.map((_,slot)=>roleAt(slot))})}).then(async r=>{const v=await r.json();if(!r.ok)throw Error(v.error);enterArenaWithoutReload('/battle-preview.html?room=arena&code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken))}).catch(e=>{$('prep-note').textContent='⚠ '+e.message});return}if(auctionMode){void fetch('/api/battle-auction-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,positions,lanes,roles:positions.map((_,slot)=>roleAt(slot))})}).then(async response=>{const data=await response.json();if(!response.ok)throw Error(data.error||'Diziliş gönderilemedi');enterArenaWithoutReload('/battle-preview.html?room=arena&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken)+'&commanderTest=1')}).catch(e=>{$('prep-note').textContent='⚠ '+e.message});return}enterArenaWithoutReload('/battle-preview.html?room=arena'+(auctionCode&&auctionToken?'&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken):''));return}prepDone=true;document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;if(prepTimer!==null){clearInterval(prepTimer);prepTimer=null}document.querySelectorAll('.formation-choices button,.board-slot,.formation-select').forEach(b=>b.disabled=true);$('apply-roles').disabled=true;$('apply-roles').textContent='✓ HAZIR';$('ready-a').textContent='🔵 Sen: Hazır';$('prep-note').textContent='İki taraf hazır. Savaş başlıyor!';stop();$('events').replaceChildren();$('play').textContent='▶ SAVAŞI OYNAT';void build().then(()=>{if(events.length)$('play').click()})}
-function startPreparation(){if(prepTimer!==null)clearInterval(prepTimer);prepDone=false;prepDeadline=Date.now()+60000;const tick=()=>{const remaining=Math.max(0,Math.ceil((prepDeadline-Date.now())/1000));$('prep-clock').textContent=String(Math.floor(remaining/60)).padStart(2,'0')+':'+String(remaining%60).padStart(2,'0');if(!remaining)lockFormation()};tick();prepTimer=setInterval(tick,200)}
+async function lockFormation(){
+ if(prepDone||prepSubmitting||auctionMode&&!auctionLoaded)return;
+ if(!arenaMode&&arenaMusicEnabled&&!arenaAudioPrimed)primeArenaAudio();
+ prepSubmitting=true;$('apply-roles').disabled=true;renderBoard();
+ try{
+  if(!arenaMode){
+   try{sessionStorage.setItem('hero-auction-arena-music','1');if(!auctionMode){sessionStorage.setItem('hero-auction-formation',JSON.stringify(positions));sessionStorage.setItem('hero-auction-lanes',JSON.stringify(lanes))}}catch{}
+   const formation=formationSnapshot();
+   if(auctionMode){
+    // Finish queued row changes before confirmation; Ready also carries the full final draft.
+    await preparationDraft?.flush();
+    const response=await fetch('/api/battle-auction-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,matchKey:preparationMatchKey,...formation})});
+    const data=await response.json();if(!response.ok)throw Error(data.error||'Diziliş gönderilemedi');
+    preparationDraft?.clear();prepDone=true;
+    enterArenaWithoutReload('/battle-preview.html?room=arena&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken)+'&commanderTest=1');return;
+   }
+   if(multiplayerCode&&multiplayerToken){
+    const response=await fetch('/api/battle-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ready',code:multiplayerCode,token:multiplayerToken,...formation})});
+    const data=await response.json();if(!response.ok)throw Error(data.error);
+    prepDone=true;enterArenaWithoutReload('/battle-preview.html?room=arena&code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken));return;
+   }
+   prepDone=true;enterArenaWithoutReload('/battle-preview.html?room=arena');return;
+  }
+  prepDone=true;document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;
+  if(prepTimer!==null){clearInterval(prepTimer);prepTimer=null}
+  $('apply-roles').textContent='✓ HAZIR';$('ready-a').textContent='🔵 Sen: Hazır';$('prep-note').textContent='İki taraf hazır. Savaş başlıyor!';stop();$('events').replaceChildren();$('play').textContent='▶ SAVAŞI OYNAT';
+  await build();if(events.length)$('play').click();
+ }catch(error){$('prep-note').textContent='⚠ '+error.message;prepDone=false;$('apply-roles').disabled=false}
+ finally{prepSubmitting=false;if(!prepDone)renderBoard()}
+}
+function startPreparation(){
+ if(prepTimer!==null)clearInterval(prepTimer);prepDone=false;prepDeadline=Date.now()+60000;let expired=false;
+ const tick=()=>{const remaining=Math.max(0,Math.ceil((prepDeadline-Date.now())/1000));$('prep-clock').textContent=String(Math.floor(remaining/60)).padStart(2,'0')+':'+String(remaining%60).padStart(2,'0');if(!remaining&&!expired){expired=true;void lockFormation()}};
+ tick();prepTimer=setInterval(tick,200);
+}
 const roleIcons={tank:'🛡️',fighter:'⚔️',energy:'⚡',assassin:'🗡️',support:'💚'};
-const modifiers={tank:[-12,22,30,-8],fighter:[6,7,8,0],energy:[15,-10,-12,2],assassin:[17,-14,-15,17],support:[-7,0,4,9]};
-const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
-function roleStats(power,role){const m=modifiers[role];return [clamp(30+Math.round(power*.65)+m[0],10,120),clamp(25+Math.round(power*.45)+m[1],5,110),clamp(95+power+m[2],50,250),clamp(25+Math.round(power*.5)+m[3],10,110)]}
-function renderRolePickers(){const root=$('role-pickers');root.replaceChildren();demoA.forEach(([name,,power],i)=>{if(positions.includes(i))return;
- const card=document.createElement('article');card.className='formation-card';card.dataset.heroIndex=i;
- const heading=document.createElement('div');heading.className='formation-hero';heading.textContent=name+' · GÜÇ '+effectivePower(power);
- const badge=document.createElement('div');badge.className='formation-role';
- const stats=document.createElement('div');stats.className='formation-stats';
- const choices=document.createElement('div');choices.className='formation-choices';choices.setAttribute('role','group');choices.setAttribute('aria-label',name+' için rol seçimi');
- function update(){const role=assignedRoles[i],v=roleStats(power,role);badge.textContent=roleIcons[role]+' '+roleNames[role];stats.textContent='❤️ '+v[2]+'   ⚔ '+v[0]+'   🛡 '+v[1]+'   ⚡ '+v[3];for(const b of choices.children){b.classList.toggle('selected',b.dataset.role===role);b.setAttribute('aria-pressed',String(b.dataset.role===role))}}
- for(const role of roleOptions){const btn=document.createElement('button');btn.type='button';btn.dataset.role=role;btn.textContent=roleIcons[role]+' '+roleNames[role];btn.onclick=()=>{assignedRoles[i]=role;update();renderBoard();$('apply-roles').textContent='✓ HAZIRIM'};choices.append(btn)}
- if(auctionMode)choices.hidden=true;
- const portrait=document.createElement('div');portrait.className='formation-portrait';heroPortrait(i,portrait);
- const pick=document.createElement('span');pick.className='formation-pick-hint';pick.textContent=selectedHero===i?'✓ Seçildi · Yuvaya dokun':'Dokun veya sürükle';
- card.tabIndex=prepDone?-1:0;card.setAttribute('role','button');card.setAttribute('aria-pressed',String(selectedHero===i));card.setAttribute('aria-label',name+' kahramanını seç');card.classList.toggle('selected',selectedHero===i);
- const select=()=>{if(prepDone||Date.now()-lastFormationDrag<350)return;selectedHero=selectedHero===i?null:i;renderBoard();for(const item of root.children){const active=Number(item.dataset.heroIndex)===selectedHero;item.classList.toggle('selected',active);item.setAttribute('aria-pressed',String(active));const hint=item.querySelector('.formation-pick-hint');if(hint)hint.textContent=active?'✓ Seçildi · Yuvaya dokun':'Dokun veya sürükle'}const help=document.querySelector('.board-help');if(help)help.textContent=selectedHero===null?'Kartını seç, ardından bir yuvaya dokun. Dolu yuvaya taşırsan yer değiştirir.':name+' seçildi. Yerleştirmek için bir yuvaya dokun.'};
- card.onclick=e=>{if(!e.target.closest('button'))select()};card.onkeydown=e=>{if(e.target===card&&(e.key==='Enter'||e.key===' ')){e.preventDefault();select()}};
- card.append(portrait,heading,badge,stats,choices,pick);root.append(card);attachDrag(card,i);update();
- })}
 $('apply-roles').onclick=lockFormation;
-if(arenaMode){document.body.classList.add('arena-room');document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;$('play').textContent='▶ SAVAŞI BAŞLAT';mountCommanderDock()}else{renderRolePickers();renderBoard();if(!auctionMode)startPreparation();else{$('apply-roles').disabled=true;$('prep-clock').textContent='--:--';$('prep-note').textContent='Açık artırma kartları doğrulanıyor…'}}
+if(arenaMode){document.body.classList.add('arena-room');document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;$('play').textContent='▶ SAVAŞI BAŞLAT';mountCommanderDock()}else{renderBoard();if(!auctionMode)startPreparation();else{$('apply-roles').disabled=true;$('prep-clock').textContent='--:--';$('prep-note').textContent='Açık artırma kartları doğrulanıyor…'}}
 const motion=()=> !document.hidden&&!document.body.classList.contains('arena-catching-up')&&$('motion').checked&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const duration=()=>Number($('speed').value);
 function comicBattleCue(e){
@@ -871,11 +916,24 @@ if(auctionCode&&auctionToken){void (async()=>{try{
  const data=await response.json();if(!response.ok)throw Error(data.error||'Açık artırma verisi alınamadı');
  const own=data.teams[data.seat],rival=data.teams[1-data.seat];
  if(!Array.isArray(own)||own.length!==5||!Array.isArray(rival)||rival.length!==5)throw Error('Her oyuncunun beş kahramanı olmalı');
- if(own.some(c=>!c.id||!c.name)||rival.some(c=>!c.id||!c.name))throw Error('Açık artırma kahramanları doğrulanamadı');
+ if(own.some(c=>!c.id||!c.name)||rival.some(c=>!c.id||!c.name)||new Set(own.map(c=>c.id)).size!==5||new Set(rival.map(c=>c.id)).size!==5)throw Error('Açık artırma kahramanları doğrulanamadı');
  demoA=own.map(c=>[c.name,c.role||'fighter',c.power,c.universe]);demoB=rival.map(c=>[c.name,c.role||'fighter',c.power,c.universe]);
  previewCredits=data.credits[data.seat];assignedRoles=demoA.map(c=>c[1]);auctionLaneModifiers=own.map(c=>c.laneModifiers||{});heroArtCache.clear();void loadArenaCommander();
+ const preparation=data.preparation;
+ if(!preparation?.matchKey||!validateFormation(preparation,own))throw Error('Diziliş doğrulanamadı');
+ preparationMatchKey=preparation.matchKey;
+ let draftStorage;try{draftStorage=sessionStorage}catch{}
+ preparationDraft=createPreparationDraft({matchKey:auctionCode+':'+auctionToken+':'+preparationMatchKey,team:own,storage:draftStorage,
+  save:async formation=>{
+   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),5000);
+   try{const response=await fetch('/api/battle-auction-formation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...formation,matchKey:preparationMatchKey,code:auctionCode,token:auctionToken}),signal:controller.signal});const value=await response.json();if(!response.ok)throw Error(value.error||'Diziliş kaydedilemedi')}finally{clearTimeout(timeout)}
+  },onError:()=>{$('prep-note').textContent='Saf değişikliği bu cihazda saklandı. Hazırım ile tekrar gönderilecek.'}});
+ const pending=!preparation.ready&&!arenaMode?preparationDraft.pending():null;
+ const restored=pending||preparation;positions.splice(0,5,...restored.positions);lanes.splice(0,5,...restored.lanes);
+ if(pending)void preparationDraft.save(pending);
+ if(preparation.ready){preparationDraft.clear();prepDone=true;window.HeroPlatform?.loaded();if(!arenaMode){auctionLoaded=true;enterArenaWithoutReload('/battle-preview.html?room=arena&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken)+'&commanderTest=1');return}}
  $('battle-lobby-status').textContent='Açık artırma kartların yüklendi · Kalan kredi: '+previewCredits+' · Bonus: %'+(creditBonus(previewCredits)*100).toFixed(1);
- if(!arenaMode){auctionLoaded=true;renderBoard();renderRolePickers();$('apply-roles').disabled=false;startPreparation();$('prep-note').textContent='Kartlar doğrulandı. Diziliş için 60 saniyen var.';window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(true)}else{window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(false);let auctionBattleStarted=false;const check=async()=>{if(auctionBattleStarted)return;try{const response=await fetch('/api/battle-auction-preview?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});const data=await response.json();if(!response.ok)throw Error(data.error||'Savaş durumu alınamadı');if(data.started){auctionBattleStarted=true;if(battlePoll!==null){clearInterval(battlePoll);battlePoll=null}await build(data.result);if(data.result?.live){$('play').textContent='⚡ CANLI SAVAŞ SÜRÜYOR';await import('/commander-experimental.js?live='+encodeURIComponent(auctionCode))}else if(events.length)startReplay()}else $('message').textContent='Rakibin dizilişi bekleniyor… '+data.ready.filter(Boolean).length+'/2 hazır'}catch(e){$('message').textContent='⚠ '+e.message}};await check();if(!auctionBattleStarted&&battlePoll===null)battlePoll=setInterval(check,1800)}
+ if(!arenaMode){auctionLoaded=true;renderBoard();$('apply-roles').disabled=false;startPreparation();$('prep-note').textContent='Kahramanların hazır. İstersen ön/arka safı değiştir, sonra Hazırım.';window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(true)}else{window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(false);let auctionBattleStarted=false;const check=async()=>{if(auctionBattleStarted)return;try{const response=await fetch('/api/battle-auction-preview?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});const data=await response.json();if(!response.ok)throw Error(data.error||'Savaş durumu alınamadı');if(data.started){auctionBattleStarted=true;if(battlePoll!==null){clearInterval(battlePoll);battlePoll=null}await build(data.result);if(data.result?.live){$('play').textContent='⚡ CANLI SAVAŞ SÜRÜYOR';await import('/commander-experimental.js?live='+encodeURIComponent(auctionCode))}else if(events.length)startReplay()}else $('message').textContent='Rakibin dizilişi bekleniyor… '+data.ready.filter(Boolean).length+'/2 hazır'}catch(e){$('message').textContent='⚠ '+e.message}};await check();if(!auctionBattleStarted&&battlePoll===null)battlePoll=setInterval(check,1800)}
  }catch(e){$('prep-note').textContent='⚠ '+e.message;$('message').textContent='⚠ '+e.message;$('battle-lobby-status').textContent='⚠ Açık artırmada seçilen kahramanlar yüklenemedi: '+e.message;$('apply-roles').disabled=true;$('play').disabled=true}})()}
 
 let battleRematchShown=false;

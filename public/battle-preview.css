@@ -500,3 +500,11 @@ body:not(.arena-room) .formation{margin-top:6px;padding:10px}
 .formation-power-breakdown strong{font-size:14px;color:#aaf1e2;font-variant-numeric:tabular-nums;white-space:nowrap}
 .formation-power-breakdown .negative{color:#ff9a9a}
 @media(min-width:600px){.formation .ready-status{grid-template-columns:auto minmax(0,1fr) minmax(0,1fr)}.formation #prep-clock{grid-row:auto}}
+
+/* One board, five automatically placed heroes, and one reachable Ready action. */
+.formation .battle-board{margin-bottom:8px}
+.formation .battle-board .board-slot{touch-action:pan-y;cursor:pointer}
+.formation .battle-board .lane-switch:focus-visible,.formation .battle-board .board-slot:focus-visible{outline:3px solid #bdf8ff;outline-offset:3px}
+.formation .board-row:empty{min-height:16px}
+.preparation-ready-bar{position:sticky;bottom:0;z-index:4;padding:8px 0 max(8px,env(safe-area-inset-bottom));background:linear-gradient(0deg,#101c32 80%,#101c3200)}
+.formation .preparation-ready-bar #apply-roles{width:100%;min-height:48px;margin:0}
