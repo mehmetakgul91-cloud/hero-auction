@@ -59,6 +59,9 @@ public class GameSmokeTest {
         instrumentation.sendPointerSync(MotionEvent.obtain(now,now+80,MotionEvent.ACTION_UP,x,y,0));
     }
     private void screenshot(String name) throws Exception {
+        js("window.__capturePainted=false;requestAnimationFrame(()=>requestAnimationFrame(()=>window.__capturePainted=true))");
+        until("capture frame settled: "+name,"window.__capturePainted",10);
+        SystemClock.sleep(350); // Allow the compositor to present the frame after DOM assertions.
         // Gradle uninstalls the app after tests, deleting its cache before adb
         // artifact collection. Shell-owned diagnostic files survive teardown.
         try(java.io.InputStream input=new android.os.ParcelFileDescriptor.AutoCloseInputStream(
@@ -101,8 +104,11 @@ public class GameSmokeTest {
         until("bot match opens auction", "!document.getElementById('game').hidden && document.getElementById('game').dataset.phase==='auction'", 60);
         until("auction card portrait loads", "[...document.querySelectorAll('#stage .card-art img')].some(i=>i.complete&&i.naturalWidth>0)", 30);
         portraitLayout("auction", ".auction-hero|.auction-action");
+        assertTrue("auction player panels must not cover the card heading",is("document.querySelector('.arena-stage').getBoundingClientRect().top>=Math.max(...[...document.querySelectorAll('#game .player-side')].map(e=>e.getBoundingClientRect().bottom))-1"));
         verifyMenu();
         screenshot("auction");
+        js("document.getElementById('bidbutton').scrollIntoView({block:'center',behavior:'instant'})");
+        screenshot("auction-bids");
         long end=SystemClock.elapsedRealtime()+180000;
         while(SystemClock.elapsedRealtime()<end && !is("document.getElementById('confirm-arena-entry') && !document.getElementById('confirm-arena-entry').disabled")) {
             if(is("document.getElementById('passbutton') && !document.getElementById('passbutton').disabled"))tap("#passbutton");
@@ -112,20 +118,28 @@ public class GameSmokeTest {
         assertEquals("[]",js("window.__smokeErrors"));
         tap("#confirm-arena-entry");
         until("formation loads and all five heroes are placed", "document.getElementById('formation-placed-count')?.textContent==='5 / 5' && !document.getElementById('apply-roles').disabled",60);
+        until("formation portraits decode", "document.querySelectorAll('.battle-board img').length===5 && [...document.querySelectorAll('.battle-board img')].every(i=>i.complete&&i.naturalWidth>0)",30);
         js("window.__smokeErrors=[];addEventListener('error',e=>__smokeErrors.push(e.message));addEventListener('unhandledrejection',e=>__smokeErrors.push(String(e.reason)))");
         screenshot("formation");
         portraitLayout("formation", ".battle-board|.preparation-ready-bar");
+        js("document.getElementById('apply-roles').scrollIntoView({block:'center',behavior:'instant'})");
+        screenshot("formation-ready");
         tap("#apply-roles");
         until("ready opens the battle arena", "document.body.classList.contains('arena-room') && document.querySelectorAll('#team-a .hero').length===5", 60);
         until("battle receives live actions", "document.getElementById('events')?.children.length>0",90);
         portraitLayout("arena", ".arena-room-nav|#arena-score|#battle-arena|.arena-commander-dock|.controls");
         verifyMenu();
         screenshot("arena");
+        js("document.querySelector('.arena-commander-dock').scrollIntoView({block:'center',behavior:'instant'})");
+        screenshot("arena-controls");
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_HOME);
         SystemClock.sleep(1500);
         instrumentation.getTargetContext().startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
         until("app resumes with the same active match", "window.HeroNative.active && document.body.classList.contains('arena-room')",30);
         until("match reaches its result", "!document.getElementById('arena-victory-reveal').hidden || !document.getElementById('battle-summary').hidden",180);
+        if(is("!document.getElementById('arena-victory-reveal').hidden"))tap("#arena-victory-continue");
+        until("final results panel is visible", "!document.getElementById('battle-summary').hidden && document.getElementById('battle-summary').getClientRects().length>0",30);
+        js("document.getElementById('battle-summary').scrollIntoView({block:'start',behavior:'instant'})");
         screenshot("result");
         assertEquals("[]",js("window.__smokeErrors"));
     }

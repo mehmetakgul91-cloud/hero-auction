@@ -98,7 +98,7 @@
    navigation/status text, and never let a sticky bid panel cover the card. */
 .hero-native .native-auction #game .room-tools{display:flex;flex-wrap:wrap}
 .hero-native .native-auction #game .auction-action{position:static;min-width:0}
-.hero-native .native-auction #game .player-side{grid-row:1;min-width:0}
+.hero-native .native-auction #game .player-side{grid-row:1;min-width:0;top:auto;bottom:auto}
 .hero-native .native-auction #game .player-side .name{overflow-wrap:anywhere}
 .hero-native #native-game-menu[open]{z-index:11000}
 .hero-native .native-menu-panel{box-sizing:border-box}
