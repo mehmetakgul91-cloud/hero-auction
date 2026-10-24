@@ -91,9 +91,11 @@ test('opt-in energy splash applies primary and secondary damage in one scheduled
  assert.equal(result.events.length,2);
  assert.equal(c.version,1);
  assert.equal(peekBasicTurn(s).actorId,'b');
- assert.equal(c.teams[1].filter(u=>u.hp<100).length,1);
- assert.equal(c.teams[1][1].hp,100);
- assert.equal(c.teams[1][1].shield,10-result.events.find(e=>e.action==='splash').rawDamage);
+ const splash=result.events.find(e=>e.action==='splash');
+ const absorbed=Math.min(10,Math.floor(splash.rawDamage*7/10));
+ assert.equal(c.teams[1].filter(u=>u.hp<100).length,2);
+ assert.equal(c.teams[1][1].hp,100-(splash.rawDamage-absorbed));
+ assert.equal(c.teams[1][1].shield,10-absorbed);
 });
 test('energy splash is inactive on ordinary rounds',()=>{
  const c=make();c.teams[0][0].role='energy';

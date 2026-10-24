@@ -50,9 +50,9 @@ test('stronger raw ultimate still respects shields, remaining health and dead ta
  const result=cast(state,'ultimate'),hits=result.events.filter(e=>e.action==='commander-hit');
  assert.equal(total(result),76);
  assert.equal(hits.length,4);
- assert.equal(state.teams[1][0].hp,1000);assert.equal(state.teams[1][0].shield,81);
+ assert.equal(state.teams[1][0].hp,994);assert.equal(state.teams[1][0].shield,87);
  assert.equal(state.teams[1][1].hp,0);assert.equal(state.teams[1][4].hp,0);
- assert.equal(result.events.at(-1).value,40);
+ assert.equal(result.events.at(-1).value,46);
 });
 
 test('legacy battle uses the same complete damage budget for normal and ultimate',()=>{

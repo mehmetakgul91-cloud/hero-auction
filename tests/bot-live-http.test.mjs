@@ -41,7 +41,7 @@ test('bot matches run authoritative live combat, accept human casts, settle with
   let code=created.room.code;player.token=created.token;
   assert.deepEqual(created.room.players.map(p=>[p.credits,p.team.length]),[[20,0],[20,0]]);
   assert.equal(created.room.difficulty,'hard');
-  const expectedSeries=[0,0];let previousCommander;
+  const expectedSeries=[0,0];let previousCommander;let shieldedHits=0;
   for(let match=0;match<4;match++){
    let room=(await post('/api/state',{code,...player})).room;
    for(let i=0;room.phase==='auction'&&i<400;i++){
@@ -87,6 +87,15 @@ test('bot matches run authoritative live combat, accept human casts, settle with
     assert.equal(commander.commanderId,'attack','the deterministic easy scenario uses the attack commander');
     assert.ok(live.events.some(e=>e.actor==='commander:1'&&e.action==='commander-attack-normal'),'the easy bot autonomously casts a normal attack through the live engine');
    }
+   const damageEvents=live.events.filter(e=>Number.isFinite(e.rawDamage)&&e.rawDamage>0);
+   assert.ok(damageEvents.length>0,'bot match must expose authoritative damage events');
+   for(const event of damageEvents){
+    assert.ok(Number.isSafeInteger(event.absorbed)&&event.absorbed>=0,'absorption is whole-point and nonnegative');
+    assert.ok(event.absorbed<=Math.floor(event.rawDamage*7/10),'bot/live shield cannot absorb more than 70%');
+    assert.ok(event.value>0,'ordinary positive damage must reach a living target through its shield');
+    assert.ok(event.value+event.absorbed<=event.rawDamage,'HP damage excludes absorbed and overkill damage');
+    if(event.absorbed>0)shieldedHits++;
+   }
    assert.equal(live.winner,battleOutcome(live.teams).winner);
    assert.ok(live.summary.actionCount>0);
    if(live.winner!==null)expectedSeries[live.winner]++;
@@ -109,6 +118,7 @@ test('bot matches run authoritative live combat, accept human casts, settle with
     assert.deepEqual(next.room.players.map(p=>[p.credits,p.team.length]),[[20,0],[20,0]]);
    }
   }
+  assert.ok(shieldedHits>0,'the bot/live shield check must exercise real shield absorption');
   assert.equal((await post('/api/wallet',player)).gold,before.gold,'rematch also remains free');
   assert.equal((await post('/api/commander/get',player)).profile,null,'training fallback does not create a persistent human commander');
   assert.doesNotMatch(logs,/Live arena stopped:|Bot commander action:/,'the bot must not throw or stop the live runner');

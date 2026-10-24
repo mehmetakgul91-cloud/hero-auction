@@ -1,3 +1,4 @@
+import {calculateShieldAbsorption} from './battle-shield-absorption.js';
 // Energy role splash also accompanies non-damage active effects (weaken/drain).
 // Mutates only the action's cloned teams; the caller commits it atomically.
 import {calculateSplashRawDamage} from './battle-special-formulas.js';
@@ -6,7 +7,7 @@ export function applyEnergySpecialSplash({actor,enemies,target,raw,round,side,ev
  const amount=calculateSplashRawDamage(raw,{skill:actor.active,role:actor.role,special:true});
  let deaths=0;
  for(const victim of enemies.filter(unit=>unit!==target&&unit.hp>0)){
-  const absorbed=Math.min(victim.shield||0,amount);
+  const absorbed=calculateShieldAbsorption(victim.shield||0,amount);
   victim.shield=(victim.shield||0)-absorbed;
   const damage=Math.min(victim.hp,amount-absorbed);
   victim.hp-=damage;actor.damage=(actor.damage||0)+damage;

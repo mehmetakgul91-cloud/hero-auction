@@ -1,3 +1,4 @@
+import {calculateShieldAbsorption} from './battle-shield-absorption.js';
 // Experimental server-only multi-target splash action. Atomic snapshot update.
 import {grantLiveCommanderEnergy} from './commander-live-abilities.js';
 import {calculateSplashRawDamage} from './battle-special-formulas.js';
@@ -12,7 +13,7 @@ export function applyServerSplashAction(combat,{side,actorId,primaryTargetId,pri
  if(!splashRaw)throw Error('No splash effect');
  const events=[],killed=[];
  for(const target of next[1-side].filter(u=>u!==primary&&u.hp>0)){
-  const absorbed=Math.min(target.shield||0,splashRaw);
+  const absorbed=calculateShieldAbsorption(target.shield||0,splashRaw);
   target.shield=(target.shield||0)-absorbed;
   const damage=Math.min(target.hp,splashRaw-absorbed);
   target.hp-=damage;

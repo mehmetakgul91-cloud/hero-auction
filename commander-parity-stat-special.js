@@ -1,3 +1,4 @@
+import {calculateShieldAbsorption} from './battle-shield-absorption.js';
 // Experimental server-owned sunder, weaken and haste special attacks.
 import {applyAttackThorns} from './commander-parity-thorns.js';
 import {calculateHeroRawDamage} from './battle-damage-formula.js';
@@ -14,7 +15,7 @@ export function stepParityStatSpecial(combat,{side,actorId,round=combat?.round,c
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
  const weakened=Number.isInteger(actor.commanderWeakenUntilRound)&&round<=actor.commanderWeakenUntilRound?Math.max(0,Math.min(1,Number(actor.commanderWeaken)||0)):0;
  const raw=calculateHeroRawDamage({unit:actor,target,skill:actor.active,special:true,critical,guarded,weakened});
- const absorbed=Math.min(target.shield||0,raw);
+ const absorbed=calculateShieldAbsorption(target.shield||0,raw);
  target.shield=(target.shield||0)-absorbed;
  const damage=Math.min(target.hp,raw-absorbed);
  target.hp-=damage;actor.damage=(actor.damage||0)+damage;

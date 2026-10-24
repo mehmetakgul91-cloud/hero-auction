@@ -1,3 +1,4 @@
+import {calculateShieldAbsorption} from './battle-shield-absorption.js';
 // Server-owned decisions, restricted to information a player can observe.
 // Difficulty changes choices, reaction time and the temporary commander profile.
 // Combat bonuses/energy still follow the same progression rules as human profiles.
@@ -88,7 +89,7 @@ export function chooseBotCast(snapshot,commanderId,difficulty,{now=Date.now(),la
    // Visible base attack is sufficient for a conservative finishing estimate.
    const basis=snapshot.teams[side].reduce((n,u)=>n+(u.baseAttack??u.attack??0),0);
    const normalDamage=Math.floor(basis*.12/enemies.length);
-   const finishing=enemies.some(u=>u.hp+(u.shield||0)<=normalDamage);
+   const finishing=enemies.some(u=>u.hp<=normalDamage-calculateShieldAbsorption(u.shield||0,normalDamage));
    if(!ability.canUseUltimate&&!finishing&&!urgent&&!late)return null;
   }else if(commanderId==='magic'){
    // Do not spend energy refreshing an equally strong debuff with time left.

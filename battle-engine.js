@@ -1,3 +1,4 @@
+import {calculateShieldAbsorption} from './battle-shield-absorption.js';
 import {commanderAbilityStats,commanderRoundEnergy} from './public/commander-ability-rules.js';
 import {commanderAttackPower,distributeCommanderAttack} from './commander-attack-damage.js';
 import {commanderShieldAmounts,commanderHealingBudget} from './commander-protection-budget.js';
@@ -102,7 +103,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
     let value=0,absorbedTotal=0;
     if(id==='attack'){
       const damageBudget=distributeCommanderAttack(commanderAttackBasis[side],rate,enemies.length);
-      for(const [index,target] of enemies.entries()){const raw=damageBudget[index],absorbed=Math.min(target.shield,raw);target.shield-=absorbed;const damage=Math.min(target.hp,raw-absorbed);target.hp-=damage;value+=damage;absorbedTotal+=absorbed;record({round,side,actor:'commander:'+side,action:'commander-hit',target:target.id,value:damage,absorbed,rawDamage:raw,damageType:'commander'}); }
+      for(const [index,target] of enemies.entries()){const raw=damageBudget[index],absorbed=calculateShieldAbsorption(target.shield,raw);target.shield-=absorbed;const damage=Math.min(target.hp,raw-absorbed);target.hp-=damage;value+=damage;absorbedTotal+=absorbed;record({round,side,actor:'commander:'+side,action:'commander-hit',target:target.id,value:damage,absorbed,rawDamage:raw,damageType:'commander'}); }
     }else if(id==='defense'){
       const amounts=commanderShieldAmounts(allies,rate);
       for(const [index,ally] of allies.entries()){ally.shield+=amounts[index];value+=amounts[index];}
@@ -149,7 +150,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       const weakened=unit.commanderWeaken||0;
       unit.commanderWeaken=0;
       const raw=calculateHeroRawDamage({unit,target,skill,special,critical,guarded,weakened});
-      const absorbed=Math.min(target.shield,raw);
+      const absorbed=calculateShieldAbsorption(target.shield,raw);
       target.shield-=absorbed;
       const damage=Math.min(target.hp,raw-absorbed);
       target.hp-=damage;unit.damage+=damage;
@@ -163,7 +164,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       if(skill?.effect==='haste'){const before=unit.speed;unit.speed=Math.max(before,Math.min(150,before+8));record({round,side,actor:unit.id,action:'haste',target:unit.id,value:unit.speed-before});}
       let executedDamage=0;
       if(skill?.effect==='execute'&&target.hp>0&&target.hp/target.maxHp<.12){executedDamage=target.hp;unit.damage+=executedDamage;target.hp=0;unit.kills++;}
-      if(skill?.effect==='splash'||unit.role==='energy'&&special)for(const other of enemies.filter(x=>x!==target&&x.hp>0)){const splashRaw=calculateSplashRawDamage(raw,{skill,role:unit.role,special});const splashAbsorbed=Math.min(other.shield,splashRaw);other.shield-=splashAbsorbed;const extra=Math.min(other.hp,splashRaw-splashAbsorbed);other.hp-=extra;unit.damage+=extra;if(other.hp===0)unit.kills++;record({round,side,actor:unit.id,action:'splash',target:other.id,value:extra,absorbed:splashAbsorbed,rawDamage:splashRaw,damageType:'splash'});}
+      if(skill?.effect==='splash'||unit.role==='energy'&&special)for(const other of enemies.filter(x=>x!==target&&x.hp>0)){const splashRaw=calculateSplashRawDamage(raw,{skill,role:unit.role,special});const splashAbsorbed=calculateShieldAbsorption(other.shield,splashRaw);other.shield-=splashAbsorbed;const extra=Math.min(other.hp,splashRaw-splashAbsorbed);other.hp-=extra;unit.damage+=extra;if(other.hp===0)unit.kills++;record({round,side,actor:unit.id,action:'splash',target:other.id,value:extra,absorbed:splashAbsorbed,rawDamage:splashRaw,damageType:'splash'});}
       if(unit.passive?.effect==='thorns'&&unit.hp>0)unit.shield+=Math.floor(unit.defense*unit.passive.value);
       record({round,side,actor:unit.id,action:skill?.name|| (special?'special':'attack'),target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:special?'special':'normal',executedDamage});
       if(unit.role==='tank'&&special)unit.shield+=Math.round(unit.defense*.2);

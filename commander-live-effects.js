@@ -1,3 +1,4 @@
+import {calculateShieldAbsorption} from './battle-shield-absorption.js';
 import {commanderAbilityStats} from './public/commander-ability-rules.js';
 import {commanderAttackPower,distributeCommanderAttack} from './commander-attack-damage.js';
 import {commanderShieldAmounts,commanderHealingBudget} from './commander-protection-budget.js';
@@ -19,7 +20,7 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
   const damageBudget=distributeCommanderAttack(attackBasis??commanderAttackPower(next[side]),rate,enemies.length);
   for(const [index,u] of enemies.entries()){
    const each=damageBudget[index];
-   const absorbed=Math.min(u.shield||0,each);u.shield=(u.shield||0)-absorbed;
+   const absorbed=calculateShieldAbsorption(u.shield||0,each);u.shield=(u.shield||0)-absorbed;
    const damage=Math.min(u.hp,each-absorbed);u.hp-=damage;value+=damage;
    impacts.push({target:u.id,kind:'damage',value:damage,absorbed});
    log.push({round,side,actor:'commander:'+side,action:'commander-hit',target:u.id,value:damage,absorbed,rawDamage:each,damageType:'commander'});

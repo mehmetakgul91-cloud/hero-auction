@@ -1,3 +1,4 @@
+import {calculateShieldAbsorption} from './battle-shield-absorption.js';
 // Server-owned atomic parity for burst, pierce, splash and headshot.
 // All damage and targets are computed from authoritative combat state.
 import {calculateHeroRawDamage} from './battle-damage-formula.js';
@@ -20,7 +21,7 @@ export function stepParityDamageSpecial(combat,{side,actorId,round=combat?.round
  const raw=calculateHeroRawDamage({unit:actor,target,skill,special:true,critical,guarded,weakened});
  const events=[],deaths=[];
  function hit(victim,amount,action,isSecondary=false){
-  const absorbed=Math.min(victim.shield||0,amount);
+  const absorbed=calculateShieldAbsorption(victim.shield||0,amount);
   victim.shield=(victim.shield||0)-absorbed;
   const damage=Math.min(victim.hp,amount-absorbed);
   victim.hp-=damage;actor.damage=(actor.damage||0)+damage;
