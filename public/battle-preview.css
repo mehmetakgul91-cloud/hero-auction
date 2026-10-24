@@ -512,3 +512,27 @@ body:not(.arena-room) .formation{margin-top:6px;padding:10px}
 /* Credits stay reachable below the arena; never cover combat or mute controls. */
 .arena-audio-credits{padding:4px 16px 16px;text-align:center;font-size:12px}
 .arena-audio-credits a{display:inline-flex;align-items:center;min-height:44px;color:#a6d5ff;text-underline-offset:3px}
+
+/* Static inner rarity frame; outer blue/red team and selection borders stay intact.
+   Badge lives inside the portrait, never on names, HP, shield or lane controls. */
+[data-rarity="common"]{--hero-rarity:#aab0bb}
+[data-rarity="advanced"]{--hero-rarity:#4faeff}
+[data-rarity="rare"]{--hero-rarity:#b56bff}
+[data-rarity="legendary"]{--hero-rarity:#ffca50}
+.arena-portrait[data-rarity]::after,.board-slot[data-rarity]::after,.summary-hero-portrait[data-rarity]::after{content:"";position:absolute;inset:2px;border:2px solid var(--hero-rarity);border-radius:inherit;z-index:2;pointer-events:none}
+.hero-rarity-badge{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:18px;height:16px;display:grid;place-items:center;background:#080e20;border:1px solid var(--hero-rarity);border-radius:4px;color:var(--hero-rarity);z-index:3;pointer-events:none;box-sizing:border-box}
+.hero-rarity-badge svg{display:block;width:14px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+/* A defeated hero stays gray, but its shape remains legible without motion. */
+.arena-hero.dead:has([data-rarity]){opacity:.65}
+
+.arena-portrait[data-rarity],.board-slot[data-rarity],.summary-hero-portrait{container-type:inline-size}
+.hero-rarity-badge{width:clamp(10px,35cqw,18px);height:auto;aspect-ratio:9/8;bottom:2px}
+.hero-rarity-badge svg{width:85%;height:85%}
+.battle-stat-identity{display:flex;align-items:center;gap:5px;min-width:0}
+.summary-hero-portrait{position:relative;display:block;flex:none;width:30px;height:34px;overflow:hidden;border-radius:6px;background:#101c32}
+.summary-hero-portrait .portrait-fallback{font-size:16px;color:#dbe9f7}
+.summary-hero-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 25%}
+.summary-hero-image.hero-portrait-wide{object-position:right center}
+.battle-hero-stat-row .battle-stat-name{min-width:0;overflow-wrap:anywhere;text-align:left;color:inherit}
+.battle-hero-stat-row .hero-rarity-badge{color:var(--hero-rarity)}
+@media(max-width:360px){.summary-hero-portrait{width:26px;height:30px}.battle-stat-identity{gap:4px}}
