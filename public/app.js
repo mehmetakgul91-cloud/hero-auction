@@ -1,3 +1,4 @@
+import {COMMANDER_CHANGE_COST} from '/commander-economy.js';
 import {createRoomInvitesUI} from '/room-invites.js';
 import {createFriendsUI} from '/friends.js';
 import {heroDescriptionEnglish} from '/hero-stories-en.js';
@@ -102,18 +103,18 @@ function renderCommanderRoster(){
   root.append(button);
  }
  const confirm=$('commander-change-confirm');
- confirm.disabled=commanderBusy||!commanderChangePending||walletGold<5000;
- confirm.textContent=commanderChangePending?'🪙 5.000 · '+commanderOptions.find(c=>c.id===commanderChangePending).name.toLocaleUpperCase('tr-TR')+' SEÇ':'🪙 5.000 · KOMUTAN DEĞİŞTİR';
+ confirm.disabled=commanderBusy||!commanderChangePending||walletGold<COMMANDER_CHANGE_COST;
+ confirm.textContent=commanderChangePending?`🪙 ${COMMANDER_CHANGE_COST} · `+commanderOptions.find(c=>c.id===commanderChangePending).name.toLocaleUpperCase('tr-TR')+' SEÇ':`🪙 ${COMMANDER_CHANGE_COST} · KOMUTAN DEĞİŞTİR`;
 }
 async function changeCommander(){
- if(commanderBusy||!commanderChangePending||!commanderProfile||walletGold<5000)return;
+ if(commanderBusy||!commanderChangePending||!commanderProfile||walletGold<COMMANDER_CHANGE_COST)return;
  const target=commanderOptions.find(c=>c.id===commanderChangePending);
- if(!target||!window.confirm(document.documentElement.lang==='en'?'Spend 5,000 gold to switch to '+uiText(target.name)+'? Your upgrade levels will be preserved.':target.name+' komutanına geçmek için 5.000 altın harcamak istiyor musun? Gelişim seviyelerin korunacak.'))return;
+ if(!target||!window.confirm(document.documentElement.lang==='en'?`Spend ${COMMANDER_CHANGE_COST} gold to switch to `+uiText(target.name)+'? Your upgrade levels will be preserved.':target.name+` komutanına geçmek için ${COMMANDER_CHANGE_COST} altın harcamak istiyor musun? Gelişim seviyelerin korunacak.`))return;
  commanderBusy=true;renderCommanderRoster();
  try{
   const result=await post('/api/commander/change',{commanderId:target.id});
   commanderProfile=result.profile;commanderChangePending=null;commanderChangeOpen=false;showGold(result.gold);
-  $('commander-upgrade-message').textContent='✓ Komutan değiştirildi. 5.000 altın harcandı.';
+  $('commander-upgrade-message').textContent=`✓ Komutan değiştirildi. ${result.cost??COMMANDER_CHANGE_COST} altın harcandı.`;
  }catch(e){$('commander-upgrade-message').textContent='⚠ '+e.message}
  finally{commanderBusy=false;renderCommanderProfile()}
 }

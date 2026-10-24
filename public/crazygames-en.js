@@ -231,7 +231,7 @@ export const phrases = {
 'Takımlar otomatik olarak mücadele eder. Kahraman yetenekleri, dayanıklılık ve doğru diziliş sonucu belirler.':'Teams fight automatically. Hero abilities, durability, and positioning determine the outcome.',
 "Gerçek oyunculu maçlarda iki taraftan 50'şer altın alınır; kazanan 120 altın kazanır. Bilgisayara karşı maçlar antrenmandır.":'Online matches cost 50 gold per player; the winner receives 120. Computer matches are free practice.',
 'En güçlü karta bütün kredini harcamak her zaman kazandırmaz. Kalan kredi ve takım uyumu da önemlidir.':'Spending everything on the strongest hero is not always best. Remaining credits and team synergy matter.',
-'İlk girişinde bir komutan seç. Seçim hesabına kaydedilir. Daha sonra 5.000 altın karşılığında komutanını değiştirebilirsin.':'Choose a commander for your account. You can change commanders later for 5,000 gold.',
+'İlk girişinde bir komutan seç. Seçim hesabına kaydedilir. Daha sonra 1000 altın karşılığında komutanını değiştirebilirsin.':'Choose a commander for your account. You can change commanders later for 1000 gold.',
 'Yalnızca ilgili kahraman sınıfı güçlenir. Ana uzmanlık en fazla %20, diğer dallar %10.':'Bonuses apply to the matching hero role. Main specialty: up to 20%; other branches: up to 10%.',
 'Diğer komutanlar yalnızca burada görüntülenir. Gelişim seviyelerin korunur.':'Choose another commander here. Your upgrade levels are preserved.',
 'Oyuncu kimliği ve ilerleme oyun sunucusunda saklanır.':'Player identity and progress are stored on the game server.',
