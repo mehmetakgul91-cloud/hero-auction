@@ -1,0 +1,8 @@
+{
+  "appId": "tr.com.heroauction.android.test",
+  "appName": "Hero Auction Test",
+  "webDir": "www",
+  "server": { "hostname": "localhost", "androidScheme": "https", "cleartext": false },
+  "android": { "allowMixedContent": false, "captureInput": true, "backgroundColor": "#070b16" },
+  "plugins": { "CapacitorHttp": { "enabled": false } }
+}

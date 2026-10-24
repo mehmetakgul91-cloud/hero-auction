@@ -1,6 +1,7 @@
 name: Publish Arena Music MP3
 on:
   push:
+    branches-ignore: [fix/android-portrait-review-20261024]
     paths:
       - 'tools/build-arena-music.py'
       - '.github/workflows/publish-arena-music.yml'

@@ -1,0 +1,7 @@
+{
+  "repository": "mehmetakgul91-cloud/hero-auction",
+  "branch": "main",
+  "commit": "6743a55dc491606e99d00bbfb299205c1913105a",
+  "note": "Current game including six arena tracks, automatic formation, tail reveal recovery and search appearance fix. Native-only presentation and transport adapters use the isolated test backend, not production accounts."
+}
+
