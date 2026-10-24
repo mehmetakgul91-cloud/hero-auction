@@ -19,6 +19,12 @@ Node.js 18 veya üzeri gerekir. `npm install` ve `npm start` komutlarından sonr
 
 `node --test *.test.js tests/*.test.* test/*.test.js` savaş, hesap, komutan ve platform kontrollerini çalıştırır. `npm run audit:strict` aktif kahraman görsellerini ve güçlerini denetler.
 
+## Kalkan hasarı
+
+Kalkan, mevcut savunma/hasar hesaplamasından sonraki her vuruşun en fazla %70’ini emer: `min(mevcut kalkan, floor(hasar × 7 / 10))`. Kalan hasar candan düşer; can kaybı kalan canla sınırlıdır. Örneğin 50 kalkan + 50 hasar → 35 emilim, 15 can kaybı, 15 kalan kalkan; 20 kalkan + 50 hasar → 20 emilim, 30 can kaybı. Tam sayı emilim aşağı yuvarlanır (1 hasarda 0, 2 hasarda 1, 90 hasarda 63).
+
+Kalkan kazanımı/yenilenmesi ve birikimi değişmez; yeni bir başlangıç veya toplam kalkan tavanı yoktur. Komutan, normal/özel ve alan saldırıları aynı hesabı kullanır. Zırh delme, infaz, can çalma ve dikenlerin mevcut özel kuralları korunur. Tamamlanmış savaşların kayıtlı hasar/kalkan görüntüleri yeniden hesaplanmaz; aynı tohumla yeni simülasyon yeni kuralı uygular.
+
 ## Arena hazırlığı
 
 Açık artırmada edinilen beş kahraman, kendi ön/arka saf tercihine (kahramanın kayıtlı saf bonuslarına) göre tahtaya otomatik yerleşir. Oyuncu yalnızca **Ön saf / Arka saf** değişikliği yapar; boş yuva seçme, sürükleme veya kahramanları yeniden sıralama gerekmez. Saf değişikliği kahramanların edinilme/savaş sırasını değiştirmez. Mevcut kurallarda iki safın her biri sıfır ile beş kahraman içerebilir.

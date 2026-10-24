@@ -48,11 +48,11 @@ test('energy drain splash deaths grant energy once per death and never heal from
  c.teams[1][0].shield=10000;
  c.teams[1].push({...c.teams[1][0],id:'secondary',position:1,shield:0,hp:1});
  const r=stepParityShieldDrain(c,{side:0,actorId:'a'});
- assert.equal(c.teams[0][0].hp,60);
+ assert.equal(c.teams[0][0].hp,62); // Drain heals 15% of HP damage, not shield absorption.
  assert.equal(c.teams[1][1].hp,0);
  assert.equal(c.teams[0][0].kills,1);
  assert.equal(c.abilities.energy[1],10);
- assert.ok(!r.events.some(e=>e.action==='heal'));
+ assert.equal(r.events.find(e=>e.action==='heal').value,2);
  assert.equal(r.events.find(e=>e.action==='splash').value,1);
 });
 test('energy primary plus splash kills each grant energy once while a shielded survivor remains',()=>{
@@ -61,6 +61,6 @@ test('energy primary plus splash kills each grant energy once while a shielded s
  c.teams[1].push({...c.teams[1][0],id:'shielded',position:2,hp:100,shield:10000});
  const r=stepParityShieldDrain(c,{side:0,actorId:'a'});
  assert.equal(c.teams[0][0].kills,2);assert.equal(c.abilities.energy[1],20);
- assert.deepEqual(c.teams[1].map(u=>u.hp),[0,0,100]);assert.equal(c.finished,false);
- const shielded=r.events.find(e=>e.target==='shielded');assert.equal(shielded.value,0);assert.equal(shielded.absorbed,shielded.rawDamage);
+ assert.deepEqual(c.teams[1].map(u=>u.hp),[0,0,97]);assert.equal(c.finished,false);
+ const shielded=r.events.find(e=>e.target==='shielded');assert.equal(shielded.value,3);assert.equal(shielded.absorbed,Math.floor(shielded.rawDamage*7/10));
 });

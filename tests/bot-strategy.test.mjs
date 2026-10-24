@@ -128,3 +128,11 @@ test('hard magic can interrupt saving for an immediate high-threat debuff',()=>{
  s.teams[0][1].attack=250;
  assert.deepEqual(chooseBotCast(s,'magic','hard',{...options,lastCastAt:1000}),{ability:'normal',targetIds:['enemy-b']});
 });
+
+test('hard finishing estimate accounts for HP leakage through large shields',()=>{
+ const s=state();s.teams[0][0].shield=10000;s.teams[0][0].hp=2;
+ // 100 base attack / 2 targets * 12% = 6 raw; 4 shield + 2 HP.
+ assert.deepEqual(chooseBotCast(s,'attack','hard',options),{ability:'normal'});
+ s.teams[0][0].hp=3;
+ assert.equal(chooseBotCast(s,'attack','hard',options),null);
+});

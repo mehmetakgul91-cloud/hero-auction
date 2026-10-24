@@ -35,7 +35,7 @@ test('rejects invalid commands and completed battles',()=>{
 test('impact records report actual shield absorption and capped health loss',()=>{
  const input=teams();input[1][0].shield=50;input[1][1].hp=2;
  const out=applyLiveCommanderEffect(input,{side:0,ability:'normal',commanderId:'attack'}),impacts=out.log.at(-1).impacts;
- assert.deepEqual(impacts[0],{target:'0',kind:'damage',value:0,absorbed:6});
+ assert.deepEqual(impacts[0],{target:'0',kind:'damage',value:2,absorbed:4});
  assert.deepEqual(impacts[1],{target:'1',kind:'damage',value:2,absorbed:0});
  for(const effect of impacts)assert.equal(effect.value,input[1][Number(effect.target)].hp-out.teams[1][Number(effect.target)].hp);
 });

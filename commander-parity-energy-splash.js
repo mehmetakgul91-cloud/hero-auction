@@ -1,3 +1,4 @@
+import {calculateShieldAbsorption} from './battle-shield-absorption.js';
 // One atomic server-owned primary attack plus energy-role splash.
 // This opt-in action does not support active skills or passives yet.
 import {applyAttackThorns} from './commander-parity-thorns.js';
@@ -17,7 +18,7 @@ export function stepParityEnergySplash(combat,{side,actorId,round=combat?.round,
  const raw=calculateHeroRawDamage({unit:actor,target,special:true,critical,guarded,weakened});
  const events=[],dead=[];
  function hit(unit,amount,action){
-  const absorbed=Math.min(unit.shield||0,amount);
+  const absorbed=calculateShieldAbsorption(unit.shield||0,amount);
   unit.shield=(unit.shield||0)-absorbed;
   const damage=Math.min(unit.hp,amount-absorbed);
   unit.hp-=damage;actor.damage=(actor.damage||0)+damage;

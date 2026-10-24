@@ -1,3 +1,4 @@
+import {calculateShieldAbsorption} from './battle-shield-absorption.js';
 import {commanderEnergyPerRound} from './public/commander-ability-rules.js';
 // Server-owned atomic commander cast and snapshot update.
 // Keep this adapter isolated until hero attacks are driven by the same live session.
@@ -50,7 +51,7 @@ export function applyServerHeroAction(combat,{side,actorId,targetId,action='atta
  if(!actor||!target)throw Error('Invalid living actor or target');
  let applied=0,absorbed=0;
  if(action==='attack'){
-  absorbed=Math.min(target.shield||0,value);
+  absorbed=calculateShieldAbsorption(target.shield||0,value);
   target.shield=(target.shield||0)-absorbed;
   applied=Math.min(target.hp,value-absorbed);
   target.hp-=applied;
