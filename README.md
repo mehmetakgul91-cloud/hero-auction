@@ -66,7 +66,7 @@ Sosyal oda koordinasyonu mevcut tek sunucu süreci modeliyle çalışır; çoklu
 
 ## Arena müzikleri
 
-İlk müzik sürümünde yüklenmiş üç parça seçilir: Determined Pursuit (orkestra), The Eternal Sands (Orta Doğu fantastik) ve Atlas • Kazakhstan (AI üretimi Kazak/Orta Asya esintili). Diğer üç parça yükleme tamamlandığında ayrı güncellemeyle eklenecektir. Latin parça dahil değildir. Her tarayıcı sekmesinde üç parçalık rastgele sıra tamamlanmadan parça tekrarlanmaz; sıra sınırında da son parça hemen tekrar etmez. Gerçek maç anahtarı değişmeden yenileme, sesi kapat/aç veya arka plandan dönme parça seçimini değiştirmez. Web ve CrazyGames kayıtları ayrıdır.
+Arena için altı ayrı parça seçilir: orkestra, Japon esintili retro, Orta Doğu fantastik, Afrika esintili marimba, İskandinav/Viking epik ve AI üretimi Kazak/Orta Asya esintili müzik. Latin parça dahil değildir. Her tarayıcı sekmesinde altı parçalık rastgele sıra tamamlanmadan parça tekrarlanmaz; sıra sınırında da son parça hemen tekrar etmez. Gerçek maç anahtarı değişmeden yenileme, sesi kapat/aç veya arka plandan dönme parça seçimini değiştirmez. Web ve CrazyGames kayıtları ayrıdır.
 
 Tek bir `HTMLAudioElement` yalnız seçilen parçayı yükler. Hazırlıkta kullanıcı dokunuşuyla sessizce açılır; maç başladığında mevcut %60 ses düzeyi kullanılır. Sekme gizlenince/platform sesi kapatınca durur, maç bitiminde kaynak bırakılır. Otomatik oynatma engeli aynı parçayı bir sonraki dokunuşta yeniden dener. Gerçek yükleme hatasında yalnız bir kez eski davul-bas parçasına, o da başarısızsa prosedürel sese döner. İndirme takılması başına 15 saniyelik sınırlı zaman aşımı vardır; bütün liste arka planda yüklenmez.
 
