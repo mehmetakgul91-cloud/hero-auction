@@ -19,6 +19,10 @@ Node.js 18 veya üzeri gerekir. `npm install` ve `npm start` komutlarından sonr
 
 `node --test *.test.js tests/*.test.* test/*.test.js` savaş, hesap, komutan ve platform kontrollerini çalıştırır. `npm run audit:strict` aktif kahraman görsellerini ve güçlerini denetler.
 
+## Komutan seçimi ve değişimi
+
+İlk komutan seçimi ücretsizdir. Daha sonra farklı bir komutana geçiş 1000 altındır; gelişim seviyeleri korunur. Ücret sunucuda bakiye kontrolüyle birlikte tek işlemde kesilir. Aynı komutanı yeniden seçme isteği ücret kesmeden reddedilir. Geliştirme ücretleri ve diğer oyun ekonomisi değişmez.
+
 ## Açık artırma kart havuzu
 
 Her maçta aktif havuzdan 10 farklı kahraman rastgele seçilir; efsanevi, nadir veya diğer nadirlikler için sabit adet kotası yoktur. Aynı kahraman aynı açık artırmada tekrar etmez. Son kartların eksik takıma verilmesi, mevcut otomatik ücret/eksi kredi kuralları ve kalan kredi güç bonusu değişmemiştir.

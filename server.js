@@ -1,3 +1,4 @@
+import {COMMANDER_CHANGE_COST} from './public/commander-economy.js';
 import {requireModerationForInteraction} from './moderation-availability.js';
 import {createModerationService,assertModeratedText} from './moderation-service.js';
 import {chooseBotBid,chooseBotFormation,chooseBotCommander,chooseBotCast,createBotCommanderProfile} from './bot-strategy.js';
@@ -513,12 +514,12 @@ if(url==='/api/commander/change'){
   if(!existing.rows.length)error('Önce bir komutan seçmelisin.',409);
   const profile=validateCommanderProfile(existing.rows[0].profile);
   if(profile.commanderId===newCommanderId)error('Bu komutan zaten seçili.',409);
-  const wallet=await client.query('UPDATE hero_auction_wallets SET gold=gold-5000 WHERE account_id=$1 AND gold>=5000 RETURNING gold',[user.sub]);
-  if(!wallet.rows.length)error('Komutan değiştirmek için 5.000 altın gerekiyor.',409);
+  const wallet=await client.query('UPDATE hero_auction_wallets SET gold=gold-$2 WHERE account_id=$1 AND gold>=$2 RETURNING gold',[user.sub,COMMANDER_CHANGE_COST]);
+  if(!wallet.rows.length)error(`Komutan değiştirmek için ${COMMANDER_CHANGE_COST} altın gerekiyor.`,409);
   const changed={commanderId:newCommanderId,levels:{...profile.levels}};
   await client.query('UPDATE hero_auction_commanders SET profile=$2::jsonb,updated_at=NOW() WHERE account_id=$1',[user.sub,JSON.stringify(changed)]);
   await client.query('COMMIT');
-  return{profile:changed,gold:Number(wallet.rows[0].gold),cost:5000};
+  return{profile:changed,gold:Number(wallet.rows[0].gold),cost:COMMANDER_CHANGE_COST};
  }catch(e){await client.query('ROLLBACK');throw e}finally{client.release()}
 }
 if(url==='/api/commander/upgrade'){
