@@ -45,8 +45,11 @@ public class GameSmokeTest {
     }
     private void tap(String selector) throws Exception {
         String quoted = org.json.JSONObject.quote(selector);
-        js("document.querySelector("+quoted+").scrollIntoView({block:'center'})");
-        SystemClock.sleep(250);
+        // CSS smooth scrolling can still be moving when a hardware tap is injected.
+        // Force instant scroll and verify hit-testing before sending the gesture.
+        js("document.querySelector("+quoted+").scrollIntoView({block:'center',behavior:'instant'})");
+        until("tap target visible: "+selector, "(()=>{const e=document.querySelector("+quoted+");const r=e.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2;return x>0&&y>0&&x<innerWidth&&y<innerHeight&&e.contains(document.elementFromPoint(x,y))})()", 15);
+        SystemClock.sleep(500);
         JSONArray point = new JSONArray(js("(()=>{const r=document.querySelector("+quoted+").getBoundingClientRect();return [r.x+r.width/2,r.y+r.height/2,innerWidth]})()"));
         int[] origin=new int[2]; instrumentation.runOnMainSync(() -> web.getLocationOnScreen(origin));
         float scale=web.getWidth()/(float)point.getDouble(2);
