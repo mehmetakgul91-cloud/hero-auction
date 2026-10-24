@@ -8,9 +8,9 @@ export function awardFlightGeometry(from,to,{width,height}){
  return {left,top,width:w,height:h,dx:x-(left+w/2),dy:y-(top+h/2),scale:Math.max(0,Math.min(1,Math.max(0,to.width-8)/w,Math.max(0,to.height-8)/h))};
 }
 export function flyAwardCard(sourceSnapshot,destination,{duration=1400,reducedMotion=false,label='',doc=sourceSnapshot?.element?.ownerDocument}={}){
- let resolve,animation=null,pulse=null,ghost=null,settled=false;
+ let resolve,animation=null,pulse=null,ghost=null,settled=false,watchdog=null;
  const finished=new Promise(done=>resolve=done);
- const settle=(arrived=false)=>{if(settled)return;settled=true;
+ const settle=(arrived=false)=>{if(settled)return;settled=true;if(watchdog!==null)clearTimeout(watchdog);
   if(arrived&&typeof destination?.animate==='function'){
    try{pulse=destination.animate([{boxShadow:'0 0 0 0 #8be9ff00'},{boxShadow:'0 0 0 3px #8be9ffcc, 0 0 18px #62d6ff99',offset:.4},{boxShadow:'0 0 0 0 #8be9ff00'}],{duration:420,easing:'ease-out'});Promise.resolve(pulse.finished).catch(()=>{});}catch{}
   }
@@ -38,6 +38,9 @@ export function flyAwardCard(sourceSnapshot,destination,{duration=1400,reducedMo
    {transform:`translate(${geometry.dx*.45}px,${geometry.dy*.45-18}px) scale(.8) rotate(-3deg)`,opacity:1,offset:.5},
    {transform:`translate(${geometry.dx}px,${geometry.dy}px) scale(${geometry.scale}) rotate(0deg)`,opacity:1}
   ],{duration,easing:'cubic-bezier(.3,.1,.2,1)',fill:'forwards'});
+  // Some background/mobile Web Animations never settle `finished`. On resume,
+  // the timer provides a bounded arrival instead of permanently blocking results.
+  watchdog=setTimeout(()=>{try{animation?.cancel();}catch{}settle(destination.isConnected!==false);},duration+750);
   Promise.resolve(animation.finished).then(()=>settle(destination.isConnected!==false),()=>settle(false));
  }catch{settle();}
  return handle;

@@ -1,9 +1,10 @@
 import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 import { build } from 'esbuild';
 import { readConfig } from '../src/policy.js';
-import { packageImages, checkPackageSize } from './package-assets.mjs';
+import { packageImages, checkPackageSize, filesIn } from './package-assets.mjs';
 export const mobile = fileURLToPath(new URL('..', import.meta.url));
 const root = path.resolve(mobile, '..');
 export function adaptSource(source, filename) {
@@ -47,8 +48,13 @@ export async function buildNative() {
   await writeFile(path.join(out,'native-config.js'),'window.__HERO_NATIVE_CONFIG__='+JSON.stringify(config)+';\n');
   await cp(path.join(mobile,'src/native.css'),path.join(out,'native.css'));
   await build({entryPoints:[path.join(mobile,'src/runtime.js')],outfile:path.join(out,'native-runtime.js'),bundle:true,format:'iife',target:'chrome100',legalComments:'eof'});
-  await writeFile(path.join(out,'native-build.json'),JSON.stringify({app:'Hero Auction Test',apiOrigin:config.apiOrigin,configured:config.configured,mode:config.configured?'network-test-unverified':'ui-preview-no-backend'},null,2)+'\n');
+  const gameSource=JSON.parse(await readFile(path.join(mobile,'game-source.json'),'utf8'));
+  const {version}=JSON.parse(await readFile(path.join(mobile,'package.json'),'utf8'));
+  await writeFile(path.join(out,'native-build.json'),JSON.stringify({app:'Hero Auction Test',version,gameSource,apiOrigin:config.apiOrigin,configured:config.configured},null,2)+'\n');
   const images=await packageImages(root,out);
+  const hashes={};
+  for(const file of await filesIn(out))hashes[file]=createHash('sha256').update(await readFile(path.join(out,file))).digest('hex');
+  await writeFile(path.join(out,'native-files.json'),JSON.stringify(hashes,null,2)+'\n');
   const report=await checkPackageSize(out,images);
   await writeFile(path.join(mobile,'package-report.json'),JSON.stringify(report,null,2)+'\n');
   console.log(`Android package: ${(report.webBytes/1e6).toFixed(2)} MB web assets; ${report.heroCount} hero portraits; ${report.omitted.length} unused image-directory files excluded.`);

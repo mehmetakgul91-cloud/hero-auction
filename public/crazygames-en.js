@@ -3,6 +3,19 @@ import {battlePhrases, translateCommanderDescription} from './crazygames-battle-
 // Presentation-only English locale for the CrazyGames entry point.
 // Do not translate stored values, hero IDs, requests, or game rules.
 export const phrases = {
+"♫ Müzik kredileri":"♫ Music credits",
+"Diziliş başka bir maça ait.":"This formation belongs to another match.",
+"Hazır diziliş değiştirilemez.":"A confirmed formation cannot be changed.",
+"Geçersiz diziliş veya kart türü":"Invalid formation or hero type",
+
+"TAKIMDAKİ KAHRAMAN":"HEROES IN TEAM",
+"Kahramanların uygun safa yerleşir. İstersen ön/arka safı değiştir.":"Your heroes are placed in their preferred row. Change FRONT/BACK if you like.",
+"Kahramanların otomatik yerleşir. Ön/arka safı değiştirebilir, ardından Hazırım düğmesine basabilirsin.":"Your heroes are placed automatically. Change FRONT/BACK if you like, then press Ready.",
+"Kahramanların hazır. İstersen ön/arka safı değiştir, sonra Hazırım.":"Your heroes are ready. Change FRONT/BACK if you like, then press Ready.",
+"Saf değişikliği bu cihazda saklandı. Hazırım ile tekrar gönderilecek.":"Your row change is saved on this device. Press Ready to send it again.",
+"Diziliş doğrulanamadı":"Formation could not be verified",
+"Diziliş kaydedilemedi":"Formation could not be saved",
+
 "Çok fazla davet. Bir dakika bekle.":"Too many invitations. Wait one minute.",
 "Oyuncunun bekleyen davet listesi dolu.":"The player’s pending invitation list is full.",
 "Davet odasına geçiş tamamlanıyor. Biraz sonra tekrar dene.":"Your invitation transfer is finishing. Try again shortly.",
@@ -25,6 +38,10 @@ export const phrases = {
 "Son yanıt zamanı":"Reply by",
 "Maç davetleri":"Match invitations",
 "ARKADAŞ DAVET ET":"INVITE A FRIEND",
+"DAVET ET":"INVITE",
+"Oda işlemi sürüyor. Lütfen bekle.":"A room action is in progress. Please wait.",
+"Davet için önce mevcut odandan ayrılmalısın.":"Leave your current room before inviting a friend.",
+"Bu arkadaş artık çevrimiçi değil veya arkadaş listende yok.":"This friend is no longer online or in your friends list.",
 "Arkadaşını özel odana davet et. Mevcut maçı varsa bitince katılır. Oda oluşturmak ücretsiz; maça giriş kişi başı 50 altın.":"Invite a friend to your private room. If they are in a match, they join after it ends. Creating a room is free; match entry costs 50 gold per player.",
 "Davet edilecek arkadaş":"Friend to invite",
 "ODA OLUŞTUR VE DAVET ET":"CREATE ROOM & INVITE",
@@ -282,6 +299,8 @@ export const phrases = {
 'ÖN SAF':'FRONT ROW','ARKA SAF':'BACK ROW','ÖN SIRA':'FRONT ROW','ARKA SIRA':'BACK ROW','ÖN ':'FRONT ','ARKA ':'BACK ',
 'TAKIM DİZİLİŞİ':'TEAM FORMATION','YERLEŞTİRİLEN KAHRAMAN':'HEROES PLACED','BAZ TAKIM GÜCÜ':'BASE TEAM POWER',
 'GÜNCEL TAKIM GÜCÜ':'CURRENT TEAM POWER','SAF / ROL / KREDİ / KOMUTAN ETKİSİ':'ROW / ROLE / CREDIT / COMMANDER BONUS',
+'Kahraman bilgileri ve roller':'Hero details and roles','Tek elle takım yerleştirme':'One-hand team placement','Kahraman seç → Konum seç':'Choose a hero → Choose a position','Kahraman seç':'Choose a hero','Konum seç':'Choose a position','Konum':'Position','Öne al':'Move to front','Arkaya al':'Move to back','Yerleşmedi':'Not placed','Yer değiştir':'Swap positions','Yerleştir':'Place','Seçili kahramanı ön safa al':'Move selected hero to front row','Seçili kahramanı arka safa al':'Move selected hero to back row','Ön':'Front','Arka':'Back','Boş':'Empty',
+'Hazırlık için kalan süre':'Preparation time remaining','Yerleştirilecek kahramanlar':'Heroes to place','Nasıl oynanır?':'How to play?',
 'Güç ve komutan bonusu detayları':'Power and commander bonus details','BOŞ KONUM':'EMPTY SLOT','Arka safa':'To back row','Ön safa':'To front row',
 'Bu safta kahraman yok':'No heroes in this row','Dokun veya sürükle':'Select or drag','kahramanını seç':'select hero',
 'HAZIRIM':'READY','Sen:':'You:','Örnek rakip:':'Opponent:','Hazırlanıyor':'Preparing','Hazır':'Ready',

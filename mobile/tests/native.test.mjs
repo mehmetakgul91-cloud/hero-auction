@@ -57,7 +57,11 @@ test('complete native assets build with no admin/development distribution',async
   const music='audio/hero-auction-senkron-davul-bas-2dk.mp3';
   assert.deepEqual(await readFile(new URL('../www/'+music,import.meta.url)),await readFile(new URL('../../public/'+music,import.meta.url)));
   const report=JSON.parse(await readFile(new URL('../package-report.json',import.meta.url),'utf8'));
-  assert.ok(report.webBytes<20_000_000,JSON.stringify(report));
+  assert.ok(report.webBytes<26_000_000,JSON.stringify(report));
+  for(const track of ['determined-pursuit','eternal-sands','atlas-kazakhstan']) {
+    const file='audio/arena/'+track+'.mp3';
+    assert.deepEqual(await readFile(new URL('../www/'+file,import.meta.url)),await readFile(new URL('../../public/'+file,import.meta.url)));
+  }
   assert.equal(report.omitted.filter(file=>/\.(png|webp|svg)$/.test(file)).length,7);
   assert.equal(report.retained.filter(image=>image.path.endsWith('.png')).length,13);
 });

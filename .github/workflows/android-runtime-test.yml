@@ -9,6 +9,8 @@ jobs:
   device:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,6 +24,9 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           npm --prefix mobile ci --no-audit --no-fund
+          node --test *.test.js tests/*.test.* test/*.test.js
+          npm run audit:strict
+          npm --prefix mobile test
           node --input-type=module <<'JS'
           import {writeFileSync} from 'node:fs';
           const origin='https://hero-auction-commander-test.onrender.com';
@@ -42,6 +47,13 @@ jobs:
           profile: pixel_7
           disable-animations: true
           script: bash mobile/scripts/device-test.sh
+      - name: Verify tested APK and bundled source
+        run: |
+          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk artifacts/Hero-Auction-Android-0.1.3.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose artifacts/Hero-Auction-Android-0.1.3.apk
+          python3 mobile/scripts/verify-apk.py artifacts/Hero-Auction-Android-0.1.3.apk > artifacts/apk-verification.json
+          cp mobile/package-report.json artifacts/package-report.json
+          sha256sum artifacts/Hero-Auction-Android-0.1.3.apk > artifacts/SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -51,3 +63,11 @@ jobs:
             mobile/android/app/build/reports/androidTests/
             mobile/android/app/build/outputs/androidTest-results/
           retention-days: 14
+      - name: Publish verified Android test build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v0.1.3-android-synced-20261024 artifacts/Hero-Auction-Android-0.1.3.apk artifacts/apk-verification.json artifacts/SHA256SUMS.txt \
+            --target "$GITHUB_SHA" --prerelease \
+            --title 'Hero Auction — Android Test 0.1.3' \
+            --notes-file mobile/SYNCED-RELEASE.md

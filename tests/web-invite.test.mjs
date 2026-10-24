@@ -1,3 +1,4 @@
+import {auctionMatchKey,isStaleAuctionSnapshot,createTailReceipts} from '../public/auction-delivery-state.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -83,8 +84,8 @@ function app({storedLogin=false,profile=null,saved=null,commanderGate=null,state
   if(String(path).startsWith('https:'))return response({results:[]});
   return response({players:0,matches:0,waiting:0});
  };
- const document={getElementById:$,createElement:()=>element(),documentElement:{lang:'tr'},querySelector:()=>null};
- const context=createContext({document,localStorage,sessionStorage:localStorage,location,history:{state:null,replaceState(_,__,url){location.href=new URL(url,location).href}},
+ const document={addEventListener(){},getElementById:$,createElement:()=>element(),documentElement:{lang:'tr'},querySelector:()=>null};
+ const context=createContext({auctionMatchKey,isStaleAuctionSnapshot,createTailReceipts,document,localStorage,sessionStorage:localStorage,location,history:{state:null,replaceState(_,__,url){location.href=new URL(url,location).href}},
   window:{location,addEventListener(){},scrollTo(){},matchMedia:()=>({matches:true})},URL,URLSearchParams,console,fetch,crypto:{randomUUID:()=> 'visitor'},
   setTimeout(){},setInterval(){},clearInterval(){},cancelAuctionReveal(){},commanderAbilityStats,COMMANDER_START_ENERGY,createWebInvite,renderWebInvite,createInviteSharer,createRoomInvitesUI:()=>({setLogin(){},setRoom(){},refresh(){},cancelRoomInvites:async()=>{}}),createFriendsUI:()=>({setLogin(){},setRoom(){},open(){},close(){}}),navigator:{},
   EventSource:class{close(){}},collectTailAwards:()=>[],collectOfferedAwards:()=>[],confirm:()=>true});

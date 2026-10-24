@@ -1,0 +1,34 @@
+{
+  "title": "Atlas • Kazakhstan",
+  "creator": "Vadim_Makes_Sound",
+  "source_page": "https://pixabay.com/music/orchestral-atlas-kazakhstan-562527/",
+  "license": "Pixabay Content License (not CC0)",
+  "license_url": "https://pixabay.com/service/license-summary/",
+  "terms_url": "https://pixabay.com/service/terms/",
+  "terms_last_updated": "2026-10-20",
+  "faq_url": "https://pixabay.com/service/faq/",
+  "ai_generated": true,
+  "published_date": "2026-07-07",
+  "duration_seconds": 153.192,
+  "source_format": "MP3",
+  "sample_rate_hz": 48000,
+  "bit_rate_bps": 256000,
+  "size_bytes": 4902144,
+  "sha256": "b89c048d18582fbb5117f6196a371e31cff4cdd2af0ba3e8ac21dccb2b5ac6d8",
+  "acquired_at_utc": "2026-10-24T15:37:09Z",
+  "download_barriers_observed": {
+    "signup": false,
+    "captcha": false,
+    "separate_agreement_checkbox": false,
+    "post_download_implicit_license_notice": true
+  },
+  "scope": "Embedded HeroAuction game asset only. Do not upload to standalone preview/Library or offer as music download.",
+  "style_label_tr": "Kazakistan / Orta Asya esintili sinematik beste — AI üretimi; tarihî kayıt veya HasSak/ULYTAU performansı değildir.",
+  "rights_notes": [
+    "Terms §5 permits commercial/non-commercial use and modification subject to prohibited uses, including no standalone distribution.",
+    "FAQ explicitly lists incorporation into app/game as a greater-work example.",
+    "Terms §6 attribution not required; retain creator/source credit anyway.",
+    "No guarantee of third-party rights clearance or absence of Content ID claims.",
+    "No direct CDN URL was extracted or guessed; downloaded through official UI."
+  ]
+}

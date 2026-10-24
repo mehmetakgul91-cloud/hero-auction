@@ -19,6 +19,14 @@ Node.js 18 veya üzeri gerekir. `npm install` ve `npm start` komutlarından sonr
 
 `node --test *.test.js tests/*.test.* test/*.test.js` savaş, hesap, komutan ve platform kontrollerini çalıştırır. `npm run audit:strict` aktif kahraman görsellerini ve güçlerini denetler.
 
+## Arena hazırlığı
+
+Açık artırmada edinilen beş kahraman, kendi ön/arka saf tercihine (kahramanın kayıtlı saf bonuslarına) göre tahtaya otomatik yerleşir. Oyuncu yalnızca **Ön saf / Arka saf** değişikliği yapar; boş yuva seçme, sürükleme veya kahramanları yeniden sıralama gerekmez. Saf değişikliği kahramanların edinilme/savaş sırasını değiştirmez. Mevcut kurallarda iki safın her biri sıfır ile beş kahraman içerebilir.
+
+Saf tercihleri maç ve oyuncuya özel taslak olarak sunucuda saklanır; yenilemede korunur, rövanşta yeni kadro için yeniden oluşturulur. Henüz sunucuya ulaşmayan değişiklik aynı sekmede maç/kadro anahtarıyla saklanır ve yeniden gönderilir. Web ve CrazyGames tarayıcı kayıtları ayrıdır; hesapta kayıtlı komutan/diziliş verilerine toplu dönüşüm uygulanmaz.
+
+Otomatik yerleşim **Hazırım** sayılmaz. Mevcut 60 saniyelik hazırlık süresi veya oyuncunun Hazırım düğmesi dizilişi onaylar; savaş için her iki tarafın da hazır olması gerekir. Sunucu beş farklı kahramanı, değiştirilemeyen gerçek rollerini ve saf değerlerini doğrular. Onaylanmış diziliş ve eski maça ait istekler değişiklik kabul etmez.
+
 ## Açık artırma kart havuzu
 
 Her maçta aktif havuzdan 10 farklı kahraman rastgele seçilir; efsanevi, nadir veya diğer nadirlikler için sabit adet kotası yoktur. Aynı kahraman aynı açık artırmada tekrar etmez. Son kartların eksik takıma verilmesi, mevcut otomatik ücret/eksi kredi kuralları ve kalan kredi güç bonusu değişmemiştir.
@@ -44,7 +52,9 @@ Lobideki **Arkadaşlar** sekmesinden kendi `HA-…` oyuncu kimliğini kopyalayab
 
 ### Maç davetleri
 
-**Rakip bul → Davet et** ile kabul edilmiş bir arkadaşına özel odana davet gönderebilirsin. Davet 30 dakika geçerlidir; gönderen oyuncu yanıtı takip edebilir veya daveti iptal edebilir. Davet edilen oyuncu başka maçtayken de **Geleceğim / Gelmeyeceğim** yanıtını verebilir. “Geleceğim” yanıtı 50 altın giriş ücretine açık onaydır; mevcut maçın sunucudaki nihai sonucu kesinleşmeden yeni odaya geçilmez. Açık artırmanın bitmesi tek başına maçın bitmesi sayılmaz.
+**Arkadaşlar → Çevrimiçi arkadaş → Davet et** ile seçtiğin arkadaşına özel oda daveti gönderebilirsin. Ücret açıklamasından sonra onay verdiğinde boş özel odan kullanılır; odan yoksa ücretsiz oluşturulur. Aktif maçından otomatik çıkılmaz. **Rakip bul → Davet et** seçeneği de korunur. Davet 30 dakika geçerlidir; gönderen oyuncu yanıtı takip edebilir veya daveti iptal edebilir. Davet edilen oyuncu başka maçtayken de **Geleceğim / Gelmeyeceğim** yanıtını verebilir. “Geleceğim” yanıtı 50 altın giriş ücretine açık onaydır; mevcut maçın sunucudaki nihai sonucu kesinleşmeden yeni odaya geçilmez. Açık artırmanın bitmesi tek başına maçın bitmesi sayılmaz.
+
+Odaya katılınca veya açık artırma başlayınca eski davet geçmişi oyun üstünden kaldırılır. Bekleyen davetler ve yeni katılım sorunları küçük, kapalı bir davet özeti üzerinden açılabilir; otomatik olarak oyunun üstüne genişlemez. Davet kayıtları ve sıraya alınmış kabul yanıtları silinmez.
 
 Kabul edilmiş davet iptal edilebilir. Oda dolmuş/kapanmışsa, davet sona ermişse veya giriş ücreti karşılanamıyorsa otomatik katılım yapılmaz ve hata gösterilir. Davetin açılması veya yanıt beklemesi ücret kesmez. İki oyuncunun normal giriş ücreti ancak gerçek oda katılımında, kalıcı oda/davet kaydıyla birlikte uygulanır. Testler yalnızca yalıtılmış hesaplar ve geliştirme bakiyeleri kullanır.
 
@@ -53,3 +63,12 @@ Sosyal oda koordinasyonu mevcut tek sunucu süreci modeliyle çalışır; çoklu
 ## Android test uygulaması (ayrı hazırlık)
 
 Canlı web oyunundan bağımsız Capacitor test paketi `mobile/` içindedir. Varsayılan sürüm sunucuya bağlı olmayan **arayüz önizlemesidir**, oynanabilir sürüm değildir. Kurulum, izole test sunucusu ve cihaz kontrol listesi: [Android test notları](docs/android-test.md).
+## Arena müzikleri
+
+İlk TEST sürümünde yüklenmiş üç parça seçilir: Determined Pursuit (orkestra), The Eternal Sands (Orta Doğu fantastik) ve Atlas • Kazakhstan (AI üretimi Kazak/Orta Asya esintili). Diğer üç parça yükleme tamamlandığında ayrı güncellemeyle eklenecektir. Latin parça dahil değildir. Her tarayıcı sekmesinde üç parçalık rastgele sıra tamamlanmadan parça tekrarlanmaz; sıra sınırında da son parça hemen tekrar etmez. Gerçek maç anahtarı değişmeden yenileme, sesi kapat/aç veya arka plandan dönme parça seçimini değiştirmez. Web ve CrazyGames kayıtları ayrıdır.
+
+Tek bir `HTMLAudioElement` yalnız seçilen parçayı yükler. Hazırlıkta kullanıcı dokunuşuyla sessizce açılır; maç başladığında mevcut %60 ses düzeyi kullanılır. Sekme gizlenince/platform sesi kapatınca durur, maç bitiminde kaynak bırakılır. Otomatik oynatma engeli aynı parçayı bir sonraki dokunuşta yeniden dener. Gerçek yükleme hatasında yalnız bir kez eski davul-bas parçasına, o da başarısızsa prosedürel sese döner. İndirme takılması başına 15 saniyelik sınırlı zaman aşımı vardır; bütün liste arka planda yüklenmez.
+
+`/music-credits.html` eser sahibi, kaynak, lisans ve dönüşüm bilgilerini gösterir; oyun ve arena altındaki bağlantılardan erişilir. Kaynak/lisans kanıtları `docs/arena-music-license-evidence/`, dosya hashleri `docs/arena-music-provenance.json`, teknik ses ölçümleri `docs/arena-music-audio-checks.json` içindedir. Atlas yalnız oyuna gömülü kullanım içindir; bağımsız MP3/soundtrack paketi olarak yayımlanmaz. Oyun yedeği kod ve oyun varlıklarıyla birlikte tutulmalıdır.
+
+Test: `node --test tests/arena-music.test.mjs tests/static-audio.test.mjs tests/arena-performance.test.mjs`. Gerçek iPhone/Safari oynatma ve işitsel döngü birleşimleri ayrıca cihazda dinlenmelidir; teknik ölçümler bir dinleme testi değildir.

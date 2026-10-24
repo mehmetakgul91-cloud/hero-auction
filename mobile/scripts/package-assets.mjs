@@ -5,7 +5,8 @@ import sharp from 'sharp';
 // Keep the API's image paths and MIME types: server responses and SSE remain
 // untouched, and every portrait still loads locally without a second download.
 export const MAX_IMAGE_EDGE = 640;
-export const MAX_WEB_BYTES = 20_000_000;
+// Includes the three new licensed arena tracks (6 MB), kept at source quality.
+export const MAX_WEB_BYTES = 26_000_000;
 export async function filesIn(directory, prefix = '') {
   const files = [];
   for (const item of await readdir(directory, { withFileTypes: true })) {

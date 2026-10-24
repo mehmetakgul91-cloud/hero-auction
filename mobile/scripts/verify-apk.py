@@ -12,6 +12,12 @@ report = json.loads((mobile / "package-report.json").read_text())
 # Read Turkish commander names the same way Android AssetManager does.
 with zipfile.ZipFile(apk, metadata_encoding="utf-8") as archive:
     names = set(archive.namelist())
+    manifest = json.loads(archive.read("assets/public/native-files.json"))
+    for name, digest in manifest.items():
+        assert hashlib.sha256(archive.read("assets/public/" + name)).hexdigest() == digest, name
+    source = json.loads(archive.read("assets/public/native-build.json"))
+    assert source["version"] == "0.1.3"
+    assert source["gameSource"]["commit"] == "f986111af571416da8043e820c3a264e7960375b"
     for item in report["retained"]:
         local = (mobile / "www" / item["path"]).read_bytes()
         assert archive.read("assets/public/" + item["path"]) == local, item["path"]
@@ -25,5 +31,5 @@ with zipfile.ZipFile(apk, metadata_encoding="utf-8") as archive:
     assert config.count("https://hero-auction-commander-test.onrender.com") == 2
     assert archive.read("assets/public/audio/hero-auction-senkron-davul-bas-2dk.mp3") == (mobile / "www/audio/hero-auction-senkron-davul-bas-2dk.mp3").read_bytes()
 size = apk.stat().st_size
-assert size < 25_000_000, f"APK size regression: {size}"
+assert size < 30_000_000, f"APK size regression: {size}"
 print(json.dumps({"file": apk.name, "bytes": size, "sha256": hashlib.sha256(apk.read_bytes()).hexdigest(), "heroCount": report["heroCount"], "omittedImages": sum(Path(p).suffix in {".png", ".webp", ".svg"} for p in report["omitted"])}, indent=2))

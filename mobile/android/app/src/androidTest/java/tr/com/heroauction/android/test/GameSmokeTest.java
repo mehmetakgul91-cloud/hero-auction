@@ -6,7 +6,11 @@ import android.content.Intent;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.KeyEvent;
 import android.webkit.WebView;
+import android.graphics.Bitmap;
+import java.io.File;
+import java.io.FileOutputStream;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import java.util.concurrent.CountDownLatch;
@@ -51,7 +55,14 @@ public class GameSmokeTest {
         instrumentation.sendPointerSync(MotionEvent.obtain(now,now,MotionEvent.ACTION_DOWN,x,y,0));
         instrumentation.sendPointerSync(MotionEvent.obtain(now,now+80,MotionEvent.ACTION_UP,x,y,0));
     }
-    @Test public void guestCanStartBotMatch() throws Exception {
+    private void screenshot(String name) throws Exception {
+        Bitmap bitmap=instrumentation.getUiAutomation().takeScreenshot();
+        try(FileOutputStream out=new FileOutputStream(new File(instrumentation.getTargetContext().getCacheDir(),name+".png"))) {
+            bitmap.compress(Bitmap.CompressFormat.PNG,100,out);
+        }
+        bitmap.recycle();
+    }
+    @Test public void guestCanPlayThroughAuctionAndArena() throws Exception {
         Intent intent=new Intent(instrumentation.getTargetContext(),MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         MainActivity activity=(MainActivity)instrumentation.startActivitySync(intent);
         web=activity.getBridge().getWebView();
@@ -67,6 +78,28 @@ public class GameSmokeTest {
         tap("#bot");
         until("bot match opens auction", "!document.getElementById('game').hidden && document.getElementById('game').dataset.phase==='auction'", 60);
         until("auction card portrait loads", "[...document.querySelectorAll('#stage .card-art img')].some(i=>i.complete&&i.naturalWidth>0)", 30);
+        screenshot("auction");
+        long end=SystemClock.elapsedRealtime()+180000;
+        while(SystemClock.elapsedRealtime()<end && !is("document.getElementById('confirm-arena-entry') && !document.getElementById('confirm-arena-entry').disabled")) {
+            if(is("document.getElementById('passbutton') && !document.getElementById('passbutton').disabled"))tap("#passbutton");
+            SystemClock.sleep(1200);
+        }
+        until("auction delivers all ten cards", "document.getElementById('confirm-arena-entry') && !document.getElementById('confirm-arena-entry').disabled", 20);
+        assertEquals("[]",js("window.__smokeErrors"));
+        tap("#confirm-arena-entry");
+        until("formation loads and all five heroes are placed", "document.getElementById('formation-placed-count')?.textContent==='5 / 5' && !document.getElementById('apply-roles').disabled",60);
+        js("window.__smokeErrors=[];addEventListener('error',e=>__smokeErrors.push(e.message));addEventListener('unhandledrejection',e=>__smokeErrors.push(String(e.reason)))");
+        screenshot("formation");
+        tap("#apply-roles");
+        until("ready opens the battle arena", "document.body.classList.contains('arena-room') && document.querySelectorAll('#team-a .hero').length===5", 60);
+        until("battle receives live actions", "document.getElementById('events')?.children.length>0",90);
+        screenshot("arena");
+        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_HOME);
+        SystemClock.sleep(1500);
+        instrumentation.getTargetContext().startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
+        until("app resumes with the same active match", "window.HeroNative.active && document.body.classList.contains('arena-room')",30);
+        until("match reaches its result", "!document.getElementById('arena-victory-reveal').hidden || !document.getElementById('battle-summary').hidden",180);
+        screenshot("result");
         assertEquals("[]",js("window.__smokeErrors"));
     }
 }

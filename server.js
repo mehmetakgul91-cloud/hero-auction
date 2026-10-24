@@ -1,10 +1,13 @@
+import {buildDefaultFormation,validateFormation} from './public/preparation-formation.js';
 import {androidTestMemoryMode} from './android-test-mode.js';
 import {requireModerationForInteraction} from './moderation-availability.js';
 import {createNativeCors} from './native-cors.js';
 import {createModerationService,assertModeratedText} from './moderation-service.js';
 import {chooseBotBid,chooseBotFormation,chooseBotCommander,chooseBotCast,createBotCommanderProfile} from './bot-strategy.js';
 import {selectAuctionCards,rarityForPower} from './auction-card-pool.js';
+import {auctionRevealSnapshot,recordTailAward} from './auction-reveal-events.js';
 import {crazyGamesSource} from './crazygames-build.js';
+import {serveStaticAudio} from './static-audio.js';
 import {verifyCrazyGamesToken} from './crazygames-auth.js';
 import http from 'node:http';
 import {createFriendsService} from './friends-service.js';
@@ -208,13 +211,14 @@ const rand=n=>crypto.randomInt(n);
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
 const code=()=>String(crypto.randomInt(100,1000));
 const token=()=>crypto.randomBytes(24).toString('hex');
-const publicRoom=(r,seat)=>({code:r.code,universe:r.universe,phase:r.phase,round:r.round,turn:r.turn,deadline:r.deadline||null,series:r.series||[0,0],rematch:r.rematch||[false,false],mode:r.mode||"friend",difficulty:r.mode==='bot'?(r.difficulty||'medium'):null,rankChange:r.phase==='finished'?(r.rankChange||[0,0]):null,rankBefore:r.phase==='finished'?(r.rankBefore||[null,null]):null,topBid:r.topBid,topSeat:r.topSeat,history:r.history,chat:(r.chat||[]).filter(message=>moderationReady&&seat>=0&&!moderation.blocked(r.players[seat]?.accountId,r.players[message.seat]?.accountId)),players:r.players.map((p,i)=>p?{name:p.name,credits:p.credits,team:p.team.map(x=>({name:x.name,universe:x.universe,cost:x.cost,rarity:rarityForPower(x.power)})),connected:true,seat:i,playerId:seat>=0&&p.accountId?friends.playerId(p.accountId):null}:null),card:r.phase==='auction'?{name:r.cards[r.round].name,universe:r.cards[r.round].universe,rarity:rarityForPower(r.cards[r.round].power)}:null,final:r.phase==='finished'?r.players.map(p=>({name:p.name,score:Math.round(p.team.reduce((a,c)=>a+c.power,0)*(1+p.credits*0.01)*100)/100,credits:p.credits,team:p.team.map(c=>({name:c.name,universe:c.universe,cost:c.cost,power:c.power,rarity:rarityForPower(c.power)}))})):null,me:seat,catalogueCount:catalogue.size});
-function publish(r){markRoom(r);for(const client of listeners.get(r.code)||[]){try{client.res.write(`data: ${JSON.stringify(publicRoom(r,client.seat))}\n\n`)}catch{}}}
+const publicRoom=(r,seat)=>({...auctionRevealSnapshot(r),code:r.code,universe:r.universe,phase:r.phase,round:r.round,turn:r.turn,deadline:r.deadline||null,series:r.series||[0,0],rematch:r.rematch||[false,false],mode:r.mode||"friend",difficulty:r.mode==='bot'?(r.difficulty||'medium'):null,rankChange:r.phase==='finished'?(r.rankChange||[0,0]):null,rankBefore:r.phase==='finished'?(r.rankBefore||[null,null]):null,topBid:r.topBid,topSeat:r.topSeat,history:r.history,chat:(r.chat||[]).filter(message=>moderationReady&&seat>=0&&!moderation.blocked(r.players[seat]?.accountId,r.players[message.seat]?.accountId)),players:r.players.map((p,i)=>p?{name:p.name,credits:p.credits,team:p.team.map(x=>({name:x.name,universe:x.universe,cost:x.cost,rarity:rarityForPower(x.power)})),connected:true,seat:i,playerId:seat>=0&&p.accountId?friends.playerId(p.accountId):null}:null),card:r.phase==='auction'?{name:r.cards[r.round].name,universe:r.cards[r.round].universe,rarity:rarityForPower(r.cards[r.round].power)}:null,final:r.phase==='finished'?r.players.map(p=>({name:p.name,score:Math.round(p.team.reduce((a,c)=>a+c.power,0)*(1+p.credits*0.01)*100)/100,credits:p.credits,team:p.team.map(c=>({name:c.name,universe:c.universe,cost:c.cost,power:c.power,rarity:rarityForPower(c.power)}))})):null,me:seat,catalogueCount:catalogue.size});
+function publish(r){r.revision=(Number.isSafeInteger(r.revision)?r.revision:0)+1;markRoom(r);for(const client of listeners.get(r.code)||[]){try{client.res.write(`data: ${JSON.stringify(publicRoom(r,client.seat))}\n\n`)}catch{}}}
 function log(r,msg){r.history.push(msg);if(r.history.length>30)r.history.shift();}
 function forcedCardCost(card){return ({common:2,advanced:3,rare:4,legendary:5})[rarityForPower(card.power)]||2}
 function finishUnbidCard(r){const {seat,card,cost}=awardUnbidCard(r,forcedCardCost);log(r,`${r.players[seat].name} ${card.name} karakterini iki pas sonrası ${cost} krediye aldı.`);advanceRound(r)}
 function advanceRound(r){
  r.deadline=null;
+ r.tailAwards??=[];
  while(r.round<10){
   const open=r.players.map((p,i)=>p.team.length<5?i:-1).filter(i=>i>=0);
   if(!open.length)break;
@@ -222,6 +226,7 @@ function advanceRound(r){
    const seat=open[0],card=r.cards[r.round],cost=forcedCardCost(card);
    r.players[seat].credits-=cost;
    r.players[seat].team.push({...card,cost});
+   recordTailAward(r,seat,card,cost);
    log(r,`${r.players[seat].name} ${card.name} karakterini zorunlu alımda ${cost} krediye aldı.`);
    r.round++;continue;
   }
@@ -230,12 +235,14 @@ function advanceRound(r){
    const seat=open.reduce((best,i)=>best<0||r.players[i].team.length<r.players[best].team.length?i:best,-1);
    const card=r.cards[r.round],cost=forcedCardCost(card);
    r.players[seat].credits-=cost;r.players[seat].team.push({...card,cost});
+   recordTailAward(r,seat,card,cost);
    log(r,`${r.players[seat].name} ${card.name} karakterini ${cost} krediye aldı (eksi bakiye uygulanabilir).`);
    r.round++;continue;
   }
   if(funded.length===1){
    const seat=funded[0],card=r.cards[r.round],cost=forcedCardCost(card);
    r.players[seat].credits-=cost;r.players[seat].team.push({...card,cost});
+   recordTailAward(r,seat,card,cost);
    log(r,`${r.players[seat].name} ${card.name} karakterini ${cost} krediye aldı.`);
    r.round++;continue;
   }
@@ -583,6 +590,7 @@ if(url==='/api/rematch'){
    r.goldAward=null;r.rankChange=null;r.rankBefore=null;r.cards=newCards(r.universe);
    r.round=0;r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.topBid=0;r.topSeat=null;
    r.history=[];r.openingPassSeat=null;r.rematch=[false,false];r.battleCompleted=[false,false];
+   r.tailAwards=[];r.revision=0;
    r.matchSettled=false;r.battleSettlementPending=false;r.battleSync=null;r.created=Date.now();r.lastActivity=Date.now();
    for(const p of r.players){p.credits=20;p.team=[];}
    log(r,'Rövanş başladı!');
@@ -611,6 +619,23 @@ setInterval(()=>{for(const [code,s] of battleSessions)if(Date.now()-s.created>2*
 const battleIdsA=["original:01", "original:02", "original:03", "original:04", "original:05"];
 const battleIdsB=["original:06", "original:07", "original:08", "original:09", "original:10"];
 function battleSessionView(session,token){const seat=session.players.findIndex(p=>p?.token===token);if(seat<0||session.players[seat].left)return null;return {code:session.code,seat,ready:session.players.map(p=>Boolean(p?.ready)),joined:session.players.map(Boolean),started:Boolean(session.result),result:session.result,created:session.created};}
+// Draft formation belongs to the completed auction, not a browser or account profile.
+// Creation does not imply Ready; both existing confirmation gates remain unchanged.
+function preparationTeams(teams){return teams.map(team=>team.map(card=>{const hero=battleRoster.find(hero=>hero.id===card.id);return {...card,role:hero.role,laneModifiers:hero.laneModifiers}}))}
+function ensureBattlePreparation(room,teams){
+ const matchKey=String(room.matchNumber||1)+':'+String(room.created);
+ let changed=false;
+ if(room.battleSync?.key!==matchKey){room.battleSync={key:matchKey,ready:[null,null],result:null};changed=true;}
+ const sync=room.battleSync;
+ if(!Array.isArray(sync.drafts)){sync.drafts=[null,null];changed=true;}
+ for(let seat=0;seat<2;seat++)if(!sync.drafts[seat]){sync.drafts[seat]=sync.ready[seat]||buildDefaultFormation(teams[seat]);changed=true;}
+ if(changed)markRoom(room);
+ return sync;
+}
+function preparationView(sync,seat){
+ const formation=sync.ready[seat]||sync.drafts[seat];
+ return {matchKey:sync.key,positions:[...formation.positions],lanes:[...formation.lanes],roles:[...formation.roles],ready:Boolean(sync.ready[seat])};
+}
 function battleSessionResult(session){const cards=(ids,formation)=>formation.map((index,slot)=>({id:ids[index],power:stablePower(ids[index]),lane:session.players[ids===battleIdsA?0:1].lanes?.[slot]||(slot<2?'front':'back'),role:session.players[ids===battleIdsA?0:1].roles?.[slot]||((slot<2)?'tank':'energy')}));const a=cards(battleIdsA,session.players[0].positions),b=cards(battleIdsB,session.players[1].positions);const result=simulateRosterBattle(a,b,{seed:'battle-room-'+session.code+'-'+session.created});return {winner:result.winner,rounds:result.rounds,teams:result.teams,initialShields:result.initialShields,log:result.log};}
 function validBattlePositions(v){return Array.isArray(v)&&v.length===5&&new Set(v).size===5&&v.every(x=>Number.isInteger(x)&&x>=0&&x<5)}
 const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data))};try{const url=new URL(req.url,'http://localhost');if(nativeCors(req,res,url.pathname))return;if(req.method==='POST'&&url.pathname==='/api/battle-auction-complete'){
@@ -704,18 +729,17 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
  if(!room||seat<0)return send(403,{error:'Yetkisiz oda'});
  if(room.phase!=='finished')return send(409,{error:'Açık artırma tamamlanmadı'});
  try{const state=auctionRoomToBattleState(room),teams=prepareBattleTeams(state);
- const matchKey=String(room.matchNumber||1)+':'+String(room.created);
- if(room.battleSync?.key!==matchKey)room.battleSync={key:matchKey,ready:[null,null],result:null};
- const sync=room.battleSync;
+ const metadata=preparationTeams(teams),sync=ensureBattlePreparation(room,metadata),matchKey=sync.key;
+ if(req.method==='POST'&&body.matchKey!==undefined&&body.matchKey!==matchKey)return send(409,{error:'Diziliş başka bir maça ait.'});
  // Computer opponent uses an automatic, server-owned formation.
  if(room.mode==='bot'&&!sync.ready[1]){
   sync.ready[1]=chooseBotFormation(teams[1],room.difficulty||'medium');
  }
  // Re-entering a confirmed formation returns the existing battle without changing it.
  if(req.method==='POST'&&!sync.ready[seat]){
- if(!validBattlePositions(body.positions)||!Array.isArray(body.lanes)||body.lanes.length!==5||body.lanes.some(l=>!['front','back'].includes(l)))return send(400,{error:'Geçersiz diziliş'});
- if(!Array.isArray(body.roles)||body.roles.length!==5||body.roles.some((v,i)=>v!==(battleRoster.find(hero=>hero.id===teams[seat][body.positions[i]].id)?.role)))return send(400,{error:'Kart türü değiştirilemez'});
- sync.ready[seat]={positions:body.positions,lanes:body.lanes,roles:body.roles};
+ if(!validateFormation(body,metadata[seat]))return send(400,{error:'Geçersiz diziliş veya kart türü'});
+ sync.ready[seat]={positions:[...body.positions],lanes:[...body.lanes],roles:[...body.roles]};
+ sync.drafts[seat]=sync.ready[seat];
  if(sync.ready.every(Boolean)){
  const ordered=teams.map((team,i)=>sync.ready[i].positions.map((index,slot)=>({...team[index],lane:sync.ready[i].lanes[slot],role:sync.ready[i].roles[slot]})));
  // Read both commanders from authenticated room account IDs, never from client payloads.
@@ -762,6 +786,22 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
  return send(200,{ready:sync.ready.map(Boolean),started:Boolean(sync.result),result:sync.result?{...sync.result,summary:orientBattleSummary(sync.result.summary,seat),winner:sync.result.winner===null?null:sync.result.winner===seat?0:1,teams:seat===0?sync.result.teams:[...sync.result.teams].reverse(),initialShields:seat===0?sync.result.initialShields:sync.result.initialShields?.slice().reverse(),commanders:seat===0?sync.result.commanders:[...sync.result.commanders].reverse(),log:seat===0?sync.result.log:sync.result.log.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side,shieldSnapshot:e.shieldSnapshot?.slice().reverse()}))}:null});
  }catch(e){return send(422,{error:e.message})}
 }
+if(req.method==='POST'&&url.pathname==='/api/battle-auction-formation'){
+ let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>4000)return send(413,{error:'İstek çok büyük'})}
+ let body;try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz JSON'})}
+ const room=rooms.get(String(body?.code||'').toUpperCase()),seat=room?.players?.findIndex(p=>p?.token===body?.token)??-1;
+ if(!room||seat<0)return send(403,{error:'Yetkisiz oda'});
+ if(room.phase!=='finished')return send(409,{error:'Açık artırma tamamlanmadı'});
+ try{
+  const teams=preparationTeams(prepareBattleTeams(auctionRoomToBattleState(room))),sync=ensureBattlePreparation(room,teams);
+  if(body.matchKey!==sync.key)return send(409,{error:'Diziliş başka bir maça ait.'});
+  if(sync.ready[seat]||sync.result)return send(409,{error:'Hazır diziliş değiştirilemez.'});
+  if(!validateFormation(body,teams[seat]))return send(400,{error:'Geçersiz diziliş veya kart türü'});
+  sync.drafts[seat]={positions:[...body.positions],lanes:[...body.lanes],roles:[...body.roles]};
+  markRoom(room);
+  return send(200,{preparation:preparationView(sync,seat)});
+ }catch(e){return send(422,{error:e.message})}
+}
 if(req.method==='GET'&&url.pathname==='/api/battle-auction-team'){
  const room=rooms.get(String(url.searchParams.get('code')||'').toUpperCase());
  const seat=room?.players?.findIndex(p=>p?.token===url.searchParams.get('token'))??-1;
@@ -770,7 +810,8 @@ if(req.method==='GET'&&url.pathname==='/api/battle-auction-team'){
  try{
   const state=auctionRoomToBattleState(room);
   const teams=prepareBattleTeams(state);
-  return send(200,{ready:true,seat,credits:[state.remainingCreditsA,state.remainingCreditsB],teams:teams.map(team=>team.map(card=>{const hero=battleRoster.find(h=>h.id===card.id);return {...card,name:hero.name,universe:hero.universe,role:hero.role,laneModifiers:hero.laneModifiers}}))});
+  const sync=ensureBattlePreparation(room,preparationTeams(teams));
+  return send(200,{ready:true,seat,preparation:preparationView(sync,seat),credits:[state.remainingCreditsA,state.remainingCreditsB],teams:teams.map(team=>team.map(card=>{const hero=battleRoster.find(h=>h.id===card.id);return {...card,name:hero.name,universe:hero.universe,role:hero.role,laneModifiers:hero.laneModifiers}}))});
  }catch(e){return send(422,{error:'Bu açık artırma 2.0 savaşına uygun değil: '+e.message})}
 }
 if(req.method==='GET'&&url.pathname==='/api/battle-room'){const session=battleSessions.get(String(url.searchParams.get('code')||'').toUpperCase());const view=session&&battleSessionView(session,url.searchParams.get('token'));return view?send(200,view):send(404,{error:'Oda veya oturum bulunamadı.'})}
@@ -847,17 +888,19 @@ if(req.method==='GET'&&url.pathname==='/api/online'){
 }
 if(req.method==='GET'&&url.pathname==='/api/info')return send(200,{catalogueCount:catalogue.size,counts:Object.fromEntries(['original'].map(k=>[k,[...catalogue.values()].filter(x=>x.universe===k).length])),...(androidTestMemoryOnly?{androidTest:{isolated:true,storage:'memory',guestOnly:true,progressionComplete:false}}:{})});
 if(req.method==='POST'&&url.pathname.startsWith('/api/')){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>12000)error('İstek çok büyük.')}let body;try{body=JSON.parse(raw)}catch{error('Geçersiz JSON')}return send(200,await api(url.pathname,body))}
-if(req.method==='GET'&&(url.pathname==='/crazygames'||url.pathname.startsWith('/crazygames/'))){
+const audioHead=req.method==='HEAD'&&path.extname(decodeURIComponent(url.pathname)).toLowerCase()==='.mp3';
+if((req.method==='GET'||audioHead)&&(url.pathname==='/crazygames'||url.pathname.startsWith('/crazygames/'))){
  if(url.pathname==='/crazygames'){res.writeHead(302,{Location:'/crazygames/'});res.end();return}
  const relative=decodeURIComponent(url.pathname.slice('/crazygames/'.length))||'index.html';
  // Public game assets only; admin and development screens are not submission pages.
  if(/(?:^|\/)(?:admin|commander-training)(?:\.|$)/.test(relative))return send(404,{error:'Bulunamadı'});
  const file=path.resolve(root,'public',relative==='privacy'?'privacy.html':relative);
  if(!file.startsWith(path.join(root,'public')+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile())return send(404,{error:'Bulunamadı'});
- const ext=path.extname(file);res.writeHead(200,{'Content-Type':mime[ext]||'application/octet-stream','Cache-Control':'no-store'});
+ const ext=path.extname(file);if(ext.toLowerCase()==='.mp3')return serveStaticAudio(req,res,file);
+ res.writeHead(200,{'Content-Type':mime[ext]||'application/octet-stream','Cache-Control':'no-store'});
  if(ext==='.html'||ext==='.js')res.end(crazyGamesSource(fs.readFileSync(file,'utf8'),ext));else fs.createReadStream(file).pipe(res);return;
 }
-if(req.method==='GET'){const staticPath=url.pathname==='/'?'index.html':url.pathname==='/privacy'?'privacy.html':url.pathname==='/admin'?'admin.html':decodeURIComponent(url.pathname);const file=path.join(root,'public',staticPath);if(!file.startsWith(path.join(root,'public')+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile())return send(404,{error:'Bulunamadı'});res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});fs.createReadStream(file).pipe(res);return}send(405,{error:'İzin verilmeyen yöntem'});}catch(e){send(e.status||500,{error:e.status?e.message:'Sunucu hatası'})}});
+if(req.method==='GET'||audioHead){const staticPath=url.pathname==='/'?'index.html':url.pathname==='/privacy'?'privacy.html':url.pathname==='/admin'?'admin.html':decodeURIComponent(url.pathname);const file=path.join(root,'public',staticPath);if(!file.startsWith(path.join(root,'public')+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile())return send(404,{error:'Bulunamadı'});if(path.extname(file).toLowerCase()==='.mp3')return serveStaticAudio(req,res,file);res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});fs.createReadStream(file).pipe(res);return}send(405,{error:'İzin verilmeyen yöntem'});}catch(e){send(e.status||500,{error:e.status?e.message:'Sunucu hatası'})}});
 setInterval(()=>{for(const r of rooms.values()){
 if(r.phase==='matching'&&Date.now()-r.created>=60000){waiting.delete(r.code);r.players[1]={name:'Bilgisayar',token:token(),credits:20,team:[]};r.mode='bot';assignBotCommander(r);r.entryPaid=false;r.phase='auction';r.deadline=Date.now()+20000;publish(r);}
 tickBotBattle(r);

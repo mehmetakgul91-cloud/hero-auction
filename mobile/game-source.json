@@ -1,0 +1,6 @@
+{
+  "repository": "mehmetakgul91-cloud/hero-auction",
+  "branch": "test/commander-arena-2-20261020",
+  "commit": "f986111af571416da8043e820c3a264e7960375b",
+  "note": "Latest test game including automatic formation, auction delivery recovery and three arena tracks. Native-only presentation and transport adapters are applied at build time."
+}
