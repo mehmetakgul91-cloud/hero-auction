@@ -102,6 +102,7 @@
 .hero-native .native-auction #game .player-side .name{overflow-wrap:anywhere}
 .hero-native #native-game-menu[open]{z-index:11000}
 .hero-native .native-menu-panel{box-sizing:border-box}
+.hero-native .formation .preparation-ready-bar{position:static;bottom:auto}
 @media(max-width:599px){
  .hero-native .native-auction #game .auction-main{grid-template-columns:minmax(0,1fr);gap:12px}
  .hero-native .native-auction #game .auction-deck-scene{width:min(100%,200px)}

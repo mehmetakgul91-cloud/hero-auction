@@ -27,3 +27,6 @@ test('native menu layers above existing 9999-z-index audio control',()=>{
  assert.match(css,/#native-game-menu\[open\]\{z-index:11000\}/);
  assert.match(css,/\.native-menu-panel\{box-sizing:border-box\}/);
 });
+test('Ready action remains in document flow rather than covering preparation heroes',()=>{
+ assert.match(css,/\.formation \.preparation-ready-bar\{position:static;bottom:auto\}/);
+});

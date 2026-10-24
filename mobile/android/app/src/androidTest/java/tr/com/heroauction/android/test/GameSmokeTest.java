@@ -59,17 +59,20 @@ public class GameSmokeTest {
         instrumentation.sendPointerSync(MotionEvent.obtain(now,now+80,MotionEvent.ACTION_UP,x,y,0));
     }
     private void screenshot(String name) throws Exception {
-        Bitmap bitmap=instrumentation.getUiAutomation().takeScreenshot();
-        try(FileOutputStream out=new FileOutputStream(new File(instrumentation.getTargetContext().getCacheDir(),name+".png"))) {
-            bitmap.compress(Bitmap.CompressFormat.PNG,100,out);
+        // Gradle uninstalls the app after tests, deleting its cache before adb
+        // artifact collection. Shell-owned diagnostic files survive teardown.
+        try(java.io.InputStream input=new android.os.ParcelFileDescriptor.AutoCloseInputStream(
+            instrumentation.getUiAutomation().executeShellCommand(
+                "screencap -p /sdcard/Download/hero-portrait-"+name+".png"))) {
+            byte[] buffer=new byte[1024];while(input.read(buffer)!=-1) {}
         }
-        bitmap.recycle();
     }
     private void portraitLayout(String stage, String orderedSelectors) throws Exception {
         assertTrue(stage+": portrait viewport",is("innerHeight>innerWidth"));
         assertTrue(stage+": no horizontal document overflow",is("document.documentElement.scrollWidth<=innerWidth+1"));
         String selectors=org.json.JSONObject.quote(orderedSelectors);
-        assertTrue(stage+": primary panels do not overlap",is("(()=>{const a="+selectors+".split('|').map(s=>document.querySelector(s)).filter(e=>e&&!e.hidden).map(e=>e.getBoundingClientRect());return a.every((r,i)=>i===0||r.top>=a[i-1].bottom-1)})()"));
+        String geometry=js("JSON.stringify("+selectors+".split('|').map(s=>{const e=document.querySelector(s),r=e?.getBoundingClientRect();return {selector:s,top:r?.top,bottom:r?.bottom,position:e?getComputedStyle(e).position:null}}))");
+        assertTrue(stage+": primary panels do not overlap: "+geometry,is("(()=>{const a="+selectors+".split('|').map(s=>document.querySelector(s)).filter(e=>e&&!e.hidden).map(e=>e.getBoundingClientRect());return a.every((r,i)=>i===0||r.top>=a[i-1].bottom-1)})()"));
     }
     private void verifyMenu() throws Exception {
         tap("#native-game-menu>summary");
