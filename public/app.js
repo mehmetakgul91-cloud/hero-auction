@@ -19,6 +19,7 @@ import {commanderAbilityStats,COMMANDER_START_ENERGY} from '/commander-ability-r
 import {abilityImpact} from '/hero-ability-text.js?v=ability-amounts-20261021';
 const $=id=>document.getElementById(id);
 let session=null,room=null,stream=null;
+let roomEntryPending=0;
 const world='mixed';
 let lastCardKey=null;
 let auctionSfxContext=null;
@@ -51,9 +52,9 @@ let login=null;try{login=JSON.parse(localStorage.getItem('hero-auction-login')||
 let platformStoredLogin=window.HeroPlatform?login:null;
 if(window.HeroPlatform)login=null;
 const signedIn=()=>!!login?.authToken;
-const friendsUI=createFriendsUI({translate:uiText,notify:message=>notify(message),onOpen:()=>{const panel=$('home-play-panel');if(panel)panel.hidden=true;$('home-play-tab')?.setAttribute('aria-expanded','false');$('home-play-tab')?.classList.remove('selected');}});
+const friendsUI=createFriendsUI({translate:uiText,notify:message=>notify(message),onInvite:playerId=>roomInvitesUI.sendTo(playerId),onOpen:()=>{const panel=$('home-play-panel');if(panel)panel.hidden=true;$('home-play-tab')?.setAttribute('aria-expanded','false');$('home-play-tab')?.classList.remove('selected');}});
 
-const roomInvitesUI=createRoomInvitesUI({translate:uiText,onHosted:({token,room:r})=>{save(token,r);commanderVisibility();},onJoined:({token,room:r})=>{save(token,r);commanderVisibility();notify(uiText('Davet edilen odaya katıldın.'));}});
+const roomInvitesUI=createRoomInvitesUI({translate:uiText,canStart:()=>roomEntryPending===0,onHosted:({token,room:r})=>{save(token,r);commanderVisibility();},onJoined:({token,room:r})=>{save(token,r);commanderVisibility();notify(uiText('Davet edilen odaya katıldın.'));}});
 
 const commanderOptions=[
  {id:'attack',icon:'⚔️',name:'Saldırı Komutanı',detail:'Savaşçı / Suikastçı'},
@@ -373,7 +374,13 @@ const laneLabel=hero=>{const [front,back]=specialtyLaneBonuses[specialtyLabel(he
 const worldNames={original:'HERO AUCTION',pokemon:'POKÉMON',marvel:'MARVEL',dc:'DC',lotr:'YÜZÜKLERİN EFENDİSİ',mixed:'KARMA EVREN'};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const notify=msg=>{const t=$('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3300)};
-async function post(url,data){const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...gameIdentity(),...data})});const j=await res.json();if(!res.ok)throw Error(j.error||'İşlem başarısız');return j}
+async function post(url,data){
+ const entry=['/api/create','/api/join','/api/match','/api/bot','/api/rematch','/api/room/detach'].includes(url);
+ if(entry&&(roomEntryPending||roomInvitesUI.busy))throw Error(uiText('Oda işlemi sürüyor. Lütfen bekle.'));
+ if(entry)roomEntryPending++;
+ try{const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...gameIdentity(),...data})});const j=await res.json();if(!res.ok)throw Error(j.error||'İşlem başarısız');return j}
+ finally{if(entry)roomEntryPending--;}
+}
 function save(token,r){session={token,code:r.code};localStorage.setItem('hero-auction-session',JSON.stringify(session));show(r);connect();refreshOnline()}
 function connect(){stream?.close();if(!session)return;stream=new EventSource(`/api/events?code=${encodeURIComponent(session.code)}&token=${encodeURIComponent(session.token)}&authToken=${encodeURIComponent(login?.authToken||'')}`);stream.onmessage=e=>{try{show(JSON.parse(e.data))}catch{}};stream.onerror=()=>{if(session&&!stream?.__rechecking){stream.__rechecking=true;setTimeout(async()=>{if(!session)return;try{await post('/api/state',session)}catch(e){if(e.message==='Oda bulunamadı.'||e.message==='Oyuncu yetkisi geçersiz.'){stream?.close();localStorage.removeItem('hero-auction-session');session=null;room=null;applyLogin();notify('Oyun odası artık mevcut değil. Yeni bir oyun oluşturabilirsin.')}}if(stream)stream.__rechecking=false},3000)}};}
 function cancelAwardFlights(){for(const flight of awardFlights)flight.cancel();awardFlights.clear();seenAwardFlights.clear();}

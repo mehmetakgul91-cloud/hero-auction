@@ -48,7 +48,9 @@ Lobideki **Arkadaşlar** sekmesinden kendi `HA-…` oyuncu kimliğini kopyalayab
 
 ### Maç davetleri
 
-**Rakip bul → Davet et** ile kabul edilmiş bir arkadaşına özel odana davet gönderebilirsin. Davet 30 dakika geçerlidir; gönderen oyuncu yanıtı takip edebilir veya daveti iptal edebilir. Davet edilen oyuncu başka maçtayken de **Geleceğim / Gelmeyeceğim** yanıtını verebilir. “Geleceğim” yanıtı 50 altın giriş ücretine açık onaydır; mevcut maçın sunucudaki nihai sonucu kesinleşmeden yeni odaya geçilmez. Açık artırmanın bitmesi tek başına maçın bitmesi sayılmaz.
+**Arkadaşlar → Çevrimiçi arkadaş → Davet et** ile seçtiğin arkadaşına özel oda daveti gönderebilirsin. Ücret açıklamasından sonra onay verdiğinde boş özel odan kullanılır; odan yoksa ücretsiz oluşturulur. Aktif maçından otomatik çıkılmaz. **Rakip bul → Davet et** seçeneği de korunur. Davet 30 dakika geçerlidir; gönderen oyuncu yanıtı takip edebilir veya daveti iptal edebilir. Davet edilen oyuncu başka maçtayken de **Geleceğim / Gelmeyeceğim** yanıtını verebilir. “Geleceğim” yanıtı 50 altın giriş ücretine açık onaydır; mevcut maçın sunucudaki nihai sonucu kesinleşmeden yeni odaya geçilmez. Açık artırmanın bitmesi tek başına maçın bitmesi sayılmaz.
+
+Odaya katılınca veya açık artırma başlayınca eski davet geçmişi oyun üstünden kaldırılır. Bekleyen davetler ve yeni katılım sorunları küçük, kapalı bir davet özeti üzerinden açılabilir; otomatik olarak oyunun üstüne genişlemez. Davet kayıtları ve sıraya alınmış kabul yanıtları silinmez.
 
 Kabul edilmiş davet iptal edilebilir. Oda dolmuş/kapanmışsa, davet sona ermişse veya giriş ücreti karşılanamıyorsa otomatik katılım yapılmaz ve hata gösterilir. Davetin açılması veya yanıt beklemesi ücret kesmez. İki oyuncunun normal giriş ücreti ancak gerçek oda katılımında, kalıcı oda/davet kaydıyla birlikte uygulanır. Testler yalnızca yalıtılmış hesaplar ve geliştirme bakiyeleri kullanır.
 
