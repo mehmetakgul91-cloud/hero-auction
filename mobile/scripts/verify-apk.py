@@ -8,7 +8,9 @@ import zipfile
 apk = Path(sys.argv[1])
 mobile = Path(__file__).resolve().parents[1]
 report = json.loads((mobile / "package-report.json").read_text())
-with zipfile.ZipFile(apk) as archive:
+# Android's ZIP writer stores UTF-8 filenames without always setting bit 11.
+# Read Turkish commander names the same way Android AssetManager does.
+with zipfile.ZipFile(apk, metadata_encoding="utf-8") as archive:
     names = set(archive.namelist())
     for item in report["retained"]:
         local = (mobile / "www" / item["path"]).read_bytes()
