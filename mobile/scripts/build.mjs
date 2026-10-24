@@ -7,6 +7,7 @@ export const mobile = fileURLToPath(new URL('..', import.meta.url));
 const root = path.resolve(mobile, '..');
 export function adaptSource(source, filename) {
   if (filename.endsWith('.html')) return source
+    .replace('<html ', '<html class="hero-native" ')
     .replace(/<script\b[^>]*src=["']https:\/\/(?:pagead2\.googlesyndication\.com|accounts\.google\.com)[^"']*["'][^>]*><\/script>/gi, '')
     .replace(/<script\b[^>]*src=["']\/ad-rewards\.js[^"']*["'][^>]*><\/script>/gi, '')
     .replace(/<div id="google-login"><\/div>/g, '<p class="native-google-note">Android testinde yalnızca misafir girişi kullanılabilir. Google hesabı henüz desteklenmiyor.</p>')
@@ -14,7 +15,8 @@ export function adaptSource(source, filename) {
     .replace(/<a class="arena-3d-launch"[^>]*>[\s\S]*?<\/a>/g, '')
     .replace(/href="https:\/\/heroauction\.com\.tr\/"/g, 'href="/"')
     .replace('width=device-width,initial-scale=1', 'width=device-width,initial-scale=1,viewport-fit=cover')
-    .replace('<head>', '<head><script src="/native-config.js"></script><script src="/native-runtime.js"></script><link rel="stylesheet" href="/native.css">');
+    .replace('<head>', '<head><script src="/native-config.js"></script><script src="/native-runtime.js"></script>')
+    .replace('</head>', '<link rel="stylesheet" href="/native.css"></head>');
   if (filename === 'app.js') {
     if (!source.includes('function connect(){stream?.close();if(!session)return;')) throw Error('Native SSE lifecycle adapter needs review after source change');
     if (!source.includes('origin:location.origin,navigator,notify')) throw Error('Invite origin adapter needs review after source change');

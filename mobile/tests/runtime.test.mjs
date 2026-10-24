@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
 import {apiUrl,linkAction,readConfig} from '../src/policy.js';
+import {mountNativeLayout} from '../src/layout.js';
 const runtime=(await readFile(new URL('../src/runtime.js',import.meta.url),'utf8')).replace(/^import .*;\n/gm,'').replace('export function handleBack','function handleBack');
 function harness(config={apiOrigin:'https://test.example',publicOrigin:'https://test.example'}){
  const nodes=new Map(),listeners=new Map(),requests=[],opened=[],events=[];
@@ -16,7 +17,7 @@ function harness(config={apiOrigin:'https://test.example',publicOrigin:'https://
  document.querySelectorAll=selector=>selector==='dialog[open]'?[...nodes.values()].filter(x=>x.open&&x.kind==='dialog'):selector==='details[open]'?[...nodes.values()].filter(x=>x.open&&x.kind==='details'):[];
  document.createElement=()=>({setAttribute(){}});document.body={prepend(node){nodes.set(node.id,node)}};
  const location={origin:'https://localhost',pathname:'/',search:'',assign:url=>opened.push(url),replace:url=>opened.push(url)};
- const context=vm.createContext({window,document,location,Event,Request,URLSearchParams,apiUrl,linkAction,readConfig,Capacitor:{isNativePlatform:()=>true},App:{addListener:async(name,fn)=>listeners.set(name,fn),minimizeApp:async()=>{minimized++}},Browser:{open:async value=>opened.push(value)}});
+ const context=vm.createContext({window,document,location,Event,Request,URLSearchParams,apiUrl,linkAction,readConfig,mountNativeLayout,Capacitor:{isNativePlatform:()=>true},App:{addListener:async(name,fn)=>listeners.set(name,fn),minimizeApp:async()=>{minimized++}},Browser:{open:async value=>opened.push(value)}});
  vm.runInContext(runtime,context);
  for(const name of ['hero:native-pause','hero:native-resume','pagehide','pageshow'])window.addEventListener(name,()=>events.push(name));
  const node=(id,props={})=>{const n={hidden:false,clicked:0,getClientRects(){return this.hidden?[]:[{}]},click(){this.clicked++},...props};nodes.set(id,n);return n};
