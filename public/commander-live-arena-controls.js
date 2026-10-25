@@ -7,14 +7,14 @@ export function createLiveArenaCommanderControls({normalButton,ultimateButton,en
  function refresh(){
   if(disposed)return;
   const state=readState();
-  const energy=state?.energy??0,cooldownMs=Math.max(0,state?.cooldownMs??0);
-  energyLabel.textContent='Komutan enerjisi: '+energy+'/100';
-  normalButton.disabled=pending||!!state?.finished||energy<getCommanderAbilityCost(state?.commanderId||'defense','normal')||cooldownMs>0;
+  const energy=state?.energy??0,ultimateEnergy=state?.ultimateEnergy??0,cooldownMs=Math.max(0,state?.cooldownMs??0),effectLockMs=Math.max(0,state?.effectLockMs??0);
+  normalButton.disabled=pending||!!state?.finished||energy<getCommanderAbilityCost(state?.commanderId||'defense','normal')||cooldownMs>0||effectLockMs>0||state?.canUseNormal===false;
   const id=state?.commanderId||'defense',revivalUsed=id==='support'&&(Array.isArray(state?.revivalUsed)?!!state.revivalUsed[state.side??0]:state?.revivalUsed===true);
   const ultimateUsed=(Array.isArray(state?.ultimateUsed)?!!state.ultimateUsed[state.side??0]:state?.ultimateUsed===true)||revivalUsed;
-  ultimateButton.disabled=pending||!!state?.finished||energy<getCommanderAbilityCost(id,'ultimate')||cooldownMs>0||ultimateUsed;
+  energyLabel.textContent='Normal: '+energy+'/100 · Ulti: '+(ultimateUsed?'Kullanıldı':ultimateEnergy+'/100');
+  ultimateButton.disabled=pending||!!state?.finished||ultimateEnergy<getCommanderAbilityCost(id,'ultimate')||cooldownMs>0||effectLockMs>0||state?.canUseUltimate===false||ultimateUsed;
   normalButton.textContent='Normal · '+getCommanderAbilityCost(id,'normal');ultimateButton.textContent=commanderUltimateName(id)+' · '+(ultimateUsed?'Kullanıldı':getCommanderAbilityCost(id,'ultimate'));ultimateButton.title=commanderUltimateDescription(id);
-  statusLabel.textContent=pending?'Komut gönderiliyor':cooldownMs>0?'Bekleme: '+Math.ceil(cooldownMs/1000)+' sn':'Komutan hazır';
+  statusLabel.textContent=pending?'Komut gönderiliyor':effectLockMs>0?'Komutan efekti sürüyor':cooldownMs>0?'Bekleme: '+Math.ceil(cooldownMs/1000)+' sn':'Komutan hazır';
  }
  async function use(ability){
   if(disposed||pending)return;
@@ -26,7 +26,9 @@ export function createLiveArenaCommanderControls({normalButton,ultimateButton,en
    if(typeof onMagicTarget==='function'){
     const targets=await onMagicTarget(ability);
     if(targets===null||targets===undefined){statusLabel.textContent='Hedef seçimi iptal edildi';return;}
-    await onCast({ability,targetIds:targets});
+    if(disposed)return;
+    if(targets===false)await onCast({ability});
+    else await onCast({ability,targetIds:targets});
    }else await onCast({ability});
    statusLabel.textContent='Komut sunucu tarafından kabul edildi';
   }catch(error){statusLabel.textContent='⚠ '+(error?.message||'Komut reddedildi');}

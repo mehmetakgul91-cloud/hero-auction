@@ -219,8 +219,8 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 .arena-commander-dock #experimental-commander-controls h2{display:none}
 .arena-commander-dock #experimental-commander-controls>p{margin:3px 0;font-size:12px;grid-column:1/-1}
 .arena-commander-dock #experimental-commander-controls>p:first-of-type{grid-column:1;grid-row:1;font-size:11px;white-space:nowrap}
-.arena-commander-dock #experimental-commander-controls [data-energy-meter]{grid-column:1;grid-row:2;width:100%;height:8px!important;margin:0!important;align-self:start}
-.arena-commander-dock #experimental-commander-controls>div:not([data-energy-meter]){grid-column:2/-1;grid-row:1/3;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px!important}
+.arena-commander-dock #experimental-commander-controls [data-energy-meters]{grid-column:1;grid-row:2;width:100%;height:8px!important;margin:0!important;align-self:start}
+.arena-commander-dock #experimental-commander-controls>div:not([data-energy-meters]){grid-column:2/-1;grid-row:1/3;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px!important}
 .arena-commander-dock #experimental-commander-controls [data-command]{min-width:0;min-height:44px!important;padding:8px 6px;border-radius:10px;font-size:12px;font-weight:900;touch-action:manipulation}
 .arena-commander-dock #experimental-commander-controls [data-command="pass"]{display:none}
 .arena-commander-dock #experimental-commander-controls [data-live-cooldown],.arena-commander-dock #experimental-commander-controls [data-status]{font-size:11px;line-height:1.3;overflow-wrap:anywhere}
@@ -350,7 +350,7 @@ body.arena-fit{height:auto;min-height:var(--arena-viewport-height,100vh);min-hei
 .arena-fit .arena-commander-dock #experimental-commander-controls{grid-template-columns:minmax(68px,.7fr) repeat(2,minmax(0,1fr));padding:0!important;column-gap:6px;row-gap:2px}
 .arena-fit .arena-commander-dock #experimental-commander-controls>p{margin:0;font-size:10px;line-height:12px}
 .arena-fit .arena-commander-dock #experimental-commander-controls>p:first-of-type{align-self:end;font-size:10px}
-.arena-fit .arena-commander-dock #experimental-commander-controls [data-energy-meter]{height:6px!important}
+.arena-fit .arena-commander-dock #experimental-commander-controls [data-energy-meters]{height:6px!important}
 .arena-fit .arena-commander-dock #experimental-commander-controls [data-command]{height:44px;min-height:44px!important;padding:4px;font-size:11px;line-height:14px}
 .arena-fit .arena-commander-dock #experimental-commander-controls [data-live-cooldown],.arena-fit .arena-commander-dock #experimental-commander-controls [data-status]{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;max-height:24px;overflow:hidden;font-size:10px;line-height:12px}
 .arena-room.arena-fit .controls{grid-row:5;grid-column:1;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:5px;height:44px;min-height:0;margin:0;padding:0 4px;border:0;border-radius:10px}
@@ -375,8 +375,8 @@ body.arena-fit{height:auto;min-height:var(--arena-viewport-height,100vh);min-hei
  .arena-fit .controls #play{width:86px}
  .arena-fit .arena-commander-dock #experimental-commander-controls{grid-template-columns:repeat(2,minmax(0,1fr))}
  .arena-fit .arena-commander-dock #experimental-commander-controls>p:first-of-type{grid-column:1/-1;grid-row:1}
- .arena-fit .arena-commander-dock #experimental-commander-controls [data-energy-meter]{grid-column:1/-1;grid-row:2}
- .arena-fit .arena-commander-dock #experimental-commander-controls>div:not([data-energy-meter]){grid-column:1/-1;grid-row:3}
+ .arena-fit .arena-commander-dock #experimental-commander-controls [data-energy-meters]{grid-column:1/-1;grid-row:2}
+ .arena-fit .arena-commander-dock #experimental-commander-controls>div:not([data-energy-meters]){grid-column:1/-1;grid-row:3}
  .arena-fit .arena-commander-dock #experimental-commander-controls [data-live-cooldown]{grid-row:4}
  .arena-fit .arena-commander-dock #experimental-commander-controls [data-status]{grid-row:5}
 }
@@ -536,3 +536,12 @@ body:not(.arena-room) .formation{margin-top:6px;padding:10px}
 .battle-hero-stat-row .battle-stat-name{min-width:0;overflow-wrap:anywhere;text-align:left;color:inherit}
 .battle-hero-stat-row .hero-rarity-badge{color:var(--hero-rarity)}
 @media(max-width:360px){.summary-hero-portrait{width:26px;height:30px}.battle-stat-identity{gap:4px}}
+
+/* Independent resources: normal casts never drain the one-use ultimate charge. */
+.commander-energy-labels span{display:block}
+[data-energy-meters]{display:grid;gap:3px;margin-bottom:10px}
+[data-energy-meter],[data-ultimate-energy-meter]{height:5px;background:#24314e;border-radius:6px;overflow:hidden}
+[data-energy-fill],[data-ultimate-energy-fill]{height:100%;width:0;transition:width .2s;background:#27c6f8}
+[data-ultimate-energy-fill]{background:#d6a4ff}
+.arena-commander-dock #experimental-commander-controls [data-energy-meters]{height:auto!important;gap:2px}
+.arena-commander-dock #experimental-commander-controls>p:first-of-type{white-space:normal;line-height:12px}

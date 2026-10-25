@@ -30,5 +30,5 @@ export function commanderRoundEnergy(previous,round,profile){return round===1?CO
 export function commanderAbilityDescription(profile){
  const stats=commanderAbilityStats(profile),normal=(stats.normalRate*100).toLocaleString('tr-TR',{maximumFractionDigits:2});
  const text={attack:`Normal: savaş başındaki takım saldırısının %${normal}'i kadar toplam hasar düşmanlara bölünür.`,defense:`Normal: yaşayan takımın azami canının %${normal}'i kadar toplam kalkan paylaşılır.`,support:`Normal: eksik canın %${normal}'i iyileştirilir. Can oranı en düşük kahraman önceliklidir.`,magic:`Normal: seçilen 1 rakibin saldırısı %${normal} azalır.`};
- return text[profile.commanderId]+' Nihai ('+getUltimateEnergyCost(profile.commanderId)+' enerji): '+commanderUltimateName(profile.commanderId)+'. '+commanderUltimateDescription(profile.commanderId);
+ return text[profile.commanderId]+' Normal beceri 40 normal enerji harcar; ulti dolumu azalmaz. Nihai ('+getUltimateEnergyCost(profile.commanderId)+' ulti dolumu): '+commanderUltimateName(profile.commanderId)+'. '+commanderUltimateDescription(profile.commanderId);
 }

@@ -36,9 +36,9 @@ test('active last stand does not invalidate useful defense shielding',()=>{
 });
 test('uses shared per-archetype costs and authoritative cast flags rather than hardcoded100',()=>{
  for(const id of ['attack','defense','magic','support']){
-  const s=snapshot();s.abilities[1].energy=getCommanderAbilityCost(id,'ultimate');const c=chooseBotCast(s,id,'medium',options);assert.equal(c?.ability,'ultimate',id);
-  s.abilities[1].energy--;assert.notEqual(chooseBotCast(s,id,'medium',options)?.ability,'ultimate',id+' insufficient budget');
-  s.abilities[1].energy=100;s.abilities[1].canUseUltimate=false;assert.notEqual(chooseBotCast(s,id,'medium',options)?.ability,'ultimate');
+  const s=snapshot();s.abilities[1].ultimateEnergy=getCommanderAbilityCost(id,'ultimate');const c=chooseBotCast(s,id,'medium',options);assert.equal(c?.ability,'ultimate',id);
+  s.abilities[1].ultimateEnergy--;assert.notEqual(chooseBotCast(s,id,'medium',options)?.ability,'ultimate',id+' insufficient budget');
+  s.abilities[1].ultimateEnergy=100;s.abilities[1].canUseUltimate=false;assert.notEqual(chooseBotCast(s,id,'medium',options)?.ability,'ultimate');
   s.abilities[1].canUseNormal=false;assert.equal(chooseBotCast(s,id,'medium',options),null);
  }
 });
@@ -48,6 +48,6 @@ test('same choices work on either seat, using only public snapshot state',()=>{
 for(const commanderId of ['magic','support'])test('chosen '+commanderId+' ultimate passes actual live authority and charges correct cost once',()=>{
  const s=snapshot();const c=createLiveCommanderCombat({round:3,teams:s.teams,abilities:createLiveCommanderAbilities({matchKey:'bot:newult',energy:[100,100],now:0}),commanders:[{commanderId:'attack',levels:{attack:0,defense:0,magic:0,support:0}},{commanderId,levels:{attack:0,defense:0,magic:0,support:0}}]});
  const view={...c,abilities:[{},viewLiveCommanderAbilities(c.abilities,1,10000)]};const choice=chooseBotCast(view,commanderId,'hard',options);const cast={side:1,...choice,requestId:'bot-valid-ultimate',matchKey:'bot:newult',now:10000};
- castLiveCommanderCombat(c,cast);assert.equal(c.abilities.energy[1],100-getCommanderAbilityCost(commanderId,'ultimate'));const state=structuredClone(c.teams);assert.equal(castLiveCommanderCombat(c,cast).duplicate,true);assert.deepEqual(c.teams,state);
+ castLiveCommanderCombat(c,cast);assert.equal(c.abilities.ultimateEnergy[1],100-getCommanderAbilityCost(commanderId,'ultimate'));assert.equal(c.abilities.energy[1],100);const state=structuredClone(c.teams);assert.equal(castLiveCommanderCombat(c,cast).duplicate,true);assert.deepEqual(c.teams,state);
  if(commanderId==='magic')assert.equal(c.teams[1].find(u=>u.id==='ally-mage').arcaneSurgeBonusAttack,100);else{assert.equal(c.teams[1].find(u=>u.id==='fallen').hp,72);assert.equal(c.revivalUsed[1],true);}
 });

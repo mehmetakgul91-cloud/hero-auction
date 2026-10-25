@@ -16,13 +16,13 @@ export function roomCommanderSeat(room,token){
  return room.players?.findIndex(p=>p?.token===token)??-1;
 }
 
-export function submitRoomCommanderTurn(room,bound,{token,round,command}){
+export function submitRoomCommanderTurn(room,bound,{token,round,command,targetIds}){
  if(!room||!bound||bound.code!==room.code)throw Error('Invalid commander room');
  if(bound.matchKey!==String(room.matchNumber||1)+':'+String(room.created))throw Error('Commander match expired');
  const side=roomCommanderSeat(room,token);
  if(side<0)throw Error('Unauthorized commander player');
  if(room.phase!=='finished')throw Error('Auction not finished');
- return submitCommanderMatchTurn(bound.session,{side,round,command});
+ return submitCommanderMatchTurn(bound.session,{side,round,command,targetIds});
 }
 
 export function viewRoomCommanderSession(room,bound,token){
@@ -32,6 +32,8 @@ export function viewRoomCommanderSession(room,bound,token){
  if(side<0)throw Error('Unauthorized commander player');
  const session=bound.session;
  const energy=session.finished?(session.result?.commanderEnergy?.[side]??0):commanderRoundEnergy(session.result?.commanderEnergy?.[side]??0,session.round,session.commanders[side]);
+ const ultimateUsed=!!session.result?.ultimateUsed?.[side];
+ const ultimateEnergy=session.finished||ultimateUsed?(session.result?.commanderUltimateEnergy?.[side]??0):commanderRoundEnergy(session.result?.commanderUltimateEnergy?.[side]??0,session.round,session.commanders[side]);
  const completedRound=session.turns.length;
  const roundEvents=Array.isArray(session.result?.log)?session.result.log.filter(event=>event.round===completedRound):[];
  const roundTeams=completedRound&&Array.isArray(session.result?.teams)?session.result.teams.map(team=>team.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position}))):null;
@@ -39,6 +41,6 @@ export function viewRoomCommanderSession(room,bound,token){
   submitted:session.pending.map(x=>x!==undefined),
   yourSide:side,
   yourCommand:session.pending[side]?.command??null,
-  energy,canUseNormal:!session.finished&&energy>=getCommanderAbilityCost(session.commanders[side].commanderId,'normal'),canUseUltimate:!session.finished&&energy>=getCommanderAbilityCost(session.commanders[side].commanderId,'ultimate'),
+  energy,ultimateEnergy,ultimateUsed,canUseNormal:!session.finished&&energy>=getCommanderAbilityCost(session.commanders[side].commanderId,'normal'),canUseUltimate:!session.finished&&!ultimateUsed&&ultimateEnergy>=getCommanderAbilityCost(session.commanders[side].commanderId,'ultimate'),
   result:session.finished&&session.result?{winner:session.result.winner===null?null:session.result.winner===side?0:1,rounds:session.result.rounds}:null};
 }

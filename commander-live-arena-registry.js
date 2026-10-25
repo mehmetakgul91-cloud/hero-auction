@@ -21,7 +21,7 @@ export function createLiveArenaRegistry(){
    const {entry,side}=requireMatch(matchKey,token);
    if(!Number.isFinite(now))throw Error('Invalid snapshot time');
    const own=viewLiveCommanderAbilities(entry.session.combat.abilities,side,now);
-   return {...viewLiveArenaSession(entry.session,{sinceVersion}),side,commanderId:entry.session.combat.commanders[side].commanderId,abilityStats:commanderAbilityStats(entry.session.combat.commanders[side]),abilities:[0,1].map(i=>i===side?own:{energy:null,cooldownMs:null,cooldownUntil:null,finished:entry.session.combat.finished})};
+   return {...viewLiveArenaSession(entry.session,{sinceVersion}),side,commanderId:entry.session.combat.commanders[side].commanderId,abilityStats:commanderAbilityStats(entry.session.combat.commanders[side]),abilities:[0,1].map(i=>i===side?own:{energy:null,ultimateEnergy:null,cooldownMs:null,cooldownUntil:null,finished:entry.session.combat.finished})};
   },
   cast({matchKey,token,ability,requestId,targetIds,now}){
    const {entry,side}=requireMatch(matchKey,token);

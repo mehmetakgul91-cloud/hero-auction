@@ -62,8 +62,8 @@ test('difficulty has measurable reaction timing and respects cooldown, effect lo
  assert.equal(chooseBotCast(state({abilities:[{}, {energy:100,canUseNormal:false,canUseUltimate:false}]}),'magic','hard',options),null);
 });
 
-test('hard saves for ultimate but spends normal to finish a vulnerable enemy',()=>{
- assert.equal(chooseBotCast(state(),'attack','hard',options),null);
+test('hard spends useful normal energy without draining ultimate charge',()=>{
+ assert.deepEqual(chooseBotCast(state(),'attack','hard',options),{ability:'normal'});
  assert.deepEqual(chooseBotCast(state(),'attack','medium',options),{ability:'normal'});
  const s=state();s.teams[0][0].hp=2;
  assert.deepEqual(chooseBotCast(s,'attack','hard',options),{ability:'normal'});
@@ -119,22 +119,23 @@ test('hard magic uses an opening debuff then really accumulates round energy to 
    casts.push(choice.ability);castRounds.push(round);lastCastAt=now;
   }
  }
- assert.deepEqual(casts,['normal','ultimate']);
- assert.deepEqual(castRounds,[2,11]);
- assert.equal(combat.abilities.energy[1],0);
+ assert.equal(casts.filter(x=>x==='ultimate').length,1);
+ assert.equal(castRounds[casts.indexOf('ultimate')],7);
+ assert.ok(casts.filter(x=>x==='normal').length>=2);
+ assert.equal(combat.abilities.ultimateEnergy[1],0);
 });
 
-test('hard magic can interrupt saving for an immediate high-threat debuff',()=>{
+test('hard magic uses useful normal debuffs without saving normal energy for ultimate',()=>{
  const s=state({round:6});
- assert.equal(chooseBotCast(s,'magic','hard',{...options,lastCastAt:1000}),null);
+ assert.deepEqual(chooseBotCast(s,'magic','hard',{...options,lastCastAt:1000}),{ability:'normal',targetIds:['enemy-b']});
  s.teams[0][1].attack=250;
  assert.deepEqual(chooseBotCast(s,'magic','hard',{...options,lastCastAt:1000}),{ability:'normal',targetIds:['enemy-b']});
 });
 
-test('hard finishing estimate accounts for HP leakage through large shields',()=>{
+test('hard normal attacks stay useful against shields without starving ultimate charge',()=>{
  const s=state();s.teams[0][0].shield=10000;s.teams[0][0].hp=2;
  // 100 base attack / 2 targets * 12% = 6 raw; 4 shield + 2 HP.
  assert.deepEqual(chooseBotCast(s,'attack','hard',options),{ability:'normal'});
  s.teams[0][0].hp=3;
- assert.equal(chooseBotCast(s,'attack','hard',options),null);
+ assert.deepEqual(chooseBotCast(s,'attack','hard',options),{ability:'normal'});
 });

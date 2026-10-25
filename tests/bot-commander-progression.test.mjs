@@ -38,7 +38,7 @@ for(const [difficulty,level,gain] of [['easy',5,14],['medium',10,17],['hard',15,
     const castTeams=teams();if(id==='support'&&ability==='ultimate')castTeams[1][4].hp=0;
     const c=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'cast',energy:[100,100],now:0}),teams:castTeams,commanders:[createCommanderProfile('attack'),p]});
     const out=castLiveCommanderCombat(c,{side:1,ability,requestId:'test-cast-01',matchKey:'cast',now:1000,targetIds:id==='magic'?(ability==='normal'?['0-0']:['1-0']):id==='support'&&ability==='ultimate'?['1-4']:undefined});
-    assert.equal(c.abilities.energy[1],100-getCommanderAbilityCost(id,ability));assert.equal(c.abilities.cooldownUntil[1],6000);
+    assert.equal(c.abilities[ability==='ultimate'?'ultimateEnergy':'energy'][1],100-getCommanderAbilityCost(id,ability));assert.equal(c.abilities[ability==='ultimate'?'energy':'ultimateEnergy'][1],100);assert.equal(c.abilities.cooldownUntil[1],6000);
     return out;
    };
    const base=castAt(createCommanderProfile(id)),upgraded=castAt(profile);

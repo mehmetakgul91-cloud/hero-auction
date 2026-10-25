@@ -13,7 +13,7 @@ const total=result=>result.events.filter(e=>e.action==='commander-hit').reduce((
 test('focus ultimate marks surviving allies without immediate damage or an extra attack',()=>{
  const late=combat();for(let i=2;i<5;i++)late.teams[0][i].hp=0;
  const before=structuredClone(late.teams), result=cast(late,'ultimate');
- assert.equal(total(result),0);assert.equal(late.abilities.energy[0],25);
+ assert.equal(total(result),0);assert.equal(late.abilities.ultimateEnergy[0],25);
  assert.deepEqual(late.teams.map(t=>t.map(u=>u.hp)),before.map(t=>t.map(u=>u.hp)));
  assert.equal(result.events.at(-1).value,2);
  assert.ok(late.teams[0].slice(0,2).every(u=>u.commanderFocusTargetId==='1-0'));

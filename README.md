@@ -91,7 +91,7 @@ Kahraman aktifleri/pasifleri nadirlik ve rol bütçeleriyle kayıtlı parametrel
 
 ## Komutan nihai becerileri
 
-Her oyuncu savaş başına bir nihai kullanabilir; normal beceriler40 enerjiyle tekrar kullanılabilir. Enerji kapasitesi100. Nihai maliyetler: saldırı75, savunma85, büyü100, destek90. İptal/yanlış hedef hak veya enerji tüketmez. Kullanım hakkı sunucu oturumundadır; yeniden bağlanma yenilemez, yeni maç sıfırlar.
+Her oyuncu savaş başına bir nihai kullanabilir. Normal enerji ve ulti dolumu ayrı havuzlardır; ikisi30 ile başlar, mevcut tur/seviye ve kahraman kaybı kazanımlarını ayrı ayrı alır,100 ile sınırlıdır. Normal beceri yalnız normal enerjiden40 harcar; ulti yalnız kendi dolumundan saldırı75, savunma85, büyü100, destek90 harcar. Normal kullanmak ulti dolumunu azaltmaz; kullanılan ulti göstergesi tekrar dolmaz. İptal/yanlış hedef hak veya enerji tüketmez. Kullanım hakkı sunucu oturumundadır; yeniden bağlanma yenilemez, yeni maç sıfırlar.
 
 - Av Emri: en düşük can oranlı yaşayan rakibe, her yaşayan müttefikin sonraki hasar vuruşunu yönlendirir; sonraki tur sonuna kadar, en fazla beş vuruş. Ek saldırı vermez.
 - Son Kale: takım kalkanı ve en düşük can oranlı bir müttefik için sonraki tur sonuna kadar tek ölümcül vuruştan1canla kurtulma.
@@ -99,3 +99,7 @@ Her oyuncu savaş başına bir nihai kullanabilir; normal beceriler40 enerjiyle 
 - Diriliş: seçilen düşmüş dost%40azami can ve sıfır kalkanla döner; en erken sonraki tur hareket eder. Bitmiş savaşta kullanılamaz.
 
 Normal beceri maliyetleri, kredi/altın politikası, müzik, kahraman temel güçleri ve%70kalkan emilim kuralı korunur. Kontrollü simülasyonlar gerçek oyuncu kazanma oranı veya tüm koşullarda kusursuz denge iddiası değildir.
+
+### Ayrı ulti dolumu — yerel doğrulama (2026-10-25)
+Normal/ulti havuzları sunucuya aittir; hedef iptali, geçersiz hedef ve aynı istek tekrarı ek harcama yapmaz. Ortak1,2sn efekt kilidi ve kişisel5sn bekleme sürer. Kolay botun önceki ulti kullanmama kuralı korunur; orta/zor botlar normal enerji biriktirerek ultiden tasarruf etmeye çalışmaz.
+Kontrollü10/20seviye,48takım karşılaştırması:11520 savaş; aynı normal+ulti karar kuralında ultisiz maç oranı sırasıyla%98,44/%91,84 → %0/%0. Destek yalnız uygun ölü müttefik varsa diriltir. Bu örneklem genel oyuncu kazanma oranı değildir. Görsel tarayıcı kontrolü yapılmadı; DOM/HTTP hedefleme ve iki koltuk işlev testleri çalıştırıldı.

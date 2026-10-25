@@ -26,13 +26,13 @@ class DetailEvent {constructor(type,options){this.type=type;this.detail=options?
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 function harness(side=0,commanderId='magic'){
  const window=new Node(),document=new Node(),panel=new Node(),enemyRoot=new Node(),allyRoot=new Node(),nodes=new Map();
- for(const selector of ['normal','ultimate','pass'].map(x=>`[data-command="${x}"]`).concat(['[data-magic-confirm]','[data-magic-cancel]','[data-energy]','[data-energy-meter]','[data-energy-fill]','[data-status]']))nodes.set(selector,new Node());
+ for(const selector of ['normal','ultimate','pass'].map(x=>`[data-command="${x}"]`).concat(['[data-magic-confirm]','[data-magic-cancel]','[data-energy]','[data-energy-meter]','[data-energy-fill]','[data-ultimate-energy]','[data-ultimate-energy-meter]','[data-ultimate-energy-fill]','[data-status]']))nodes.set(selector,new Node());
  nodes.get('[data-magic-confirm]').hidden=nodes.get('[data-magic-cancel]').hidden=true;
  panel.querySelector=selector=>nodes.get(selector);
  document.getElementById=id=>id==='experimental-commander-controls'?panel:id===(side===0?'team-b':'team-a')?enemyRoot:id===(side===0?'team-a':'team-b')?allyRoot:null;
  const requests=[],intervals=new Map(),visuals=[];let intervalId=0,uuid=0;
- const c=createLiveCommanderCombat({teams:[0,1].map(s=>['a','b','c'].map(id=>({id:s+id,hp:100,maxHp:100,attack:50}))),commanders:[{commanderId},{commanderId}],abilities:createLiveCommanderAbilities({matchKey:'ui',energy:[100,100],now:0})});
- const snapshot=(extra={})=>({version:c.version,round:1,side,commanderId,revivalUsed:[false,false],ultimateUsed:[false,false],teams:structuredClone(c.teams),abilities:c.abilities.energy.map(energy=>({energy,cooldownMs:0,effectLockMs:0})),finished:c.finished,events:[],...extra});
+ const c=createLiveCommanderCombat({teams:[0,1].map(s=>['a','b','c'].map(id=>({id:s+id,hp:100,maxHp:100,attack:50}))),commanders:[{commanderId},{commanderId}],abilities:createLiveCommanderAbilities({matchKey:'ui',energy:[100,100],ultimateEnergy:[100,100],now:0})});
+ const snapshot=(extra={})=>({version:c.version,round:1,side,commanderId,revivalUsed:[false,false],ultimateUsed:[false,false],teams:structuredClone(c.teams),abilities:c.abilities.energy.map((energy,side)=>({energy,ultimateEnergy:c.abilities.ultimateEnergy[side],cooldownMs:0,effectLockMs:0})),finished:c.finished,events:[],...extra});
  window.addEventListener('heroarena:experimental-round-end',event=>{
   allyRoot.cards=event.detail.teams[side].map(hero=>{const card=new Node();card.dataset.heroId=hero.id;return card});
   enemyRoot.cards=event.detail.teams[1-side].map(hero=>{const card=new Node();card.dataset.heroId=hero.id;return card});
@@ -87,7 +87,7 @@ test('support ultimate targets only dead friendly cards and a revival snapshot c
 test('support already-used revival and per-archetype energy costs disable casts',async()=>{
  const h=harness(0,'support');h.c.teams[0][0].hp=0;await h.respond(0,h.snapshot({revivalUsed:[true,false]}));h.click(h.ultimate);assert.equal(h.requests.length,1);assert.equal(h.confirm.hidden,true);
  for(const [id,energy,ready]of [['attack',74,false],['attack',75,true],['defense',84,false],['defense',85,true],['magic',99,false],['support',89,false],['support',90,true]]){
-  const f=harness(0,id);f.c.teams[0][0].hp=id==='support'?0:100;await f.respond(0,f.snapshot({abilities:[{energy,cooldownMs:0,effectLockMs:0}]}));assert.equal(f.ultimate.disabled,!ready,id+' '+energy);
+  const f=harness(0,id);f.c.teams[0][0].hp=id==='support'?0:100;await f.respond(0,f.snapshot({abilities:[{energy:0,ultimateEnergy:energy,cooldownMs:0,effectLockMs:0}]}));assert.equal(f.ultimate.disabled,!ready,id+' '+energy);
  }
 });
 
@@ -133,4 +133,20 @@ test('support ultimate UI displays canonical 90 cost, normal remains 40',async()
  assert.equal(h.ultimate.textContent,'Diriliş · 90');assert.equal(h.normal.textContent,'Normal · 40');
  h.click(h.ultimate);h.allyTarget(0);assert.match(h.confirm.textContent,/90/);
  assert.equal(h.requests.length,1);h.click(h.cancel);assert.equal(h.energy.textContent,'100 / 100');
+});
+
+for(const side of [0,1])test(`production seat ${side} keeps ultimate charge through a normal cast`,async()=>{
+ const h=harness(side);await h.respond(0,h.snapshot());
+ assert.equal(h.nodes.get('[data-ultimate-energy]').textContent,'100 / 100');
+ h.click(h.normal);h.target(0);h.click(h.confirm);await h.accept(1);
+ assert.equal(h.energy.textContent,'60 / 100');assert.equal(h.nodes.get('[data-ultimate-energy]').textContent,'100 / 100');
+ assert.equal(h.c.abilities.energy[side],60);assert.equal(h.c.abilities.ultimateEnergy[side],100);
+});
+for(const side of [0,1])test(`production seat ${side} enables ultimate at zero normal energy and shows terminal used meter`,async()=>{
+ const h=harness(side);h.c.abilities.energy[side]=0;await h.respond(0,h.snapshot());
+ assert.equal(h.normal.disabled,true);assert.equal(h.ultimate.disabled,false);
+ h.click(h.ultimate);h.allyTarget(0);h.click(h.cancel);assert.equal(h.requests.length,1);assert.equal(h.nodes.get('[data-ultimate-energy]').textContent,'100 / 100');
+ const used=[false,false];used[side]=true;h.tick();await h.respond(1,h.snapshot({version:1,ultimateUsed:used}));
+ assert.equal(h.ultimate.disabled,true);assert.equal(h.nodes.get('[data-ultimate-energy]').textContent,'Kullanıldı');assert.equal(h.nodes.get('[data-ultimate-energy-fill]').style.width,'0%');assert.equal(h.nodes.get('[data-ultimate-energy-meter]').attributes['aria-valuetext'],'Kullanıldı');
+ h.tick();await h.respond(2,h.snapshot({version:0}));assert.equal(h.nodes.get('[data-ultimate-energy]').textContent,'Kullanıldı');
 });

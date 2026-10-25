@@ -6,7 +6,7 @@ import {commanderAbilityDescription,getCommanderAbilityCost} from '../public/com
 import {translate} from '../public/crazygames-en.js';
 for(const [id,cost]of Object.entries({attack:75,defense:85,magic:100,support:90}))test(`${id} ultimate name, cost and bilingual description stay aligned`,()=>{
  const profile={commanderId:id,levels:{[id]:0}},description=commanderAbilityDescription(profile);
- assert.equal(getCommanderAbilityCost(id,'ultimate'),cost);assert.match(description,new RegExp('Nihai \\('+cost+' enerji\\)'));
+ assert.equal(getCommanderAbilityCost(id,'ultimate'),cost);assert.match(description,new RegExp('Nihai \\('+cost+' ulti dolumu\\)'));
  assert.ok(description.includes(commanderUltimateName(id)));
  assert.equal(translate(commanderUltimateDescription(id)),commanderUltimateDescription(id,{english:true}));
  assert.doesNotMatch(translate(description),/[çğıöşüÇĞİÖŞÜ]/u);
