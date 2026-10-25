@@ -1,0 +1,40 @@
+/* A shared, non-modal top card. In-flow space is reserved; no full-screen veil,
+   focus capture, auto-scroll, or countdown animation competes with a match. */
+.room-invites{max-height:min(330px,50dvh);overflow-y:auto;overscroll-behavior-y:auto;position:sticky;top:0;z-index:30;box-sizing:border-box;width:calc(100% - 24px);max-width:780px;margin:0 auto;padding:8px 14px 10px;border:1px solid #8d704a;border-top:2px solid #eccb81;border-radius:0 0 16px 16px;background:radial-gradient(ellipse at 8% 0%,#3c3041 0%,transparent 65%),linear-gradient(115deg,#1e2238,#101a2d 75%);box-shadow:0 8px 26px #0006,inset 0 1px #fff1;color:#eff4ff;font:13px/1.35 system-ui,sans-serif;isolation:isolate}
+.room-invites[hidden],.room-invites [hidden]{display:none!important}
+.room-invites-heading{display:flex;gap:8px;align-items:center;min-height:20px;margin:0 0 5px;color:#eaca8d}
+.room-invites-sigil{font-size:19px;line-height:1;color:#f4d494}
+.room-invites h2{flex:1;margin:0;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#dfc79c}
+.room-invites button{box-sizing:border-box;cursor:pointer;font:700 12px/1.2 system-ui,sans-serif;letter-spacing:0;text-transform:none;min-width:44px;min-height:44px;touch-action:manipulation;white-space:normal;border-radius:9px}
+.room-invites button:disabled{opacity:.5;cursor:not-allowed}
+.room-invites button:focus-visible,.room-invites summary:focus-visible{outline:3px solid #a9e5ff;outline-offset:2px}
+#room-invites-next{border:1px solid #6a6283;background:#272b43;color:#e1dcec;padding:6px 10px}
+.room-invite-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:5px 8px;align-items:center;border:0;padding:0}
+.room-invite-copy{min-width:0;grid-column:1;grid-row:1/3;overflow-wrap:anywhere}
+.room-invite-kicker{display:block;font-size:9px;letter-spacing:.9px;color:#aeb6c9}
+.room-invite-name{display:block;font-size:17px;line-height:1.2;color:#fff5df;margin:2px 0;overflow-wrap:anywhere}
+.room-invite-status{display:block;font-size:11px;color:#bfcde4}
+.room-invite-expiry{display:block;font-size:10px;color:#a2adc4;margin-top:3px}
+.room-invite-reason{display:block;color:#ffc6b9;font-size:11px;line-height:1.4;margin-top:5px}
+.room-invite-fee{grid-column:2/4;grid-row:1;margin:0;max-width:330px;color:#c0cada;font-size:11px;line-height:1.4}
+.room-invite-action{grid-row:2;padding:9px 16px;border:1px solid #667088;background:#27334d;color:#e1e8f5;box-shadow:none}
+.room-invite-action.accept{grid-column:2;background:linear-gradient(135deg,#f2d596,#dba758);border-color:#ffe5af;color:#30200e}
+.room-invite-action.decline{grid-column:3;background:#352b3b;border-color:#926a7a;color:#f7d4db}
+.room-invite-action.cancel,.room-invite-action.dismiss{grid-column:2/4;justify-self:end}
+.room-invite-row[data-status="queued"] .room-invite-status{color:#a1e9ce}
+.room-invite-row[data-status="failed"] .room-invite-status,.room-invite-row[data-status="expired"] .room-invite-status{color:#ffbfac}
+#room-invites-message{margin:5px 0 0;font-size:11px;line-height:1.5;color:#ffdcc4;overflow-wrap:anywhere}
+#room-invites-message:empty{display:none}
+.room-invites-history{margin:4px 0 0;font-size:10px;color:#aeb8ce}
+.room-invites-history>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;list-style:revert;color:#c6cee0}
+#room-invites-history{max-height:32dvh;overflow:auto;overscroll-behavior-y:auto}
+.room-invite-history-row{display:flex;justify-content:space-between;gap:12px;border-top:1px solid #46506b;padding:6px 0;margin:0;overflow-wrap:anywhere}
+.room-invite-history-row strong{min-width:0;color:#e0e6f4}.room-invite-history-row span{flex-shrink:0}
+/* Arena card occupies real space above the grid. Small screens keep document
+   scrolling and minimum combat tracks, so attacks and readiness remain reachable. */
+.arena-room.arena-fit:has(>.room-invites:not([hidden])) .shell{height:calc(var(--arena-viewport-height,100dvh) - var(--room-invite-height,170px))}
+html:has(.room-invites:not([hidden])){scroll-padding-top:calc(var(--room-invite-height,170px) + 8px)}
+@media(max-width:520px){.room-invites{width:calc(100% - 12px);padding:7px 10px 9px}.room-invite-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}.room-invite-copy{grid-row:1;grid-column:1/-1;padding-right:4px}.room-invite-name{font-size:16px}.room-invite-kicker,.room-invite-expiry{display:inline;font-size:9px}.room-invite-expiry{margin-left:7px}.room-invite-status{display:inline;font-size:10px}.room-invite-fee{grid-column:1/-1;grid-row:2;max-width:none;font-size:11px}.room-invite-action{grid-row:3}.room-invite-action.accept{grid-column:1}.room-invite-action.decline{grid-column:2}.room-invite-action.cancel,.room-invite-action.dismiss{grid-column:1/-1;grid-row:3;min-width:125px}.room-invites-heading{margin-bottom:3px}.room-invites h2{font-size:9px}.room-invite-history-row{flex-wrap:wrap;gap:3px}}
+@media(prefers-reduced-motion:reduce){.room-invites,.room-invites *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+.room-invites-announcement{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
