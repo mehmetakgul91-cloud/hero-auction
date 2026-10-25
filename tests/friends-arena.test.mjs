@@ -22,13 +22,13 @@ test('CrazyGames arena resolves shared friends module and isolated stored identi
  assert.ok(cg.includes("document.documentElement.lang==='en'?translate(text):text"));
 });
 
-test('arena mounts invitation inbox inside navigation and persists transferred seat before navigation',()=>{
+test('arena mounts shared invitation dock outside the combat grid and persists transferred seat before navigation',()=>{
  assert.ok(source.includes("from '/room-invites.js'"));
  assert.ok(source.includes('inboxRoot:inviteBox'));
  assert.ok(source.includes('arenaInvites.setLogin(auth)'));
  assert.ok(source.includes('arenaInvites.setRoom(result.room,auctionToken)'));
  assert.ok(source.includes("localStorage.setItem('hero-auction-session',JSON.stringify({token,code:room.code}))"));
- assert.ok(source.includes("nav?.append(inviteBox)"));
- assert.ok(css.includes('max-height:32dvh'));
+ assert.ok(source.includes("document.body.prepend(inviteBox)"));
+ const inviteCSS=readFileSync(new URL('../public/room-invites.css',import.meta.url),'utf8');assert.ok(inviteCSS.includes('max-height:32dvh'));assert.ok(inviteCSS.includes('var(--room-invite-height,170px)'));assert.ok(inviteCSS.includes('min-height:44px'));
  const cg=crazyGamesSource(source,'.js');assert.ok(cg.includes("from '/crazygames/room-invites.js'"));
 });

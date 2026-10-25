@@ -171,19 +171,26 @@ const auctionCode=query.get('auctionCode');
 const auctionToken=query.get('auctionToken');
 const auctionMode=Boolean(auctionCode&&auctionToken);
 // Reuse authenticated friendships/presence across the separate preparation/arena page.
-// Mount within the existing navigation row: never add a row over the combat controls.
+// The shared invitation dock has its own in-flow space, outside the fitted combat grid.
 let arenaFriends=null,arenaInvites=null;
 if(auctionMode){
  const nav=document.querySelector('.arena-room-nav');
  const friendButton=document.createElement('button');friendButton.type='button';friendButton.id='arena-friend-opponent';friendButton.hidden=true;friendButton.setAttribute('aria-live','polite');
  const title=nav?.querySelector('strong');nav?.append(friendButton);
  if(nav){nav.classList.add('arena-social-nav');nav.hidden=false;}
- const inviteBox=document.createElement('details');inviteBox.id='room-invites-inbox';inviteBox.className='room-invites-inbox arena-invites-inbox';inviteBox.hidden=true;
- const inviteSummary=document.createElement('summary');inviteSummary.id='room-invites-summary';inviteSummary.textContent=document.documentElement.lang==='en'?'Invitations':'Davetler';
- const inviteContent=document.createElement('div');inviteContent.className='room-invites-popover';
+ const inviteBox=document.createElement('section');inviteBox.id='room-invites-inbox';inviteBox.className='room-invites';inviteBox.hidden=true;inviteBox.setAttribute('aria-label',document.documentElement.lang==='en'?'Match invitations':'Maç davetleri');
+ const inviteHeading=document.createElement('div');inviteHeading.className='room-invites-heading';
+ const inviteSigil=document.createElement('span');inviteSigil.className='room-invites-sigil';inviteSigil.textContent='✦';inviteSigil.setAttribute('aria-hidden','true');
+ const inviteSummary=document.createElement('h2');inviteSummary.id='room-invites-summary';
+ const inviteNext=document.createElement('button');inviteNext.type='button';inviteNext.id='room-invites-next';inviteNext.hidden=true;
+ inviteHeading.append(inviteSigil,inviteSummary,inviteNext);
+ const inviteAnnouncement=document.createElement('p');inviteAnnouncement.id='room-invites-announcement';inviteAnnouncement.className='room-invites-announcement';inviteAnnouncement.setAttribute('role','status');inviteAnnouncement.setAttribute('aria-live','polite');inviteAnnouncement.setAttribute('aria-atomic','true');
  const inviteList=document.createElement('div');inviteList.id='room-invites-list';
- const inviteMessage=document.createElement('p');inviteMessage.id='room-invites-message';inviteMessage.setAttribute('role','status');
- inviteContent.append(inviteList,inviteMessage);inviteBox.append(inviteSummary,inviteContent);nav?.append(inviteBox);
+ const inviteMessage=document.createElement('p');inviteMessage.id='room-invites-message';inviteMessage.setAttribute('role','status');inviteMessage.setAttribute('aria-live','polite');
+ const inviteHistory=document.createElement('details');inviteHistory.className='room-invites-history';inviteHistory.hidden=true;
+ const historyTitle=document.createElement('summary');historyTitle.textContent=document.documentElement.lang==='en'?'Recent invitations':'Son davetler';
+ const historyList=document.createElement('div');historyList.id='room-invites-history';inviteHistory.append(historyTitle,historyList);
+ inviteBox.append(inviteHeading,inviteList,inviteMessage,inviteHistory);document.body.prepend(inviteBox);inviteBox.before(inviteAnnouncement);
  arenaInvites=createRoomInvitesUI({inboxRoot:inviteBox,translate:text=>document.documentElement.lang==='en'?translate(text):text,
   onJoined:({token,room})=>{
    // The server returns a seat only after the accepted source match has settled.

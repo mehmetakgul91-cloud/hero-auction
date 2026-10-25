@@ -58,7 +58,7 @@ if(window.HeroPlatform)login=null;
 const signedIn=()=>!!login?.authToken;
 const friendsUI=createFriendsUI({translate:uiText,notify:message=>notify(message),onInvite:playerId=>roomInvitesUI.sendTo(playerId),onOpen:()=>{const panel=$('home-play-panel');if(panel)panel.hidden=true;$('home-play-tab')?.setAttribute('aria-expanded','false');$('home-play-tab')?.classList.remove('selected');}});
 
-const roomInvitesUI=createRoomInvitesUI({translate:uiText,canStart:()=>roomEntryPending===0,onHosted:({token,room:r})=>{save(token,r);commanderVisibility();},onJoined:({token,room:r})=>{save(token,r);commanderVisibility();notify(uiText('Davet edilen odaya katıldın.'));}});
+const roomInvitesUI=createRoomInvitesUI({translate:uiText,onStateChange:state=>friendsUI.setInvitations(state),canStart:()=>roomEntryPending===0,onHosted:({token,room:r})=>{save(token,r);commanderVisibility();},onJoined:({token,room:r})=>{save(token,r);commanderVisibility();notify(uiText('Davet edilen odaya katıldın.'));}});
 
 const commanderOptions=[
  {id:'attack',icon:'⚔️',name:'Saldırı Komutanı',detail:'Savaşçı / Suikastçı'},

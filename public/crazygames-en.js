@@ -5,6 +5,26 @@ import {battlePhrases, translateCommanderDescription} from './crazygames-battle-
 // Presentation-only English locale for the CrazyGames entry point.
 // Do not translate stored values, hero IDs, requests, or game rules.
 export const phrases = {
+"Başka sekmede katıldın":"Joined in another tab",
+"Güncel odayı aç":"Open current room",
+"Güncel oda bulunamadı. Ana menüden tekrar bağlan.":"Current room not found. Reconnect from the main menu.",
+"Yeni maç daveti":"New match invitation",
+"Onayla veya reddet.":"Approve or decline.",
+"Kabul edildi · maçın bitmesi bekleniyor":"Accepted · waiting for the match to end",
+"Davet reddedildi":"Invitation declined",
+"Diğer davet":"Next invitation",
+"SANA MAÇ DAVETİ":"MATCH INVITATION",
+"GÖNDERDİĞİN DAVET":"YOUR INVITATION",
+"Maç bitince katılacaksın":"You will join after your match",
+"Onayla: 50 altın giriş ücretini kabul et. Aktif maçın varsa sonucu kesinleşince katılırsın.":"Approve to accept the 50-gold entry fee. If you are playing, join after the result is confirmed.",
+"Onayla":"Approve",
+"Reddet":"Decline",
+"Mevcut oyunun bölünmez. 50 altın yalnız yeni odaya katılınca alınır.":"Your current game will not be interrupted. The 50 gold is charged only when you join the new room.",
+"Oda ücretsiz. Maça giriş kişi başı 50 altın; yalnız katılımda alınır.":"Creating the room is free. Entry costs 50 gold per player, charged only on joining.",
+"Son davetler":"Recent invitations",
+"Gönderildi":"Sent",
+"Kapat":"Close",
+
 "Gelişim ağacı":"Development tree",
 "Bir dal seç, gücünü artır.":"Choose a branch. Grow your power.",
 "✦ Ana dal":"✦ Main branch",

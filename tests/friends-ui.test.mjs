@@ -104,3 +104,14 @@ test('account change drops old invite confirmation and in-flight callback feedba
  const oldInvite=findButton(f,'DAVET ET');oldInvite.onclick();findButton(f,'ODA OLUŞTUR VE DAVET ET').onclick();f.ui.setLogin({authToken:'new-account'});await tick();f.ui.open();await tick();oldInvite.onclick();assert.equal(findButton(f,'ODA OLUŞTUR VE DAVET ET'),undefined);
  resolve(true);await tick();assert.deepEqual(sent,['HA-ONLINE']);assert.equal(f.nodes['friends-message'].textContent,'');assert.equal(findButton(f,'DAVET ET').disabled,false);
 });
+
+test('friend invitation row uses server status, prevents duplicate sends, and preserves focused controls',async()=>{
+ const sent=[];const f=await inviteFixture({onInvite:async id=>sent.push(id)});const original=findButton(f,'DAVET ET');f.doc.activeElement=original;
+ f.ui.setInvitations({incoming:[],outgoing:[{id:'sent',to:online,status:'pending'}]});assert.equal(findButton(f,'DAVET ET'),original);original.onclick();assert.deepEqual(sent,[]);
+ f.doc.activeElement=null;f.ui.close();f.ui.open();assert.ok(findButton(f,'Gönderildi').disabled);assert.match(elements(f.nodes['friends-lists']).map(e=>e.textContent).join(' '),/Yanıt bekleniyor/);
+ f.ui.setInvitations({incoming:[],outgoing:[{id:'sent',to:online,status:'queued'}]});assert.match(elements(f.nodes['friends-lists']).map(e=>e.textContent).join(' '),/Kabul edildi/);
+ f.ui.setInvitations({incoming:[],outgoing:[{id:'sent',to:online,status:'declined'}]});assert.equal(findButton(f,'DAVET ET').disabled,false);assert.match(elements(f.nodes['friends-lists']).map(e=>e.textContent).join(' '),/Davet reddedildi/);
+});
+test('global invitation language has exact English equivalents without fabricating match presence',()=>{
+ for(const text of ['Onayla','Reddet','Maç bitince katılacaksın','Kabul edildi · maçın bitmesi bekleniyor','Davet reddedildi','Diğer davet','Yeni maç daveti','Son davetler','Başka sekmede katıldın','Güncel odayı aç'])assert.notEqual(translate(text),text);
+});
