@@ -5,6 +5,19 @@ import {battlePhrases, translateCommanderDescription} from './crazygames-battle-
 // Presentation-only English locale for the CrazyGames entry point.
 // Do not translate stored values, hero IDs, requests, or game rules.
 export const phrases = {
+"Gelişim ağacı":"Development tree",
+"Bir dal seç, gücünü artır.":"Choose a branch. Grow your power.",
+"✦ Ana dal":"✦ Main branch",
+"Dal seçimi altın harcamaz":"Choosing a branch spends no gold",
+"Henüz açık değil":"Not available yet",
+"Elmas → Altın":"Diamonds → Gold",
+"Elmas satın alma henüz açık değil.":"Diamond purchases are not available yet.",
+"GELİŞİM YOLUN":"YOUR DEVELOPMENT PATH",
+"Bir dal seç. Sonraki seviyenin gerçek etkisini gör.":"Choose a branch. See exactly what the next level changes.",
+"Ana dal 40, yan dallar 20 etkin seviye. Dallar birbirinden bağımsız gelişir.":"Main branch: 40 active levels. Side branches: 20. Each branch develops independently.",
+"NORMAL + ULTİ DOLUMU":"NORMAL + ULTIMATE CHARGE",
+"İki ayrı dolum · her biri en fazla 100":"Two separate pools · each capped at 100",
+"Elmas":"Diamonds",
 "♫ Müzik kredileri":"♫ Music credits",
 "Diziliş başka bir maça ait.":"This formation belongs to another match.",
 "Hazır diziliş değiştirilemez.":"A confirmed formation cannot be changed.",

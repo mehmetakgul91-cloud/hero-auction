@@ -1,3 +1,5 @@
+import {renderCommanderExchange,commanderExchangeQuote} from '/commander-exchange-view.js';
+import {renderCommanderSkills,renderCommanderDevelopment,commanderBranchView,commanderDiamondPolicyCopy} from '/commander-profile-view.js';
 import {COMMANDER_CHANGE_COST} from '/commander-economy.js';
 import {createRoomInvitesUI} from '/room-invites.js';
 import {createFriendsUI} from '/friends.js';
@@ -67,6 +69,8 @@ const commanderOptions=[
 const commanderPortraits={"attack":"/images/Ate%C5%9Fler%20%C4%B0%C3%A7inde%20Sava%C5%9F%C3%A7%C4%B1%20Komutan.png","defense":"/images/Alt%C4%B1n%20Aslan%C4%B1n%20Kale%20Muhaf%C4%B1z%C4%B1.png","magic":"/images/Kozmik%20R%C3%BCnlerin%20B%C3%BCy%C3%BCc%C3%BC%20Komutan%C4%B1.png","support":"/images/Z%C3%BCmr%C3%BCt%20I%C5%9F%C4%B1%C4%9F%C4%B1n%20%C5%9Eifac%C4%B1%20Krali%C3%A7esi.png"};
 function commanderPortrait(id){return commanderPortraits[id]||'/images/commander-attack.svg';}
 let commanderProfile=null,commanderLoaded=false,commanderPending=null,commanderChangePending=null,commanderProfileOpen=false,commanderBusy=false,commanderLoading=false,commanderChangeOpen=false;
+let commanderSelectedBranch=null,commanderProgression=null,commanderDiamonds=null,commanderUpgradeRequest=null;
+let commanderExchange=null,commanderExchangeAmount='1',commanderExchangeRequest=null;
 function commanderVisibility(){
  renderLobbyIdentity();
  const logged=signedIn(),needSelection=logged&&commanderLoaded&&!commanderProfile&&(!window.HeroPlatform||!room);
@@ -116,7 +120,7 @@ async function changeCommander(){
  commanderBusy=true;renderCommanderRoster();
  try{
   const result=await post('/api/commander/change',{commanderId:target.id});
-  commanderProfile=result.profile;commanderChangePending=null;commanderChangeOpen=false;showGold(result.gold);
+  commanderProfile=result.profile;commanderProgression=result.progression||null;commanderDiamonds=result.diamonds??null;commanderExchange=result.exchange||null;commanderChangePending=null;commanderChangeOpen=false;showGold(result.gold);
   $('commander-upgrade-message').textContent=`✓ Komutan değiştirildi. ${result.cost??COMMANDER_CHANGE_COST} altın harcandı.`;
  }catch(e){$('commander-upgrade-message').textContent='⚠ '+e.message}
  finally{commanderBusy=false;renderCommanderProfile()}
@@ -129,10 +133,9 @@ function renderCommanderProfile(){
  if(!commanderProfile)return;
  const chosen=commanderOptions.find(c=>c.id===commanderProfile.commanderId);
  const stats=commanderAbilityStats(commanderProfile),activeLevel=stats.level;
- const number=value=>value.toLocaleString('tr-TR',{maximumFractionDigits:2});
- const el=(tag,cls,text)=>{const node=document.createElement(tag);node.className=cls;if(text!==undefined)node.textContent=text;return node;};
+ const number=value=>value.toLocaleString(document.documentElement.lang==='en'?'en-US':'tr-TR',{maximumFractionDigits:2});
  $('commander-profile').dataset.type=chosen.id;
- $('commander-profile-name').textContent='Komutan geliştirme';
+ $('commander-profile-name').textContent=document.documentElement.lang==='en'?'Development tree':'Gelişim ağacı';
  $('commander-profile-gold').textContent=number(walletGold);
  const activeImg=$('commander-active-portrait');activeImg.src=commanderPortrait(chosen.id);activeImg.alt=chosen.name;
  $('commander-active-art').dataset.type=chosen.id;
@@ -144,57 +147,37 @@ function renderCommanderProfile(){
  $('commander-main-progress').setAttribute('aria-valuenow',String(activeLevel));
  $('commander-start-energy').textContent=COMMANDER_START_ENERGY;
  $('commander-round-energy').textContent='+'+stats.energyPerRound;
- $('commander-effect-bonus').textContent='+%'+stats.bonusPercent+' BECERİ GÜCÜ';
+ $('commander-effect-bonus').textContent=document.documentElement.lang==='en'?'NORMAL +'+stats.bonusPercent+'%':'NORMAL +%'+stats.bonusPercent;
  $('commander-active-detail').textContent=activeLevel>=40?'Ana uzmanlık tamamlandı.':activeLevel%2===0?'Her 2 ana dal seviyesinde tur enerjisi +1.':'Sonraki ana dal seviyesinde tur enerjisi +1.';
- const skillCopy={
-  attack:['Savaş başındaki takım saldırısı oranında toplam hasar; yaşayan düşmanlara bölünür.','Savaş başındaki takım saldırısı oranında toplam hasar; yaşayan düşmanlara bölünür.'],
-  defense:['Yaşayan takımın azami canı oranında toplam kalkan paylaşılır.','Yaşayan takımın azami canı oranında toplam kalkan paylaşılır.'],
-  magic:['1 hedefin saldırısını azaltır.','En fazla 2 hedefin saldırısını azaltır.'],
-  support:['Eksik canı iyileştirir. Can oranı en düşük kahraman önceliklidir.','Eksik canı iyileştirir. Can oranı en düşük kahraman önceliklidir.']
- };
- const skillNames={attack:['Güçlü Darbe','Yıkıcı Hücum'],defense:['Koruyucu Kalkan','Sarsılmaz Savunma'],magic:['Zayıflatma','Kitle Zayıflatma'],support:['Şifa Dokunuşu','Büyük İyileştirme']};
- const skillRoot=$('commander-skill-summary');skillRoot.replaceChildren();
- [stats.normalRate,stats.ultimateRate].forEach((rate,i)=>{
-  const card=el('article','cp-skill'+(i?' ultimate':''));
-  const top=el('div','cp-skill-top');top.append(el('span','',i?'NİHAİ BECERİ':'NORMAL BECERİ'),el('b','',i?'100 ENERJİ':'40 ENERJİ'));
-  const main=el('div','cp-skill-main');main.append(el('strong','','%'+number(rate*100)),el('span','',skillNames[chosen.id][i]));
-  card.append(top,main,el('p','',skillCopy[chosen.id][i]));skillRoot.append(card);
- });
+ renderCommanderSkills($('commander-skill-summary'),commanderProfile,{english:document.documentElement.lang==='en',document});
  renderCommanderRoster();
- const root=$('commander-upgrades');root.replaceChildren();
- const abilityNames={attack:'Savaş Ustalığı',defense:'Çelik İrade',magic:'Arkane Güç',support:'Yaşam Enerjisi'};
- const abilityDescriptions={attack:'Savaşçı / Suikastçı',defense:'Tank',magic:'Enerji',support:'Destek'};
- const ordered=[chosen,...commanderOptions.filter(c=>c.id!==chosen.id)];
- for(const c of ordered){
-  const primary=c.id===chosen.id,level=Number(commanderProfile.levels[c.id]||0),max=primary?40:20,cost=200*(level+1),isMax=level>=max,canAfford=walletGold>=cost;
-  const card=el('article','cp-upgrade'+(primary?' specialty':'')+(isMax?' maxed':''));card.dataset.type=c.id;
-  const head=el('div','cp-upgrade-head'),img=el('img','cp-branch-art');img.src=commanderPortrait(c.id);img.alt='';img.loading='lazy';
-  const title=el('div','cp-branch-title');title.append(el('span','cp-branch-tag',primary?'★ ANA UZMANLIK':'YAN UZMANLIK'),el('h4','',abilityNames[c.id]),el('small','',abilityDescriptions[c.id]));head.append(img,title);
-  const values=el('div','cp-bonus');const current=el('span','');current.append(el('small','','SINIF BONUSU'),el('b','','+%'+number(level*.5)));
-  const next=el('span','cp-next');next.append(el('small','',isMax?'TAMAMLANDI':'SONRAKİ SEVİYE'),el('b','',isMax?'✓':'+%'+number((level+1)*.5)));values.append(current,el('span','cp-arrow','→'),next);
-  const progress=el('div','cp-branch-progress');progress.append(el('span','','SEVİYE '+level+' / '+max),el('span','',number(100*level/max)+'%'));
-  const bar=el('div','cp-progress');bar.setAttribute('role','progressbar');bar.setAttribute('aria-label',abilityNames[c.id]+' gelişimi');bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax',String(max));bar.setAttribute('aria-valuenow',String(level));
-  const fill=el('span','');fill.style.width=(100*level/max)+'%';bar.append(fill);
-  const benefit=el('p','cp-upgrade-benefit');
-  if(primary&&!isMax){
-   const preview=commanderAbilityStats({...commanderProfile,levels:{...commanderProfile.levels,[c.id]:level+1}});
-   benefit.textContent='Beceri gücü +%'+stats.bonusPercent+' → +%'+preview.bonusPercent+' · Enerji / tur '+stats.energyPerRound+' → '+preview.energyPerRound;
-  }else benefit.textContent=isMax?'Bu dalın en yüksek seviyesine ulaştın.':'Yalnızca ilgili kahraman sınıfını güçlendirir.';
-  const button=el('button','cp-upgrade-button');button.type='button';
-  button.append(el('span','',isMax?'✓ TAMAMLANDI':!canAfford?'ALTIN YETERSİZ':'GELİŞTİR'),el('b','',isMax?'':number(cost)+' ALTIN'));
-  button.setAttribute('aria-label',abilityNames[c.id]+' · '+(isMax?'Tamamlandı':number(cost)+' altın · '+(!canAfford?'Altın yetersiz':'Geliştir')));
-  button.disabled=commanderBusy||isMax||!canAfford;button.onclick=()=>void upgradeCommander(c.id);
-  card.append(head,values,progress,bar,benefit,button);root.append(card);
- }
+ if(!commanderSelectedBranch)commanderSelectedBranch=chosen.id;
+ renderCommanderDevelopment($('commander-upgrades'),commanderProfile,{
+  branchesRoot:$('commander-branch-nodes'),selected:commanderSelectedBranch,gold:walletGold,diamonds:commanderDiamonds,progression:commanderProgression,busy:commanderBusy,english:document.documentElement.lang==='en',document,
+  onSelect:id=>{commanderSelectedBranch=id;renderCommanderProfile();$('commander-branch-nodes').querySelector(`[data-branch="${id}"]`)?.focus();},
+  onUpgrade:id=>void upgradeCommander(id)
+ });
+ $('commander-command-tree').dataset.selected=commanderSelectedBranch;
+ const diamondWallet=$('commander-diamond-wallet');diamondWallet.hidden=commanderProgression?.diamondsEnabled!==true;
+ $('commander-diamond-info').hidden=diamondWallet.hidden;
+ $('commander-diamond-info').textContent=commanderDiamondPolicyCopy(commanderProgression,{english:document.documentElement.lang==='en'});
+ $('commander-profile-diamonds').textContent=commanderDiamonds===null?'—':number(commanderDiamonds);
+ $('commander-exchange-availability').textContent=commanderExchange?.available===true?'1 → '+number(commanderExchange.rate):(document.documentElement.lang==='en'?'Not available yet':'Henüz açık değil');
+ renderCommanderExchange($('commander-exchange-controls'),{
+  policy:commanderExchange,diamonds:commanderDiamonds,gold:walletGold,amount:commanderExchangeAmount,
+  pending:commanderExchangeRequest?.authToken===login?.authToken?commanderExchangeRequest.body:null,busy:commanderBusy,english:document.documentElement.lang==='en',document,
+  onAmount:value=>{commanderExchangeAmount=value;},onExchange:amount=>void exchangeCommanderDiamonds(amount)
+ });
+
 }
 async function loadCommander(){
  if(!signedIn()||commanderLoading)return;
  commanderLoading=true;const authToken=login.authToken;
- commanderLoaded=false;commanderProfile=null;commanderProfileOpen=false;commanderChangeOpen=false;commanderVisibility();
+ commanderLoaded=false;commanderProfile=null;commanderProgression=null;commanderDiamonds=null;commanderSelectedBranch=null;commanderUpgradeRequest=null;commanderExchange=null;commanderExchangeRequest=null;commanderExchangeAmount='1';commanderProfileOpen=false;commanderChangeOpen=false;commanderVisibility();
  try{
   const result=await post('/api/commander/get',{});
   if(!signedIn()||login.authToken!==authToken)return;
-  commanderProfile=result.profile;commanderLoaded=true;showGold(result.gold);
+  commanderProfile=result.profile;commanderProgression=result.progression||null;commanderDiamonds=result.diamonds??null;commanderExchange=result.exchange||null;commanderLoaded=true;showGold(result.gold);
   renderCommanderOnboarding();renderCommanderProfile();commanderVisibility();
  }catch(e){notify('Komutan profili yüklenemedi: '+e.message)}
  finally{commanderLoading=false}
@@ -204,20 +187,75 @@ async function selectCommander(){
  commanderBusy=true;renderCommanderOnboarding();
  try{
   const result=await post('/api/commander/select',{commanderId:commanderPending});
-  commanderProfile=result.profile;commanderLoaded=true;showGold(result.gold);
+  commanderProfile=result.profile;commanderProgression=result.progression||null;commanderDiamonds=result.diamonds??null;commanderExchange=result.exchange||null;commanderLoaded=true;showGold(result.gold);
   renderCommanderProfile();commanderVisibility();notify('Komutanın hesabına kaydedildi.');
  }catch(e){$('commander-onboarding-message').textContent=e.message}
  finally{commanderBusy=false;renderCommanderOnboarding()}
 }
-async function upgradeCommander(stat){
- if(commanderBusy||!commanderProfile)return;
+async function exchangeCommanderDiamonds(amount){
+ if(commanderBusy||!commanderProfile||!signedIn())return;
+ const authToken=login.authToken,english=document.documentElement.lang==='en';
+ let request=commanderExchangeRequest?.authToken===authToken?commanderExchangeRequest:null;
+ if(!request){
+  const quote=commanderExchangeQuote(commanderExchange,commanderDiamonds,walletGold,amount);
+  if(!quote.canExchange)return;
+  const fmt=value=>value.toLocaleString(english?'en-US':'tr-TR');
+  const prompt=english?`Spend ${fmt(quote.diamondsToSpend)} diamonds to receive ${fmt(quote.goldGranted)} gold? This exchange cannot be reversed.`:`${fmt(quote.diamondsToSpend)} elmas harcayıp ${fmt(quote.goldGranted)} altın almak istiyor musun? Bu dönüşüm geri alınamaz.`;
+  if(!window.confirm(prompt))return;
+  request={authToken,body:{diamondsToSpend:quote.diamondsToSpend,expectedRate:quote.expectedRate,pricingVersion:quote.pricingVersion,requestId:crypto.randomUUID()}};
+  commanderExchangeRequest=request;
+ }
  commanderBusy=true;renderCommanderProfile();
  try{
-  const result=await post('/api/commander/upgrade',{stat});
-  commanderProfile=result.profile;showGold(result.gold);
-  $('commander-upgrade-message').textContent='✓ '+result.cost.toLocaleString('tr-TR')+' altın harcandı.';
- }catch(e){$('commander-upgrade-message').textContent='⚠ '+e.message}
- finally{commanderBusy=false;renderCommanderProfile()}
+  const result=await post('/api/diamonds/exchange',request.body);
+  if(login?.authToken!==authToken)return;
+  commanderExchangeRequest=null;commanderDiamonds=result.diamonds;commanderExchange=result.exchange||null;showGold(result.gold);
+  $('commander-upgrade-message').textContent=english?'✓ Exchange confirmed. Balances updated.':'✓ Dönüşüm doğrulandı. Bakiyeler güncellendi.';
+ }catch(e){
+  if(login?.authToken!==authToken)return;
+  if(e.status&&e.status<500)commanderExchangeRequest=null;
+  $('commander-upgrade-message').textContent='⚠ '+e.message;
+  // Balances alone cannot prove an uncertain exchange; retain its request ID.
+  try{
+   const result=await post('/api/commander/get',{});
+   if(login?.authToken!==authToken)return;
+   commanderProfile=result.profile;commanderProgression=result.progression||null;commanderDiamonds=result.diamonds??null;commanderExchange=result.exchange||null;showGold(result.gold);
+  }catch{/* Retry the same request ID, even if a reconciliation request fails. */}
+ }finally{commanderBusy=false;renderCommanderProfile();}
+}
+async function upgradeCommander(stat){
+ if(commanderBusy||!commanderProfile||!signedIn())return;
+ const view=commanderBranchView(commanderProfile,stat,{gold:walletGold,diamonds:commanderDiamonds,progression:commanderProgression});
+ if(!view.canUpgrade)return;
+ const authToken=login.authToken,commanderId=commanderProfile.commanderId,expectedCurrentLevel=commanderProfile.levels[stat];
+ const key=[authToken,commanderId,stat,expectedCurrentLevel].join(':');
+ // Retain the same request after a transport-uncertain response; never debit twice.
+ if(commanderUpgradeRequest?.key!==key)commanderUpgradeRequest={key,body:{stat,commanderId,expectedCurrentLevel,requestId:crypto.randomUUID()}};
+ const request=commanderUpgradeRequest;
+ const restoreFocus=document.activeElement?.dataset?.upgrade===stat;
+ commanderBusy=true;renderCommanderProfile();
+ try{
+  const result=await post('/api/commander/upgrade',request.body);
+  if(login?.authToken!==authToken)return;
+  commanderUpgradeRequest=null;
+  commanderProfile=result.profile;commanderProgression=result.progression||null;commanderDiamonds=result.diamonds??null;commanderExchange=result.exchange||null;showGold(result.gold);
+  const english=document.documentElement.lang==='en';
+  $('commander-upgrade-message').textContent=english?'✓ Upgrade saved.':'✓ Geliştirme kaydedildi.';
+ }catch(e){
+  if(login?.authToken!==authToken)return;
+  if(e.status&&e.status<500)commanderUpgradeRequest=null;
+  $('commander-upgrade-message').textContent='⚠ '+e.message;
+  // Reconcile stale levels, balances, and a possibly completed network request.
+  try{
+   const result=await post('/api/commander/get',{});
+   if(login?.authToken!==authToken)return;
+   commanderProfile=result.profile;commanderProgression=result.progression||null;commanderDiamonds=result.diamonds??null;commanderExchange=result.exchange||null;showGold(result.gold);
+   if(commanderProfile?.commanderId!==commanderId||commanderProfile?.levels[stat]!==expectedCurrentLevel)commanderUpgradeRequest=null;
+  }catch{/* Keep the original error and request ID for a safe retry. */}
+ }finally{
+  commanderBusy=false;renderCommanderProfile();
+  if(restoreFocus&&login?.authToken===authToken&&commanderProfileOpen&&(!document.activeElement||document.activeElement===document.body))$('commander-upgrades').querySelector(`[data-upgrade="${stat}"]`)?.focus({preventScroll:true});
+ }
 }
 $('commander-select-confirm').onclick=()=>void selectCommander();
 $('commander-open-profile').onclick=()=>{commanderProfileOpen=true;commanderVisibility();renderCommanderProfile()};
@@ -406,7 +444,7 @@ async function post(url,data){
  const entry=['/api/create','/api/join','/api/match','/api/bot','/api/rematch','/api/room/detach'].includes(url);
  if(entry&&(roomEntryPending||roomInvitesUI.busy))throw Error(uiText('Oda işlemi sürüyor. Lütfen bekle.'));
  if(entry)roomEntryPending++;
- try{const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...gameIdentity(),...data})});const j=await res.json();if(!res.ok)throw Error(j.error||'İşlem başarısız');return j}
+ try{const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...gameIdentity(),...data})});const j=await res.json();if(!res.ok){const error=Error(j.error||'İşlem başarısız');error.status=res.status;throw error;}return j}
  finally{if(entry)roomEntryPending--;}
 }
 function save(token,r){session={token,code:r.code};localStorage.setItem('hero-auction-session',JSON.stringify(session));show(r);connect();refreshOnline()}
