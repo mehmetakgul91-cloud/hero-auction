@@ -386,6 +386,7 @@ body.arena-fit{height:auto;min-height:var(--arena-viewport-height,100vh);min-hei
 .commander-hero-impact.damage{--impact-color:#ff8c91}.commander-hero-impact.shield{--impact-color:#80dfff}.commander-hero-impact.heal{--impact-color:#85f8ae}.commander-hero-impact.weaken{--impact-color:#ddb0ff}
 .commander-impact-label{display:flex;align-items:center;flex-direction:column;justify-content:center;gap:2px;min-width:58px;max-width:100px;padding:4px 5px;border:1px solid currentColor;border-radius:8px;background:#081322f5;box-shadow:0 2px 8px #000b;text-align:center;font:800 9px/1.1 system-ui,sans-serif;white-space:nowrap}
 .commander-impact-label strong{font-size:clamp(15px,3.5vw,24px);line-height:1.05}.commander-impact-label small{font-size:9px}
+.commander-impact-label strong.focus-until-death{max-width:90px;font-size:11px;line-height:1.15;white-space:normal}
 @keyframes commanderImpact{0%{opacity:0;transform:scale(.9)}12%,80%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.04)}}
 @media(prefers-reduced-motion:reduce){.commander-hero-impact{animation:none}}
 

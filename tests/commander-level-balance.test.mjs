@@ -28,8 +28,8 @@ for(const kind of ['attack','magic','support'])test(kind+' ultimate utility magn
   const hero=out.teams[0][0],summary=out.log.at(-1);
   if(kind==='attack'){
    assert.equal(summary.value,5);
-   assert.ok(out.teams[0].every(u=>u.commanderFocusTargetId==='1-0'&&u.commanderFocusUntilRound===3));
-   assert.deepEqual(out.teams[1],input[1],'focus grants no immediate attack');
+   assert.equal(out.teams[1][0].commanderFocusUntilDeath,true);
+   assert.deepEqual(out.teams.map(t=>t.map(u=>u.hp)),input.map(t=>t.map(u=>u.hp)),'focus grants no immediate attack');
   }else if(kind==='magic'){
    assert.equal(hero.attack,1000);
    assert.equal(hero.arcaneSurgeBonusAttack,1000);

@@ -204,3 +204,10 @@ test('logout or account replacement ignores pending purchase result and leaves n
 test('maxed, unaffordable and logged-out actions never send a purchase',async()=>{
  for(const mutate of [context=>context.walletGold=199,context=>context.commanderProfile=profile('attack',40),context=>context.login=null]){const h=upgradeHarness(()=>{throw Error('Unexpected request');});mutate(h.context);await h.run('attack');assert.equal(h.calls.length,0);}
 });
+
+for(const english of [false,true])test(`Hunt Order profile summary and detail both state until-death focus (${english?'EN':'TR'})`,()=>{
+ const root=new Element();renderCommanderSkills(root,profile('attack',20),{document,english});
+ const summary=root.children[1].children.find(child=>child.tagName==='p');
+ assert.match(summary.textContent,english?/until the target dies/:/Hedef ölünceye kadar/);
+ assert.doesNotMatch(root.children[1].textContent,/next attack|next round|sonraki saldırısı|Sonraki tur/);
+});

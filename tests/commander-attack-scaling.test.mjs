@@ -16,7 +16,7 @@ test('focus ultimate marks surviving allies without immediate damage or an extra
  assert.equal(total(result),0);assert.equal(late.abilities.ultimateEnergy[0],25);
  assert.deepEqual(late.teams.map(t=>t.map(u=>u.hp)),before.map(t=>t.map(u=>u.hp)));
  assert.equal(result.events.at(-1).value,2);
- assert.ok(late.teams[0].slice(0,2).every(u=>u.commanderFocusTargetId==='1-0'));
+ assert.equal(late.teams[1][0].commanderFocusUntilDeath,true);
  assert.ok(late.teams[0].slice(2).every(u=>u.commanderFocusTargetId===undefined));
 });
 test('normal damage still scales with initial power after casualties on both sides',()=>{

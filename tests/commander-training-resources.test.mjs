@@ -1,3 +1,5 @@
+import {commanderUltimateDescription} from '../public/commander-ultimate-presentation.js';
+import {describeBattleEvent} from '../public/battle-event-text.js';
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
 import {trainingCommanderResources,trainingCommanderEnemyTargets} from '../public/commander-training-resources.js';
 import {commanderAbilityDescription} from '../public/commander-ability-rules.js';
@@ -21,7 +23,7 @@ test('shipped training controller uses separate charge through normal, rejected 
  const html=readFileSync(new URL('../public/commander-training.html',import.meta.url),'utf8'),source=html.split('<script type="module">')[1].split('</script>')[0].replace(/^import .*;\n/gm,'');
  class Node{style={};value='defense';disabled=false;textContent='';replaceChildren(){}append(){}}
  const nodes=new Map(),requests=[];const document={getElementById:id=>{if(!nodes.has(id))nodes.set(id,new Node());return nodes.get(id)},createElement:()=>new Node()};
- runInNewContext(source,{document,getCommanderAbilityCost,trainingCommanderResources,trainingCommanderEnemyTargets,fetch:(url,options)=>new Promise(resolve=>requests.push({url,options,resolve}))});
+ runInNewContext(source,{document,getCommanderAbilityCost,trainingCommanderResources,trainingCommanderEnemyTargets,commanderUltimateDescription,describeBattleEvent,fetch:(url,options)=>new Promise(resolve=>requests.push({url,options,resolve}))});
  const flush=()=>new Promise(r=>setImmediate(r));const data=(changes=[])=>({rounds:15,teams:[[],[]],log:[],commanderResourcesByRound:Array.from({length:15},(_,i)=>({round:i+1,energy:[Math.min(100,30+i*12),100],ultimateEnergy:[Math.min(100,30+i*12),100],ultimateUsed:[false,false],...changes.find(c=>c.round===i+1)}))});
  const reply=async(index,value,ok=true)=>{requests[index].resolve({ok,json:async()=>value});await flush()};
  await reply(0,data());nodes.get('advance').onclick();assert.equal(nodes.get('energy-label').textContent,'Normal enerji: 42 / 100');

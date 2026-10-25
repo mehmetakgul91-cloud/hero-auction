@@ -58,7 +58,8 @@ function showHeroImpacts(){
    const signs={damage:'−',heal:'+',shield:'+',weaken:'−%'};
    const label=document.createElement('span');label.className='commander-impact-label';
    const title=document.createElement('span');title.textContent=labels[impact.kind];
-   const value=document.createElement('strong');value.textContent=impact.kind==='buff'?'+'+Math.round(impact.value)+text(' VURUŞ GÜCÜ · 3 TUR',' HIT POWER · 3 ROUNDS'):impact.kind==='guard'?text('1 CANDA KORUR','SURVIVE AT 1 HP'):impact.kind==='focus'?text('HEDEF','TARGET'):impact.kind==='revive'?'+'+Math.round(impact.value)+' HP':signs[impact.kind]+(impact.kind==='weaken'?impact.value:Math.round(impact.value)).toLocaleString(english()?'en-US':'tr-TR',{maximumFractionDigits:1});
+   const value=document.createElement('strong');value.textContent=impact.kind==='buff'?'+'+Math.round(impact.value)+text(' VURUŞ GÜCÜ · 3 TUR',' HIT POWER · 3 ROUNDS'):impact.kind==='guard'?text('1 CANDA KORUR','SURVIVE AT 1 HP'):impact.kind==='focus'?(impact.untilDeath===true?text('HEDEF ÖLÜNCEYE KADAR','UNTIL TARGET DIES'):text('HEDEF','TARGET')):impact.kind==='revive'?'+'+Math.round(impact.value)+' HP':signs[impact.kind]+(impact.kind==='weaken'?impact.value:Math.round(impact.value)).toLocaleString(english()?'en-US':'tr-TR',{maximumFractionDigits:1});
+   if(impact.kind==='focus'&&impact.untilDeath===true)value.className='focus-until-death';
    label.append(title,value);
    if(impact.absorbed>0){const blocked=document.createElement('small');blocked.textContent='🛡 '+Math.round(impact.absorbed)+text(' engellendi',' blocked');label.append(blocked);}
    descriptions.push(title.textContent+' '+value.textContent+(impact.absorbed>0?text(', kalkan ',', shield blocked ')+impact.absorbed+text(' engelledi',''):''));

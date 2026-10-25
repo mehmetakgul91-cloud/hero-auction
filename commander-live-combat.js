@@ -83,6 +83,7 @@ export function applyServerHeroAction(combat,{side,actorId,targetId,action='atta
  combat.events.push(event);
  // Preserve the existing per-casualty energy bonus once, per affected side.
  if(action==='attack'&&target.hp===0)grantLiveCommanderEnergy(combat.abilities,targetSide,10);
+ expireCommanderFocus(next,round);
  combat.finished=next.some(team=>team.every(u=>u.hp<=0));
  combat.abilities.finished=combat.finished;
  return {version:combat.version,event,teams:structuredClone(next),finished:combat.finished};

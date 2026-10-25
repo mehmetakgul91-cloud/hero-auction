@@ -3,7 +3,7 @@ import {applyHeroDamage,grantLastStand,isLastStandActive} from './battle-hp-dama
 import {commanderAbilityStats} from './public/commander-ability-rules.js';
 import {commanderAttackPower,distributeCommanderAttack} from './commander-attack-damage.js';
 import {commanderShieldAmounts,commanderHealingBudget} from './commander-protection-budget.js';
-import {grantCommanderFocus} from './battle-commander-focus.js';
+import {grantCommanderFocus,expireCommanderFocus} from './battle-commander-focus.js';
 import {grantArcaneSurge,reviveCommanderAlly} from './commander-ultimate-status.js';
 const lowestHealth=units=>[...units].sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp||a.id.localeCompare(b.id))[0];
 function selectedFriendly(allies,targetIds,{dead=false}={}){
@@ -24,7 +24,7 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
   if(!Array.isArray(targetIds)||targetIds.length!==1||typeof targetIds[0]!=='string')throw Error('Select one living enemy hero');
   const selected=enemies.find(unit=>unit.id===targetIds[0]);if(!selected)throw Error('Selected enemy is no longer alive or is invalid');
   const focused=grantCommanderFocus(allies,enemies,round,selected.id);if(!focused)throw Error('Focus order already active');value=focused.allyIds.length;
-  impacts.push({target:focused.targetId,kind:'focus',value:focused.allyIds.length});
+  impacts.push({target:focused.targetId,kind:'focus',value:focused.allyIds.length,untilDeath:true});
  }else if(commanderId==='attack'){
   const budget=distributeCommanderAttack(attackBasis??commanderAttackPower(next[side]),rate,enemies.length);
   for(const[index,u]of enemies.entries()){
@@ -57,6 +57,7 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
   const target=enemies.find(u=>u.id===targetIds[0]);grantCommanderWeaken(target,rate,round);value=1;
   impacts.push({target:target.id,kind:'weaken',value:Number((target.commanderWeaken*100).toFixed(1))});
  }
- log.push({round,side,actor:'commander:'+side,action:'commander-'+commanderId+'-'+ability,value,impacts,commanderLevel:stats.level,abilityBonusPercent:stats.bonusPercent});
+ expireCommanderFocus(next,round);
+ log.push({round,side,actor:'commander:'+side,action:'commander-'+commanderId+'-'+ability,value,impacts,...(commanderId==='attack'&&strong?{focusUntilDeath:true}:{}),commanderLevel:stats.level,abilityBonusPercent:stats.bonusPercent});
  return {teams:next,log,revivalUsed:nextRevivalUsed,finished:next.some(team=>team.every(u=>u.hp<=0))};
 }
