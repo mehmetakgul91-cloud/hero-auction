@@ -19,3 +19,19 @@ html[lang="en"] #home .home-quick-nav{grid-template-columns:repeat(5,minmax(0,1f
 .friend-actions button:focus-visible{outline:3px solid #a9e5ff;outline-offset:2px}
 @media(max-width:400px){.friend-roster-row{gap:7px;padding:8px}.friend-roster-row .friend-avatar{flex-basis:30px;height:36px;font-size:17px}.friend-roster-row .friend-actions{margin-left:0;gap:4px}.friend-roster-row .friend-identity{min-width:75px}.friend-roster-row .friend-invite{padding-inline:8px;font-size:10px}.friend-roster-row .friend-actions>button:not(.friend-invite){padding-inline:5px;font-size:9px}}
 @media(prefers-reduced-motion:reduce){.friend-roster-row *{animation:none!important;transition:none!important}}
+
+/* Keep the roster one tap away: identity/help and real friendship requests use
+   native disclosures; empty request categories never render a block. */
+.friends-tools,.friends-requests{margin:12px 0 8px;border:1px solid #3c4d68;border-radius:10px;background:#152237;color:#cbd9ee}
+.friends-tools>summary,.friends-requests>summary{display:flex;align-items:center;gap:9px;min-height:44px;padding:10px 12px;cursor:pointer;list-style:none;font-size:12px;font-weight:750;letter-spacing:0;touch-action:manipulation}
+.friends-tools>summary::-webkit-details-marker,.friends-requests>summary::-webkit-details-marker{display:none}
+.friends-tools>summary::after,.friends-requests>summary::after{content:'+';margin-left:auto;font-size:18px;line-height:1;color:#e2c58b}
+.friends-tools[open]>summary::after,.friends-requests[open]>summary::after{content:'−'}
+.friends-tools>summary:focus-visible,.friends-requests>summary:focus-visible{outline:3px solid #a9e5ff;outline-offset:2px;border-radius:9px}
+.friends-tools-body{padding:0 12px 12px;border-top:1px solid #31455f}.friends-tools-body .hint{font-size:11px;margin:10px 0}.friends-tools-body label{font-size:11px;margin-top:12px}
+.friends-tools-body input{padding:12px;font-size:13px}.friends-tools-body button{min-height:44px;font-size:11px;padding:10px 12px}
+.friends-requests{background:#182436;margin-top:8px}.friends-request-count{display:inline-flex;min-width:24px;min-height:24px;align-items:center;justify-content:center;padding:2px 7px;border-radius:20px;background:#425063;color:#f5dfb6;font-size:11px}
+.friends-request-section{margin:0 12px;padding-top:0}.friends-request-section h3{font-size:10px;letter-spacing:.6px;margin:10px 0 0}.friends-request-section .friend-row:last-child{border-bottom:0}.friends-request-section .friend-identity small{font-size:9px}
+.friends-section.friends-roster{margin-top:8px;border-top:0}.friends-roster>h3{font-size:11px;letter-spacing:.7px;margin:14px 0 8px}
+#friends-message:empty{display:none}#friends-message{margin:8px 0;font-size:12px;line-height:1.5}
+@media(max-width:400px){.friends-tools>summary,.friends-requests>summary{font-size:11px;padding:9px 10px}.friends-tools-body{padding-inline:10px}.friends-tools-body .friends-input-row input{flex-basis:150px}}

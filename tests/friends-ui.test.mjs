@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import {createFriendsUI} from '../public/friends.js';
 import {translate} from '../public/crazygames-en.js';
 class Element{
- constructor(tag='div'){this.tag=tag;this.children=[];this.hidden=false;this.value='';this.textContent='';this.classList={add(){},remove(){}};this.attrs={};}
+ constructor(tag='div'){this.tag=tag;this.children=[];this.hidden=false;this.open=false;this.value='';this.textContent='';this.classList={add(){},remove(){}};this.attrs={};}
  append(...v){this.children.push(...v)} replaceChildren(...v){this.children=v} setAttribute(k,v){this.attrs[k]=v} contains(el){return this===el||this.children.some(c=>c.contains?.(el))} focus(){this.focused=true} select(){this.selected=true} scrollIntoView(){}
 }
 const snapshot={playerId:'HA-ABC',guest:true,persistent:false,friends:[],incoming:[],outgoing:[]};
 function fixture({fetcher,full=true,onInvite=null}={}){
- const ids=full?['friends-panel','home-friends-tab','friend-opponent','friends-message','friends-lists','friend-own-id','friend-id','friend-add','friend-add-form','friend-copy','friends-close','friends-online-count','friends-guest-note','friends-preview-note']:['friend-opponent'];
+ const ids=full?['friends-panel','friends-tools','home-friends-tab','friend-opponent','friends-message','friends-lists','friend-own-id','friend-id','friend-add','friend-add-form','friend-copy','friends-close','friends-online-count','friends-guest-note','friends-preview-note']:['friend-opponent'];
  const nodes=Object.fromEntries(ids.map(id=>[id,new Element()]));if(nodes['friends-panel'])nodes['friends-panel'].hidden=true;
  const calls=[],events={},timers=[];
  const win={crypto:{randomUUID:()=> 'tab-id'},fetch:async(path,options)=>{calls.push([path,JSON.parse(options.body),options]);return fetcher?fetcher(path,options):{ok:true,json:async()=>path==='/api/friends'?snapshot:{ok:true}}},setInterval:fn=>{timers.push(fn);return timers.length},clearInterval(){},addEventListener:(n,fn)=>events[n]=fn,removeEventListener:n=>delete events[n],navigator:{clipboard:{writeText:async()=>{throw Error('denied')}}}};
@@ -35,7 +35,7 @@ test('old account response cannot repaint after logout',async()=>{
 });
 test('mutation forces a new read while an older poll is pending',async()=>{
  let reads=0,release;const f=fixture({fetcher:path=>{if(path!=='/api/friends')return {ok:true,json:async()=>({})};reads++;if(reads===2)return new Promise(r=>release=()=>r({ok:true,json:async()=>snapshot}));return {ok:true,json:async()=>({...snapshot,outgoing:reads>=3?[{playerId:'HA-RIVAL',name:'Rival'}]:[]})}}});
- f.ui.setLogin({authToken:'secret'});await tick();f.ui.open();f.nodes['friend-id'].value='HA-RIVAL';f.nodes['friend-add-form'].onsubmit({preventDefault(){}});await tick();assert.equal(reads,3);release();await tick();assert.equal(f.nodes['friend-id'].value,'');assert.equal(f.nodes['friends-lists'].children[1].children[0].textContent,'Gönderilen istekler · 1');
+ f.ui.setLogin({authToken:'secret'});await tick();f.ui.open();f.nodes['friend-id'].value='HA-RIVAL';f.nodes['friend-add-form'].onsubmit({preventDefault(){}});await tick();assert.equal(reads,3);release();await tick();assert.equal(f.nodes['friend-id'].value,'');assert.ok(elements(f.nodes['friends-lists']).some(el=>el.textContent==='Gönderilen istekler · 1'));assert.equal(f.nodes['friends-lists'].children[0].tag,'details');
 });
 test('new friend labels have exact English translations',()=>{for(const text of ['Arkadaşlar','Oyuncu kimliğin','Gelen istekler','Gönderilen istekler','＋ Rakibi arkadaş ekle','Arkadaşlık isteği gönderildi.','Çevrimiçi durumunu yalnızca kabul ettiğin arkadaşların görebilir.'])assert.notEqual(translate(text),text)});
 test('repeated submit is locked and switching accounts releases form without stale feedback',async()=>{
@@ -110,8 +110,66 @@ test('friend invitation row uses server status, prevents duplicate sends, and pr
  f.ui.setInvitations({incoming:[],outgoing:[{id:'sent',to:online,status:'pending'}]});assert.equal(findButton(f,'DAVET ET'),original);original.onclick();assert.deepEqual(sent,[]);
  f.doc.activeElement=null;f.ui.close();f.ui.open();assert.ok(findButton(f,'Gönderildi').disabled);assert.match(elements(f.nodes['friends-lists']).map(e=>e.textContent).join(' '),/Yanıt bekleniyor/);
  f.ui.setInvitations({incoming:[],outgoing:[{id:'sent',to:online,status:'queued'}]});assert.match(elements(f.nodes['friends-lists']).map(e=>e.textContent).join(' '),/Kabul edildi/);
- f.ui.setInvitations({incoming:[],outgoing:[{id:'sent',to:online,status:'declined'}]});assert.equal(findButton(f,'DAVET ET').disabled,false);assert.match(elements(f.nodes['friends-lists']).map(e=>e.textContent).join(' '),/Davet reddedildi/);
+ f.ui.setInvitations({incoming:[],outgoing:[{id:'sent',to:online,status:'declined'}]});assert.equal(findButton(f,'DAVET ET').disabled,false);assert.doesNotMatch(elements(f.nodes['friends-lists']).map(e=>e.textContent).join(' '),/Davet reddedildi/);
 });
 test('global invitation language has exact English equivalents without fabricating match presence',()=>{
  for(const text of ['Onayla','Reddet','Maç bitince katılacaksın','Kabul edildi · maçın bitmesi bekleniyor','Davet reddedildi','Diğer davet','Yeni maç daveti','Son davetler','Başka sekmede katıldın','Güncel odayı aç'])assert.notEqual(translate(text),text);
+});
+
+const requestBox=f=>f.nodes['friends-lists'].children.find(el=>el.tag==='details');
+const panelText=f=>elements(f.nodes['friends-lists']).map(el=>el.textContent).join(' ');
+test('empty friendship request categories never create headings, blank states or a disclosure',async()=>{
+ const f=await inviteFixture();assert.equal(requestBox(f),undefined);assert.equal(f.nodes['friends-lists'].children.length,1);
+ assert.equal(f.nodes['friends-lists'].children[0].children[0].textContent,'Arkadaşlarım · 1');
+ assert.doesNotMatch(panelText(f),/Gelen istekler|Gönderilen istekler|Bekleyen istek yok|Gönderilen istek yok/);
+});
+test('identity, privacy and friend-add form are together in a default-collapsed native disclosure',async()=>{
+ const {readFile}=await import('node:fs/promises');const html=await readFile(new URL('../public/index.html',import.meta.url),'utf8');
+ const panel=html.slice(html.indexOf('<section id="friends-panel"'),html.indexOf('<section class="home-guide"'));
+ const match=panel.match(/<details id="friends-tools"([^>]*)>([\s\S]*?)<\/details>/);assert.ok(match);assert.doesNotMatch(match[1],/\bopen\b/);
+ assert.match(match[2],/<summary>Arkadaş ekle \/ Oyuncu kimliğim<\/summary>/);
+ for(const id of ['friend-own-id','friend-copy','friend-add-form','friend-id','friend-add','friends-guest-note','friends-preview-note'])assert.ok(match[2].includes('id="'+id+'"'),id);
+ assert.ok(match[2].includes('Çevrimiçi durumunu yalnızca kabul ettiğin arkadaşların görebilir.'));
+ assert.ok(panel.indexOf('id="friends-lists"')>panel.indexOf('</details>'));
+ const f=await inviteFixture();assert.equal(f.nodes['friends-tools'].open,false);
+});
+test('real friend requests use a compact collapsed count disclosure, retain its state during polling and reset on close/logout',async()=>{
+ const requests={...snapshot,friends:[online],incoming:[{playerId:'HA-IN',name:'Incoming'}],outgoing:[{playerId:'HA-OUT',name:'Outgoing'}]};
+ const f=await inviteFixture({state:requests});let details=requestBox(f);assert.ok(details);assert.equal(details.open,false);
+ assert.equal(details.children[0].children[0].textContent,'Arkadaşlık istekleri');assert.equal(details.children[0].children[1].textContent,'2');
+ assert.ok(findButton(f,'KABUL ET'));assert.ok(findButton(f,'REDDET'));assert.ok(findButton(f,'İPTAL ET'));
+ details.open=true;await f.ui.refresh();details=requestBox(f);assert.equal(details.open,true);
+ f.doc.activeElement=details.children[0];await f.ui.refresh();assert.equal(requestBox(f),details,'polling must preserve a focused request summary');
+ f.doc.activeElement=null;f.nodes['friends-tools'].open=true;f.ui.close();assert.equal(details.open,false);assert.equal(f.nodes['friends-tools'].open,false);
+ f.ui.open();await tick();assert.equal(requestBox(f).open,false);f.nodes['friends-tools'].open=true;requestBox(f).open=true;f.ui.setLogin(null);
+ assert.equal(f.nodes['friends-tools'].open,false);assert.equal(f.nodes['friends-lists'].children.length,0);
+});
+test('request disclosure opening, closing and empty-state removal never sends mutations',async()=>{
+ const f=await inviteFixture({state:{...snapshot,friends:[online],incoming:[{playerId:'HA-IN',name:'Incoming'}]}});
+ requestBox(f).open=true;await f.ui.refresh();requestBox(f).open=false;await f.ui.refresh();
+ assert.ok(f.calls.every(([path])=>['/api/friends','/api/friends/presence'].includes(path)));
+ f.source.value={...snapshot,friends:[online]};await f.ui.refresh();assert.equal(requestBox(f),undefined);
+ f.source.value={...snapshot,friends:[online],incoming:[{playerId:'HA-IN-NEW',name:'New incoming'}]};await f.ui.refresh();assert.equal(requestBox(f).open,false);
+});
+test('nonempty friendship accept, decline and outgoing cancel remain available and modify only chosen requests',async()=>{
+ let state={...snapshot,friends:[online],incoming:[{playerId:'HA-ACCEPT',name:'Accept me'},{playerId:'HA-DECLINE',name:'Decline me'}],outgoing:[{playerId:'HA-CANCEL',name:'Cancel me'}]};
+ const f=fixture({fetcher:async(path,options)=>{const b=JSON.parse(options.body);if(path==='/api/friend/accept'){const person=state.incoming.find(p=>p.playerId===b.playerId);state={...state,friends:[...state.friends,{...person,online:false}],incoming:state.incoming.filter(p=>p.playerId!==b.playerId)}}else if(path==='/api/friend/decline')state={...state,incoming:state.incoming.filter(p=>p.playerId!==b.playerId)};else if(path==='/api/friend/remove')state={...state,outgoing:state.outgoing.filter(p=>p.playerId!==b.playerId)};return {ok:true,json:async()=>path==='/api/friends'?state:{ok:true}}}});
+ f.ui.setLogin({authToken:'account'});await tick();f.ui.open();await tick();requestBox(f).open=true;
+ const action=(name,label)=>{const row=elements(f.nodes['friends-lists']).find(el=>el.className==='friend-row'&&elements(el).some(child=>child.textContent===name));return elements(row).find(el=>el.tag==='button'&&el.textContent===label)};
+ action('Accept me','KABUL ET').onclick();await tick();assert.ok(state.friends.some(p=>p.playerId==='HA-ACCEPT'));assert.equal(requestBox(f).open,true);
+ action('Decline me','REDDET').onclick();await tick();action('Cancel me','İPTAL ET').onclick();await tick();assert.equal(requestBox(f),undefined);
+ const writes=f.calls.filter(([path])=>['/api/friend/accept','/api/friend/decline','/api/friend/remove'].includes(path));
+ assert.deepEqual(writes.map(([path,body])=>[path,body.playerId]),[['/api/friend/accept','HA-ACCEPT'],['/api/friend/decline','HA-DECLINE'],['/api/friend/remove','HA-CANCEL']]);
+});
+test('cached request controls cannot act after panel closure or account changes',async()=>{
+ const f=await inviteFixture({state:{...snapshot,friends:[online],incoming:[{playerId:'HA-IN',name:'Incoming'}]}});const oldAccept=findButton(f,'KABUL ET');
+ f.ui.close();oldAccept.onclick();await tick();assert.equal(f.calls.some(([path])=>path==='/api/friend/accept'),false);
+ f.ui.setLogin({authToken:'new-account'});await tick();f.ui.open();await tick();oldAccept.onclick();await tick();assert.equal(f.calls.some(([path])=>path==='/api/friend/accept'),false);
+});
+test('friend rows show only active pending/queued match invitation status, never old terminal history or inferred presence',async()=>{
+ const offline={...online,online:false};const f=await inviteFixture({state:{...snapshot,friends:[offline]}});
+ for(const status of ['joined','declined','failed','cancelled','expired']){
+  f.ui.setInvitations({incoming:[],outgoing:[{id:'history',to:offline,status}]});assert.doesNotMatch(panelText(f),/Odaya katıldı|Davet reddedildi|Katılım başarısız|Davet iptal edildi|Davetin süresi doldu/);assert.match(panelText(f),/Çevrimdışı/);assert.doesNotMatch(panelText(f),/Maçta/);
+ }
+ for(const [status,label] of [['pending','Yanıt bekleniyor'],['queued','Kabul edildi']]){f.ui.setInvitations({incoming:[],outgoing:[{id:'active',to:offline,status}]});assert.match(panelText(f),new RegExp(label));assert.match(panelText(f),/Çevrimdışı/)}
 });

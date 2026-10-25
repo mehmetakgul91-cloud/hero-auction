@@ -1,8 +1,34 @@
 // Server owns invitation consent, match settlement and exactly-once room admission.
 export const ROOM_INVITE_LABELS={pending:'Yanıt bekleniyor',queued:'Kabul edildi · maçın bitmesi bekleniyor',joined:'Odaya katıldı',declined:'Davet reddedildi',cancelled:'Davet iptal edildi',failed:'Katılım başarısız',expired:'Davetin süresi doldu'};
+// Native modal dialogs make body siblings inert. Keep the same card and live
+// announcer in the active modal's top layer, then return them to the body. This
+// does not open/close dialogs, move focus, duplicate actions, or lock scrolling.
+export function portalRoomInvites({document:doc,window:win,root,announcement}){
+ if(!root||!doc.body||!doc.querySelectorAll)return {sync(){},destroy(){}};
+ let order=[];
+ function sync(records=[]){
+  if(!Array.isArray(records))records=[];
+  const open=[...doc.querySelectorAll('dialog[open]')].filter(dialog=>{try{return dialog.matches(':modal')}catch{return true}});
+  order=order.filter(dialog=>open.includes(dialog));
+  for(const record of records)if(record.type==='attributes'&&open.includes(record.target)){order=order.filter(dialog=>dialog!==record.target);order.push(record.target)}
+  for(const dialog of open)if(!order.includes(dialog))order.push(dialog);
+  const parent=order.at(-1)||doc.body;
+  for(const item of [announcement,root])if(item&&item.parentNode!==parent)parent.append(item);
+ }
+ // Ignore ordinary arena/card DOM churn; only dialog changes need reparenting.
+ const changed=records=>{if(records.some(record=>record.type==='attributes'&&record.target.tagName==='DIALOG'||record.type==='childList'&&[...(record.addedNodes||[]),...(record.removedNodes||[])].some(node=>node.tagName==='DIALOG'||node.querySelector?.('dialog'))))sync(records)};
+ const observer=win.MutationObserver?new win.MutationObserver(changed):null;
+ observer?.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open']});
+ // close is captured as an additional signal for browsers with delayed records.
+ doc.addEventListener?.('close',sync,true);sync();
+ return {sync,destroy(){observer?.disconnect();doc.removeEventListener?.('close',sync,true);for(const item of [announcement,root])if(item&&item.parentNode!==doc.body)doc.body.append(item)}};
+}
 export function createRoomInvitesUI({document:doc=globalThis.document,window:win=globalThis.window,translate=t=>t,onJoined=()=>{},onHosted=()=>{},onStateChange=()=>{},canStart=()=>true,inboxRoot=null}={}){
  const $=id=>doc.getElementById(id),t=translate,root=inboxRoot||$('room-invites');
  const node=(tag,text,cls)=>{const n=doc.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n};
+ // A click-through viewport anchor contains one independently scrollable card.
+ if(root&&!root.querySelector?.('.room-invite-surface')){const surface=node('div',undefined,'room-invite-surface');surface.append(...(root.childNodes||[]));root.replaceChildren(surface);}
+ const portal=portalRoomInvites({document:doc,window:win,root,announcement:$('room-invites-announcement')});
  let login=null,room=null,seatToken=null,state={incoming:[],outgoing:[]},generation=0,serial=0,pending=false,busy=false,timer=null,suspended=false,roomVersion=0,presentation=0,notice=null,selectedId=null,renderKey='';
  const attention=new Set(),handling=new Set();
  const text=(id,value)=>{if($(id))$(id).textContent=t(value)};
@@ -22,13 +48,13 @@ export function createRoomInvitesUI({document:doc=globalThis.document,window:win
  }
  function button(label,fn,cls=''){const b=node('button',t(label),'room-invite-action '+cls);b.type='button';b.disabled=busy;b.onclick=fn;return b}
  const allInvites=()=>[...state.incoming.map(v=>({...v,incoming:true})),...state.outgoing.map(v=>({...v,incoming:false}))];
- function measure(){const height=root&&!root.hidden?Math.ceil(root.getBoundingClientRect?.().height||0):0;doc.documentElement?.style?.setProperty('--room-invite-height',height+'px')}
+
  function render(force=false){
-  if(!root)return;const list=$('room-invites-list');if(!list)return;
+  if(!root)return;portal.sync();const list=$('room-invites-list');if(!list)return;
   const all=allInvites(),queued=state.incoming.find(i=>i.status==='queued');
   const visible=[...all.filter(i=>i.incoming&&active(i)),...all.filter(i=>!i.incoming&&active(i)),...all.filter(i=>attention.has(i.id)&&!active(i))];
   root.hidden=!login?.authToken||(!visible.length&&!notice);
-  if(root.hidden){list.replaceChildren();renderKey='';measure();return}
+  if(root.hidden){list.replaceChildren();renderKey='';return}
   // One card at a time keeps a burst of invitations from covering game controls.
   // A queued acceptance stays selected until the server resolves it or the player cancels.
   let chosen=visible.find(i=>i.id===selectedId)||visible.find(i=>i.id===queued?.id)||visible[0];
@@ -37,9 +63,9 @@ export function createRoomInvitesUI({document:doc=globalThis.document,window:win
   text('room-invites-summary',summary);
   const next=$('room-invites-next');if(next){next.hidden=visible.length<2;next.disabled=busy;next.textContent=t('Diğer davet');next.onclick=()=>{selectedId=visible[(index+1)%visible.length]?.id;render(true)}}
   const key=JSON.stringify([chosen,queued?.id,busy,chosen?.status==='joined'?room?.code:null]);
-  if(!force&&key===renderKey){measure();return}renderKey=key;
+  if(!force&&key===renderKey){return}renderKey=key;
   const history=$('room-invites-history');if(history){history.replaceChildren();const recent=all.filter(i=>!active(i)).slice(-10);for(const i of recent){const line=node('p',undefined,'room-invite-history-row');const name=node('strong',(i.incoming?i.from:i.to)?.name||t('Oyuncu'));name.setAttribute('translate','no');line.append(name,node('span',t(ROOM_INVITE_LABELS[i.status]||i.status)));history.append(line)}if(history.parentElement)history.parentElement.hidden=!recent.length}
-  list.replaceChildren();if(!chosen){measure();return}
+  list.replaceChildren();if(!chosen){return}
   const invite=chosen,row=node('article',undefined,'room-invite-row '+(invite.incoming?'incoming':'outgoing'));
   row.setAttribute('data-status',invite.status);
   const copy=node('div',undefined,'room-invite-copy');
@@ -62,7 +88,7 @@ export function createRoomInvitesUI({document:doc=globalThis.document,window:win
    row.append(button(invite.incoming?'VAZGEÇ':'DAVETİ İPTAL ET',()=>void cancel(invite.id),'cancel'));
   }else if(elsewhere){row.append(button('Güncel odayı aç',()=>void openJoinedRoom(invite),'accept'),button('Kapat',()=>{attention.delete(invite.id);selectedId=null;render(true)},'decline'));}
   else row.append(button('Kapat',()=>{attention.delete(invite.id);selectedId=null;render(true)},'dismiss'));
-  list.append(row);measure();
+  list.append(row);
  }
  function applyState(result,view=presentation){
   if(!Array.isArray(result?.incoming)||!Array.isArray(result?.outgoing))return;
@@ -141,9 +167,8 @@ export function createRoomInvitesUI({document:doc=globalThis.document,window:win
  async function send(){try{await sendTo($('room-invite-friend')?.value)}catch{/* Displayed by the shared send flow. */}}
  async function cancelRoomInvites(code){const version=generation;await refresh(true);if(version!==generation)return;for(const invite of state.outgoing.filter(i=>i.code===code&&active(i)))await request('/api/friend/invite/cancel',{inviteId:invite.id});await refresh(true)}
  if($('room-invite-open'))$('room-invite-open').onclick=()=>void open();if($('room-invite-send'))$('room-invite-send').onclick=()=>void send();
- const resizeObserver=win.ResizeObserver&&root?new win.ResizeObserver(measure):null;resizeObserver?.observe(root);
  const stored=event=>{if(event.key==='hero-auction-session'&&!suspended)void refresh(true)};win.addEventListener('storage',stored);
  const reconnect=()=>{if(!suspended)void refresh(true)};win.addEventListener('online',reconnect);
  const hide=()=>{suspended=true;serial++;pending=false},show=()=>{suspended=false;void refresh()};win.addEventListener('pagehide',hide);win.addEventListener('pageshow',show);
- return {setLogin,setRoom,refresh,sendTo,cancelRoomInvites,get busy(){return busy},destroy(){generation++;resizeObserver?.disconnect();win.removeEventListener('storage',stored);win.removeEventListener('online',reconnect);doc.documentElement?.style?.removeProperty('--room-invite-height');win.clearInterval(timer);win.removeEventListener('pagehide',hide);win.removeEventListener('pageshow',show)}};
+ return {setLogin,setRoom,refresh,sendTo,cancelRoomInvites,get busy(){return busy},destroy(){generation++;portal.destroy();win.removeEventListener('storage',stored);win.removeEventListener('online',reconnect);win.clearInterval(timer);win.removeEventListener('pagehide',hide);win.removeEventListener('pageshow',show)}};
 }
