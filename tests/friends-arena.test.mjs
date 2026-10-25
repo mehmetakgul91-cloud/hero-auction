@@ -29,6 +29,6 @@ test('arena mounts shared invitation dock outside the combat grid and persists t
  assert.ok(source.includes('arenaInvites.setRoom(result.room,auctionToken)'));
  assert.ok(source.includes("localStorage.setItem('hero-auction-session',JSON.stringify({token,code:room.code}))"));
  assert.ok(source.includes("document.body.prepend(inviteBox)"));
- const inviteCSS=readFileSync(new URL('../public/room-invites.css',import.meta.url),'utf8');assert.ok(inviteCSS.includes('max-height:32dvh'));assert.ok(inviteCSS.includes('var(--room-invite-height,170px)'));assert.ok(inviteCSS.includes('min-height:44px'));
+ const inviteCSS=readFileSync(new URL('../public/room-invites.css',import.meta.url),'utf8');assert.ok(inviteCSS.includes('max-height:32dvh'));assert.ok(inviteCSS.includes('position:fixed'));assert.ok(!inviteCSS.includes('--room-invite-height'));assert.ok(inviteCSS.includes('min-height:44px'));
  const cg=crazyGamesSource(source,'.js');assert.ok(cg.includes("from '/crazygames/room-invites.js'"));
 });

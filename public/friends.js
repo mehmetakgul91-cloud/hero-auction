@@ -5,8 +5,8 @@ export function createFriendsUI({document:doc=globalThis.document,window:win=glo
  const panel=$('friends-panel'),nav=$('home-friends-tab'),opponent=opponentRoot||$('friend-opponent');
  const sessionId=win.crypto.randomUUID();
  let login=null,data=null,room=null,generation=0,pending=false,mutating=false,opponentBusy=false,timer=null,requestSerial=0,suspended=false;
- let inviteTarget=null,inviteBusy=false,inviteRevision=0,invitationState={incoming:[],outgoing:[]};
- const sentInvite=id=>[...invitationState.outgoing].reverse().find(i=>i.to?.playerId===id);
+ let inviteTarget=null,inviteBusy=false,inviteRevision=0,invitationState={incoming:[],outgoing:[]},requestDisclosure=null;
+ const sentInvite=id=>[...invitationState.outgoing].reverse().find(i=>i.to?.playerId===id&&['pending','queued'].includes(i.status));
  function setInvitations(next){if(JSON.stringify(next)===JSON.stringify(invitationState))return;invitationState=next;if(panel&&!panel.hidden&&!$('friends-lists')?.contains(doc.activeElement))renderLists();}
  const node=(tag,text,cls)=>{const el=doc.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;return el};
  function message(text){if($('friends-message'))$('friends-message').textContent=t(text)}
@@ -37,7 +37,7 @@ export function createFriendsUI({document:doc=globalThis.document,window:win=glo
  const onlineFriend=id=>data?.friends.find(person=>person.playerId===id&&person.online);
  const roomContext=value=>JSON.stringify(value?[value.code,value.mode,value.phase,value.me,!!value.players?.[1]]:null);
  function setRoom(value){const changed=roomContext(room)!==roomContext(value);room=value;renderOpponent();if(changed){if(inviteTarget||inviteBusy)message('');inviteTarget=null;inviteRevision++;if(panel&&!panel.hidden)renderLists()}}
- function actionButton(label,action,id){const button=node('button',t(label),'outline');button.type='button';button.disabled=mutating||inviteBusy;button.onclick=()=>void mutate(action,id);return button}
+ function actionButton(label,action,id){const version=generation;const button=node('button',t(label),'outline');button.type='button';button.disabled=mutating||inviteBusy;button.onclick=()=>{if(version===generation&&!panel?.hidden)void mutate(action,id)};return button}
  function beginInvite(id,version){
   if(version!==generation||mutating||inviteBusy||!login?.authToken||!onInvite||panel?.hidden)return;
   if(!canHostInvite()){message('Davet için önce mevcut odandan ayrılmalısın.');return}
@@ -62,9 +62,16 @@ export function createFriendsUI({document:doc=globalThis.document,window:win=glo
  }
  function renderLists(){
   const root=$('friends-lists');if(!root||!data)return;
-  root.replaceChildren();
-  for(const [key,title,empty] of [['incoming','Gelen istekler','Bekleyen istek yok.'],['outgoing','Gönderilen istekler','Gönderilen istek yok.'],['friends','Arkadaşlarım','Henüz arkadaş yok.']]){
-   const section=node('section',undefined,'friends-section');section.append(node('h3',t(title)+' · '+data[key].length));
+  const requestsOpen=!!requestDisclosure?.open,requestCount=data.incoming.length+data.outgoing.length;
+  root.replaceChildren();requestDisclosure=null;
+  if(requestCount){
+   requestDisclosure=node('details',undefined,'friends-requests');requestDisclosure.open=requestsOpen;
+   const summary=node('summary'),label=node('span',t('Arkadaşlık istekleri')),count=node('span',String(requestCount),'friends-request-count');
+   summary.append(label,count);requestDisclosure.append(summary);root.append(requestDisclosure);
+  }
+  for(const [key,title,empty] of [['friends','Arkadaşlarım','Henüz arkadaş yok.'],['incoming','Gelen istekler',''],['outgoing','Gönderilen istekler','']]){
+   if(key!=='friends'&&!data[key].length)continue;
+   const section=node('section',undefined,'friends-section '+(key==='friends'?'friends-roster':'friends-request-section'));section.append(node('h3',t(title)+' · '+data[key].length));
    if(!data[key].length)section.append(node('p',t(empty),'hint'));
    for(const person of (key==='friends'?[...data[key]].sort((a,b)=>Number(b.online)-Number(a.online)):data[key])){
     const row=node('div',undefined,'friend-row'),identity=node('div',undefined,'friend-identity'),name=node('strong',person.name);name.setAttribute('translate','no');
@@ -83,7 +90,7 @@ export function createFriendsUI({document:doc=globalThis.document,window:win=glo
     row.append(actions);if(key==='friends'&&inviteTarget===person.playerId&&person.online&&canHostInvite())row.append(inviteConfirmation(person));section.append(row);
    }
    if(key==='friends'&&onInvite&&!canHostInvite()&&data.friends.some(person=>person.online))section.append(node('p',t('Davet için önce mevcut odandan ayrılmalısın.'),'hint'));
-   root.append(section);
+   if(key==='friends')root.append(section);else requestDisclosure.append(section);
   }
  }
  async function refresh(force=false){
@@ -106,7 +113,7 @@ export function createFriendsUI({document:doc=globalThis.document,window:win=glo
  }
  function open(){if(!panel||!login?.authToken)return;onOpen();panel.hidden=false;nav?.setAttribute('aria-expanded','true');nav?.classList.add('selected');
   if($('friends-guest-note'))$('friends-guest-note').hidden=login.type!=='guest';renderLists();void refresh();panel.scrollIntoView?.({behavior:'smooth',block:'start'});}
- function close(){inviteTarget=null;inviteRevision++;message('');if(panel)panel.hidden=true;nav?.setAttribute('aria-expanded','false');nav?.classList.remove('selected')}
+ function close(){inviteTarget=null;inviteRevision++;message('');if($('friends-tools'))$('friends-tools').open=false;if(requestDisclosure)requestDisclosure.open=false;if(panel)panel.hidden=true;nav?.setAttribute('aria-expanded','false');nav?.classList.remove('selected')}
  if(nav)nav.onclick=open;
  if($('friends-close'))$('friends-close').onclick=()=>{close();nav?.focus()};
  if($('friend-add-form'))$('friend-add-form').onsubmit=e=>{e.preventDefault();void mutate('add',$('friend-id').value.trim())};
