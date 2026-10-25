@@ -624,8 +624,8 @@ async function loadHeroInfo(card){
  if(desc)desc.textContent=document.documentElement.lang==='en'?heroDescriptionEnglish(card):data?.description||card.description||card.name+' hakkında doğrulanmış kısa açıklama henüz eklenmedi.';
 
  const activeNode=document.getElementById('auction-active'),passiveNode=document.getElementById('auction-passive');
- if(activeNode)activeNode.textContent='⚔ Aktif: '+abilityImpact(data?.active);
- if(passiveNode)passiveNode.textContent='✦ Pasif: '+abilityImpact(data?.passive);
+ if(activeNode)activeNode.textContent='⚔ Aktif: '+abilityImpact(data?.active,{compact:true});
+ if(passiveNode)passiveNode.textContent='✦ Pasif: '+abilityImpact(data?.passive,{compact:true});
  const tag=document.getElementById('auction-lane-bonuses');
  if(tag){
   const front=Number(data?.laneModifiers?.front),back=Number(data?.laneModifiers?.back);

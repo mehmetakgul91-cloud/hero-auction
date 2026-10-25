@@ -36,12 +36,101 @@ const templates=Object.freeze({
  thorns:['Vuruş sonrası kendine kalkan: savunma × %{0}','After attacking, gains a self shield for {0}% of defense'],
  unknown:['Etki belirtilmemiş','Effect not specified']
 });
+// Only gameplay cards opt into compact copy. The Heroes list and detail dialog
+// retain the complete descriptions above by default, without an extra click.
+// Secondary conditions remain in full copy; summaries keep effect, target and rates.
+const compactTemplates=Object.freeze({
+ "delay": [
+  "hedefin sonraki hareketini sona erteler",
+  "moves the target’s next action to the end"
+ ],
+ "shield": [
+  "Kendine savunması × %{0} kalkan",
+  "Self shield: own defense × {0}%"
+ ],
+ "front": [
+  "ön saf müttefiklerine +%{0} savunma kadar kalkan",
+  "front-row allies gain an extra {0}% of own defense as shield"
+ ],
+ "tankSelf": [
+  "kendine ek +%{0} savunma kadar kalkan",
+  "extra self shield: own defense × {0}%"
+ ],
+ "tankShield": [
+  "Kendi savunmasından kendine %{0} + %{2}, ön safa +%{1} kalkan (tükenene dek)",
+  "Shields from own defense: {0}% + {2}% to self, +{1}% to front row (until consumed)"
+ ],
+ "shieldDuration": [
+  "tükenene dek kalır",
+  "lasts until consumed"
+ ],
+ "hybrid": [
+  "En düşük can oranlı müttefike kendi saldırısı × %{0} şifa, savunması × %{1} kalkan",
+  "Lowest-health-ratio ally: own attack × {0}% healing, own defense × {1}% shield"
+ ],
+ "heal": [
+  "Can oranı en düşük yaralı müttefike kendi saldırısı × %{0} şifa",
+  "Heals the injured ally with the lowest health ratio for own attack × {0}%"
+ ],
+ "pierce": [
+  "Bu vuruşta hedefin savunmasını %{0} deler",
+  "Pierces {0}% of target defense for this hit"
+ ],
+ "splash": [
+  "Diğer her düşmana ana vuruşun ham hasarı × %{0} hasar",
+  "Each other enemy takes {0}% of the main hit’s raw damage"
+ ],
+ "sunder": [
+  "Vuruş sonrası hedef savunması −%{0}, kalıcı",
+  "After hitting: target defense −{0}%, permanent"
+ ],
+ "weaken": [
+  "Vuruş sonrası hedef saldırısı −%{0}, kalıcı",
+  "After hitting: target attack −{0}%, permanent"
+ ],
+ "drain": [
+  "Ana vuruşun can hasarı × %{0} kendine şifa",
+  "Heals self for {0}% of the main hit’s health damage"
+ ],
+ "execute": [
+  "Vuruş sonrası canı %{0} altındaki hedefi bitirir",
+  "After hitting, finishes the target below {0}% health"
+ ],
+ "haste": [
+  "Hız +{0} (tavan 150); sonraki turda etkili",
+  "Speed +{0} (cap 150); affects next round’s order"
+ ],
+ "defense": [
+  "Savaş başı: savunma +%{0}",
+  "Battle start: defense +{0}%"
+ ],
+ "speed": [
+  "Savaş başı: hız +%{0}",
+  "Battle start: speed +{0}%"
+ ],
+ "focus": [
+  "Savaş başı: saldırı +%{0}",
+  "Battle start: attack +{0}%"
+ ],
+ "rage": [
+  "Tur başı can %50 altındaysa bir kez kalıcı saldırı +%{0}",
+  "Once at round start below 50% health: permanent attack +{0}%"
+ ],
+ "regen": [
+  "Tur başı: azami can × %{0} şifa",
+  "Round start: heals {0}% of max health"
+ ],
+ "thorns": [
+  "Vuruş sonrası kendine savunma × %{0} kalkan",
+  "After attacking: self shield equal to {0}% of defense"
+ ]
+});
 const number=new Intl.NumberFormat('tr-TR',{maximumFractionDigits:2});
 const enNumber=new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
-const segment=(key,values,english)=>templates[key][english?1:0].replace(/\{(\d+)\}/g,(_,i)=>(english?enNumber:number).format(values[i]));
-export function abilityImpact(ability,{english=false}={}){
+const segment=(key,values,english,compact=false)=>(compact?compactTemplates[key]??templates[key]:templates[key])[english?1:0].replace(/\{(\d+)\}/g,(_,i)=>(english?enNumber:number).format(values[i]));
+export function abilityImpact(ability,{english=false,compact=false}={}){
  const effect=ability?.effect;
- const make=(key,...values)=>segment(key,values,english);
+ const make=(key,...values)=>segment(key,values,english,compact);
  const pct=key=>abilityValue(ability,key)*100;
  const passivePercent=Number.isFinite(ability?.value)?ability.value*100:null;
  if(passivePercent!==null){
@@ -53,6 +142,7 @@ export function abilityImpact(ability,{english=false}={}){
   case 'burst':text=make('burst',(abilityValue(ability,'power')-1)*100)+(ability.delay?'; '+make('delay'):'');break;
   case 'shield':
    if(ability.supportHybrid)text=make('hybrid',pct('healRate'),pct('allyShieldRate'));
+   else if(compact&&ability.frontShieldRate!==undefined&&ability.tankShieldRate!==undefined)text=make('tankShield',pct('shieldRate'),pct('frontShieldRate'),pct('tankShieldRate'));
    else {text=make('shield',pct('shieldRate'));if(ability.frontShieldRate!==undefined)text+='; '+make('front',pct('frontShieldRate'));if(ability.tankShieldRate!==undefined)text+='; '+make('tankSelf',pct('tankShieldRate'));text+='; '+make('shieldDuration');}
    break;
   case 'heal':text=make('heal',pct('healRate'));break;
@@ -69,7 +159,7 @@ export function abilityImpact(ability,{english=false}={}){
  return make('cadence')+text;
 }
 const escapeRegex=text=>text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-const translationPatterns=Object.values(templates).map(([tr,en])=>{
+const translationPatterns=[...Object.values(templates),...Object.values(compactTemplates)].map(([tr,en])=>{
  const indices=[];
  const pattern=tr.split(/(\{\d+\})/).map(part=>{const placeholder=part.match(/^\{(\d+)\}$/);if(!placeholder)return escapeRegex(part);indices.push(Number(placeholder[1]));return '([0-9]+(?:[.,][0-9]+)?)';}).join('');
  return {tr,en,indices,pattern:new RegExp(pattern,'g')};
