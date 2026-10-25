@@ -10,7 +10,7 @@ test('defaults use every real hero lane preference, including role exceptions',(
  for(const hero of battleRoster){
   assert.equal(preferredLane(hero),hero.laneModifiers.front>hero.laneModifiers.back?'front':'back',hero.name);
  }
- for(const [name,lane] of [['Kadim Koruyucu','back'],['Eloren','back'],['Kök Dervişi','front'],['Sancak Bekçisi','front'],['Kum Hançeri','front']])assert.equal(preferredLane(battleRoster.find(hero=>hero.name===name)),lane);
+ for(const [name,lane] of [['Kadim Koruyucu','back'],['Eloren','back'],['Kök Dervişi','front'],['Sancak Bekçisi','front'],['Kum Hançeri','back']])assert.equal(preferredLane(battleRoster.find(hero=>hero.name===name)),lane);
  assert.equal(preferredLane({role:'tank'}),'front');assert.equal(preferredLane({role:'energy'}),'back');
 });
 

@@ -14,7 +14,11 @@ const surgeFields=['arcaneSurgeBonusAttack','arcaneSurgeFromRound','arcaneSurgeU
 test('legacy primary then successive splash casualties replay transfers in actual settlement order',()=>{
  const cards=names.map(team=>team.map((name,index)=>{
   const hero=roster.find(entry=>entry.name===name);assert.ok(hero,name);
-  return {...structuredClone(hero),power:hero.proposedPower,lane:index<2?'front':'back'};
+  // This historical casualty chain tests replay ordering, not current balance.
+  // Keep its original Mor Hilal stats; current lane data and live preparation
+  // are independently covered by assassin-lane-bonuses.test.mjs.
+  const laneModifiers=hero.id==='original:expansion-26'?{front:.06,back:-.03}:hero.laneModifiers;
+  return {...structuredClone(hero),laneModifiers:{...laneModifiers},power:hero.proposedPower,lane:index<2?'front':'back'};
  }));
  const result=simulateBattle(...cards,{
   seed:'chain:3698',maxRounds:6,

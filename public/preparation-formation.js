@@ -1,5 +1,5 @@
 // One deterministic default per acquired roster. Per-hero lane data is authoritative:
-// some fighters prefer the back and some support/assassin heroes prefer the front.
+// some fighters prefer the back and some support heroes prefer the front.
 const roles=new Set(['tank','fighter','energy','assassin','support']);
 const lanes=new Set(['front','back']);
 const validTeam=team=>Array.isArray(team)&&team.length===5&&team.every(hero=>hero&&typeof hero.id==='string'&&hero.id&&roles.has(hero.role))&&new Set(team.map(hero=>hero.id)).size===5;
