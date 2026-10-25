@@ -258,15 +258,15 @@ exception predates 004; its SQL is still correctly limited to welcome10. Payment
 provider readiness is required for **sales**, not for a separately approved free
 campaign; activation documentation must keep those two decisions distinct.
 
-## Approved disposable CI implementation (prepared; result pending)
+## Approved disposable CI implementation
 
 An official `postgres:18` service **inside GitHub Actions** is authorized
 for this test only. `.github/workflows/economy-postgres-tests.yml` uses an ephemeral
 Ubuntu runner, read-only repository permissions, no repository secret references,
 a health check, and a 15-minute ceiling. This route is separate from production
 and does not authorize accessing or modifying Render data. The official major-18
-image is intentionally not digest-pinned; each run records its actual PostgreSQL
-version, and migration SHA-256 hashes are printed. [Official image](https://github.com/docker-library/docs/tree/master/postgres)
+image is pinned to the digest actually exercised by the first isolated run; each
+run records its PostgreSQL version and migration SHA-256 hashes. [Official image](https://github.com/docker-library/docs/tree/master/postgres)
 
 `tools/test-postgres-economy.mjs` requires the exact explicit fixture target
 `HERO_ECONOMY_TEST_DB=postgresql://test:test@127.0.0.1:5432/hero_economy_test`.
@@ -288,3 +288,12 @@ Local JS syntax, YAML parsing, and six refusal-path checks passed (missing opt-i
 remote host, wrong database, wrong role, nonempty DATABASE_URL, query override). A real PostgreSQL pass may be stated
 **only after the exact published commit's CI job terminates successfully**. This
 review has not run or connected to PostgreSQL locally.
+
+### First real-database result
+
+PR47 head `d907e8e58dd089a34a17e74691c3fcc359937ad6` passed all **12**
+real PostgreSQL integration groups on PostgreSQL **18.6**.
+[Run 40244930411](https://github.com/mehmetakgul91-cloud/hero-auction/actions/runs/40244930411).
+The workflow is now pinned to that run’s official image digest; its final release
+head must pass again. This does not satisfy production preflight or authorize
+production migration/activation, and does not claim a physical restart test.

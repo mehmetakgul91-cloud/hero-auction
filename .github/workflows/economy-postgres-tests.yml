@@ -35,9 +35,9 @@ jobs:
     timeout-minutes: 15
     services:
       postgres:
-        # Official Docker Library image; major 18 intentionally tracks its patch
-        # updates. The harness records the actual server version used by each run.
-        image: postgres:18
+        # Official Docker Library PostgreSQL18 image, pinned to the digest actually
+        # exercised by the first isolated CI run. No production database access.
+        image: postgres:18@sha256:edb0c08dc33befd0262ab3b5cf1c4f3f8cfd8b09e88c05b45adee29d6761ddb6
         env:
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
