@@ -1,3 +1,4 @@
+import {consumeCommanderWeaken,expireCommanderWeaken} from './commander-weaken-status.js';
 import {expireCommanderFocus} from './battle-commander-focus.js';
 import {expireCommanderUltimateStatuses} from './commander-ultimate-status.js';
 import {applyHeroDamage,expireLastStandGuards} from './battle-hp-damage.js';
@@ -38,7 +39,7 @@ export function castLiveCommanderCombat(combat,{side,ability,requestId,matchKey,
  combat.abilities.finished=effect.finished;
  const record=combat.abilities.requests.get(requestKey);
  if(record){record.version=combat.version;record.targetIds=structuredClone(targetIds??null);}
- return {duplicate:false,version:combat.version,events,teams:structuredClone(combat.teams),finished:combat.finished,energy:cast.energy,ultimateEnergy:cast.ultimateEnergy,cooldownUntil:cast.cooldownUntil};
+ return {duplicate:false,version:combat.version,events,teams:structuredClone(combat.teams),finished:combat.finished,energy:cast.energy,ultimateEnergy:cast.ultimateEnergy,normalCooldownUntil:cast.normalCooldownUntil,normalCooldownMs:cast.normalCooldownMs,cooldownUntil:cast.cooldownUntil};
 }
 export function viewLiveCommanderCombat(combat,{sinceVersion=0}={}){
  if(!combat||!Number.isSafeInteger(sinceVersion)||sinceVersion<0)throw Error('Invalid snapshot request');
@@ -74,6 +75,7 @@ export function applyServerHeroAction(combat,{side,actorId,targetId,action='atta
   if(!Number.isSafeInteger(amount)||amount<0)throw Error('Invalid thorns value');
   actor.shield=(actor.shield||0)+amount;
  }
+ if(action==='attack')consumeCommanderWeaken(actor);
  combat.teams=next;
  combat.version++;
  const event={round,side,actor:actorId,action,target:targetId,value:applied,absorbed,version:combat.version,...(guardTriggered?{guardTriggered:true}:{}),...(arcaneTransfer?{arcaneTransfer}:{})};
@@ -91,7 +93,7 @@ export function beginServerCombatRound(combat,round){
  expireLastStandGuards(combat.teams,round);
  expireCommanderUltimateStatuses(combat.teams,round);
  expireCommanderFocus(combat.teams,round);
- for(const team of combat.teams)for(const unit of team){if(unit.commanderWeaken&&Number.isInteger(unit.commanderWeakenUntilRound)&&round>unit.commanderWeakenUntilRound){delete unit.commanderWeaken;delete unit.commanderWeakenUntilRound;}}
+ expireCommanderWeaken(combat.teams,round);
  for(let side=0;side<2;side++)grantLiveCommanderEnergy(combat.abilities,side,commanderEnergyPerRound(combat.commanders[side]));
  combat.version++;
  const event={round,action:'round-start',energy:[...combat.abilities.energy],ultimateEnergy:[...combat.abilities.ultimateEnergy],version:combat.version};

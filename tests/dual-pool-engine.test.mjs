@@ -6,10 +6,11 @@ import {replayCommanderTranscript} from '../commander-transcript.js';
 import {createRoomCommanderSession,submitRoomCommanderTurn,viewRoomCommanderSession} from '../commander-room-bridge.js';
 const cards=p=>Array.from({length:5},(_,i)=>({id:p+i,power:100,role:'tank',lane:'front',passive:{effect:'regen',value:1}}));
 const commanders=[{commanderId:'attack',levels:{attack:0,defense:0,magic:0,support:0}},{commanderId:'defense',levels:{attack:0,defense:0,magic:0,support:0}}];
+const resourcePools=({targets,...pools})=>pools;
 const opts={seed:'dual-pool',maxRounds:8,commanders};
 test('normal-spending legacy transcript retains charge and ultimate leaves normal energy intact',()=>{
  const turns=Array.from({length:8},()=>[{command:'pass'},{command:'pass'}]);
- turns[1][0]={command:'normal'};turns[4][0]={command:'ultimate'};turns[5][0]={command:'normal'};
+ turns[1][0]={command:'normal'};turns[4][0]={command:'ultimate',targetIds:['b0']};turns[5][0]={command:'normal'};
  const r=replayCommanderTranscript(cards('a'),cards('b'),{...opts,turns});
  const normal=r.log.find(e=>e.action==='commander-attack-normal');
  const ult=r.log.find(e=>e.action==='commander-attack-ultimate');
@@ -43,7 +44,7 @@ test('room views expose both pools for the authenticated seat and fresh matches 
  const room={code:'dualp',phase:'finished',created:1,matchNumber:1,players:[{token:'a'},{token:'b'}]};
  const bound=createRoomCommanderSession(room,{cardsA:cards('a'),cardsB:cards('b'),commanders});
  for(let round=1;round<=5;round++){
-  submitRoomCommanderTurn(room,bound,{token:'a',round,command:round===2?'normal':round===5?'ultimate':'pass',energy:1000,ultimateEnergy:1000});
+  submitRoomCommanderTurn(room,bound,{token:'a',round,command:round===2?'normal':round===5?'ultimate':'pass',...(round===5?{targetIds:['b0']}:{}),energy:1000,ultimateEnergy:1000});
   submitRoomCommanderTurn(room,bound,{token:'b',round,command:'pass'});
  }
  const a=viewRoomCommanderSession(room,bound,'a'),b=viewRoomCommanderSession(room,bound,'b');
@@ -107,10 +108,10 @@ test('selected target helper rejects a dead mage recipient and living revive rec
  assert.throws(()=>validateCommanderTurnTargets('ultimate',{commanderId:'magic',side:0,targetIds:['b0'],teams}),/living friendly/);
 });
 test('round resource snapshots capture post-command balances with independent arrays',()=>{
- const r=simulateBattle(cards('a'),cards('b'),{...opts,commanderActions:[{round:2,side:0,ability:'normal'},{round:5,side:0,ability:'ultimate'}]});
- assert.deepEqual(r.commanderResourcesByRound[0],{round:1,energy:[30,30],ultimateEnergy:[30,30],ultimateUsed:[false,false]});
- assert.deepEqual(r.commanderResourcesByRound[1],{round:2,energy:[2,42],ultimateEnergy:[42,42],ultimateUsed:[false,false]});
- assert.deepEqual(r.commanderResourcesByRound[4],{round:5,energy:[38,78],ultimateEnergy:[3,78],ultimateUsed:[true,false]});
+ const r=simulateBattle(cards('a'),cards('b'),{...opts,commanderActions:[{round:2,side:0,ability:'normal'},{round:5,side:0,ability:'ultimate',targetIds:['b0']}]});
+ assert.deepEqual(resourcePools(r.commanderResourcesByRound[0]),{round:1,energy:[30,30],ultimateEnergy:[30,30],ultimateUsed:[false,false]});
+ assert.deepEqual(resourcePools(r.commanderResourcesByRound[1]),{round:2,energy:[2,42],ultimateEnergy:[42,42],ultimateUsed:[false,false]});
+ assert.deepEqual(resourcePools(r.commanderResourcesByRound[4]),{round:5,energy:[38,78],ultimateEnergy:[3,78],ultimateUsed:[true,false]});
  assert.equal(r.commanderResourcesByRound[7].ultimateEnergy[0],3);
  r.commanderResourcesByRound[4].energy[0]=999;r.commanderResourcesByRound[4].ultimateEnergy[0]=999;r.commanderResourcesByRound[4].ultimateUsed[0]=false;
  assert.equal(r.commanderResourcesByRound[5].energy[0],50);assert.equal(r.commanderResourcesByRound[5].ultimateEnergy[0],3);assert.equal(r.commanderResourcesByRound[5].ultimateUsed[0],true);

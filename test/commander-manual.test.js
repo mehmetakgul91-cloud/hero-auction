@@ -17,10 +17,10 @@ test('normal ability at round 4 changes real damage and logs action',()=>{
 });
 test('attack ultimate requires 75 energy and is available by round 5 at level zero',()=>{
  const opts={seed:'ultimate-test',maxRounds:15,commanders};
- assert.throws(()=>simulateBattle(team('a'),team('b'),{...opts,commanderActions:[{side:0,round:4,ability:'ultimate'}]}),/Insufficient commander energy/);
- const powered=simulateBattle(team('a'),team('b'),{...opts,commanderActions:[{side:0,round:5,ability:'ultimate'}]});
+ assert.throws(()=>simulateBattle(team('a'),team('b'),{...opts,commanderActions:[{side:0,round:4,ability:'ultimate',targetIds:['b0']}]}),/Insufficient commander energy/);
+ const powered=simulateBattle(team('a'),team('b'),{...opts,commanderActions:[{side:0,round:5,ability:'ultimate',targetIds:['b0']}]});
  assert.ok(powered.log.some(e=>e.action==='commander-attack-ultimate'&&e.value>0));
 });
 test('cannot cast two abilities in same round',()=>{
- assert.throws(()=>simulateBattle(team('a'),team('b'),{commanders,commanderActions:[{side:0,round:4,ability:'normal'},{side:0,round:4,ability:'ultimate'}]}),/Only one commander action/);
+ assert.throws(()=>simulateBattle(team('a'),team('b'),{commanders,commanderActions:[{side:0,round:4,ability:'normal'},{side:0,round:4,ability:'ultimate',targetIds:['b0']}]}),/Only one commander action/);
 });

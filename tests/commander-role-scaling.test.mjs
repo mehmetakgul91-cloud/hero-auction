@@ -13,7 +13,7 @@ function combat(kind,level=0){
 const cast=(c,ability,side=0,targetIds)=>castLiveCommanderCombat(c,{side,ability,targetIds,requestId:'roles_'+ability,matchKey:'roles',now:2000});
 
 for(const kind of ['defense','support','magic'])test(kind+' normal retains level scaling on either seat and after casualties',()=>{
- const base={defense:.08,support:.12,magic:.30}[kind];
+ const base={defense:.08,support:.12,magic:.35}[kind];
  for(const level of [0,1,10,20,40])for(const side of [0,1])for(const survivors of [5,2,1]){
   const c=combat(kind,level);for(let i=survivors;i<5;i++){c.teams[side][i].hp=0;c.teams[1-side][i].hp=0;}
   const target=c.teams[1-side].find(u=>u.hp>0).id,before=structuredClone(c.teams),rate=Number((base*(1+level*.01)).toFixed(4));
@@ -32,7 +32,7 @@ for(const kind of ['defense','support','magic'])test(kind+' normal retains level
 test('defense ultimate preserves shield scaling plus one guard at every level and survivor count',()=>{
  for(const level of [0,1,10,20,40])for(const side of [0,1])for(const survivors of [5,2,1]){
   const c=combat('defense',level);for(let i=survivors;i<5;i++)c.teams[side][i].hp=0;const before=structuredClone(c.teams),rate=Number((.2*(1+level*.01)).toFixed(4));const result=cast(c,'ultimate',side),summary=result.events.at(-1),expected=Math.round(survivors*1000*rate);
-  assert.equal(c.abilities.ultimateEnergy[side],15);assert.equal(summary.value,expected);assert.equal(summary.impacts.filter(u=>u.kind==='shield').reduce((sum,u)=>sum+u.value,0),expected);assert.equal(summary.impacts.filter(u=>u.kind==='guard').length,1);assert.deepEqual(c.teams[side].filter(u=>u.hp===0),before[side].filter(u=>u.hp===0));assert.deepEqual(c.teams[1-side],before[1-side]);assert.equal(c.teams[side][0].lastStandUntilRound,2);
+  assert.equal(c.abilities.ultimateEnergy[side],15);assert.equal(summary.value,expected);assert.equal(summary.impacts.filter(u=>u.kind==='shield').reduce((sum,u)=>sum+u.value,0),expected);assert.equal(summary.impacts.filter(u=>u.kind==='guard').length,1);assert.deepEqual(c.teams[side].filter(u=>u.hp===0),before[side].filter(u=>u.hp===0));assert.deepEqual(c.teams[1-side],before[1-side]);assert.equal(c.teams[side][0].lastStandPersistent,true);assert.equal(c.teams[side][0].lastStandUntilRound,undefined);
  }
 });
 test('magic ultimate is a fixed cast-time attack snapshot, not a level-scaled enemy debuff',()=>{
@@ -57,10 +57,10 @@ test('support normal heals a one-point wound, but rejects healthy/fallen-only ta
   const healthy=combat('support',level);for(const u of healthy.teams[0])u.hp=u.maxHp;healthy.teams[0][4].hp=0;const before=structuredClone(healthy);assert.throws(()=>cast(healthy,'normal'),/yaralı kahraman yok/);assert.deepEqual(healthy,before);
  }
 });
-test('magic normal lowers enemy damage with level scaling and expires after three rounds',()=>{
+test('magic normal lowers only the next attack with level scaling',()=>{
  for(const level of [0,1,10,20,40]){
-  const c=combat('magic',level);cast(c,'normal',0,['1-0']);const rate=Number((.3*(1+level*.01)).toFixed(4));
-  for(let round=1;round<=4;round++){if(round>1)beginServerCombatRound(c,round);const hit=stepParityBasicAttack(c,{side:1,actorId:'1-0'});assert.equal(hit.event.rawDamage,Math.floor(100*(round<=3?1-rate:1)*.7));}
+  const c=combat('magic',level);cast(c,'normal',0,['1-0']);const rate=Number((.35*(1+level*.01)).toFixed(4));
+  for(let round=1;round<=4;round++){if(round>1)beginServerCombatRound(c,round);const hit=stepParityBasicAttack(c,{side:1,actorId:'1-0'});assert.equal(hit.event.rawDamage,Math.floor(100*(round===1?1-rate:1)*.7));}
  }
 });
 test('magic ultimate doubles selected ally damage for three rounds at all levels then restores base',()=>{

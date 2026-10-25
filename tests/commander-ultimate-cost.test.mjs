@@ -25,7 +25,7 @@ for(const [kind,cost]of Object.entries(costs)){
  });
  test(`${kind} browser button threshold follows selected archetype`,()=>{
   const button=()=>({disabled:false,textContent:'',addEventListener(){},removeEventListener(){}}),normalButton=button(),ultimateButton=button(),energyLabel=button(),statusLabel=button();
-  let state={commanderId:kind,energy:100,ultimateEnergy:cost-1,cooldownMs:0,finished:false};
+  let state={commanderId:kind,ultimateTargetAvailable:true,energy:100,ultimateEnergy:cost-1,cooldownMs:0,finished:false};
   const controls=createLiveArenaCommanderControls({normalButton,ultimateButton,energyLabel,statusLabel,readState:()=>state,onCast:async()=>{}});
   assert.equal(ultimateButton.disabled,true);state.ultimateEnergy=cost;controls.refresh();assert.equal(ultimateButton.disabled,false);assert.equal(normalButton.disabled,false);assert.match(energyLabel.textContent,new RegExp(cost+'/100'));controls.destroy();
  });

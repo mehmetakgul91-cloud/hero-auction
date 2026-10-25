@@ -41,20 +41,20 @@ test('special heroes are rejected rather than silently losing abilities',()=>{
  assert.equal(c.version,0);
 });
 
-test('magic weakens actual basic attack damage for exactly three rounds',()=>{
+test('magic weakens only the next actual basic attack',()=>{
  const c=make();
  c.commanders[0]={commanderId:'magic'};
  c.abilities.energy[0]=100;c.abilities.ultimateEnergy[0]=100;
  castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'weaken_hit_01',targetIds:['1-0'],matchKey:'step:1',now:2000});
  const weakened=c.teams[1].find(u=>u.commanderWeaken>0);
  assert.ok(weakened);
- assert.equal(weakened.commanderWeaken,.30);
+ assert.equal(weakened.commanderWeaken,.35);
  for(let round=1;round<=3;round++){
   if(round>1)advanceBasicCombatRound(c);
   const target=selectBattleTarget(c.teams[0],weakened,c.round);
   const before=target.hp;
   stepBasicHeroCombat(c,{side:1,actorId:weakened.id});
-  assert.equal(before-c.teams[0].find(u=>u.id===target.id).hp,21);
+  assert.equal(before-c.teams[0].find(u=>u.id===target.id).hp,round===1?20:30);
  }
  advanceBasicCombatRound(c);
  assert.equal(c.teams[1].find(u=>u.id===weakened.id).commanderWeaken,undefined);

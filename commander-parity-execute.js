@@ -1,3 +1,4 @@
+import {commanderWeakenRate,consumeCommanderWeaken} from './commander-weaken-status.js';
 import {abilityValue} from './public/hero-ability-rules.js';
 import {applyHeroDamage} from './battle-hp-damage.js';
 // Experimental server-owned execute special, preserving the legacy <12% threshold.
@@ -12,7 +13,7 @@ export function stepParityExecute(combat,{side,actorId,round=combat?.round,criti
  const enemies=teams[1-side],target=selectBattleTarget(enemies,actor,round);
  if(!target)throw Error('No living target');
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
- const weakened=Number.isInteger(actor.commanderWeakenUntilRound)&&round<=actor.commanderWeakenUntilRound?Math.max(0,Math.min(1,Number(actor.commanderWeaken)||0)):0;
+ const weakened=commanderWeakenRate(actor,round);
  const raw=calculateHeroRawDamage({unit:actor,target,skill:actor.active,special:true,critical,guarded,weakened,round});
  const {damage,absorbed,executedDamage:executed,guardTriggered,arcaneTransfer}=applyHeroDamage(target,raw,{round,allies:enemies,executeThreshold:abilityValue(actor.active,'executeThreshold')});
  actor.damage=(actor.damage||0)+damage+executed;
@@ -21,6 +22,7 @@ export function stepParityExecute(combat,{side,actorId,round=combat?.round,criti
  const event={round,side,actor:actorId,action:actor.active.name||'special',target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:'special',executedDamage:executed,...(guardTriggered?{guardTriggered:true}:{}),...(arcaneTransfer?{arcaneTransfer}:{})};
  const thornsShield=applyAttackThorns(actor,{enabled:allowThornsPassive});
  if(thornsShield)event.thornsShield=thornsShield;
+ consumeCommanderWeaken(actor);
  combat.teams=teams;combat.version++;event.version=combat.version;combat.events.push(event);
  if(killed)grantLiveCommanderEnergy(combat.abilities,1-side,10);
  combat.finished=teams.some(team=>team.every(u=>u.hp<=0));

@@ -2,16 +2,23 @@ import {transferArcaneSurgeOnDeath} from './commander-ultimate-status.js';
 import {calculateShieldAbsorption} from './battle-shield-absorption.js';
 // One-shot Son Kale: survives a lethal atomic hit at 1 HP. It never resurrects,
 // heals, stacks charges, or bypasses the existing per-hit shield absorption.
+const clearLastStand=target=>{delete target.lastStandReady;delete target.lastStandPersistent;delete target.lastStandUntilRound;};
+export function isLastStandActive(target,round){
+ if(!target||target.lastStandReady!==true||!Number.isFinite(target.hp)||target.hp<=0||!Number.isInteger(round)||round<1)return false;
+ if(target.lastStandPersistent===true)return true;
+ // Previously saved guards without a persistent flag retain their timed lifetime.
+ return target.lastStandPersistent===undefined&&Number.isInteger(target.lastStandUntilRound)&&target.lastStandUntilRound>=round;
+}
 export function grantLastStand(target,round){
  if(!Number.isInteger(round)||round<1)throw Error('Invalid last stand round');
  if(!target||!Number.isFinite(target.hp)||target.hp<=0)return false;
- if(target.lastStandReady===true&&Number.isInteger(target.lastStandUntilRound)&&target.lastStandUntilRound>=round)return false;
- target.lastStandReady=true;target.lastStandUntilRound=round+1;return true;
+ if(isLastStandActive(target,round))return false;
+ target.lastStandReady=true;target.lastStandPersistent=true;delete target.lastStandUntilRound;return true;
 }
 export function expireLastStandGuards(teams,round){
  if(!Array.isArray(teams)||!Number.isInteger(round)||round<1)throw Error('Invalid last stand expiry');
  for(const team of teams)for(const target of team){
-  if(target.lastStandReady!==true||!Number.isInteger(target.lastStandUntilRound)||target.lastStandUntilRound<round){delete target.lastStandReady;delete target.lastStandUntilRound;}
+  if(!isLastStandActive(target,round))clearLastStand(target);
  }
 }
 export function applyHeroDamage(target,raw,{round,executeThreshold=0,allies}={}){
@@ -24,12 +31,12 @@ export function applyHeroDamage(target,raw,{round,executeThreshold=0,allies}={})
  let damage=Math.min(oldHp,raw-absorbed);
  const afterHit=oldHp-damage;
  let executedDamage=executeThreshold&&afterHit>0&&afterHit/target.maxHp<executeThreshold?afterHit:0;
- const guarded=target.lastStandReady===true&&Number.isInteger(target.lastStandUntilRound)&&round<=target.lastStandUntilRound;
+ const guarded=isLastStandActive(target,round);
  const guardTriggered=guarded&&damage+executedDamage>=oldHp;
  if(guardTriggered){
   const budget=Math.max(0,oldHp-1);
   damage=Math.min(damage,budget);executedDamage=Math.min(executedDamage,Math.max(0,budget-damage));
-  delete target.lastStandReady;delete target.lastStandUntilRound;
+  clearLastStand(target);
  }
  target.hp=oldHp-damage-executedDamage;
  const arcaneTransfer=target.hp===0&&allies?transferArcaneSurgeOnDeath(target,allies,round):null;

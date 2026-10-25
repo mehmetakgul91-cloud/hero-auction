@@ -93,13 +93,24 @@ Kahraman aktifleri/pasifleri nadirlik ve rol bütçeleriyle kayıtlı parametrel
 
 Her oyuncu savaş başına bir nihai kullanabilir. Normal enerji ve ulti dolumu ayrı havuzlardır; ikisi30 ile başlar, mevcut tur/seviye ve kahraman kaybı kazanımlarını ayrı ayrı alır,100 ile sınırlıdır. Normal beceri yalnız normal enerjiden40 harcar; ulti yalnız kendi dolumundan saldırı75, savunma85, büyü100, destek90 harcar. Normal kullanmak ulti dolumunu azaltmaz; kullanılan ulti göstergesi tekrar dolmaz. İptal/yanlış hedef hak veya enerji tüketmez. Kullanım hakkı sunucu oturumundadır; yeniden bağlanma yenilemez, yeni maç sıfırlar.
 
-- Av Emri: en düşük can oranlı yaşayan rakibe, her yaşayan müttefikin sonraki hasar vuruşunu yönlendirir; sonraki tur sonuna kadar, en fazla beş vuruş. Ek saldırı vermez.
-- Son Kale: takım kalkanı ve en düşük can oranlı bir müttefik için sonraki tur sonuna kadar tek ölümcül vuruştan1canla kurtulma.
+- Av Emri: oyuncunun seçtiği yaşayan rakibe, her yaşayan müttefikin sonraki hasar vuruşunu yönlendirir; sonraki tur sonuna kadar, en fazla beş vuruş. Ek saldırı vermez.
+- Son Kale: takım kalkanı ve en düşük can oranlı bir müttefik için tur sınırı olmadan ilk ölümcül vuruştan 1 canla kurtulma. Koruma aynı kahramanda kalır ve tetiklenince tüketilir.
 - Aşırı Yük: seçilen dostun kullanım anındaki saldırısı kadar sabit bonus, üç hareket turu. Katlanmaz; alan hasarı aynı güçlendirilmiş saldırıdan bir kez hesaplanır, şifa/kalkan büyümez. Ölürse kalan süre kendi takımındaki mevcut canı en yüksek yaşayan dosta, yeni dostun kendi saldırı değeriyle aktarılır; süre uzamaz ve aynı tur fazladan güçlendirilmiş hareket verilmez.
 - Diriliş: seçilen düşmüş dost%40azami can ve sıfır kalkanla döner; en erken sonraki tur hareket eder. Bitmiş savaşta kullanılamaz.
 
 Normal beceri maliyetleri, kredi/altın politikası, müzik, kahraman temel güçleri ve%70kalkan emilim kuralı korunur. Kontrollü simülasyonlar gerçek oyuncu kazanma oranı veya tüm koşullarda kusursuz denge iddiası değildir.
 
 ### Ayrı ulti dolumu — yerel doğrulama (2026-10-25)
-Normal/ulti havuzları sunucuya aittir; hedef iptali, geçersiz hedef ve aynı istek tekrarı ek harcama yapmaz. Ortak1,2sn efekt kilidi ve kişisel5sn bekleme sürer. Kolay botun önceki ulti kullanmama kuralı korunur; orta/zor botlar normal enerji biriktirerek ultiden tasarruf etmeye çalışmaz.
+Normal/ulti havuzları sunucuya aittir; hedef iptali, geçersiz hedef ve aynı istek tekrarı ek harcama yapmaz. Ortak1,2sn efekt kilidi sürer;5sn bekleme yalnızca iki normal beceri arasındadır. Ulti normal beklemesini başlatmaz, uzatmaz veya sıfırlamaz. Kolay botun önceki ulti kullanmama kuralı korunur; orta/zor botlar normal enerji biriktirerek ultiden tasarruf etmeye çalışmaz.
 Kontrollü10/20seviye,48takım karşılaştırması:11520 savaş; aynı normal+ulti karar kuralında ultisiz maç oranı sırasıyla%98,44/%91,84 → %0/%0. Destek yalnız uygun ölü müttefik varsa diriltir. Bu örneklem genel oyuncu kazanma oranı değildir. Görsel tarayıcı kontrolü yapılmadı; DOM/HTTP hedefleme ve iki koltuk işlev testleri çalıştırıldı.
+
+### Ulti hazır vurgusu ve normal bekleme sınırı
+Ulti gerçekten kullanılabiliyorsa düğme Hazır etiketi ve2,4sn yumuşak ışık döngüsü gösterir. Hareket azaltma tercihinde sabit belirgin kenarlık kullanılır. Enerji dolu olsa bile uygun hedef yoksa, animasyon kilidi/hedef seçimi sürüyorsa veya ulti kullanıldıysa hazır animasyonu gösterilmez.
+Normal0ms → ulti1200ms → sonraki normal5000ms geçerlidir. Ulti0ms → normal1200ms geçerlidir. Normal0ms → ulti4900ms durumunda ortak efekt kilidi nedeniyle normal6100ms olur; ulti normalin5000ms zamanını değiştirmez. Sunucu normalCooldownMs/normalCooldownUntil alanlarını döndürür; eski cooldownMs/cooldownUntil alanları normal-beceri uyumluluk adlarıdır. Tur bazlı eski eğitim yine turda tek komut kullanır; gerçek zamanlı bekleme göstergesi değildir.
+
+### Av Emri hedef seçimi
+Oyuncu, ultinin hedefini yaşayan rakiplerden seçer. Hedef seçimi ve iptal enerji/hak harcamaz; onay anında sunucu rakip tarafı ve canlılık durumunu yeniden doğrular. Geçersiz veya düşmüş hedef reddedilir. Bot aynı deterministik en düşük can oranı politikasını açık hedef kimliği göndererek sürdürür. Süre, her müttefikin tek saldırı hakkı ve beş kahramanlık sınır değişmez. Büyücü normal becerisi ve Son Kale gücü bu değişiklikte düzenlenmemiştir.
+
+### Son Kale ve büyücü normal becerisi
+Son Kale koruması, kullanıldığı anda seçilen en düşük can oranlı müttefikte ilk ölümcül darbeye kadar tur sınırı olmadan kalır; 1 canla kurtardıktan sonra tüketilir. Başka kahramana geçmez. Kalkan miktarı değişmez.
+Büyücünün normal becerisi tek rakibin sonraki ilk gerçek saldırısını zayıflatır. Temel oran %35; 10 seviyede %38,5, 20 seviyede %42. Saldırana kadar bekler; aynı saldırının alan hasarı da etkilenir, iyileştirme/kalkan eylemleri ve komutan saldırıları hakkı tüketmez. Tek yük tutulur; tekrar kullanım ek yük biriktirmez. Önceki çok turlu etkinin yerini alır; bu değişiklik için yeni kapsamlı denge simülasyonu yapılmamıştır.

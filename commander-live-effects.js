@@ -1,4 +1,5 @@
-import {applyHeroDamage,grantLastStand} from './battle-hp-damage.js';
+import {grantCommanderWeaken} from './commander-weaken-status.js';
+import {applyHeroDamage,grantLastStand,isLastStandActive} from './battle-hp-damage.js';
 import {commanderAbilityStats} from './public/commander-ability-rules.js';
 import {commanderAttackPower,distributeCommanderAttack} from './commander-attack-damage.js';
 import {commanderShieldAmounts,commanderHealingBudget} from './commander-protection-budget.js';
@@ -20,7 +21,9 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
  const stats=commanderAbilityStats(commanderProfile);if(commanderProfile.commanderId!==commanderId)throw Error('Invalid commander profile');
  const strong=ability==='ultimate',rate=strong?stats.ultimateRate:stats.normalRate,log=[],impacts=[];let value=0,nextRevivalUsed=revivalUsed;
  if(commanderId==='attack'&&strong){
-  const focused=grantCommanderFocus(allies,enemies,round);if(!focused)throw Error('Focus order already active');value=focused.allyIds.length;
+  if(!Array.isArray(targetIds)||targetIds.length!==1||typeof targetIds[0]!=='string')throw Error('Select one living enemy hero');
+  const selected=enemies.find(unit=>unit.id===targetIds[0]);if(!selected)throw Error('Selected enemy is no longer alive or is invalid');
+  const focused=grantCommanderFocus(allies,enemies,round,selected.id);if(!focused)throw Error('Focus order already active');value=focused.allyIds.length;
   impacts.push({target:focused.targetId,kind:'focus',value:focused.allyIds.length});
  }else if(commanderId==='attack'){
   const budget=distributeCommanderAttack(attackBasis??commanderAttackPower(next[side]),rate,enemies.length);
@@ -34,7 +37,7 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
   for(const[index,u]of allies.entries()){const each=amounts[index];u.shield=(u.shield||0)+each;value+=each;if(each>0)impacts.push({target:u.id,kind:'shield',value:each});}
   if(strong){
    // Never accumulate several simultaneous death guards or refresh a live one.
-   const already=allies.some(u=>u.lastStandReady&&u.lastStandUntilRound>=round);
+   const already=allies.some(u=>isLastStandActive(u,round));
    if(!already){const target=lowestHealth(allies);if(grantLastStand(target,round))impacts.push({target:target.id,kind:'guard',value:1});}
   }
  }else if(commanderId==='support'&&strong){
@@ -51,7 +54,7 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
   value=target.arcaneSurgeBonusAttack;impacts.push({target:target.id,kind:'buff',value,fromRound:target.arcaneSurgeFromRound,untilRound:target.arcaneSurgeUntilRound});
  }else{
   if(!Array.isArray(targetIds)||targetIds.length!==1||typeof targetIds[0]!=='string'||!enemies.some(u=>u.id===targetIds[0]))throw Error('Invalid magic targets');
-  const target=enemies.find(u=>u.id===targetIds[0]);target.commanderWeaken=Math.max(target.commanderWeaken||0,rate);target.commanderWeakenUntilRound=round+2;value=1;
+  const target=enemies.find(u=>u.id===targetIds[0]);grantCommanderWeaken(target,rate,round);value=1;
   impacts.push({target:target.id,kind:'weaken',value:Number((target.commanderWeaken*100).toFixed(1))});
  }
  log.push({round,side,actor:'commander:'+side,action:'commander-'+commanderId+'-'+ability,value,impacts,commanderLevel:stats.level,abilityBonusPercent:stats.bonusPercent});

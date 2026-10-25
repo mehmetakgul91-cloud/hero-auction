@@ -41,6 +41,13 @@ export const battlePhrases = {
  'Anlık yetenek sistemi hazırlanıyor…':'Preparing live abilities…',
  'Komutan efekti':'Commander effect',
  'Yetenek bekleme süresi:':'Ability cooldown:',
+ 'Normal beceri bekleme süresi:':'Normal ability cooldown:',
+ 'Normal bekleme:':'Normal cooldown:',
+ 'Av Emri hedefi':'Hunt Order target',
+ 'Rakip seç':'Select an enemy',
+ 'Yaşayan rakip yok':'No living enemy',
+ 'Ulti dolu · uygun hedef yok':'Ultimate charged · no eligible target',
+ 'Hazır':'Ready',
  'Büyü hedefleri':'Spell targets',
  'Hedefleri onayla (önizleme)':'Confirm targets (preview)',
  'Canlı savaş bağlantısı kurulamadı':'Could not connect to the live battle',
@@ -215,6 +222,7 @@ export function translateCommanderDescription(text) {
   .replace(/Normal: yaşayan takımın azami canının %([\d,]+)'i kadar toplam kalkan paylaşılır\./g,(_,n)=>`Normal: shares a total shield equal to ${percent(n)}% of living allies' maximum health.`)
   .replace(/Normal: eksik canın %([\d,]+)'i iyileştirilir\. Can oranı en düşük kahraman önceliklidir\./g,(_,n)=>`Normal: restores ${percent(n)}% of missing health, prioritizing the hero with the lowest health ratio.`)
   .replace(/Normal: seçilen 1 rakibin saldırısı %([\d,]+) azalır\./g,(_,n)=>`Normal: reduces 1 selected enemy's attack by ${percent(n)}%.`)
+  .replace(/Normal: seçilen 1 rakibin yapacağı ilk saldırının gücü %([\d,]+) azalır\. Etki saldırana kadar bekler; aynı saldırının tüm alan vuruşlarına uygulanır\. Şifa ve kalkan etkilenmez\./g,(_,n)=>`Normal: reduces the power of 1 selected enemy's next actual attack by ${percent(n)}%. Waits until it attacks; also affects every area hit of that attack. Healing and shields are unaffected.`)
   .replace(/Nihai \((\d+) enerji\):/g,'Ultimate ($1 energy):')
   .replace(/Normal beceri 40 normal enerji harcar; ulti dolumu azalmaz\./g,'Normal abilities spend 40 normal energy; ultimate charge is unaffected.')
   .replace(/Nihai \((\d+) ulti dolumu\):/g,'Ultimate ($1 ultimate charge):');

@@ -1,3 +1,4 @@
+import {commanderWeakenRate} from './commander-weaken-status.js';
 // Experimental incremental combat scheduler. Unlike precomputed battle logs,
 // each attack uses current HP/shields after any intervening commander cast.
 // This handles basic attacks only; special/passive mechanics remain gated.
@@ -17,7 +18,7 @@ export function stepBasicHeroCombat(combat,{side,actorId,round=combat?.round}={}
  const target=selectBattleTarget(enemies,actor,round);
  // A deliberately bounded basic-attack formula, not a substitute for the
  // existing battle engine's crits, skills, defense, and other mechanics.
- const weaken=Number.isInteger(actor.commanderWeakenUntilRound)&&round<=actor.commanderWeakenUntilRound?Math.max(0,Math.min(1,Number(actor.commanderWeaken)||0)):0;
+ const weaken=commanderWeakenRate(actor,round);
  const effectiveAttack=Math.round(arcaneDamageAttack(actor,round)*(1-weaken));
  const raw=Math.max(1,Math.round(effectiveAttack-Math.max(0,target.defense||0)*0.35));
  return applyServerHeroAction(combat,{side,actorId,targetId:target.id,value:raw,round});

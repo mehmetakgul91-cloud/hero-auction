@@ -1,3 +1,4 @@
+import {commanderWeakenRate} from './commander-weaken-status.js';
 // Experimental parity attack: caller must supply a server-owned critical roll.
 // No specials/passives here; the legacy basic prototype remains untouched.
 import {calculateHeroRawDamage} from './battle-damage-formula.js';
@@ -14,7 +15,7 @@ export function stepParityBasicAttack(combat,{side,actorId,round=combat?.round,c
  const target=selectBattleTarget(enemies,actor,round);
  if(!target)throw Error('No living target');
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
- const weakened=Number.isInteger(actor.commanderWeakenUntilRound)&&round<=actor.commanderWeakenUntilRound?Math.max(0,Math.min(1,Number(actor.commanderWeaken)||0)):0;
+ const weakened=commanderWeakenRate(actor,round);
  const raw=calculateHeroRawDamage({unit:actor,target,skill:specialFallback?actor.active:null,special:specialFallback,critical,guarded,weakened,round});
  const result=applyServerHeroAction(combat,{side,actorId,targetId:target.id,value:raw,round,applyThorns:allowThornsPassive});
  // This is server-calculated metadata, not a client-provided damage value.

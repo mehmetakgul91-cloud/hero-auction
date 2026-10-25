@@ -1,0 +1,5 @@
+/* Availability, not merely charge: JS removes this class for locks, selection,
+   unavailable targets, used ultimates and finished battles. No fast flashing. */
+.commander-ultimate-ready:not(:disabled){border:2px solid #ffe28a!important;background:linear-gradient(135deg,#42306a,#563d20)!important;color:#fff6d5!important;box-shadow:0 0 0 1px #ffe28a66,0 0 12px #e6bd6655;animation:commander-ready-glow 2.4s ease-in-out infinite}
+@keyframes commander-ready-glow{0%,100%{box-shadow:0 0 0 1px #ffe28a66,0 0 9px #e6bd6644}50%{box-shadow:0 0 0 2px #ffe28a99,0 0 17px #e6bd6688}}
+@media(prefers-reduced-motion:reduce){.commander-ultimate-ready:not(:disabled){animation:none;box-shadow:0 0 0 2px #ffe28a88,0 0 12px #e6bd6655}}

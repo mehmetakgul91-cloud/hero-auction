@@ -12,7 +12,7 @@ export function createArenaMagicTargeting({root,enemySide=1,onConfirm=()=>{}}){
    card.setAttribute('aria-pressed',String(active&&selected.includes(card.dataset.heroId)));
    const english=root.ownerDocument?.documentElement?.lang==='en'||(typeof document!=='undefined'&&document.documentElement?.lang==='en');
    const mode=commanderTargetMode(context.commanderId,ability);
-   if(active)card.setAttribute('data-commander-target-label',mode==='ally-dead'?(english?'↟ REVIVAL':'↟ DİRİLİŞ'):mode==='ally-alive'?(english?'✦ EMPOWER':'✦ GÜÇLENDİRME'):(english?'✦ TARGET':'✦ HEDEF'));else card.removeAttribute('data-commander-target-label');
+   if(active)card.setAttribute('data-commander-target-label',context.commanderId==='attack'?(english?'✦ HUNT ORDER':'✦ AV EMRİ'):mode==='ally-dead'?(english?'↟ REVIVAL':'↟ DİRİLİŞ'):mode==='ally-alive'?(english?'✦ EMPOWER':'✦ GÜÇLENDİRME'):(english?'✦ TARGET':'✦ HEDEF'));else card.removeAttribute('data-commander-target-label');
    if(valid){card.setAttribute('role','button');card.setAttribute('tabindex','0');}
    else {card.removeAttribute('role');card.removeAttribute('tabindex');}
   }

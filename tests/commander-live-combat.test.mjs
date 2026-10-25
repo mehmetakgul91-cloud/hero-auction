@@ -78,12 +78,12 @@ test('magic ultimate rejects enemy, dead ally, multiple or missing targets atomi
  }
  const result=castLiveCommanderCombat(combat,{side:0,ability:'ultimate',requestId:'valid_ult_001',matchKey:'room:1',now:2000,targetIds:['0-0']});
  assert.equal(result.version,1);assert.equal(combat.abilities.ultimateEnergy[0],0);
- assert.equal(combat.abilities.cooldownUntil[0],7000);
+ assert.equal(combat.abilities.cooldownUntil[0],1000);
  assert.equal(combat.teams[0][0].arcaneSurgeBonusAttack,50);
  assert.ok(combat.teams[1].every(u=>u.commanderWeaken===undefined));
 });
 
-test('round changes increment snapshot version and announce magic expiration',()=>{
+test('round changes increment snapshot version while pending next-attack magic persists',()=>{
  const combat=make('magic');
  castLiveCommanderCombat(combat,{side:0,ability:'normal',requestId:'magic_round_01',matchKey:'room:1',now:2000,targetIds:['1-0']});
  const first=beginServerCombatRound(combat,2);
@@ -91,7 +91,7 @@ test('round changes increment snapshot version and announce magic expiration',()
  assert.equal(viewLiveCommanderCombat(combat,{sinceVersion:1}).events[0].action,'round-start');
  beginServerCombatRound(combat,3);
  beginServerCombatRound(combat,4);
- assert.equal(combat.teams[1][0].commanderWeaken,undefined);
+ assert.equal(combat.teams[1][0].commanderWeaken,.35);assert.equal(combat.teams[1][0].commanderWeakenNextAttack,true);
  assert.equal(combat.version,4);
  assert.equal(viewLiveCommanderCombat(combat,{sinceVersion:3}).events[0].round,4);
 });
