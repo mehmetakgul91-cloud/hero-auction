@@ -1,3 +1,5 @@
+import {hasCommanderFocus} from '../battle-commander-focus.js';
+import {isLastStandActive} from '../battle-hp-damage.js';
 // Expanded LOCAL audit. Default only builds a reviewable manifest; --run is explicit.
 import {gzipSync} from 'node:zlib';
 import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import crypto from 'node:crypto';import assert from 'node:assert/strict';import {fileURLToPath,pathToFileURL} from 'node:url';
@@ -69,7 +71,7 @@ export function chooseAuditAction(combat,side,availability,policy,ultimatesEnabl
   if(id==='magic'){const target=strongest(enemies.filter(u=>!(u.commanderWeakenUntilRound>=round)));if(target)return {ability:'normal',targetIds:[target.id]};}
  }
  if(!ultimatesEnabled||!availability.canUseUltimate||combat.ultimateUsed?.[side])return null;
- if(id==='attack'&&allies.some(u=>u.commanderFocusTargetId&&u.commanderFocusUntilRound>=round&&enemies.some(e=>e.id===u.commanderFocusTargetId)))return null;
+ if(id==='attack'&&hasCommanderFocus(allies,enemies,round))return null;
  if(id==='magic'){const target=allies.filter(u=>!(u.arcaneSurgeUntilRound>=round)).sort((a,b)=>mageAuditScore(b,allies,enemies,round)-mageAuditScore(a,allies,enemies,round)||a.id.localeCompare(b.id))[0];return target?{ability:'ultimate',targetIds:[target.id]}:null;}
  if(id==='support'){if(combat.revivalUsed?.[side])return null;const target=combat.teams[side].filter(u=>u.hp===0).sort((a,b)=>b.maxHp-a.maxHp||a.id.localeCompare(b.id))[0];return target?{ability:'ultimate',targetIds:[target.id]}:null;}
  if(id==='attack'){const target=[...enemies].sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp||a.id.localeCompare(b.id))[0];return {ability:'ultimate',targetIds:[target.id]};}
@@ -101,7 +103,7 @@ else{
     for(const side of [0,1]){
      const availability=viewLiveCommanderAbilities(combat.abilities,side,now),decision=chooseAuditAction(combat,side,availability,policy,Array.isArray(enabled)?enabled[side]:enabled,{earlyNormalUsed:trace.some(e=>e.side===side&&e.ability==='normal')});if(!decision)continue;
      const energyBefore=combat.abilities.energy[side];registry.cast({matchKey,token:tokens[side],...decision,requestId:'diverse_'+(++castId),now});
-     const focusGuardTargetsBySide=[0,1].map(attacking=>combat.teams[1-attacking].filter(enemy=>enemy.lastStandReady&&enemy.lastStandUntilRound>=combat.round&&combat.teams[attacking].some(ally=>ally.hp>0&&ally.commanderFocusTargetId===enemy.id&&ally.commanderFocusUntilRound>=combat.round)).map(enemy=>enemy.id));
+     const focusGuardTargetsBySide=[0,1].map(attacking=>combat.teams[1-attacking].filter(enemy=>isLastStandActive(enemy,combat.round)&&hasCommanderFocus(combat.teams[attacking],[enemy],combat.round)).map(enemy=>enemy.id));
      const focusGuardTargets=focusGuardTargetsBySide[side];
      trace.push({side,round:combat.round,heroActions,at:now,energyBefore,energyAfter:combat.abilities.energy[side],focusGuardTargets,focusGuardTargetsBySide,...decision});
      if(combat.finished)break;

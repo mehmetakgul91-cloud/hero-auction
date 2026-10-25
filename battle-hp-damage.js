@@ -39,6 +39,7 @@ export function applyHeroDamage(target,raw,{round,executeThreshold=0,allies}={})
   clearLastStand(target);
  }
  target.hp=oldHp-damage-executedDamage;
+ if(target.hp===0)delete target.commanderFocusUntilDeath;
  const arcaneTransfer=target.hp===0&&allies?transferArcaneSurgeOnDeath(target,allies,round):null;
  return {damage,executedDamage,absorbed,rawDamage:raw,guardTriggered,...(arcaneTransfer?{arcaneTransfer}:{})};
 }

@@ -62,7 +62,7 @@ export function renderCommanderSkills(root,profile,{english=false,document=root.
   main.append(el('span','',ultimate?commanderUltimateName(id,{english}):pick(normalNames[id])));
   card.append(top,main);
   if(ultimate){
-   const summaries={attack:['Her müttefikin sonraki saldırısı seçilen rakibe.','Each ally’s next attack focuses the selected enemy.'],defense:['Takım kalkanı + en düşük can oranındaki müttefike ölümcül darbede 1 can koruması.','Team shield + the lowest-health-ratio ally survives a lethal hit at 1 health.'],magic:['Seçilen müttefike 3 hareket turu ek vuruş gücü.','Extra hit power for the selected ally for 3 action rounds.'],support:['Seçilen düşen müttefik %40 azami canla döner.','The selected fallen ally returns at 40% max health.']};
+   const summaries={attack:['Hedef ölünceye kadar takımın saldırıları seçilen rakibe odaklanır.','All allied attacks focus the selected enemy until the target dies.'],defense:['Takım kalkanı + en düşük can oranındaki müttefike ölümcül darbede 1 can koruması.','Team shield + the lowest-health-ratio ally survives a lethal hit at 1 health.'],magic:['Seçilen müttefike 3 hareket turu ek vuruş gücü.','Extra hit power for the selected ally for 3 action rounds.'],support:['Seçilen düşen müttefik %40 azami canla döner.','The selected fallen ally returns at 40% max health.']};
    card.append(el('p','',pick(summaries[id])),el('small','cp-once',pick(['Savaşta 1 kez · ayrı dolum','Once per battle · separate charge'])));
    const details=el('details','cp-skill-details');details.append(el('summary','',pick(['Nasıl çalışır?','How it works'])),el('p','',commanderUltimateDescription(id,{english})));card.append(details);
   }else card.append(el('p','',pick(normalDetails[id])));

@@ -1,4 +1,4 @@
-import {chooseCommanderFocusEnemy} from './battle-commander-focus.js';
+import {chooseCommanderFocusEnemy,hasCommanderFocus} from './battle-commander-focus.js';
 import {commanderWeakenRate} from './commander-weaken-status.js';
 import {commanderAbilityStats,getCommanderAbilityCost} from './public/commander-ability-rules.js';
 // Server-owned decisions, restricted to information a player can observe.
@@ -94,7 +94,7 @@ export function chooseBotCast(snapshot,commanderId,difficulty,{now=Date.now(),la
    .sort((a,b)=>(b.power||0)-(a.power||0)||(b.maxHp||0)-(a.maxHp||0)||String(a.id).localeCompare(String(b.id)))[0]??null;
   if(!friendlyTarget)cast='normal';
  }else if(cast==='ultimate'&&commanderId==='attack'){
-  const activeOrder=allies.some(u=>Number.isInteger(u.commanderFocusUntilRound)&&u.commanderFocusUntilRound>=snapshot.round&&enemies.some(e=>e.id===u.commanderFocusTargetId));
+  const activeOrder=hasCommanderFocus(allies,enemies,snapshot.round);
   if(activeOrder)return null;
  }
  if(cast==='normal'&&!canNormal)return null;

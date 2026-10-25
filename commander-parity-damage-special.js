@@ -1,3 +1,4 @@
+import {expireCommanderFocus} from './battle-commander-focus.js';
 import {commanderWeakenRate,consumeCommanderWeaken} from './commander-weaken-status.js';
 import {abilityValue} from './public/hero-ability-rules.js';
 import {applyHeroDamage} from './battle-hp-damage.js';
@@ -43,6 +44,7 @@ export function stepParityDamageSpecial(combat,{side,actorId,round=combat?.round
  combat.teams=teams;combat.version++;
  for(const event of events){event.version=combat.version;combat.events.push(event)}
  for(const id of deaths)grantLiveCommanderEnergy(combat.abilities,1-side,10);
+ expireCommanderFocus(teams,round);
  combat.finished=teams.some(team=>team.every(u=>u.hp<=0));
  combat.abilities.finished=combat.finished;
  return {version:combat.version,events,teams:structuredClone(teams),finished:combat.finished};

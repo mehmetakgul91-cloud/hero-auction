@@ -24,3 +24,12 @@ test('arcane transfer is described as status with unchanged duration, not an ext
  const description=text({side:0,actor:'a',target:'b',action:'attack',value:100,arcaneTransfer:{targetId:'c',bonusAttack:80}},{english:true});
  assert.match(description,/Arcane Surge transfer → c · \+80 hit power; duration is not reset/);
 });
+
+for(const english of [false,true])test(`Hunt Order replay describes new until-death events without changing historical timed casts (${english?'EN':'TR'})`,()=>{
+ const event={actor:'commander:0',action:'commander-attack-ultimate',value:5,focusUntilDeath:true};
+ assert.match(text(event,{english}),english?/Focus until the target dies/:/Hedef ölünceye kadar/);
+ assert.doesNotMatch(text(event,{english}),/next attack|next round|Sonraki saldırı|Sonraki tur/);
+ const legacy={...event};delete legacy.focusUntilDeath;
+ assert.match(text(legacy,{english}),english?/next attack.*next round/:/Sonraki saldırı.*Sonraki tur/);
+ assert.doesNotMatch(text(legacy,{english}),/until the target dies|ölünceye kadar/);
+});

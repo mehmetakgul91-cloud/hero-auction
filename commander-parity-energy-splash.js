@@ -1,3 +1,4 @@
+import {expireCommanderFocus} from './battle-commander-focus.js';
 import {commanderWeakenRate,consumeCommanderWeaken} from './commander-weaken-status.js';
 import {applyHeroDamage} from './battle-hp-damage.js';
 // One atomic server-owned primary attack plus energy-role splash.
@@ -36,6 +37,7 @@ export function stepParityEnergySplash(combat,{side,actorId,round=combat?.round,
  combat.version++;
  for(const event of events){event.version=combat.version;combat.events.push(event);}
  for(const id of dead)grantLiveCommanderEnergy(combat.abilities,1-side,10);
+ expireCommanderFocus(next,round);
  combat.finished=next.some(team=>team.every(u=>u.hp<=0));
  combat.abilities.finished=combat.finished;
  return {version:combat.version,events,teams:structuredClone(next),finished:combat.finished};

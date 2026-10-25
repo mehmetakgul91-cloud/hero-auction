@@ -28,7 +28,7 @@ export function replayCommanderTranscript(cardsA,cardsB,{commanders,turns,seed='
    validateCommanderTurnTargets(entry.command,{commanderId:commanders[side].commanderId,targetIds:entry.targetIds,teams:previous?.teams,side});
   }
   actions.push(...resolveTurnSubmissions(state));
-  previous=simulateBattle(cardsA,cardsB,{seed,maxRounds:round,remainingCredits,commanders,commanderActions:actions});
+  previous=simulateBattle(cardsA,cardsB,{seed,maxRounds:round,remainingCredits,commanders,commanderActions:actions,partial:round<maxRounds});
  }
  return previous??simulateBattle(cardsA,cardsB,{seed,maxRounds,remainingCredits,commanders,commanderActions:actions});
 }

@@ -4,7 +4,7 @@ import {expireCommanderUltimateStatuses} from './commander-ultimate-status.js';
 import {commanderRoundEnergy,getCommanderAbilityCost} from './public/commander-ability-rules.js';
 import {commanderAttackPower} from './commander-attack-damage.js';
 import {applyLiveCommanderEffect} from './commander-live-effects.js';
-import {consumeCommanderFocus,expireCommanderFocus} from './battle-commander-focus.js';
+import {consumeCommanderFocus,expireCommanderFocus,clearCommanderFocus} from './battle-commander-focus.js';
 // Hero Auction 2.0 - isolated, deterministic automatic battle prototype.
 // Not connected to live matchmaking or wallet payouts.
 import crypto from 'node:crypto';
@@ -38,7 +38,7 @@ export function fighterFromCard(card,position=0){
 function isFront(unit){return unit.lane==='front'}
 
 // Manual commander commands are validated against actual round energy; no command means no active ability.
-export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,remainingCredits=[0,0],commanders=[null,null],commanderActions=[]}={}){
+export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,remainingCredits=[0,0],commanders=[null,null],commanderActions=[],partial=false}={}){
   if(!Array.isArray(remainingCredits)||remainingCredits.length!==2||remainingCredits.some(v=>!Number.isSafeInteger(v)||v< -10000||v>10000))throw Error('Invalid auction remaining credits');
   if(!Array.isArray(cardsA)||!Array.isArray(cardsB)||cardsA.length!==5||cardsB.length!==5)throw Error('Each team must contain exactly five cards.');
   if(!Number.isInteger(maxRounds)||maxRounds<1||maxRounds>100)throw Error('Invalid round limit.');
@@ -178,6 +178,8 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
     }
     if(teams.some(team=>team.every(x=>x.hp<=0)))break;
   }
+  // Transcript sessions recompute unfinished rounds; keep their current order.
+  if(!partial||teams.some(team=>team.every(unit=>unit.hp<=0)))clearCommanderFocus(teams);
   const {winner,damage,survivors}=battleOutcome(teams);
   return {version:4,initialShields,commanderEnergy,commanderUltimateEnergy,commanderResourcesByRound,revivalUsed,ultimateUsed,commanders:Array.isArray(commanders)?commanders.slice(0,2):[null,null],remainingCredits:[...remainingCredits],seed:String(seed),winner,rounds:Math.max(0,...log.map(x=>x.round)),teams,damage,survivors,log};
 }

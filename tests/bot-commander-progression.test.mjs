@@ -52,7 +52,7 @@ for(const [difficulty,level,gain] of [['easy',5,14],['medium',10,17],['hard',15,
     assert.equal(upgraded.teams[1][4].hp,2000);assert.equal(upgraded.teams[1][4].canActFromRound,2);assert.equal(upgraded.teams[1][4].shield,0);
     assert.equal(upgraded.events.at(-1).value,base.events.at(-1).value,'revival is a fixed bounded 40% life, not level-scaled resurrection');
    }else if(ability==='ultimate'&&id==='attack'){
-    assert.ok(upgraded.teams[1].every(u=>u.commanderFocusTargetId==='0-0'&&u.commanderFocusUntilRound===2));assert.ok(upgraded.teams[0].every(u=>u.hp===2500));
+    assert.equal(upgraded.teams[0][0].commanderFocusUntilDeath,true);assert.ok(upgraded.teams[0].every(u=>u.hp===2500));
     assert.equal(upgraded.events.at(-1).value,base.events.at(-1).value,'focus orders do not add level-scaled bonus attacks');
    }else{
     assert.ok(upgraded.events.at(-1).value>base.events.at(-1).value,'numeric shield/healing/normal damage scale with level');

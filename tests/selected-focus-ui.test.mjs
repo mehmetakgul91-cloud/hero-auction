@@ -1,3 +1,4 @@
+import {translate} from '../public/crazygames-en.js';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {commanderTargetMode,requiredMagicTargets,validateMagicTargetSelection} from '../public/commander-magic-target-picker.js';
 import {mountLiveArenaCommanderBridge} from '../public/commander-live-arena-bridge.js';
@@ -17,5 +18,13 @@ for(const side of [0,1])test(`Av Emri bridge seat ${side} selects opponent, canc
  cancel=false;await elements.ultimateButton.click();assert.deepEqual(sent,[{side,ability:'ultimate',targetIds:[teams[1-side][0].id]}]);bridge.destroy();
 });
 test('Av Emri text says selected living enemy instead of automatic lowest-health target',()=>{
- assert.match(commanderUltimateDescription('attack'),/Seçilen yaşayan rakibi/);const en=commanderUltimateDescription('attack',{english:true});assert.match(en,/selected living enemy/);assert.doesNotMatch(en,/lowest health ratio/);assert.match(en,/next attack.*next round.*no extra action/);
+ assert.match(commanderUltimateDescription('attack'),/Seçilen yaşayan rakibi/);const en=commanderUltimateDescription('attack',{english:true});assert.match(en,/selected living enemy/);assert.doesNotMatch(en,/lowest health ratio/);assert.match(commanderUltimateDescription('attack'),/Hedef ölünceye kadar/);assert.match(en,/Until the target dies.*all allied attacks.*no round or attack-count limit/);assert.match(en,/first death.*does not return if it revives/);assert.match(en,/no extra attack or damage/);assert.doesNotMatch(en,/next attack|next round/);
+});
+
+test('full Hunt Order description translates all duration, healing and area-target rules',()=>{
+ const tr=commanderUltimateDescription('attack'),en=commanderUltimateDescription('attack',{english:true});
+ assert.equal(translate(tr),en);
+ assert.match(en,/Healing and shield actions are not turned into attacks/);
+ assert.match(en,/other area-attack targets are unchanged/);
+ assert.match(en,/Once per battle/);
 });

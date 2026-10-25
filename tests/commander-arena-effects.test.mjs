@@ -201,3 +201,12 @@ for(const [commander,kind,targetSide,expected]of [['magic','buff',0,'+1 HIT POWE
 for(const english of [false,true])test(`mage normal committed impact labels next attack, not rounds (${english?'EN':'TR'})`,()=>{
  const h=effectHarness({english});h.emit({action:'commander-magic-normal',side:0,sequence:1,impacts:[{target:'same',kind:'weaken',value:35}]});h.advance(1200);assert.equal(h.impacts().length,1);const text=textOf(h.impacts()[0]);assert.match(text,english?/NEXT ATTACK/:/SONRAKİ SALDIRI/);assert.match(text,/35/);assert.doesNotMatch(text,/3 TUR|3 ROUNDS/);
 });
+
+for(const english of [false,true])test(`Hunt Order committed until-death impact explains duration (${english?'EN':'TR'})`,()=>{
+ const h=effectHarness({english});h.emit({action:'commander-attack-ultimate',side:0,sequence:1,focusUntilDeath:true,impacts:[{target:'same',kind:'focus',value:5,untilDeath:true}]});
+ h.advance(1200);assert.equal(h.impacts().length,1);const description=textOf(h.impacts()[0]);
+ assert.match(description,english?/UNTIL TARGET DIES/:/HEDEF ÖLÜNCEYE KADAR/);
+ assert.equal(h.impacts()[0].querySelectorAll('.focus-until-death').length,1);
+ assert.match(css,/strong\.focus-until-death\{[^}]*max-width:90px[^}]*font-size:11px[^}]*white-space:normal/);
+ assert.doesNotMatch(description,/NEXT ATTACK|SONRAKİ SALDIRI|5.*(?:DAMAGE|HASAR)/);
+});

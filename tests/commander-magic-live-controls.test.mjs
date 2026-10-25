@@ -171,7 +171,7 @@ for(const side of [0,1])test(`Av Emri production seat ${side}: explicit non-lowe
  h.click(h.ultimate);assert.match(h.status.textContent,/Av Emri.*Rakip kartına dokun/);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),false);h.allyTarget(1);assert.equal(h.confirm.disabled,true);h.target(2);assert.equal(h.confirm.disabled,false);
  assert.equal(h.enemyRoot.cards[2].attributes['data-commander-target-label'],'✦ AV EMRİ');h.click(h.cancel);assert.equal(h.requests.length,1);assert.equal(h.c.abilities.ultimateEnergy[side],100);assert.equal(h.c.abilities.ultimateUsed[side],false);
  h.click(h.ultimate);h.target(2);h.click(h.confirm);h.click(h.confirm);await flush();assert.equal(h.requests.length,2);assert.deepEqual(JSON.parse(h.requests[1].options.body).targetIds,[(1-side)+'c']);await h.accept(1);
- assert.equal(h.c.abilities.ultimateEnergy[side],25);assert.equal(h.c.abilities.energy[side],100);assert.equal(h.c.abilities.ultimateUsed[side],true);assert.ok(h.c.teams[side].every(hero=>hero.commanderFocusTargetId===(1-side)+'c'));assert.match(h.ultimate.textContent,/Kullanıldı/);
+ assert.equal(h.c.abilities.ultimateEnergy[side],25);assert.equal(h.c.abilities.energy[side],100);assert.equal(h.c.abilities.ultimateUsed[side],true);assert.equal(h.c.teams[1-side].find(hero=>hero.id===(1-side)+'c').commanderFocusUntilDeath,true);assert.match(h.ultimate.textContent,/Kullanıldı/);
 });
 for(const side of [0,1])test(`Av Emri production seat ${side}: dead selected target is cleared without charge`,async()=>{
  const h=harness(side,'attack');await h.respond(0,h.snapshot());h.click(h.ultimate);h.target(1);assert.equal(h.confirm.disabled,false);

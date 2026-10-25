@@ -36,7 +36,7 @@ export function viewRoomCommanderSession(room,bound,token){
  const ultimateEnergy=session.finished||ultimateUsed?(session.result?.commanderUltimateEnergy?.[side]??0):commanderRoundEnergy(session.result?.commanderUltimateEnergy?.[side]??0,session.round,session.commanders[side]);
  const completedRound=session.turns.length;
  const roundEvents=Array.isArray(session.result?.log)?session.result.log.filter(event=>event.round===completedRound):[];
- const roundTeams=completedRound&&Array.isArray(session.result?.teams)?session.result.teams.map(team=>team.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position}))):null;
+ const roundTeams=completedRound&&Array.isArray(session.result?.teams)?session.result.teams.map(team=>team.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position,...(u.commanderFocusUntilDeath===true?{commanderFocusUntilDeath:true}:{})}))):null;
  return {round:session.round,completedRound,roundEvents,roundTeams,finished:session.finished,
   submitted:session.pending.map(x=>x!==undefined),
   yourSide:side,

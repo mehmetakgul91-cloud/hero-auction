@@ -14,7 +14,7 @@ export function describeBattleEvent(event, {english=false, names=new Map()}={}) 
   if(e.guardTriggered)effect+=' · '+t('Ölümcül darbeden 1 canla korundu','Survived a lethal hit at 1 health');
   if(Number(e.executedDamage)>0)effect+=' · '+t('Bitirici','Finisher')+' +'+e.executedDamage;
  }else if(['revive','commander-revive'].includes(action))effect=t('Diriliş','Revival')+' · '+amount+' '+t('can','health');
- else if(action==='commander-attack-ultimate')effect=t('Av Emri · Sonraki saldırıda hedefe odaklan','Hunt Order · Focus target on the next attack');
+ else if(action==='commander-attack-ultimate')effect=e.focusUntilDeath===true?t('Av Emri · Hedef ölünceye kadar odaklan','Hunt Order · Focus until the target dies'):t('Av Emri · Sonraki saldırıda hedefe odaklan · Sonraki tur sonuna kadar','Hunt Order · Focus target on the next attack · Through next round');
  else if(action==='commander-defense-ultimate')effect=t('Son Kale · Kalkan ve ölümcül darbe koruması','Last Bastion · Shield and lethal-hit protection');
  else if(action==='commander-magic-ultimate')effect=t('Aşırı Yük · Sabit ek vuruş gücü · 3 hareket turu','Arcane Surge · Fixed extra hit power · 3 action rounds');
  else if(action==='commander-support-ultimate')effect=t('Diriliş','Revival');

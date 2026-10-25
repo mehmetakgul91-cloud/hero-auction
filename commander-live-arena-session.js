@@ -1,3 +1,4 @@
+import {clearCommanderFocus} from './battle-commander-focus.js';
 // Experimental server-owned live arena coordinator.
 // Commander casts can be interleaved with scheduled hero actions without a pass turn.
 import {createBasicTurnSession,peekBasicTurn,stepBasicTurn,advanceBasicTurnSession} from './commander-basic-turn-session.js';
@@ -18,6 +19,8 @@ export function stepLiveArenaHero(session){
  // Exhausting the final round must produce a finished snapshot, not only stop the runner.
  if(!session.combat.finished&&session.combat.round>=15&&!peekBasicTurn(session.turns)){
   session.combat.finished=true;session.combat.abilities.finished=true;
+  clearCommanderFocus(session.combat.teams);
+  result.result.teams=structuredClone(session.combat.teams);
   result.finished=true;
  }
  return result;

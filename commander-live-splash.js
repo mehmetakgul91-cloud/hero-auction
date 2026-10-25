@@ -1,3 +1,4 @@
+import {expireCommanderFocus} from './battle-commander-focus.js';
 import {applyHeroDamage} from './battle-hp-damage.js';
 // Experimental server-only multi-target splash action. Atomic snapshot update.
 import {grantLiveCommanderEnergy} from './commander-live-abilities.js';
@@ -22,6 +23,7 @@ export function applyServerSplashAction(combat,{side,actorId,primaryTargetId,pri
  combat.version++;
  for(const event of events){event.version=combat.version;combat.events.push(event);}
  for(const id of killed)grantLiveCommanderEnergy(combat.abilities,1-side,10);
+ expireCommanderFocus(next,round);
  combat.finished=next.some(team=>team.every(u=>u.hp<=0));
  combat.abilities.finished=combat.finished;
  return {version:combat.version,events,teams:structuredClone(next),finished:combat.finished};

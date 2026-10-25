@@ -16,7 +16,7 @@ test('mage description promises a fixed snapshot bonus, not compounding current 
 });
 test('revival and focus semantics are explicit and no static ultimate85 label remains',()=>{
  assert.match(commanderUltimateDescription('support',{english:true}),/40% max health.*once per battle.*Shield becomes 0.*no extra action/);
- assert.match(commanderUltimateDescription('attack',{english:true}),/selected living enemy.*next attack/);
+ assert.match(commanderUltimateDescription('attack',{english:true}),/selected living enemy.*Until the target dies/);
  const html=fs.readFileSync(new URL('../public/battle-preview.html',import.meta.url),'utf8');assert.doesNotMatch(html,/Nihai · 85/);
  const css=fs.readFileSync(new URL('../public/commander-arena-magic-targeting.css',import.meta.url),'utf8');assert.match(css,/content:attr\(data-commander-target-label\)/);
 });
