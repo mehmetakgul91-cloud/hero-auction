@@ -1,3 +1,6 @@
+import {createDiamondPolicy,commanderProgression,readDiamondBalance,upgradeCommanderWithDiamonds} from './paid-diamonds.js';
+import {createDiamondExchangePolicy,diamondExchangeView,exchangeDiamondsForGold} from './paid-diamond-exchange.js';
+import {createDiamondSignupPolicy,registerDiamondMember} from './diamond-signup-bonus.js';
 import {buildDefaultFormation,validateFormation} from './public/preparation-formation.js';
 import {COMMANDER_CHANGE_COST} from './public/commander-economy.js';
 import {requireModerationForInteraction} from './moderation-availability.js';
@@ -33,6 +36,12 @@ import {orientBattleSummary} from './public/battle-summary-data.js';
 import {createArena3dDemo} from './arena-3d-demo.js';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
+// Explicit opt-in only. Schema is a separate, unapplied migration; no payment handler.
+const diamondPolicy=createDiamondPolicy(process.env);
+const diamondExchangePolicy=createDiamondExchangePolicy(process.env);
+const diamondSignupPolicy=createDiamondSignupPolicy(process.env);
+// Non-secret release evidence: never log environment values, credentials or wallets.
+console.info('Commander economy policy:',JSON.stringify({diamondsEnabled:diamondPolicy.enabled,signupBonusEnabled:diamondSignupPolicy.enabled,exchangeEnabled:diamondExchangePolicy.enabled,purchaseAvailable:false}));
 const GOOGLE_CLIENT_ID=process.env.GOOGLE_CLIENT_ID||'742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
 const ADMIN_GOOGLE_EMAIL=String(process.env.ADMIN_GOOGLE_EMAIL||'').trim().toLowerCase();
 const authSecret=process.env.AUTH_SIGNING_SECRET?Buffer.from(process.env.AUTH_SIGNING_SECRET,'hex'):crypto.randomBytes(32);
@@ -299,6 +308,13 @@ function finishAuction(r){
 }
 function error(message,status=400){const e=new Error(message);e.status=status;throw e}
 function authorize(body){const r=rooms.get(String(body.code||'').toUpperCase());if(!r)error('Oda bulunamadı.',404);const seat=r.players.findIndex(p=>p&&p.token===body.token);if(seat<0||r.players[seat].accountId!==readLogin(body.authToken)?.sub)error('Oyuncu yetkisi geçersiz.',403);return{r,seat}}
+async function registerVerifiedDiamondMember(user,provider){
+ if(!diamondSignupPolicy.enabled)return;
+ if(!database||!databaseReady)error('Üyelik hediyesi geçici olarak kullanılamıyor.',503);
+ // Called only after provider verification, before the normal profile upsert.
+ // Guest/session-check routes do not invoke this registration hook.
+ await registerDiamondMember({database,accountId:user.sub,provider,policy:diamondSignupPolicy});
+}
 async function rememberDisplayName(user){if(user?.name){try{user.name=assertModeratedText(user.name,{kind:'name'})}catch{user.name='Oyuncu'}}if(user?.sub&&(!database||databaseReady))await friends.register(user.sub,user.name);if(database&&databaseReady&&user?.sub&&user?.name)await database.query('INSERT INTO hero_auction_user_profiles(account_id,display_name) VALUES($1,$2) ON CONFLICT(account_id) DO UPDATE SET display_name=EXCLUDED.display_name,updated_at=NOW()',[user.sub,user.name]);}
 async function adminApi(url,b){
  const user=readLogin(b.authToken);
@@ -447,7 +463,24 @@ async function api(url,b){
  requireModerationForInteraction(moderationReady,url);
  if(url.startsWith('/api/moderation/'))return moderationApi(url,b);
  const entryRoutes=['/api/create','/api/join','/api/match','/api/bot','/api/rematch'];
- if(!entryRoutes.includes(url)&&url!=='/api/room/detach')return apiAction(url,b);
+ if(!entryRoutes.includes(url)&&url!=='/api/room/detach'){
+  const commanderRoute=['/api/commander/get','/api/commander/select','/api/commander/change','/api/commander/upgrade'].includes(url);
+  // Preflight diamond reads BEFORE gold-only selection/change can commit. A
+  // missing unapplied schema must not turn a successful mutation into a 503.
+  let diamonds=null;
+  if(commanderRoute&&diamondPolicy.enabled){
+   const user=readLogin(b.authToken);if(!user)error('Odaya erişmek için giriş yapmalısın.',401);
+   diamonds=database&&databaseReady?await readDiamondBalance(database,user.sub):0;
+  }
+  const result=await apiAction(url,b);
+  if(commanderRoute){
+   const exchange=diamondExchangeView(diamondExchangePolicy);
+   const welcomeBonus={enabled:diamondSignupPolicy.enabled,amount:10,eligibleProviders:['google']};
+   if(result.progression)return{...result,exchange,progression:{...result.progression,welcomeBonus}}; // Already constructed under transaction locks.
+   return{...result,diamonds,exchange,progression:{...commanderProgression(result.profile,{gold:result.gold,diamonds},diamondPolicy),welcomeBonus}};
+  }
+  return result;
+ }
  const user=readLogin(b.authToken);if(!user)error('Odaya erişmek için giriş yapmalısın.',401);
  await friends.register(user.sub,user.name);
  return friends.afterMutations(async()=>{
@@ -474,6 +507,12 @@ async function api(url,b){
 }
 async function apiAction(url,b){if(url.startsWith('/api/admin/'))return adminApi(url,b);if(url==='/api/auth/check'){const user=readLogin(b.authToken);if(!user)error('Oturumun sona erdi. Yeniden giriş yap.',401);await rememberDisplayName(user);return{user:{sub:user.sub,name:user.name},gold:await goldBalance(user.sub)}}if(url==='/api/auth/crazygames'){const user=await verifyCrazyGamesToken(b.credential);await rememberDisplayName(user);for(const r of rooms.values()){let changed=false;for(const p of r.players){if(p?.accountId===user.sub&&p.name!==user.name){p.name=user.name;changed=true}}if(changed)publish(r)}return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}if(url==='/api/auth/guest'){const name=assertModeratedText(b.name||'Oyuncu',{kind:'name'});const user={sub:'guest:'+crypto.randomUUID(),name};await rememberDisplayName(user);return{user:{name},authToken:signLogin(user),gold:await goldBalance(user.sub)}}
 if(!url.startsWith('/api/auth/')){const user=readLogin(b.authToken);if(!user)error('Odaya erişmek için giriş yapmalısın.',401);if(databaseReady){const block=await database.query('SELECT banned FROM hero_auction_admin_accounts WHERE account_id=$1',[user.sub]);if(block.rows[0]?.banned)error('Hesap askıya alınmıştır.',403)}}
+if(url==='/api/diamonds/exchange'){
+ const user=readLogin(b.authToken);
+ if(!diamondPolicy.enabled||!diamondExchangePolicy.enabled)error('Elmas-altın dönüşümü etkin değil.',503);
+ if(!database||!databaseReady)error('Elmas-altın dönüşümü geçici olarak kullanılamıyor.',503);
+ return exchangeDiamondsForGold({database,accountId:user.sub,request:b,policy:diamondExchangePolicy});
+}
 if(previewGuestMode&&url==='/api/commander/get'){
  const user=readLogin(b.authToken);
  return {profile:previewCommanderProfiles.get(user.sub)||null,gold:await goldBalance(user.sub)};
@@ -532,6 +571,7 @@ if(url==='/api/commander/change'){
 if(url==='/api/commander/upgrade'){
  const user=readLogin(b.authToken);
  if(!database||!databaseReady)error('Komutan sistemi geçici olarak kullanılamıyor.',503);
+ if(diamondPolicy.enabled)return upgradeCommanderWithDiamonds({database,accountId:user.sub,request:b,policy:diamondPolicy});
  const stat=String(b.stat||'');
  if(!COMMANDER_STATS.includes(stat))error('Geçersiz geliştirme alanı.',400);
  const client=await database.connect();
@@ -540,6 +580,7 @@ if(url==='/api/commander/upgrade'){
   const existing=await client.query('SELECT profile FROM hero_auction_commanders WHERE account_id=$1 FOR UPDATE',[user.sub]);
   if(!existing.rows.length)error('Önce komutan seçmelisin.',409);
   const profile=validateCommanderProfile(existing.rows[0].profile);
+  if((b.commanderId!==undefined&&b.commanderId!==profile.commanderId)||(b.expectedCurrentLevel!==undefined&&b.expectedCurrentLevel!==profile.levels[stat]))error('Komutan seviyesi değişti. Profili yenileyip tekrar dene.',409);
   if(profile.levels[stat]>=commanderLevelCap(profile.commanderId,stat))error('Bu dal maksimum seviyede.',409);
   const cost=commanderUpgradeCost(profile.levels[stat]);
   const wallet=await client.query('UPDATE hero_auction_wallets SET gold=gold-$2 WHERE account_id=$1 AND gold >= $2 RETURNING gold',[user.sub,cost]);
@@ -567,7 +608,7 @@ if(url==='/api/spectate'){const r=rooms.get(String(b.code||''));if(!r||r.phase!=
 if(url==='/api/rewarded/status'){return await rewardedAdStatus(readLogin(b.authToken).sub)}
 if(url==='/api/rewarded/claim'){error('Ödüllü reklam sistemi henüz etkin değil.',503)}
 if(url==='/api/wallet'){return{gold:await goldBalance(readLogin(b.authToken).sub)}}
-if(url==='/api/auth/google'){const credential=String(b.credential||'');if(credential.length<100||credential.length>8000)error('Geçersiz Google kimliği.');const response=await fetch('https://oauth2.googleapis.com/tokeninfo?id_token='+encodeURIComponent(credential),{signal:AbortSignal.timeout(8000)});if(!response.ok)error('Google kimliği doğrulanamadı.',401);const claims=await response.json();if(claims.aud!==GOOGLE_CLIENT_ID||!['accounts.google.com','https://accounts.google.com'].includes(claims.iss)||Number(claims.exp)*1000<Date.now()||!claims.sub||claims.email_verified!=='true')error('Google kimliği doğrulanamadı.',401);const user={sub:claims.sub,name:String(claims.name||claims.given_name||'Oyuncu').slice(0,24),email:String(claims.email||'').toLowerCase()};await rememberDisplayName(user);return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}
+if(url==='/api/auth/google'){const credential=String(b.credential||'');if(credential.length<100||credential.length>8000)error('Geçersiz Google kimliği.');const response=await fetch('https://oauth2.googleapis.com/tokeninfo?id_token='+encodeURIComponent(credential),{signal:AbortSignal.timeout(8000)});if(!response.ok)error('Google kimliği doğrulanamadı.',401);const claims=await response.json();if(claims.aud!==GOOGLE_CLIENT_ID||!['accounts.google.com','https://accounts.google.com'].includes(claims.iss)||Number(claims.exp)*1000<Date.now()||!claims.sub||claims.email_verified!=='true')error('Google kimliği doğrulanamadı.',401);const user={sub:claims.sub,name:String(claims.name||claims.given_name||'Oyuncu').slice(0,24),email:String(claims.email||'').toLowerCase()};await registerVerifiedDiamondMember(user,'google');await rememberDisplayName(user);return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}
 if(url==='/api/create'){const name=chosenName(b,'Oyuncu 1');const universe='mixed';const cards=newCards(universe);let id;do{id=code()}while(rooms.has(id));const t=token();const accountId=readLogin(b.authToken).sub;const r={code:id,universe,cards,round:0,phase:'waiting',turn:0,topBid:0,topSeat:null,players:[{name,token:t,accountId,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],deadline:null,mode:'friend'};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/join'){const r=rooms.get(String(b.code||'').toUpperCase());if(!r)error('Oda bulunamadı.',404);if(moderation.blocked(readLogin(b.authToken).sub,r.players[0]?.accountId))error('Bu oyuncuyla etkileşim kullanılamıyor.',403);if(r.players[1]||r.joinPending)error('Oda dolu.');if(r.phase!=='waiting'||r.mode!=='friend'||activeSeats.get(r.players[0]?.accountId)?.code!==r.code||activeSeats.get(r.players[0]?.accountId)?.created!==r.created)error('Davet odası artık açık değil.',409);r.joinPending=true;try{await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name:chosenName(b,'Oyuncu 2'),token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;log(r,`Oyun başladı. 1. kart için açılış: ${r.players[0].name}`);publish(r);return{token:t,room:publicRoom(r,1)}}finally{r.joinPending=false}}
 if(url==='/api/rematch'){

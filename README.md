@@ -35,7 +35,47 @@ Otomatik yerleşim **Hazırım** sayılmaz. Mevcut 60 saniyelik hazırlık süre
 
 ## Komutan seçimi ve değişimi
 
-İlk komutan seçimi ücretsizdir. Daha sonra farklı bir komutana geçiş 1000 altındır; gelişim seviyeleri korunur. Ücret sunucuda bakiye kontrolüyle birlikte tek işlemde kesilir. Aynı komutanı yeniden seçme isteği ücret kesmeden reddedilir. Geliştirme ücretleri ve diğer oyun ekonomisi değişmez.
+İlk komutan seçimi ücretsizdir. Daha sonra farklı bir komutana geçiş 1000 altındır; gelişim seviyeleri korunur. Ücret sunucuda bakiye kontrolüyle birlikte tek işlemde kesilir. Aynı komutanı yeniden seçme isteği ücret kesmeden reddedilir. Komutan değiştirme ücreti bu güncellemede de 1000 altındır; gelişim fiyatları için aşağıdaki güncel ekonomi bölümüne bak.
+
+## Güncel gelişim ve elmas hazırlığı (25 Ekim 2026)
+
+Komutan ekranında dört bağımsız gelişim dalı seçilir; sıkıştırılmış bağlantılı
+seviye yolu mevcut ve sıradaki seviyeyi gösterir. Dal seçimi harcama yapmaz.
+Ana dal 40, yan dal 20 etkin seviyedir; komutan değişince fazladan kayıtlı
+seviyeler silinmez, saklı olarak gösterilir. Sonraki gerçek sınıf/beceri/dolum
+etkileri ve sunucunun ücreti birlikte görünür.
+
+- Altın: hedef seviye `L` için `ceil(200 × 1,2^(L−1))`; ilk fiyatlar 200, 240,
+  288, 346. Yuvarlama her adımda ilk tabandan yapılır. Bu kod yayımlandığında
+  yeni altın eğrisi uygulanır; bunun ayrı bir etkinleştirme bayrağı yoktur.
+- Elmas etkinse 20→21 için ek 10 elmas; sonraki hedeflerde ilk tabandan ×1,2,
+  yukarı yuvarlama. Eski seviyelere borç, sıfırlama veya geriye dönük ücret yoktur.
+- Elmas → altın: 1 elmas = 500 altın; ayrı, kapalı açılır bölümde miktar ve
+  kesin çıktı gösterilip onay istenir. Altın → elmas veya gerçek ödeme yoktur.
+- Karşılama istisnası yalnız etkinleştirmeden sonra gerçekten yeni, doğrulanmış
+  Google hesabına bir kez 10 elmastır. Misafir, CrazyGames ve eski hesaplar almaz.
+
+| Yerel varsayılan / seçenek | 21+ geliştirme | Karşılama | Elmas → altın |
+| --- | --- | --- | --- |
+| Tüm bayraklar kapalı (varsayılan) | Yalnız altın | Kapalı | Kapalı |
+| `HERO_DIAMONDS_ENABLED=1` | Altın + elmas | Ayrı bayrak gerektirir | Ayrı bayrak gerektirir |
+| Üç bayrak da açık | Altın + elmas | Yeni Google üyeye 10 | 1 → 500 |
+
+Diğer iki bayrak `HERO_DIAMOND_SIGNUP_BONUS_ENABLED` ve
+`HERO_DIAMOND_EXCHANGE_ENABLED` değerleridir. Satın alma sağlayıcısı/paketleri
+henüz yoktur; **hiçbir kombinasyon gerçek elmas satın almayı açmaz**. Bu yüzden
+premiumu satış olmadan açmak 21+ gelişimi eldeki/uygun karşılama elmasıyla sınırlar.
+
+Bu çalışma yereldir; yayın, üretim bayrağı veya veri değişikliği yapılmadı.
+`migrations/001…003` taslakları uygulanmadı. Atomiklik/yeniden deneme testleri
+izole SQL modelleri kullanır, gerçek PostgreSQL kanıtı değildir; bu ortamda
+`psql`, `postgres`, `initdb`, `pg_ctl` ve Docker bulunmadı. Yayın/şema/etkinleştirme
+öncesi izole gerçek PostgreSQL doğrulaması ayrıca gereklidir.
+
+Ayrıntılar: [gelişim görünümü](docs/commander-profile-refresh.md),
+[elmas ve fiyatlar](docs/paid-diamonds-foundation.md),
+[dönüşüm](docs/diamond-exchange.md),
+[Google karşılama](docs/diamond-signup-bonus.md).
 
 ## Açık artırma kart havuzu
 

@@ -17,7 +17,7 @@ for(const [difficulty,level,gain] of [['easy',5,14],['medium',10,17],['hard',15,
    earned=previewCommanderUpgrade(earned,stat,commanderUpgradeCost(n)).profile;
   }
   assert.deepEqual(profile,earned,'exactly reachable through human branch upgrade rules');
-  assert.equal(cost,4*100*level*(level+1));
+  assert.equal(cost,4*({5:1489,10:5194,15:14412}[level]),'approved exponential gold curve; bots still spend no currency');
   assert.equal(commanderAbilityStats(profile).level,level);
   assert.equal(commanderAbilityStats(profile).energyPerRound,gain);
   assert.equal(commanderAbilityStats(profile).bonusPercent,level);

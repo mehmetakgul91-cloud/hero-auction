@@ -61,7 +61,7 @@ function fixture({gold=1000,profile=initialProfile(),failSave=false,lostCommit=f
   }
  };
  const context=vm.createContext({COMMANDER_CHANGE_COST,createCommanderProfile,validateCommanderProfile,resolveCommander,COMMANDER_STATS,commanderLevelCap,commanderUpgradeCost,previewCommanderUpgrade,
-  database,databaseReady:true,previewGuestMode:preview,previewCommanderProfiles:new Map(profile?[[account,structuredClone(profile)]]:[]),
+  diamondPolicy:{enabled:false},database,databaseReady:true,previewGuestMode:preview,previewCommanderProfiles:new Map(profile?[[account,structuredClone(profile)]]:[]),
   readLogin:()=>({sub:account}),goldBalance:async()=>durable.gold,error:(message,status)=>{throw Object.assign(Error(message),{status})}});
  vm.runInContext(`async function handle(url,b){${handlers}}`,context);
  return{durable,queries,context,releases:()=>releases,request:(action,body={})=>context.handle('/api/commander/'+action,{authToken:'isolated-test-token',...body})};
@@ -130,11 +130,19 @@ test('profile persistence failure rolls the debit back and releases the client',
  await assert.rejects(f.request('change',{commanderId:'defense'}),/Profile save failed/);
  assert.deepEqual(f.durable,before);assert.equal(f.queries.at(-1)[0],'ROLLBACK');assert.equal(f.releases(),1);
 });
-test('upgrade pricing and free preview switches are unchanged',async()=>{
+test('first upgrade price and free preview switches are unchanged; later gold uses approved 1.2 curve',async()=>{
  const f=fixture({gold:500,profile:createCommanderProfile('attack')});
  const upgrade=await f.request('upgrade',{stat:'attack'});assert.equal(upgrade.cost,200);assert.equal(upgrade.gold,300);assert.equal(upgrade.profile.levels.attack,1);
- assert.equal(commanderUpgradeCost(1),400);assert.equal(commanderUpgradeCost(39),8000);
+ assert.equal(commanderUpgradeCost(1),240);assert.equal(commanderUpgradeCost(39),244962);
  const preview=fixture({gold:0,preview:true});
  const switched=await preview.request('change',{commanderId:'magic'});
  assert.equal(switched.cost,0);assert.equal(switched.gold,0);assert.equal(switched.profile.commanderId,'magic');assert.equal(preview.queries.length,0);
+});
+
+test('feature OFF expected-level guard rejects replay/new-key duplicate without second debit',async()=>{
+ const f=fixture({gold:1000,profile:createCommanderProfile('attack')});
+ const body={stat:'attack',commanderId:'attack',expectedCurrentLevel:0,requestId:'request-0000000001'};
+ await f.request('upgrade',body);
+ await assert.rejects(f.request('upgrade',{...body,requestId:'request-0000000002'}),e=>e.status===409&&/seviyesi değişti/.test(e.message));
+ assert.equal(f.durable.gold,800);assert.equal(f.durable.profile.levels.attack,1);assert.equal(debitQueries(f).length,1);
 });
