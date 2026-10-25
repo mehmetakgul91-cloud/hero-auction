@@ -16,15 +16,25 @@ test('defense adds shields only to allies',()=>{
  assert.ok(out.teams[0].every(u=>u.shield>0));
  assert.ok(out.teams[1].every(u=>u.shield===0));
 });
-test('support heals injured units without exceeding max HP',()=>{
+test('support normal heals injured units without exceeding max HP',()=>{
  const input=teams();input[0][0].hp=20;input[0][1].hp=50;
- const out=applyLiveCommanderEffect(input,{side:0,ability:'ultimate',commanderId:'support'});
+ const out=applyLiveCommanderEffect(input,{side:0,ability:'normal',commanderId:'support'});
  assert.ok(out.teams[0][0].hp>20);
  assert.ok(out.teams[0].every(u=>u.hp<=u.maxHp));
 });
-test('magic weakens at most two opponents',()=>{
- const out=applyLiveCommanderEffect(teams(),{side:0,ability:'ultimate',commanderId:'magic',targetIds:['0','1']});
- assert.equal(out.teams[1].filter(u=>u.commanderWeaken>0).length,2);
+test('magic ultimate buffs exactly one living friendly hero without weakening enemies',()=>{
+ const input=teams();
+ const out=applyLiveCommanderEffect(input,{side:0,ability:'ultimate',commanderId:'magic',targetIds:['0'],round:2});
+ assert.equal(out.teams[0][0].attack,50);assert.equal(out.teams[0][0].arcaneSurgeBonusAttack,50);
+ assert.equal(out.teams[0][0].arcaneSurgeUntilRound,4);assert.deepEqual(out.teams[1],input[1]);
+ assert.equal(out.teams[0].filter(u=>u.arcaneSurgeBonusAttack!==undefined).length,1);
+ assert.throws(()=>applyLiveCommanderEffect(input,{side:0,ability:'ultimate',commanderId:'magic',targetIds:['0','1']}),/Select one/);
+});
+test('support ultimate revives exactly selected fallen ally instead of healing living allies',()=>{
+ const input=teams();input[0][0].hp=0;input[0][1].hp=20;
+ const out=applyLiveCommanderEffect(input,{side:0,ability:'ultimate',commanderId:'support',targetIds:['0'],round:2});
+ assert.equal(out.teams[0][0].hp,40);assert.equal(out.teams[0][0].shield,0);assert.equal(out.teams[0][0].canActFromRound,3);
+ assert.equal(out.teams[0][1].hp,20);assert.deepEqual(out.teams[1],input[1]);assert.equal(out.revivalUsed,true);assert.equal(input[0][0].hp,0);
 });
 test('rejects invalid commands and completed battles',()=>{
  assert.throws(()=>applyLiveCommanderEffect(teams(),{side:0,ability:'pass',commanderId:'attack'}),/Invalid ability/);
@@ -41,15 +51,16 @@ test('impact records report actual shield absorption and capped health loss',()=
 });
 test('healing impact records only the injured recipients actually healed',()=>{
  const input=teams();input[0][0].hp=20;input[0][1].hp=50;
- const out=applyLiveCommanderEffect(input,{side:0,ability:'ultimate',commanderId:'support'});
- assert.deepEqual(out.log.at(-1).impacts,[{target:'0',kind:'heal',value:39}]);
+ const out=applyLiveCommanderEffect(input,{side:0,ability:'normal',commanderId:'support'});
+ assert.deepEqual(out.log.at(-1).impacts,[{target:'0',kind:'heal',value:16}]);
  assert.throws(()=>applyLiveCommanderEffect(teams(),{side:0,ability:'normal',commanderId:'support'}),/yaralı kahraman yok/);
 });
 test('shield impact records exclude dead heroes and report gained shield, not total shield',()=>{
  const input=teams();input[1][0].hp=0;input[1][1].shield=100;
  const out=applyLiveCommanderEffect(input,{side:1,ability:'ultimate',commanderId:'defense'});
- assert.equal(out.log.at(-1).impacts.length,4);
- for(const impact of out.log.at(-1).impacts){assert.equal(impact.kind,'shield');assert.equal(impact.value,20);assert.notEqual(impact.target,'0');}
+ const shields=out.log.at(-1).impacts.filter(e=>e.kind==='shield'),guards=out.log.at(-1).impacts.filter(e=>e.kind==='guard');
+ assert.equal(shields.length,4);assert.deepEqual(guards,[{target:'1',kind:'guard',value:1}]);
+ for(const impact of shields){assert.equal(impact.kind,'shield');assert.equal(impact.value,20);assert.notEqual(impact.target,'0');}
  assert.equal(out.teams[1][1].shield,120);
 });
 test('magic impact records only chosen targets and preserve an existing stronger weakening',()=>{

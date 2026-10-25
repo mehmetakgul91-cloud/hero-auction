@@ -8,6 +8,7 @@ import {createRoomInvitesUI} from '/room-invites.js';
 import {createFriendsUI} from '/friends.js';
 import {translate} from '/crazygames-en.js';
 import {describeBattleEvent} from '/battle-event-text.js';
+import {createBattleReplayHealth} from '/battle-replay-health.js';
 import {createArenaTeamRenderer} from '/arena-team-renderer.js';
 import {summarizeBattle} from '/battle-summary-data.js?v=complete-results-20261021';
 import {commanderAbilityStats,commanderAbilityDescription} from '/commander-ability-rules.js?v=commander-attack-fix-20261021';
@@ -354,7 +355,7 @@ function renderBoard(){
    portrait.onclick=()=>{selectedHero=heroIndex;renderBoard()};
    const identity=document.createElement('div');identity.className='board-hero-identity';
    const name=document.createElement('strong');name.className='board-hero-name';name.textContent=demoA[heroIndex][0];
-   const powerLabel=document.createElement('span');powerLabel.className='board-hero-power';powerLabel.textContent='⚡ GÜÇ '+power.power.toFixed(2);powerLabel.style.color=power.power>=power.base?'#83f4b6':'#ff9a9a';
+   const powerLabel=document.createElement('span');powerLabel.className='board-hero-power';powerLabel.textContent='⚡ GÜÇ ≈'+power.power.toFixed(2);powerLabel.setAttribute('aria-label','Tahmini güç '+power.power.toFixed(2));powerLabel.title='Rol, saf ve komutan etkilerini özetleyen tahmini güç; gerçek savaş istatistikleri ayrı hesaplanır.';powerLabel.style.color=power.power>=power.base?'#83f4b6':'#ff9a9a';
    identity.append(name,powerLabel);
    const move=document.createElement('button');move.type='button';move.className='lane-switch';move.dataset.slot=slot;
    move.textContent=lane==='front'?'↓ Arka safa':'↑ Ön safa';move.setAttribute('aria-label',demoA[heroIndex][0]+' · '+move.textContent);
@@ -494,6 +495,12 @@ function showHeroSoul(card){
 
 function animateMove(e){
  if(!motion())return;
+ // Delay changes initiative, not another attack or stun animation.
+ if(e.action==='delay'){
+  const delayed=[...document.querySelectorAll('.hero')].find(x=>x.dataset.heroId===e.targetId);
+  floatingArenaEffect(delayed,'arena-floating-damage',document.documentElement.lang==='en'?'ACTS LAST':'SIRA SONU');
+  return;
+ }
  const splash=e.damageType==='splash';
  // Splash entries belong to the same ability: don't replay the caster's special attack.
  if(!splash)comicBattleCue(e);
@@ -583,21 +590,13 @@ async function build(overrideResult){
   renderArenaCommanderMatchup(result.commanders);
   liveArenaMode=!!result.live;
   states=result.teams.map((team,side)=>team.map((u,index)=>({...u,hp:u.maxHp,shieldKnown:liveArenaMode||Number.isFinite(result.initialShields?.[side]?.[index]),shield:liveArenaMode?(Number(u.shield)||0):(Number(result.initialShields?.[side]?.[index])||0)})));
+  if(!liveArenaMode)for(const unit of states.flat())for(const key of ['arcaneSurgeBonusAttack','arcaneSurgeFromRound','arcaneSurgeUntilRound'])delete unit[key];
   const lookup=new Map(states.flat().map(u=>[u.id,u.name]));
-  const health=states.map(team=>team.map(u=>u.maxHp));
-  events=(liveArenaMode?[]:result.log).map(entry=>{
-   const side=entry.side??states.findIndex(team=>team.some(u=>u.id===entry.actor));
-   const targetSide=1-side;
-   const target=states[targetSide]?.findIndex(u=>u.id===entry.target)??-1;
-    if(entry.action==='heal'||entry.action==='passive-heal'){
-    const healSide=entry.action==='passive-heal'?side:side;
-    const idx=states[healSide]?.findIndex(u=>u.id===(entry.target||entry.actor))??-1;
-    if(idx>=0)health[healSide][idx]=Math.min(states[healSide][idx].maxHp,health[healSide][idx]+entry.value);
-   }else if(target>=0&&entry.value>0){
-    health[targetSide][target]=Math.max(0,health[targetSide][target]-entry.value);
-   }
-   return {...entry,actorId:entry.actor,targetId:entry.target,actor:lookup.get(entry.actor)||entry.actor,target:lookup.get(entry.target)||entry.target,snapshot:health.map(team=>team.slice())};
-  });
+  const replayHealth=createBattleReplayHealth(states);
+  events=(liveArenaMode?[]:result.log).map(entry=>({
+   ...entry,actorId:entry.actor,targetId:entry.target,actor:lookup.get(entry.actor)||entry.actor,target:lookup.get(entry.target)||entry.target,
+   snapshot:replayHealth.apply(entry),statusSnapshot:replayHealth.statusSnapshot()
+  }));
   // The server is authoritative for winner; the UI reconstructs interim HP from logs.
   finalResult=result;
   if(liveArenaMode)startArenaClock();
@@ -818,7 +817,7 @@ function step(){
  if(!batch.length){batch.push(events[cursor++])}
  const last=batch[batch.length-1];
  const previous=states.map(team=>team.map(unit=>unit.hp));
- states.forEach((t,side)=>t.forEach((u,i)=>{u.hp=last.snapshot[side][i];u.shieldKnown=Number.isFinite(last.shieldSnapshot?.[side]?.[i]);if(u.shieldKnown)u.shield=Math.max(0,last.shieldSnapshot[side][i]);}));
+ states.forEach((t,side)=>t.forEach((u,i)=>{u.hp=last.snapshot[side][i];if(last.statusSnapshot){for(const key of ['arcaneSurgeBonusAttack','arcaneSurgeFromRound','arcaneSurgeUntilRound'])delete u[key];Object.assign(u,last.statusSnapshot[side][i]);}u.shieldKnown=Number.isFinite(last.shieldSnapshot?.[side]?.[i]);if(u.shieldKnown)u.shield=Math.max(0,last.shieldSnapshot[side][i]);}));
  const defeatedSide=states.findIndex((team,side)=>previous[side].some(hp=>hp>0)&&team.every(u=>u.hp<=0));
  const lastFallen=defeatedSide<0?null:states[defeatedSide].find((u,i)=>previous[defeatedSide][i]>0&&u.hp<=0);
  for(const e of batch){

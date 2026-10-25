@@ -1,4 +1,5 @@
-import {calculateShieldAbsorption} from './battle-shield-absorption.js';
+import {abilityValue} from './public/hero-ability-rules.js';
+import {applyHeroDamage} from './battle-hp-damage.js';
 // Experimental server-owned execute special, preserving the legacy <12% threshold.
 import {applyAttackThorns} from './commander-parity-thorns.js';
 import {calculateHeroRawDamage} from './battle-damage-formula.js';
@@ -12,18 +13,12 @@ export function stepParityExecute(combat,{side,actorId,round=combat?.round,criti
  if(!target)throw Error('No living target');
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
  const weakened=Number.isInteger(actor.commanderWeakenUntilRound)&&round<=actor.commanderWeakenUntilRound?Math.max(0,Math.min(1,Number(actor.commanderWeaken)||0)):0;
- const raw=calculateHeroRawDamage({unit:actor,target,skill:actor.active,special:true,critical,guarded,weakened});
- const absorbed=calculateShieldAbsorption(target.shield||0,raw);
- target.shield=(target.shield||0)-absorbed;
- const damage=Math.min(target.hp,raw-absorbed);
- target.hp-=damage;actor.damage=(actor.damage||0)+damage;
- let executed=0;
- if(target.hp>0&&target.hp/target.maxHp<.12){
-  executed=target.hp;actor.damage+=executed;target.hp=0;
- }
+ const raw=calculateHeroRawDamage({unit:actor,target,skill:actor.active,special:true,critical,guarded,weakened,round});
+ const {damage,absorbed,executedDamage:executed,guardTriggered,arcaneTransfer}=applyHeroDamage(target,raw,{round,allies:enemies,executeThreshold:abilityValue(actor.active,'executeThreshold')});
+ actor.damage=(actor.damage||0)+damage+executed;
  const killed=target.hp===0;
  if(killed)actor.kills=(actor.kills||0)+1;
- const event={round,side,actor:actorId,action:actor.active.name||'special',target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:'special',executedDamage:executed};
+ const event={round,side,actor:actorId,action:actor.active.name||'special',target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:'special',executedDamage:executed,...(guardTriggered?{guardTriggered:true}:{}),...(arcaneTransfer?{arcaneTransfer}:{})};
  const thornsShield=applyAttackThorns(actor,{enabled:allowThornsPassive});
  if(thornsShield)event.thornsShield=thornsShield;
  combat.teams=teams;combat.version++;event.version=combat.version;combat.events.push(event);

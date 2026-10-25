@@ -1,4 +1,5 @@
-import {calculateShieldAbsorption} from './battle-shield-absorption.js';
+import {abilityValue} from './public/hero-ability-rules.js';
+import {applyHeroDamage} from './battle-hp-damage.js';
 // Experimental server-owned sunder, weaken and haste special attacks.
 import {applyAttackThorns} from './commander-parity-thorns.js';
 import {calculateHeroRawDamage} from './battle-damage-formula.js';
@@ -14,20 +15,18 @@ export function stepParityStatSpecial(combat,{side,actorId,round=combat?.round,c
  if(!target)throw Error('No living target');
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
  const weakened=Number.isInteger(actor.commanderWeakenUntilRound)&&round<=actor.commanderWeakenUntilRound?Math.max(0,Math.min(1,Number(actor.commanderWeaken)||0)):0;
- const raw=calculateHeroRawDamage({unit:actor,target,skill:actor.active,special:true,critical,guarded,weakened});
- const absorbed=calculateShieldAbsorption(target.shield||0,raw);
- target.shield=(target.shield||0)-absorbed;
- const damage=Math.min(target.hp,raw-absorbed);
- target.hp-=damage;actor.damage=(actor.damage||0)+damage;
+ const raw=calculateHeroRawDamage({unit:actor,target,skill:actor.active,special:true,critical,guarded,weakened,round});
+ const {damage,absorbed,guardTriggered,arcaneTransfer}=applyHeroDamage(target,raw,{round,allies:enemies});
+ actor.damage=(actor.damage||0)+damage;
  const killed=target.hp===0;
  if(killed)actor.kills=(actor.kills||0)+1;
  let action,value=0,recipient=target.id;
- if(effect==='sunder'){target.defense=Math.max(5,Math.floor(target.defense*.85));action='armor-break';}
- else if(effect==='weaken'){target.attack=Math.max(5,Math.floor(target.attack*.9));action='weaken';}
- else{const before=actor.speed;actor.speed=Math.max(before,Math.min(150,before+8));action='haste';value=actor.speed-before;recipient=actor.id;}
+ if(effect==='sunder'){target.defense=Math.max(5,Math.floor(target.defense*(1-abilityValue(actor.active,'sunderRate'))));action='armor-break';}
+ else if(effect==='weaken'){target.attack=Math.max(5,Math.floor(target.attack*(1-abilityValue(actor.active,'weakenRate'))));action='weaken';}
+ else{const before=actor.speed;actor.speed=Math.max(before,Math.min(150,before+abilityValue(actor.active,'hasteAmount')));action='haste';value=actor.speed-before;recipient=actor.id;}
  const events=[
   {round,side,actor:actorId,action,target:recipient,value},
-  {round,side,actor:actorId,action:actor.active.name||'special',target:target.id,value:damage,absorbed,critical,rawDamage:raw,damageType:'special'}
+  {round,side,actor:actorId,action:actor.active.name||'special',target:target.id,value:damage,absorbed,critical,rawDamage:raw,damageType:'special',...(guardTriggered?{guardTriggered:true}:{}),...(arcaneTransfer?{arcaneTransfer}:{})}
  ];
  const splashDeaths=applyEnergySpecialSplash({actor,enemies,target,raw,round,side,events});
  const thornsShield=applyAttackThorns(actor,{enabled:allowThornsPassive});

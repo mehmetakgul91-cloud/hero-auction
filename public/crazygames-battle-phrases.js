@@ -1,3 +1,4 @@
+import {commanderUltimatePhrases} from './commander-ultimate-presentation.js';
 // Presentation-only copy for formation, live combat, and hero abilities.
 // Hero identities and battle rules are intentionally not changed.
 export const battlePhrases = {
@@ -200,7 +201,7 @@ export const battlePhrases = {
 // These generated sentences must be translated before their individual labels.
 export function translateCommanderDescription(text) {
  const percent = value => value.replace(',', '.');
- return text
+ let translated=text
   .replace(/Normal: savaş başındaki takım saldırısının %([\d,]+)'i; nihai: %([\d,]+)'i kadar toplam hasar düşmanlara bölünür\./g,
    (_,normal,ultimate)=>`Normal: ${percent(normal)}% of starting team attack; ultimate: ${percent(ultimate)}%. Total damage is split between enemies.`)
   .replace(/Normal: yaşayan takımın azami canının %([\d,]+)'i; nihai: %([\d,]+)'i kadar toplam kalkan paylaşılır\./g,
@@ -209,4 +210,12 @@ export function translateCommanderDescription(text) {
    (_,normal,ultimate)=>`Normal: restores ${percent(normal)}% of missing health; ultimate: ${percent(ultimate)}%. Prioritizes the hero with the lowest health ratio.`)
   .replace(/Normal: seçilen 1 hedefin saldırısı %([\d,]+); nihai: en fazla 2 hedefin saldırısı %([\d,]+) azalır\./g,
    (_,normal,ultimate)=>`Normal: reduces one selected target’s attack by ${percent(normal)}%; ultimate: reduces the attack of up to two targets by ${percent(ultimate)}%.`);
+ translated=translated
+  .replace(/Normal: savaş başındaki takım saldırısının %([\d,]+)'i kadar toplam hasar düşmanlara bölünür\./g,(_,n)=>`Normal: deals ${percent(n)}% of starting team attack, split between enemies.`)
+  .replace(/Normal: yaşayan takımın azami canının %([\d,]+)'i kadar toplam kalkan paylaşılır\./g,(_,n)=>`Normal: shares a total shield equal to ${percent(n)}% of living allies' maximum health.`)
+  .replace(/Normal: eksik canın %([\d,]+)'i iyileştirilir\. Can oranı en düşük kahraman önceliklidir\./g,(_,n)=>`Normal: restores ${percent(n)}% of missing health, prioritizing the hero with the lowest health ratio.`)
+  .replace(/Normal: seçilen 1 rakibin saldırısı %([\d,]+) azalır\./g,(_,n)=>`Normal: reduces 1 selected enemy's attack by ${percent(n)}%.`)
+  .replace(/Nihai \((\d+) enerji\):/g,'Ultimate ($1 energy):');
+ for(const [tr,en]of Object.entries(commanderUltimatePhrases).sort((a,b)=>b[0].length-a[0].length))translated=translated.split(tr).join(en);
+ return translated;
 }

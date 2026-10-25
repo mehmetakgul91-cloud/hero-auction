@@ -1,7 +1,7 @@
-import {COMMANDER_ROUND_ENERGY,commanderEnergyPerRound} from './public/commander-ability-rules.js';
+import {COMMANDER_ROUND_ENERGY,commanderEnergyPerRound,COMMANDER_ABILITY_COSTS,getCommanderAbilityCost} from './public/commander-ability-rules.js';
 // Isolated turn-command validation for the upcoming multiplayer arena.
 // This module does not change the existing battle engine or live endpoints.
-export const COMMANDER_TURN_COST=Object.freeze({normal:40,ultimate:100});
+export const COMMANDER_TURN_COST=COMMANDER_ABILITY_COSTS;
 export const COMMANDER_MAX_ENERGY=100;
 export const COMMANDER_TURN_ENERGY=COMMANDER_ROUND_ENERGY;
 
@@ -12,7 +12,7 @@ export function validateTurnCommand(command,{side,round,energy,commanderId}){
  if(!['attack','defense','magic','support'].includes(commanderId))throw Error('Commander not selected');
  if(command===null||command==='pass')return null;
  if(!['normal','ultimate'].includes(command))throw Error('Invalid commander ability');
- if(energy<COMMANDER_TURN_COST[command])throw Error('Insufficient commander energy');
+ if(energy<getCommanderAbilityCost(commanderId,command))throw Error('Insufficient commander energy');
  return Object.freeze({side,round,ability:command});
 }
 
@@ -38,7 +38,7 @@ export function resolveTurnSubmissions(state){
 export function calculateNextTurnEnergy(energy,action,{lostHeroes=0,commanderProfile}={}){
  if(!Number.isInteger(energy)||energy<0||energy>100)throw Error('Invalid commander energy');
  if(!Number.isInteger(lostHeroes)||lostHeroes<0||lostHeroes>5)throw Error('Invalid hero loss count');
- const cost=action===null?0:COMMANDER_TURN_COST[action?.ability];
+ const cost=action===null?0:getCommanderAbilityCost(commanderProfile?.commanderId??'defense',action?.ability);
  if(cost===undefined||energy<cost)throw Error('Invalid or unaffordable commander action');
  return Math.min(COMMANDER_MAX_ENERGY,energy-cost+lostHeroes*10+commanderEnergyPerRound(commanderProfile));
 }

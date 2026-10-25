@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
+import {getCommanderAbilityCost} from '../public/commander-ability-rules.js';
+import {commanderTargetMode,requiredMagicTargets} from '../public/commander-magic-target-picker.js';
+import {commanderUltimateName,commanderUltimateDescription} from '../public/commander-ultimate-presentation.js';
 import {createMagicCastControls} from '../public/commander-magic-cast-controls.js';
 import {createLiveCommanderAbilities} from '../commander-live-abilities.js';
 import {createLiveCommanderCombat,castLiveCommanderCombat} from '../commander-live-combat.js';
@@ -21,26 +24,28 @@ class Node {
 }
 class DetailEvent {constructor(type,options){this.type=type;this.detail=options?.detail}}
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
-function harness(side=0){
- const window=new Node(),document=new Node(),panel=new Node(),enemyRoot=new Node(),nodes=new Map();
+function harness(side=0,commanderId='magic'){
+ const window=new Node(),document=new Node(),panel=new Node(),enemyRoot=new Node(),allyRoot=new Node(),nodes=new Map();
  for(const selector of ['normal','ultimate','pass'].map(x=>`[data-command="${x}"]`).concat(['[data-magic-confirm]','[data-magic-cancel]','[data-energy]','[data-energy-meter]','[data-energy-fill]','[data-status]']))nodes.set(selector,new Node());
  nodes.get('[data-magic-confirm]').hidden=nodes.get('[data-magic-cancel]').hidden=true;
  panel.querySelector=selector=>nodes.get(selector);
- document.getElementById=id=>id==='experimental-commander-controls'?panel:id===(side===0?'team-b':'team-a')?enemyRoot:null;
+ document.getElementById=id=>id==='experimental-commander-controls'?panel:id===(side===0?'team-b':'team-a')?enemyRoot:id===(side===0?'team-a':'team-b')?allyRoot:null;
  const requests=[],intervals=new Map(),visuals=[];let intervalId=0,uuid=0;
- const c=createLiveCommanderCombat({teams:[0,1].map(s=>['a','b','c'].map(id=>({id:s+id,hp:100,maxHp:100,attack:50}))),commanders:[{commanderId:'magic'},{commanderId:'magic'}],abilities:createLiveCommanderAbilities({matchKey:'ui',energy:[100,100],now:0})});
- const snapshot=(extra={})=>({version:c.version,round:1,side,commanderId:'magic',teams:structuredClone(c.teams),abilities:c.abilities.energy.map(energy=>({energy,cooldownMs:0,effectLockMs:0})),finished:c.finished,events:[],...extra});
+ const c=createLiveCommanderCombat({teams:[0,1].map(s=>['a','b','c'].map(id=>({id:s+id,hp:100,maxHp:100,attack:50}))),commanders:[{commanderId},{commanderId}],abilities:createLiveCommanderAbilities({matchKey:'ui',energy:[100,100],now:0})});
+ const snapshot=(extra={})=>({version:c.version,round:1,side,commanderId,revivalUsed:[false,false],ultimateUsed:[false,false],teams:structuredClone(c.teams),abilities:c.abilities.energy.map(energy=>({energy,cooldownMs:0,effectLockMs:0})),finished:c.finished,events:[],...extra});
  window.addEventListener('heroarena:experimental-round-end',event=>{
+  allyRoot.cards=event.detail.teams[side].map(hero=>{const card=new Node();card.dataset.heroId=hero.id;return card});
   enemyRoot.cards=event.detail.teams[1-side].map(hero=>{const card=new Node();card.dataset.heroId=hero.id;return card});
  });
  window.addEventListener('heroarena:commander-round',event=>visuals.push(...event.detail.events));
- runInNewContext(source,{createMagicCastControls,window,document,location:{search:'?commanderTest=1&auctionCode=ui&auctionToken=test'},URLSearchParams,CustomEvent:DetailEvent,AbortSignal,crypto:{randomUUID:()=>`magic_request_${++uuid}`},
+ runInNewContext(source,{getCommanderAbilityCost,commanderTargetMode,requiredMagicTargets,commanderUltimateName,commanderUltimateDescription,createMagicCastControls,window,document,location:{search:'?commanderTest=1&auctionCode=ui&auctionToken=test'},URLSearchParams,CustomEvent:DetailEvent,AbortSignal,crypto:{randomUUID:()=>`magic_request_${++uuid}`},
   fetch:(url,options)=>new Promise(resolve=>requests.push({url,options,resolve})),setInterval:fn=>{intervals.set(++intervalId,fn);return intervalId},clearInterval:id=>intervals.delete(id)});
  const respond=async(index,data,ok=true)=>{requests[index].resolve({ok,json:async()=>data});await flush()};
- return {window,panel,enemyRoot,nodes,requests,visuals,c,snapshot,respond,
+ return {window,panel,enemyRoot,allyRoot,nodes,requests,visuals,c,snapshot,respond,
   normal:nodes.get('[data-command="normal"]'),ultimate:nodes.get('[data-command="ultimate"]'),confirm:nodes.get('[data-magic-confirm]'),cancel:nodes.get('[data-magic-cancel]'),energy:nodes.get('[data-energy]'),status:nodes.get('[data-status]'),
   click:node=>node.dispatchEvent({type:'click'}),
   target:(index,key)=>enemyRoot.dispatchEvent({type:key?'keydown':'click',key:key||undefined,preventDefault(){},target:enemyRoot.cards[index]}),
+  allyTarget:(index,key)=>allyRoot.dispatchEvent({type:key?'keydown':'click',key:key||undefined,preventDefault(){},target:allyRoot.cards[index]}),
   tick:()=>{for(const fn of [...intervals.values()])fn()},
   async accept(index){const payload=JSON.parse(requests[index].options.body);const out=castLiveCommanderCombat(c,{...payload,side,matchKey:'ui',now:2000});await respond(index,snapshot({events:out.events}));}
  };
@@ -58,27 +63,38 @@ for(const side of [0,1])test('live magic seat '+side+' selects a card, confirms 
  assert.deepEqual(h.visuals[0].impacts.map(e=>e.target),[(1-side)+'b']);assert.equal(h.confirm.hidden,true);assert.equal(h.normal.hidden,false);
 });
 
-test('ultimate requires two choices and keeps them on replacement cards after a polling render',async()=>{
- const h=harness();await h.respond(0,h.snapshot());h.click(h.ultimate);h.target(0,'Enter');
- assert.equal(h.confirm.disabled,true);h.target(2,' ');assert.equal(h.confirm.disabled,false);
- const previous=h.enemyRoot.cards;h.tick();await h.respond(1,h.snapshot({version:1}));
- assert.notEqual(h.enemyRoot.cards,previous);assert.ok(h.enemyRoot.cards[0].classes.has('magic-target-selected'));assert.ok(h.enemyRoot.cards[2].classes.has('magic-target-selected'));assert.equal(h.confirm.disabled,false);
- h.click(h.confirm);assert.deepEqual(JSON.parse(h.requests[2].options.body).targetIds,['1a','1c']);assert.equal(h.visuals.length,0);
+test('mage ultimate selects exactly one friendly card and survives replacement snapshots',async()=>{
+ const h=harness();await h.respond(0,h.snapshot());h.click(h.ultimate);h.target(0);
+ assert.equal(h.confirm.disabled,true);h.allyTarget(2,'Enter');assert.equal(h.confirm.disabled,false);
+ const previous=h.allyRoot.cards;h.tick();await h.respond(1,h.snapshot({version:1}));
+ assert.notEqual(h.allyRoot.cards,previous);assert.ok(h.allyRoot.cards[2].classes.has('magic-target-selected'));
+ h.allyTarget(1);assert.equal(h.allyRoot.cards[2].classes.has('magic-target-selected'),false);
+ h.click(h.confirm);assert.deepEqual(JSON.parse(h.requests[2].options.body).targetIds,['0b']);assert.equal(h.visuals.length,0);
 });
-
-test('a dead selected target is removed; sole surviving enemy becomes a valid ultimate target',async()=>{
- const h=harness();await h.respond(0,h.snapshot());h.click(h.ultimate);h.target(0);h.target(1);
- h.c.teams[1][0].hp=0;h.tick();await h.respond(1,h.snapshot({version:1}));
- assert.equal(h.confirm.disabled,true);assert.ok(!h.enemyRoot.cards[0].classes.has('magic-target-selected'));
- h.target(0);assert.equal(h.confirm.disabled,true);
- h.c.teams[1][2].hp=0;h.tick();await h.respond(2,h.snapshot({version:2}));
- assert.equal(h.confirm.disabled,false);h.click(h.confirm);assert.deepEqual(JSON.parse(h.requests[3].options.body).targetIds,['1b']);
+test('selected ally death or a newly active buff invalidates selection without charging',async()=>{
+ const h=harness();await h.respond(0,h.snapshot());h.click(h.ultimate);h.allyTarget(0);
+ h.c.teams[0][0].hp=0;h.tick();await h.respond(1,h.snapshot({version:1}));assert.equal(h.confirm.disabled,true);
+ h.allyTarget(1);assert.equal(h.confirm.disabled,false);
+ h.c.teams[0][1].arcaneSurgeUntilRound=3;h.tick();await h.respond(2,h.snapshot({version:2}));assert.equal(h.confirm.disabled,true);
+ h.click(h.confirm);assert.equal(h.requests.length,3);assert.equal(h.energy.textContent,'100 / 100');
+});
+test('support ultimate targets only dead friendly cards and a revival snapshot clears stale selection',async()=>{
+ const h=harness(1,'support');h.c.teams[1][0].hp=0;await h.respond(0,h.snapshot());h.click(h.ultimate);
+ h.allyTarget(1);assert.equal(h.confirm.disabled,true);h.target(0);assert.equal(h.confirm.disabled,true);
+ h.allyTarget(0);assert.equal(h.confirm.disabled,false);assert.equal(h.requests.length,1);
+ h.c.teams[1][0].hp=40;h.tick();await h.respond(1,h.snapshot({version:1}));assert.equal(h.confirm.hidden,true);h.click(h.confirm);assert.equal(h.requests.length,2);
+});
+test('support already-used revival and per-archetype energy costs disable casts',async()=>{
+ const h=harness(0,'support');h.c.teams[0][0].hp=0;await h.respond(0,h.snapshot({revivalUsed:[true,false]}));h.click(h.ultimate);assert.equal(h.requests.length,1);assert.equal(h.confirm.hidden,true);
+ for(const [id,energy,ready]of [['attack',74,false],['attack',75,true],['defense',84,false],['defense',85,true],['magic',99,false],['support',89,false],['support',90,true]]){
+  const f=harness(0,id);f.c.teams[0][0].hp=id==='support'?0:100;await f.respond(0,f.snapshot({abilities:[{energy,cooldownMs:0,effectLockMs:0}]}));assert.equal(f.ultimate.disabled,!ready,id+' '+energy);
+ }
 });
 
 test('cancel and battle finish clear selection without a cast or an effect',async()=>{
  const h=harness();await h.respond(0,h.snapshot());h.click(h.normal);h.target(0);h.click(h.cancel);
  assert.equal(h.requests.length,1);assert.equal(h.energy.textContent,'100 / 100');assert.equal(h.normal.hidden,false);assert.ok(h.enemyRoot.cards.every(c=>!c.classes.has('magic-target-selected')));
- h.click(h.ultimate);h.target(0);h.target(1);h.window.dispatchEvent({type:'heroarena:battle-finished'});h.click(h.confirm);h.tick();await flush();
+ h.click(h.ultimate);h.allyTarget(0);h.window.dispatchEvent({type:'heroarena:battle-finished'});h.click(h.confirm);h.tick();await flush();
  assert.equal(h.panel.hidden,true);assert.equal(h.confirm.hidden,true);assert.equal(h.requests.length,1);assert.equal(h.visuals.length,0);
 });
 
@@ -94,4 +110,27 @@ test('insufficient energy and opponent effect lock cannot submit a magic cast',a
  h.tick();await h.respond(1,h.snapshot({version:1}));h.click(h.normal);h.target(1);
  h.window.heroCommanderEffectUntil=Date.now()+1200;h.window.dispatchEvent({type:'heroarena:commander-effect-lock'});
  assert.equal(h.confirm.disabled,true);h.click(h.confirm);assert.equal(h.requests.length,2);assert.equal(h.visuals.length,0);
+});
+
+for(const id of ['attack','defense','magic','support'])for(const side of [0,1])test(`${id} used ultimate snapshot disables only ultimate for seat ${side}`,async()=>{
+ const h=harness(side,id);if(id==='support')h.c.teams[side][0].hp=0;
+ const used=[false,false];used[side]=true;await h.respond(0,h.snapshot({ultimateUsed:used}));
+ assert.equal(h.ultimate.disabled,true);assert.match(h.ultimate.textContent,/Kullanıldı/);assert.equal(h.normal.disabled,false);
+ h.click(h.ultimate);assert.equal(h.requests.length,1);assert.equal(h.confirm.hidden,true);assert.equal(h.energy.textContent,'100 / 100');
+});
+test('authoritative used snapshot clears pending ultimate selection without charging',async()=>{
+ const h=harness();await h.respond(0,h.snapshot());h.click(h.ultimate);h.allyTarget(0);assert.equal(h.confirm.disabled,false);
+ h.tick();await h.respond(1,h.snapshot({ultimateUsed:[true,false]}));
+ assert.equal(h.confirm.hidden,true);assert.match(h.ultimate.textContent,/Kullanıldı/);h.click(h.confirm);assert.equal(h.requests.length,2);assert.equal(h.energy.textContent,'100 / 100');
+});
+test('canceling ultimate never marks it used',async()=>{
+ const h=harness();await h.respond(0,h.snapshot());h.click(h.ultimate);h.allyTarget(0);h.click(h.cancel);
+ assert.equal(h.ultimate.disabled,false);assert.doesNotMatch(h.ultimate.textContent,/Kullanıldı/);assert.equal(h.requests.length,1);
+});
+
+test('support ultimate UI displays canonical 90 cost, normal remains 40',async()=>{
+ const h=harness(0,'support');h.c.teams[0][0].hp=0;await h.respond(0,h.snapshot());
+ assert.equal(h.ultimate.textContent,'Diriliş · 90');assert.equal(h.normal.textContent,'Normal · 40');
+ h.click(h.ultimate);h.allyTarget(0);assert.match(h.confirm.textContent,/90/);
+ assert.equal(h.requests.length,1);h.click(h.cancel);assert.equal(h.energy.textContent,'100 / 100');
 });

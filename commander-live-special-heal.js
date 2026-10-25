@@ -1,26 +1,19 @@
-// Experimental server-owned special healing. Never accept heal amounts from clients.
-import {calculateSpecialHeal} from './battle-special-formulas.js';
+// Server-owned heal/hybrid action. Never accepts client effect amounts.
+import {resolveSpecialHealing} from './battle-special-formulas.js';
 export function applyServerSpecialHeal(combat,{side,actorId,round=combat?.round}={}){
  if(!combat||combat.finished||![0,1].includes(side)||round!==combat.round||round%3!==0)throw Error('Invalid special heal turn');
  const next=structuredClone(combat.teams);
  const actor=next[side].find(u=>u.id===actorId&&u.hp>0);
  if(!actor||!Number.isFinite(actor.attack)||actor.attack<0)throw Error('Invalid healing actor');
- // Legacy support heal precedes the active self-heal check on special rounds.
- const allies=next[side];
- let target=null;
- if(actor.role==='support'){
-  target=[...allies].filter(u=>u.hp>0&&u.hp<u.maxHp).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0]??null;
- }
- if(!target){
-  if(actor.active?.effect!=='heal'||actor.hp>=actor.maxHp)throw Error('No applicable special heal');
-  target=actor;
- }
- const amount=calculateSpecialHeal({attack:actor.attack,missingHp:target.maxHp-target.hp});
- target.hp+=amount;
- actor.healing=(actor.healing||0)+amount;
- combat.teams=next;
- combat.version++;
- const event={round,side,actor:actorId,action:'heal',target:target.id,value:amount,version:combat.version};
- combat.events.push(event);
- return {version:combat.version,event,teams:structuredClone(next),finished:combat.finished};
+ const resolved=resolveSpecialHealing(actor,next[side]);
+ if(!resolved)throw Error('No applicable special heal');
+ const {target,heal,shield}=resolved;
+ target.hp+=heal;actor.healing=(actor.healing||0)+heal;
+ if(shield)target.shield=(target.shield||0)+shield;
+ combat.teams=next;combat.version++;
+ const events=[];
+ if(heal)events.push({round,side,actor:actorId,action:'heal',target:target.id,value:heal,version:combat.version});
+ if(shield)events.push({round,side,actor:actorId,action:'shield',target:target.id,value:shield,version:combat.version});
+ combat.events.push(...events);
+ return {version:combat.version,event:events[0]??null,events,teams:structuredClone(next),finished:combat.finished};
 }

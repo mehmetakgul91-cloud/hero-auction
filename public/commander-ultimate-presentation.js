@@ -1,0 +1,15 @@
+// Names/descriptions only. Costs and effects remain server/shared-rule owned.
+export const COMMANDER_ULTIMATE_NAMES=Object.freeze({attack:['Av Emri','Hunt Order'],defense:['Son Kale','Last Bastion'],magic:['Aşırı Yük','Arcane Surge'],support:['Diriliş','Revival']});
+const descriptions={
+ attack:['Can oranı en düşük yaşayan rakibi işaretler; her müttefikin bir sonraki saldırısı bu hedefe yönelir. Sonraki tur sonuna kadar, ek hareket vermez.','Marks the living enemy with the lowest health ratio; each ally focuses its next attack on this target. Lasts through next round, grants no extra action.'],
+ defense:['Takıma kalkan verir; can oranı en düşük yaşayan müttefiki sonraki tur sonuna kadar tek ölümcül darbeden 1 canla korur.','Shields the team; protects the living ally with the lowest health ratio from one lethal hit at 1 health through next round.'],
+ magic:['Seçilen yaşayan müttefike kullanım anındaki saldırısı kadar sabit ek vuruş gücü verir; 3 hareket turu. Hareket ettiyse sonraki tur başlar. Normal ve alan hasarına uygulanır; şifa ve kalkan değişmez. Üst üste binmez, süresi yenilenmez. Taşıyıcı düşerse etki, yaşayan müttefikler içinde mevcut canı en yüksek olana aktarılır; kalan süre korunur, bonus yeni taşıyıcının o andaki saldırısından belirlenir.','Grants the selected living ally fixed extra hit power equal to its attack when cast, for 3 action rounds. Starts next round if it already acted. Applies to normal and area damage, not healing or shields. Does not stack or refresh. If the bearer falls, the effect transfers to the living ally with the highest current health; remaining duration is preserved and the bonus is set from the new bearer’s attack at transfer.'],
+ support:['Seçilen düşen müttefiki %40 azami canla diriltir; savaşta 1 kez. Kalkanı 0 olur, bu tur ek hareket kazanmaz.','Revives the selected fallen ally at 40% max health, once per battle. Shield becomes 0; no extra action this round.']
+};
+export function commanderUltimateName(id,{english=false}={}){return COMMANDER_ULTIMATE_NAMES[id]?.[english?1:0]||(english?'Ultimate':'Nihai');}
+export function commanderUltimateDescription(id,{english=false}={}){const description=descriptions[id]?.[english?1:0]||'';return description&&id!=='support'?description+(english?' Once per battle.':' Savaşta 1 kez.'):description;}
+export const commanderUltimatePhrases=Object.freeze(Object.fromEntries([...Object.values(COMMANDER_ULTIMATE_NAMES),...Object.values(descriptions),
+ ['Yaşayan müttefik kartına dokun','Tap a living ally card'],['Düşen müttefik kartına dokun','Tap a fallen ally card'],['Rakip kartına dokun','Tap an enemy card'],
+ ['Hedefi onayla','Confirm target'],['Hedef seçimi iptal edildi; enerji harcanmadı','Target selection canceled; no energy spent'],['Uygun hedef yok; enerji harcanmadı','No eligible target; no energy spent'],
+ ['Kullanıldı','Used'],['Savaşta 1 kez.','Once per battle.'],['Nihai yetenek seçiliyor','Choosing ultimate ability'],['Yetenek komutu gönderiliyor…','Sending ability command…']
+]));

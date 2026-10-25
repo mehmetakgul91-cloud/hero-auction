@@ -1,7 +1,9 @@
+import {validateHeroAbility} from './public/hero-ability-rules.js';
 // Hero Auction 2.0 roster adapter. Does not modify the classic auction.
 import fs from 'node:fs';
 const roster=JSON.parse(fs.readFileSync(new URL('./battle-roster.json',import.meta.url),'utf8'));
 import {simulateBattle} from './battle-engine.js';
+for(const hero of roster.characters){validateHeroAbility(hero);Object.freeze(hero.active);Object.freeze(hero.passive);Object.freeze(hero.laneModifiers);}
 const byId=new Map(roster.characters.map(hero=>[hero.id,hero]));
 export const battleRoster=Object.freeze(roster.characters.map(hero=>Object.freeze({...hero})));
 export function battleCard(card){
