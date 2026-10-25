@@ -24,7 +24,7 @@ export function commanderDiamondPolicyCopy(progression,{english=false}={}){
  const bonus=progression.welcomeBonus;
  const welcome=bonus?.enabled===true&&Number.isSafeInteger(bonus.amount)&&bonus.amount>0&&bonus.eligibleProviders?.length===1&&bonus.eligibleProviders[0]==='google';
  const intro=welcome?(english?`New verified Google members receive ${bonus.amount} diamonds once. `:`Yeni doğrulanmış Google üyelerine bir kez ${bonus.amount} elmas. `):'';
- return intro+(english?'Further diamonds are purchase-only; purchases are not available yet.':'Sonraki elmaslar yalnız satın alınabilir; satın alma henüz açık değil.');
+ return intro+(english?'Diamond purchases are not available yet. Check login reward availability in the store.':'Elmas satın alma henüz açık değil. Giriş ödüllerinin durumunu mağazadan takip edebilirsin.');
 }
 
 export function commanderBranchView(profile,id,{gold=0,diamonds=null,progression=null}={}){

@@ -1,3 +1,4 @@
+import {createWalletOperations} from '../public/wallet-operations.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -47,8 +48,9 @@ test('English exchange copy is complete and busy states block mutations',()=>{
 const app=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
 const source=app.slice(app.indexOf('async function exchangeCommanderDiamonds(amount){'),app.indexOf('async function upgradeCommander(stat){'));
 function harness({confirmed=true,post}={}){
- const calls=[],prompts=[];let nextId=0;
- const context={commanderProfile:{commanderId:'attack',levels:{attack:0,defense:0,magic:0,support:0}},commanderBusy:false,commanderProgression:null,commanderDiamonds:10,commanderExchange:policy,commanderExchangeRequest:null,walletGold:1000,login:{authToken:'first'},document:{documentElement:{lang:'en'}},crypto:{randomUUID:()=>`exchange-request-${++nextId}`},commanderExchangeQuote,signedIn:()=>!!context.login?.authToken,renderCommanderProfile(){},showGold(value){context.walletGold=value;},$:()=>({textContent:''}),window:{confirm:message=>{prompts.push(message);return confirmed;}},post:async(url,body)=>{calls.push({url,body:structuredClone(body)});return post(url,body,calls.length);}};
+ const calls=[],prompts=[],memory=new Map();let nextId=0;
+ const walletOperations=createWalletOperations({storage:()=>({getItem:key=>memory.get(key),setItem:(key,value)=>memory.set(key,value)})});
+ const context={walletOperations,commanderProfile:{commanderId:'attack',levels:{attack:0,defense:0,magic:0,support:0}},commanderBusy:false,commanderProgression:null,commanderDiamonds:10,commanderExchange:policy,commanderExchangeRequest:null,walletGold:1000,login:{authToken:'first',user:{sub:'test-account'}},document:{documentElement:{lang:'en'}},crypto:{randomUUID:()=>`exchange-request-${++nextId}`},commanderExchangeQuote,signedIn:()=>!!context.login?.authToken,renderCommanderProfile(){},showGold(value){context.walletGold=value;},$:()=>({textContent:''}),window:{confirm:message=>{prompts.push(message);return confirmed;}},post:async(url,body)=>{calls.push({url,body:structuredClone(body)});return post(url,body,calls.length);}};
  vm.createContext(context);vm.runInContext(source,context);return {context,calls,prompts,run:amount=>context.exchangeCommanderDiamonds(amount)};
 }
 test('canceling the exact quote sends no request and creates no pending transaction',async()=>{

@@ -8,7 +8,7 @@ export function commanderExchangeQuote(policy,diamonds,gold,amount){
  return {available:configured,canExchange:reason===null,reason,diamondsToSpend:validAmount?count:null,goldGranted,expectedRate:configured?policy.rate:null,pricingVersion:configured?policy.pricingVersion:null};
 }
 
-export function renderCommanderExchange(root,{policy=null,diamonds=null,gold=0,amount='1',pending=null,busy=false,english=false,document=root.ownerDocument,onAmount=()=>{},onExchange=()=>{}}={}){
+export function renderCommanderExchange(root,{policy=null,diamonds=null,gold=0,amount='1',pending=null,busy=false,english=false,document=root.ownerDocument,idPrefix='commander-exchange',onAmount=()=>{},onExchange=()=>{}}={}){
  const pick=values=>values[english?1:0],fmt=value=>value.toLocaleString(english?'en-US':'tr-TR');
  const el=(tag,cls,text)=>{const node=document.createElement(tag);node.className=cls;if(text!==undefined)node.textContent=text;return node;};
  root.replaceChildren();
@@ -20,9 +20,9 @@ export function renderCommanderExchange(root,{policy=null,diamonds=null,gold=0,a
  const initial=commanderExchangeQuote(policy,diamonds,gold,amount);
  if(!initial.available){root.append(el('p','cp-exchange-note',pick(['Elmas → altın dönüşümü henüz açık değil. Bakiye veya satın alma işlemi oluşturulmaz.','Diamond → gold exchange is not available yet. No balance or purchase is created.'])));return;}
  root.append(el('p','cp-exchange-note',`1 ${pick(['elmas','diamond'])} = ${fmt(policy.rate)} ${pick(['altın','gold'])} · ${pick(['Mevcut elmas','Current diamonds'])}: ${Number.isSafeInteger(diamonds)?fmt(diamonds):'—'}`));
- const label=el('label','',pick(['Harcanacak elmas','Diamonds to spend']));label.setAttribute('for','commander-exchange-amount');
- const input=el('input','cp-exchange-input');input.id='commander-exchange-amount';input.type='number';input.inputMode='numeric';input.min='1';input.step='1';input.max=Number.isSafeInteger(diamonds)?String(diamonds):'';input.value=String(amount);input.disabled=busy;input.setAttribute('aria-describedby','commander-exchange-preview');
- const quote=el('p','cp-exchange-quote');quote.id='commander-exchange-preview';quote.setAttribute('aria-live','polite');
+ const label=el('label','',pick(['Harcanacak elmas','Diamonds to spend']));label.setAttribute('for',idPrefix+'-amount');
+ const input=el('input','cp-exchange-input');input.id=idPrefix+'-amount';input.type='number';input.inputMode='numeric';input.min='1';input.step='1';input.max=Number.isSafeInteger(diamonds)?String(diamonds):'';input.value=String(amount);input.disabled=busy;input.setAttribute('aria-describedby',idPrefix+'-preview');
+ const quote=el('p','cp-exchange-quote');quote.id=idPrefix+'-preview';quote.setAttribute('aria-live','polite');
  const button=el('button','cp-exchange-button');button.type='button';
  function update(){
   const view=commanderExchangeQuote(policy,diamonds,gold,input.value);

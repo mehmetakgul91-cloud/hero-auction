@@ -1,3 +1,5 @@
+import {createWalletOperations} from '/wallet-operations.js';
+import {createStorefront} from '/storefront.js';
 import {renderCommanderExchange,commanderExchangeQuote} from '/commander-exchange-view.js';
 import {renderCommanderSkills,renderCommanderDevelopment,commanderBranchView,commanderDiamondPolicyCopy} from '/commander-profile-view.js';
 import {COMMANDER_CHANGE_COST} from '/commander-economy.js';
@@ -56,9 +58,26 @@ let login=null;try{login=JSON.parse(localStorage.getItem('hero-auction-login')||
 let platformStoredLogin=window.HeroPlatform?login:null;
 if(window.HeroPlatform)login=null;
 const signedIn=()=>!!login?.authToken;
-const friendsUI=createFriendsUI({translate:uiText,notify:message=>notify(message),onInvite:playerId=>roomInvitesUI.sendTo(playerId),onOpen:()=>{const panel=$('home-play-panel');if(panel)panel.hidden=true;$('home-play-tab')?.setAttribute('aria-expanded','false');$('home-play-tab')?.classList.remove('selected');}});
+const friendsUI=createFriendsUI({translate:uiText,notify:message=>notify(message),onInvite:playerId=>roomInvitesUI.sendTo(playerId),onOpen:()=>{storefrontUI.close();const panel=$('home-play-panel');if(panel)panel.hidden=true;$('home-play-tab')?.setAttribute('aria-expanded','false');$('home-play-tab')?.classList.remove('selected');}});
 
 const roomInvitesUI=createRoomInvitesUI({translate:uiText,onStateChange:state=>friendsUI.setInvitations(state),canStart:()=>roomEntryPending===0,onHosted:({token,room:r})=>{save(token,r);commanderVisibility();},onJoined:({token,room:r})=>{save(token,r);commanderVisibility();notify(uiText('Davet edilen odaya katıldın.'));}});
+
+const walletOperations=createWalletOperations({storage:()=>window.sessionStorage});
+const storefrontUI=createStorefront({walletOperations,canOpen:()=>!room&&!commanderProfileOpen,onOpen:()=>{friendsUI.close();const panel=$('home-play-panel');if(panel)panel.hidden=true;$('home-play-tab')?.setAttribute('aria-expanded','false');$('home-play-tab')?.classList.remove('selected');},onBalance:result=>{if(Number.isSafeInteger(result.gold))showGold(result.gold);if(Number.isSafeInteger(result.diamonds))commanderDiamonds=result.diamonds;}});
+
+// A store request may finish after the player has opened the commander screen.
+// Refresh only that same open account; never reset navigation or apply old data
+// over a commander mutation/new profile that completed during the read.
+walletOperations.subscribe(({key,busy})=>{if(!busy)void refreshCommanderAfterWalletOperation(key);});
+async function refreshCommanderAfterWalletOperation(key){
+ if(key!==walletOperations.keyFor(login)||!commanderProfileOpen||commanderBusy||!signedIn())return;
+ const authToken=login.authToken,previous=commanderProfile;
+ try{
+  const result=await post('/api/commander/get',{});
+  if(login?.authToken!==authToken||!commanderProfileOpen||commanderBusy||commanderProfile!==previous)return;
+  commanderProfile=result.profile;commanderProgression=result.progression||null;commanderDiamonds=result.diamonds??null;commanderExchange=result.exchange||null;showGold(result.gold);renderCommanderProfile();
+ }catch{if(login?.authToken===authToken&&commanderProfileOpen&&!commanderBusy)renderCommanderProfile();}
+}
 
 const commanderOptions=[
  {id:'attack',icon:'⚔️',name:'Saldırı Komutanı',detail:'Savaşçı / Suikastçı'},
@@ -165,7 +184,7 @@ function renderCommanderProfile(){
  $('commander-exchange-availability').textContent=commanderExchange?.available===true?'1 → '+number(commanderExchange.rate):(document.documentElement.lang==='en'?'Not available yet':'Henüz açık değil');
  renderCommanderExchange($('commander-exchange-controls'),{
   policy:commanderExchange,diamonds:commanderDiamonds,gold:walletGold,amount:commanderExchangeAmount,
-  pending:commanderExchangeRequest?.authToken===login?.authToken?commanderExchangeRequest.body:null,busy:commanderBusy,english:document.documentElement.lang==='en',document,
+  pending:walletOperations.read(login).exchange,busy:commanderBusy||walletOperations.busy(login),english:document.documentElement.lang==='en',document,
   onAmount:value=>{commanderExchangeAmount=value;},onExchange:amount=>void exchangeCommanderDiamonds(amount)
  });
 
@@ -193,9 +212,10 @@ async function selectCommander(){
  finally{commanderBusy=false;renderCommanderOnboarding()}
 }
 async function exchangeCommanderDiamonds(amount){
- if(commanderBusy||!commanderProfile||!signedIn())return;
- const authToken=login.authToken,english=document.documentElement.lang==='en';
- let request=commanderExchangeRequest?.authToken===authToken?commanderExchangeRequest:null;
+ if(commanderBusy||walletOperations.busy(login)||!commanderProfile||!signedIn())return;
+ const authToken=login.authToken,english=document.documentElement.lang==='en',operationKey=walletOperations.keyFor(login);
+ const stored=walletOperations.read(login).exchange;
+ let request=stored?{authToken,body:stored}:null;
  if(!request){
   const quote=commanderExchangeQuote(commanderExchange,commanderDiamonds,walletGold,amount);
   if(!quote.canExchange)return;
@@ -203,17 +223,23 @@ async function exchangeCommanderDiamonds(amount){
   const prompt=english?`Spend ${fmt(quote.diamondsToSpend)} diamonds to receive ${fmt(quote.goldGranted)} gold? This exchange cannot be reversed.`:`${fmt(quote.diamondsToSpend)} elmas harcayıp ${fmt(quote.goldGranted)} altın almak istiyor musun? Bu dönüşüm geri alınamaz.`;
   if(!window.confirm(prompt))return;
   request={authToken,body:{diamondsToSpend:quote.diamondsToSpend,expectedRate:quote.expectedRate,pricingVersion:quote.pricingVersion,requestId:crypto.randomUUID()}};
-  commanderExchangeRequest=request;
  }
+ if(!walletOperations.write(operationKey,'exchange',request.body)){
+  $('commander-upgrade-message').textContent=english?'Session storage is required for safe retries. No request was sent.':'Güvenli yeniden deneme için tarayıcı oturum depolaması gerekli. İşlem gönderilmedi.';return;
+ }
+ if(!walletOperations.begin(operationKey))return;
+ commanderExchangeRequest=request;
  commanderBusy=true;renderCommanderProfile();
  try{
   const result=await post('/api/diamonds/exchange',request.body);
+  walletOperations.write(operationKey,'exchange',null);
   if(login?.authToken!==authToken)return;
   commanderExchangeRequest=null;commanderDiamonds=result.diamonds;commanderExchange=result.exchange||null;showGold(result.gold);
   $('commander-upgrade-message').textContent=english?'✓ Exchange confirmed. Balances updated.':'✓ Dönüşüm doğrulandı. Bakiyeler güncellendi.';
  }catch(e){
+  if(e.status===400||e.status===409)walletOperations.write(operationKey,'exchange',null);
   if(login?.authToken!==authToken)return;
-  if(e.status&&e.status<500)commanderExchangeRequest=null;
+  if(e.status===400||e.status===409)commanderExchangeRequest=null;
   $('commander-upgrade-message').textContent='⚠ '+e.message;
   // Balances alone cannot prove an uncertain exchange; retain its request ID.
   try{
@@ -221,7 +247,7 @@ async function exchangeCommanderDiamonds(amount){
    if(login?.authToken!==authToken)return;
    commanderProfile=result.profile;commanderProgression=result.progression||null;commanderDiamonds=result.diamonds??null;commanderExchange=result.exchange||null;showGold(result.gold);
   }catch{/* Retry the same request ID, even if a reconciliation request fails. */}
- }finally{commanderBusy=false;renderCommanderProfile();}
+ }finally{walletOperations.finish(operationKey);commanderBusy=false;renderCommanderProfile();}
 }
 async function upgradeCommander(stat){
  if(commanderBusy||!commanderProfile||!signedIn())return;
@@ -258,7 +284,7 @@ async function upgradeCommander(stat){
  }
 }
 $('commander-select-confirm').onclick=()=>void selectCommander();
-$('commander-open-profile').onclick=()=>{commanderProfileOpen=true;commanderVisibility();renderCommanderProfile()};
+$('commander-open-profile').onclick=()=>{storefrontUI.close();commanderProfileOpen=true;commanderVisibility();renderCommanderProfile()};
 $('commander-profile-close').onclick=()=>{commanderProfileOpen=false;commanderVisibility()};
 let walletGold=0;
 function showGold(value){walletGold=Math.max(0,Number(value)||0);if(commanderProfileOpen)renderCommanderProfile();const el=$('gold-balance');if(el)el.textContent=walletGold.toLocaleString('tr-TR');}
@@ -278,7 +304,7 @@ function renderLobbyIdentity(){
  if($('account-avatar').getAttribute('src')!==portrait)$('account-avatar').src=portrait;
  if(chosen&&$('nav-commander-portrait').getAttribute('src')!==portrait)$('nav-commander-portrait').src=portrait;
 }
-function applyLogin(){window.dispatchEvent?.(new Event('hero:login-changed'));roomInvitesUI.setLogin(login);roomInvitesUI.setRoom(room,session?.token);friendsUI.setLogin(login);friendsUI.setRoom(room);if(!room){cancelAwardFlights();tailReveal?.cancel();tailReveal=null;cancelAuctionReveal($('stage'));}const active=signedIn();if(!room)window.HeroPlatform?.gameplay(false);if(!room)window.HeroPlatform?.setRoom(null);const wallet=$('gold-wallet');if(wallet)wallet.hidden=!active;$('login-gate').hidden=active;$('home').hidden=!active||!!room;$('game').hidden=!active||!room;$('account-status').hidden=!active;$('google-logout').hidden=true;$('account-status').setAttribute('aria-expanded','false');if(active){$('name').value=login.user?.name||'Oyuncu';$('name').readOnly=login.type==='google'||login.type==='crazygames';}renderLobbyIdentity();commanderVisibility();}
+function applyLogin(){storefrontUI.setLogin(login);if(room)storefrontUI.close();window.dispatchEvent?.(new Event('hero:login-changed'));roomInvitesUI.setLogin(login);roomInvitesUI.setRoom(room,session?.token);friendsUI.setLogin(login);friendsUI.setRoom(room);if(!room){cancelAwardFlights();tailReveal?.cancel();tailReveal=null;cancelAuctionReveal($('stage'));}const active=signedIn();if(!room)window.HeroPlatform?.gameplay(false);if(!room)window.HeroPlatform?.setRoom(null);const wallet=$('gold-wallet');if(wallet)wallet.hidden=!active;$('login-gate').hidden=active;$('home').hidden=!active||!!room;$('game').hidden=!active||!room;$('account-status').hidden=!active;$('google-logout').hidden=true;$('account-status').setAttribute('aria-expanded','false');if(active){$('name').value=login.user?.name||'Oyuncu';$('name').readOnly=login.type==='google'||login.type==='crazygames';}renderLobbyIdentity();commanderVisibility();}
 async function enterGuest(){try{const name=$('guest-name').value.trim()||'Oyuncu';const result=await post('/api/auth/guest',{name});login={type:'guest',user:result.user,authToken:result.authToken};localStorage.setItem('hero-auction-login',JSON.stringify(login));showGold(result.gold);applyLogin();void loadCommander();restoreGame()}catch(e){notify(e.message)}}
 $('guest-login').onclick=()=>window.HeroPlatform?startPlatform():enterGuest();
 $('account-status').onclick=()=>{if(window.HeroPlatform||!signedIn())return;const button=$('google-logout');button.hidden=!button.hidden;$('account-status').setAttribute('aria-expanded',String(!button.hidden));};
@@ -347,6 +373,7 @@ $('lobby-home').onclick=async()=>{
   }
   commanderProfileOpen=false;
   friendsUI.close();
+  storefrontUI.close();
   webInvite?.cancel();
   homePlayPanel.hidden=true;
   homePlayTab.setAttribute('aria-expanded','false');
@@ -359,7 +386,7 @@ $('lobby-home').onclick=async()=>{
 };
 
 const homeGuidePlay=$('home-guide-play');if(homeGuidePlay)homeGuidePlay.onclick=()=>{if(homePlayPanel.hidden)homePlayTab.click();else homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'});};
-if(homePlayTab&&homePlayPanel){homePlayTab.onclick=()=>{friendsUI.close();homePlayPanel.hidden=false;homePlayTab.setAttribute('aria-expanded','true');homePlayTab.classList.add('selected');homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'});};const lobbyBack=$('play-lobby-back');if(lobbyBack)lobbyBack.onclick=()=>{webInvite?.cancel();homePlayPanel.hidden=true;homePlayTab.setAttribute('aria-expanded','false');homePlayTab.classList.remove('selected');homePlayTab.scrollIntoView({behavior:'smooth',block:'start'});};}
+if(homePlayTab&&homePlayPanel){homePlayTab.onclick=()=>{storefrontUI.close();friendsUI.close();homePlayPanel.hidden=false;homePlayTab.setAttribute('aria-expanded','true');homePlayTab.classList.add('selected');homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'});};const lobbyBack=$('play-lobby-back');if(lobbyBack)lobbyBack.onclick=()=>{webInvite?.cancel();homePlayPanel.hidden=true;homePlayTab.setAttribute('aria-expanded','false');homePlayTab.classList.remove('selected');homePlayTab.scrollIntoView({behavior:'smooth',block:'start'});};}
 webInvite=createWebInvite({
  url:location.href,platform:!!window.HeroPlatform,
  view:state=>{if(!window.HeroPlatform)renderWebInvite(document,state);},
@@ -480,7 +507,7 @@ function animateWonAuctionCard(award,me,sourceSnapshot){
  const flight=flyAwardCard(sourceSnapshot,awardDestination(award.seat,me),{duration:1400,reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,label:award.seat===me?(document.documentElement.lang==='en'?'Your team':'Senin takımın'):(document.documentElement.lang==='en'?'Opponent team':'Rakip takım')});
  awardFlights.add(flight);return flight.finished.finally(()=>awardFlights.delete(flight));
 }
-function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAuctionSnapshot(room,r))return;roomInvitesUI.setRoom(r,session?.token);friendsUI.setRoom(r);if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.matchKey===auctionMatchKey(r)&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const tailAwards=tailReceipts.pending(r,collectTailAwards(room,r));
+function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAuctionSnapshot(room,r))return;storefrontUI.close();roomInvitesUI.setRoom(r,session?.token);friendsUI.setRoom(r);if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.matchKey===auctionMatchKey(r)&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const tailAwards=tailReceipts.pending(r,collectTailAwards(room,r));
  if(room?.code!==r.code||(r.phase==='auction'&&room?.phase!=='auction')||(r.phase==='auction'&&r.round<room?.round))cancelAwardFlights();
  const offeredAwards=collectOfferedAwards(room,r),offeredArt=document.querySelector('#stage .card-art');
  const deliveryCounts=r.phase==='finished'?(r.final||[]).map((p,seat)=>p.team.length-tailAwards.filter(a=>a.seat===seat).length-offeredAwards.filter(a=>a.seat===seat).length):[];

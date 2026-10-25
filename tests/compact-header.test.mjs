@@ -17,7 +17,7 @@ function harness({active=false,confirmed=true,failure=false,language='tr'}={}){
   post:async(url,body)=>{calls.push([url,body]);if(failure)throw Error('offline')},
   localStorage:{removeItem:key=>removed.push(key)},stream:{close:()=>events.push('stream-close')},
   applyLogin:()=>events.push('apply'),refreshOnline(){},roomInvitesUI:{refresh(){}},
-  friendsUI:{close:()=>events.push('friends-close')},webInvite:{cancel:()=>events.push('invite-cancel')},
+  storefrontUI:{close(){}},friendsUI:{close:()=>events.push('friends-close')},webInvite:{cancel:()=>events.push('invite-cancel')},
   commanderVisibility:()=>events.push('visibility'),notify:e=>events.push(e),
   window:{scrollTo:()=>events.push('scroll'),HeroPlatform:language==='en'?{setRoom:r=>events.push(['platform',r])}:undefined}
  });
