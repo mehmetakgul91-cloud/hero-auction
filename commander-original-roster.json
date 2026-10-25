@@ -636,8 +636,8 @@
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": 0.04,
-        "back": -0.03
+        "front": -0.03,
+        "back": 0.04
       }
     },
     {
@@ -937,8 +937,8 @@
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": 0.05,
-        "back": -0.04
+        "front": -0.04,
+        "back": 0.05
       }
     },
     {
@@ -1168,8 +1168,8 @@
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": 0.06,
-        "back": -0.05
+        "front": -0.05,
+        "back": 0.06
       }
     },
     {
@@ -1401,8 +1401,8 @@
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": 0.06,
-        "back": -0.03
+        "front": -0.03,
+        "back": 0.06
       }
     },
     {
@@ -1533,8 +1533,8 @@
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": 0.04,
-        "back": 0.02
+        "front": 0.02,
+        "back": 0.04
       }
     },
     {
@@ -1601,8 +1601,8 @@
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": 0.05,
-        "back": -0.04
+        "front": -0.04,
+        "back": 0.05
       }
     },
     {
