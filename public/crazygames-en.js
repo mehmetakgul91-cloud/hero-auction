@@ -1,3 +1,5 @@
+import {commanderUltimatePhrases} from './commander-ultimate-presentation.js';
+import {translateAbilityDescription} from './hero-ability-text.js';
 import {uiPhrases, translateAuctionHistory} from './crazygames-ui-phrases.js';
 import {battlePhrases, translateCommanderDescription} from './crazygames-battle-phrases.js';
 // Presentation-only English locale for the CrazyGames entry point.
@@ -381,6 +383,9 @@ Object.assign(phrases, {
  "Saf / rol / kredi etkisi": "Row / role / credit effect",
  "Komutan önizleme katkısı": "Commander preview contribution",
  "Tahmini güç göstergesi": "Estimated power",
+ "TAHMİNİ GÜÇ": "EST. POWER",
+ "Tahmini güç": "Estimated power",
+ "Rol, saf ve komutan etkilerini özetleyen tahmini güç; gerçek savaş istatistikleri ayrı hesaplanır.": "Estimated power summarizing role, row, and commander effects; actual combat stats are calculated separately.",
  "Gerçek savaş etkisi:": "Actual battle effect:",
  "Saldırı istatistiğine yüzdesel uygulanır": "Applied as a percentage of attack",
  "Maksimum cana uygulanır": "Applied to maximum health",
@@ -409,7 +414,7 @@ Object.assign(phrases, {
 });
 // One longest-match pass: translations must never feed shorter source fragments.
 // Apply complete sentences before numeric templates (including split DOM labels).
-Object.assign(phrases, uiPhrases, battlePhrases);
+Object.assign(phrases, uiPhrases, battlePhrases, commanderUltimatePhrases);
 // Match at word content, not leading whitespace: otherwise a short ' kredi'
 // steals the earlier space from a longer 'kredi kullanıldı' phrase.
 const dictionary=Object.fromEntries(Object.entries(phrases).map(([tr,en])=>[tr.trim(),en.trim()]));
@@ -420,7 +425,7 @@ const phrasePattern=new RegExp(Object.keys(dictionary).sort((a,b)=>b.length-a.le
  return left+escapePattern(tr)+right;
 }).join('|'),'gu');
 export function translate(text){
- text=translateCommanderDescription(String(text));
+ text=translateAbilityDescription(translateCommanderDescription(String(text)));
  const chunks=[];let cursor=0;
  for(const match of String(text).matchAll(phrasePattern)){
   // Reserve complete multi-word instructions before dynamic substitutions.

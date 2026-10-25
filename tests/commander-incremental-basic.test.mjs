@@ -63,15 +63,18 @@ test('magic weakens actual basic attack damage for exactly three rounds',()=>{
  stepBasicHeroCombat(c,{side:1,actorId:weakened.id});
  assert.equal(before-c.teams[0].find(u=>u.id===target.id).hp,30);
 });
-test('ultimate magic reduces basic attack by 40 percent',()=>{
+test('ultimate magic doubles selected ally basic damage for three rounds without changing base attack',()=>{
  const c=make();
  c.commanders[0]={commanderId:'magic'};
  c.abilities.energy[0]=100;
- castLiveCommanderCombat(c,{side:0,ability:'ultimate',requestId:'weaken_ult_01',targetIds:['1-0','1-1'],matchKey:'step:1',now:2000});
- const weakened=c.teams[1].find(u=>u.commanderWeaken===.40);
- assert.ok(weakened);
- const target=selectBattleTarget(c.teams[0],weakened,c.round);
- const before=target.hp;
- stepBasicHeroCombat(c,{side:1,actorId:weakened.id});
- assert.equal(before-c.teams[0].find(u=>u.id===target.id).hp,18);
+ castLiveCommanderCombat(c,{side:0,ability:'ultimate',requestId:'surge_ult_01',targetIds:['0-0'],matchKey:'step:1',now:2000});
+ for(let round=1;round<=4;round++){
+  if(round>1)advanceBasicCombatRound(c);
+  const actor=c.teams[0][0];
+  const target=selectBattleTarget(c.teams[1],actor,c.round);
+  const before=target.hp;
+  stepBasicHeroCombat(c,{side:0,actorId:actor.id});
+  assert.equal(before-c.teams[1].find(u=>u.id===target.id).hp,Math.min(before,round<=3?60:30));
+  assert.equal(c.teams[0][0].attack,30);
+ }
 });

@@ -15,11 +15,11 @@ test('normal ability at round 4 changes real damage and logs action',()=>{
  assert.ok(powered.log.filter(e=>e.action==='commander-hit'&&e.round===4).every(e=>e.rawDamage>=e.value+e.absorbed),'Commander damage accounting must respect shields');
  assert.notDeepEqual(powered.log,baseline.log,'Commander action must change authoritative combat log');
 });
-test('ultimate requires 100 energy and is available by round 7 at level zero',()=>{
+test('attack ultimate requires 75 energy and is available by round 5 at level zero',()=>{
  const opts={seed:'ultimate-test',maxRounds:15,commanders};
- assert.throws(()=>simulateBattle(team('a'),team('b'),{...opts,commanderActions:[{side:0,round:6,ability:'ultimate'}]}),/Insufficient commander energy/);
- const powered=simulateBattle(team('a'),team('b'),{...opts,commanderActions:[{side:0,round:7,ability:'ultimate'}]});
- assert.ok(powered.log.some(e=>e.action==='commander-attack-ultimate'&&e.value+e.absorbed>0));
+ assert.throws(()=>simulateBattle(team('a'),team('b'),{...opts,commanderActions:[{side:0,round:4,ability:'ultimate'}]}),/Insufficient commander energy/);
+ const powered=simulateBattle(team('a'),team('b'),{...opts,commanderActions:[{side:0,round:5,ability:'ultimate'}]});
+ assert.ok(powered.log.some(e=>e.action==='commander-attack-ultimate'&&e.value>0));
 });
 test('cannot cast two abilities in same round',()=>{
  assert.throws(()=>simulateBattle(team('a'),team('b'),{commanders,commanderActions:[{side:0,round:4,ability:'normal'},{side:0,round:4,ability:'ultimate'}]}),/Only one commander action/);

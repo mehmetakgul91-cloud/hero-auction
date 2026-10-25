@@ -192,3 +192,8 @@ for(const side of [0,1])test('hidden commander dock on side '+side+' falls back 
  const h=effectHarness({dockWidth:0});h.emit({action:'commander-defense-normal',side,sequence:1});
  assert.equal(h.cues()[0].parentElement,h.headings[side]);assert.equal(h.commanders[side].children.length,0);
 });
+for(const [commander,kind,targetSide,expected]of [['magic','buff',0,'+1 HIT POWER · 3 ROUNDS'],['defense','guard',0,'SURVIVE AT 1 HP'],['attack','focus',1,'TARGET'],['support','revive',0,'+30 HP']])test(`new ${commander} ultimate ${kind} is a status on the authoritative side`,()=>{
+ const h=effectHarness({english:true});h.emit({action:'commander-'+commander+'-ultimate',side:0,sequence:1,impacts:[{target:'same',kind,value:kind==='revive'?30:1}]});
+ assert.equal(h.targetFx().length,1);assert.equal(h.targetFx()[0].parentElement,h.portraits[targetSide][0]);h.advance(1200);
+ assert.equal(h.impacts().length,1);assert.equal(h.impacts()[0].style.left,targetSide*200+'px');assert.ok(textOf(h.impacts()[0]).includes(expected));assert.doesNotMatch(textOf(h.impacts()[0]),/HP DAMAGE|HEALING/);
+});

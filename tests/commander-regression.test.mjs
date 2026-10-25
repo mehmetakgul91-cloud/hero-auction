@@ -19,7 +19,7 @@ for(const id of ['attack','defense','magic','support']){
   assert.equal(result.commanders[0].commanderId,id);
   assert.equal(result.log.some(x=>String(x.action).startsWith('commander-'+id+'-')),false);
  });
- test(id+' cannot use ultimate before reaching 100 energy',()=>{
+ test(id+' cannot use ultimate before reaching 85 energy',()=>{
   assert.throws(()=>run(id,[{side:0,round:2,ability:'ultimate'}]),/Insufficient commander energy/);
  });
  test(id+' cannot use ultimate at round one',()=>{

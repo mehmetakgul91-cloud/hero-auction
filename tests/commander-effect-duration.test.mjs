@@ -14,11 +14,11 @@ test('attack commander inflicts immediate damage but no repeated round damage',(
  beginServerCombatRound(c,2);
  assert.deepEqual(c.teams[1].map(u=>u.hp),hp);
 });
-test('support commander heals once, retains HP next round and never exceeds max HP',()=>{
+test('support commander normal heals once, retains HP next round and never exceeds max HP',()=>{
  const c=combat('support');
  applyServerHeroAction(c,{side:1,actorId:'1-0',targetId:'0-0',value:50});
  assert.equal(c.teams[0][0].hp,50);
- castLiveCommanderCombat(c,{side:0,ability:'ultimate',requestId:'heal_once_001',matchKey:'effects:1',now:2000});
+ castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'heal_once_001',matchKey:'effects:1',now:2000});
  const hp=c.teams[0][0].hp;
  assert.ok(hp>50&&hp<=100);
  beginServerCombatRound(c,2);

@@ -1,4 +1,4 @@
-import {calculateShieldAbsorption} from './battle-shield-absorption.js';
+import {applyHeroDamage} from './battle-hp-damage.js';
 // One atomic server-owned primary attack plus energy-role splash.
 // This opt-in action does not support active skills or passives yet.
 import {applyAttackThorns} from './commander-parity-thorns.js';
@@ -15,15 +15,13 @@ export function stepParityEnergySplash(combat,{side,actorId,round=combat?.round,
  if(!target)throw Error('No living target');
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
  const weakened=Number.isInteger(actor.commanderWeakenUntilRound)&&round<=actor.commanderWeakenUntilRound?Math.max(0,Math.min(1,Number(actor.commanderWeaken)||0)):0;
- const raw=calculateHeroRawDamage({unit:actor,target,special:true,critical,guarded,weakened});
+ const raw=calculateHeroRawDamage({unit:actor,target,special:true,critical,guarded,weakened,round});
  const events=[],dead=[];
  function hit(unit,amount,action){
-  const absorbed=calculateShieldAbsorption(unit.shield||0,amount);
-  unit.shield=(unit.shield||0)-absorbed;
-  const damage=Math.min(unit.hp,amount-absorbed);
-  unit.hp-=damage;actor.damage=(actor.damage||0)+damage;
+  const {damage,absorbed,guardTriggered,arcaneTransfer}=applyHeroDamage(unit,amount,{round,allies:enemies});
+  actor.damage=(actor.damage||0)+damage;
   if(unit.hp===0){actor.kills=(actor.kills||0)+1;dead.push(unit.id);}
-  events.push({round,side,actor:actorId,action,target:unit.id,value:damage,absorbed,rawDamage:amount,damageType:action==='splash'?'splash':'special',...(action==='special'?{critical}:{})});
+  events.push({round,side,actor:actorId,action,target:unit.id,value:damage,absorbed,rawDamage:amount,damageType:action==='splash'?'splash':'special',...(guardTriggered?{guardTriggered:true}:{}),...(arcaneTransfer?{arcaneTransfer}:{}),...(action==='special'?{critical}:{})});
  }
  // Legacy engine applies splash before recording the primary event, but the
  // primary damage and shield changes themselves happen first.

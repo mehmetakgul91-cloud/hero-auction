@@ -1,60 +1,51 @@
-import {createArenaMagicTargeting} from './commander-arena-magic-targeting.js?v=magic-selection-20261021';
-import {requiredMagicTargets,validateMagicTargetSelection} from './commander-magic-target-picker.js';
+import {getCommanderAbilityCost} from './commander-ability-rules.js';
+import {createArenaMagicTargeting} from './commander-arena-magic-targeting.js?v=commander-ultimate-selection';
+import {requiredMagicTargets,validateMagicTargetSelection,commanderTargetMode} from './commander-magic-target-picker.js';
+import {commanderUltimateName} from './commander-ultimate-presentation.js';
 
-export function createMagicCastControls({enemyRoot,confirmButton,cancelButton,status,onCast,canCast=()=>true,onSelectionChange=()=>{}}){
- if(!enemyRoot||!confirmButton||!cancelButton||!status||typeof onCast!=='function')throw Error('Invalid magic controls');
- let ability=null,heroes=[],pending=false,generation=0;
- const picker=createArenaMagicTargeting({root:enemyRoot,enemySide:1});
+export function createMagicCastControls({enemyRoot,allyRoot=enemyRoot,commanderId='magic',confirmButton,cancelButton,status,onCast,canCast=()=>true,onSelectionChange=()=>{}}){
+ if(!enemyRoot||!allyRoot||!confirmButton||!cancelButton||!status||typeof onCast!=='function')throw Error('Invalid magic controls');
+ let ability=null,heroes=[],pending=false,generation=0,context={commanderId},picker=null;
+ const roots=[...new Set([enemyRoot,allyRoot])],pickers=new Map(roots.map(root=>[root,createArenaMagicTargeting({root,enemySide:1})]));
  function reset(){
-  generation++;ability=null;heroes=[];pending=false;picker.cancel();
-  confirmButton.disabled=true;confirmButton.hidden=true;cancelButton.hidden=true;cancelButton.disabled=false;
-  onSelectionChange(false);
+  generation++;ability=null;heroes=[];pending=false;for(const p of pickers.values())p.cancel();picker=null;
+  confirmButton.disabled=true;confirmButton.hidden=true;cancelButton.hidden=true;cancelButton.disabled=false;onSelectionChange(false);
  }
  function sync(){
   if(!ability)return;
   picker.setEnabled(!pending);
-  const selected=picker.selection();
-  confirmButton.disabled=pending||!canCast(ability)||!validateMagicTargetSelection(ability,heroes,selected);
-  confirmButton.textContent='Büyüyü uygula · '+(ability==='ultimate'?100:40);
-  cancelButton.disabled=pending;
-  status.textContent=pending?'Büyü komutu gönderiliyor…':(ability==='ultimate'?'Nihai büyü':'Normal büyü')+' · Rakip kartına dokun: '+selected.length+' / '+requiredMagicTargets(ability,heroes);
+  const selected=picker.selection(),mode=commanderTargetMode(context.commanderId,ability);
+  confirmButton.disabled=pending||!canCast(ability)||!validateMagicTargetSelection(ability,heroes,selected,context);
+  confirmButton.textContent='Hedefi onayla · '+getCommanderAbilityCost(context.commanderId,ability);cancelButton.disabled=pending;
+  const title=ability==='ultimate'?commanderUltimateName(context.commanderId):'Normal büyü';
+  const instruction=mode==='enemy-alive'?'Rakip kartına dokun':mode==='ally-dead'?'Düşen müttefik kartına dokun':'Yaşayan müttefik kartına dokun';
+  status.textContent=pending?'Yetenek komutu gönderiliyor…':title+' · '+instruction+': '+selected.length+' / '+requiredMagicTargets(ability,heroes,context);
  }
  const click=()=>sync();
  const confirm=async()=>{
   if(!ability||pending||!canCast(ability))return;
-  const targetIds=picker.selection();
-  if(!validateMagicTargetSelection(ability,heroes,targetIds))return;
-  const chosen=ability,current=generation;
-  pending=true;sync();
-  try{
-   // Energy and effects change only after the server revalidates the selection.
-   await onCast({ability:chosen,targetIds});
-   if(current===generation)reset();
-  }catch(error){
-   if(current!==generation)return;
-   pending=false;sync();status.textContent='⚠ '+(error?.message||'Büyü komutu reddedildi');
-  }
+  const targetIds=picker.selection();if(!validateMagicTargetSelection(ability,heroes,targetIds,context))return;
+  const chosen=ability,current=generation;pending=true;sync();
+  try{await onCast({ability:chosen,targetIds});if(current===generation)reset();}
+  catch(error){if(current!==generation)return;pending=false;sync();status.textContent='⚠ '+(error?.message||'Yetenek komutu reddedildi');}
  };
- const cancel=()=>{if(pending)return;reset();status.textContent='Büyü seçimi iptal edildi; enerji harcanmadı'};
- enemyRoot.addEventListener('click',click);enemyRoot.addEventListener('keydown',click);
- confirmButton.addEventListener('click',confirm);cancelButton.addEventListener('click',cancel);
- reset();
+ const cancel=()=>{if(pending)return;reset();status.textContent='Hedef seçimi iptal edildi; enerji harcanmadı'};
+ for(const root of roots){root.addEventListener('click',click);root.addEventListener('keydown',click)}
+ confirmButton.addEventListener('click',confirm);cancelButton.addEventListener('click',cancel);reset();
  return {
-  isSelecting:()=>ability!==null,
-  begin(nextAbility,nextHeroes){
+  isSelecting:()=>ability!==null,selectedAbility:()=>ability,
+  begin(nextAbility,nextHeroes,options={}){
    if(pending)throw Error('Cast pending');
    if(!['normal','ultimate'].includes(nextAbility)||!Array.isArray(nextHeroes))throw Error('Invalid magic targets');
-   generation++;ability=nextAbility;heroes=nextHeroes.map(h=>({...h}));
-   if(requiredMagicTargets(ability,heroes)===0){reset();return false}
-   picker.begin(ability,heroes);confirmButton.hidden=false;cancelButton.hidden=false;onSelectionChange(true);sync();return true;
+   generation++;for(const p of pickers.values())p.cancel();ability=nextAbility;heroes=nextHeroes.map(h=>({...h}));context={commanderId,...options};
+   if(requiredMagicTargets(ability,heroes,context)===0){reset();status.textContent='Uygun hedef yok; enerji harcanmadı';return false}
+   picker=pickers.get(commanderTargetMode(context.commanderId,ability)==='enemy-alive'?enemyRoot:allyRoot);
+   picker.begin(ability,heroes,context);confirmButton.hidden=false;cancelButton.hidden=false;onSelectionChange(true);sync();return true;
   },
-  refresh(nextHeroes){
-   if(!ability)return;
-   heroes=nextHeroes.map(h=>({...h}));picker.refresh(heroes);
-   if(!requiredMagicTargets(ability,heroes)){reset();return}
-   sync();
-  },
-  cancel,
-  destroy(){reset();enemyRoot.removeEventListener('click',click);enemyRoot.removeEventListener('keydown',click);confirmButton.removeEventListener('click',confirm);cancelButton.removeEventListener('click',cancel);picker.destroy()}
+  refresh(nextHeroes,options={}){
+   if(!ability)return;heroes=nextHeroes.map(h=>({...h}));context={...context,...options};picker.refresh(heroes,context);
+   if(!requiredMagicTargets(ability,heroes,context)){reset();status.textContent='Uygun hedef yok; enerji harcanmadı';return}sync();
+  },cancel,
+  destroy(){reset();for(const root of roots){root.removeEventListener('click',click);root.removeEventListener('keydown',click)}confirmButton.removeEventListener('click',confirm);cancelButton.removeEventListener('click',cancel);for(const p of pickers.values())p.destroy()}
  };
 }

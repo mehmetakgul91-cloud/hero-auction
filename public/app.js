@@ -294,6 +294,32 @@ async function restoreSavedGame(){
  }
 }
 const homePlayTab=$('home-play-tab'),homePlayPanel=$('home-play-panel');
+$('lobby-home').setAttribute('aria-label','Hero Auction · '+uiText('Ana menü'));
+// Stay in this document (including CrazyGames); never reload or reset the account.
+// The existing leave action owns confirmation, detach and stale-session handling.
+$('lobby-home').onclick=async()=>{
+ const button=$('lobby-home');
+ if(button.disabled||$('leave').disabled||roomEntryPending>0||roomInvitesUI.busy||commanderBusy)return;
+ button.disabled=true;
+ const auth=login?.authToken;
+ try{
+  if(session||room){
+   await $('leave').onclick();
+   if(session||room||login?.authToken!==auth)return;
+  }
+  commanderProfileOpen=false;
+  friendsUI.close();
+  webInvite?.cancel();
+  homePlayPanel.hidden=true;
+  homePlayTab.setAttribute('aria-expanded','false');
+  homePlayTab.classList.remove('selected');
+  $('google-logout').hidden=true;
+  $('account-status').setAttribute('aria-expanded','false');
+  commanderVisibility();
+  window.scrollTo({top:0,behavior:'instant'});
+ }finally{button.disabled=false;}
+};
+
 const homeGuidePlay=$('home-guide-play');if(homeGuidePlay)homeGuidePlay.onclick=()=>{if(homePlayPanel.hidden)homePlayTab.click();else homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'});};
 if(homePlayTab&&homePlayPanel){homePlayTab.onclick=()=>{friendsUI.close();homePlayPanel.hidden=false;homePlayTab.setAttribute('aria-expanded','true');homePlayTab.classList.add('selected');homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'});};const lobbyBack=$('play-lobby-back');if(lobbyBack)lobbyBack.onclick=()=>{webInvite?.cancel();homePlayPanel.hidden=true;homePlayTab.setAttribute('aria-expanded','false');homePlayTab.classList.remove('selected');homePlayTab.scrollIntoView({behavior:'smooth',block:'start'});};}
 webInvite=createWebInvite({
@@ -531,7 +557,7 @@ if(!window.HeroPlatform){
 }
 $('share').textContent='📲 ARKADAŞINI DAVET ET';
 $('share').onclick=()=>{if(room)shareInvite(room.code)};
-$('leave').onclick=async()=>{if(!confirm(uiText('Bu cihazda odadan ayrılmak istiyor musun?')))return;const leaving=session,auth=login?.authToken;$('leave').disabled=true;try{if(leaving)await post('/api/room/detach',leaving);if(session!==leaving||login?.authToken!==auth)return;window.HeroPlatform?.setRoom(null);localStorage.removeItem('hero-auction-session');stream?.close();session=null;room=null;applyLogin();refreshOnline();void roomInvitesUI.refresh(true)}catch(e){notify(e.message)}finally{$('leave').disabled=false}};
+$('leave').onclick=async()=>{if($('leave').disabled)return;if(!confirm(uiText('Bu cihazda odadan ayrılmak istiyor musun?')))return;const leaving=session,auth=login?.authToken;$('leave').disabled=true;try{if(leaving)await post('/api/room/detach',leaving);if(session!==leaving||login?.authToken!==auth)return;window.HeroPlatform?.setRoom(null);localStorage.removeItem('hero-auction-session');stream?.close();session=null;room=null;applyLogin();refreshOnline();void roomInvitesUI.refresh(true)}catch(e){notify(e.message)}finally{$('leave').disabled=false}};
 
 // CrazyGames session bridge: authenticate before restoring any device-local seat.
 let platformStarting=false,platformJoinQueue=Promise.resolve();

@@ -1,4 +1,8 @@
 import test from 'node:test';
+import fs from 'node:fs';
+import {validateHeroAbility} from '../public/hero-ability-rules.js';
+const expectedManifest=JSON.parse(fs.readFileSync(new URL('./fixtures/ability-balance-expected.json',import.meta.url)));
+const expectedById=new Map(expectedManifest.map(h=>[h.id,h]));
 import assert from 'node:assert/strict';
 import {battleRoster,simulateRosterBattle} from '../battle-roster.js';
 import {prepareLiveArenaTeams} from '../commander-live-team-preparation.js';
@@ -26,6 +30,9 @@ function fixture(hero,{injuredAlly=false,speed=1000}={}){
 // not merely the informational readiness report or preserved metadata.
 for(const hero of battleRoster){
  test(`${hero.name}: actual special action and passive behavior`,()=>{
+  const expected=expectedById.get(hero.id);
+  assert.ok(expected, 'hero must exist in independently pinned balance manifest');
+  assert.deepEqual({id:hero.id,name:hero.name,role:hero.role,rarity:hero.rarity,power:hero.proposedPower,active:hero.active,passive:hero.passive},expected);
   const cards=[hero,...battleRoster.filter(h=>h.id!==hero.id).slice(0,4)].map(h=>({id:h.id,power:75}));
   const prepared=prepareLiveArenaTeams(cards,cards,{cardAdapter:'auction'})[0][0];
   assert.deepEqual(prepared.active,hero.active);
@@ -34,23 +41,26 @@ for(const hero of battleRoster){
   const actor=combat.teams[0][0],previous=before[0][0],effect=hero.active.effect;
   const hit=events.find(e=>e.damageType==='special');
   const event=action=>events.find(e=>e.action===action);
-  if(effect==='heal'){
-   assert.equal(actor.hp-previous.hp,52);assert.equal(event('heal')?.target,hero.id);
+  if(expected.active.supportHybrid){
+   assert.ok(!hit,'hybrid special must not attack');assert.equal(actor.shield,Math.round(previous.defense*expected.active.allyShieldRate));
+   assert.equal(event('shield')?.target,hero.id);
+  }else if(effect==='heal'){
+   assert.equal(actor.hp-previous.hp,Math.round(previous.attack*expected.active.healRate));assert.equal(event('heal')?.target,hero.id);
   }else{
    assert.ok(hit,`${hero.name}: special attack missing`);
    const target=combat.teams[1].find(u=>u.id===hit.target);
    const oldTarget=before[1].find(u=>u.id===hit.target);
    const expectedRaw=calculateHeroRawDamage({unit:previous,target:oldTarget,skill:hero.active,special:true,critical:hit.critical,guarded:false});
    assert.equal(hit.rawDamage,expectedRaw,`${hero.name}: skill multiplier/pierce formula`);
-   if(effect==='shield')assert.ok(actor.shield>=Math.round(previous.defense*.4));
-   if(effect==='drain')assert.equal(actor.hp-previous.hp,Math.floor(hit.value*.15));
-   if(effect==='sunder')assert.equal(target.defense,85);
-   if(effect==='weaken')assert.equal(target.attack,90);
+   if(effect==='shield')assert.ok(actor.shield>=Math.round(previous.defense*expected.active.shieldRate));
+   if(effect==='drain')assert.equal(actor.hp-previous.hp,Math.floor(hit.value*expected.active.drainRate));
+   if(effect==='sunder')assert.equal(target.defense,Math.floor(100*(1-expected.active.sunderRate)));
+   if(effect==='weaken')assert.equal(target.attack,Math.floor(100*(1-expected.active.weakenRate)));
    if(effect==='haste'){assert.ok(actor.speed>=previous.speed);assert.equal(event('haste').value,actor.speed-previous.speed);}
    if(effect==='execute')assert.equal(target.hp,0);
    if(effect==='splash'||hero.role==='energy'){
     const splash=events.filter(e=>e.action==='splash');assert.equal(splash.length,4);
-    for(const e of splash)assert.equal(e.rawDamage,Math.max(1,Math.floor(hit.rawDamage*(effect==='splash'?.25:.15))));
+    for(const e of splash)assert.equal(e.rawDamage,Math.max(1,Math.floor(hit.rawDamage*(effect==='splash'?expected.active.splashRate:.15))));
    }
   }
   // Preserve the existing front/back rule: passives still apply in either lane.
@@ -58,23 +68,27 @@ for(const hero of battleRoster){
    const unit={id:hero.id,hp:400,maxHp:1000,attack:100,defense:100,speed:100,lane,passive:hero.passive};
    const teams=applyLegacyStartPassives([[unit],[]]);
    const p=hero.passive.effect;
-   if(['guard','resist'].includes(p))assert.equal(teams[0][0].defense,106);
-   if(p==='focus')assert.equal(teams[0][0].attack,106);
-   if(['evasion','momentum'].includes(p))assert.equal(teams[0][0].speed,106);
+   if(['guard','resist'].includes(p))assert.equal(teams[0][0].defense,Math.round(100*(1+expected.passive.value)));
+   if(p==='focus')assert.equal(teams[0][0].attack,Math.round(100*(1+expected.passive.value)));
+   if(['evasion','momentum'].includes(p))assert.equal(teams[0][0].speed,Math.round(100*(1+expected.passive.value)));
    const c={teams,round:2,version:0,events:[],finished:false};applyLegacyRoundPassives(c);
    if(p==='regen')assert.equal(c.teams[0][0].hp,430);
-   if(p==='rage'){assert.equal(c.teams[0][0].attack,106);applyLegacyRoundPassives(c);assert.equal(c.teams[0][0].attack,106);}
+   if(p==='rage'){assert.equal(c.teams[0][0].attack,100+Math.floor(100*expected.passive.value));applyLegacyRoundPassives(c);assert.equal(c.teams[0][0].attack,100+Math.floor(100*expected.passive.value));}
   }
  });
 }
-for(const id of ['original:15','original:expansion-31'])test(`${id}: support healing precedes shield when ally injured`,()=>{
+for(const id of ['original:15','original:expansion-31'])test(`${id}: hybrid support heals and shields same injured ally without attack`,()=>{
  const hero=battleRoster.find(h=>h.id===id);const {combat,events}=fixture(hero,{injuredAlly:true});
- assert.equal(combat.teams[0][1].hp,552);assert.ok(events.some(e=>e.action==='heal'));assert.ok(!events.some(e=>e.action==='shield'||e.damageType==='special'));
+ const expected=expectedById.get(id);
+ assert.equal(combat.teams[0][1].hp,500+Math.round(100*expected.active.healRate));
+ assert.equal(combat.teams[0][1].shield,Math.round(100*expected.active.allyShieldRate));
+ assert.ok(events.some(e=>e.action==='heal'));assert.ok(events.some(e=>e.action==='shield'));assert.ok(!events.some(e=>e.damageType==='special'));
+ assert.equal(events.find(e=>e.action==='heal').target,events.find(e=>e.action==='shield').target);
 });
 test('rage never reduces already boosted attack for all rage heroes',()=>{
  for(const hero of battleRoster.filter(h=>h.passive.effect==='rage'))for(const attack of [100,175,180,210,216]){
   const c={teams:[[{id:hero.id,hp:40,maxHp:100,attack,passive:hero.passive}],[]],round:2,version:0,events:[],finished:false};
-  applyLegacyRoundPassives(c);assert.equal(c.teams[0][0].attack,Math.max(attack,Math.min(180,attack+Math.floor(attack*.06))));
+  applyLegacyRoundPassives(c);assert.equal(c.teams[0][0].attack,Math.max(attack,Math.min(180,attack+Math.floor(attack*expectedById.get(hero.id).passive.value))));
  }
 });
 test('haste increases ordinary speed and never reduces boosted speed; events truthful',()=>{
@@ -91,12 +105,13 @@ test('bot fixtures retain energy weaken and drain behavior',()=>{
  const b=['original:03','original:04','original:06','original:10','original:11'].map(id=>({id,power:30}));
  const result=simulateRosterBattle(a,b,{seed:'audit-5'});assert.ok(result.log.some(e=>e.actor===id&&e.action==='heal'&&e.value>0));
 });
-for(const id of ['original:15','original:expansion-31'])test(`${id}: bot support still heals wounded ally before shield`,()=>{
+for(const id of ['original:15','original:expansion-31'])test(`${id}: bot hybrid support protects same wounded ally with heal and shield`,()=>{
  const a=['original:01','original:02',id,'original:03','original:04'].map((id,i)=>({id,power:i===2?100:75}));
  const b=['original:03','original:04','original:06','original:10','original:11'].map(id=>({id,power:50}));
  const result=simulateRosterBattle(a,b,{seed:'support-regression',maxRounds:3});
  const events=result.log.filter(e=>e.actor===id&&e.round===3);
- assert.ok(events.some(e=>e.action==='heal'));assert.ok(!events.some(e=>e.action==='shield'));
+ assert.ok(events.some(e=>e.action==='heal'));assert.ok(events.some(e=>e.action==='shield'));
+ assert.equal(events.find(e=>e.action==='heal').target,events.find(e=>e.action==='shield').target);assert.ok(!events.some(e=>e.damageType==='special'));
 });
 for(const hero of battleRoster.filter(h=>h.passive.effect==='rage'))test(`${hero.name}: bot rage cannot lower credit-boosted attack`,()=>{
  const a=[hero.id,'original:01','original:02','original:03','original:04'].map((id,i)=>({id,power:100,lane:i?'back':'front'}));
@@ -118,4 +133,8 @@ test('bot haste cannot lower boosted speed and reports actual zero gain',()=>{
  const result=simulateRosterBattle(a,b,{seed:'haste-regression',remainingCredits:[100,100]});
  const events=result.log.filter(e=>e.actor===id&&e.action==='haste');
  assert.ok(events.length>0);assert.ok(result.teams[0][2].speed>=initial);assert.ok(events.every(e=>e.value===0));
+});
+
+test('trusted ability validation rejects malformed and incompatible explicit parameters',()=>{
+ for(const bad of [{pierceRate:1},{shieldRate:'0.4'},{shieldRate:null},{splashRate:.3},{supportHybrid:true},{unknown:1}]){const hero=structuredClone(battleRoster.find(h=>h.name==='Demir Sur'));Object.assign(hero.active,bad);assert.throws(()=>validateHeroAbility(hero));}
 });

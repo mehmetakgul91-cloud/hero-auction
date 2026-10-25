@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - test/commander-arena-2-20261020
+  pull_request:
   workflow_dispatch:
 jobs:
   commander-tests:
@@ -28,3 +29,8 @@ jobs:
       - name: Existing battle balance smoke test
         run: node tools/battle-balance.mjs > /tmp/hero-auction-balance.json
 
+
+      - name: Complete approved ability and interface regression suite
+        run: node --test *.test.js tests/*.test.* test/*.test.js
+      - name: Strict active roster audit
+        run: npm run audit:strict

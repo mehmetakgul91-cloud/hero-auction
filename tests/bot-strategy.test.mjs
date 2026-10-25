@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {chooseBotCommander,chooseBotBid,chooseBotFormation,chooseBotCast,BOT_REACTION_MS} from '../bot-strategy.js';
 import {battleRoster} from '../battle-roster.js';
+import {getCommanderAbilityCost} from '../public/commander-ability-rules.js';
 import {createLiveCommanderAbilities,viewLiveCommanderAbilities} from '../commander-live-abilities.js';
 import {createLiveCommanderCombat,castLiveCommanderCombat,beginServerCombatRound} from '../commander-live-combat.js';
 const unit=(id,props={})=>({id,hp:100,maxHp:100,attack:100,shield:0,...props});
@@ -77,7 +78,7 @@ test('hard healing waits for damage and emergency beats energy saving; shield av
  s.teams[1][0].hp=20;
  assert.deepEqual(chooseBotCast(s,'support','hard',options),{ability:'normal'});
  s.teams[1][0].hp=100;s.teams[1][0].shield=100;
- s.abilities[1].canUseUltimate=true;
+ s.abilities[1].canUseUltimate=true;s.abilities[1].energy=getCommanderAbilityCost('defense','ultimate');
  assert.equal(chooseBotCast(s,'defense','hard',options),null);
  s.teams[1][0].shield=0;
  assert.deepEqual(chooseBotCast(s,'defense','hard',options),{ability:'ultimate'});
@@ -96,18 +97,18 @@ test('hard magic targets strongest unweakened enemy and executes legally in live
  assert.equal(combat.abilities.cooldownUntil[1],15000);
 });
 
-test('ultimate magic targets exactly the living targets, without duplicate IDs',()=>{
+test('ultimate magic selects exactly one living friendly hero, never enemy targets',()=>{
  const s=state();s.abilities[1].canUseUltimate=true;s.abilities[1].energy=100;
- assert.deepEqual(chooseBotCast(s,'magic','hard',options),{ability:'ultimate',targetIds:['enemy-b','enemy-a']});
+ assert.deepEqual(chooseBotCast(s,'magic','hard',options),{ability:'ultimate',targetIds:['ally']});
  s.teams[0][0].hp=0;
- assert.deepEqual(chooseBotCast(s,'magic','hard',options),{ability:'ultimate',targetIds:['enemy-b']});
+ assert.deepEqual(chooseBotCast(s,'magic','hard',options),{ability:'ultimate',targetIds:['ally']});
 });
 
 
 test('hard magic uses an opening debuff then really accumulates round energy to an ultimate',()=>{
  const commanders=[chooseBotCommander(undefined,()=>0),{commanderId:'magic',levels:{attack:0,defense:0,magic:0,support:0}}];
  const combat=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'saving',now:0}),teams:state().teams,commanders});
- let lastCastAt=0;const casts=[];
+ let lastCastAt=0;const casts=[],castRounds=[];
  for(let round=2;round<=11;round++){
   beginServerCombatRound(combat,round);
   const now=round*10000;
@@ -115,10 +116,11 @@ test('hard magic uses an opening debuff then really accumulates round energy to 
   const choice=chooseBotCast(snapshot,'magic','hard',{now,lastCastAt});
   if(choice){
    castLiveCommanderCombat(combat,{side:1,...choice,requestId:'saving-'+round,matchKey:'saving',now});
-   casts.push(choice.ability);lastCastAt=now;
+   casts.push(choice.ability);castRounds.push(round);lastCastAt=now;
   }
  }
  assert.deepEqual(casts,['normal','ultimate']);
+ assert.deepEqual(castRounds,[2,11]);
  assert.equal(combat.abilities.energy[1],0);
 });
 

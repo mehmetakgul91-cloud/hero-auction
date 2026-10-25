@@ -79,3 +79,23 @@ Tek bir `HTMLAudioElement` yalnız seçilen parçayı yükler. Hazırlıkta kull
 `/music-credits.html` eser sahibi, kaynak, lisans ve dönüşüm bilgilerini gösterir; oyun ve arena altındaki bağlantılardan erişilir. Kaynak/lisans kanıtları `docs/arena-music-license-evidence/`, dosya hashleri `docs/arena-music-provenance.json`, teknik ses ölçümleri `docs/arena-music-audio-checks.json` içindedir. Atlas yalnız oyuna gömülü kullanım içindir; bağımsız MP3/soundtrack paketi olarak yayımlanmaz. Oyun yedeği kod ve oyun varlıklarıyla birlikte tutulmalıdır.
 
 Test: `node --test tests/arena-music.test.mjs tests/static-audio.test.mjs tests/arena-performance.test.mjs`. Gerçek iPhone/Safari oynatma ve işitsel döngü birleşimleri ayrıca cihazda dinlenmelidir; teknik ölçümler bir dinleme testi değildir.
+
+## Kahraman beceri dengesi
+
+Kahraman aktifleri/pasifleri nadirlik ve rol bütçeleriyle kayıtlı parametrelerden hesaplanır; istemci kendi beceri gücünü gönderemez. Ayrıntılı 50 kahraman önce/sonra tablosu `docs/ability-balance/roster-changes.md` içindedir. Kael ve Alev Zırhı özel turda hedefin hareketini sıra sonuna taşır; hareket iptal edilmez veya çoğaltılmaz, geciktirilen hareketten sonraki tam tur zincirlemeye karşı korunur. Seraphine ve Sancak Bekçisi aynı düşük-canlı müttefike sınırlı şifa ve kalkan uygular.
+
+Şifacıların tam-can özel vuruşu iki savaş yolunda eşittir. Bitirici hasar non-live tekrarın can göstergesine dahil edilir. Büyücü komutanının mevcut zayıflatması iki motorda da üç tur (uygulandığı tur dahil) sürer. Hazırlık ekranındaki yaklaşık güç, bütün savaş istatistiklerinin aynı sayıya dönüştüğü anlamına gelmez; kredi ve komutanın mevcut rol bazlı hesapları değişmez.
+
+`node tools/verify-ability-parity.mjs` tüm kahramanlarla aynı kritik akışında legacy/canlı durumlarını karşılaştırır. `node tools/compare-ability-balance.mjs` sabit başlangıç commitine karşı kontrollü takım matrisi çalıştırır; sonuçlar gerçek oyuncu kitlesi kazanma oranı tahmini değildir. Görsel tarayıcı QA ortam kısıtı nedeniyle tamamlanamadı; işlevsel DOM/API testleri bu sınırdan ayrıdır.
+
+
+## Komutan nihai becerileri
+
+Her oyuncu savaş başına bir nihai kullanabilir; normal beceriler40 enerjiyle tekrar kullanılabilir. Enerji kapasitesi100. Nihai maliyetler: saldırı75, savunma85, büyü100, destek90. İptal/yanlış hedef hak veya enerji tüketmez. Kullanım hakkı sunucu oturumundadır; yeniden bağlanma yenilemez, yeni maç sıfırlar.
+
+- Av Emri: en düşük can oranlı yaşayan rakibe, her yaşayan müttefikin sonraki hasar vuruşunu yönlendirir; sonraki tur sonuna kadar, en fazla beş vuruş. Ek saldırı vermez.
+- Son Kale: takım kalkanı ve en düşük can oranlı bir müttefik için sonraki tur sonuna kadar tek ölümcül vuruştan1canla kurtulma.
+- Aşırı Yük: seçilen dostun kullanım anındaki saldırısı kadar sabit bonus, üç hareket turu. Katlanmaz; alan hasarı aynı güçlendirilmiş saldırıdan bir kez hesaplanır, şifa/kalkan büyümez. Ölürse kalan süre kendi takımındaki mevcut canı en yüksek yaşayan dosta, yeni dostun kendi saldırı değeriyle aktarılır; süre uzamaz ve aynı tur fazladan güçlendirilmiş hareket verilmez.
+- Diriliş: seçilen düşmüş dost%40azami can ve sıfır kalkanla döner; en erken sonraki tur hareket eder. Bitmiş savaşta kullanılamaz.
+
+Normal beceri maliyetleri, kredi/altın politikası, müzik, kahraman temel güçleri ve%70kalkan emilim kuralı korunur. Kontrollü simülasyonlar gerçek oyuncu kazanma oranı veya tüm koşullarda kusursuz denge iddiası değildir.

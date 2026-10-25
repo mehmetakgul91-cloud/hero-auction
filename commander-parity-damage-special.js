@@ -1,4 +1,5 @@
-import {calculateShieldAbsorption} from './battle-shield-absorption.js';
+import {abilityValue} from './public/hero-ability-rules.js';
+import {applyHeroDamage} from './battle-hp-damage.js';
 // Server-owned atomic parity for burst, pierce, splash and headshot.
 // All damage and targets are computed from authoritative combat state.
 import {calculateHeroRawDamage} from './battle-damage-formula.js';
@@ -18,15 +19,13 @@ export function stepParityDamageSpecial(combat,{side,actorId,round=combat?.round
  if(!target)throw Error('No living target');
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
  const weakened=Number.isInteger(actor.commanderWeakenUntilRound)&&round<=actor.commanderWeakenUntilRound?Math.max(0,Math.min(1,Number(actor.commanderWeaken)||0)):0;
- const raw=calculateHeroRawDamage({unit:actor,target,skill,special:true,critical,guarded,weakened});
+ const raw=calculateHeroRawDamage({unit:actor,target,skill,special:true,critical,guarded,weakened,round});
  const events=[],deaths=[];
  function hit(victim,amount,action,isSecondary=false){
-  const absorbed=calculateShieldAbsorption(victim.shield||0,amount);
-  victim.shield=(victim.shield||0)-absorbed;
-  const damage=Math.min(victim.hp,amount-absorbed);
-  victim.hp-=damage;actor.damage=(actor.damage||0)+damage;
+  const {damage,absorbed,guardTriggered,arcaneTransfer}=applyHeroDamage(victim,amount,{round,allies:enemies});
+  actor.damage=(actor.damage||0)+damage;
   if(victim.hp===0){actor.kills=(actor.kills||0)+1;deaths.push(victim.id)}
-  events.push({round,side,actor:actorId,action,target:victim.id,value:damage,absorbed,rawDamage:amount,damageType:isSecondary?'splash':'special',...(isSecondary?{}:{critical})});
+  events.push({round,side,actor:actorId,action,target:victim.id,value:damage,absorbed,rawDamage:amount,damageType:isSecondary?'splash':'special',...(guardTriggered?{guardTriggered:true}:{}),...(arcaneTransfer?{arcaneTransfer}:{}),...(isSecondary?{}:{critical})});
  }
  hit(target,raw,skill.name||'special');
  if(skill.effect==='splash'||actor.role==='energy'){
@@ -34,11 +33,11 @@ export function stepParityDamageSpecial(combat,{side,actorId,round=combat?.round
   for(const victim of enemies.filter(u=>u!==target&&u.hp>0))hit(victim,splashRaw,'splash',true);
  }
  if(actor.role==='tank'){
-  for(const ally of teams[side].filter(u=>u.hp>0&&u.lane==='front'))ally.shield=(ally.shield||0)+Math.max(1,Math.round(actor.defense*.16));
+  for(const ally of teams[side].filter(u=>u.hp>0&&u.lane==='front'))ally.shield=(ally.shield||0)+Math.max(1,Math.round(actor.defense*abilityValue(actor.active,'frontShieldRate')));
  }
  const thornsShield=applyAttackThorns(actor,{enabled:allowThornsPassive});
  if(thornsShield)events.push({round,side,actor:actorId,action:'thorns-shield',target:actorId,value:thornsShield});
- if(actor.role==='tank')actor.shield=(actor.shield||0)+Math.round(actor.defense*.2);
+ if(actor.role==='tank')actor.shield=(actor.shield||0)+Math.round(actor.defense*abilityValue(actor.active,'tankShieldRate'));
  combat.teams=teams;combat.version++;
  for(const event of events){event.version=combat.version;combat.events.push(event)}
  for(const id of deaths)grantLiveCommanderEnergy(combat.abilities,1-side,10);

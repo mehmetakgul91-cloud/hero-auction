@@ -677,7 +677,7 @@ if(url.pathname==='/api/experimental/commander-live'&&(req.method==='GET'||req.m
  const liveKey=activeLiveKey||matchKey;
  const sinceVersion=Number(req.method==='GET'?url.searchParams.get('sinceVersion')||0:body.sinceVersion||0);
  if(!Number.isSafeInteger(sinceVersion)||sinceVersion<0)return send(400,{error:'Geçersiz savaş sürümü'});
- const snapshot=()=>{const current=liveArenaLifecycle.snapshot({matchKey:liveKey,token:body.token,sinceVersion});return side===0?current:{...current,side:0,summary:orientBattleSummary(current.summary,side),winner:current.winner===null?null:1-current.winner,teams:[...current.teams].reverse(),abilities:[...current.abilities].reverse(),events:current.events.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side,shieldSnapshot:e.shieldSnapshot?.slice().reverse()}))};};
+ const snapshot=()=>{const current=liveArenaLifecycle.snapshot({matchKey:liveKey,token:body.token,sinceVersion});return side===0?current:{...current,side:0,ultimateUsed:current.ultimateUsed?.slice().reverse(),revivalUsed:current.revivalUsed?.slice().reverse(),summary:orientBattleSummary(current.summary,side),winner:current.winner===null?null:1-current.winner,teams:[...current.teams].reverse(),abilities:[...current.abilities].reverse(),events:current.events.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side,shieldSnapshot:e.shieldSnapshot?.slice().reverse()}))};};
  try{
   if(req.method==='POST'){
    if(!['normal','ultimate'].includes(body?.ability))return send(422,{error:'Geçersiz komutan yeteneği'});
@@ -780,7 +780,7 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
  if(!sync.result.live&&room.battleSettlementPending&&!room.matchSettled){settleFinishedMatch(room,result.winner);room.battleSettlementPending=false;}
  }markRoom(room);
  }
- return send(200,{ready:sync.ready.map(Boolean),started:Boolean(sync.result),result:sync.result?{...sync.result,summary:orientBattleSummary(sync.result.summary,seat),winner:sync.result.winner===null?null:sync.result.winner===seat?0:1,teams:seat===0?sync.result.teams:[...sync.result.teams].reverse(),initialShields:seat===0?sync.result.initialShields:sync.result.initialShields?.slice().reverse(),commanders:seat===0?sync.result.commanders:[...sync.result.commanders].reverse(),log:seat===0?sync.result.log:sync.result.log.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side,shieldSnapshot:e.shieldSnapshot?.slice().reverse()}))}:null});
+ return send(200,{ready:sync.ready.map(Boolean),started:Boolean(sync.result),result:sync.result?{...sync.result,ultimateUsed:seat===0?sync.result.ultimateUsed:sync.result.ultimateUsed?.slice().reverse(),revivalUsed:seat===0?sync.result.revivalUsed:sync.result.revivalUsed?.slice().reverse(),summary:orientBattleSummary(sync.result.summary,seat),winner:sync.result.winner===null?null:sync.result.winner===seat?0:1,teams:seat===0?sync.result.teams:[...sync.result.teams].reverse(),initialShields:seat===0?sync.result.initialShields:sync.result.initialShields?.slice().reverse(),commanders:seat===0?sync.result.commanders:[...sync.result.commanders].reverse(),log:seat===0?sync.result.log:sync.result.log.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side,shieldSnapshot:e.shieldSnapshot?.slice().reverse()}))}:null});
  }catch(e){return send(422,{error:e.message})}
 }
 if(req.method==='POST'&&url.pathname==='/api/battle-auction-formation'){
@@ -821,13 +821,13 @@ if(req.method==='POST'&&url.pathname==='/api/commander-manual-demo'){
  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>6000)return send(413,{error:'İstek çok büyük'})}
  let body;try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz JSON'})}
  const commanderId=String(body?.commanderId||'');if(!resolveCommander(commanderId))return send(400,{error:'Geçersiz komutan'});
- const actions=body?.actions;if(!Array.isArray(actions)||actions.length>15||actions.some(a=>!a||!Number.isInteger(a.round)||a.round<1||a.round>15||!['normal','ultimate'].includes(a.ability)))return send(400,{error:'Geçersiz yetenek listesi'});
+ const actions=body?.actions;if(!Array.isArray(actions)||actions.length>15||actions.some(a=>!a||!Number.isInteger(a.round)||a.round<1||a.round>15||!['normal','ultimate'].includes(a.ability)||(a.targetIds!==undefined&&(!Array.isArray(a.targetIds)||a.targetIds.length!==1||typeof a.targetIds[0]!=='string'||a.targetIds[0].length>120))))return send(400,{error:'Geçersiz yetenek listesi'});
  const seen=new Set();if(actions.some(a=>{if(seen.has(a.round))return true;seen.add(a.round);return false}))return send(400,{error:'Bir turda yalnızca bir yetenek kullanılabilir'});
  const idsA=["original:01", "original:02", "original:03", "original:04", "original:05"];
  const idsB=["original:06", "original:07", "original:08", "original:09", "original:10"];
  const cards=ids=>ids.map((id,i)=>({id,power:stablePower(id),lane:i<2?'front':'back'}));
  const commander={commanderId,levels:{attack:0,defense:0,magic:0,support:0}};
- try{const result=simulateRosterBattle(cards(idsA),cards(idsB),{seed:'manual-commander-training-v1',maxRounds:15,commanders:[commander,null],commanderActions:actions.map(a=>({side:0,round:a.round,ability:a.ability}))});return send(200,{rounds:result.rounds,winner:result.winner,teams:result.teams.map(team=>team.map(u=>({id:u.id,name:u.name,maxHp:u.maxHp}))),log:result.log});}
+ try{const result=simulateRosterBattle(cards(idsA),cards(idsB),{seed:'manual-commander-training-v1',maxRounds:15,commanders:[commander,null],commanderActions:actions.map(a=>({side:0,round:a.round,ability:a.ability,...(a.targetIds?{targetIds:a.targetIds}:{})}))});return send(200,{rounds:result.rounds,winner:result.winner,teams:result.teams.map(team=>team.map(u=>({id:u.id,name:u.name,maxHp:u.maxHp}))),log:result.log});}
  catch(e){return send(400,{error:e.message})}
 }
 if(req.method==='GET'&&url.pathname==='/api/arena-3d-demo'){

@@ -1,3 +1,5 @@
+import {commanderUltimateName,commanderUltimateDescription} from './commander-ultimate-presentation.js';
+import {getCommanderAbilityCost} from './commander-ability-rules.js';
 // Experimental, opt-in arena commander buttons. No live-room integration.
 export function createLiveArenaCommanderControls({normalButton,ultimateButton,energyLabel,statusLabel,readState,onCast,onMagicTarget}){
  if(!normalButton||!ultimateButton||!energyLabel||!statusLabel||typeof readState!=='function'||typeof onCast!=='function')throw Error('Invalid live commander controls');
@@ -7,8 +9,11 @@ export function createLiveArenaCommanderControls({normalButton,ultimateButton,en
   const state=readState();
   const energy=state?.energy??0,cooldownMs=Math.max(0,state?.cooldownMs??0);
   energyLabel.textContent='Komutan enerjisi: '+energy+'/100';
-  normalButton.disabled=pending||!!state?.finished||energy<40||cooldownMs>0;
-  ultimateButton.disabled=pending||!!state?.finished||energy<100||cooldownMs>0;
+  normalButton.disabled=pending||!!state?.finished||energy<getCommanderAbilityCost(state?.commanderId||'defense','normal')||cooldownMs>0;
+  const id=state?.commanderId||'defense',revivalUsed=id==='support'&&(Array.isArray(state?.revivalUsed)?!!state.revivalUsed[state.side??0]:state?.revivalUsed===true);
+  const ultimateUsed=(Array.isArray(state?.ultimateUsed)?!!state.ultimateUsed[state.side??0]:state?.ultimateUsed===true)||revivalUsed;
+  ultimateButton.disabled=pending||!!state?.finished||energy<getCommanderAbilityCost(id,'ultimate')||cooldownMs>0||ultimateUsed;
+  normalButton.textContent='Normal · '+getCommanderAbilityCost(id,'normal');ultimateButton.textContent=commanderUltimateName(id)+' · '+(ultimateUsed?'Kullanıldı':getCommanderAbilityCost(id,'ultimate'));ultimateButton.title=commanderUltimateDescription(id);
   statusLabel.textContent=pending?'Komut gönderiliyor':cooldownMs>0?'Bekleme: '+Math.ceil(cooldownMs/1000)+' sn':'Komutan hazır';
  }
  async function use(ability){

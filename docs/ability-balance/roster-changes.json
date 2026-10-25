@@ -1,0 +1,1726 @@
+[
+  {
+    "id": "original:01",
+    "name": "Obsidyen Muhafız",
+    "rarity": "legendary",
+    "role": "tank",
+    "powerUnchanged": 90,
+    "before": {
+      "active": {
+        "name": "obsidyen-kalkan",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "hasar-azaltma",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "obsidyen-kalkan",
+        "effect": "shield",
+        "power": 1.14,
+        "shieldRate": 0.45,
+        "frontShieldRate": 0.18,
+        "tankShieldRate": 0.2
+      },
+      "passive": {
+        "name": "hasar-azaltma",
+        "effect": "guard",
+        "value": 0.08
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Self plus living front allies"
+  },
+  {
+    "id": "original:02",
+    "name": "Demir Sur",
+    "rarity": "advanced",
+    "role": "tank",
+    "powerUnchanged": 69,
+    "before": {
+      "active": {
+        "name": "celik-siper",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "takim-koruma",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "celik-siper",
+        "effect": "shield",
+        "power": 1.1,
+        "shieldRate": 0.4,
+        "frontShieldRate": 0.14,
+        "tankShieldRate": 0.2
+      },
+      "passive": {
+        "name": "takim-koruma",
+        "effect": "guard",
+        "value": 0.04
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Self plus living front allies"
+  },
+  {
+    "id": "original:03",
+    "name": "Kaya Titanı",
+    "rarity": "rare",
+    "role": "tank",
+    "powerUnchanged": 80,
+    "before": {
+      "active": {
+        "name": "yer-sarsintisi",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "alan-kontrol",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "yer-sarsintisi",
+        "effect": "shield",
+        "power": 1.12,
+        "shieldRate": 0.42,
+        "frontShieldRate": 0.16,
+        "tankShieldRate": 0.2
+      },
+      "passive": {
+        "name": "alan-kontrol",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Self plus living front allies"
+  },
+  {
+    "id": "original:04",
+    "name": "Buz Kalesi",
+    "rarity": "rare",
+    "role": "tank",
+    "powerUnchanged": 83,
+    "before": {
+      "active": {
+        "name": "donma",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "buz-kalkani",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "donma",
+        "effect": "shield",
+        "power": 1.12,
+        "shieldRate": 0.42,
+        "frontShieldRate": 0.16,
+        "tankShieldRate": 0.2
+      },
+      "passive": {
+        "name": "buz-kalkani",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Self plus living front allies"
+  },
+  {
+    "id": "original:05",
+    "name": "Gölge Suikastçı",
+    "rarity": "legendary",
+    "role": "assassin",
+    "powerUnchanged": 90,
+    "before": {
+      "active": {
+        "name": "gorunmezlik",
+        "effect": "pierce",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "kritik-darbe",
+        "effect": "evasion",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "gorunmezlik",
+        "effect": "pierce",
+        "power": 1.14,
+        "pierceRate": 0.45
+      },
+      "passive": {
+        "name": "kritik-darbe",
+        "effect": "evasion",
+        "value": 0.08
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:06",
+    "name": "Altın Muhafız",
+    "rarity": "legendary",
+    "role": "tank",
+    "powerUnchanged": 91,
+    "before": {
+      "active": {
+        "name": "kutsal-kalkan",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "takim-koruma",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "kutsal-kalkan",
+        "effect": "shield",
+        "power": 1.14,
+        "shieldRate": 0.45,
+        "frontShieldRate": 0.2,
+        "tankShieldRate": 0.2
+      },
+      "passive": {
+        "name": "takim-koruma",
+        "effect": "guard",
+        "value": 0.08
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Self plus living front allies"
+  },
+  {
+    "id": "original:07",
+    "name": "Alev Zırhı",
+    "rarity": "rare",
+    "role": "fighter",
+    "powerUnchanged": 84,
+    "before": {
+      "active": {
+        "name": "yakma",
+        "effect": "burst",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "alev-kilici",
+        "effect": "rage",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "yakma",
+        "effect": "burst",
+        "power": 1.1,
+        "delay": true
+      },
+      "passive": {
+        "name": "alev-kilici",
+        "effect": "rage",
+        "value": 0.11
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:08",
+    "name": "Kadim Koruyucu",
+    "rarity": "rare",
+    "role": "fighter",
+    "powerUnchanged": 72,
+    "before": {
+      "active": {
+        "name": "uzun-menzil",
+        "effect": "sunder",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "dogal-yavaslatma",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "uzun-menzil",
+        "effect": "sunder",
+        "power": 1.12,
+        "sunderRate": 0.15
+      },
+      "passive": {
+        "name": "dogal-yavaslatma",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:09",
+    "name": "Morvan",
+    "rarity": "legendary",
+    "role": "energy",
+    "powerUnchanged": 90,
+    "before": {
+      "active": {
+        "name": "Ruh Çağırma",
+        "effect": "splash",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Ölülerin Gücü",
+        "effect": "regen",
+        "value": 0.03
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Ruh Çağırma",
+        "effect": "splash",
+        "power": 1.14,
+        "splashRate": 0.27
+      },
+      "passive": {
+        "name": "Ölülerin Gücü",
+        "effect": "regen",
+        "value": 0.03
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy; splash to other enemies"
+  },
+  {
+    "id": "original:10",
+    "name": "Brunn",
+    "rarity": "rare",
+    "role": "tank",
+    "powerUnchanged": 75,
+    "before": {
+      "active": {
+        "name": "Taret Siperi",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Mekanik Zırh",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Taret Siperi",
+        "effect": "shield",
+        "power": 1.12,
+        "shieldRate": 0.42,
+        "frontShieldRate": 0.16,
+        "tankShieldRate": 0.2
+      },
+      "passive": {
+        "name": "Mekanik Zırh",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Self plus living front allies"
+  },
+  {
+    "id": "original:11",
+    "name": "Drogar",
+    "rarity": "legendary",
+    "role": "tank",
+    "powerUnchanged": 92,
+    "before": {
+      "active": {
+        "name": "buz-alan-hasari",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "yavaslatma",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "buz-alan-hasari",
+        "effect": "shield",
+        "power": 1.14,
+        "shieldRate": 0.45,
+        "frontShieldRate": 0.18,
+        "tankShieldRate": 0.2
+      },
+      "passive": {
+        "name": "yavaslatma",
+        "effect": "guard",
+        "value": 0.08
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Self plus living front allies"
+  },
+  {
+    "id": "original:12",
+    "name": "Vandra",
+    "rarity": "legendary",
+    "role": "assassin",
+    "powerUnchanged": 91,
+    "before": {
+      "active": {
+        "name": "can-calma",
+        "effect": "pierce",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "kacis",
+        "effect": "evasion",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "can-calma",
+        "effect": "pierce",
+        "power": 1.14,
+        "pierceRate": 0.45
+      },
+      "passive": {
+        "name": "kacis",
+        "effect": "evasion",
+        "value": 0.08
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:13",
+    "name": "Eloren",
+    "rarity": "rare",
+    "role": "fighter",
+    "powerUnchanged": 70,
+    "before": {
+      "active": {
+        "name": "kritik-ok",
+        "effect": "sunder",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "hareket",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "kritik-ok",
+        "effect": "sunder",
+        "power": 1.12,
+        "sunderRate": 0.15
+      },
+      "passive": {
+        "name": "hareket",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:14",
+    "name": "Kael",
+    "rarity": "legendary",
+    "role": "fighter",
+    "powerUnchanged": 90,
+    "before": {
+      "active": {
+        "name": "sersemletme",
+        "effect": "burst",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "yildirim",
+        "effect": "rage",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "sersemletme",
+        "effect": "burst",
+        "power": 1.12,
+        "delay": true
+      },
+      "passive": {
+        "name": "yildirim",
+        "effect": "rage",
+        "value": 0.12
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:15",
+    "name": "Seraphine",
+    "rarity": "legendary",
+    "role": "support",
+    "powerUnchanged": 92,
+    "before": {
+      "active": {
+        "name": "Ejderha Kalkanı",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Buz Direnci",
+        "effect": "resist",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Ejderha Kalkanı",
+        "effect": "shield",
+        "power": 1.14,
+        "supportHybrid": true,
+        "healRate": 0.52,
+        "allyShieldRate": 0.28
+      },
+      "passive": {
+        "name": "Buz Direnci",
+        "effect": "resist",
+        "value": 0.08
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Lowest HP-ratio living ally: heal+shield (full HP still shield)"
+  },
+  {
+    "id": "original:expansion-01",
+    "name": "Yıldırım Hükümdarı",
+    "rarity": "rare",
+    "role": "energy",
+    "powerUnchanged": 83,
+    "before": {
+      "active": {
+        "name": "Yıldırım Fırtınası",
+        "effect": "splash",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Fırtına Odağı",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Yıldırım Fırtınası",
+        "effect": "splash",
+        "power": 1.12,
+        "splashRate": 0.27
+      },
+      "passive": {
+        "name": "Fırtına Odağı",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy; splash to other enemies"
+  },
+  {
+    "id": "original:expansion-02",
+    "name": "Kum Hançeri",
+    "rarity": "advanced",
+    "role": "assassin",
+    "powerUnchanged": 65,
+    "before": {
+      "active": {
+        "name": "Çöl Baskını",
+        "effect": "pierce",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Sessiz Adım",
+        "effect": "evasion",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Çöl Baskını",
+        "effect": "pierce",
+        "power": 1.1,
+        "pierceRate": 0.35
+      },
+      "passive": {
+        "name": "Sessiz Adım",
+        "effect": "evasion",
+        "value": 0.04
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:expansion-03",
+    "name": "Kuzey Baltası",
+    "rarity": "rare",
+    "role": "fighter",
+    "powerUnchanged": 76,
+    "before": {
+      "active": {
+        "name": "Balta Darbesi",
+        "effect": "sunder",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Savaş Öfkesi",
+        "effect": "rage",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Balta Darbesi",
+        "effect": "sunder",
+        "power": 1.12,
+        "sunderRate": 0.15
+      },
+      "passive": {
+        "name": "Savaş Öfkesi",
+        "effect": "rage",
+        "value": 0.11
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:expansion-04",
+    "name": "Kızıl Düellocu",
+    "rarity": "rare",
+    "role": "fighter",
+    "powerUnchanged": 82,
+    "before": {
+      "active": {
+        "name": "Kızıl Kesik",
+        "effect": "drain",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Düello Ustalığı",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Kızıl Kesik",
+        "effect": "drain",
+        "power": 1.12,
+        "drainRate": 0.18
+      },
+      "passive": {
+        "name": "Düello Ustalığı",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:expansion-05",
+    "name": "Fener Şifacısı",
+    "rarity": "advanced",
+    "role": "support",
+    "powerUnchanged": 65,
+    "before": {
+      "active": {
+        "name": "Yaşam Işığı",
+        "effect": "heal",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Işık Direnci",
+        "effect": "resist",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Yaşam Işığı",
+        "effect": "heal",
+        "power": 1.1,
+        "healRate": 0.52
+      },
+      "passive": {
+        "name": "Işık Direnci",
+        "effect": "resist",
+        "value": 0.04
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Lowest HP-ratio injured ally; self if non-support"
+  },
+  {
+    "id": "original:expansion-06",
+    "name": "Çan Muhafızı",
+    "rarity": "rare",
+    "role": "tank",
+    "powerUnchanged": 76,
+    "before": {
+      "active": {
+        "name": "Kutsal Çan",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Sabır Zırhı",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Kutsal Çan",
+        "effect": "shield",
+        "power": 1.12,
+        "shieldRate": 0.42,
+        "frontShieldRate": 0.16,
+        "tankShieldRate": 0.2
+      },
+      "passive": {
+        "name": "Sabır Zırhı",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Self plus living front allies"
+  },
+  {
+    "id": "original:expansion-07",
+    "name": "Şafak Azizesi",
+    "rarity": "rare",
+    "role": "support",
+    "powerUnchanged": 75,
+    "before": {
+      "active": {
+        "name": "Şafak Duası",
+        "effect": "heal",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Kutsal Direnç",
+        "effect": "resist",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Şafak Duası",
+        "effect": "heal",
+        "power": 1.12,
+        "healRate": 0.58
+      },
+      "passive": {
+        "name": "Kutsal Direnç",
+        "effect": "resist",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Lowest HP-ratio injured ally; self if non-support"
+  },
+  {
+    "id": "original:expansion-08",
+    "name": "Ay Cadısı",
+    "rarity": "rare",
+    "role": "energy",
+    "powerUnchanged": 73,
+    "before": {
+      "active": {
+        "name": "Ay Laneti",
+        "effect": "weaken",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Ay Odağı",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Ay Laneti",
+        "effect": "weaken",
+        "power": 1.12,
+        "weakenRate": 0.14
+      },
+      "passive": {
+        "name": "Ay Odağı",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:expansion-10",
+    "name": "Kara Siper",
+    "rarity": "rare",
+    "role": "tank",
+    "powerUnchanged": 77,
+    "before": {
+      "active": {
+        "name": "Kara Kalkan",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Çelik Direnç",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Kara Kalkan",
+        "effect": "shield",
+        "power": 1.12,
+        "shieldRate": 0.42,
+        "frontShieldRate": 0.16,
+        "tankShieldRate": 0.2
+      },
+      "passive": {
+        "name": "Çelik Direnç",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Self plus living front allies"
+  },
+  {
+    "id": "original:expansion-11",
+    "name": "Ruh Dokuyucu",
+    "rarity": "legendary",
+    "role": "support",
+    "powerUnchanged": 90,
+    "before": {
+      "active": {
+        "name": "Ruh Şifası",
+        "effect": "heal",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Ruh Perdesi",
+        "effect": "resist",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Ruh Şifası",
+        "effect": "heal",
+        "power": 1.14,
+        "healRate": 0.64
+      },
+      "passive": {
+        "name": "Ruh Perdesi",
+        "effect": "resist",
+        "value": 0.08
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Lowest HP-ratio injured ally; self if non-support"
+  },
+  {
+    "id": "original:expansion-12",
+    "name": "Kuzgun Hançer",
+    "rarity": "rare",
+    "role": "assassin",
+    "powerUnchanged": 74,
+    "before": {
+      "active": {
+        "name": "Kuzgun Baskını",
+        "effect": "pierce",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Kuzgun Adımı",
+        "effect": "evasion",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Kuzgun Baskını",
+        "effect": "pierce",
+        "power": 1.12,
+        "pierceRate": 0.4
+      },
+      "passive": {
+        "name": "Kuzgun Adımı",
+        "effect": "evasion",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:expansion-13",
+    "name": "Astral Kâhin",
+    "rarity": "rare",
+    "role": "energy",
+    "powerUnchanged": 85,
+    "before": {
+      "active": {
+        "name": "Astral Dalga",
+        "effect": "splash",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Yıldız Odağı",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Astral Dalga",
+        "effect": "splash",
+        "power": 1.12,
+        "splashRate": 0.27
+      },
+      "passive": {
+        "name": "Yıldız Odağı",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy; splash to other enemies"
+  },
+  {
+    "id": "original:expansion-14",
+    "name": "Sis Bilgesi",
+    "rarity": "advanced",
+    "role": "energy",
+    "powerUnchanged": 68,
+    "before": {
+      "active": {
+        "name": "Sis Mührü",
+        "effect": "weaken",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Sis Perdesi",
+        "effect": "resist",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Sis Mührü",
+        "effect": "weaken",
+        "power": 1.1,
+        "weakenRate": 0.12
+      },
+      "passive": {
+        "name": "Sis Perdesi",
+        "effect": "resist",
+        "value": 0.04
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:expansion-15",
+    "name": "Kök Dervişi",
+    "rarity": "rare",
+    "role": "support",
+    "powerUnchanged": 73,
+    "before": {
+      "active": {
+        "name": "Kök Şifası",
+        "effect": "heal",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Doğa Direnci",
+        "effect": "resist",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Kök Şifası",
+        "effect": "heal",
+        "power": 1.12,
+        "healRate": 0.58
+      },
+      "passive": {
+        "name": "Doğa Direnci",
+        "effect": "resist",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Lowest HP-ratio injured ally; self if non-support"
+  },
+  {
+    "id": "original:expansion-16",
+    "name": "Güneş Mızrağı",
+    "rarity": "legendary",
+    "role": "fighter",
+    "powerUnchanged": 92,
+    "before": {
+      "active": {
+        "name": "Güneş Darbesi",
+        "effect": "pierce",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Şafak Azmi",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Güneş Darbesi",
+        "effect": "pierce",
+        "power": 1.14,
+        "pierceRate": 0.45
+      },
+      "passive": {
+        "name": "Şafak Azmi",
+        "effect": "focus",
+        "value": 0.08
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:expansion-17",
+    "name": "Işık Serafı",
+    "rarity": "legendary",
+    "role": "support",
+    "powerUnchanged": 93,
+    "before": {
+      "active": {
+        "name": "Seraf Duası",
+        "effect": "heal",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Işık Zırhı",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Seraf Duası",
+        "effect": "heal",
+        "power": 1.14,
+        "healRate": 0.64
+      },
+      "passive": {
+        "name": "Işık Zırhı",
+        "effect": "guard",
+        "value": 0.08
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Lowest HP-ratio injured ally; self if non-support"
+  },
+  {
+    "id": "original:expansion-18",
+    "name": "Buz Gölgesi",
+    "rarity": "rare",
+    "role": "assassin",
+    "powerUnchanged": 77,
+    "before": {
+      "active": {
+        "name": "Soğuk Baskın",
+        "effect": "weaken",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Buz Adımı",
+        "effect": "evasion",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Soğuk Baskın",
+        "effect": "weaken",
+        "power": 1.12,
+        "weakenRate": 0.12
+      },
+      "passive": {
+        "name": "Buz Adımı",
+        "effect": "evasion",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:expansion-19",
+    "name": "Gece Orağı",
+    "rarity": "advanced",
+    "role": "assassin",
+    "powerUnchanged": 69,
+    "before": {
+      "active": {
+        "name": "Hilal Kesik",
+        "effect": "execute",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Gece Adımı",
+        "effect": "evasion",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Hilal Kesik",
+        "effect": "execute",
+        "power": 1.1,
+        "executeThreshold": 0.12
+      },
+      "passive": {
+        "name": "Gece Adımı",
+        "effect": "evasion",
+        "value": 0.04
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:expansion-20",
+    "name": "Zehir Sarmaşığı",
+    "rarity": "rare",
+    "role": "assassin",
+    "powerUnchanged": 77,
+    "before": {
+      "active": {
+        "name": "Zehirli Bıçak",
+        "effect": "weaken",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Orman Çevikliği",
+        "effect": "evasion",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Zehirli Bıçak",
+        "effect": "weaken",
+        "power": 1.12,
+        "weakenRate": 0.12
+      },
+      "passive": {
+        "name": "Orman Çevikliği",
+        "effect": "evasion",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:expansion-21",
+    "name": "Kristal Şifacı",
+    "rarity": "rare",
+    "role": "support",
+    "powerUnchanged": 77,
+    "before": {
+      "active": {
+        "name": "Kristal Işık",
+        "effect": "heal",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Kristal Direnç",
+        "effect": "resist",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Kristal Işık",
+        "effect": "heal",
+        "power": 1.12,
+        "healRate": 0.58
+      },
+      "passive": {
+        "name": "Kristal Direnç",
+        "effect": "resist",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Lowest HP-ratio injured ally; self if non-support"
+  },
+  {
+    "id": "original:expansion-22",
+    "name": "Demir Düellocu",
+    "rarity": "rare",
+    "role": "fighter",
+    "powerUnchanged": 73,
+    "before": {
+      "active": {
+        "name": "Çelik Kesik",
+        "effect": "sunder",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Dövüş Azmi",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Çelik Kesik",
+        "effect": "sunder",
+        "power": 1.12,
+        "sunderRate": 0.15
+      },
+      "passive": {
+        "name": "Dövüş Azmi",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:expansion-23",
+    "name": "Fırtına Çağıran",
+    "rarity": "rare",
+    "role": "energy",
+    "powerUnchanged": 82,
+    "before": {
+      "active": {
+        "name": "Fırtına Dalgası",
+        "effect": "splash",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Rüzgâr Adımı",
+        "effect": "momentum",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Fırtına Dalgası",
+        "effect": "splash",
+        "power": 1.12,
+        "splashRate": 0.27
+      },
+      "passive": {
+        "name": "Rüzgâr Adımı",
+        "effect": "momentum",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy; splash to other enemies"
+  },
+  {
+    "id": "original:expansion-24",
+    "name": "Altın Ozan",
+    "rarity": "rare",
+    "role": "support",
+    "powerUnchanged": 73,
+    "before": {
+      "active": {
+        "name": "Zafer Ezgisi",
+        "effect": "heal",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Ezgili Direnç",
+        "effect": "resist",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Zafer Ezgisi",
+        "effect": "heal",
+        "power": 1.12,
+        "healRate": 0.58
+      },
+      "passive": {
+        "name": "Ezgili Direnç",
+        "effect": "resist",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Lowest HP-ratio injured ally; self if non-support"
+  },
+  {
+    "id": "original:expansion-25",
+    "name": "Kadim Meşe",
+    "rarity": "rare",
+    "role": "tank",
+    "powerUnchanged": 81,
+    "before": {
+      "active": {
+        "name": "Kadim Kabuk",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Kabuk Zırhı",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Kadim Kabuk",
+        "effect": "shield",
+        "power": 1.12,
+        "shieldRate": 0.42,
+        "frontShieldRate": 0.16,
+        "tankShieldRate": 0.2
+      },
+      "passive": {
+        "name": "Kabuk Zırhı",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Self plus living front allies"
+  },
+  {
+    "id": "original:expansion-26",
+    "name": "Mor Hilal",
+    "rarity": "legendary",
+    "role": "assassin",
+    "powerUnchanged": 92,
+    "before": {
+      "active": {
+        "name": "Hilal Baskını",
+        "effect": "pierce",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Gölge Çevikliği",
+        "effect": "evasion",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Hilal Baskını",
+        "effect": "pierce",
+        "power": 1.14,
+        "pierceRate": 0.45
+      },
+      "passive": {
+        "name": "Gölge Çevikliği",
+        "effect": "evasion",
+        "value": 0.08
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:expansion-27",
+    "name": "Taş Yumruk",
+    "rarity": "advanced",
+    "role": "fighter",
+    "powerUnchanged": 66,
+    "before": {
+      "active": {
+        "name": "Ezici Yumruk",
+        "effect": "sunder",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Mücadele Azmi",
+        "effect": "rage",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Ezici Yumruk",
+        "effect": "sunder",
+        "power": 1.1,
+        "sunderRate": 0.12
+      },
+      "passive": {
+        "name": "Mücadele Azmi",
+        "effect": "rage",
+        "value": 0.1
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:expansion-28",
+    "name": "Kış Kraliçesi",
+    "rarity": "legendary",
+    "role": "energy",
+    "powerUnchanged": 91,
+    "before": {
+      "active": {
+        "name": "Kış Fırtınası",
+        "effect": "splash",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Buz Direnci",
+        "effect": "resist",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Kış Fırtınası",
+        "effect": "splash",
+        "power": 1.14,
+        "splashRate": 0.3
+      },
+      "passive": {
+        "name": "Buz Direnci",
+        "effect": "resist",
+        "value": 0.08
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy; splash to other enemies"
+  },
+  {
+    "id": "original:expansion-29",
+    "name": "Gök Çekici",
+    "rarity": "legendary",
+    "role": "fighter",
+    "powerUnchanged": 91,
+    "before": {
+      "active": {
+        "name": "Yıldırım Çekici",
+        "effect": "sunder",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Fırtına Zırhı",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Yıldırım Çekici",
+        "effect": "sunder",
+        "power": 1.14,
+        "sunderRate": 0.18
+      },
+      "passive": {
+        "name": "Fırtına Zırhı",
+        "effect": "guard",
+        "value": 0.08
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:expansion-30",
+    "name": "Mor Gölge",
+    "rarity": "rare",
+    "role": "assassin",
+    "powerUnchanged": 82,
+    "before": {
+      "active": {
+        "name": "Gölgeli Kesik",
+        "effect": "drain",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Gölge Adımı",
+        "effect": "evasion",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Gölgeli Kesik",
+        "effect": "drain",
+        "power": 1.12,
+        "drainRate": 0.18
+      },
+      "passive": {
+        "name": "Gölge Adımı",
+        "effect": "evasion",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:expansion-31",
+    "name": "Sancak Bekçisi",
+    "rarity": "rare",
+    "role": "support",
+    "powerUnchanged": 76,
+    "before": {
+      "active": {
+        "name": "Sancak Koruması",
+        "effect": "shield",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Sancak Direnci",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Sancak Koruması",
+        "effect": "shield",
+        "power": 1.12,
+        "supportHybrid": true,
+        "healRate": 0.48,
+        "allyShieldRate": 0.2
+      },
+      "passive": {
+        "name": "Sancak Direnci",
+        "effect": "guard",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Lowest HP-ratio living ally: heal+shield (full HP still shield)"
+  },
+  {
+    "id": "original:expansion-32",
+    "name": "Kül Bıçağı",
+    "rarity": "advanced",
+    "role": "assassin",
+    "powerUnchanged": 62,
+    "before": {
+      "active": {
+        "name": "Kül Baskını",
+        "effect": "haste",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Hızlı Adım",
+        "effect": "evasion",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Kül Baskını",
+        "effect": "haste",
+        "power": 1.1,
+        "hasteAmount": 8
+      },
+      "passive": {
+        "name": "Hızlı Adım",
+        "effect": "evasion",
+        "value": 0.04
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:expansion-33",
+    "name": "Kan Büyücüsü",
+    "rarity": "rare",
+    "role": "energy",
+    "powerUnchanged": 82,
+    "before": {
+      "active": {
+        "name": "Kan Akışı",
+        "effect": "drain",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Kızıl Odak",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Kan Akışı",
+        "effect": "drain",
+        "power": 1.2,
+        "drainRate": 0.18
+      },
+      "passive": {
+        "name": "Kızıl Odak",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy (haste changes own next-round initiative)"
+  },
+  {
+    "id": "original:expansion-34",
+    "name": "Ay Rahibesi",
+    "rarity": "rare",
+    "role": "support",
+    "powerUnchanged": 76,
+    "before": {
+      "active": {
+        "name": "Ay Duası",
+        "effect": "heal",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Ay Perdesi",
+        "effect": "resist",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Ay Duası",
+        "effect": "heal",
+        "power": 1.12,
+        "healRate": 0.58
+      },
+      "passive": {
+        "name": "Ay Perdesi",
+        "effect": "resist",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Lowest HP-ratio injured ally; self if non-support"
+  },
+  {
+    "id": "original:expansion-35",
+    "name": "Yıldız Kraliçesi",
+    "rarity": "legendary",
+    "role": "energy",
+    "powerUnchanged": 94,
+    "before": {
+      "active": {
+        "name": "Yıldız Yağmuru",
+        "effect": "splash",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Kozmik Odak",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Yıldız Yağmuru",
+        "effect": "splash",
+        "power": 1.14,
+        "splashRate": 0.3
+      },
+      "passive": {
+        "name": "Kozmik Odak",
+        "effect": "focus",
+        "value": 0.08
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy; splash to other enemies"
+  },
+  {
+    "id": "original:expansion-36",
+    "name": "Kristal Fırtına",
+    "rarity": "rare",
+    "role": "energy",
+    "powerUnchanged": 83,
+    "before": {
+      "active": {
+        "name": "Kristal Dalgası",
+        "effect": "splash",
+        "power": 1.12
+      },
+      "passive": {
+        "name": "Kristal Odak",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "after": {
+      "active": {
+        "name": "Kristal Dalgası",
+        "effect": "splash",
+        "power": 1.12,
+        "splashRate": 0.27
+      },
+      "passive": {
+        "name": "Kristal Odak",
+        "effect": "focus",
+        "value": 0.06
+      }
+    },
+    "cadence": "Active every third round; passive start-of-battle except rage round-start once and regen each round-start",
+    "target": "Primary enemy; splash to other enemies"
+  }
+]
