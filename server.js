@@ -1,6 +1,7 @@
 import {createDiamondPolicy,commanderProgression,readDiamondBalance,upgradeCommanderWithDiamonds} from './paid-diamonds.js';
 import {createDiamondExchangePolicy,diamondExchangeView,exchangeDiamondsForGold} from './paid-diamond-exchange.js';
 import {createDiamondSignupPolicy,registerDiamondMember} from './diamond-signup-bonus.js';
+import {createLoginRewardPolicy,readLoginRewardStatus,claimLoginReward} from './login-rewards.js';
 import {buildDefaultFormation,validateFormation} from './public/preparation-formation.js';
 import {COMMANDER_CHANGE_COST} from './public/commander-economy.js';
 import {requireModerationForInteraction} from './moderation-availability.js';
@@ -40,13 +41,17 @@ const PORT=Number(process.env.PORT||3000);
 const diamondPolicy=createDiamondPolicy(process.env);
 const diamondExchangePolicy=createDiamondExchangePolicy(process.env);
 const diamondSignupPolicy=createDiamondSignupPolicy(process.env);
+const loginRewardPolicy=createLoginRewardPolicy(process.env);
+console.info('Login reward policy:',JSON.stringify({enabled:loginRewardPolicy.enabled,timezone:'Europe/Istanbul',day7Diamonds:5}));
 // Non-secret release evidence: never log environment values, credentials or wallets.
 console.info('Commander economy policy:',JSON.stringify({diamondsEnabled:diamondPolicy.enabled,signupBonusEnabled:diamondSignupPolicy.enabled,exchangeEnabled:diamondExchangePolicy.enabled,purchaseAvailable:false}));
 const GOOGLE_CLIENT_ID=process.env.GOOGLE_CLIENT_ID||'742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
 const ADMIN_GOOGLE_EMAIL=String(process.env.ADMIN_GOOGLE_EMAIL||'').trim().toLowerCase();
 const authSecret=process.env.AUTH_SIGNING_SECRET?Buffer.from(process.env.AUTH_SIGNING_SECRET,'hex'):crypto.randomBytes(32);
-function signLogin(user){const data=Buffer.from(JSON.stringify({sub:user.sub,name:user.name,email:user.email||null,expires:Date.now()+86400000})).toString('base64url');const sig=crypto.createHmac('sha256',authSecret).update(data).digest('base64url');return data+'.'+sig}
-function readLogin(value){try{const [data,sig]=String(value||'').split('.');if(!data||!sig)return null;const expected=crypto.createHmac('sha256',authSecret).update(data).digest();const received=Buffer.from(sig,'base64url');if(expected.length!==received.length||!crypto.timingSafeEqual(expected,received))return null;const user=JSON.parse(Buffer.from(data,'base64url').toString());return user.expires>Date.now()?user:null}catch{return null}}
+function signLogin(user){const data=Buffer.from(JSON.stringify({sub:user.sub,name:user.name,email:user.email||null,provider:user.provider||null,expires:Date.now()+86400000})).toString('base64url');const sig=crypto.createHmac('sha256',authSecret).update(data).digest('base64url');return data+'.'+sig}
+// Legacy HMAC-signed sessions had no provider field: only verified Google ever
+// supplied email on an unprefixed subject. Normalize here, never from POST data.
+function readLogin(value){try{const [data,sig]=String(value||'').split('.');if(!data||!sig)return null;const expected=crypto.createHmac('sha256',authSecret).update(data).digest();const received=Buffer.from(sig,'base64url');if(expected.length!==received.length||!crypto.timingSafeEqual(expected,received))return null;const user=JSON.parse(Buffer.from(data,'base64url').toString());if(user.provider===undefined&&typeof user.email==='string'&&user.email.length&&typeof user.sub==='string'&&!user.sub.includes(':'))user.provider='google';return user.expires>Date.now()?user:null}catch{return null}}
 function chosenName(body,fallback){return readLogin(body.authToken)?.name||String(body.name||fallback).trim().slice(0,24)}
 const rooms=new Map();
 // Experimental commander turn endpoint; disabled unless explicitly enabled in a test environment.
@@ -505,8 +510,23 @@ async function api(url,b){
   return result;
  });
 }
-async function apiAction(url,b){if(url.startsWith('/api/admin/'))return adminApi(url,b);if(url==='/api/auth/check'){const user=readLogin(b.authToken);if(!user)error('Oturumun sona erdi. Yeniden giriş yap.',401);await rememberDisplayName(user);return{user:{sub:user.sub,name:user.name},gold:await goldBalance(user.sub)}}if(url==='/api/auth/crazygames'){const user=await verifyCrazyGamesToken(b.credential);await rememberDisplayName(user);for(const r of rooms.values()){let changed=false;for(const p of r.players){if(p?.accountId===user.sub&&p.name!==user.name){p.name=user.name;changed=true}}if(changed)publish(r)}return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}if(url==='/api/auth/guest'){const name=assertModeratedText(b.name||'Oyuncu',{kind:'name'});const user={sub:'guest:'+crypto.randomUUID(),name};await rememberDisplayName(user);return{user:{name},authToken:signLogin(user),gold:await goldBalance(user.sub)}}
+async function apiAction(url,b){if(url.startsWith('/api/admin/'))return adminApi(url,b);if(url==='/api/auth/check'){const user=readLogin(b.authToken);if(!user)error('Oturumun sona erdi. Yeniden giriş yap.',401);await rememberDisplayName(user);return{user:{sub:user.sub,name:user.name,provider:user.provider},gold:await goldBalance(user.sub)}}if(url==='/api/auth/crazygames'){const user=await verifyCrazyGamesToken(b.credential);user.provider='crazygames';await rememberDisplayName(user);for(const r of rooms.values()){let changed=false;for(const p of r.players){if(p?.accountId===user.sub&&p.name!==user.name){p.name=user.name;changed=true}}if(changed)publish(r)}return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}if(url==='/api/auth/guest'){const name=assertModeratedText(b.name||'Oyuncu',{kind:'name'});const user={sub:'guest:'+crypto.randomUUID(),name,provider:'guest'};await rememberDisplayName(user);return{user:{name},authToken:signLogin(user),gold:await goldBalance(user.sub)}}
 if(!url.startsWith('/api/auth/')){const user=readLogin(b.authToken);if(!user)error('Odaya erişmek için giriş yapmalısın.',401);if(databaseReady){const block=await database.query('SELECT banned FROM hero_auction_admin_accounts WHERE account_id=$1',[user.sub]);if(block.rows[0]?.banned)error('Hesap askıya alınmıştır.',403)}}
+if(url==='/api/store/status'){
+ const user=readLogin(b.authToken),storageReady=!!database&&databaseReady;
+ // Capability/status reads never create a wallet, streak or reward receipt.
+ const gold=storageReady?Number((await database.query('SELECT gold FROM hero_auction_wallets WHERE account_id=$1',[user.sub])).rows[0]?.gold):previewGuestMode?previewGuestWallets.get(user.sub):null;
+ const diamonds=diamondPolicy.enabled&&storageReady?await readDiamondBalance(database,user.sub):null;
+ const exchange=diamondExchangeView(diamondExchangePolicy);
+ return{gold:Number.isSafeInteger(gold)?gold:null,diamonds,diamondsEnabled:diamondPolicy.enabled,
+  purchase:{available:false,reason:'provider_not_configured'},
+  rewardedAds:await rewardedAdStatus(user.sub),
+  exchange:storageReady?exchange:{...exchange,available:false,reason:exchange.enabled?'storage_unavailable':exchange.reason},
+  loginRewards:await readLoginRewardStatus({database:storageReady?database:null,identity:user,policy:loginRewardPolicy})};
+}
+if(url==='/api/login-rewards/claim'){
+ return claimLoginReward({database:database&&databaseReady?database:null,identity:readLogin(b.authToken),policy:loginRewardPolicy,request:{rewardDate:b.rewardDate}});
+}
 if(url==='/api/diamonds/exchange'){
  const user=readLogin(b.authToken);
  if(!diamondPolicy.enabled||!diamondExchangePolicy.enabled)error('Elmas-altın dönüşümü etkin değil.',503);
@@ -608,7 +628,7 @@ if(url==='/api/spectate'){const r=rooms.get(String(b.code||''));if(!r||r.phase!=
 if(url==='/api/rewarded/status'){return await rewardedAdStatus(readLogin(b.authToken).sub)}
 if(url==='/api/rewarded/claim'){error('Ödüllü reklam sistemi henüz etkin değil.',503)}
 if(url==='/api/wallet'){return{gold:await goldBalance(readLogin(b.authToken).sub)}}
-if(url==='/api/auth/google'){const credential=String(b.credential||'');if(credential.length<100||credential.length>8000)error('Geçersiz Google kimliği.');const response=await fetch('https://oauth2.googleapis.com/tokeninfo?id_token='+encodeURIComponent(credential),{signal:AbortSignal.timeout(8000)});if(!response.ok)error('Google kimliği doğrulanamadı.',401);const claims=await response.json();if(claims.aud!==GOOGLE_CLIENT_ID||!['accounts.google.com','https://accounts.google.com'].includes(claims.iss)||Number(claims.exp)*1000<Date.now()||!claims.sub||claims.email_verified!=='true')error('Google kimliği doğrulanamadı.',401);const user={sub:claims.sub,name:String(claims.name||claims.given_name||'Oyuncu').slice(0,24),email:String(claims.email||'').toLowerCase()};await registerVerifiedDiamondMember(user,'google');await rememberDisplayName(user);return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}
+if(url==='/api/auth/google'){const credential=String(b.credential||'');if(credential.length<100||credential.length>8000)error('Geçersiz Google kimliği.');const response=await fetch('https://oauth2.googleapis.com/tokeninfo?id_token='+encodeURIComponent(credential),{signal:AbortSignal.timeout(8000)});if(!response.ok)error('Google kimliği doğrulanamadı.',401);const claims=await response.json();if(claims.aud!==GOOGLE_CLIENT_ID||!['accounts.google.com','https://accounts.google.com'].includes(claims.iss)||(!Number.isFinite(Number(claims.exp))||Number(claims.exp)*1000<=Date.now())||typeof claims.sub!=='string'||!claims.sub.length||claims.sub.length>200||/[\u0000-\u0020\u007f:]/.test(claims.sub)||claims.email_verified!=='true')error('Google kimliği doğrulanamadı.',401);const user={sub:claims.sub,provider:'google',name:String(claims.name||claims.given_name||'Oyuncu').slice(0,24),email:String(claims.email||'').toLowerCase()};await registerVerifiedDiamondMember(user,'google');await rememberDisplayName(user);return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}
 if(url==='/api/create'){const name=chosenName(b,'Oyuncu 1');const universe='mixed';const cards=newCards(universe);let id;do{id=code()}while(rooms.has(id));const t=token();const accountId=readLogin(b.authToken).sub;const r={code:id,universe,cards,round:0,phase:'waiting',turn:0,topBid:0,topSeat:null,players:[{name,token:t,accountId,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],deadline:null,mode:'friend'};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/join'){const r=rooms.get(String(b.code||'').toUpperCase());if(!r)error('Oda bulunamadı.',404);if(moderation.blocked(readLogin(b.authToken).sub,r.players[0]?.accountId))error('Bu oyuncuyla etkileşim kullanılamıyor.',403);if(r.players[1]||r.joinPending)error('Oda dolu.');if(r.phase!=='waiting'||r.mode!=='friend'||activeSeats.get(r.players[0]?.accountId)?.code!==r.code||activeSeats.get(r.players[0]?.accountId)?.created!==r.created)error('Davet odası artık açık değil.',409);r.joinPending=true;try{await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name:chosenName(b,'Oyuncu 2'),token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;log(r,`Oyun başladı. 1. kart için açılış: ${r.players[0].name}`);publish(r);return{token:t,room:publicRoom(r,1)}}finally{r.joinPending=false}}
 if(url==='/api/rematch'){

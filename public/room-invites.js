@@ -48,10 +48,16 @@ export function createRoomInvitesUI({document:doc=globalThis.document,window:win
  }
  function button(label,fn,cls=''){const b=node('button',t(label),'room-invite-action '+cls);b.type='button';b.disabled=busy;b.onclick=fn;return b}
  const allInvites=()=>[...state.incoming.map(v=>({...v,incoming:true})),...state.outgoing.map(v=>({...v,incoming:false}))];
+ // A joined receipt is no longer an attention card once the authoritative
+ // current-room snapshot shows these same players in the admitted seats.
+ const joinedHere=invite=>invite.status==='joined'&&!!seatToken&&room?.code===invite.code&&['auction','finished'].includes(room.phase)&&room.me===(invite.incoming?1:0)&&!!invite.from?.playerId&&!!invite.to?.playerId&&room.players?.[0]?.playerId===invite.from.playerId&&room.players?.[1]?.playerId===invite.to.playerId;
 
  function render(force=false){
   if(!root)return;portal.sync();const list=$('room-invites-list');if(!list)return;
   const all=allInvites(),queued=state.incoming.find(i=>i.status==='queued');
+  // Room SSE and invitation polling can arrive in either order, including after
+  // reconnect. Remove only completed admissions; unrelated requests stay visible.
+  for(const invite of all)if(joinedHere(invite))attention.delete(invite.id);
   const visible=[...all.filter(i=>i.incoming&&active(i)),...all.filter(i=>!i.incoming&&active(i)),...all.filter(i=>attention.has(i.id)&&!active(i))];
   root.hidden=!login?.authToken||(!visible.length&&!notice);
   if(root.hidden){list.replaceChildren();renderKey='';return}
@@ -126,7 +132,9 @@ export function createRoomInvitesUI({document:doc=globalThis.document,window:win
    for(const invite of state.incoming){if(invite.status!=='joined'||!invite.room||!invite.token||handling.has(invite.id))continue;
     handling.add(invite.id);try{
     let navigate;stage='handoff';
-    if(!handled(invite.id)){navigate=await onJoined({token:invite.token,room:invite.room,inviteId:invite.id});if(version!==generation)return;markHandled(invite.id);}
+    if(!handled(invite.id)){navigate=await onJoined({token:invite.token,room:invite.room,inviteId:invite.id});if(version!==generation)return;markHandled(invite.id);attention.delete(invite.id);}
+    // A receipt handled by another tab still needs its explicit recovery card
+    // here unless joinedHere already proves this tab reached the admitted room.
     if(notice?.kind==='handoff')message(null,'');
     try{await request('/api/friend/invite/ack',{inviteId:invite.id},true);if(version===generation&&notice?.kind==='ack')message(null,'')}catch(e){if(version===generation){message('ack',e.message);render()}}
     if(version!==generation)return;if(typeof navigate==='function')navigate();

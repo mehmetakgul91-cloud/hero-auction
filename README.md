@@ -77,6 +77,27 @@ Ayrıntılar: [gelişim görünümü](docs/commander-profile-refresh.md),
 [dönüşüm](docs/diamond-exchange.md),
 [Google karşılama](docs/diamond-signup-bonus.md).
 
+## Mağaza ve tekrarlayan giriş ödülleri — kapalı özellik altyapısı
+
+Ana menüde Ligler sekmesinin yerini tek Mağaza alır; İletişim korunur. Lig
+sayfası ve verileri silinmez. Mağaza gerçek sunucu kullanılabilirliğini gösterir; elmas satın alma ve ödüllü
+reklam henüz açık değildir. Paket/TL fiyatı veya çalışan ödeme akışı eklenmedi.
+Mevcut ayrı bayraklı 1 elmas → 500 altın dönüşümü korunur.
+
+Onaylı seri: 1–6. gün **100, 150, 200, 250, 300, 400 altın**; son değişiklikle
+7. gün **5 elmas**. Türkiye saatiyle 00.00'da gün değişir; takip eden gün seri
+1'den başlar, bir gün kaçırılırsa sıfırlanır. Yalnız doğrulanmış Google üyeleri
+(yeni ve mevcut) uygundur. Ayrı yeni-üye karşılama hediyesi **10 elmas** kalır.
+Bu sürümde mağazada **Ödülü al** kullanılır: günlük çıkış/giriş gerekmez;
+sadece sayfayı açmak seriyi ilerletmez, başarılı ödül makbuzu ilerletir.
+
+`HERO_LOGIN_REWARDS_ENABLED=1` ve `HERO_DIAMONDS_ENABLED=1` birlikte gerekir;
+varsayılan kapalıdır. `migrations/004-login-rewards.sql` **uygulanmadı**.
+Bu kodun yayını ödülleri etkinleştirmez. Üretim şeması, ödeme/reklam sağlayıcısı
+ve Android paketi bu değişikliğin parçası değildir.
+Gerçek PostgreSQL doğrulaması/ayrı etkinleştirme onayı halen gereklidir.
+Ayrıntılar: [mağaza ve giriş ödülü tasarımı](docs/store-login-rewards.md).
+
 ## Açık artırma kart havuzu
 
 Her maçta aktif havuzdan 10 farklı kahraman rastgele seçilir; efsanevi, nadir veya diğer nadirlikler için sabit adet kotası yoktur. Aynı kahraman aynı açık artırmada tekrar etmez. Son kartların eksik takıma verilmesi, mevcut otomatik ücret/eksi kredi kuralları ve kalan kredi güç bonusu değişmemiştir.

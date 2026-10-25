@@ -6,10 +6,10 @@ class Element{
  append(...values){this.children.push(...values)}replaceChildren(...values){this.children=values}setAttribute(k,v){this.attrs[k]=v}contains(el){return this===el||this.children.some(c=>c.contains?.(el))}
 }
 const invitation={id:'invite-1',from:{name:'Host',playerId:'HA-HOST'},to:{name:'Guest',playerId:'HA-GUEST'},code:'123',status:'pending'};
-function setup({fetcher,onJoined=()=>{},onHosted=()=>{},canStart=()=>true,storage=new Map()}={}){
+function setup({fetcher,onJoined=()=>{},onHosted=()=>{},canStart=()=>true,storage=new Map(),createUI=createRoomInvitesUI}={}){
  const ids=['room-invites','room-invites-list','room-invites-summary','room-invites-message','room-invites-next','room-invites-history','room-invites-announcement','room-invite-compose-message','room-invite-open','room-invite-compose','room-invite-friend','room-invite-send'];const nodes=Object.fromEntries(ids.map(id=>[id,new Element()]));nodes['room-invite-compose'].hidden=true;
  const calls=[],events={},timers=[];const win={fetch:async(path,options)=>{calls.push([path,JSON.parse(options.body),options]);return {ok:true,json:async()=>fetcher?fetcher(path,JSON.parse(options.body)):path==='/api/friend/invitations'?{incoming:[invitation],outgoing:[]}:{}}},setInterval:fn=>{timers.push(fn);return 1},clearInterval(){},addEventListener:(n,fn)=>events[n]=fn,removeEventListener:n=>delete events[n],localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)}};
- const doc={getElementById:id=>nodes[id],createElement:()=>new Element(),activeElement:null};const ui=createRoomInvitesUI({document:doc,window:win,onJoined,onHosted,canStart});return {ui,nodes,calls,events,timers,storage,doc};
+ const doc={getElementById:id=>nodes[id],createElement:()=>new Element(),activeElement:null};const ui=createUI({document:doc,window:win,onJoined,onHosted,canStart});return {ui,nodes,calls,events,timers,storage,doc};
 }
 const tick=()=>new Promise(r=>setImmediate(r));
 function buttons(f){return f.nodes['room-invites-list'].children.flatMap(row=>row.children.filter(c=>typeof c.onclick==='function'))}
@@ -218,4 +218,63 @@ test('reconnect supersedes a hung older poll and ignores its late data',async()=
  let reads=0,release;const f=setup({fetcher:()=>++reads===1?new Promise(r=>release=()=>r({incoming:[{...invitation,id:'stale'}],outgoing:[]})):{incoming:[invitation],outgoing:[]}});
  f.ui.setLogin({authToken:'account'});await tick();f.events.online();await tick();assert.equal(reads,2);release();await tick();
  buttons(f).find(b=>b.textContent==='Onayla').onclick();await tick();assert.equal(f.calls.find(([p])=>p==='/api/friend/invite/respond')[1].inviteId,'invite-1');
+});
+
+const admittedRoom={code:'123',mode:'friend',phase:'auction',round:0,me:0,players:[invitation.from,invitation.to]};
+for(const order of ['room-first','receipt-first'])test('sender joined overlay clears automatically after admission in '+order+' order',async()=>{
+ let status='pending';const f=setup({fetcher:()=>({incoming:[],outgoing:[{...invitation,status}]})});
+ f.ui.setLogin({authToken:'host-account'});f.ui.setRoom({...admittedRoom,phase:'waiting',players:[invitation.from,null]},'host-seat');await tick();assert.equal(f.nodes['room-invites'].hidden,false);
+ if(order==='room-first')f.ui.setRoom(admittedRoom,'host-seat');
+ status='joined';await f.ui.refresh();
+ if(order==='receipt-first'){assert.equal(f.nodes['room-invites'].hidden,false);f.ui.setRoom(admittedRoom,'host-seat')}
+ assert.equal(f.nodes['room-invites'].hidden,true);assert.equal(f.nodes['room-invites-list'].children.length,0);
+ f.events.online();await tick();await f.ui.refresh();assert.equal(f.nodes['room-invites'].hidden,true);
+ f.ui.setRoom(null,null);await f.ui.refresh();assert.equal(f.nodes['room-invites'].hidden,true,'dismissed completion cannot reappear when leaving');
+ assert.ok(f.calls.every(([path])=>path==='/api/friend/invitations'),'presentation cleanup must not cancel, ACK or alter sender records');
+});
+test('receiver successful handoff clears completion even when the navigation adapter does not call setRoom',async()=>{
+ let current=invitation,saves=0,navigations=0;const f=setup({fetcher:path=>path==='/api/friend/invitations'?{incoming:[current],outgoing:[]}:{},onJoined:()=>{saves++;return ()=>navigations++}});
+ f.ui.setLogin({authToken:'guest-account'});await tick();current={...invitation,status:'joined',room:{...admittedRoom,me:1},token:'guest-seat'};await f.ui.refresh();
+ assert.equal(saves,1);assert.equal(navigations,1);assert.equal(f.nodes['room-invites'].hidden,true);await f.ui.refresh();assert.equal(saves,1);assert.equal(f.nodes['room-invites'].hidden,true);
+ assert.equal(f.calls.filter(([path])=>path==='/api/friend/invite/respond').length,0,'receipt presentation does not accept or debit again');
+});
+test('receiver receipt after current-room restore clears only the matching admitted overlay',async()=>{
+ let status='pending';const f=setup({fetcher:()=>({incoming:[{...invitation,status}],outgoing:[]})});f.ui.setLogin({authToken:'guest-account'});await tick();
+ f.ui.setRoom({...admittedRoom,me:1},'guest-seat');status='joined';await f.ui.refresh();assert.equal(f.nodes['room-invites'].hidden,true);
+ const reloaded=setup({fetcher:()=>({incoming:[{...invitation,status}],outgoing:[]})});reloaded.ui.setRoom({...admittedRoom,me:1},'guest-seat');reloaded.ui.setLogin({authToken:'guest-account'});await tick();assert.equal(reloaded.nodes['room-invites'].hidden,true);
+});
+test('same room code alone cannot hide completion for unrelated players or an unverified seat',async()=>{
+ for(const [room,token] of [[{...admittedRoom,players:[invitation.from,{playerId:'HA-OTHER'}]},'host-seat'],[admittedRoom,null],[{...admittedRoom,me:1},'different-seat']]){
+  let status='pending';const f=setup({fetcher:()=>({incoming:[],outgoing:[{...invitation,status}]})});f.ui.setLogin({authToken:'host-account'});f.ui.setRoom(room,token);await tick();status='joined';await f.ui.refresh();assert.equal(f.nodes['room-invites'].hidden,false);
+ }
+});
+test('current-room success never hides a different pending invite or a still-queued acceptance',async()=>{
+ let status='pending';const pending={...invitation,id:'other',code:'789',from:{name:'Other host',playerId:'HA-OTHER'}};
+ const f=setup({fetcher:()=>({incoming:[pending],outgoing:[{...invitation,status}]})});f.ui.setLogin({authToken:'account'});f.ui.setRoom(admittedRoom,'host-seat');await tick();status='joined';await f.ui.refresh();
+ assert.equal(f.nodes['room-invites'].hidden,false);assert.equal(f.nodes['room-invites-next'].hidden,true);assert.ok(buttons(f).some(button=>button.textContent==='Onayla'));
+ const queued=setup({fetcher:()=>({incoming:[{...invitation,status:'queued'}],outgoing:[]})});queued.ui.setLogin({authToken:'account'});queued.ui.setRoom({...admittedRoom,me:1},'guest-seat');await tick();assert.equal(queued.nodes['room-invites'].hidden,false);assert.ok(buttons(queued).some(button=>button.textContent==='VAZGEÇ'));
+});
+test('failed receipt save remains visible and retry clears success without hiding a later ACK error',async()=>{
+ let current=invitation,saveFails=true,ackFails=false;const f=setup({fetcher:path=>{if(path==='/api/friend/invite/ack'&&ackFails)throw Error('ACK network error');return path==='/api/friend/invitations'?{incoming:[current],outgoing:[]}:{}},onJoined:()=>{if(saveFails)throw Error('Storage blocked')}});
+ f.ui.setLogin({authToken:'guest-account'});await tick();current={...invitation,status:'joined',room:{...admittedRoom,me:1},token:'guest-seat'};await f.ui.refresh();assert.equal(f.nodes['room-invites'].hidden,false);assert.equal(f.nodes['room-invites-message'].textContent,'Storage blocked');assert.equal(f.calls.some(([path])=>path==='/api/friend/invite/ack'),false);
+ saveFails=false;ackFails=true;await f.ui.refresh();assert.equal(f.nodes['room-invites'].hidden,false);assert.equal(f.nodes['room-invites-message'].textContent,'ACK network error');assert.equal(f.nodes['room-invites-list'].children.length,0,'only actionable ACK error remains, not a stale joined card');
+ ackFails=false;await f.ui.refresh();assert.equal(f.nodes['room-invites'].hidden,true);
+});
+test('CrazyGames adaptation preserves the same admission cleanup without changing invitation API or consent',async()=>{
+ const fs=await import('node:fs'),{crazyGamesSource}=await import('../crazygames-build.js');
+ const source=crazyGamesSource(fs.readFileSync(new URL('../public/room-invites.js',import.meta.url),'utf8'),'.js');
+ const {createRoomInvitesUI:adapted}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
+ let status='pending';const f=setup({createUI:adapted,fetcher:()=>({incoming:[],outgoing:[{...invitation,status}]})});
+ f.ui.setLogin({authToken:'portal-account'});f.ui.setRoom({...admittedRoom,phase:'waiting',players:[invitation.from,null]},'portal-seat');await tick();assert.equal(f.nodes['room-invites'].hidden,false);
+ f.ui.setRoom(admittedRoom,'portal-seat');status='joined';await f.ui.refresh();assert.equal(f.nodes['room-invites'].hidden,true);
+ assert.match(source,/expectedCost:50/);assert.match(source,/hero-auction-cg-session/);f.ui.destroy();
+});
+test('another-tab handled receipt arriving before ACK retains explicit recovery after credentials disappear',async()=>{
+ let current=invitation,joins=0;const storage=new Map();
+ const f=setup({storage,fetcher:path=>path==='/api/state'?{room:{...admittedRoom,me:1}}:path==='/api/friend/invitations'?{incoming:[current],outgoing:[]}:{},onJoined:()=>joins++});
+ f.ui.setLogin({authToken:'account'});f.ui.setRoom({...admittedRoom,code:'456',me:1},'old-seat');await tick();
+ storage.set('hero-room-invites-handled',JSON.stringify([invitation.id]));storage.set('hero-auction-session',JSON.stringify({code:'123',token:'shared-seat'}));
+ current={...invitation,status:'joined',room:{...admittedRoom,me:1},token:'shared-seat'};await f.ui.refresh();assert.equal(joins,0);assert.equal(f.nodes['room-invites'].hidden,false);
+ current={...invitation,status:'joined'};await f.ui.refresh();assert.equal(joins,0);const open=buttons(f).find(button=>button.textContent==='Güncel odayı aç');assert.ok(open,'another tab did not navigate this tab; explicit recovery remains reachable');
+ open.onclick();await tick();assert.equal(joins,1);assert.equal(f.nodes['room-invites'].hidden,true);
 });

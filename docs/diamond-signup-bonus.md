@@ -1,6 +1,6 @@
 # One-time new-member diamond gift — disabled foundation
 
-The approved exception to paid-only diamonds is **10 diamonds once for each genuinely new verified Google member**. Subsequent diamonds require purchase; advertisements, matches, bot training, refresh and repeat login never award diamonds. Anonymous guests, CrazyGames accounts and all other login providers receive no registration gift, even if those other identities are verified.
+The approved exception to paid-only diamonds is **10 diamonds once for each genuinely new verified Google member**. This welcome gift is never repeated by login or refresh. A later, separately gated [login campaign](store-login-rewards.md) can award 5 diamonds on claimed day 7; advertisements, matches and bot training still never create diamonds. Anonymous guests, CrazyGames accounts and all other login providers receive no registration gift, even if those other identities are verified.
 
 `createDiamondSignupPolicy` requires both `HERO_DIAMONDS_ENABLED=1` and `HERO_DIAMOND_SIGNUP_BONUS_ENABLED=1`. Both default OFF. With the bonus disabled, `registerDiamondMember` returns without accessing any database table. Existing zero-default diamond wallets remain zero by default; only the distinct, audited registration transaction supplies this fixed exception.
 
