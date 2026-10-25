@@ -47,7 +47,7 @@ test('round-aware pure scheduler skips pending revival and permits it next round
 
 test('live focus cast costs75 once, snapshots carry marks and active refresh fails atomically',()=>{
  const c=combat([[h('a'),h('ally')],[h('enemy')]],2),now=c.abilities.cooldownUntil[0]+1000;
- const request={side:0,ability:'ultimate',requestId:'focus_cast_01',matchKey:'focus:test',now};
+ const request={side:0,ability:'ultimate',requestId:'focus_cast_01',matchKey:'focus:test',now,targetIds:['enemy']};
  const result=castLiveCommanderCombat(c,request);assert.equal(result.ultimateEnergy,25);assert.equal(result.energy,100);
  assert.equal(result.events.filter(e=>e.action==='commander-hit').length,0);
  assert.equal(result.teams[0][0].commanderFocusUntilRound,3);

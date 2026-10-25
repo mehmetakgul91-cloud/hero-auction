@@ -31,7 +31,7 @@ test('execute is atomic with ordinary hit: guard prevents final death, not just 
  const plain=hero('p',{hp:14,shield:100});const normal=applyHeroDamage(plain,10,{round:3,executeThreshold:.12});assert.equal(normal.executedDamage,11);assert.equal(plain.hp,0);
 });
 test('guard lasts through castRound+1, never stacks or refreshes an active charge',()=>{
- const target=hero('t',{hp:5});assert.equal(grantLastStand(target,2),true);assert.equal(target.lastStandUntilRound,3);
+ const target=hero('t',{hp:5,lastStandReady:true,lastStandUntilRound:3});assert.equal(grantLastStand(target,2),false);assert.equal(target.lastStandUntilRound,3);
  assert.equal(grantLastStand(target,3),false);assert.equal(target.lastStandUntilRound,3);
  expireLastStandGuards([[target]],3);assert.equal(target.lastStandReady,true);
  expireLastStandGuards([[target]],4);assert.equal(Object.hasOwn(target,'lastStandReady'),false);
@@ -71,7 +71,7 @@ for(const [name,extra,step]of [
  assert.equal(c.teams[1][1].hp,1);const event=c.events.find(e=>e.target==='secondary');assert.equal(event.value,4);assert.equal(event.guardTriggered,true);assert.equal(c.teams[0][0].kills,0);assert.equal(c.abilities.energy[1],0);
 });
 test('normal live round transition removes expired guard without HP changes',()=>{
- const c=make();beginServerCombatRound(c,4);assert.equal(c.teams[1][0].hp,10);assert.equal(Object.hasOwn(c.teams[1][0],'lastStandReady'),false);
+ const c=make();delete c.teams[1][0].lastStandPersistent;c.teams[1][0].lastStandUntilRound=3;beginServerCombatRound(c,4);assert.equal(c.teams[1][0].hp,10);assert.equal(Object.hasOwn(c.teams[1][0],'lastStandReady'),false);
 });
 
 test('surged special damage passes its round through every live family and guard still stops death',()=>{
@@ -82,6 +82,6 @@ test('surged special damage passes its round through every live family and guard
  const execute=make({attack:100,role:'assassin',active:{effect:'execute',name:'execute',power:1.12}});grantArcaneSurge(execute.teams[0][0],3);const result=stepParityExecute(execute,{side:0,actorId:'actor'});assert.ok(result.event.rawDamage>100);assert.equal(execute.teams[1][0].hp,1);
 });
 test('live round cleanup expires mage and last-stand statuses together without stat mutation',()=>{
- const c=make();c.teams[0][0].arcaneSurgeBonusAttack=100;c.teams[0][0].arcaneSurgeFromRound=1;c.teams[0][0].arcaneSurgeUntilRound=3;c.teams[0][0].commanderFocusTargetId='target';c.teams[0][0].commanderFocusUntilRound=3;
+ const c=make();delete c.teams[1][0].lastStandPersistent;c.teams[1][0].lastStandUntilRound=3;c.teams[0][0].arcaneSurgeBonusAttack=100;c.teams[0][0].arcaneSurgeFromRound=1;c.teams[0][0].arcaneSurgeUntilRound=3;c.teams[0][0].commanderFocusTargetId='target';c.teams[0][0].commanderFocusUntilRound=3;
  beginServerCombatRound(c,4);assert.equal(c.teams[0][0].attack,100);assert.equal(Object.hasOwn(c.teams[0][0],'arcaneSurgeBonusAttack'),false);assert.equal(Object.hasOwn(c.teams[1][0],'lastStandReady'),false);assert.equal(Object.hasOwn(c.teams[0][0],'commanderFocusTargetId'),false);
 });

@@ -10,7 +10,7 @@ const teams=()=>[0,1].map(side=>Array.from({length:5},(_,i)=>({id:side+'-'+i,hp:
 for(const kind of ['attack','defense','magic','support'])test(kind+' normal scales actual effects with the saved specialty level',()=>{
  const cast=level=>applyLiveCommanderEffect(teams(),{side:0,ability:'normal',commanderId:kind,commanderProfile:profile(kind,level),targetIds:['1-0']});
  const base=cast(0),upgraded=cast(40);
- if(kind==='magic')assert.equal(upgraded.teams[1][0].commanderWeaken,.42);
+ if(kind==='magic')assert.equal(upgraded.teams[1][0].commanderWeaken,.49);
  else assert.equal(upgraded.log.at(-1).value,base.log.at(-1).value*1.4);
  assert.equal(upgraded.log.at(-1).commanderLevel,40);
  assert.equal(upgraded.log.at(-1).abilityBonusPercent,40);
@@ -24,7 +24,7 @@ test('defense ultimate retains level-scaled shields and one fixed lethal guard',
 for(const kind of ['attack','magic','support'])test(kind+' ultimate utility magnitude is fixed rather than multiplied by specialty level',()=>{
  for(const level of [0,40]){
   const input=teams();if(kind==='support')input[0][0].hp=0;
-  const out=applyLiveCommanderEffect(input,{side:0,ability:'ultimate',commanderId:kind,commanderProfile:profile(kind,level),targetIds:['0-0'],round:2});
+  const out=applyLiveCommanderEffect(input,{side:0,ability:'ultimate',commanderId:kind,commanderProfile:profile(kind,level),targetIds:[kind==='attack'?'1-0':'0-0'],round:2});
   const hero=out.teams[0][0],summary=out.log.at(-1);
   if(kind==='attack'){
    assert.equal(summary.value,5);
@@ -79,8 +79,8 @@ test('incoming cast values cannot forge level and changing the source profile ca
  const combat=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'level',energy:[100,100],now:0}),teams:teams(),commanders:[saved,profile('attack',0)]});
  saved.levels.magic=40;
  const cast=castLiveCommanderCombat(combat,{side:0,ability:'normal',requestId:'level_cast_01',matchKey:'level',now:1000,targetIds:['1-0'],commanderProfile:saved,commanderLevel:40});
- assert.equal(cast.teams[1][0].commanderWeaken,.318);
- assert.equal(cast.events.at(-1).impacts[0].value,31.8);
+ assert.equal(cast.teams[1][0].commanderWeaken,.371);
+ assert.equal(cast.events.at(-1).impacts[0].value,37.1);
  assert.equal(cast.events.at(-1).commanderLevel,6);
  beginServerCombatRound(combat,2);assert.equal(combat.abilities.energy[0],75);
 });

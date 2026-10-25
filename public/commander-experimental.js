@@ -21,7 +21,7 @@ function initializeCommanderControls(){
   if(ability==='ultimate'&&ultimateUsed())return false;
   const mode=commanderTargetMode(state.commanderId,ability);
   if(mode&&!requiredMagicTargets(ability,targetHeroes(ability),targetContext(ability)))return false;
-  return !stopped&&!busy&&!!state&&!state.finished&&Date.now()>=Math.max(effectLockUntil,window.heroCommanderEffectUntil||0)&&Number(own.cooldownMs||0)<=0&&Number(ability==='ultimate'?own.ultimateEnergy:own.energy)>=getCommanderAbilityCost(state.commanderId,ability);
+  return !stopped&&!busy&&!!state&&!state.finished&&Date.now()>=Math.max(effectLockUntil,window.heroCommanderEffectUntil||0)&&(ability==='ultimate'||Number(own.normalCooldownMs??own.cooldownMs??0)<=0)&&(ability==='ultimate'?own.canUseUltimate!==false:own.canUseNormal!==false)&&Number(ability==='ultimate'?own.ultimateEnergy:own.energy)>=getCommanderAbilityCost(state.commanderId,ability);
  }
  function targetHeroes(ability){return state?.teams?.[commanderTargetMode(state.commanderId,ability)==='enemy-alive'?1-state.side:state.side]||[];}
  function targetContext(ability){return {commanderId:state?.commanderId,excludedTargetIds:state?.commanderId==='magic'&&ability==='ultimate'?targetHeroes(ability).filter(hero=>Number.isInteger(hero.arcaneSurgeUntilRound)&&hero.arcaneSurgeUntilRound>=state.round).map(hero=>hero.id):[]};}
@@ -29,12 +29,16 @@ function initializeCommanderControls(){
  function renderControls(){
   const selecting=!!magicControls?.isSelecting();
   normal.hidden=ultimate.hidden=selecting;
-  if(state){normal.textContent='Normal · '+getCommanderAbilityCost(state.commanderId,'normal');ultimate.textContent=commanderUltimateName(state.commanderId)+' · '+(ultimateUsed()?'Kullanıldı':getCommanderAbilityCost(state.commanderId,'ultimate'));ultimate.title=commanderUltimateDescription(state.commanderId);}
   normal.disabled=!canCast('normal');ultimate.disabled=!canCast('ultimate');
-  if(!selecting&&state)status.textContent=state.finished?'Savaş tamamlandı':`Tur ${state.round} · Sv. ${state.abilityStats?.level||0} · Beceri +%${state.abilityStats?.bonusPercent||0} · +${state.abilityStats?.energyPerRound||12} / tur (${ultimateUsed()?'normal':'normal + ulti'})`;
+  const ready=!selecting&&!ultimate.disabled;ultimate.classList?.toggle('commander-ultimate-ready',ready);
+  if(state){normal.textContent='Normal · '+getCommanderAbilityCost(state.commanderId,'normal');ultimate.textContent=commanderUltimateName(state.commanderId)+' · '+(ultimateUsed()?'Kullanıldı':getCommanderAbilityCost(state.commanderId,'ultimate')+(ready?' · Hazır':''));ultimate.title=commanderUltimateDescription(state.commanderId);}
+  if(!selecting&&state){
+   const own=state.abilities?.[state.side]||{},noTarget=commanderTargetMode(state.commanderId,'ultimate')&&!requiredMagicTargets('ultimate',targetHeroes('ultimate'),targetContext('ultimate'));
+   status.textContent=state.finished?'Savaş tamamlandı':!ultimateUsed()&&Number(own.ultimateEnergy)>=getCommanderAbilityCost(state.commanderId,'ultimate')&&noTarget?'Ulti dolu · uygun hedef yok':`Tur ${state.round} · Sv. ${state.abilityStats?.level||0} · Beceri +%${state.abilityStats?.bonusPercent||0} · +${state.abilityStats?.energyPerRound||12} / tur (${ultimateUsed()?'normal':'normal + ulti'})`;
+  }
  }
  function finish(){
-  stopped=true;panel.hidden=true;magicControls?.destroy();magicControls=null;normal.disabled=ultimate.disabled=true;
+  stopped=true;panel.hidden=true;magicControls?.destroy();magicControls=null;normal.disabled=ultimate.disabled=true;ultimate.classList?.toggle('commander-ultimate-ready',false);
   if(interval!==null){clearInterval(interval);interval=null;}
  }
  window.addEventListener('heroarena:battle-finished',finish);
@@ -76,7 +80,7 @@ function initializeCommanderControls(){
  }
  async function sendCast({ability,targetIds}){
   if(!canCast(ability))throw Error('Yetenek henüz hazır değil.');
-  busy=true;normal.disabled=ultimate.disabled=true;status.textContent='Yetenek sunucuya gönderiliyor…';
+  busy=true;renderControls();status.textContent='Yetenek sunucuya gönderiliyor…';
   try{applySnapshot(await request('POST',{ability,requestId:crypto.randomUUID().replaceAll('-','_'),targetIds}))}
   finally{busy=false;renderControls();void refresh()}
  }
@@ -86,7 +90,7 @@ function initializeCommanderControls(){
    if(!magicControls)magicControls=createMagicCastControls({
     enemyRoot:document.getElementById(state.side===0?'team-b':'team-a'),allyRoot:document.getElementById(state.side===0?'team-a':'team-b'),commanderId:state.commanderId,
     confirmButton:$('[data-magic-confirm]'),cancelButton:$('[data-magic-cancel]'),status,canCast,onCast:sendCast,
-    onSelectionChange:active=>{normal.hidden=ultimate.hidden=active;if(!active)renderControls()}
+    onSelectionChange:()=>renderControls()
    });
    magicControls.begin(ability,targetHeroes(ability),targetContext(ability));
   }else void sendCast({ability}).catch(e=>{if(!stopped)status.textContent='⚠ '+e.message});

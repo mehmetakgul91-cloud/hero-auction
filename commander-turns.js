@@ -65,11 +65,12 @@ export function calculateNextTurnUltimateEnergy(ultimateEnergy,action,{lostHeroe
 // effect engine repeats validation on the actual ordered cast transaction.
 export function validateCommanderTurnTargets(command,{commanderId,targetIds,teams,side}){
  const friendly=command==='ultimate'&&['magic','support'].includes(commanderId);
- const enemy=command==='normal'&&commanderId==='magic';
- if(!friendly&&targetIds===undefined)return;
+ const selectedAttack=command==='ultimate'&&commanderId==='attack';
+ const enemy=selectedAttack||command==='normal'&&commanderId==='magic';
+ if(!friendly&&!selectedAttack&&targetIds===undefined)return;
  if(!friendly&&!enemy)throw Error('Invalid commander targets');
- if(enemy&&targetIds===undefined)return; // Legacy normal magic auto-targets.
- if(!Array.isArray(targetIds)||targetIds.length!==1||typeof targetIds[0]!=='string')throw Error('Select one friendly hero');
+ if(enemy&&!selectedAttack&&targetIds===undefined)return; // Legacy normal magic auto-targets.
+ if(!Array.isArray(targetIds)||targetIds.length!==1||typeof targetIds[0]!=='string')throw Error(friendly?'Select one friendly hero':'Select one living enemy hero');
  const target=teams?.[friendly?side:1-side]?.find(u=>u.id===targetIds[0]);
- if(!target||(friendly&&commanderId==='support'?target.hp!==0:!(target.hp>0)))throw Error(friendly?(commanderId==='support'?'Select a fallen friendly hero':'Select a living friendly hero'):'Invalid magic targets');
+ if(!target||(friendly&&commanderId==='support'?target.hp!==0:!(target.hp>0)))throw Error(friendly?(commanderId==='support'?'Select a fallen friendly hero':'Select a living friendly hero'):selectedAttack?'Select one living enemy hero':'Invalid magic targets');
 }

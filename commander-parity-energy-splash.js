@@ -1,3 +1,4 @@
+import {commanderWeakenRate,consumeCommanderWeaken} from './commander-weaken-status.js';
 import {applyHeroDamage} from './battle-hp-damage.js';
 // One atomic server-owned primary attack plus energy-role splash.
 // This opt-in action does not support active skills or passives yet.
@@ -14,7 +15,7 @@ export function stepParityEnergySplash(combat,{side,actorId,round=combat?.round,
  const enemies=next[1-side],target=selectBattleTarget(enemies,actor,round);
  if(!target)throw Error('No living target');
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
- const weakened=Number.isInteger(actor.commanderWeakenUntilRound)&&round<=actor.commanderWeakenUntilRound?Math.max(0,Math.min(1,Number(actor.commanderWeaken)||0)):0;
+ const weakened=commanderWeakenRate(actor,round);
  const raw=calculateHeroRawDamage({unit:actor,target,special:true,critical,guarded,weakened,round});
  const events=[],dead=[];
  function hit(unit,amount,action){
@@ -30,6 +31,7 @@ export function stepParityEnergySplash(combat,{side,actorId,round=combat?.round,
  for(const other of enemies.filter(u=>u!==target&&u.hp>0))hit(other,splashRaw,'splash');
  const thornsShield=applyAttackThorns(actor,{enabled:allowThornsPassive});
  if(thornsShield)events.push({round,side,actor:actorId,action:'thorns-shield',target:actorId,value:thornsShield});
+ consumeCommanderWeaken(actor);
  combat.teams=next;
  combat.version++;
  for(const event of events){event.version=combat.version;combat.events.push(event);}

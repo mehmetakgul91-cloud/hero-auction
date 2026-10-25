@@ -197,3 +197,7 @@ for(const [commander,kind,targetSide,expected]of [['magic','buff',0,'+1 HIT POWE
  assert.equal(h.targetFx().length,1);assert.equal(h.targetFx()[0].parentElement,h.portraits[targetSide][0]);h.advance(1200);
  assert.equal(h.impacts().length,1);assert.equal(h.impacts()[0].style.left,targetSide*200+'px');assert.ok(textOf(h.impacts()[0]).includes(expected));assert.doesNotMatch(textOf(h.impacts()[0]),/HP DAMAGE|HEALING/);
 });
+
+for(const english of [false,true])test(`mage normal committed impact labels next attack, not rounds (${english?'EN':'TR'})`,()=>{
+ const h=effectHarness({english});h.emit({action:'commander-magic-normal',side:0,sequence:1,impacts:[{target:'same',kind:'weaken',value:35}]});h.advance(1200);assert.equal(h.impacts().length,1);const text=textOf(h.impacts()[0]);assert.match(text,english?/NEXT ATTACK/:/SONRAKİ SALDIRI/);assert.match(text,/35/);assert.doesNotMatch(text,/3 TUR|3 ROUNDS/);
+});

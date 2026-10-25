@@ -1,3 +1,4 @@
+import {commanderWeakenRate,consumeCommanderWeaken} from './commander-weaken-status.js';
 import {abilityValue} from './public/hero-ability-rules.js';
 import {applyHeroDamage} from './battle-hp-damage.js';
 // Server-only experimental special attack: shield or drain.
@@ -15,7 +16,7 @@ export function stepParityShieldDrain(combat,{side,actorId,round=combat?.round,c
  const enemies=teams[1-side],target=selectBattleTarget(enemies,actor,round);
  if(!target)throw Error('No living target');
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
- const weakened=Number.isInteger(actor.commanderWeakenUntilRound)&&round<=actor.commanderWeakenUntilRound?Math.max(0,Math.min(1,Number(actor.commanderWeaken)||0)):0;
+ const weakened=commanderWeakenRate(actor,round);
  const raw=calculateHeroRawDamage({unit:actor,target,skill:actor.active,special:true,critical,guarded,weakened,round});
  const {damage,absorbed,guardTriggered,arcaneTransfer}=applyHeroDamage(target,raw,{round,allies:enemies});
  actor.damage=(actor.damage||0)+damage;
@@ -45,6 +46,7 @@ export function stepParityShieldDrain(combat,{side,actorId,round=combat?.round,c
  const splashDeaths=applyEnergySpecialSplash({actor,enemies,target,raw,round,side,events});
  const thornsShield=applyAttackThorns(actor,{enabled:allowThornsPassive});
  if(thornsShield)events.push({round,side,actor:actorId,action:'thorns-shield',target:actorId,value:thornsShield});
+ consumeCommanderWeaken(actor);
  combat.teams=teams;combat.version++;
  for(const event of events){event.version=combat.version;combat.events.push(event);}
  for(let i=0;i<Number(killed)+splashDeaths;i++)grantLiveCommanderEnergy(combat.abilities,1-side,10);

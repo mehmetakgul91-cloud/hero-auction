@@ -54,7 +54,7 @@ function showHeroImpacts(){
   effect.setAttribute('role','status');effect.setAttribute('aria-live','polite');
   const descriptions=[];
   for(const impact of impacts.values()){
-   const labels={damage:text('CAN HASARI','HP DAMAGE'),heal:text('ŞİFA','HEALING'),shield:text('KALKAN','SHIELD'),weaken:text('SALDIRI','ATTACK'),buff:text('AŞIRI YÜK','ARCANE SURGE'),guard:text('ÖLÜMCÜL DARBE KORUMASI','LETHAL-HIT GUARD'),focus:text('AV EMRİ','HUNT ORDER'),revive:text('DİRİLİŞ','REVIVAL')};
+   const labels={damage:text('CAN HASARI','HP DAMAGE'),heal:text('ŞİFA','HEALING'),shield:text('KALKAN','SHIELD'),weaken:text('SONRAKİ SALDIRI','NEXT ATTACK'),buff:text('AŞIRI YÜK','ARCANE SURGE'),guard:text('ÖLÜMCÜL DARBE KORUMASI','LETHAL-HIT GUARD'),focus:text('AV EMRİ','HUNT ORDER'),revive:text('DİRİLİŞ','REVIVAL')};
    const signs={damage:'−',heal:'+',shield:'+',weaken:'−%'};
    const label=document.createElement('span');label.className='commander-impact-label';
    const title=document.createElement('span');title.textContent=labels[impact.kind];

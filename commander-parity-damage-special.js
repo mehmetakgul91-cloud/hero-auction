@@ -1,3 +1,4 @@
+import {commanderWeakenRate,consumeCommanderWeaken} from './commander-weaken-status.js';
 import {abilityValue} from './public/hero-ability-rules.js';
 import {applyHeroDamage} from './battle-hp-damage.js';
 // Server-owned atomic parity for burst, pierce, splash and headshot.
@@ -18,7 +19,7 @@ export function stepParityDamageSpecial(combat,{side,actorId,round=combat?.round
  const enemies=teams[1-side],target=selectBattleTarget(enemies,actor,round);
  if(!target)throw Error('No living target');
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
- const weakened=Number.isInteger(actor.commanderWeakenUntilRound)&&round<=actor.commanderWeakenUntilRound?Math.max(0,Math.min(1,Number(actor.commanderWeaken)||0)):0;
+ const weakened=commanderWeakenRate(actor,round);
  const raw=calculateHeroRawDamage({unit:actor,target,skill,special:true,critical,guarded,weakened,round});
  const events=[],deaths=[];
  function hit(victim,amount,action,isSecondary=false){
@@ -38,6 +39,7 @@ export function stepParityDamageSpecial(combat,{side,actorId,round=combat?.round
  const thornsShield=applyAttackThorns(actor,{enabled:allowThornsPassive});
  if(thornsShield)events.push({round,side,actor:actorId,action:'thorns-shield',target:actorId,value:thornsShield});
  if(actor.role==='tank')actor.shield=(actor.shield||0)+Math.round(actor.defense*abilityValue(actor.active,'tankShieldRate'));
+ consumeCommanderWeaken(actor);
  combat.teams=teams;combat.version++;
  for(const event of events){event.version=combat.version;combat.events.push(event)}
  for(const id of deaths)grantLiveCommanderEnergy(combat.abilities,1-side,10);

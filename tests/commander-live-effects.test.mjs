@@ -64,7 +64,7 @@ test('shield impact records exclude dead heroes and report gained shield, not to
  assert.equal(out.teams[1][1].shield,120);
 });
 test('magic impact records only chosen targets and preserve an existing stronger weakening',()=>{
- const input=teams();input[1][2].commanderWeaken=.4;
+ const input=teams();input[1][2].commanderWeaken=.4;input[1][2].commanderWeakenNextAttack=true;
  const out=applyLiveCommanderEffect(input,{side:0,ability:'normal',commanderId:'magic',targetIds:['2']});
  assert.deepEqual(out.log.at(-1).impacts,[{target:'2',kind:'weaken',value:40}]);
 });

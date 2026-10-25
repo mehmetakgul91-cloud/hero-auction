@@ -7,15 +7,17 @@ export function mountLiveArenaCommanderBridge({normalButton,ultimateButton,energ
  let snapshot=null,disposed=false,requestVersion=0;
  const readState=()=>{
   const state=snapshot?.abilities?.[side];
-  return state?{...state,commanderId,side,ultimateUsed:snapshot.ultimateUsed??state.ultimateUsed,revivalUsed:snapshot.revivalUsed??state.revivalUsed}:{energy:0,ultimateEnergy:0,cooldownMs:0,finished:true};
+  const selectorAvailable=typeof transport.selectCommanderTargets==='function'||commanderId==='magic'&&typeof transport.selectMagicTargets==='function';
+  const ultimateTargetAvailable=commanderId==='attack'?selectorAvailable&&(snapshot?.teams?.[1-side]||[]).some(hero=>hero.hp>0):commanderId==='support'?selectorAvailable&&(snapshot?.teams?.[side]||[]).some(hero=>hero.hp<=0):commanderId==='magic'?selectorAvailable&&(snapshot?.teams?.[side]||[]).some(hero=>hero.hp>0&&!(Number.isInteger(hero.arcaneSurgeUntilRound)&&hero.arcaneSurgeUntilRound>=snapshot.round)):true;
+  return state?{...state,commanderId,side,ultimateTargetAvailable,ultimateUsed:snapshot.ultimateUsed??state.ultimateUsed,revivalUsed:snapshot.revivalUsed??state.revivalUsed}:{energy:0,ultimateEnergy:0,cooldownMs:0,finished:true};
  };
  const controls=createLiveArenaCommanderControls({
   normalButton,ultimateButton,energyLabel,statusLabel,readState,
-  onMagicTarget:['magic','support'].includes(commanderId)?async ability=>{
+  onMagicTarget:['attack','magic','support'].includes(commanderId)?async ability=>{
    const mode=commanderTargetMode(commanderId,ability);if(!mode)return false;
    const selector=transport.selectCommanderTargets??(commanderId==='magic'?transport.selectMagicTargets:null);
    if(typeof selector!=='function')throw Error('Commander target selector unavailable');
-   const heroes=(snapshot?.teams?.[mode==='enemy-alive'?1-side:side]||[]).filter(hero=>mode==='ally-dead'?hero.hp<=0:hero.hp>0);
+   const heroes=(snapshot?.teams?.[mode==='enemy-alive'?1-side:side]||[]).filter(hero=>mode==='ally-dead'?hero.hp<=0:hero.hp>0&&!(commanderId==='magic'&&ability==='ultimate'&&Number.isInteger(hero.arcaneSurgeUntilRound)&&hero.arcaneSurgeUntilRound>=snapshot.round));
    return selector.call(transport,ability,heroes,{commanderId,mode,side});
   }:undefined,
   onCast:async cast=>{

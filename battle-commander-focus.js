@@ -5,12 +5,17 @@ export function consumeCommanderFocus(actor){
  delete actor.commanderFocusTargetId;
  delete actor.commanderFocusUntilRound;
 }
-export function grantCommanderFocus(allies,enemies,round){
+export function chooseCommanderFocusEnemy(enemies){
+ return enemies.filter(unit=>unit.hp>0&&unit.maxHp>0).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp||(String(a.id)<String(b.id)?-1:String(a.id)>String(b.id)?1:0))[0]??null;
+}
+export function grantCommanderFocus(allies,enemies,round,targetId){
  if(!Array.isArray(allies)||!Array.isArray(enemies)||!Number.isInteger(round)||round<1)throw Error('Invalid commander focus');
  // An outstanding order cannot be refreshed to grant another focused attack.
  // Clear expired/dead-target tokens first, so an obsolete mark cannot block a cast.
  for(const ally of allies){if(ally.hp<=0)consumeCommanderFocus(ally);else if(selectCommanderFocusTarget(ally,enemies,round))return null;}
- const target=enemies.filter(unit=>unit.hp>0&&unit.maxHp>0).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp||(String(a.id)<String(b.id)?-1:String(a.id)>String(b.id)?1:0))[0];
+ // Omitted selection is reserved for internal deterministic focus fixtures.
+ // All player-facing effects validate an explicit enemy ID before calling here.
+ const target=targetId===undefined?chooseCommanderFocusEnemy(enemies):enemies.find(unit=>unit.id===targetId&&unit.hp>0&&unit.maxHp>0);
  if(!target)return null;
  const living=allies.filter(unit=>unit.hp>0);
  if(!living.length)return null;

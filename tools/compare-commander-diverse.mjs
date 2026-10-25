@@ -72,6 +72,7 @@ export function chooseAuditAction(combat,side,availability,policy,ultimatesEnabl
  if(id==='attack'&&allies.some(u=>u.commanderFocusTargetId&&u.commanderFocusUntilRound>=round&&enemies.some(e=>e.id===u.commanderFocusTargetId)))return null;
  if(id==='magic'){const target=allies.filter(u=>!(u.arcaneSurgeUntilRound>=round)).sort((a,b)=>mageAuditScore(b,allies,enemies,round)-mageAuditScore(a,allies,enemies,round)||a.id.localeCompare(b.id))[0];return target?{ability:'ultimate',targetIds:[target.id]}:null;}
  if(id==='support'){if(combat.revivalUsed?.[side])return null;const target=combat.teams[side].filter(u=>u.hp===0).sort((a,b)=>b.maxHp-a.maxHp||a.id.localeCompare(b.id))[0];return target?{ability:'ultimate',targetIds:[target.id]}:null;}
+ if(id==='attack'){const target=[...enemies].sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp||a.id.localeCompare(b.id))[0];return {ability:'ultimate',targetIds:[target.id]};}
  return {ability:'ultimate'};
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){

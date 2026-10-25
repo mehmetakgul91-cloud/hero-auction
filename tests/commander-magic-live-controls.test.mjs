@@ -32,7 +32,7 @@ function harness(side=0,commanderId='magic'){
  document.getElementById=id=>id==='experimental-commander-controls'?panel:id===(side===0?'team-b':'team-a')?enemyRoot:id===(side===0?'team-a':'team-b')?allyRoot:null;
  const requests=[],intervals=new Map(),visuals=[];let intervalId=0,uuid=0;
  const c=createLiveCommanderCombat({teams:[0,1].map(s=>['a','b','c'].map(id=>({id:s+id,hp:100,maxHp:100,attack:50}))),commanders:[{commanderId},{commanderId}],abilities:createLiveCommanderAbilities({matchKey:'ui',energy:[100,100],ultimateEnergy:[100,100],now:0})});
- const snapshot=(extra={})=>({version:c.version,round:1,side,commanderId,revivalUsed:[false,false],ultimateUsed:[false,false],teams:structuredClone(c.teams),abilities:c.abilities.energy.map((energy,side)=>({energy,ultimateEnergy:c.abilities.ultimateEnergy[side],cooldownMs:0,effectLockMs:0})),finished:c.finished,events:[],...extra});
+ const snapshot=(extra={})=>({version:c.version,round:1,side,commanderId,revivalUsed:[...c.revivalUsed],ultimateUsed:[...c.abilities.ultimateUsed],teams:structuredClone(c.teams),abilities:c.abilities.energy.map((energy,side)=>({energy,ultimateEnergy:c.abilities.ultimateEnergy[side],cooldownMs:0,effectLockMs:0})),finished:c.finished,events:[],...extra});
  window.addEventListener('heroarena:experimental-round-end',event=>{
   allyRoot.cards=event.detail.teams[side].map(hero=>{const card=new Node();card.dataset.heroId=hero.id;return card});
   enemyRoot.cards=event.detail.teams[1-side].map(hero=>{const card=new Node();card.dataset.heroId=hero.id;return card});
@@ -130,7 +130,7 @@ test('canceling ultimate never marks it used',async()=>{
 
 test('support ultimate UI displays canonical 90 cost, normal remains 40',async()=>{
  const h=harness(0,'support');h.c.teams[0][0].hp=0;await h.respond(0,h.snapshot());
- assert.equal(h.ultimate.textContent,'Diriliş · 90');assert.equal(h.normal.textContent,'Normal · 40');
+ assert.equal(h.ultimate.textContent,'Diriliş · 90 · Hazır');assert.equal(h.normal.textContent,'Normal · 40');
  h.click(h.ultimate);h.allyTarget(0);assert.match(h.confirm.textContent,/90/);
  assert.equal(h.requests.length,1);h.click(h.cancel);assert.equal(h.energy.textContent,'100 / 100');
 });
@@ -149,4 +149,32 @@ for(const side of [0,1])test(`production seat ${side} enables ultimate at zero n
  const used=[false,false];used[side]=true;h.tick();await h.respond(1,h.snapshot({version:1,ultimateUsed:used}));
  assert.equal(h.ultimate.disabled,true);assert.equal(h.nodes.get('[data-ultimate-energy]').textContent,'Kullanıldı');assert.equal(h.nodes.get('[data-ultimate-energy-fill]').style.width,'0%');assert.equal(h.nodes.get('[data-ultimate-energy-meter]').attributes['aria-valuetext'],'Kullanıldı');
  h.tick();await h.respond(2,h.snapshot({version:0}));assert.equal(h.nodes.get('[data-ultimate-energy]').textContent,'Kullanıldı');
+});
+
+for(const side of [0,1])test(`production seat ${side}: normal cooldown leaves valid ultimate visibly ready`,async()=>{
+ const h=harness(side,'magic');const abilities=h.snapshot().abilities;abilities[side]={...abilities[side],normalCooldownMs:5000,cooldownMs:5000,canUseNormal:false,canUseUltimate:true};await h.respond(0,h.snapshot({abilities}));
+ assert.equal(h.normal.disabled,true);assert.equal(h.ultimate.disabled,false);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),true);assert.match(h.ultimate.textContent,/Hazır/);
+ h.click(h.ultimate);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),false);h.allyTarget(0);assert.equal(h.confirm.disabled,false);h.click(h.cancel);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),true);assert.equal(h.requests.length,1);
+ h.window.heroCommanderEffectUntil=Date.now()+1200;h.window.dispatchEvent({type:'heroarena:commander-effect-lock'});assert.equal(h.ultimate.disabled,true);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),false);assert.doesNotMatch(h.ultimate.textContent,/Hazır/);
+});
+for(const side of [0,1])test(`production seat ${side}: charged support has no ready cue until own fallen hero exists`,async()=>{
+ const h=harness(side,'support');await h.respond(0,h.snapshot());assert.equal(h.ultimate.disabled,true);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),false);assert.match(h.status.textContent,/Ulti dolu · uygun hedef yok/);
+ h.c.teams[side][0].hp=0;h.tick();await h.respond(1,h.snapshot({version:1}));assert.equal(h.ultimate.disabled,false);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),true);
+ h.window.dispatchEvent({type:'heroarena:battle-finished'});assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),false);assert.equal(h.ultimate.disabled,true);
+});
+test('production readiness observes explicit authoritative canUseUltimate=false despite full meter',async()=>{
+ const h=harness(0,'attack');await h.respond(0,h.snapshot({abilities:[{energy:100,ultimateEnergy:100,canUseUltimate:false,cooldownMs:0}]}));assert.equal(h.ultimate.disabled,true);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),false);assert.doesNotMatch(h.ultimate.textContent,/Hazır/);
+});
+
+for(const side of [0,1])test(`Av Emri production seat ${side}: explicit non-lowest opponent, cancel, single confirmation`,async()=>{
+ const h=harness(side,'attack');h.c.teams[1-side][0].hp=1;await h.respond(0,h.snapshot());
+ h.click(h.ultimate);assert.match(h.status.textContent,/Av Emri.*Rakip kartına dokun/);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),false);h.allyTarget(1);assert.equal(h.confirm.disabled,true);h.target(2);assert.equal(h.confirm.disabled,false);
+ assert.equal(h.enemyRoot.cards[2].attributes['data-commander-target-label'],'✦ AV EMRİ');h.click(h.cancel);assert.equal(h.requests.length,1);assert.equal(h.c.abilities.ultimateEnergy[side],100);assert.equal(h.c.abilities.ultimateUsed[side],false);
+ h.click(h.ultimate);h.target(2);h.click(h.confirm);h.click(h.confirm);await flush();assert.equal(h.requests.length,2);assert.deepEqual(JSON.parse(h.requests[1].options.body).targetIds,[(1-side)+'c']);await h.accept(1);
+ assert.equal(h.c.abilities.ultimateEnergy[side],25);assert.equal(h.c.abilities.energy[side],100);assert.equal(h.c.abilities.ultimateUsed[side],true);assert.ok(h.c.teams[side].every(hero=>hero.commanderFocusTargetId===(1-side)+'c'));assert.match(h.ultimate.textContent,/Kullanıldı/);
+});
+for(const side of [0,1])test(`Av Emri production seat ${side}: dead selected target is cleared without charge`,async()=>{
+ const h=harness(side,'attack');await h.respond(0,h.snapshot());h.click(h.ultimate);h.target(1);assert.equal(h.confirm.disabled,false);
+ h.c.teams[1-side][1].hp=0;h.tick();await h.respond(1,h.snapshot({version:1}));assert.equal(h.confirm.disabled,true);assert.equal(h.enemyRoot.cards[1].classes.has('magic-target-selected'),false);h.click(h.confirm);assert.equal(h.requests.length,2);assert.equal(h.c.abilities.ultimateEnergy[side],100);assert.equal(h.c.abilities.ultimateUsed[side],false);
+ for(const hero of h.c.teams[1-side])hero.hp=0;h.tick();await h.respond(2,h.snapshot({version:2}));assert.equal(h.confirm.hidden,true);assert.equal(h.ultimate.disabled,true);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),false);
 });

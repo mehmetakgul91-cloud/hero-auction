@@ -7,7 +7,7 @@ import {simulateBattle} from '../battle-engine.js';
 const profile=level=>({commanderId:'attack',levels:{attack:level,defense:0,magic:0,support:0}});
 const teams=()=>[0,1].map(side=>Array.from({length:5},(_,i)=>({id:side+'-'+i,hp:1000,maxHp:1000,attack:50,shield:0})));
 function combat(level=0){return createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'scaling',energy:[100,100],now:0}),teams:teams(),commanders:[profile(level),profile(level)]});}
-function cast(state,ability,side=0){return castLiveCommanderCombat(state,{side,ability,requestId:'cast_'+ability,matchKey:'scaling',now:1000});}
+function cast(state,ability,side=0){return castLiveCommanderCombat(state,{side,ability,requestId:'cast_'+ability,matchKey:'scaling',now:1000,...(ability==='ultimate'?{targetIds:[(1-side)+'-0']}:{})});}
 const total=result=>result.events.filter(e=>e.action==='commander-hit').reduce((n,e)=>n+e.rawDamage,0);
 
 test('focus ultimate marks surviving allies without immediate damage or an extra attack',()=>{
@@ -45,7 +45,7 @@ test('normal commander damage retains shield and dead-target accounting',()=>{
 test('legacy normal preserves damage budget while ultimate only grants focus',()=>{
  const durable=prefix=>Array.from({length:5},(_,i)=>({id:prefix+i,power:100,role:'tank',lane:'front',passive:{effect:'regen',value:1}}));
  for(const [ability,expected] of [['normal',59],['ultimate',0]]){
-  const result=simulateBattle(durable('a'),durable('b'),{seed:'attack-level-scaling',maxRounds:7,commanders:[profile(10),profile(0)],commanderActions:[{side:0,round:7,ability}]});
+  const result=simulateBattle(durable('a'),durable('b'),{seed:'attack-level-scaling',maxRounds:7,commanders:[profile(10),profile(0)],commanderActions:[{side:0,round:7,ability,...(ability==='ultimate'?{targetIds:['b0']}:{})}]});
   assert.equal(result.log.filter(e=>e.action==='commander-hit').reduce((n,e)=>n+e.rawDamage,0),expected);
   if(ability==='ultimate')assert.ok(result.log.some(e=>e.action==='commander-attack-ultimate'&&e.value>0));
  }

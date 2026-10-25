@@ -58,7 +58,7 @@ test('ultimate ability becomes available by the seventh round at level zero',()=
  const result=simulateBattle(durable('alpha'),durable('beta'),{
   seed:'commander-ultimate-long-match',maxRounds:15,
   commanders:[createCommanderProfile('attack'),createCommanderProfile('defense')],
-  commanderActions:[{side:0,round:7,ability:'ultimate'}]
+  commanderActions:[{side:0,round:7,ability:'ultimate',targetIds:['beta0']}]
  });
  assert.ok(result.log.some(x=>x.action==='commander-attack-ultimate'),
   'Expected ultimate in round seven; battle ended at round '+result.rounds);
