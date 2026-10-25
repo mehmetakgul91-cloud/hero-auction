@@ -1,4 +1,3 @@
-import {calculateShieldAbsorption} from './battle-shield-absorption.js';
 import {getCommanderAbilityCost} from './public/commander-ability-rules.js';
 // Server-owned decisions, restricted to information a player can observe.
 // Difficulty changes choices, reaction time and the temporary commander profile.
@@ -73,7 +72,7 @@ export const BOT_REACTION_MS=Object.freeze({easy:9000,medium:4500,hard:1500});
 export function chooseBotCast(snapshot,commanderId,difficulty,{now=Date.now(),lastCastAt=0,startedAt=0,side=1}={}){
  const level=difficultyOf(difficulty),ability=snapshot?.abilities?.[side];
  if(!ability||snapshot.finished||![0,1].includes(side)||!COMMANDERS.some(c=>c.id===commanderId)||now-Math.max(startedAt,lastCastAt)<BOT_REACTION_MS[level])return null;
- const available=cast=>(cast!=='ultimate'||!snapshot.ultimateUsed?.[side])&&ability[cast==='ultimate'?'canUseUltimate':'canUseNormal']===true&&(!Number.isFinite(ability.energy)||ability.energy>=getCommanderAbilityCost(commanderId,cast));
+ const available=cast=>(cast!=='ultimate'||!snapshot.ultimateUsed?.[side])&&ability[cast==='ultimate'?'canUseUltimate':'canUseNormal']===true&&(!Number.isFinite(ability[cast==='ultimate'?'ultimateEnergy':'energy'])||ability[cast==='ultimate'?'ultimateEnergy':'energy']>=getCommanderAbilityCost(commanderId,cast));
  const canNormal=available('normal'),canUltimate=level!=='easy'&&available('ultimate');
  if(!canNormal&&!canUltimate)return null;
  const ownTeam=snapshot.teams[side],allies=ownTeam.filter(u=>u.hp>0),enemies=snapshot.teams[1-side].filter(u=>u.hp>0);
@@ -99,27 +98,17 @@ export function chooseBotCast(snapshot,commanderId,difficulty,{now=Date.now(),la
  // a revival ultimate was unavailable or already used earlier in the battle.
  if(commanderId==='support'&&cast==='normal'&&missing<=0)return null;
  if(level==='hard'){
-  const urgent=allies.some(u=>u.hp/u.maxHp<.3),late=snapshot.round>=13;
+  const urgent=allies.some(u=>u.hp/u.maxHp<.3);
   if(commanderId==='support'&&cast==='normal'){
    if(missing/maxHp<.15)return null;
-   if(!canUltimate&&!urgent&&!late)return null;
   }else if(commanderId==='defense'){
    const shields=allies.reduce((n,u)=>n+(u.shield||0),0);
    if(shields>maxHp*.3&&!urgent)return null;
-   if(!canUltimate&&!urgent&&!late)return null;
-  }else if(commanderId==='attack'){
-   const basis=ownTeam.reduce((n,u)=>n+(u.baseAttack??u.attack??0),0);
-   const normalDamage=Math.floor(basis*.12/enemies.length);
-   const finishing=enemies.some(u=>u.hp<=normalDamage-calculateShieldAbsorption(u.shield||0,normalDamage));
-   if(!canUltimate&&!finishing&&!urgent&&!late)return null;
   }else if(commanderId==='magic'&&cast==='normal'){
    // Normal spell remains the existing enemy debuff, not an ally buff.
    const worthwhile=enemies.some(u=>(u.commanderWeaken||0)<.3||(u.commanderWeakenUntilRound||0)<=snapshot.round);
    if(!worthwhile)return null;
-   const enemyAttack=enemies.reduce((n,u)=>n+(u.attack||0),0),strongestAlly=Math.max(...allies.map(u=>u.attack||0));
-   const highThreat=enemies.some(u=>(u.commanderWeaken||0)<.3&&(u.attack||0)>=enemyAttack*.55&&(u.attack||0)>=strongestAlly*2);
-   const openingDebuff=snapshot.round<=3&&lastCastAt===0;
-   if(!canUltimate&&!urgent&&!late&&!highThreat&&!openingDebuff)return null;
+
   }
  }
  const result={ability:cast};

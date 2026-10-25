@@ -17,7 +17,7 @@ class DetailEvent extends Event {
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 function harness(){
  const window=new EventTarget(),document=new Node(),panel=new Node(),nodes=new Map();
- for(const selector of ['normal','ultimate','pass'].map(command=>`[data-command="${command}"]`).concat(['[data-energy]','[data-energy-meter]','[data-energy-fill]','[data-status]']))nodes.set(selector,new Node());
+ for(const selector of ['normal','ultimate','pass'].map(command=>`[data-command="${command}"]`).concat(['[data-energy]','[data-energy-meter]','[data-energy-fill]','[data-ultimate-energy]','[data-ultimate-energy-meter]','[data-ultimate-energy-fill]','[data-status]']))nodes.set(selector,new Node());
  panel.querySelector=selector=>nodes.get(selector);
  document.getElementById=()=>panel;
  const requests=[],intervals=new Map();let intervalId=0;

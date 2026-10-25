@@ -32,13 +32,13 @@ export function castLiveCommanderCombat(combat,{side,ability,requestId,matchKey,
  combat.teams=effect.teams;
  combat.revivalUsed??=[false,false];combat.revivalUsed[side]=effect.revivalUsed;
  combat.version++;
- const events=effect.log.map(entry=>({...entry,version:combat.version,sequence:cast.cast.sequence,at:now,effectUntil:cast.effectUntil}));
+ const events=effect.log.map(entry=>({...entry,energy:cast.energy,ultimateEnergy:cast.ultimateEnergy,ultimateUsed:cast.ultimateUsed,version:combat.version,sequence:cast.cast.sequence,at:now,effectUntil:cast.effectUntil}));
  combat.events.push(...events);
  combat.finished=effect.finished;
  combat.abilities.finished=effect.finished;
  const record=combat.abilities.requests.get(requestKey);
  if(record){record.version=combat.version;record.targetIds=structuredClone(targetIds??null);}
- return {duplicate:false,version:combat.version,events,teams:structuredClone(combat.teams),finished:combat.finished,energy:cast.energy,cooldownUntil:cast.cooldownUntil};
+ return {duplicate:false,version:combat.version,events,teams:structuredClone(combat.teams),finished:combat.finished,energy:cast.energy,ultimateEnergy:cast.ultimateEnergy,cooldownUntil:cast.cooldownUntil};
 }
 export function viewLiveCommanderCombat(combat,{sinceVersion=0}={}){
  if(!combat||!Number.isSafeInteger(sinceVersion)||sinceVersion<0)throw Error('Invalid snapshot request');
@@ -94,7 +94,7 @@ export function beginServerCombatRound(combat,round){
  for(const team of combat.teams)for(const unit of team){if(unit.commanderWeaken&&Number.isInteger(unit.commanderWeakenUntilRound)&&round>unit.commanderWeakenUntilRound){delete unit.commanderWeaken;delete unit.commanderWeakenUntilRound;}}
  for(let side=0;side<2;side++)grantLiveCommanderEnergy(combat.abilities,side,commanderEnergyPerRound(combat.commanders[side]));
  combat.version++;
- const event={round,action:'round-start',energy:[...combat.abilities.energy],version:combat.version};
+ const event={round,action:'round-start',energy:[...combat.abilities.energy],ultimateEnergy:[...combat.abilities.ultimateEnergy],version:combat.version};
  combat.events.push(event);
- return {round,energy:[...combat.abilities.energy],version:combat.version,event};
+ return {round,energy:[...combat.abilities.energy],ultimateEnergy:[...combat.abilities.ultimateEnergy],version:combat.version,event};
 }

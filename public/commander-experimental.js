@@ -11,7 +11,7 @@ function initializeCommanderControls(){
  window.__heroArenaCommanderControlsInitialized=true;
  const code=params.get('auctionCode'),token=params.get('auctionToken');
  const $=s=>panel.querySelector(s),normal=$('[data-command="normal"]'),ultimate=$('[data-command="ultimate"]'),pass=$('[data-command="pass"]');
- const energy=$('[data-energy]'),meter=$('[data-energy-meter]'),fill=$('[data-energy-fill]'),status=$('[data-status]');
+ const energy=$('[data-energy]'),meter=$('[data-energy-meter]'),fill=$('[data-energy-fill]'),ultimateEnergy=$('[data-ultimate-energy]'),ultimateMeter=$('[data-ultimate-energy-meter]'),ultimateFill=$('[data-ultimate-energy-fill]'),status=$('[data-status]');
  let state=null,busy=false,refreshing=false,stopped=false,lastVersion=0,effectLockUntil=0,interval=null,magicControls=null;
  panel.hidden=false;if(pass)pass.hidden=true;
  function ultimateUsed(){return !!state?.ultimateUsed?.[state.side]||(state?.commanderId==='support'&&!!state?.revivalUsed?.[state.side]);}
@@ -21,7 +21,7 @@ function initializeCommanderControls(){
   if(ability==='ultimate'&&ultimateUsed())return false;
   const mode=commanderTargetMode(state.commanderId,ability);
   if(mode&&!requiredMagicTargets(ability,targetHeroes(ability),targetContext(ability)))return false;
-  return !stopped&&!busy&&!!state&&!state.finished&&Date.now()>=Math.max(effectLockUntil,window.heroCommanderEffectUntil||0)&&Number(own.cooldownMs||0)<=0&&Number(own.energy)>=getCommanderAbilityCost(state.commanderId,ability);
+  return !stopped&&!busy&&!!state&&!state.finished&&Date.now()>=Math.max(effectLockUntil,window.heroCommanderEffectUntil||0)&&Number(own.cooldownMs||0)<=0&&Number(ability==='ultimate'?own.ultimateEnergy:own.energy)>=getCommanderAbilityCost(state.commanderId,ability);
  }
  function targetHeroes(ability){return state?.teams?.[commanderTargetMode(state.commanderId,ability)==='enemy-alive'?1-state.side:state.side]||[];}
  function targetContext(ability){return {commanderId:state?.commanderId,excludedTargetIds:state?.commanderId==='magic'&&ability==='ultimate'?targetHeroes(ability).filter(hero=>Number.isInteger(hero.arcaneSurgeUntilRound)&&hero.arcaneSurgeUntilRound>=state.round).map(hero=>hero.id):[]};}
@@ -31,7 +31,7 @@ function initializeCommanderControls(){
   normal.hidden=ultimate.hidden=selecting;
   if(state){normal.textContent='Normal · '+getCommanderAbilityCost(state.commanderId,'normal');ultimate.textContent=commanderUltimateName(state.commanderId)+' · '+(ultimateUsed()?'Kullanıldı':getCommanderAbilityCost(state.commanderId,'ultimate'));ultimate.title=commanderUltimateDescription(state.commanderId);}
   normal.disabled=!canCast('normal');ultimate.disabled=!canCast('ultimate');
-  if(!selecting&&state)status.textContent=state.finished?'Savaş tamamlandı':`Tur ${state.round} · Sv. ${state.abilityStats?.level||0} · Beceri +%${state.abilityStats?.bonusPercent||0} · +${state.abilityStats?.energyPerRound||12} enerji/tur`;
+  if(!selecting&&state)status.textContent=state.finished?'Savaş tamamlandı':`Tur ${state.round} · Sv. ${state.abilityStats?.level||0} · Beceri +%${state.abilityStats?.bonusPercent||0} · +${state.abilityStats?.energyPerRound||12} / tur (${ultimateUsed()?'normal':'normal + ulti'})`;
  }
  function finish(){
   stopped=true;panel.hidden=true;magicControls?.destroy();magicControls=null;normal.disabled=ultimate.disabled=true;
@@ -49,7 +49,9 @@ function initializeCommanderControls(){
   state=data;const own=data.abilities?.[data.side]||{};
   effectLockUntil=Date.now()+Math.max(0,Number(own.effectLockMs)||0);
   const value=Math.max(0,Math.min(100,Number(own.energy)||0));
-  energy.textContent=value+' / 100';meter.setAttribute('aria-valuenow',String(value));fill.style.width=value+'%';renderControls();
+  energy.textContent=value+' / 100';meter.setAttribute('aria-valuenow',String(value));fill.style.width=value+'%';
+  const used=ultimateUsed(),charge=used?0:Math.max(0,Math.min(100,Number(own.ultimateEnergy)||0));
+  ultimateEnergy.textContent=used?'Kullanıldı':charge+' / 100';ultimateMeter.setAttribute('aria-valuenow',String(charge));ultimateMeter.setAttribute('aria-valuetext',used?'Kullanıldı':charge+' / 100');ultimateFill.style.width=charge+'%';renderControls();
   if(battleChanged&&Array.isArray(data.teams)){
    window.dispatchEvent(new CustomEvent('heroarena:experimental-round-end',{detail:{round:data.round,teams:data.teams,finished:data.finished,winner:data.winner,summary:data.summary,version:data.version,events:data.events||[]}}));
    window.dispatchEvent(new CustomEvent('heroarena:commander-round',{detail:{round:data.round,events:data.events||[],teams:data.teams,finished:data.finished}}));

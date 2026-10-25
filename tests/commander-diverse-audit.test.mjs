@@ -22,7 +22,7 @@ test('casualty energy enables same-round revive and commander effect lock does n
  const matchKey='midround:test',combat=createLiveCommanderCombat({teams:[[hero('victim',{hp:1,maxHp:1000,speed:0}),hero('survivor',{position:1})],[hero('killer',{attack:100,speed:100,position:1})]],commanders:[{commanderId:'support'},{commanderId:'attack'}],abilities:createLiveCommanderAbilities({matchKey,energy:[80,100],now:0})});
  const registry=createLiveArenaRegistry();registry.register({matchKey,tokens:['a','b'],combat,options:{parity:true}});const pacer=createLiveArenaPacer({registry,matchKey,token:'a',intervalMs:900});pacer.start(0);
  assert.equal(pacer.tick(900).kind,'hero');assert.equal(combat.teams[0][0].hp,0);assert.equal(combat.abilities.energy[0],90);
- registry.cast({matchKey,token:'a',ability:'ultimate',targetIds:['victim'],requestId:'revive_midround',now:900});assert.equal(combat.round,1);assert.equal(combat.abilities.energy[0],0);assert.equal(combat.teams[0][0].canActFromRound,2);
+ registry.cast({matchKey,token:'a',ability:'ultimate',targetIds:['victim'],requestId:'revive_midround',now:900});assert.equal(combat.round,1);assert.equal(combat.abilities.ultimateEnergy[0],0);assert.equal(combat.teams[0][0].canActFromRound,2);
  assert.throws(()=>registry.cast({matchKey,token:'b',ability:'normal',requestId:'locked_cast_1',now:1800}),/Komutan efekti/);
  assert.equal(pacer.tick(1800).kind,'hero','hero proceeds before2100 cast lock expiry');assert.equal(combat.teams[0][1].lastActionRound,1);assert.equal(combat.teams[0][0].lastActionRound,1,'revived unit has only cast marker, not an extra action');
 });

@@ -86,7 +86,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
   }
   const initialShields=shieldSnapshot();
   const commanderAttackBasis=teams.map(commanderAttackPower);
-  const commanderEnergy=[0,0],revivalUsed=[false,false],ultimateUsed=[false,false];
+  const commanderResourcesByRound=[],commanderEnergy=[0,0],commanderUltimateEnergy=[0,0],revivalUsed=[false,false],ultimateUsed=[false,false];
   if(!Array.isArray(commanderActions)||commanderActions.length>200)throw Error('Invalid commander actions');
   const actions=new Map();
   for(const action of commanderActions){
@@ -100,21 +100,25 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
     const commander=commanders?.[side],id=commander?.commanderId;
     if(ability==='ultimate'&&ultimateUsed[side])throw Error('Commander ultimate already used');
     const cost=getCommanderAbilityCost(id,ability);
-    if(commanderEnergy[side]<cost)throw Error('Insufficient commander energy at round '+round);
+    const pool=ability==='ultimate'?commanderUltimateEnergy:commanderEnergy;
+    if(pool[side]<cost)throw Error('Insufficient commander energy at round '+round);
     if(!teams[side].some(u=>u.hp>0)||!teams[1-side].some(u=>u.hp>0))return;
     // Legacy scripted normal magic keeps deterministic targeting when omitted.
     // New selected-friendly ultimates require explicit authoritative hero IDs.
     if(id==='magic'&&ability==='normal'&&targetIds===undefined)targetIds=[...teams[1-side]].filter(u=>u.hp>0).sort((a,b)=>b.attack-a.attack||a.id.localeCompare(b.id)).slice(0,1).map(u=>u.id);
     const effect=applyLiveCommanderEffect(teams,{side,ability,commanderId:id,commanderProfile:commander,attackBasis:commanderAttackBasis[side],round,targetIds,revivalUsed:revivalUsed[side]});
-    commanderEnergy[side]-=cost;revivalUsed[side]=effect.revivalUsed;if(ability==='ultimate')ultimateUsed[side]=true;
+    pool[side]-=cost;revivalUsed[side]=effect.revivalUsed;if(ability==='ultimate')ultimateUsed[side]=true;
     teams[0]=effect.teams[0];teams[1]=effect.teams[1];
-    for(const event of effect.log)record({...event,energy:commanderEnergy[side]});
+    for(const event of effect.log)record({...event,energy:commanderEnergy[side],ultimateEnergy:commanderUltimateEnergy[side],ultimateUsed:ultimateUsed[side]});
   };
   for(let round=1;round<=maxRounds;round++){
     actionId=null;
     expireLastStandGuards(teams,round);expireCommanderUltimateStatuses(teams,round);expireCommanderFocus(teams,round);
     for(const team of teams)for(const unit of team){if(unit.commanderWeaken&&Number.isInteger(unit.commanderWeakenUntilRound)&&round>unit.commanderWeakenUntilRound){delete unit.commanderWeaken;delete unit.commanderWeakenUntilRound;}}
-    for(let side=0;side<2;side++)commanderEnergy[side]=commanderRoundEnergy(commanderEnergy[side],round,commanders?.[side]);
+    for(let side=0;side<2;side++){
+      commanderEnergy[side]=commanderRoundEnergy(commanderEnergy[side],round,commanders?.[side]);
+      if(!ultimateUsed[side])commanderUltimateEnergy[side]=commanderRoundEnergy(commanderUltimateEnergy[side],round,commanders?.[side]);
+    }
     for(const team of teams)for(const u of team){
       if(u.hp<=0||!u.passive)continue;
       const {effect,value}=u.passive;
@@ -122,6 +126,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       if(effect==='rage'&&u.hp/u.maxHp<.5&&!u.rageActivated){u.attack=Math.max(u.attack,Math.min(180,u.attack+Math.max(1,Math.floor(u.attack*value))));u.rageActivated=true;record({round,actor:u.id,action:'rage',value:u.attack});}
     }
     for(let side=0;side<2;side++){const ability=actions.get(round+':'+side);if(ability)applyCommanderAction(round,side,ability);}
+    commanderResourcesByRound.push({round,energy:[...commanderEnergy],ultimateEnergy:[...commanderUltimateEnergy],ultimateUsed:[...ultimateUsed]});
     const order=orderHeroActions(teams,{round});
     for(let cursor=0;cursor<order.length;cursor++){
       const {unit,side}=order[cursor];
@@ -151,7 +156,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       const hit=applyHeroDamage(target,raw,{round,allies:teams[1-side],executeThreshold:skill?.effect==='execute'?abilityValue(skill,'executeThreshold'):0});
       const {absorbed,damage,executedDamage}=hit;
       unit.damage+=damage+executedDamage;
-      if(target.hp===0){unit.kills++;commanderEnergy[1-side]=Math.min(100,commanderEnergy[1-side]+10);}
+      if(target.hp===0){unit.kills++;commanderEnergy[1-side]=Math.min(100,commanderEnergy[1-side]+10);if(!ultimateUsed[1-side])commanderUltimateEnergy[1-side]=Math.min(100,commanderUltimateEnergy[1-side]+10);}
       if(skill?.effect==='drain'){const healed=Math.min(unit.maxHp-unit.hp,Math.floor(damage*abilityValue(skill,'drainRate')));unit.hp+=healed;unit.healing+=healed;if(healed)record({round,side,actor:unit.id,action:'heal',target:unit.id,value:healed});}
       if(skill?.effect==='shield'){const amount=Math.round(unit.defense*abilityValue(skill,'shieldRate'));unit.shield+=amount;record({round,side,actor:unit.id,action:'shield',target:unit.id,value:amount});}
       // Tanks reinforce their whole front line during their special turns.
@@ -161,7 +166,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       if(skill?.effect==='haste'){const before=unit.speed;unit.speed=Math.max(before,Math.min(150,before+abilityValue(skill,'hasteAmount')));record({round,side,actor:unit.id,action:'haste',target:unit.id,value:unit.speed-before});}
       // Log primary settlement before secondary deaths so status transfer replay is chronological.
       record({round,side,actor:unit.id,action:skill?.name|| (special?'special':'attack'),target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:special?'special':'normal',executedDamage,...(hit.guardTriggered?{guardTriggered:true}:{}),...(hit.arcaneTransfer?{arcaneTransfer:hit.arcaneTransfer}:{})});
-      if(skill?.effect==='splash'||unit.role==='energy'&&special)for(const other of enemies.filter(x=>x!==target&&x.hp>0)){const splashRaw=calculateSplashRawDamage(raw,{skill,role:unit.role,special});const splashHit=applyHeroDamage(other,splashRaw,{round,allies:teams[1-side]});const splashAbsorbed=splashHit.absorbed,extra=splashHit.damage;unit.damage+=extra;if(other.hp===0){unit.kills++;commanderEnergy[1-side]=Math.min(100,commanderEnergy[1-side]+10);}record({round,side,actor:unit.id,action:'splash',target:other.id,value:extra,absorbed:splashAbsorbed,rawDamage:splashRaw,damageType:'splash',...(splashHit.guardTriggered?{guardTriggered:true}:{}),...(splashHit.arcaneTransfer?{arcaneTransfer:splashHit.arcaneTransfer}:{})});}
+      if(skill?.effect==='splash'||unit.role==='energy'&&special)for(const other of enemies.filter(x=>x!==target&&x.hp>0)){const splashRaw=calculateSplashRawDamage(raw,{skill,role:unit.role,special});const splashHit=applyHeroDamage(other,splashRaw,{round,allies:teams[1-side]});const splashAbsorbed=splashHit.absorbed,extra=splashHit.damage;unit.damage+=extra;if(other.hp===0){unit.kills++;commanderEnergy[1-side]=Math.min(100,commanderEnergy[1-side]+10);if(!ultimateUsed[1-side])commanderUltimateEnergy[1-side]=Math.min(100,commanderUltimateEnergy[1-side]+10);}record({round,side,actor:unit.id,action:'splash',target:other.id,value:extra,absorbed:splashAbsorbed,rawDamage:splashRaw,damageType:'splash',...(splashHit.guardTriggered?{guardTriggered:true}:{}),...(splashHit.arcaneTransfer?{arcaneTransfer:splashHit.arcaneTransfer}:{})});}
       if(unit.passive?.effect==='thorns'&&unit.hp>0)unit.shield+=Math.floor(unit.defense*unit.passive.value);
       if(unit.role==='tank'&&special)unit.shield+=Math.round(unit.defense*abilityValue(skill,'tankShieldRate'));
       unit.lastActionRound=round;finishHeroDelay(unit,round);consumeCommanderFocus(unit);expireCommanderFocus(teams,round);
@@ -173,5 +178,5 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
     if(teams.some(team=>team.every(x=>x.hp<=0)))break;
   }
   const {winner,damage,survivors}=battleOutcome(teams);
-  return {version:4,initialShields,commanderEnergy,revivalUsed,ultimateUsed,commanders:Array.isArray(commanders)?commanders.slice(0,2):[null,null],remainingCredits:[...remainingCredits],seed:String(seed),winner,rounds:Math.max(0,...log.map(x=>x.round)),teams,damage,survivors,log};
+  return {version:4,initialShields,commanderEnergy,commanderUltimateEnergy,commanderResourcesByRound,revivalUsed,ultimateUsed,commanders:Array.isArray(commanders)?commanders.slice(0,2):[null,null],remainingCredits:[...remainingCredits],seed:String(seed),winner,rounds:Math.max(0,...log.map(x=>x.round)),teams,damage,survivors,log};
 }

@@ -58,7 +58,7 @@ test('magic normal requires one living enemy; ultimate buffs one living ally',()
  assert.equal(combat.teams[0][1].arcaneSurgeBonusAttack,50);
  assert.equal(combat.teams[0][1].arcaneSurgeUntilRound,3);
  assert.equal(combat.teams[1][0].commanderWeaken,undefined);
- assert.equal(combat.abilities.energy[0],0);
+ assert.equal(combat.abilities.ultimateEnergy[0],0);
  assert.throws(()=>castLiveCommanderCombat(combat,{side:0,ability:'ultimate',requestId:'magic_valid_001',matchKey:'room:1',now:2001,targetIds:['1-2','1-3']}),/conflict/);
 });
 test('magic cannot target dead enemy and rejected selection costs no energy',()=>{
@@ -77,7 +77,7 @@ test('magic ultimate rejects enemy, dead ally, multiple or missing targets atomi
   assert.deepEqual(viewLiveCommanderCombat(combat),before);
  }
  const result=castLiveCommanderCombat(combat,{side:0,ability:'ultimate',requestId:'valid_ult_001',matchKey:'room:1',now:2000,targetIds:['0-0']});
- assert.equal(result.version,1);assert.equal(combat.abilities.energy[0],0);
+ assert.equal(result.version,1);assert.equal(combat.abilities.ultimateEnergy[0],0);
  assert.equal(combat.abilities.cooldownUntil[0],7000);
  assert.equal(combat.teams[0][0].arcaneSurgeBonusAttack,50);
  assert.ok(combat.teams[1].every(u=>u.commanderWeaken===undefined));

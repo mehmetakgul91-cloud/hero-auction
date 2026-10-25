@@ -32,19 +32,19 @@ for(const kind of ['defense','support','magic'])test(kind+' normal retains level
 test('defense ultimate preserves shield scaling plus one guard at every level and survivor count',()=>{
  for(const level of [0,1,10,20,40])for(const side of [0,1])for(const survivors of [5,2,1]){
   const c=combat('defense',level);for(let i=survivors;i<5;i++)c.teams[side][i].hp=0;const before=structuredClone(c.teams),rate=Number((.2*(1+level*.01)).toFixed(4));const result=cast(c,'ultimate',side),summary=result.events.at(-1),expected=Math.round(survivors*1000*rate);
-  assert.equal(c.abilities.energy[side],15);assert.equal(summary.value,expected);assert.equal(summary.impacts.filter(u=>u.kind==='shield').reduce((sum,u)=>sum+u.value,0),expected);assert.equal(summary.impacts.filter(u=>u.kind==='guard').length,1);assert.deepEqual(c.teams[side].filter(u=>u.hp===0),before[side].filter(u=>u.hp===0));assert.deepEqual(c.teams[1-side],before[1-side]);assert.equal(c.teams[side][0].lastStandUntilRound,2);
+  assert.equal(c.abilities.ultimateEnergy[side],15);assert.equal(summary.value,expected);assert.equal(summary.impacts.filter(u=>u.kind==='shield').reduce((sum,u)=>sum+u.value,0),expected);assert.equal(summary.impacts.filter(u=>u.kind==='guard').length,1);assert.deepEqual(c.teams[side].filter(u=>u.hp===0),before[side].filter(u=>u.hp===0));assert.deepEqual(c.teams[1-side],before[1-side]);assert.equal(c.teams[side][0].lastStandUntilRound,2);
  }
 });
 test('magic ultimate is a fixed cast-time attack snapshot, not a level-scaled enemy debuff',()=>{
  for(const level of [0,1,10,20,40])for(const side of [0,1]){
   const c=combat('magic',level),target=c.teams[side][0],before=structuredClone(c.teams);const result=cast(c,'ultimate',side,[target.id]);
-  assert.equal(c.abilities.energy[side],0);assert.equal(result.events.at(-1).value,100);assert.equal(c.teams[side][0].attack,100);assert.equal(c.teams[side][0].arcaneSurgeBonusAttack,100);assert.equal(c.teams[side][0].arcaneSurgeUntilRound,3);assert.deepEqual(c.teams[1-side],before[1-side]);
+  assert.equal(c.abilities.ultimateEnergy[side],0);assert.equal(result.events.at(-1).value,100);assert.equal(c.teams[side][0].attack,100);assert.equal(c.teams[side][0].arcaneSurgeBonusAttack,100);assert.equal(c.teams[side][0].arcaneSurgeUntilRound,3);assert.deepEqual(c.teams[1-side],before[1-side]);
  }
 });
 test('support ultimate revives one chosen casualty at fixed40 percent without level amplification',()=>{
  for(const level of [0,1,10,20,40])for(const side of [0,1])for(const survivors of [4,2,1]){
   const c=combat('support',level);for(let i=survivors;i<5;i++)c.teams[side][i].hp=0;const targetId=c.teams[side][4].id,before=structuredClone(c.teams);const result=cast(c,'ultimate',side,[targetId]);
-  assert.equal(c.abilities.energy[side],10);assert.equal(result.events.at(-1).value,400);assert.equal(c.teams[side][4].hp,400);assert.equal(c.teams[side][4].shield,0);assert.equal(c.teams[side][4].canActFromRound,2);assert.equal(c.revivalUsed[side],true);assert.deepEqual(c.teams[1-side],before[1-side]);for(let i=0;i<4;i++)assert.deepEqual(c.teams[side][i],before[side][i]);
+  assert.equal(c.abilities.ultimateEnergy[side],10);assert.equal(result.events.at(-1).value,400);assert.equal(c.teams[side][4].hp,400);assert.equal(c.teams[side][4].shield,0);assert.equal(c.teams[side][4].canActFromRound,2);assert.equal(c.revivalUsed[side],true);assert.deepEqual(c.teams[1-side],before[1-side]);for(let i=0;i<4;i++)assert.deepEqual(c.teams[side][i],before[side][i]);
  }
 });
 test('level-one defense ultimate keeps its extra shield points instead of dropping the remainder',()=>{

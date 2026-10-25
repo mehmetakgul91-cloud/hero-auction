@@ -19,7 +19,7 @@ for(const kind of ['attack','defense','magic','support'])test(`${kind}: one succ
 });
 test('invalid target and insufficient energy do not consume ultimate or mutate effects',()=>{
  for(const kind of ['magic','support']){const c=make(kind),before=viewLiveCommanderCombat(c);assert.throws(()=>cast(c,kind,{targetIds:['missing']}));assert.deepEqual(viewLiveCommanderCombat(c),before);assert.equal(c.abilities.energy[0],100);cast(c,kind);}
- for(const kind of ['attack','defense','magic','support']){const c=make(kind);c.abilities.energy[0]=0;const before=viewLiveCommanderCombat(c);assert.throws(()=>cast(c,kind),/energy/);assert.deepEqual(viewLiveCommanderCombat(c),before);assert.deepEqual(c.ultimateUsed,[false,false]);}
+ for(const kind of ['attack','defense','magic','support']){const c=make(kind);c.abilities.ultimateEnergy[0]=0;const before=viewLiveCommanderCombat(c);assert.throws(()=>cast(c,kind),/energy/);assert.deepEqual(viewLiveCommanderCombat(c),before);assert.deepEqual(c.ultimateUsed,[false,false]);}
 });
 test('low-level authoritative ability gate persists across views, is per-side and duplicate-safe',()=>{
  const s=createLiveCommanderAbilities({matchKey:'once-match',energy:[100,100],now:0});const req={side:0,ability:'ultimate',matchKey:'once-match',requestId:'ability_001',now:1000};

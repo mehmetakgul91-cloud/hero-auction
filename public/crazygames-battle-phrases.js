@@ -215,7 +215,9 @@ export function translateCommanderDescription(text) {
   .replace(/Normal: yaşayan takımın azami canının %([\d,]+)'i kadar toplam kalkan paylaşılır\./g,(_,n)=>`Normal: shares a total shield equal to ${percent(n)}% of living allies' maximum health.`)
   .replace(/Normal: eksik canın %([\d,]+)'i iyileştirilir\. Can oranı en düşük kahraman önceliklidir\./g,(_,n)=>`Normal: restores ${percent(n)}% of missing health, prioritizing the hero with the lowest health ratio.`)
   .replace(/Normal: seçilen 1 rakibin saldırısı %([\d,]+) azalır\./g,(_,n)=>`Normal: reduces 1 selected enemy's attack by ${percent(n)}%.`)
-  .replace(/Nihai \((\d+) enerji\):/g,'Ultimate ($1 energy):');
+  .replace(/Nihai \((\d+) enerji\):/g,'Ultimate ($1 energy):')
+  .replace(/Normal beceri 40 normal enerji harcar; ulti dolumu azalmaz\./g,'Normal abilities spend 40 normal energy; ultimate charge is unaffected.')
+  .replace(/Nihai \((\d+) ulti dolumu\):/g,'Ultimate ($1 ultimate charge):');
  for(const [tr,en]of Object.entries(commanderUltimatePhrases).sort((a,b)=>b[0].length-a[0].length))translated=translated.split(tr).join(en);
  return translated;
 }

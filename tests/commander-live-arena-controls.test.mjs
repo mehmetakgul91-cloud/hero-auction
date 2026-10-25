@@ -9,7 +9,7 @@ class Button {
 }
 function setup(onCast=async()=>{}){
  const normalButton=new Button(),ultimateButton=new Button(),energyLabel=new Button(),statusLabel=new Button();
- let state={energy:100,cooldownMs:0,finished:false};
+ let state={energy:100,ultimateEnergy:100,cooldownMs:0,finished:false};
  const controls=createLiveArenaCommanderControls({normalButton,ultimateButton,energyLabel,statusLabel,readState:()=>state,onCast});
  return {normalButton,ultimateButton,energyLabel,statusLabel,controls,setState:s=>{state=s;controls.refresh()}};
 }
