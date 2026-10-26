@@ -96,3 +96,10 @@ test('canonical and CrazyGames HTTP documents serve the exact shared theme witho
   }
  }finally{child.kill('SIGTERM');await new Promise(resolve=>{if(child.exitCode!==null)return resolve();child.once('exit',resolve);setTimeout(resolve,2000).unref();});}
 });
+
+
+test('preparation board hint overrides original important pale-gold text with AA contrast',()=>{
+ assert.match(publicFile('battle-preview.css'),/\.board-help\{[^}]*color:#f5de98!important/);
+ assert.match(css,/body:has\(#battle-arena\) \.formation \.board-help\{color:#586676!important\}/);
+ assert.ok(contrast('#586676','#f1f2ee')>=4.5);
+});
