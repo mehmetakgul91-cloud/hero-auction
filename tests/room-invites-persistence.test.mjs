@@ -21,7 +21,7 @@ function fixture({gold=[500,500],lostCommit=false,receiptReadFails=false}={}){
   if(sql.startsWith('INSERT INTO hero_auction_social')){staged.social=JSON.parse(args[1]);return{}}
   throw Error('unexpected query '+sql);
  }};
- const ctx={structuredClone,Map,Date,JSON,console,roomFlushes:new Map(),rooms:new Map([['123',room]]),activeSeats:new Map(),token:()=> 'guest-room-token',log:(r,text)=>r.history.push(text),publish:()=>{},previewGuestMode:false,databaseReady:true,ratings:new Map(),matchRecords:new Map(),friends:{snapshot:()=>({})},roomInvites:{snapshot:()=>[['invite-1',invite]]},error:(message,status=400)=>{throw Object.assign(Error(message),{status})},database:{connect:async()=>client,query:async()=>{if(receiptReadFails)throw Error('database unavailable');return{rows:durable.receipt?[{state:durable.receipt}]:[]}}}};
+ const ctx={requireVictoryChestStorage(){},requireVictoryChestProgression(){},structuredClone,Map,Date,JSON,console,roomFlushes:new Map(),rooms:new Map([['123',room]]),activeSeats:new Map(),token:()=> 'guest-room-token',log:(r,text)=>r.history.push(text),publish:()=>{},previewGuestMode:false,databaseReady:true,ratings:new Map(),matchRecords:new Map(),friends:{snapshot:()=>({})},roomInvites:{snapshot:()=>[['invite-1',invite]]},error:(message,status=400)=>{throw Object.assign(Error(message),{status})},database:{connect:async()=>client,query:async()=>{if(receiptReadFails)throw Error('database unavailable');return{rows:durable.receipt?[{state:durable.receipt}]:[]}}}};
  vm.createContext(ctx);vm.runInContext(functions,ctx);
  return{ctx,room,invite,durable,statements,join:()=>ctx.commitInvitationJoin(invite,room,{sub:'guest',name:'Guest'})};
 }

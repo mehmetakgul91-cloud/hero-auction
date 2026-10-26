@@ -27,7 +27,7 @@ export function commanderDiamondPolicyCopy(progression,{english=false}={}){
  return intro+(english?'Diamond purchases are not available yet. Check login reward availability in the store.':'Elmas satın alma henüz açık değil. Giriş ödüllerinin durumunu mağazadan takip edebilirsin.');
 }
 
-export function commanderBranchView(profile,id,{gold=0,diamonds=null,progression=null}={}){
+export function commanderBranchView(profile,id,{gold=0,diamonds=null,magicDust=null,progression=null}={}){
  const branch=COMMANDER_BRANCHES.find(branch=>branch.id===id);
  if(!branch)throw Error('Invalid commander branch');
  const level=profile.levels[id]??0,primary=profile.commanderId===id,cap=primary?40:20;
@@ -36,17 +36,23 @@ export function commanderBranchView(profile,id,{gold=0,diamonds=null,progression
  const nextStats=nextLevel===null?stats:commanderAbilityStats({...profile,levels:{...profile.levels,[id]:nextLevel}});
  const quote=progression?.branches?.[id];
  const quoteMatches=quote?.currentLevel===level&&quote?.nextLevel===nextLevel;
- const premium=progression?.diamondsEnabled===true;
+ const premium=progression?.diamondsEnabled===true,dustEnabled=progression?.magicDustEnabled===true;
  const cost=maxed?null:quoteMatches?quote.gold:commanderGoldUpgradeCost(level);
  const diamondCost=maxed?0:quoteMatches?quote.diamonds:premium&&level>=20?null:0;
  const requiresDiamonds=!maxed&&(quoteMatches?quote.requiresDiamonds:premium&&level>=20);
+ const magicDustCost=maxed?0:quoteMatches?quote.magicDust??(dustEnabled?null:0):dustEnabled&&level>=15?null:0;
+ const requiresMagicDust=!maxed&&dustEnabled&&level>=15;
+ // Dust uses the server quote's affordability when no separate balance was
+ // supplied. Never guess a free price or invent a wallet from a missing field.
+ const dustUnknown=requiresMagicDust&&(!Number.isSafeInteger(magicDustCost)||magicDustCost<=0);
+ const dustInsufficient=requiresMagicDust&&(quoteMatches&&quote.reason==='insufficient_magic_dust'||magicDust!==null&&(!Number.isSafeInteger(magicDust)||magicDust<magicDustCost));
  const quoteBlocked=quoteMatches&&quote.canUpgrade!==true&&!['insufficient_gold','insufficient_diamonds'].includes(quote.reason);
- const reason=maxed?'maximum_level':premium&&!quoteMatches?'pricing_unavailable':requiresDiamonds&&diamondCost===null?'pricing_unavailable':gold<cost?'insufficient_gold':requiresDiamonds&&(!Number.isSafeInteger(diamonds)||diamonds<diamondCost)?'insufficient_diamonds':quoteBlocked?(quote.reason||'unavailable'):null;
+ const reason=maxed?'maximum_level':(premium||dustEnabled)&&!quoteMatches?'pricing_unavailable':requiresDiamonds&&diamondCost===null||dustUnknown?'pricing_unavailable':gold<cost?'insufficient_gold':requiresDiamonds&&(!Number.isSafeInteger(diamonds)||diamonds<diamondCost)?'insufficient_diamonds':dustInsufficient?'insufficient_magic_dust':quoteBlocked?(quote.reason||'unavailable'):null;
  // A compressed path, not an invented unlock tree: always retain current and next.
  const points=[0,Math.floor(effectiveLevel/10)*10,effectiveLevel,...(maxed?[]:[nextLevel]),cap];
  const nodes=[...new Set(points)].sort((a,b)=>a-b).map(value=>({level:value,state:value===effectiveLevel?'current':value<effectiveLevel?'earned':value===nextLevel?'next':'future'}));
  return {...branch,level,primary,cap,effectiveLevel,retainedLevel:Math.max(0,level-cap),maxed,nextLevel,cost,
-  diamondCost,requiresDiamonds,reason,canUpgrade:!maxed&&!reason,progress:100*effectiveLevel/cap,bonus:effectiveLevel*.5,nextBonus:maxed?effectiveLevel*.5:nextLevel*.5,stats,nextStats,nodes};
+  diamondCost,requiresDiamonds,magicDustCost,requiresMagicDust,reason,canUpgrade:!maxed&&!reason,progress:100*effectiveLevel/cap,bonus:effectiveLevel*.5,nextBonus:maxed?effectiveLevel*.5:nextLevel*.5,stats,nextStats,nodes};
 }
 
 export function renderCommanderSkills(root,profile,{english=false,document=root.ownerDocument}={}){
@@ -70,10 +76,10 @@ export function renderCommanderSkills(root,profile,{english=false,document=root.
  }
 }
 
-export function renderCommanderDevelopment(root,profile,{selected=profile.commanderId,gold=0,diamonds=null,progression=null,busy=false,english=false,document=root.ownerDocument,branchesRoot=null,onSelect=()=>{},onUpgrade=()=>{}}={}){
+export function renderCommanderDevelopment(root,profile,{selected=profile.commanderId,gold=0,diamonds=null,magicDust=null,progression=null,busy=false,english=false,document=root.ownerDocument,branchesRoot=null,onSelect=()=>{},onUpgrade=()=>{}}={}){
  const pick=values=>values[english?1:0],fmt=value=>number(value,english),pct=value=>percent(value,english);
  const el=(tag,cls,text)=>{const node=document.createElement(tag);node.className=cls;if(text!==undefined)node.textContent=text;return node;};
- const views=COMMANDER_BRANCHES.map(branch=>commanderBranchView(profile,branch.id,{gold,diamonds,progression}));
+ const views=COMMANDER_BRANCHES.map(branch=>commanderBranchView(profile,branch.id,{gold,diamonds,magicDust,progression}));
  const chosen=views.find(branch=>branch.id===selected)||views.find(branch=>branch.primary);
  root.replaceChildren();
  if(branchesRoot)branchesRoot.replaceChildren();
@@ -115,13 +121,14 @@ export function renderCommanderDevelopment(root,profile,{selected=profile.comman
  if(chosen.primary)explanation.append(el('p','cp-fixed-note',chosen.id==='defense'?pick(['Ölümcül darbeden 1 canla kurtulma kuralı değişmez.','The 1-health lethal-hit protection is unchanged.']):pick(['Nihai becerinin hedefi, süresi ve özel etkisi seviyeden bağımsızdır.','The ultimate’s targeting, duration and special effect do not scale with level.'])));
  panel.append(effects);
  const button=el('button','cp-upgrade-button');button.type='button';button.dataset.upgrade=chosen.id;
- const blocked={pricing_unavailable:pick(['ELMAS FİYATI HENÜZ BELİRLENMEDİ','DIAMOND PRICE NOT SET']),insufficient_gold:pick(['ALTIN YETERSİZ','NOT ENOUGH GOLD']),insufficient_diamonds:pick(['ELMAS YETERSİZ','NOT ENOUGH DIAMONDS'])};
+ const blocked={pricing_unavailable:progression?.magicDustEnabled?pick(['GELİŞTİRME FİYATI KULLANILAMIYOR','UPGRADE PRICE UNAVAILABLE']):pick(['ELMAS FİYATI HENÜZ BELİRLENMEDİ','DIAMOND PRICE NOT SET']),insufficient_gold:pick(['ALTIN YETERSİZ','NOT ENOUGH GOLD']),insufficient_diamonds:pick(['ELMAS YETERSİZ','NOT ENOUGH DIAMONDS']),insufficient_magic_dust:pick(['BÜYÜ TOZU YETERSİZ','NOT ENOUGH MAGIC DUST'])};
  const state=busy?pick(['İŞLENİYOR…','PROCESSING…']):chosen.maxed?pick(['✓ BU DAL TAMAMLANDI','✓ BRANCH COMPLETE']):!chosen.canUpgrade?(blocked[chosen.reason]||pick(['GELİŞTİRME KULLANILAMIYOR','UPGRADE UNAVAILABLE'])):pick(['GELİŞTİR','UPGRADE']);
- const costText=chosen.cost===null?'':fmt(chosen.cost)+' '+pick(['ALTIN','GOLD'])+(chosen.requiresDiamonds?' + '+(chosen.diamondCost===null?'—':fmt(chosen.diamondCost))+' '+pick(['ELMAS','DIAMONDS']):'');
+ const costText=chosen.cost===null?'':fmt(chosen.cost)+' '+pick(['ALTIN','GOLD'])+(chosen.requiresMagicDust?' + '+(chosen.magicDustCost===null?'—':fmt(chosen.magicDustCost))+' '+pick(['BÜYÜ TOZU','MAGIC DUST']):'')+(chosen.requiresDiamonds?' + '+(chosen.diamondCost===null?'—':fmt(chosen.diamondCost))+' '+pick(['ELMAS','DIAMONDS']):'');
  button.append(el('span','',state),el('b','',costText));
  button.disabled=busy||!chosen.canUpgrade;button.setAttribute('aria-label',pick(chosen.name)+' · '+state+(costText?' · '+costText:''));button.onclick=()=>{if(!button.disabled)onUpgrade(chosen.id);};
  panel.append(button);
  if(chosen.reason==='insufficient_gold')panel.append(el('p','cp-afford-note',english?`${fmt(Math.max(0,chosen.cost-gold))} more gold needed.`:`${fmt(Math.max(0,chosen.cost-gold))} altın daha gerekiyor.`));
+ if(chosen.requiresMagicDust)panel.append(el('p','cp-afford-note',pick(['15. seviyeden sonraki geliştirmeler ayrıca büyü tozu ister. Gösterilen bedel sunucuda yeniden doğrulanır.','Upgrades after level 15 also require magic dust. The shown price is verified again by the server.'])));
  if(chosen.requiresDiamonds)panel.append(el('p','cp-afford-note',pick(['20. seviyeden sonraki geliştirmeler altın + elmas ister. Elmas satın alma henüz açık değil.','Upgrades after level 20 require gold + diamonds. Diamond purchases are not available yet.'])));
  explanation.append(el('p','cp-path-note',pick(['Seviyeler sırayla alınır. Dal seçmek altın harcamaz.','Levels are purchased in order. Choosing a branch spends no gold.'])));panel.append(explanation);
  root.append(panel);

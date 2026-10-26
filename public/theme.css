@@ -620,10 +620,33 @@ body:has(#battle-arena) :is(.formation-card.previewing,.board-slot.circle-slot.h
 body:has(#battle-arena) .formation-card.previewing .formation-stats{color:#28654d}
 body:has(#battle-arena) #commander-bonus-content>div{border-color:#bcc9cb!important}
 /* Slate keeps original blue/red teams, HP, shield, rarity and cast effects legible. */
-body:has(#battle-arena) .battle-arena{background:#263548;border-color:#6e899b;box-shadow:0 5px 22px #20304720;color:#e7edf1}
-body:has(#battle-arena) .battle-arena:after{background:#314154;border-color:#91b1c0;color:#e7edf1}
-body:has(#battle-arena) .arena-blue{background:linear-gradient(110deg,#2b4e65,#283c50);border-color:#799ca566}
-body:has(#battle-arena) .arena-red{background:linear-gradient(250deg,#624452,#3d394e)}
+/* Cosmetic scene only: the existing grid, clipping, hit areas and stacking are
+   intentionally untouched. Static local SVGs require no canvas, filters or animation. */
+body:has(#battle-arena) .battle-arena{
+ background-color:#283333;
+ background-image:radial-gradient(ellipse at center,transparent 35%,#111b2566 100%),url('/images/arena-themes/courtyard.svg');
+ background-position:center;
+ background-size:100% 100%;
+ background-repeat:no-repeat;
+ border-color:#7f877b;
+ box-shadow:inset 0 1px #c5c5ab33,inset 0 0 30px #10191f55,0 5px 22px #20304720;
+ color:#e7edf1;
+}
+body:has(#battle-arena) .battle-arena[data-arena-theme="savanna"]{background-image:radial-gradient(ellipse at center,transparent 35%,#111b2566 100%),url('/images/arena-themes/savanna.svg');border-color:#8f8368}
+body:has(#battle-arena) .battle-arena[data-arena-theme="fjord"]{background-image:radial-gradient(ellipse at center,transparent 35%,#111b2566 100%),url('/images/arena-themes/fjord.svg');border-color:#82969c}
+body:has(#battle-arena) .battle-arena[data-arena-theme="ruins"]{background-image:radial-gradient(ellipse at center,transparent 35%,#111b2566 100%),url('/images/arena-themes/ruins.svg');border-color:#7d9176}
+body:has(#battle-arena) .battle-arena[data-arena-theme="space"]{background-image:radial-gradient(ellipse at center,transparent 35%,#111b2566 100%),url('/images/arena-themes/space.svg');border-color:#8493b4}
+body:has(#battle-arena) .battle-arena::before{background:none}
+body:has(#battle-arena) .battle-arena:after{background:#303a3f;border-color:#aaac93;color:#f0e7cd;box-shadow:0 2px 8px #10191f66}
+/* Text labels and left/right placement remain the primary team identifiers.
+   Solid/dashed edge styles add a second non-colour cue, without widening borders. */
+body:has(#battle-arena) .arena-blue{background:linear-gradient(90deg,#3696c81a,transparent 24%);border-color:#75b9d65c;border-style:solid;box-shadow:inset 2px 0 #7bc5e466}
+body:has(#battle-arena) .arena-red{background:linear-gradient(270deg,#ce62701a,transparent 24%);border-color:#dd929958;border-style:dashed;box-shadow:inset -2px 0 #e9a1a366}
+@media(forced-colors:active){
+ body:has(#battle-arena) .battle-arena[data-arena-theme],body:has(#battle-arena) .battle-arena{background:Canvas;color:CanvasText;border-color:CanvasText;box-shadow:none}
+ body:has(#battle-arena) .arena-blue,body:has(#battle-arena) .arena-red{background:none;border-color:CanvasText;box-shadow:none}
+ body:has(#battle-arena) .battle-arena:after{background:Canvas;color:CanvasText;border-color:CanvasText;box-shadow:none}
+}
 body:has(#battle-arena) .arena-side h2{color:#e7edf1}
 body:has(#battle-arena) .arena-hero-label{color:#e7edf1}
 body:has(#battle-arena) :is(.arena-commander-matchup,.arena-live-clock){background:#e3e7de;border-color:#b7ad8d;color:#203047;box-shadow:none}

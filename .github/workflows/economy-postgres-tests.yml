@@ -7,6 +7,9 @@ on:
       - 'paid-diamond-exchange.js'
       - 'diamond-signup-bonus.js'
       - 'login-rewards.js'
+      - 'magic-dust.js'
+      - 'victory-chests.js'
+      - 'tools/test-postgres-victory-chests.mjs'
       - 'server.js'
       - 'arena-commanders.js'
       - 'public/commander-economy.js'
@@ -21,6 +24,9 @@ on:
       - 'paid-diamond-exchange.js'
       - 'diamond-signup-bonus.js'
       - 'login-rewards.js'
+      - 'magic-dust.js'
+      - 'victory-chests.js'
+      - 'tools/test-postgres-victory-chests.mjs'
       - 'server.js'
       - 'arena-commanders.js'
       - 'public/commander-economy.js'
@@ -64,3 +70,35 @@ jobs:
           # Disposable fixture credential, never a repository/production secret.
           HERO_ECONOMY_TEST_DB: postgresql://test:test@127.0.0.1:5432/hero_economy_test
         run: node tools/test-postgres-economy.mjs
+
+  postgres-victory-chests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18@sha256:edb0c08dc33befd0262ab3b5cf1c4f3f8cfd8b09e88c05b45adee29d6761ddb6
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: hero_victory_chests_test
+        ports:
+          - '127.0.0.1:5432:5432'
+        options: >-
+          --health-cmd "pg_isready -U test -d hero_victory_chests_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Victory chest and magic dust real transactions, recovery and concurrency
+        env:
+          HERO_VICTORY_CHEST_TEST_DB: postgresql://test:test@127.0.0.1:5432/hero_victory_chests_test
+        run: node tools/test-postgres-victory-chests.mjs
