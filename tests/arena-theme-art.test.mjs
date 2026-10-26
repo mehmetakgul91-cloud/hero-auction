@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,statSync} from 'node:fs';
-import {ARENA_THEME_CATALOG_IDS} from '../public/arena-theme.js';
+import {ARENA_THEME_IDS,ARENA_THEME_CATALOG_IDS} from '../public/arena-theme.js';
 const css=readFileSync(new URL('../public/theme.css',import.meta.url),'utf8');
 const scenes=css.slice(css.indexOf('/* Cosmetic scene only:'),css.indexOf('body:has(#battle-arena) .arena-side h2'));
 const path=id=>new URL('../public/images/arena-themes/'+id+'.svg',import.meta.url);
@@ -15,6 +15,15 @@ test('five archived vector scene assets remain intact and below 4 KB each',()=>{
  });
  assert.equal(new Set(assets).size,5,'not merely recoloured copies');
  assert.match(assets[0],/pattern id="paving"/);assert.match(assets[1],/Afrika savanası/);assert.match(assets[2],/pattern id="slabs"/);assert.match(assets[3],/sarmaşıklar/);assert.match(assets[4],/pattern id="panels"/);
+});
+test('only approved forest and savanna are active while the other three vector scenes stay archived',()=>{
+ assert.deepEqual(ARENA_THEME_IDS,['ruins','savanna']);
+ assert.ok(css.includes("url('/images/arena-themes/ruins-premium.webp')"));
+ assert.match(css,/\.battle-arena\[data-arena-theme="savanna"\]\{[^}]*background-image:url\('\/images\/arena-themes\/savanna-premium\.webp'\)/);
+ for(const id of ['courtyard','fjord','space']){
+  assert.ok(!ARENA_THEME_IDS.includes(id));assert.ok(statSync(path(id)).size>0);
+  assert.ok(!css.includes("url('/images/arena-themes/"+id+".svg')"));
+ }
 });
 test('scene layer changes no geometry, scrolling, stacking, input or resource styling',()=>{
  const clean=scenes.replace(/\/\*[\s\S]*?\*\//g,'');

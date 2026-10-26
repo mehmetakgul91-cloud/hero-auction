@@ -634,6 +634,8 @@ body:has(#battle-arena) .battle-arena{
 }
 /* Approved forest painting: preserve proportions and natural lighting, no dark veil. */
 body:has(#battle-arena) .battle-arena[data-arena-theme="ruins"]{border-color:#7d9176}
+/* Approved savanna painting is requested only when this match selects savanna. */
+body:has(#battle-arena) .battle-arena[data-arena-theme="savanna"]{background-image:url('/images/arena-themes/savanna-premium.webp');border-color:#aa8a5b}
 @media(max-width:600px){body:has(#battle-arena) .battle-arena{background-position:center center}}
 body:has(#battle-arena) .battle-arena::before{background:none}
 body:has(#battle-arena) .battle-arena:after{background:#303a3f;border-color:#aaac93;color:#f0e7cd;box-shadow:0 2px 8px #10191f66}
@@ -736,3 +738,50 @@ body:has(.demo-shell),body:has(.model-shell){background:radial-gradient(ellipse 
 .demo-shell .result-panel p{color:#586676}
 .demo-shell .result-panel button{background:#e1d7c1;color:#66512b;border-color:#baa575}
 /* No display, size, position, visibility, motion, HP/energy fill, or rarity-variable changes. */
+
+/* Cosmetic arena weather — selected scene only, finite noninteractive bursts. */
+/* Approved v4 dust: mount inside the existing isolated, positioned arena.
+   No rules target heroes, health/shield bars, hit areas or the arena's geometry. */
+[data-savanna-dust]{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none;border-radius:inherit}
+[data-savanna-dust][hidden]{display:none!important}
+[data-savanna-dust] .savanna-dust__layer{
+ position:absolute;left:var(--dust-left);top:var(--dust-top);width:var(--dust-width);height:var(--dust-height);
+ display:block;max-width:none;object-fit:contain;pointer-events:none;user-select:none;transform-origin:center;
+ opacity:0;transform:translate(var(--dust-start),var(--dust-start-y)) rotate(var(--dust-rotation)) scale(var(--dust-start-scale));
+}
+[data-savanna-dust].is-running .savanna-dust__layer{animation:savanna-dust-pass var(--dust-layer-duration) linear var(--dust-layer-delay) 1 both}
+@keyframes savanna-dust-pass{
+ 0%{transform:translate(var(--dust-start),var(--dust-start-y)) rotate(var(--dust-rotation)) scale(var(--dust-start-scale));opacity:0}
+ 18%{opacity:var(--dust-peak)}
+ 70%{opacity:var(--dust-tail)}
+ 100%{transform:translate(var(--dust-end),var(--dust-end-y)) rotate(var(--dust-rotation)) scale(var(--dust-end-scale));opacity:0}
+}
+/* CSS is a second hard stop, even before the preference listener executes. */
+@media(prefers-reduced-motion:reduce){
+ [data-savanna-dust]{display:none!important}
+ [data-savanna-dust] .savanna-dust__layer{animation:none!important;opacity:0;transform:none}
+}
+/* Same finite transform/opacity animation and reduced-motion hard stop as dust.css.
+   The generated clip contains ONLY portrait interiors, never labels or bars. */
+[data-savanna-dust][data-savanna-foreground]{z-index:20}
+/* Forest wind: fixed leaves, finite bursts; the approved painting stays still. */
+[data-forest-gust]{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;z-index:-1}
+[data-forest-gust="foreground"]{z-index:20}
+[data-forest-gust][hidden]{display:none!important}
+[data-forest-gust] .forest-gust__leaf{position:absolute;left:0;top:0;width:var(--leaf-size);height:auto;max-width:none;pointer-events:none;user-select:none;opacity:0;transform-origin:center}
+[data-forest-gust].is-running .forest-gust__leaf{animation:forest-leaf-drift var(--leaf-duration) linear var(--leaf-delay) 1 both}
+@keyframes forest-leaf-drift{
+ 0%{opacity:0;transform:translate(var(--leaf-start-x),var(--leaf-start-y)) rotate(var(--leaf-start-rotation)) scale(.75,.9)}
+ 15%{opacity:var(--leaf-opacity)}
+ 50%{opacity:var(--leaf-opacity);transform:translate(var(--leaf-mid-x),var(--leaf-mid-y)) rotate(var(--leaf-mid-rotation)) scale(1,.76)}
+ 80%{opacity:var(--leaf-opacity)}
+ 100%{opacity:0;transform:translate(var(--leaf-end-x),var(--leaf-end-y)) rotate(var(--leaf-end-rotation)) scale(.68,.9)}
+}
+[data-forest-gust] .forest-gust__light,[data-forest-gust] .forest-gust__shadow{position:absolute;pointer-events:none;opacity:0}
+[data-forest-gust] .forest-gust__light{left:6%;top:4%;width:34%;height:30%;background:radial-gradient(ellipse,#eee6b6,transparent 72%)}
+[data-forest-gust] .forest-gust__shadow{right:-4%;bottom:8%;width:32%;height:44%;background:radial-gradient(ellipse,#0e281b,transparent 72%)}
+[data-forest-gust].is-running .forest-gust__light{animation:forest-light-gust 7s ease-in-out 1 both}
+[data-forest-gust].is-running .forest-gust__shadow{animation:forest-shadow-gust 7s ease-in-out 1 both}
+@keyframes forest-light-gust{0%,100%{opacity:0}45%{opacity:.03}}
+@keyframes forest-shadow-gust{0%,100%{opacity:0}55%{opacity:.035}}
+@media(prefers-reduced-motion:reduce){[data-forest-gust]{display:none!important}[data-forest-gust] .forest-gust__leaf,[data-forest-gust] .forest-gust__light,[data-forest-gust] .forest-gust__shadow{animation:none!important;opacity:0}}

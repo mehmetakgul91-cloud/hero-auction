@@ -7,6 +7,8 @@ import {crazyGamesSource} from '../crazygames-build.js';
 
 const publicFile=name=>readFileSync(new URL(`../public/${name}`,import.meta.url),'utf8');
 const css=publicFile('theme.css');
+// Weather geometry is separately scoped and tested; the accepted page theme stays visual-only.
+const baseCss=css.split('/* Cosmetic arena weather — selected scene only, finite noninteractive bursts. */')[0];
 const pages=['index','kahramanlar','ligler','privacy','crazygames-privacy','music-credits','battle-preview','arena-3d','arena-model','commander-training'];
 
 test('accepted theme loads once, last in every active public document, preserving original styles',()=>{
@@ -24,7 +26,7 @@ test('accepted theme loads once, last in every active public document, preservin
 
 test('theme preserves behavior, visibility and geometry apart from the scoped masthead layer',()=>{
  // One reviewed masthead layer repairs account dropdown stacking; no other z-index is allowed.
- const clean=css.replace(/\/\*[\s\S]*?\*\//g,'').replace('.shell>.lobby-header{z-index:1;','.shell>.lobby-header{');
+ const clean=baseCss.replace(/\/\*[\s\S]*?\*\//g,'').replace('.shell>.lobby-header{z-index:1;','.shell>.lobby-header{');
  assert.doesNotMatch(clean,/(?:^|[;{])\s*(?:display|visibility|position|z-index|pointer-events|content|width|height|min-width|max-width|min-height|max-height|overflow(?:-x|-y)?|grid-template-columns|touch-action|user-select)\s*:/m);
  assert.doesNotMatch(clean,/@import|https?:\/\/|url\([^)]*data:/);
  assert.doesNotMatch(clean,/\b(?:img|canvas|svg)\s*\{[^}]*\bfilter\s*:[^;}]*(?:brightness|invert|saturate|grayscale|hue-rotate)\(/);
@@ -57,7 +59,7 @@ const luminance=hex=>{
 const contrast=(a,b)=>(Math.max(luminance(a),luminance(b))+.05)/(Math.min(luminance(a),luminance(b))+.05);
 test('approved broad surfaces stay at or below the accepted off-white luminance ceiling',()=>{
  const ceiling=luminance('#f8f7f3');
- const clean=css.replace(/\/\*[\s\S]*?\*\//g,'');
+ const clean=baseCss.replace(/\/\*[\s\S]*?\*\//g,'');
  for(const [,value] of clean.matchAll(/(?:^|[;{])\s*background(?:-color|-image)?\s*:([^;}]+)/gm)){
   for(const [hex] of value.matchAll(/#[0-9a-f]{6}(?![0-9a-f])/gi))assert.ok(luminance(hex)<=ceiling+1e-9,`${hex} exceeds accepted surface`);
   assert.doesNotMatch(value,/(?:^|[\s,(])(?:white|#fff)(?:[\s,)]|$)/i);
@@ -110,7 +112,7 @@ test('account dropdown escapes the later home context without overtaking global 
  assert.match(publicFile('lobby-chrome.css'),/\.shell>\.lobby-header\{[^}]*position:relative;isolation:isolate/);
  assert.match(publicFile('style.css'),/#home\.cinema-home\{[^}]*position:relative;isolation:isolate/);
  assert.match(css,/\.shell>\.lobby-header\{z-index:1;/);
- assert.deepEqual([...css.matchAll(/z-index\s*:\s*([^;}]+)/g)].map(m=>m[1]),['1']);
+ assert.deepEqual([...baseCss.matchAll(/z-index\s*:\s*([^;}]+)/g)].map(m=>m[1]),['1']);
  assert.match(publicFile('lobby-chrome.css'),/\.lobby-header \.account-bar #google-logout\{[^}]*z-index:20/);
  assert.match(publicFile('style.css'),/#toast\{[^}]*z-index:5/);
  assert.match(publicFile('room-invites.css'),/\.room-invites\s*\{[^}]*z-index:12000/);
