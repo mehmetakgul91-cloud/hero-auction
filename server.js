@@ -1,3 +1,4 @@
+import {assertCancellableRoom,cancellationMatchId,cancellationIdentity,cancellationDigest,cancellationCandidate,publicCancellationCandidate,normalizeCancellationSelections,cancellationReceiptKey,cancelPaidMatches} from './paid-match-cancellation.js';
 import {createPaidEntryMaintenance,isUnsettledPaidRoom} from './paid-entry-maintenance.js';
 import {createMagicDustPolicy,readMagicDustBalance} from './magic-dust.js';
 import {createVictoryChestPolicy,eligibleVictory,victoryMatchId,persistVictoryChestIntent,creditVictoryChest,readVictoryChestRecovery,victoryChestView} from './victory-chests.js';
@@ -41,7 +42,7 @@ import {createArena3dDemo} from './arena-3d-demo.js';
 import {startRoomArenaTheme,roomArenaPresentation} from './arena-theme.js';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
-const paidEntryMaintenance=createPaidEntryMaintenance({bootPaused:process.env.HERO_PAID_ENTRY_PAUSED==='1'});
+const paidEntryMaintenance=createPaidEntryMaintenance({bootPaused:process.env.HERO_PAID_ENTRY_PAUSED==='1',canResume:()=>cancellationReservations.size===0});
 // Explicit opt-in only. Schema is a separate, unapplied migration; no payment handler.
 const diamondPolicy=createDiamondPolicy(process.env);
 const magicDustPolicy=createMagicDustPolicy(process.env);
@@ -122,6 +123,9 @@ const matchRecords=new Map();
 const roomInvites=createRoomInvites();
 const activeSeats=new Map();
 const roomFlushes=new Map();
+const cancellationPlans=new Map();
+const cancellationReservations=new Map();
+const battlePreparationFlights=new Map();
 const friends=createFriendsService({persist:()=>saveSocial(true),profile:id=>profileOf(id),canInteract:(a,b)=>moderationReady&&!moderation.blocked(a,b)});
 let socialSaveQueue=Promise.resolve();
 let socialSaveNeedsConfirmation=false;
@@ -189,7 +193,7 @@ async function flushRooms(){
  const finishRoomBatch=paidEntryMaintenance.track('roomBatches');
  const codes=[...dirtyRooms];dirtyRooms.clear();
  try{for(const code of codes){
-  const r=rooms.get(code);if(r?.inviteJoining){dirtyRooms.add(code);continue}
+  const r=rooms.get(code);if(r?.inviteJoining||r&&isCancellationReserved(r)){dirtyRooms.add(code);continue}
   try{
    if(r){
     const write=database.query('INSERT INTO hero_auction_rooms(code,state,updated_at) VALUES($1,$2,NOW()) ON CONFLICT(code) DO UPDATE SET state=EXCLUDED.state,updated_at=NOW()',[code,JSON.stringify(r)]);
@@ -212,12 +216,68 @@ async function paidEntryDrainStatus(){
  const paid=room=>room?.mode!=='bot'&&room?.entryPaid===true;
  return paidEntryMaintenance.status({
   activePaidMatches:[...rooms.values()].filter(isUnsettledPaidRoom).length,
-  pendingGold:pendingGold.size,unconfirmedSocialWrites:socialSaveNeedsConfirmation?1:0,
+  pendingMatchCancellations:cancellationReservations.size,pendingGold:pendingGold.size,unconfirmedSocialWrites:socialSaveNeedsConfirmation?1:0,
   dirtyPaidRooms:[...dirtyRooms].filter(code=>!rooms.has(code)||paid(rooms.get(code))).length,
   paidRoomWritesInFlight:[...roomFlushes.keys()].filter(code=>paid(rooms.get(code))).length,
   uncertainInvitations:[...rooms.values()].filter(room=>room.inviteUncertain).length,
   pendingVictoryChests:pendingVictoryChests.size,victoryChestWritesInFlight:victoryChestFlights.size
  },healthy);
+}
+function isCancellationReserved(room){return !!room&&cancellationReservations.has(cancellationIdentity(room));}
+function requireBattleNotCancelled(room){if(room.cancelled)throw Object.assign(Error('Bu maç yönetici tarafından iptal edildi; giriş ücreti iade edildi.'),{status:409,cancellation:{reason:'admin-entry-refund',refundGoldPerSeat:50}});if(isCancellationReserved(room))error('Bu maçın iptal işlemi doğrulanıyor.',503);}
+function assertCancellationRuntime(plan){
+ const room=rooms.get(plan.room.code),matchId=cancellationMatchId(plan.room);
+ if(!room||cancellationMatchId(room)!==matchId)error('Maç kimliği değişti.',409);
+ assertCancellableRoom(room);
+ if(cancellationDigest({snapshot:room,durableDigest:plan.durableDigest})!==plan.digest)error('Oda önizlemeden sonra değişti.',409);
+ if(liveArenaMatchKeys.has(room.code)||liveArenaLifecycle.status(matchId)||battlePreparationFlights.get(matchId)||pendingVictoryChests.has(matchId)||victoryChestFlights.has(matchId)||roomFlushes.has(room.code))error('Maçta devam eden savaş veya kayıt işlemi var.',409);
+ if([...pendingGold.keys()].some(id=>id===matchId||id.startsWith(room.code+':refund:')&&id.endsWith(':'+(room.matchNumber||1)+':'+room.created)))error('Maçın ödül veya iade işlemi bekliyor.',409);
+}
+async function cancellationPreview(){
+ const status=await paidEntryDrainStatus();
+ if(!status.paused||!status.persistenceConfirmed||!status.databaseHealthy||status.controlWritesInFlight||status.paidEntriesInFlight||status.roomFlushBatchesInFlight||status.goldFlushesInFlight||status.socialWritesInFlight||status.unconfirmedSocialWrites||status.uncertainLegacyEntries)error('Önce kalıcı duraklatmayı ve bekleyen kayıtları doğrulayın.',409);
+ const durable=new Map((await database.query('SELECT code,state FROM hero_auction_rooms')).rows.map(row=>[row.code,row.state]));
+ const candidates=[];
+ for(const room of rooms.values()){
+  try{
+   if(isCancellationReserved(room)||dirtyRooms.has(room.code))continue;
+   const plan=cancellationCandidate(room,durable.get(room.code));assertCancellationRuntime(plan);
+   cancellationPlans.set(plan.id,plan);candidates.push(publicCancellationCandidate(plan));
+  }catch{}
+ }
+ for(const [id,plan] of cancellationPlans)if(!cancellationReservations.has(id)&&(!rooms.has(plan.room.code)||cancellationIdentity(rooms.get(plan.room.code))!==id))cancellationPlans.delete(id);
+ return{bootId:status.bootId,revision:status.revision,paused:status.paused,persistenceConfirmed:status.persistenceConfirmed,candidates,requiredSelectionCount:3};
+}
+async function executeCancellations(body,user){
+ const selected=normalizeCancellationSelections(body.candidates),receiptKey=cancellationReceiptKey(selected);
+ return paidEntryMaintenance.runPaused(body.expectedBootId,body.expectedRevision,async()=>{
+  if([...cancellationReservations.values()].some(value=>value.receiptKey!==receiptKey))error('Önce bekleyen iptal işleminin sonucunu doğrulayın.',409);
+  if(pendingGold.size||pendingVictoryChests.size||victoryChestFlights.size||socialSaveNeedsConfirmation||[...rooms.values()].some(room=>room.inviteUncertain))error('Önce bekleyen ödül veya kayıt işlemlerini tamamlayın.',409);
+  const existingIds=new Set(cancellationReservations.keys());
+  for(const item of selected){const plan=cancellationPlans.get(item.id);if(plan&&plan.digest===item.digest&&!rooms.get(plan.room.code)?.cancelled)assertCancellationRuntime(plan);}
+  // Synchronous reservation precedes every DB await. Preview/formation/start
+  // recheck it, including after the commander-profile await.
+  for(const item of selected)cancellationReservations.set(item.id,{receiptKey,digest:item.digest});
+  let durableOutcome=false;
+  try{
+   const outcome=await cancelPaidMatches({database,selections:selected,plans:cancellationPlans,actorId:user.sub,expectedRevision:body.expectedRevision,validateLive:chosen=>chosen.forEach(assertCancellationRuntime)});
+   durableOutcome=true;
+   for(const closed of outcome.rooms){
+    const current=rooms.get(closed.code);
+    if(!current||cancellationMatchId(current)!==cancellationMatchId(closed)||current.cancelled?.receiptKey===receiptKey)continue;
+    const plan=cancellationPlans.get(cancellationIdentity(closed));
+    // Never overwrite a newer rematch or changed in-memory snapshot on replay.
+    if(!plan||cancellationDigest({snapshot:current,durableDigest:plan.durableDigest})!==plan.digest)error('İade kaydedildi; oda görünümü yeniden doğrulanmalı.',503);
+    Object.assign(current,structuredClone(closed));publish(current);
+   }
+   for(const item of selected)cancellationReservations.delete(item.id);
+   return outcome.result;
+  }catch(cause){
+   if(durableOutcome)cause.uncertain=true;
+   if(!cause.uncertain)for(const item of selected)if(!existingIds.has(item.id))cancellationReservations.delete(item.id);
+   throw cause;
+  }
+ });
 }
 async function walletSummary(accountId){
  const gold=await goldBalance(accountId),result={gold,diamonds:null,magicDust:null,currencies:{gold:{available:true,reason:null},diamonds:{available:false,reason:'disabled'},magicDust:{available:false,reason:'disabled'}}};
@@ -338,7 +398,7 @@ const rand=n=>crypto.randomInt(n);
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
 const code=()=>String(crypto.randomInt(100,1000));
 const token=()=>crypto.randomBytes(24).toString('hex');
-const publicRoom=(r,seat)=>({...auctionRevealSnapshot(r),arenaPresentation:roomArenaPresentation(r),...victoryChestView(r,seat),code:r.code,universe:r.universe,phase:r.phase,round:r.round,turn:r.turn,deadline:r.deadline||null,series:r.series||[0,0],rematch:r.rematch||[false,false],mode:r.mode||"friend",difficulty:r.mode==='bot'?(r.difficulty||'medium'):null,rankChange:r.phase==='finished'?(r.rankChange||[0,0]):null,rankBefore:r.phase==='finished'?(r.rankBefore||[null,null]):null,topBid:r.topBid,topSeat:r.topSeat,history:r.history,chat:(r.chat||[]).filter(message=>moderationReady&&seat>=0&&!moderation.blocked(r.players[seat]?.accountId,r.players[message.seat]?.accountId)),players:r.players.map((p,i)=>p?{name:p.name,credits:p.credits,team:p.team.map(x=>({name:x.name,universe:x.universe,cost:x.cost,rarity:rarityForPower(x.power)})),connected:true,seat:i,playerId:seat>=0&&p.accountId?friends.playerId(p.accountId):null}:null),card:r.phase==='auction'?{name:r.cards[r.round].name,universe:r.cards[r.round].universe,rarity:rarityForPower(r.cards[r.round].power)}:null,final:r.phase==='finished'?r.players.map(p=>({name:p.name,score:Math.round(p.team.reduce((a,c)=>a+c.power,0)*(1+p.credits*0.01)*100)/100,credits:p.credits,team:p.team.map(c=>({name:c.name,universe:c.universe,cost:c.cost,power:c.power,rarity:rarityForPower(c.power)}))})):null,me:seat,catalogueCount:catalogue.size});
+const publicRoom=(r,seat)=>({...auctionRevealSnapshot(r),cancellation:r.cancelled?{reason:'admin-entry-refund',refundGoldPerSeat:50}:null,arenaPresentation:roomArenaPresentation(r),...victoryChestView(r,seat),code:r.code,universe:r.universe,phase:r.phase,round:r.round,turn:r.turn,deadline:r.deadline||null,series:r.series||[0,0],rematch:r.rematch||[false,false],mode:r.mode||"friend",difficulty:r.mode==='bot'?(r.difficulty||'medium'):null,rankChange:r.phase==='finished'?(r.rankChange||[0,0]):null,rankBefore:r.phase==='finished'?(r.rankBefore||[null,null]):null,topBid:r.topBid,topSeat:r.topSeat,history:r.history,chat:(r.chat||[]).filter(message=>moderationReady&&seat>=0&&!moderation.blocked(r.players[seat]?.accountId,r.players[message.seat]?.accountId)),players:r.players.map((p,i)=>p?{name:p.name,credits:p.credits,team:p.team.map(x=>({name:x.name,universe:x.universe,cost:x.cost,rarity:rarityForPower(x.power)})),connected:true,seat:i,playerId:seat>=0&&p.accountId?friends.playerId(p.accountId):null}:null),card:r.phase==='auction'?{name:r.cards[r.round].name,universe:r.cards[r.round].universe,rarity:rarityForPower(r.cards[r.round].power)}:null,final:r.phase==='finished'?r.players.map(p=>({name:p.name,score:Math.round(p.team.reduce((a,c)=>a+c.power,0)*(1+p.credits*0.01)*100)/100,credits:p.credits,team:p.team.map(c=>({name:c.name,universe:c.universe,cost:c.cost,power:c.power,rarity:rarityForPower(c.power)}))})):null,me:seat,catalogueCount:catalogue.size});
 function publish(r){r.revision=(Number.isSafeInteger(r.revision)?r.revision:0)+1;markRoom(r);for(const client of listeners.get(r.code)||[]){try{client.res.write(`data: ${JSON.stringify(publicRoom(r,client.seat))}\n\n`)}catch{}}}
 function log(r,msg){r.history.push(msg);if(r.history.length>30)r.history.shift();}
 function forcedCardCost(card){return ({common:2,advanced:3,rare:4,legendary:5})[rarityForPower(card.power)]||2}
@@ -451,7 +511,9 @@ async function adminApi(url,b){
  if(!user||!ADMIN_GOOGLE_EMAIL||user.email!==ADMIN_GOOGLE_EMAIL||user.sub.startsWith('guest:'))error('Yönetici yetkisi gerekli.',403);
  if(!database||!databaseReady)error('Veritabanı kullanılamıyor.',503);
  if(url==='/api/admin/economy/status')return paidEntryDrainStatus();
- if(url==='/api/admin/economy/pause'){await paidEntryMaintenance.setPaused(b.paused,b.expectedBootId,b.expectedRevision);return paidEntryDrainStatus();}
+ if(url==='/api/admin/economy/cancellations/preview')return cancellationPreview();
+ if(url==='/api/admin/economy/cancellations/execute')return executeCancellations(b,user);
+ if(url==='/api/admin/economy/pause'){if(b.paused===false&&cancellationReservations.size)error('Önce bekleyen iptal işlemini doğrulayın.',409);await paidEntryMaintenance.setPaused(b.paused,b.expectedBootId,b.expectedRevision);return paidEntryDrainStatus();}
  if(url==='/api/admin/moderation/list'||url==='/api/admin/moderation/review'){if(!moderationReady)error('Denetim sistemi geçici olarak kullanılamıyor.',503);return url.endsWith('/list')?moderation.adminList(user):moderation.review(user,b)}
  if(url==='/api/admin/list'){
   const search=String(b.search||'').slice(0,100);
@@ -651,6 +713,7 @@ async function api(url,b){
 }
 async function apiAction(url,b){if(url.startsWith('/api/admin/'))return adminApi(url,b);if(url==='/api/auth/check'){const user=readLogin(b.authToken);if(!user)error('Oturumun sona erdi. Yeniden giriş yap.',401);await rememberDisplayName(user);return{user:{sub:user.sub,name:user.name,provider:user.provider},gold:await goldBalance(user.sub)}}if(url==='/api/auth/crazygames'){const user=await verifyCrazyGamesToken(b.credential);user.provider='crazygames';await rememberDisplayName(user);for(const r of rooms.values()){let changed=false;for(const p of r.players){if(p?.accountId===user.sub&&p.name!==user.name){p.name=user.name;changed=true}}if(changed)publish(r)}return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}if(url==='/api/auth/guest'){const name=assertModeratedText(b.name||'Oyuncu',{kind:'name'});const user={sub:'guest:'+crypto.randomUUID(),name,provider:'guest'};await rememberDisplayName(user);return{user:{name},authToken:signLogin(user),gold:await goldBalance(user.sub)}}
 if(!url.startsWith('/api/auth/')){const user=readLogin(b.authToken);if(!user)error('Odaya erişmek için giriş yapmalısın.',401);if(databaseReady){const block=await database.query('SELECT banned FROM hero_auction_admin_accounts WHERE account_id=$1',[user.sub]);if(block.rows[0]?.banned)error('Hesap askıya alınmıştır.',403)}}
+if(b.code&&url!=='/api/state'){const selectedRoom=rooms.get(String(b.code).toUpperCase());if(selectedRoom&&isCancellationReserved(selectedRoom))error('Bu maçın iptal işlemi doğrulanıyor.',503);}
 if(url==='/api/store/status'){
  const user=readLogin(b.authToken),storageReady=!!database&&databaseReady;
  // Capability/status reads never create a wallet, streak or reward receipt.
@@ -788,7 +851,7 @@ if(url==='/api/rematch'){
    r.round=0;r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.topBid=0;r.topSeat=null;
    r.history=[];r.openingPassSeat=null;r.rematch=[false,false];r.battleCompleted=[false,false];
    r.tailAwards=[];r.revision=0;
-   r.matchSettled=false;r.battleSettlementPending=false;r.battleSync=null;r.created=Date.now();r.lastActivity=Date.now();
+   r.cancelled=null;r.matchSettled=false;r.battleSettlementPending=false;r.battleSync=null;r.created=Date.now();r.lastActivity=Date.now();
    startRoomArenaTheme(r);
    for(const p of r.players){p.credits=20;p.team=[];}
    log(r,'Rövanş başladı!');
@@ -799,7 +862,7 @@ if(url==='/api/rematch'){
 if(url==='/api/bot'){const difficulty=['easy','medium','hard'].includes(b.difficulty)?b.difficulty:'medium';const universe='mixed';const name=chosenName(b,'Oyuncu');let id;do{id=code()}while(rooms.has(id));const t=token();const r={entryPaid:false,code:id,universe,cards:newCards(universe),round:0,phase:'auction',turn:0,deadline:Date.now()+20000,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},{name:'Bilgisayar',token:token(),credits:20,team:[]}],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'bot',difficulty};assignBotCommander(r);startRoomArenaTheme(r);rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/match'){const universe='mixed';const name=chosenName(b,'Oyuncu');for(const [key,item] of waiting){if(item.universe!==universe||Date.now()-item.created>60000)continue;const r=rooms.get(item.code);if(r&&moderation.blocked(readLogin(b.authToken).sub,r.players[0]?.accountId))continue;if(!r||r.players[1]||r.joinPending||activeSeats.get(r.players[0]?.accountId)?.code!==r.code||activeSeats.get(r.players[0]?.accountId)?.created!==r.created){waiting.delete(key);continue;}await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.mode='random';waiting.delete(key);publish(r);return{token:t,room:publicRoom(r,1)}}let id;do{id=code()}while(rooms.has(id));const t=token();const r={code:id,universe,cards:newCards(universe),round:0,phase:'matching',turn:0,deadline:null,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'random'};startRoomArenaTheme(r);rooms.set(id,r);markRoom(r);waiting.set(id,{code:id,universe,created:Date.now()});return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/chat'){const{r,seat}=authorize(b);if(moderation.blocked(r.players[0]?.accountId,r.players[1]?.accountId))error('Bu oyuncuyla sohbet kullanılamıyor.',403);if(r.mode==='bot')error('Sohbet yalnızca gerçek oyuncularla kullanılabilir.');const message=assertModeratedText(b.message);if(!message||message.length>240)error('Mesaj 1–240 karakter olmalı.');if(Date.now()-(r.lastChatAt?.[seat]||0)<1000)error('Yeni mesaj için bir saniye bekle.');r.lastChatAt??=[0,0];r.lastChatAt[seat]=Date.now();r.chat??=[];r.chat.push({seat,name:r.players[seat].name,message,time:Date.now()});if(r.chat.length>60)r.chat.shift();r.lastActivity=Date.now();publish(r);return{room:publicRoom(r,seat)}}
-if(url==='/api/state'){const{r,seat}=authorize(b);r.lastActivity=Date.now();return{room:publicRoom(r,seat)}}
+if(url==='/api/state'){const{r,seat}=authorize(b);if(!isCancellationReserved(r))r.lastActivity=Date.now();return{room:publicRoom(r,seat)}}
 if(url==='/api/bid'){const{r,seat}=authorize(b);if(r.phase!=='auction')error('İhale aktif değil.');if(r.turn!==seat)error('Teklif sırası sende değil.');const amount=Number(b.amount);if(!Number.isInteger(amount)||amount<=r.topBid||amount>r.players[seat].credits)error('Teklif tutarı geçersiz.');if(r.players[seat].team.length>=5)error('Takımın tamamlandı.');r.topBid=amount;r.topSeat=seat;r.openingPassSeat=null;log(r,`${r.players[seat].name} ${amount} kredi teklif etti.`);const other=1-seat;if(r.players[other].credits<=amount||r.players[other].team.length>=5){finishAuction(r);}else{r.turn=other;r.deadline=Date.now()+20000;}publish(r);return{room:publicRoom(r,seat)}}
 if(url==='/api/pass'){const{r,seat}=authorize(b);if(r.phase!=='auction'||r.turn!==seat)error('Şu an çekilemezsin.');if(r.topSeat===null){if(r.openingPassSeat===1-seat){finishUnbidCard(r);}else{r.openingPassSeat=seat;r.turn=1-seat;r.deadline=Date.now()+20000;log(r,r.players[seat].name+' pas geçti.');}}else finishAuction(r);publish(r);return{room:publicRoom(r,seat)}}
 error('Bilinmeyen işlem.',404)}
@@ -821,6 +884,7 @@ function battleSessionView(session,token){const seat=session.players.findIndex(p
 // Creation does not imply Ready; both existing confirmation gates remain unchanged.
 function preparationTeams(teams){return teams.map(team=>team.map(card=>{const hero=battleRoster.find(hero=>hero.id===card.id);return {...card,role:hero.role,laneModifiers:hero.laneModifiers}}))}
 function ensureBattlePreparation(room,teams){
+ requireBattleNotCancelled(room);
  const matchKey=String(room.matchNumber||1)+':'+String(room.created);
  let changed=false;
  if(room.battleSync?.key!==matchKey){room.battleSync={key:matchKey,ready:[null,null],result:null};changed=true;}
@@ -926,6 +990,8 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
  const room=rooms.get(String(body?.code||'').toUpperCase());const seat=room?.players?.findIndex(p=>p?.token===body?.token)??-1;
  if(!room||seat<0)return send(403,{error:'Yetkisiz oda'});
  if(room.phase!=='finished')return send(409,{error:'Açık artırma tamamlanmadı'});
+ try{requireBattleNotCancelled(room)}catch(e){return send(e.status||409,{error:e.message,...(e.cancellation?{cancellation:e.cancellation}:{})})}
+ const preparationId=cancellationMatchId(room);battlePreparationFlights.set(preparationId,(battlePreparationFlights.get(preparationId)||0)+1);
  try{const state=auctionRoomToBattleState(room),teams=prepareBattleTeams(state);
  const metadata=preparationTeams(teams),sync=ensureBattlePreparation(room,metadata),matchKey=sync.key;
  if(req.method==='POST'&&body.matchKey!==undefined&&body.matchKey!==matchKey)return send(409,{error:'Diziliş başka bir maça ait.'});
@@ -948,6 +1014,7 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
   const ids=accountIds.filter(Boolean);
   if(ids.length){
    const records=await database.query('SELECT account_id,profile FROM hero_auction_commanders WHERE account_id=ANY($1::text[])',[ids]);
+   requireBattleNotCancelled(room);
    const byId=new Map(records.rows.map(row=>[row.account_id,row.profile]));
     for(let i=0;i<2;i++){
     const profile=byId.get(accountIds[i]);
@@ -982,7 +1049,7 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
  }markRoom(room);
  }
  return send(200,{arenaPresentation:roomArenaPresentation(room),ready:sync.ready.map(Boolean),started:Boolean(sync.result),result:sync.result?{...sync.result,arenaPresentation:roomArenaPresentation(room),...victoryChestView(room,seat),commanderEnergy:seat===0?sync.result.commanderEnergy:sync.result.commanderEnergy?.slice().reverse(),commanderUltimateEnergy:seat===0?sync.result.commanderUltimateEnergy:sync.result.commanderUltimateEnergy?.slice().reverse(),ultimateUsed:seat===0?sync.result.ultimateUsed:sync.result.ultimateUsed?.slice().reverse(),revivalUsed:seat===0?sync.result.revivalUsed:sync.result.revivalUsed?.slice().reverse(),summary:orientBattleSummary(sync.result.summary,seat),winner:sync.result.winner===null?null:sync.result.winner===seat?0:1,teams:seat===0?sync.result.teams:[...sync.result.teams].reverse(),initialShields:seat===0?sync.result.initialShields:sync.result.initialShields?.slice().reverse(),commanders:seat===0?sync.result.commanders:[...sync.result.commanders].reverse(),log:seat===0?sync.result.log:sync.result.log.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side,energy:Array.isArray(e.energy)?e.energy.slice().reverse():e.energy,ultimateEnergy:Array.isArray(e.ultimateEnergy)?e.ultimateEnergy.slice().reverse():e.ultimateEnergy,shieldSnapshot:e.shieldSnapshot?.slice().reverse()}))}:null});
- }catch(e){return send(422,{error:e.message})}
+ }catch(e){return send(e.status||422,{error:e.message,...(e.cancellation?{cancellation:e.cancellation}:{})})}finally{const remaining=(battlePreparationFlights.get(preparationId)||1)-1;if(remaining)battlePreparationFlights.set(preparationId,remaining);else battlePreparationFlights.delete(preparationId)}
 }
 if(req.method==='POST'&&url.pathname==='/api/battle-auction-formation'){
  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>4000)return send(413,{error:'İstek çok büyük'})}
@@ -998,7 +1065,7 @@ if(req.method==='POST'&&url.pathname==='/api/battle-auction-formation'){
   sync.drafts[seat]={positions:[...body.positions],lanes:[...body.lanes],roles:[...body.roles]};
   markRoom(room);
   return send(200,{preparation:preparationView(sync,seat)});
- }catch(e){return send(422,{error:e.message})}
+ }catch(e){return send(e.status||422,{error:e.message,...(e.cancellation?{cancellation:e.cancellation}:{})})}
 }
 if(req.method==='GET'&&url.pathname==='/api/battle-auction-team'){
  const room=rooms.get(String(url.searchParams.get('code')||'').toUpperCase());
@@ -1010,7 +1077,7 @@ if(req.method==='GET'&&url.pathname==='/api/battle-auction-team'){
   const teams=prepareBattleTeams(state);
   const sync=ensureBattlePreparation(room,preparationTeams(teams));
   return send(200,{ready:true,seat,arenaPresentation:roomArenaPresentation(room),preparation:preparationView(sync,seat),credits:[state.remainingCreditsA,state.remainingCreditsB],teams:teams.map(team=>team.map(card=>{const hero=battleRoster.find(h=>h.id===card.id);return {...card,name:hero.name,universe:hero.universe,role:hero.role,laneModifiers:hero.laneModifiers}}))});
- }catch(e){return send(422,{error:'Bu açık artırma 2.0 savaşına uygun değil: '+e.message})}
+ }catch(e){return send(e.status||422,{error:e.message,...(e.cancellation?{cancellation:e.cancellation}:{})})}
 }
 if(req.method==='GET'&&url.pathname==='/api/battle-room'){const session=battleSessions.get(String(url.searchParams.get('code')||'').toUpperCase());const view=session&&battleSessionView(session,url.searchParams.get('token'));return view?send(200,view):send(404,{error:'Oda veya oturum bulunamadı.'})}
 if(req.method==='POST'&&url.pathname==='/api/battle-room'){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>4000)return send(413,{error:'İstek çok büyük'})}let body;try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz veri'})}const action=body?.action;let session;if(action==='create'){let code;do{code=String(100000+crypto.randomInt(900000))}while(battleSessions.has(code));session={code,created:Date.now(),players:[{token:crypto.randomBytes(24).toString('hex'),ready:false,positions:null},null],result:null};startRoomArenaTheme(session);battleSessions.set(code,session);return send(200,{...battleSessionView(session,session.players[0].token),token:session.players[0].token})}
@@ -1084,7 +1151,7 @@ if(req.method==='GET'&&url.pathname==='/api/online'){
  onlineVisitors.set(id,{seen:Date.now(),code:belongs?code:null});
  return send(200,onlineStats());
 }
-if(req.method==='GET'&&url.pathname==='/api/info')return send(200,{catalogueCount:catalogue.size,victoryChests:{enabled:victoryChestPolicy.enabled,available:victoryChestPolicy.enabled&&victoryChestStorageReady&&victoryChestCreditHealthy,goldOptions:victoryChestPolicy.config?.gold||[],goldWeights:victoryChestPolicy.config?.goldWeights||[],magicDustOptions:victoryChestPolicy.config?.magicDust||[],magicDustChance:(victoryChestPolicy.config?.magicDustChance??0)/100,diamondChance:(victoryChestPolicy.config?.diamondChance??0)/100},counts:Object.fromEntries(['original'].map(k=>[k,[...catalogue.values()].filter(x=>x.universe===k).length]))});
+if(req.method==='GET'&&url.pathname==='/api/info')return send(200,{catalogueCount:catalogue.size,paidMatches:{paused:paidEntryMaintenance.isPaused()},victoryChests:{enabled:victoryChestPolicy.enabled,available:victoryChestPolicy.enabled&&victoryChestStorageReady&&victoryChestCreditHealthy,goldOptions:victoryChestPolicy.config?.gold||[],goldWeights:victoryChestPolicy.config?.goldWeights||[],magicDustOptions:victoryChestPolicy.config?.magicDust||[],magicDustChance:(victoryChestPolicy.config?.magicDustChance??0)/100,diamondChance:(victoryChestPolicy.config?.diamondChance??0)/100},counts:Object.fromEntries(['original'].map(k=>[k,[...catalogue.values()].filter(x=>x.universe===k).length]))});
 if(req.method==='POST'&&url.pathname.startsWith('/api/')){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>12000)error('İstek çok büyük.')}let body;try{body=JSON.parse(raw)}catch{error('Geçersiz JSON')}return send(200,await api(url.pathname,body))}
 const audioHead=req.method==='HEAD'&&path.extname(decodeURIComponent(url.pathname)).toLowerCase()==='.mp3';
 if((req.method==='GET'||audioHead)&&(url.pathname==='/crazygames'||url.pathname.startsWith('/crazygames/'))){

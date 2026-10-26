@@ -1,7 +1,7 @@
 const $=id=>document.getElementById(id);
 let login=null;try{login=JSON.parse(localStorage.getItem('hero-auction-login')||'null')}catch{}
 const status=t=>$('status').textContent=t;
-async function api(path,body={}){const auth=login?.authToken;const r=await fetch('/api/admin/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,authToken:auth})});const j=await r.json();if(auth!==login?.authToken)throw Error('Yönetici oturumu değişti. Yeniden doğrulayın.');if(!r.ok)throw Error(j.error||'İşlem başarısız');return j}
+async function api(path,body={}){const auth=login?.authToken;const r=await fetch('/api/admin/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,authToken:auth})});const j=await r.json();if(auth!==login?.authToken)throw Error('Yönetici oturumu değişti. Yeniden doğrulayın.');if(!r.ok)throw Object.assign(Error(j.error||'İşlem başarısız'),{status:r.status});return j}
 async function load(){
  try{
   const d=await api('list',{search:$('search').value});

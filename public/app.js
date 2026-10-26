@@ -552,7 +552,32 @@ function animateWonAuctionCard(award,me,sourceSnapshot){
  const flight=flyAwardCard(sourceSnapshot,awardDestination(award.seat,me),{duration:1400,reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,label:award.seat===me?(document.documentElement.lang==='en'?'Your team':'Senin takımın'):(document.documentElement.lang==='en'?'Opponent team':'Rakip takım')});
  awardFlights.add(flight);return flight.finished.finally(()=>awardFlights.delete(flight));
 }
-function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAuctionSnapshot(room,r))return;storefrontUI.close();roomInvitesUI.setRoom(r,session?.token);friendsUI.setRoom(r);if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.matchKey===auctionMatchKey(r)&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const tailAwards=tailReceipts.pending(r,collectTailAwards(room,r));
+function showCancelledRoom(r){
+ const firstNotice=room?.code!==r.code||room?.matchKey!==r.matchKey||!room?.cancellation;
+ tailReveal?.cancel();tailReveal=null;cancelAwardFlights();cancelAuctionReveal($('stage'));
+ room=r;lastCardKey=null;window.HeroPlatform?.setRoom(r);window.HeroPlatform?.gameplay(false);
+ const english=document.documentElement.lang==='en';
+ $('game').classList.remove('auction-results-only','auction-delivery-active');$('game').dataset.phase='finished';
+ $('login-gate').hidden=true;$('home').hidden=true;$('game').hidden=false;
+ $('room-title').textContent=r.code;$('phase').textContent=english?'MATCH CANCELLED':'MAÇ İPTAL EDİLDİ';
+ const section=document.createElement('section');section.className='auction-summary match-cancelled';
+ const title=document.createElement('h2');title.textContent=english?'Match cancelled':'Maç iptal edildi';
+ const message=document.createElement('p');message.setAttribute('role','status');
+ message.textContent=r.cancellation.refundGoldPerSeat===50?(english?'Your 50 gold entry fee has been refunded.':'50 altın giriş ücreti iade edildi.'):(english?'The entry refund record is being verified.':'Giriş ücreti iade kaydı doğrulanıyor.');
+ const detail=document.createElement('p');detail.textContent=english?'No winner or league result was recorded. Your match history is preserved.':'Kazanan veya lig sonucu oluşturulmadı. Maç geçmişin korundu.';
+ const back=document.createElement('button');back.type='button';back.className='primary';back.textContent=english?'RETURN TO MAIN MENU':'ANA MENÜYE DÖN';back.onclick=()=>$('leave').click();
+ section.append(title,message,detail,back);$('stage').replaceChildren(section);
+ for(let visual=0;visual<2;visual++){
+  const seat=r.me===1?1-visual:visual,p=r.players?.[seat],box=$('player'+visual);box.className='player player-side'+(r.me===seat?' me':'');
+  const name=document.createElement('div');name.className='name';name.textContent=displayPlayerName(p);
+  const team=document.createElement('div');team.className='teams';
+  for(const hero of p?.team||[]){const card=document.createElement('span');card.className='side-hero';card.textContent=hero.name;team.append(card)}
+  box.replaceChildren(name,team);
+ }
+ $('log').replaceChildren(...(r.history||[]).slice().reverse().map(value=>{const event=document.createElement('div');event.className='event';event.textContent=value;return event}));
+ renderChat(r);if(firstNotice)void refreshGold();
+}
+function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAuctionSnapshot(room,r))return;storefrontUI.close();roomInvitesUI.setRoom(r,session?.token);friendsUI.setRoom(r);if(r.cancellation?.reason==='admin-entry-refund'){showCancelledRoom(r);return;}if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.matchKey===auctionMatchKey(r)&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const tailAwards=tailReceipts.pending(r,collectTailAwards(room,r));
  if(room?.code!==r.code||(r.phase==='auction'&&room?.phase!=='auction')||(r.phase==='auction'&&r.round<room?.round))cancelAwardFlights();
  const offeredAwards=collectOfferedAwards(room,r),offeredArt=document.querySelector('#stage .card-art');
  const deliveryCounts=r.phase==='finished'?(r.final||[]).map((p,seat)=>p.team.length-tailAwards.filter(a=>a.seat===seat).length-offeredAwards.filter(a=>a.seat===seat).length):[];

@@ -9,7 +9,7 @@ function storedState(value){
  if(!value||value.version!==1||!Number.isSafeInteger(value.revision)||value.revision<0||typeof value.paused!=='boolean'||typeof value.uncertainLegacyEntry!=='boolean')throw failure('Bakım kaydı doğrulanamadı.');
  return{version:1,revision:value.revision,paused:value.paused,uncertainLegacyEntry:value.uncertainLegacyEntry};
 }
-export function createPaidEntryMaintenance({bootPaused=false,bootId=randomUUID(),now=Date.now}={}){
+export function createPaidEntryMaintenance({bootPaused=false,bootId=randomUUID(),now=Date.now,canResume=()=>true}={}){
  let database=null,loaded=false,durable=false,paused=bootPaused,confirmed=false,state=storedState(null),uncertain=false,queue=Promise.resolve(),controls=0;
  const startedAt=now();let pausedAt=paused?startedAt:null;
  const flights={admissions:0,goldWrites:0,socialWrites:0,roomBatches:0};
@@ -46,6 +46,7 @@ export function createPaidEntryMaintenance({bootPaused=false,bootId=randomUUID()
   assertRevision();
   if(value){paused=true;pausedAt??=now();confirmed=false;} // Close admission before the first await.
   return serialized(async()=>{
+   if(!value&&!canResume())throw failure('Önce bekleyen yönetici işlemini doğrulayın.',409);
    try{assertRevision();if(!value&&uncertain)throw failure('Belirsiz eski giriş işlemi incelenmeden yeni maçlar açılamaz.',409);await write(value);paused=value;pausedAt=value?(pausedAt??now()):null;return true}
    catch(error){paused=true;pausedAt??=now();confirmed=false;throw error}
   });
@@ -56,12 +57,20 @@ export function createPaidEntryMaintenance({bootPaused=false,bootId=randomUUID()
   uncertain=true;paused=true;pausedAt??=now();confirmed=false;
   return serialized(()=>write(true));
  }
+ async function runPaused(expectedBootId,expectedRevision,work){
+  return serialized(async()=>{
+   if(expectedBootId!==bootId||expectedRevision!==state.revision)throw failure('Sunucu veya bakım sürümü değişti. Durumu yenileyin.',409);
+   if(!loaded||!durable||!confirmed||!paused||uncertain)throw failure('Kalıcı ve doğrulanmış duraklatma gerekli.',409);
+   if(Object.values(flights).some(value=>value!==0))throw failure('Devam eden kayıt veya giriş işlemleri tamamlanmalı.',409);
+   return work();
+  });
+ }
  function status(counts={},databaseHealthy=false){
   const numeric={paidEntriesInFlight:flights.admissions,uncertainLegacyEntries:uncertain?1:0,goldFlushesInFlight:flights.goldWrites,roomFlushBatchesInFlight:flights.roomBatches,socialWritesInFlight:flights.socialWrites,controlWritesInFlight:controls};
-  for(const key of ['activePaidMatches','unconfirmedSocialWrites','pendingGold','dirtyPaidRooms','paidRoomWritesInFlight','uncertainInvitations','pendingVictoryChests','victoryChestWritesInFlight'])numeric[key]=Number.isSafeInteger(counts[key])&&counts[key]>=0?counts[key]:null;
+  for(const key of ['activePaidMatches','pendingMatchCancellations','unconfirmedSocialWrites','pendingGold','dirtyPaidRooms','paidRoomWritesInFlight','uncertainInvitations','pendingVictoryChests','victoryChestWritesInFlight'])numeric[key]=Number.isSafeInteger(counts[key])&&counts[key]>=0?counts[key]:null;
   const ready=paused&&loaded&&durable&&confirmed&&databaseHealthy&&Object.values(numeric).every(value=>value===0);
   return{version:1,bootId,startedAt,paused,pausedAt,revision:state.revision,persistenceConfirmed:durable&&confirmed,loaded,databaseHealthy,ready,...numeric};
  }
- return{initialize,setPaused,latchLegacyUncertainty,track,status,assertOpen,isPaused:()=>paused||!loaded||uncertain||controls>0,beginAdmission(){assertOpen();return track('admissions')}};
+ return{initialize,setPaused,runPaused,latchLegacyUncertainty,track,status,assertOpen,isPaused:()=>paused||!loaded||uncertain||controls>0,beginAdmission(){assertOpen();return track('admissions')}};
 }
 export function isUnsettledPaidRoom(room){return room?.mode!=='bot'&&room?.entryPaid===true&&(room.matchSettled!==true||room.battleSettlementPending===true||room.victoryChestPending===true)}

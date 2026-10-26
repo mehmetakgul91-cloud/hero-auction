@@ -65,3 +65,8 @@ uncertainty, full room batches, social enqueue/failure and admin UI state. Exist
 invitation/entry/moderation regressions cover the new dependency. Actual
 PostgreSQL restart/control assertions live in the dedicated disposable-DB harness;
 passing local mocks does not substitute for that CI result.
+
+Explicit recovery of approved abandoned paid matches uses the separately
+reviewed [three-match cancellation flow](paid-match-cancellation.md). It refunds
+existing paid seats exactly once without inventing a battle result; pending or
+uncertain cancellation work remains a drain blocker.

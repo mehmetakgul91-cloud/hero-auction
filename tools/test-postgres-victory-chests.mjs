@@ -13,6 +13,7 @@ import {createMagicDustPolicy} from '../magic-dust.js';
 import {createDiamondExchangePolicy,exchangeDiamondsForGold} from '../paid-diamond-exchange.js';
 import {createLoginRewardPolicy,claimLoginReward} from '../login-rewards.js';
 import {createVictoryChestPolicy,persistVictoryChestIntent,creditVictoryChest,victoryMatchId,readVictoryChestRecovery} from '../victory-chests.js';
+import {cancellationIdentity,cancellationCandidate,cancelPaidMatches} from '../paid-match-cancellation.js';
 
 const APPROVED='postgresql://test:test@127.0.0.1:5432/hero_victory_chests_test';
 if(process.env.HERO_VICTORY_CHEST_TEST_DB!==APPROVED||process.env.DATABASE_URL){
@@ -69,6 +70,52 @@ async function withFailure(table,event,sub,run){
  try{await run()}finally{await sql(`DROP TRIGGER pgchest_write_failure ON ${table}; DROP FUNCTION pgchest_reject_write();`)}
 }
 
+// Cancellation fixtures are independently created after the empty-database
+// check. They never identify or modify any production room/account.
+let cancellationSequence=300;
+async function cancellationBatch(label,mutate=()=>{}){
+ const rooms=[],plans=new Map(),selections=[],accounts=[];
+ const cards=battleRoster.slice(0,10).map(hero=>({id:hero.id,name:hero.name,universe:hero.universe,role:hero.role,power:hero.proposedPower,cost:2}));
+ for(let index=0;index<3;index++){
+  const code=String(++cancellationSequence),created=Date.now()-3*86400000+index;
+  const ids=[0,1].map(seat=>`pgcancel-${label}-${index}-${seat}`);
+  for(const id of ids){await member(id,{gold:450,diamonds:7,magicDust:9,level:15});accounts.push(id)}
+  // Old match identity, recent synthetic read: keep the successful-cancellation
+  // restart assertions independent from the normal 24h settled-room expiry.
+  const r={code,created,lastActivity:Date.now()-60000,matchNumber:1,universe:'mixed',phase:'finished',mode:'friend',entryPaid:true,
+   cards,round:10,turn:null,deadline:null,topBid:0,topSeat:null,history:[],chat:[],series:[0,0],rematch:[false,false],
+   matchSettled:false,battleSettlementPending:true,battleCompleted:[false,false],
+   players:ids.map((id,seat)=>({accountId:id,name:'Synthetic cancellation player',token:`cancel-${code}-${seat}-seat`,credits:10,team:cards.slice(seat*5,seat*5+5)}))};
+  mutate(r,index);
+  await sql('INSERT INTO hero_auction_rooms(code,state) VALUES($1,$2::jsonb)',[r.code,JSON.stringify(r)]);
+  rooms.push(r);
+  const plan=cancellationCandidate(r,structuredClone(r));
+  if(plan){plans.set(plan.id,plan);selections.push({id:plan.id,digest:plan.digest})}
+ }
+ return{rooms,plans,selections,accounts};
+}
+async function cancellationMaintenance(revision=50,extra={}){
+ const state={version:1,revision,paused:true,uncertainLegacyEntry:false,...extra};
+ await sql('INSERT INTO hero_auction_social(id,state) VALUES($1,$2::jsonb) ON CONFLICT(id) DO UPDATE SET state=EXCLUDED.state',['economy-maintenance',JSON.stringify(state)]);
+ return state;
+}
+const cancelBatch=(batch,extra={})=>cancelPaidMatches({database:pool,selections:batch.selections,plans:batch.plans,actorId:'pgcancel-operator',expectedRevision:50,validateLive(){},...extra});
+async function cancellationProof(batch){
+ return{
+  balances:await Promise.all(batch.accounts.map(snapshot)),
+  rooms:(await sql('SELECT code,state FROM hero_auction_rooms WHERE code=ANY($1::text[]) ORDER BY code',[batch.rooms.map(r=>r.code)])).rows,
+  awards:(await sql('SELECT award_id,account_id,amount FROM hero_auction_gold_awards WHERE account_id=ANY($1::text[]) ORDER BY award_id',[batch.accounts])).rows,
+  audit:(await sql('SELECT account_id,actor_id,action,old_gold,new_gold FROM hero_auction_admin_audit WHERE account_id=ANY($1::text[]) ORDER BY account_id,action',[batch.accounts])).rows,
+  receipts:(await sql("SELECT id,state FROM hero_auction_social WHERE id LIKE 'paid-cancel-batch:%' ORDER BY id")).rows
+ };
+}
+async function cancellationWriteFault(table,condition,run){
+ assert.ok(['hero_auction_wallets','hero_auction_gold_awards','hero_auction_admin_audit','hero_auction_rooms','hero_auction_social'].includes(table));
+ await sql(`CREATE FUNCTION pgcancel_reject_write() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'isolated cancellation write fault'; END $$;
+ CREATE TRIGGER pgcancel_write_failure BEFORE INSERT OR UPDATE ON ${table} FOR EACH ROW WHEN (${condition}) EXECUTE FUNCTION pgcancel_reject_write();`);
+ try{await run()}finally{await sql(`DROP TRIGGER pgcancel_write_failure ON ${table}; DROP FUNCTION pgcancel_reject_write();`)}
+}
+
 
 const FIXTURE_SIGNING_SECRET='51'.repeat(32); // Known synthetic fixture only; never a production signing key.
 function fixtureAuth(sub,name,email=null){
@@ -99,8 +146,13 @@ async function startFixtureServer(){
    await new Promise(resolve=>setTimeout(resolve,50));
   }
   assert.ok(info,'Fixture server startup timed out: '+logs);assert.equal(info.victoryChests.enabled,true);assert.equal(info.victoryChests.available,true,logs);
-  return{stop,async post(path,body,status=200){const response=await fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(5000)});const result=await response.json();assert.equal(response.status,status,JSON.stringify(result)+'\n'+logs);return result}};
+  return{stop,async publicInfo(){const response=await fetch(base+'/api/info',{signal:AbortSignal.timeout(5000)});assert.equal(response.status,200);return response.json()},async post(path,body,status=200){const response=await fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(5000)});const result=await response.json();assert.equal(response.status,status,JSON.stringify(result)+'\n'+logs);return result}};
  }catch(error){await stop();throw error}
+}
+async function waitCancellationWrites(app,admin){
+ const deadline=Date.now()+10000,keys=['paidEntriesInFlight','pendingGold','goldFlushesInFlight','dirtyPaidRooms','roomFlushBatchesInFlight','paidRoomWritesInFlight','socialWritesInFlight','unconfirmedSocialWrites','pendingVictoryChests','victoryChestWritesInFlight','pendingMatchCancellations'];let status;
+ do{status=await app.post('/api/admin/economy/status',admin);if(keys.every(key=>status[key]===0))return status;await new Promise(resolve=>setTimeout(resolve,50))}while(Date.now()<deadline);
+ assert.fail('Synthetic cancellation persistence did not settle: '+JSON.stringify(status));
 }
 
 try{
@@ -159,9 +211,11 @@ try{
    await app.post('/api/admin/economy/status',{},403);
    await app.post('/api/admin/economy/status',ownerAuth,403);
    const open=await app.post('/api/admin/economy/status',adminAuth);assert.equal(open.paused,false);assert.equal(open.loaded,true);previousBoot=open.bootId;
+   assert.deepEqual((await app.publicInfo()).paidMatches,{paused:false});
    await app.post('/api/admin/economy/pause',{...adminAuth,paused:true,expectedBootId:'stale-fixture-boot',expectedRevision:open.revision},409);
    assert.equal((await app.post('/api/admin/economy/status',adminAuth)).paused,false);
    const paused=await app.post('/api/admin/economy/pause',{...adminAuth,paused:true,expectedBootId:previousBoot,expectedRevision:open.revision});assert.equal(paused.paused,true);assert.equal(paused.persistenceConfirmed,true);
+   assert.deepEqual((await app.publicInfo()).paidMatches,{paused:true});
    await app.post('/api/admin/economy/pause',{...adminAuth,paused:false,expectedBootId:previousBoot,expectedRevision:open.revision},409);
    const durable=(await sql("SELECT state FROM hero_auction_social WHERE id='economy-maintenance'")).rows[0].state;assert.equal(durable.paused,true);assert.equal(durable.uncertainLegacyEntry,false);
    await app.post('/api/rematch',ownerAuth,503);await app.post('/api/rematch',loserAuth,503);
@@ -180,9 +234,11 @@ try{
    assert.deepEqual(again.victoryChest,receipt);assert.equal(again.victoryChestPending,false);assert.deepEqual(again.series,[1,0]);assert.equal(other.victoryChest,null);
    assert.deepEqual(await snapshot(owner),creditedOwner);assert.deepEqual(await snapshot(loser),unchangedLoser);
    const restoredPause=await app.post('/api/admin/economy/status',adminAuth);assert.equal(restoredPause.paused,true);assert.equal(restoredPause.persistenceConfirmed,true);assert.notEqual(restoredPause.bootId,previousBoot);
+   assert.deepEqual((await app.publicInfo()).paidMatches,{paused:true});
    await app.post('/api/admin/economy/pause',{...adminAuth,paused:false,expectedBootId:previousBoot,expectedRevision:restoredPause.revision},409);
    await app.post('/api/rematch',ownerAuth,503);
    const resumed=await app.post('/api/admin/economy/pause',{...adminAuth,paused:false,expectedBootId:restoredPause.bootId,expectedRevision:restoredPause.revision});assert.equal(resumed.paused,false);assert.equal(resumed.persistenceConfirmed,true);
+   assert.deepEqual((await app.publicInfo()).paidMatches,{paused:false});
    assert.equal((await sql("SELECT state FROM hero_auction_social WHERE id='economy-maintenance'")).rows[0].state.paused,false);
    // Both real HTTP approvals prove recovery no longer blocks the room. Only
    // the normal synthetic 50-gold entry fee is charged; no reward is rerolled.
@@ -192,6 +248,125 @@ try{
    assert.equal(afterOwner.gold,creditedOwner.gold-50);assert.equal(afterLoser.gold,unchangedLoser.gold-50);
    for(const key of ['diamonds','magicDust','intents','chests','awards']){assert.equal(afterOwner[key],creditedOwner[key]);assert.equal(afterLoser[key],unchangedLoser[key])}
   }finally{await app?.stop()}
+ });
+
+ await check('actual admin cancellation HTTP binds boot/revision/digest, reserves combat across awaits and replays after restart without credit or room rewind',async()=>{
+  await cancellationMaintenance();const batch=await cancellationBatch('http'),before=await cancellationProof(batch),admin={authToken:fixtureAuth('pgcancel-operator','Synthetic cancellation operator','fixture-admin@example.invalid')};
+  const previewPath='/api/admin/economy/cancellations/preview',executePath='/api/admin/economy/cancellations/execute';
+  let app,selection,boot,committed;
+  try{
+   app=await startFixtureServer();await waitCancellationWrites(app,admin);await app.post(previewPath,{},403);await app.post(previewPath,{authToken:fixtureAuth(batch.accounts[0],'Not an admin')},403);
+   const preview=await app.post(previewPath,admin);assert.equal(preview.paused,true);assert.equal(preview.persistenceConfirmed,true);assert.equal(preview.requiredSelectionCount,3);
+   boot=preview.bootId;const ids=new Set(batch.rooms.map(cancellationIdentity));selection=preview.candidates.filter(value=>ids.has(value.id)).map(({id,digest})=>({id,digest}));assert.equal(selection.length,3);
+   const request={...admin,expectedBootId:boot,expectedRevision:preview.revision,candidates:selection};
+   await app.post(executePath,{...request,authToken:fixtureAuth(batch.accounts[0],'Not an admin')},403);
+   await app.post(executePath,{...request,expectedBootId:'old-fixture-boot'},409);
+   await app.post(executePath,{...request,expectedRevision:preview.revision-1},409);
+   await app.post(executePath,{...request,candidates:selection.map((value,index)=>index?value:{...value,digest:'0'.repeat(64)})},409);
+   assert.deepEqual(await cancellationProof(batch),before);
+   // Hold a real wallet row lock so the HTTP cancellation remains reserved
+   // across DB awaits, then prove a player cannot start battle in that window.
+   const blocker=await pool.connect();let executing,result;
+   try{
+    await blocker.query('BEGIN');await blocker.query('SELECT gold FROM hero_auction_wallets WHERE account_id=$1 FOR UPDATE',[batch.accounts[0]]);
+    executing=app.post(executePath,request);executing.catch(()=>{});
+    let held;for(let attempt=0;attempt<30;attempt++){held=await app.post('/api/admin/economy/status',admin);if(held.pendingMatchCancellations===3)break;await new Promise(resolve=>setTimeout(resolve,20))}
+    assert.equal(held.pendingMatchCancellations,3);assert.equal(held.ready,false);assert.deepEqual((await app.publicInfo()).paidMatches,{paused:true});
+    const selectedRoom=batch.rooms[0];await app.post('/api/battle-auction-preview',{code:selectedRoom.code,token:selectedRoom.players[0].token},503);
+    await blocker.query('COMMIT');result=await executing;
+   }finally{await blocker.query('ROLLBACK').catch(()=>{});blocker.release();if(executing)await executing.catch(()=>{})}
+   assert.equal(result.ok,true);assert.equal(result.replayed,false);assert.equal(result.refundGold,300);assert.equal(result.cancelled.length,3);
+   committed=await cancellationProof(batch);assert.equal(committed.awards.length,6);assert.equal(committed.audit.length,6);assert.ok(committed.balances.every(value=>value.gold===500));assert.ok(committed.rooms.every(value=>value.state.matchSettled===true&&value.state.cancelled?.kind==='admin-entry-refund'));
+   await waitCancellationWrites(app,admin);const replay=await app.post(executePath,request);assert.equal(replay.replayed,true);assert.deepEqual(await cancellationProof(batch),committed);
+  }finally{await app?.stop()}
+  // A newer synthetic identity now reuses one room code. Replaying the old
+  // durable receipt must not reinstall its cancelled snapshot over this room.
+  const newer={...committed.rooms[0].state,created:committed.rooms[0].state.created+1000,matchNumber:2,entryPaid:false,cancelled:null,goldRefunds:null};
+  await sql('UPDATE hero_auction_rooms SET state=$2::jsonb WHERE code=$1',[newer.code,JSON.stringify(newer)]);
+  committed=await cancellationProof(batch);
+  app=null;
+  try{
+   app=await startFixtureServer();const status=await waitCancellationWrites(app,admin);assert.equal(status.paused,true);assert.notEqual(status.bootId,boot);assert.deepEqual((await app.publicInfo()).paidMatches,{paused:true});
+   await app.post(executePath,{...admin,expectedBootId:boot,expectedRevision:status.revision,candidates:selection},409);
+   // No preview is requested on this new process: only a durable complete
+   // receipt may authorize no-op reconciliation of the original selection.
+   const replay=await app.post(executePath,{...admin,expectedBootId:status.bootId,expectedRevision:status.revision,candidates:selection});assert.equal(replay.replayed,true);assert.equal(replay.refundGold,300);
+   assert.deepEqual(await cancellationProof(batch),committed);
+  }finally{await app?.stop()}
+ });
+
+ await check('three-room cancellation atomically refunds six paid seats and preserves all unrelated progression; concurrent replay adds nothing',async()=>{
+  await cancellationMaintenance();const batch=await cancellationBatch('atomic'),before=await cancellationProof(batch);
+  const results=await Promise.all(Array.from({length:8},()=>cancelBatch(batch)));
+  assert.equal(results.filter(value=>!value.result.replayed).length,1);
+  for(const value of results){assert.equal(value.result.refundGold,300);assert.equal(value.result.cancelled.length,3);assert.equal(value.rooms.length,3)}
+  const after=await cancellationProof(batch);assert.equal(after.awards.length,6);assert.equal(after.audit.length,6);assert.equal(after.receipts.length,before.receipts.length+1);
+  for(let index=0;index<batch.accounts.length;index++){
+   assert.equal(after.balances[index].gold,500);assert.equal(after.balances[index].awards,1);
+   for(const key of Object.keys(before.balances[index]).filter(key=>!['gold','awards'].includes(key)))assert.deepEqual(after.balances[index][key],before.balances[index][key],key);
+  }
+  for(const audit of after.audit){assert.equal(audit.actor_id,'pgcancel-operator');assert.equal(audit.old_gold,450);assert.equal(audit.new_gold,500);assert.match(audit.action,/^cancel_paid_match:/)}
+  for(const saved of after.rooms){const original=batch.rooms.find(r=>r.code===saved.code);assert.equal(saved.state.cancelled.kind,'admin-entry-refund');assert.equal(saved.state.matchSettled,true);assert.equal(saved.state.battleSettlementPending,false);assert.equal(saved.state.goldRefunds.length,2);assert.equal(saved.state.cancelled.refundGoldPerSeat,50);for(const key of ['players','history','series','cards'])assert.deepEqual(saved.state[key],original[key]);assert.equal(saved.state.victoryChestReceipt,undefined)}
+  const replay=await cancelBatch(batch,{plans:new Map()});assert.equal(replay.result.replayed,true);assert.deepEqual(await cancellationProof(batch),after);
+ });
+ await check('real SQL failures at wallet, refund ledger, audit, room, or batch receipt roll back all three cancellations',async()=>{
+  const tables=['hero_auction_wallets','hero_auction_gold_awards','hero_auction_admin_audit','hero_auction_rooms','hero_auction_social'];
+  for(const [index,table] of tables.entries()){
+   await cancellationMaintenance();const batch=await cancellationBatch('fault'+index),before=await cancellationProof(batch);
+   const condition=table==='hero_auction_social'?"NEW.id LIKE 'paid-cancel-batch:%'":table==='hero_auction_rooms'?`NEW.code='${batch.rooms[2].code}'`:`NEW.account_id='${batch.accounts[5]}'`;
+   await cancellationWriteFault(table,condition,async()=>{await assert.rejects(cancelBatch(batch),/isolated cancellation write fault/);assert.deepEqual(await cancellationProof(batch),before)});
+   const retry=await cancelBatch(batch);assert.equal(retry.result.replayed,false);assert.equal((await cancellationProof(batch)).audit.length,6);
+  }
+ });
+ await check('lost cancellation COMMIT response reconciles durable batch receipt without plans, repeated refunds, or audit duplication',async()=>{
+  await cancellationMaintenance();const batch=await cancellationBatch('uncertain');
+  await assert.rejects(cancelBatch(batch,{database:lostCommit()}),error=>error.status===503&&error.uncertain===true);
+  const committed=await cancellationProof(batch);assert.equal(committed.audit.length,6);assert.equal(committed.awards.length,6);assert.ok(committed.balances.every(value=>value.gold===500));
+  const replay=await cancelBatch(batch,{plans:new Map()});assert.equal(replay.result.replayed,true);assert.deepEqual(await cancellationProof(batch),committed);
+ });
+ await check('cancellation rejects stale maintenance revision, open admission, uncertain legacy charge, or changed selection digest without writes',async()=>{
+  const batch=await cancellationBatch('guards');
+  for(const state of [{revision:51},{paused:false},{uncertainLegacyEntry:true}]){
+   await cancellationMaintenance(50,state);const before=await cancellationProof(batch);await assert.rejects(cancelBatch(batch),error=>error.status===409);assert.deepEqual(await cancellationProof(batch),before);
+  }
+  await cancellationMaintenance();const before=await cancellationProof(batch);
+  for(const selections of [batch.selections.slice(0,2),[...batch.selections,{...batch.selections[0]}],batch.selections.map((item,index)=>index?item:{...item,digest:'0'.repeat(64)})]){
+   await assert.rejects(cancelBatch(batch,{selections}),error=>[400,409].includes(error.status));assert.deepEqual(await cancellationProof(batch),before);
+  }
+  assert.equal(cancellationIdentity(batch.rooms[0]),batch.selections[0].id);
+ });
+ await check('one active combat, settled, unpaid, awarded, bot or missing-account room refuses the entire three-room cancellation',async()=>{
+  await cancellationMaintenance();const batch=await cancellationBatch('eligibility'),before=await cancellationProof(batch),selection=batch.selections[1],original=batch.plans.get(selection.id);
+  const changes=[{battleSync:{result:{live:true,finished:false}}},{matchSettled:true},{entryPaid:false},{goldAward:{id:'existing'}},{goldRefunds:[{amount:50}]},{victoryChestPending:true},{victoryChestReceipt:{}},{mode:'bot'},{battleSettlementPending:false},{players:[original.room.players[0],{...original.room.players[1],accountId:null}]}];
+  for(const change of changes){batch.plans.set(selection.id,{...original,room:{...original.room,...change}});await assert.rejects(cancelBatch(batch),error=>error.status===409);assert.deepEqual(await cancellationProof(batch),before)}
+  batch.plans.set(selection.id,original);
+  const changed={...batch.rooms[0],lastActivity:batch.rooms[0].lastActivity+1};await sql('UPDATE hero_auction_rooms SET state=$2::jsonb WHERE code=$1',[changed.code,JSON.stringify(changed)]);
+  const drifted=await cancellationProof(batch);await assert.rejects(cancelBatch(batch),error=>error.status===409);assert.deepEqual(await cancellationProof(batch),drifted);
+  await sql('UPDATE hero_auction_rooms SET state=$2::jsonb WHERE code=$1',[batch.rooms[0].code,JSON.stringify(batch.rooms[0])]);
+ });
+ await check('existing canonical refund, win award or chest intent refuses new cancellation without paying any other seat',async()=>{
+  await cancellationMaintenance();
+  for(const kind of ['refund','win','chest']){
+   const batch=await cancellationBatch('prior-'+kind),r=batch.rooms[0];
+   if(kind==='chest')await intent({...r,battleSettlementPending:false});
+   else{const id=kind==='win'?victoryMatchId(r):`${r.code}:refund:0:1:${r.created}`;await sql('INSERT INTO hero_auction_gold_awards(award_id,account_id,amount) VALUES($1,$2,$3)',[id,r.players[0].accountId,kind==='win'?120:50]);await sql('UPDATE hero_auction_wallets SET gold=gold+$2 WHERE account_id=$1',[r.players[0].accountId,kind==='win'?120:50])}
+   const before=await cancellationProof(batch);await assert.rejects(cancelBatch(batch),error=>error.status===409);assert.deepEqual(await cancellationProof(batch),before);
+  }
+ });
+ await check('late live validation failure, missing paid wallet or integer overflow rolls back every refund and creates no wallet',async()=>{
+  await cancellationMaintenance();const late=await cancellationBatch('late'),before=await cancellationProof(late);let validations=0;
+  await assert.rejects(cancelBatch(late,{validateLive(){if(++validations===3)throw Object.assign(Error('Fixture live identity changed'),{status:409})}}),/Fixture live identity changed/);assert.equal(validations,3);assert.deepEqual(await cancellationProof(late),before);
+  const overflow=await cancellationBatch('overflow');await sql('UPDATE hero_auction_wallets SET gold=2147483647 WHERE account_id=$1',[overflow.accounts[5]]);const overflowBefore=await cancellationProof(overflow);await assert.rejects(cancelBatch(overflow),error=>error.status===409);assert.deepEqual(await cancellationProof(overflow),overflowBefore);
+  const missing=await cancellationBatch('missing-wallet');const changed=structuredClone(missing.rooms[0]);changed.players[1].accountId='pgcancel-no-wallet-ever';await sql('UPDATE hero_auction_rooms SET state=$2::jsonb WHERE code=$1',[changed.code,JSON.stringify(changed)]);const plan=cancellationCandidate(changed,changed),oldId=missing.selections[0].id;missing.plans.delete(oldId);missing.plans.set(plan.id,plan);missing.selections[0]={id:plan.id,digest:plan.digest};const missingBefore=await cancellationProof(missing);await assert.rejects(cancelBatch(missing),error=>error.status===409);assert.deepEqual(await cancellationProof(missing),missingBefore);assert.equal((await sql('SELECT count(*)::int AS n FROM hero_auction_wallets WHERE account_id=$1',['pgcancel-no-wallet-ever'])).rows[0].n,0);
+ });
+ await check('a competing durable resume under the same PostgreSQL advisory lock prevents cancellation after lock handover',async()=>{
+  await cancellationMaintenance();const batch=await cancellationBatch('pause-lock'),before=await cancellationProof(batch),locker=await pool.connect();let operation;
+  try{
+   await locker.query('BEGIN');await locker.query("SELECT pg_advisory_xact_lock(hashtext('hero-economy-maintenance'))");
+   operation=assert.rejects(cancelBatch(batch),error=>error.status===409);
+   await locker.query("UPDATE hero_auction_social SET state=jsonb_set(state,'{paused}','false'::jsonb) WHERE id='economy-maintenance'");await locker.query('COMMIT');await operation;
+  }finally{await locker.query('ROLLBACK').catch(()=>{});locker.release()}
+  assert.deepEqual(await cancellationProof(batch),before);await cancellationMaintenance();
  });
 
  today=(await sql("SELECT (clock_timestamp() AT TIME ZONE 'Europe/Istanbul')::date::text AS day")).rows[0].day;
