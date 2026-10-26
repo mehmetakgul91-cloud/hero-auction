@@ -123,7 +123,8 @@ body[data-theme-page="commander-training"] .energy{background:#c5c8d1}
 :root{color:#203047;background:#e9eae6;color-scheme:light}
 body{color:#203047;background:radial-gradient(ellipse at 8% 0%,#e3e8e7 0%,transparent 52%),radial-gradient(ellipse at 96% 35%,#e9e4da 0%,transparent 50%),#eeefeb}
 body:before{opacity:.24;background-image:linear-gradient(#6c7e8910 1px,transparent 1px),linear-gradient(90deg,#6c7e8910 1px,transparent 1px)}
-.shell>.lobby-header{background:linear-gradient(115deg,#f8f7f3,#eeefeb);border-color:#c8cfd2;box-shadow:inset 0 1px #ffffff90,0 6px 20px #20304709}
+/* Lift the isolated masthead above the later home stacking context; dialogs/invites stay above it. */
+.shell>.lobby-header{z-index:1;background:linear-gradient(115deg,#f8f7f3,#eeefeb);border-color:#c8cfd2;box-shadow:inset 0 1px #ffffff90,0 6px 20px #20304709}
 .lobby-header:before{background:linear-gradient(110deg,transparent 45%,#d3dcd533 45.2%,transparent 71%)}
 .lobby-header:after{background:#ad8b4e;box-shadow:none}
 .lobby-header .lobby-emblem{filter:drop-shadow(0 2px 3px #20304718)}
@@ -576,6 +577,8 @@ body:before{opacity:.24;background-image:linear-gradient(#6c7e8910 1px,transpare
 body:has(#battle-arena){background:radial-gradient(ellipse at 8% 0%,#e3e8e7,transparent 52%),#eeefeb;color:#203047}
 body:has(#battle-arena) :is(.formation,.battle-lobby,.controls,.log,.score,.arena-commander-dock,.battle-summary){background:#f1f2ee;border-color:#c1cbd0;box-shadow:0 5px 18px #2030470a;color:#203047}
 body:has(#battle-arena) :is(.intro,.disclaimer,.formation p,.battle-lobby p,.board-help,#prep-note,.settings,.score small,.battle-summary p,.battle-summary-stats small){color:#586676}
+/* Original board-help uses !important pale gold; override only this light-panel hint. */
+body:has(#battle-arena) .formation .board-help{color:#586676!important}
 body:has(#battle-arena) :is(.arena-room-nav,.arena-social-nav){border-color:#c5cece;color:#203047}
 body:has(#battle-arena) .arena-room-nav a,body:has(#battle-arena) .arena-audio-credits a{color:#28627f}
 body:has(#battle-arena).arena-room .arena-room-nav a{background:#e1e9e4;border-color:#aabdc4;color:#28627f}

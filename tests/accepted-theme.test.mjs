@@ -22,8 +22,9 @@ test('accepted theme loads once, last in every active public document, preservin
  assert.match(publicFile('kahramanlar.html'),/href="\/kahramanlar\.css\?/);
 });
 
-test('theme has no behavior, visibility, geometry, asset replacement or dependency reset',()=>{
- const clean=css.replace(/\/\*[\s\S]*?\*\//g,'');
+test('theme preserves behavior, visibility and geometry apart from the scoped masthead layer',()=>{
+ // One reviewed masthead layer repairs account dropdown stacking; no other z-index is allowed.
+ const clean=css.replace(/\/\*[\s\S]*?\*\//g,'').replace('.shell>.lobby-header{z-index:1;','.shell>.lobby-header{');
  assert.doesNotMatch(clean,/(?:^|[;{])\s*(?:display|visibility|position|z-index|pointer-events|content|width|height|min-width|max-width|min-height|max-height|overflow(?:-x|-y)?|grid-template-columns|touch-action|user-select)\s*:/m);
  assert.doesNotMatch(clean,/@import|https?:\/\/|url\([^)]*data:/);
  assert.doesNotMatch(clean,/\b(?:img|canvas|svg)\s*\{[^}]*\bfilter\s*:[^;}]*(?:brightness|invert|saturate|grayscale|hue-rotate)\(/);
@@ -95,4 +96,23 @@ test('canonical and CrazyGames HTTP documents serve the exact shared theme witho
    }
   }
  }finally{child.kill('SIGTERM');await new Promise(resolve=>{if(child.exitCode!==null)return resolve();child.once('exit',resolve);setTimeout(resolve,2000).unref();});}
+});
+
+
+test('preparation board hint overrides original important pale-gold text with AA contrast',()=>{
+ assert.match(publicFile('battle-preview.css'),/\.board-help\{[^}]*color:#f5de98!important/);
+ assert.match(css,/body:has\(#battle-arena\) \.formation \.board-help\{color:#586676!important\}/);
+ assert.ok(contrast('#586676','#f1f2ee')>=4.5);
+});
+
+
+test('account dropdown escapes the later home context without overtaking global overlays',()=>{
+ assert.match(publicFile('lobby-chrome.css'),/\.shell>\.lobby-header\{[^}]*position:relative;isolation:isolate/);
+ assert.match(publicFile('style.css'),/#home\.cinema-home\{[^}]*position:relative;isolation:isolate/);
+ assert.match(css,/\.shell>\.lobby-header\{z-index:1;/);
+ assert.deepEqual([...css.matchAll(/z-index\s*:\s*([^;}]+)/g)].map(m=>m[1]),['1']);
+ assert.match(publicFile('lobby-chrome.css'),/\.lobby-header \.account-bar #google-logout\{[^}]*z-index:20/);
+ assert.match(publicFile('style.css'),/#toast\{[^}]*z-index:5/);
+ assert.match(publicFile('room-invites.css'),/\.room-invites\s*\{[^}]*z-index:12000/);
+ assert.doesNotMatch(css,/\.shell>\.lobby-header\{[^}]*overflow\s*:/);
 });
