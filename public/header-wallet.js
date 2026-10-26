@@ -15,11 +15,13 @@ export function createHeaderWallet({document=globalThis.document}={}){
  function render(){
   if(root)root.hidden=!authToken;
   const english=document?.documentElement?.lang==='en';
+  let wideValues=false;
   for(const currency of currencies){
    const label=english?currency.english:currency.label,value=amounts[currency.key],available=valid(value);
    const amount=document?.getElementById(currency.id),item=document?.getElementById(currency.item),name=document?.getElementById(currency.item+'-label');
    const formatted=available?value.toLocaleString(english?'en-US':'tr-TR'):'—';
    if(amount)amount.textContent=formatted;
+   if(available&&formatted.length>6)wideValues=true;
    if(name)name.textContent=label;
    if(item){
     const description=available?`${label}: ${formatted}`:`${label}: ${english?'unavailable':'kullanılamıyor'}`;
@@ -27,6 +29,7 @@ export function createHeaderWallet({document=globalThis.document}={}){
     if(item.dataset)item.dataset.available=String(available);
    }
   }
+  if(root?.dataset)root.dataset.wideValues=String(wideValues);
  }
  function setLogin(login){
   const next=typeof login?.authToken==='string'&&login.authToken?login.authToken:null;

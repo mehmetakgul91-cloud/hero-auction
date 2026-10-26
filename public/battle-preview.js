@@ -13,7 +13,7 @@ import {createBattleReplayHealth} from '/battle-replay-health.js';
 import {createArenaTeamRenderer} from '/arena-team-renderer.js';
 import {summarizeBattle} from '/battle-summary-data.js?v=complete-results-20261021';
 import {commanderAbilityStats,commanderAbilityDescription} from '/commander-ability-rules.js?v=commander-attack-fix-20261021';
-import {getArenaLaneLayout} from '/arena-viewport.js?v=arena-viewport-20261021b';
+import {getArenaLaneLayout} from '/arena-viewport.js?v=equal-lanes-20261026';
 import {heroCombatPresentation,stationaryArenaAction} from '/hero-combat-presentation.js';
 import {createArenaThemePresentation} from '/arena-theme.js';
 // Verify the current portal account before accessing any saved arena seat.
@@ -692,12 +692,11 @@ function showVictoryChest(result){
 window.addEventListener('pagehide',resetVictoryChestPresentation);
 window.addEventListener('storage',event=>{if(event.key==='hero-auction-login')resetVictoryChestPresentation()});
 window.addEventListener('hero:login-changed',resetVictoryChestPresentation);
-function centeredLaneRows(count){const layouts={0:[],1:[3],2:[2,4],3:[2,3,4],4:[1,2,4,5],5:[1,2,3,4,5]};return layouts[Math.max(0,Math.min(5,count))].slice()}
 function render(flash){
  const fittedLayout=getArenaLaneLayout(states);
  for(let side=0;side<2;side++){
   const parent=$(side?'team-b':'team-a');
-  const laneRows={front:centeredLaneRows(states[side].filter(u=>u.lane==='front').length),back:centeredLaneRows(states[side].filter(u=>u.lane!=='front').length)};
+  const laneRows=fittedLayout.teams[side];
   arenaTeamRenderer.update(parent,states[side],{side,rows:fittedLayout.rows,laneRows,fittedRows:fittedLayout.teams[side],flash,roleNames});
   $(side?'score-b':'score-a').textContent=states[side].filter(u=>u.hp>0).length+' / 5';
   const suffix=side?'b':'a';

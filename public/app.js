@@ -1,3 +1,5 @@
+import {createRoomChat} from '/room-chat.js';
+import {isAuctionEntry,resetAuctionEntryViewport} from '/auction-entry.js';
 import {victoryChestReceipt} from '/victory-chest.js';
 import {createHeaderWallet} from '/header-wallet.js';
 import {createWalletOperations} from '/wallet-operations.js';
@@ -297,10 +299,14 @@ function renderLobbyEconomy(capability){
  if(!label||!odds)return;
  if(prefix)prefix.textContent=english?'Winner':'Kazanan';
  const guide=$('home-guide-economy'),guideCopy=reward=>{if(guide)guide.textContent=english?`Live match: 50 gold each · ${reward}. Computer training is free.`:`Oyunculu maç: kişi başı 50 altın · ${reward}. Bilgisayara karşı antrenman ücretsiz.`;};
+ const prize=$('home-guide-prize-value'),kind=$('home-guide-prize-kind'),detail=$('home-guide-reward-detail');
+ const prizeCopy=(value,type,text)=>{if(prize)prize.textContent=value;if(kind)kind.textContent=type;if(detail)detail.textContent=text;};
+ prizeCopy('—',english?'REWARD':'ÖDÜL',english?'Reward information unavailable.':'Ödül bilgisi alınamadı.');
  odds.hidden=true;odds.textContent='';
  if(!victoryChestCapability){label.textContent=english?'Reward unavailable':'Ödül bilgisi alınamadı';guideCopy(label.textContent);return;}
- if(!capability.enabled){label.textContent=english?'120 gold':'120 altın';guideCopy(english?'Winner receives 120 gold':'Kazanana 120 altın');return;}
+ if(!capability.enabled){prizeCopy('120',english?'GOLD':'ALTIN',english?'Winner receives 120 gold.':'Kazanana 120 altın.');label.textContent=english?'120 gold':'120 altın';guideCopy(english?'Winner receives 120 gold':'Kazanana 120 altın');return;}
  if(capability.available!==true){label.textContent=english?'Chest unavailable':'Sandık hazırlanıyor';guideCopy(label.textContent);odds.hidden=false;odds.textContent=english?'Victory chest storage is unavailable; new live matches are paused.':'Zafer sandığı altyapısı kullanılamıyor; yeni canlı maçlara giriş bekletiliyor.';return;}
+ prizeCopy('✦',english?'CHEST':'SANDIK',english?'Winner receives a victory chest.':'Kazanana zafer sandığı.');
  label.textContent=english?'Victory chest':'Zafer sandığı';guideCopy(english?'Winner receives a victory chest':'Kazanana zafer sandığı');
  const gold=Array.isArray(capability.goldOptions)&&capability.goldOptions.every(n=>Number.isSafeInteger(n)&&n>0)?capability.goldOptions.join(' / '):null;
  const chance=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100?n:null,dust=chance(capability.magicDustChance),diamonds=chance(capability.diamondChance);
@@ -311,6 +317,7 @@ function renderLobbyEconomy(capability){
   const equal=total&&weights.every(n=>n===weights[0]),perGold=equal?100/weights.length:null;
   const distribution=perGold===null?'':english?` (each ${perGold}%)`:` (her biri %${perGold})`;
   odds.textContent=english?`Guaranteed gold: ${gold}${distribution}. ${dust}% chance: ${dustAmounts} magic dust. ${diamonds}% chance: 1 diamond. Independent rolls; several rewards can appear together.`:`Altın garantili: ${gold}${distribution}. %${dust} ihtimalle ${dustAmounts} büyü tozu, %${diamonds} ihtimalle 1 elmas. Bağımsız çekilişler; ödüller birlikte çıkabilir.`;
+  if(detail)detail.textContent=english?`Guaranteed: ${gold} gold. ${dust}% chance of ${dustAmounts} magic dust; ${diamonds}% chance of 1 diamond.`:`Garantili: ${gold} altın. %${dust} ihtimalle ${dustAmounts} büyü tozu; %${diamonds} ihtimalle 1 elmas.`;
   odds.hidden=false;
  }
 }
@@ -346,7 +353,7 @@ function renderLobbyIdentity(){
  if($('account-avatar').getAttribute('src')!==portrait)$('account-avatar').src=portrait;
  if(chosen&&$('nav-commander-portrait').getAttribute('src')!==portrait)$('nav-commander-portrait').src=portrait;
 }
-function applyLogin(){const walletChanged=headerWallet.setLogin(login);if(walletChanged&&signedIn())void refreshGold();storefrontUI.setLogin(login);if(room)storefrontUI.close();window.dispatchEvent?.(new Event('hero:login-changed'));roomInvitesUI.setLogin(login);roomInvitesUI.setRoom(room,session?.token);friendsUI.setLogin(login);friendsUI.setRoom(room);if(!room){cancelAwardFlights();tailReveal?.cancel();tailReveal=null;cancelAuctionReveal($('stage'));}const active=signedIn();if(!room)window.HeroPlatform?.gameplay(false);if(!room)window.HeroPlatform?.setRoom(null);const wallet=$('gold-wallet');if(wallet)wallet.hidden=!active;$('login-gate').hidden=active;$('home').hidden=!active||!!room;$('game').hidden=!active||!room;$('account-status').hidden=!active;$('google-logout').hidden=true;$('account-status').setAttribute('aria-expanded','false');if(active){$('name').value=login.user?.name||'Oyuncu';$('name').readOnly=login.type==='google'||login.type==='crazygames';}renderLobbyIdentity();commanderVisibility();}
+function applyLogin(){roomChat.update();const walletChanged=headerWallet.setLogin(login);if(walletChanged&&signedIn())void refreshGold();storefrontUI.setLogin(login);if(room)storefrontUI.close();window.dispatchEvent?.(new Event('hero:login-changed'));roomInvitesUI.setLogin(login);roomInvitesUI.setRoom(room,session?.token);friendsUI.setLogin(login);friendsUI.setRoom(room);if(!room){cancelAwardFlights();tailReveal?.cancel();tailReveal=null;cancelAuctionReveal($('stage'));}const active=signedIn();if(!room)window.HeroPlatform?.gameplay(false);if(!room)window.HeroPlatform?.setRoom(null);const wallet=$('gold-wallet');if(wallet)wallet.hidden=!active;$('login-gate').hidden=active;$('home').hidden=!active||!!room;$('game').hidden=!active||!room;$('account-status').hidden=!active;$('google-logout').hidden=true;$('account-status').setAttribute('aria-expanded','false');if(active){$('name').value=login.user?.name||'Oyuncu';$('name').readOnly=login.type==='google'||login.type==='crazygames';}renderLobbyIdentity();commanderVisibility();}
 async function enterGuest(){try{const name=$('guest-name').value.trim()||'Oyuncu';const result=await post('/api/auth/guest',{name});login={type:'guest',user:result.user,authToken:result.authToken};localStorage.setItem('hero-auction-login',JSON.stringify(login));showGold(result.gold);applyLogin();void loadCommander();restoreGame()}catch(e){notify(e.message)}}
 $('guest-login').onclick=()=>window.HeroPlatform?startPlatform():enterGuest();
 $('account-status').onclick=()=>{if(window.HeroPlatform||!signedIn())return;const button=$('google-logout');button.hidden=!button.hidden;$('account-status').setAttribute('aria-expanded',String(!button.hidden));};
@@ -441,6 +448,9 @@ webInvite=createWebInvite({
 $('join-invite-button').onclick=()=>void webInvite.accept();
 $('join-invite-cancel').onclick=()=>webInvite.cancel();
 $('join-invite-notice-cancel').onclick=()=>webInvite.cancel();
+const roomChat=createRoomChat({document,form:$('chat-compose'),input:$('chat-input'),button:$('chat-send'),panel:$('chat-panel'),list:$('chat-messages'),
+ getContext:()=>({session,room,authToken:login?.authToken,disableChat:!!window.HeroPlatform?.disableChat}),post,onRoom:show,notify:message=>notify(message),escape:value=>esc(value)});
+function renderChat(){roomChat.update();}
 applyLogin();initGoogle();
 // Isolated test service only: create a fresh guest seat automatically.
 // Production deployments do not set this flag.
@@ -622,7 +632,7 @@ function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAu
   }});deliveryController=tailReveal;tailReveal.matchKey=auctionMatchKey(r);tailReveal.signature=JSON.stringify(r.final);return;
  }
  if(r.phase==='finished')tailReceipts.received(r,tailAwards);
- window.HeroPlatform?.gameplay(r.phase==='auction');const currentCardKey=r.phase==='auction'?r.code+':'+r.round+':'+r.card?.name:null;const isNewCard=!!currentCardKey&&currentCardKey!==lastCardKey;lastCardKey=currentCardKey;const wasFinished=room?.phase==='finished'&&room?.code===r.code;const enteredAuction=r.phase==='auction'&&(room?.phase!=='auction'||room?.code!==r.code||room?.round>r.round);room=r;$('game').dataset.phase=r.phase;window.HeroPlatform?.setRoom(r);if(window.HeroPlatform)commanderVisibility();if(enteredAuction)refreshGold();if(r.phase==='finished'&&!wasFinished){refreshGold();}
+ window.HeroPlatform?.gameplay(r.phase==='auction');const currentCardKey=r.phase==='auction'?r.code+':'+r.round+':'+r.card?.name:null;const isNewCard=!!currentCardKey&&currentCardKey!==lastCardKey;lastCardKey=currentCardKey;const wasFinished=room?.phase==='finished'&&room?.code===r.code;const enteredAuction=isAuctionEntry(room,r);room=r;$('game').dataset.phase=r.phase;window.HeroPlatform?.setRoom(r);if(window.HeroPlatform)commanderVisibility();if(enteredAuction)refreshGold();if(r.phase==='finished'&&!wasFinished){refreshGold();}
  for(let i=0;i<2;i++){const seat=r.me===1?1-i:i;const p=r.players[seat];$('player'+i).className='player player-side'+(r.me===seat?' me':'')+(r.phase==='auction'&&r.turn===seat?' active-turn':'');$('player'+i).innerHTML=p?`<div class="name">${esc(displayPlayerName(p,r.mode==='bot'&&seat===1))} ${r.me===seat?'(SEN)':''}</div><div class="credit">${p.credits} <small>kalan kredi</small></div><div class="spent-credit">💸 ${20-p.credits} kredi kullanıldı</div><div class="side-team-title">🎴 KARTLAR (${p.team.length})</div><div class="teams">${p.team.map(x=>`<span class="side-hero"><span class="side-hero-name">${esc(x.name)} <small class="rarity rarity-${esc(x.rarity||'common')}">${rarityLabel(x.rarity)}</small></span><small class="side-hero-role">${esc(specialtyLabel(x))}</small><span class="side-hero-cost">${Number(x.cost)||0} <small>kredi</small></span></span>`).join('')||'Henüz karakter yok'}</div>`:'<div class="name">2. OYUNCU</div><p class="status">Katılması bekleniyor…</p>'}
  for(const award of offeredAwards)animateWonAuctionCard(award,r.me,offeredSnapshot);
  if(r.phase==='finished'&&r.final?.length===2&&r.final.every(p=>p.team?.length===5)&&session?.token){
@@ -643,13 +653,11 @@ if(r.phase==='finished'){const [a,b]=r.final;const tied=a.score===b.score;const 
 const card=r.card;const canBid=r.turn===r.me;const min=r.topBid+1;const max=r.players[r.me].credits;const art=`<div class="hero-art-placeholder">${emojis[card.universe]}<small>Görsel yükleniyor…</small></div>`;
 const timer=`<p class="status" id="turntimer">⏱ ${Math.max(0,Math.ceil((r.deadline-Date.now())/1000))} saniye</p>`;const status=r.topBid?`En yüksek teklif: <b>${r.topBid} kredi</b> · <span translate="no">${esc(displayPlayerName(r.players[r.topSeat],r.mode==='bot'&&r.topSeat===1))}</span>`:'Henüz teklif yok';
 stage.innerHTML=`<div class="auction-main"><div class="auction-hero"><div class="eyebrow">KART ${r.round+1} / 10</div><div class="auction-deck-scene rarity-frame-${esc(card.rarity||'common')}">${auctionDeckMarkup(r.round,document.documentElement.lang==='en')}<div class="auction-draw-back" aria-hidden="true"><b>✦</b></div><div class="card-art rarity-frame rarity-frame-${esc(card.rarity||'common')}">${art}</div></div><div class="card-name">${esc(card.name)}</div><span class="tag">${worldNames[card.universe]} · 🔒 GÜÇ GİZLİ</span><span class="rarity rarity-${esc(card.rarity||'common')} rarity-feature">✦ ${rarityLabel(card.rarity)}</span><span class="tag" id="auction-lane-bonuses">ÖN / ARKA SAF BONUSLARI YÜKLENİYOR…</span><div class="auction-abilities" id="auction-abilities" style="display:grid;gap:4px;margin:6px 0;font-size:.86rem;line-height:1.35"><div id="auction-active">⚔ Aktif yetenek yükleniyor…</div><div id="auction-passive">✦ Pasif yetenek yükleniyor…</div></div><p class="status hero-description" id="hero-description">${esc(document.documentElement.lang==='en'?heroDescriptionEnglish(card):card.description||"Karakter bilgisi yükleniyor…")}</p></div><div class="auction-action"><div class="auction-budget" aria-label="Kalan krediler"><div class="auction-budget-own"><small>Senin kredin</small><strong>${r.players[r.me].credits}</strong></div><div class="auction-budget-rival"><small>Rakibin kredisi</small><strong>${r.players[1-r.me].credits}</strong></div></div><p class="status">${status}</p>${timer}${canBid&&max>=min?`<div class="bid-stepper"><button id="minusbid" type="button" aria-label="Teklifi azalt">−</button><div class="big-bid" id="bidview">${min} KREDİ</div><button id="plusbid" type="button" aria-label="Teklifi artır">+</button></div><input id="bidrange" class="range" type="range" min="${min}" max="${max}" value="${min}" step="1"><div class="controls"><button class="primary" id="bidbutton">${r.topBid?'TEKLİFİ ARTIR':'AÇILIŞ TEKLİFİ VER'} →</button><button class="danger" id="passbutton">PAS</button></div>`:canBid?'<p class="status">Bütçen artırmaya yetmiyor. İhale otomatik kapanıyor.</p>':`<p class="status">⏳ Teklif sırası: <b translate="no">${esc(displayPlayerName(r.players[r.turn],r.mode==='bot'&&r.turn===1))}</b><br>Rakibin kararını bekle.</p>`}</div></div>`;
+if(enteredAuction)resetAuctionEntryViewport({window,document,home:$('home')});
 revealAuctionCard(stage,{round:r.round,newCard:isNewCard,reducedMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches});
 loadHeroInfo(card);
 if(canBid&&max>=min){$('bidrange').oninput=e=>$('bidview').textContent=e.target.value+' KREDİ';$('bidbutton').onclick=()=>{playAuctionActionSound('bid');void act('/api/bid',{amount:Number($('bidrange').value)})};$('minusbid').onclick=()=>{const el=$('bidrange');el.value=Math.max(min,Number(el.value)-1);el.oninput({target:el})};$('plusbid').onclick=()=>{const el=$('bidrange');el.value=Math.min(max,Number(el.value)+1);el.oninput({target:el})};$('passbutton').onclick=()=>{playAuctionActionSound('pass');void act('/api/pass',{})}}
 }
-function renderChat(r){const panel=$('chat-panel');if(!panel)return;panel.hidden=r.mode==='bot'||Boolean(window.HeroPlatform?.disableChat);if(panel.hidden)return;const list=$('chat-messages');const oldCount=Number(list.dataset.count||0);const messages=r.chat||[];if(oldCount!==messages.length||list.dataset.room!==r.code){const nearBottom=list.scrollHeight-list.scrollTop-list.clientHeight<80;list.innerHTML=messages.map(m=>`<div class="chat-line ${m.seat===r.me?'chat-mine':''}"><span class="chat-author">${esc(m.name)} · ${new Date(m.time).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</span><span class="chat-text">${esc(m.message)}</span></div>`).join('')||'<p class="status">Henüz mesaj yok. Rakibine merhaba de!</p>';list.dataset.count=String(messages.length);list.dataset.room=r.code;if(nearBottom||!oldCount)list.scrollTop=list.scrollHeight;}}
-let chatSending=false;
-$('chat-send').onclick=async()=>{if(!session||room?.mode==='bot'||chatSending||window.HeroPlatform?.disableChat)return;const input=$('chat-input');const message=input.value.trim();if(!message)return;chatSending=true;$('chat-send').disabled=true;try{const result=await post('/api/chat',{...session,message});input.value='';show(result.room);}catch(e){notify('Sohbet mesajı gönderilemedi: '+e.message)}finally{chatSending=false;$('chat-send').disabled=false}};
 // Recover game progress as well as chat when a proxy drops SSE (also in bot games).
 setInterval(()=>{if(!session||!room||document.hidden)return;void syncRoomSnapshot().catch(()=>{});},4000);
 document.addEventListener('visibilitychange',()=>{
@@ -657,17 +665,6 @@ document.addEventListener('visibilitychange',()=>{
  if(room?.phase==='finished')show(room);
  void syncRoomSnapshot().catch(()=>{});
 });
-// Delegate focus directly from the user's tap; iOS requires synchronous focus in the gesture.
-const chatPanel=$('chat-panel');
-const chatInput=$('chat-input');
-chatPanel.addEventListener('click',event=>{
- if(!room||room.mode==='bot'||event.target.closest('#chat-send'))return;
- if(event.target!==chatInput)chatInput.focus({preventScroll:true});
-});
-chatInput.addEventListener('touchend',()=>{
- if(document.activeElement!==chatInput)chatInput.focus({preventScroll:true});
-},{passive:true});
-$('chat-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('chat-send').click()}});
 // PokeAPI species are indexed by national Pokédex number; name mapping is loaded lazily.
 let pokeMap={};async function loadPokeMap(){try{const r=await fetch('https://pokeapi.co/api/v2/pokemon-species?limit=1025');const j=await r.json();j.results.forEach((x,i)=>pokeMap[x.name.replaceAll('-',' ').toLowerCase()]=i+1);if(room)show(room)}catch{}}
 function pokemonId(name){return pokeMap[name.toLowerCase()]||null}

@@ -7,7 +7,7 @@ const app=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
 const source=app.slice(app.indexOf('let victoryChestCapability=null;'),app.indexOf('function showGold(value)'));
 const configured={enabled:true,available:true,goldOptions:[100,105,110,115,120],goldWeights:[1,1,1,1,1],magicDustOptions:[3,4,5],magicDustChance:40,diamondChance:10};
 function fixture(lang='tr'){
- const nodes=Object.fromEntries(['play-reward-label','play-reward-prefix','play-reward-odds','home-guide-economy'].map(id=>[id,{textContent:'',hidden:true}]));
+ const nodes=Object.fromEntries(['play-reward-label','play-reward-prefix','play-reward-odds','home-guide-economy','home-guide-prize-value','home-guide-prize-kind','home-guide-reward-detail'].map(id=>[id,{textContent:'',hidden:true}]));
  const context=vm.createContext({victoryChestReceipt,auctionMatchKey:r=>r.matchId,document:{documentElement:{lang}},$:id=>nodes[id]});vm.runInContext(source,context);
  return {context,nodes,lobby:config=>context.renderLobbyEconomy(config),result:(room={},tied=false,iWon=true)=>context.legacyRewardCopy(room,tied,iWon)};
 }
@@ -47,4 +47,18 @@ test('existing committed or pending chest stays honest after flags are turnedOFF
 test('English labels and trusted-event refresh work without portal postMessage or event money',()=>{
  const f=fixture('en');f.lobby(configured);assert.equal(f.nodes['play-reward-label'].textContent,'Victory chest');assert.match(f.nodes['play-reward-odds'].textContent,/each 20%|Independent rolls/);assert.match(f.result({matchId:receipt.matchId,victoryChest:receipt}).detail,/105 gold · 4 magic dust · 1 diamond/);
  assert.match(app,/window.addEventListener\('hero:wallet-refresh',\(\)=>void refreshGold\(\)\)/);assert.doesNotMatch(app,/postMessage\(/);assert.match(app,/pageshow',event=>\{if\(event.persisted\)void refreshGold\(\)/);
+});
+
+test('tutorial prize badge and detail follow server policy instead of advertising fixed120',()=>{
+ const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
+ assert.doesNotMatch(html,/120 <small>ALTIN/);
+ for(const lang of ['tr','en']){
+  const f=fixture(lang);f.lobby(configured);
+  assert.equal(f.nodes['home-guide-prize-value'].textContent,'✦');
+  assert.match(f.nodes['home-guide-reward-detail'].textContent,/100 \/ 105 \/ 110 \/ 115 \/ 120/);
+  assert.match(f.nodes['home-guide-reward-detail'].textContent,/40/);assert.match(f.nodes['home-guide-reward-detail'].textContent,/10/);
+  f.lobby({...configured,magicDustChance:25,diamondChance:5});assert.match(f.nodes['home-guide-reward-detail'].textContent,/25/);
+  f.lobby(null);assert.equal(f.nodes['home-guide-prize-value'].textContent,'—');assert.doesNotMatch(f.nodes['home-guide-reward-detail'].textContent,/100|120|40/);
+  f.lobby({enabled:false});assert.equal(f.nodes['home-guide-prize-value'].textContent,'120');
+ }
 });

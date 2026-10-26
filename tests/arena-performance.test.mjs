@@ -1,3 +1,4 @@
+import {getArenaLaneLayout} from '../public/arena-viewport.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -17,13 +18,13 @@ class Element {
  set src(value){this.url=value;this.naturalWidth=100;this.naturalHeight=150;this.onload?.();}
 }
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
-function fixture(){
+function fixture({frontA=2,frontB=2}={}){
  let created=0,artLoads=0;const fallen=[];
  const document={createElement(){created++;return new Element();}};
  const renderer=createArenaTeamRenderer({document,loadArt:unit=>{artLoads++;return '/art/'+unit.id;},onDefeated:card=>fallen.push(card)});
  const parents=[new Element(),new Element()];parents.forEach(parent=>parent.root=true);
- const teams=parents.map(()=>Array.from({length:5},(_,index)=>({id:'hero:'+index,name:'Hero '+index,role:'fighter',lane:index<2?'front':'back',hp:100,maxHp:100})));
- const update=(side=0)=>renderer.update(parents[side],teams[side],{side,rows:3,laneRows:{front:[2,4],back:[2,3,4]},fittedRows:{front:[1,3],back:[1,2,3]},roleNames:{fighter:'Savaşçı'}});
+ const teams=parents.map((_,side)=>Array.from({length:5},(_,index)=>({id:'hero:'+index,name:'Hero '+index,role:'fighter',lane:index<(side?frontB:frontA)?'front':'back',hp:100,maxHp:100})));
+ const update=(side=0)=>{const layout=getArenaLaneLayout(teams);return renderer.update(parents[side],teams[side],{side,rows:layout.rows,laneRows:layout.teams[side],fittedRows:layout.teams[side],roleNames:{fighter:'Savaşçı'}});};
  return {renderer,parents,teams,update,fallen,counts:()=>({created,artLoads})};
 }
 test('1000 live updates reuse exactly ten cards and ten portraits, preserving animations and target selection',async()=>{
@@ -133,4 +134,21 @@ test('rarity remains roster-correct on both teams through live stat changes, dea
  assert.match(portrait.attributes['aria-label'],/Yenildi/);
  h.renderer.reset();h.update();assert.notEqual(h.parents[0].children[0].children[0],portrait);
  assert.equal(h.parents[0].children[0].children[0].dataset.rarity,'legendary');
+});
+
+test('actual renderer preserves inward front lanes and stable equal slices for all 36 splits',()=>{
+ for(let frontA=0;frontA<=5;frontA++)for(let frontB=0;frontB<=5;frontB++){
+  const h=fixture({frontA,frontB});
+  for(let side=0;side<2;side++){
+   h.update(side);const cards=h.parents[side].children,layout=cards.map(card=>[card.style.gridColumn,card.style.gridRow]);
+   cards.forEach((card,index)=>{
+    const front=h.teams[side][index].lane==='front';
+    assert.equal(card.style.gridColumn,front?(side?'1':'2'):(side?'2':'1'));
+    assert.equal(card.style.gridRow,card.style['--arena-fitted-row']);
+    assert.match(card.style.gridRow,/^\d+ \/ span \d+$/);
+   });
+   h.teams[side][0].hp=0;h.update(side);assert.deepEqual(cards.map(card=>[card.style.gridColumn,card.style.gridRow]),layout);
+   h.teams[side][0].hp=20;h.update(side);assert.deepEqual(cards.map(card=>[card.style.gridColumn,card.style.gridRow]),layout);
+  }
+ }
 });

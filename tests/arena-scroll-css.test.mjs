@@ -28,3 +28,12 @@ test('scroll fallback preserves commander tap targets and avoids a fixed shell',
  assert.equal(buttons.height,'44px');assert.equal(buttons['min-height'],'44px!important');
  for(const rule of rules('.arena-room.arena-fit .shell').map(properties))assert.notEqual(rule.position,'fixed');
 });
+
+test('independent lane spans use sixty gapless tracks in fitted and ordinary arenas',()=>{
+ const fitted=rules('.arena-room.arena-fit .arena-side .team').map(properties).at(-1);
+ assert.equal(fitted['grid-template-rows'],'repeat(60,minmax(0,1fr))');assert.equal(fitted['row-gap'],'0');assert.equal(fitted['min-height'],'0');
+ const ordinary=rules('.arena-room .arena-side .team,.arena-side .team').map(properties).at(-1);
+ assert.equal(ordinary['grid-template-rows'],'repeat(60,minmax(0,1fr))');assert.equal(ordinary['row-gap'],'0');
+ const hero=rules('.arena-room.arena-fit .arena-side .arena-hero').map(properties).at(-1);
+ assert.equal(hero.height,'calc(100% - 3px)');assert.equal(hero['align-self'],'center');
+});
