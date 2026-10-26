@@ -27,7 +27,7 @@ test('real HTTP room, both seats, lane edits, rematch, bot, preview-room and CG 
   let previous=null;
   for(let match=0;match<2;match++){
    let room=(await post('/api/state',{code,...players[0]})).room;const meta=room.arenaPresentation;checkMeta(meta);
-   if(previous){assert.notEqual(meta.matchKey,previous.matchKey);assert.notEqual(meta.theme,previous.theme,'rematch redraw excludes the last scene');}
+   if(previous){assert.notEqual(meta.matchKey,previous.matchKey);assert.equal(meta.theme,'ruins','single-option rematch keeps approved forest');}
    for(let i=0;room.phase==='auction'&&i<40;i++){room=(await post('/api/pass',{code,...players[room.turn],arenaPresentation:forged})).room;assert.deepEqual(room.arenaPresentation,meta)}
    assert.equal(room.phase,'finished');
    const views=await Promise.all(players.map(player=>get('/api/battle-auction-team',{code,token:player.token})));
@@ -52,7 +52,11 @@ test('real HTTP room, both seats, lane edits, rematch, bot, preview-room and CG 
   for(const p of [p0,p1])await post('/api/battle-room',{action:'ready',code:p.code,token:p.token,positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:['tank','tank','tank','tank','assassin'],arenaPresentation:forged});
   for(const p of [p0,p1]){const view=await get('/api/battle-room',{code:p.code,token:p.token});assert.deepEqual(view.arenaPresentation,p0.arenaPresentation);assert.deepEqual(view.result.arenaPresentation,p0.arenaPresentation);}
   const normal=await fetch(base+'/arena-theme.js'),cg=await fetch(base+'/crazygames/arena-theme.js');assert.equal(normal.status,200);assert.equal(cg.status,200);assert.equal(await normal.text(),await cg.text());
-  for(const prefix of ['', '/crazygames'])for(const theme of ARENA_THEME_IDS){const path='/images/arena-themes/'+theme+'.svg';const response=await fetch(base+prefix+path);assert.equal(response.status,200);assert.match(response.headers.get('content-type'),/image\/svg\+xml/);assert.equal(await response.text(),readFileSync(new URL('../public'+path,import.meta.url),'utf8'));}
+  for(const prefix of ['', '/crazygames']){
+   const path='/images/arena-themes/ruins-premium.webp',response=await fetch(base+prefix+path);
+   assert.equal(response.status,200);assert.match(response.headers.get('content-type'),/image\/webp/);
+   assert.deepEqual(Buffer.from(await response.arrayBuffer()),readFileSync(new URL('../public'+path,import.meta.url)));
+  }
   const cgBattle=await fetch(base+'/crazygames/battle-preview.js');assert.match(await cgBattle.text(),/from '\/crazygames\/arena-theme\.js'/);
  }finally{child.kill('SIGTERM');await new Promise(resolve=>{if(child.exitCode!==null)return resolve();child.once('exit',resolve);setTimeout(resolve,2000).unref()})}
 });

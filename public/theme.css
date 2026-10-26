@@ -621,21 +621,20 @@ body:has(#battle-arena) .formation-card.previewing .formation-stats{color:#28654
 body:has(#battle-arena) #commander-bonus-content>div{border-color:#bcc9cb!important}
 /* Slate keeps original blue/red teams, HP, shield, rarity and cast effects legible. */
 /* Cosmetic scene only: the existing grid, clipping, hit areas and stacking are
-   intentionally untouched. Static local SVGs require no canvas, filters or animation. */
+   intentionally untouched. Local scene images require no canvas, filters or animation. */
 body:has(#battle-arena) .battle-arena{
  background-color:#283333;
- background-image:radial-gradient(ellipse at center,transparent 35%,#111b2566 100%),url('/images/arena-themes/courtyard.svg');
- background-position:center;
- background-size:100% 100%;
+ background-image:url('/images/arena-themes/ruins-premium.webp');
+ background-position:center 18%;
+ background-size:cover;
  background-repeat:no-repeat;
  border-color:#7f877b;
- box-shadow:inset 0 1px #c5c5ab33,inset 0 0 30px #10191f55,0 5px 22px #20304720;
+ box-shadow:inset 0 1px #c5c5ab33,0 5px 22px #20304720;
  color:#e7edf1;
 }
-body:has(#battle-arena) .battle-arena[data-arena-theme="savanna"]{background-image:radial-gradient(ellipse at center,transparent 35%,#111b2566 100%),url('/images/arena-themes/savanna.svg');border-color:#8f8368}
-body:has(#battle-arena) .battle-arena[data-arena-theme="fjord"]{background-image:radial-gradient(ellipse at center,transparent 35%,#111b2566 100%),url('/images/arena-themes/fjord.svg');border-color:#82969c}
-body:has(#battle-arena) .battle-arena[data-arena-theme="ruins"]{background-image:radial-gradient(ellipse at center,transparent 35%,#111b2566 100%),url('/images/arena-themes/ruins.svg');border-color:#7d9176}
-body:has(#battle-arena) .battle-arena[data-arena-theme="space"]{background-image:radial-gradient(ellipse at center,transparent 35%,#111b2566 100%),url('/images/arena-themes/space.svg');border-color:#8493b4}
+/* Approved forest painting: preserve proportions and natural lighting, no dark veil. */
+body:has(#battle-arena) .battle-arena[data-arena-theme="ruins"]{border-color:#7d9176}
+@media(max-width:600px){body:has(#battle-arena) .battle-arena{background-position:center center}}
 body:has(#battle-arena) .battle-arena::before{background:none}
 body:has(#battle-arena) .battle-arena:after{background:#303a3f;border-color:#aaac93;color:#f0e7cd;box-shadow:0 2px 8px #10191f66}
 /* Text labels and left/right placement remain the primary team identifiers.
@@ -649,6 +648,8 @@ body:has(#battle-arena) .arena-red{background:linear-gradient(270deg,#ce62701a,t
 }
 body:has(#battle-arena) .arena-side h2{color:#e7edf1}
 body:has(#battle-arena) .arena-hero-label{color:#e7edf1}
+/* Local name contrast only; never tint or repaint the approved forest art. */
+body:has(#battle-arena) .battle-arena .arena-hero-label{background:#17212be6;border-radius:3px;text-shadow:0 1px 2px #000}
 body:has(#battle-arena) :is(.arena-commander-matchup,.arena-live-clock){background:#e3e7de;border-color:#b7ad8d;color:#203047;box-shadow:none}
 body:has(#battle-arena) .arena-commander-matchup small{color:#586676}
 body:has(#battle-arena) .arena-commander-versus{color:#735626;text-shadow:none}

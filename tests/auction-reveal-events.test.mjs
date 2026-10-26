@@ -75,5 +75,6 @@ test('actual rematch reset clears tail metadata and changes match identity befor
  await context.rematch();
  assert.equal(room.phase,'auction');assert.equal(room.matchNumber,2);assert.notEqual(published.matchKey,oldKey);assert.equal(published.revision,1);assert.deepEqual(clone(room.tailAwards),[]);assert.equal('tailAwards' in published,false);
  assert.equal(roomArenaPresentation(room).matchKey,published.matchKey);
- assert.notEqual(roomArenaPresentation(room).theme,oldTheme.theme,'cosmetic scene resets only with the new match identity');
+ assert.equal(roomArenaPresentation(room).theme,'ruins','single active forest remains valid after rematch');
+ assert.notEqual(roomArenaPresentation(room).matchKey,oldTheme.matchKey,'cosmetic identity still resets with the new match');
 });
