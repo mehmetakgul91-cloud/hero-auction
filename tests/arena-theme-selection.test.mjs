@@ -1,25 +1,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {ARENA_THEME_IDS,fallbackArenaTheme,validatedArenaPresentation,createArenaThemePresentation} from '../public/arena-theme.js';
+import {ARENA_THEME_IDS,ARENA_THEME_CATALOG_IDS,fallbackArenaTheme,validatedArenaPresentation,createArenaThemePresentation} from '../public/arena-theme.js';
 import {arenaMatchKey,startRoomArenaTheme,roomArenaPresentation} from '../arena-theme.js';
 import {crazyGamesSource} from '../crazygames-build.js';
 
 const room=(extra={})=>({code:'123',created:1793000000000,matchNumber:1,players:[{token:'a'},{token:'b'}],...extra});
 const fixture=()=>{let writes=0;const dataset={};const attributes={};const element={dataset:new Proxy(dataset,{set(object,key,value){writes++;object[key]=value;return true}}),setAttribute(key,value){writes++;attributes[key]=value}};return {element,dataset,attributes,writes:()=>writes}};
 
-test('all five cosmetic draws are reachable with exact bounds; returned objects do not mutate room storage',()=>{
+test('forest-only cosmetic draw has exact bounds; returned objects do not mutate room storage',()=>{
  const counts=Object.fromEntries(ARENA_THEME_IDS.map(id=>[id,0]));
  for(let sample=0;sample<500;sample++){
-  const r=room({code:String(sample)}),view=startRoomArenaTheme(r,{randomIndex:bound=>{assert.equal(bound,5);return sample%bound}});
+  const r=room({code:String(sample)}),view=startRoomArenaTheme(r,{randomIndex:bound=>{assert.equal(bound,1);return sample%bound}});
   assert.equal(view.matchKey,arenaMatchKey(r));assert.equal(view.version,1);counts[view.theme]++;
   view.theme='invalid';assert.ok(ARENA_THEME_IDS.includes(r.arenaPresentation.theme));
  }
- assert.deepEqual(Object.values(counts),[100,100,100,100,100]);
- for(const invalid of [-1,5,Infinity,NaN,.5])assert.throws(()=>startRoomArenaTheme(room(),{randomIndex:()=>invalid}),RangeError);
+ assert.deepEqual(Object.values(counts),[500]);
+ for(const invalid of [-1,1,5,Infinity,NaN,.5])assert.throws(()=>startRoomArenaTheme(room(),{randomIndex:()=>invalid}),RangeError);
 });
 test('one match draws once; polling, roster swaps, side changes and serialized reload keep the same scene',()=>{
- const r=room();let draws=0;const rng=()=>{draws++;return 2};
+ const r=room();let draws=0;const rng=()=>{draws++;return 0};
  const first=startRoomArenaTheme(r,{randomIndex:rng});
  for(let i=0;i<1000;i++){
   r.round=i;r.players.reverse();r.battleSync={key:'ignored',ready:[i,i]};
@@ -28,12 +28,12 @@ test('one match draws once; polling, roster swaps, side changes and serialized r
  }
  assert.equal(draws,1);assert.deepEqual(roomArenaPresentation(JSON.parse(JSON.stringify(r))),first);
 });
-test('new matches redraw separately; rematches choose among the other four without carrying old identity',()=>{
- const r=room(),first=startRoomArenaTheme(r,{randomIndex:()=>1});
+test('new matches and repeated one-option rematches retain forest without an empty draw',()=>{
+ const r=room(),first=startRoomArenaTheme(r,{randomIndex:()=>0});
  r.matchNumber++;r.created++;
- const second=startRoomArenaTheme(r,{randomIndex:bound=>{assert.equal(bound,4);return 1}});
- assert.notEqual(second.theme,first.theme);assert.notEqual(second.matchKey,first.matchKey);
- assert.equal(startRoomArenaTheme(room({code:'456'}),{randomIndex:()=>1}).theme,first.theme,'unrelated room does not share previous-theme state');
+ const second=startRoomArenaTheme(r,{randomIndex:bound=>{assert.equal(bound,1);return 0}});
+ assert.equal(second.theme,first.theme);assert.notEqual(second.matchKey,first.matchKey);
+ assert.equal(startRoomArenaTheme(room({code:'456'}),{randomIndex:()=>0}).theme,first.theme,'unrelated room does not share previous-theme state');
 });
 test('legacy or stale persisted metadata falls back deterministically without mutating room state',()=>{
  const r=room(),before=JSON.stringify(r),expected=fallbackArenaTheme(arenaMatchKey(r));
@@ -51,12 +51,12 @@ test('client validates whitelist, version and exact current room context before 
 test('client changes only cosmetic attributes once per match, never flips during repeated snapshots',()=>{
  const h=fixture(),p=createArenaThemePresentation({element:h.element}),first={version:1,matchKey:'123:1:1',theme:'ruins'};
  assert.deepEqual(p.apply(first,first.matchKey),first);const writes=h.writes();
- for(let n=0;n<1000;n++)assert.deepEqual(p.apply({...first,theme:ARENA_THEME_IDS[n%5]},first.matchKey),first);
+ for(let n=0;n<1000;n++)assert.deepEqual(p.apply({...first,theme:ARENA_THEME_CATALOG_IDS[n%5]},first.matchKey),first);
  assert.equal(h.writes(),writes);assert.equal(h.dataset.arenaTheme,'ruins');assert.match(h.attributes['aria-label'],/Orman harabeleri/);
  assert.equal(p.apply({...first,matchKey:'old'},first.matchKey),null);
- const next={version:1,matchKey:'123:2:2',theme:'fjord'};assert.deepEqual(p.apply(next,next.matchKey),next);
- assert.equal(h.dataset.arenaTheme,'fjord');assert.equal(h.writes(),writes+2);assert.deepEqual(Object.keys(p.current()).sort(),['matchKey','theme','version']);
- const copy=p.current();copy.theme='courtyard';assert.equal(p.current().theme,'fjord');
+ const next={version:1,matchKey:'123:2:2',theme:'ruins'};assert.deepEqual(p.apply(next,next.matchKey),next);
+ assert.equal(h.dataset.arenaTheme,'ruins');assert.equal(h.writes(),writes+2);assert.deepEqual(Object.keys(p.current()).sort(),['matchKey','theme','version']);
+ const copy=p.current();copy.theme='courtyard';assert.equal(p.current().theme,'ruins');
 });
 test('legacy client fallback is identical for two seats, reloads and preview keys, with English CG label',()=>{
  const key='123:1:1793000000000';const values=[];
@@ -76,4 +76,25 @@ test('presentation code has no combat dependency, per-frame effects, storage, na
  assert.match(source,/arenaTheme\.apply\(data\.arenaPresentation,auctionCode\+':'+/);
  assert.match(crazyGamesSource(source,'.js'),/from '\/crazygames\/arena-theme\.js'/);
  assert.doesNotMatch(source,/query\.get\(['"](?:arenaTheme|theme)['"]\)/);
+});
+
+test('saved retired scenes normalize to forest on both server and client without rewriting stored rooms',()=>{
+ assert.deepEqual(ARENA_THEME_IDS,['ruins']);assert.equal(ARENA_THEME_CATALOG_IDS.length,5);
+ for(const theme of ARENA_THEME_CATALOG_IDS){
+  const r=room();r.arenaPresentation={version:1,matchKey:arenaMatchKey(r),theme};const before=JSON.stringify(r);
+  for(let n=0;n<3;n++){
+   const view=roomArenaPresentation(JSON.parse(before));assert.equal(view.theme,'ruins');
+   const f=fixture(),p=createArenaThemePresentation({element:f.element});
+   assert.equal(p.apply(r.arenaPresentation,arenaMatchKey(r)).theme,'ruins');assert.equal(f.dataset.arenaTheme,'ruins');
+   assert.equal(startRoomArenaTheme(r,{randomIndex:()=>{throw Error('must not redraw saved match')}}).theme,'ruins');
+  }
+  assert.equal(JSON.stringify(r),before);
+ }
+});
+test('hundreds of forest rematches never call a zero bound or retain an older match key',()=>{
+ const r=room();let last=null;
+ for(let n=0;n<500;n++){
+  r.matchNumber=n+1;const view=startRoomArenaTheme(r,{randomIndex:bound=>{assert.equal(bound,1);return 0}});
+  assert.equal(view.theme,'ruins');assert.notEqual(view.matchKey,last);last=view.matchKey;
+ }
 });

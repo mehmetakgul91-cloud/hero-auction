@@ -8,7 +8,9 @@ export function startRoomArenaTheme(room,{randomIndex=randomInt}={}){
  const existing=room.arenaPresentation&&validatedArenaPresentation(room.arenaPresentation,arenaMatchKey(room));
  if(existing)return existing;
  const previous=room.arenaPresentation?.theme;
- const choices=ARENA_THEME_IDS.filter(theme=>theme!==previous);
+ const alternatives=ARENA_THEME_IDS.filter(theme=>theme!==previous);
+ // A single active theme is a valid pool: rematches must never draw from zero.
+ const choices=alternatives.length?alternatives:ARENA_THEME_IDS;
  const index=randomIndex(choices.length);
  if(!Number.isInteger(index)||index<0||index>=choices.length)throw new RangeError('Invalid cosmetic random index');
  room.arenaPresentation={version:1,matchKey:arenaMatchKey(room),theme:choices[index]};

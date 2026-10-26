@@ -1,5 +1,7 @@
 // Cosmetic presentation only. Never read hero stats, seats, turns or combat RNG.
-export const ARENA_THEME_IDS=Object.freeze(['courtyard','savanna','fjord','ruins','space']);
+// Active pool is temporarily forest-only; retired IDs remain readable for saved rooms.
+export const ARENA_THEME_IDS=Object.freeze(['ruins']);
+export const ARENA_THEME_CATALOG_IDS=Object.freeze(['courtyard','savanna','fjord','ruins','space']);
 export const ARENA_THEME_LABELS=Object.freeze({
  courtyard:Object.freeze({tr:'Çin esintili avlu',en:'Chinese-inspired courtyard'}),
  savanna:Object.freeze({tr:'Afrika savanası',en:'African savanna'}),
@@ -21,8 +23,8 @@ export function fallbackArenaTheme(matchKey){
 export function validatedArenaPresentation(value,expectedMatchKey){
  if(!validArenaMatchKey(expectedMatchKey))return null;
  if(value===undefined||value===null)return {version:1,matchKey:expectedMatchKey,theme:fallbackArenaTheme(expectedMatchKey)};
- if(value.version!==1||value.matchKey!==expectedMatchKey||!isArenaTheme(value.theme))return null;
- return {version:1,matchKey:expectedMatchKey,theme:value.theme};
+ if(value.version!==1||value.matchKey!==expectedMatchKey||!ARENA_THEME_CATALOG_IDS.includes(value.theme))return null;
+ return {version:1,matchKey:expectedMatchKey,theme:isArenaTheme(value.theme)?value.theme:fallbackArenaTheme(expectedMatchKey)};
 }
 // One current binding, not an accumulating match cache. Repeated snapshots and
 // orientation/formation changes never rewrite the arena or restart any effects.
