@@ -39,4 +39,6 @@ test('cancellation groups exercise real SQL faults, paired refunds, audit, repla
  assert.match(source,/assert\.equal\(held\.pendingMatchCancellations,3\)/);assert.match(source,/app\.post\('\/api\/battle-auction-preview',[\s\S]*?\},503\)/);
  assert.match(source,/await app\.publicInfo\(\)\)\.paidMatches,\{paused:true\}/);assert.match(source,/const newer=\{[\s\S]*?matchNumber:2/);
  assert.match(source,/assert\.deepEqual\(await cancellationProof\(batch\),committed\)/);
+ const baseline=source.indexOf('committed=await cancellationProof(batch)');
+ assert.ok(source.lastIndexOf('await waitCancellationWrites(app,admin);',baseline)>source.lastIndexOf('assert.equal(result.ok,true)',baseline),'replay baseline follows the normal publish revision flush');
 });

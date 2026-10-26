@@ -276,8 +276,11 @@ try{
     await blocker.query('COMMIT');result=await executing;
    }finally{await blocker.query('ROLLBACK').catch(()=>{});blocker.release();if(executing)await executing.catch(()=>{})}
    assert.equal(result.ok,true);assert.equal(result.replayed,false);assert.equal(result.refundGold,300);assert.equal(result.cancelled.length,3);
+   // publish() increments the normal room revision after atomic cancellation.
+   // Capture the replay baseline only after that secondary room write drains.
+   await waitCancellationWrites(app,admin);
    committed=await cancellationProof(batch);assert.equal(committed.awards.length,6);assert.equal(committed.audit.length,6);assert.ok(committed.balances.every(value=>value.gold===500));assert.ok(committed.rooms.every(value=>value.state.matchSettled===true&&value.state.cancelled?.kind==='admin-entry-refund'));
-   await waitCancellationWrites(app,admin);const replay=await app.post(executePath,request);assert.equal(replay.replayed,true);assert.deepEqual(await cancellationProof(batch),committed);
+   const replay=await app.post(executePath,request);assert.equal(replay.replayed,true);assert.deepEqual(await cancellationProof(batch),committed);
   }finally{await app?.stop()}
   // A newer synthetic identity now reuses one room code. Replaying the old
   // durable receipt must not reinstall its cancelled snapshot over this room.
