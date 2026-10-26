@@ -38,7 +38,7 @@ function fixture({hidden=false,reduced=false,random=()=>0,legacy=false,width=378
   hide(on){document.hidden=on;document.emit('visibilitychange');},reduce(on){media.matches=on;media.emit('change');}};
 }
 test('three depths and two approved down-right gust windows fit within one finite eight-second pass',()=>{
- assert.deepEqual(VIKING_WEATHER_TIMING,{durationMs:8000,initialDelayMs:1200,minIntervalMs:20000,maxIntervalMs:30000});
+ assert.deepEqual(VIKING_WEATHER_TIMING,{durationMs:8000,initialDelayMs:2500,minIntervalMs:20000,maxIntervalMs:30000});
  assert.equal(VIKING_SNOW_LAYERS.length,5);assert.deepEqual(VIKING_FOREGROUND_INDICES,[2,3,4]);
  assert.deepEqual(VIKING_SNOW_LAYERS.slice(3).map(l=>[l.delayMs,l.durationMs]),[[1600,2300],[5000,2300]]);
  for(const layer of VIKING_SNOW_LAYERS){assert.ok(layer.dx>0&&layer.dy>0);assert.ok(layer.durationMs+layer.delayMs<=8000);assert.ok(layer.opacity>.5&&layer.opacity<1);}
@@ -58,52 +58,52 @@ test('mount is idempotent, decorative, lazy and leaves root geometry and hero no
  assert.equal(f.document.count(),1);assert.equal(f.media.count(),1);assert.equal(f.clock.pending.size,1);f.controller.dispose();
 });
 test('one timer reuses all fourteen layers across 100 passes without reloading texture properties',()=>{
- const f=fixture(),nodes=f.sheets();f.clock.tick(1199);assert.equal(f.controller.state().phase,'waiting');f.clock.tick(1);assert.equal(f.controller.state().phase,'playing');
+ const f=fixture(),nodes=f.sheets();f.clock.tick(2499);assert.equal(f.controller.state().phase,'waiting');f.clock.tick(1);assert.equal(f.controller.state().phase,'playing');
  assert.ok(nodes.every(n=>n.writes['background-image']===1));assert.equal(f.foreground.hidden,false);
  f.clock.tick(8000);assert.equal(f.controller.state().phase,'waiting');assert.equal(f.controller.state().nextDelayMs,12000);assert.ok(f.background.hidden&&f.foreground.hidden);
  f.clock.tick(20000*100);assert.equal(f.clock.maximum,1);assert.equal(f.root.children.length,3);assert.deepEqual(f.sheets(),nodes);assert.ok(nodes.every(n=>n.writes['background-image']===1));
- assert.ok(f.clock.history.every(n=>[1200,8000,12000].includes(n)));f.controller.dispose();assert.equal(f.clock.pending.size,0);
+ assert.ok(f.clock.history.every(n=>[2500,8000,12000].includes(n)));f.controller.dispose();assert.equal(f.clock.pending.size,0);
 });
 test('maximum cadence is start-to-start thirty seconds excluding the one initial short delay',()=>{
- const f=fixture({random:()=>1});f.clock.tick(1200);f.clock.tick(8000);assert.equal(f.controller.state().nextDelayMs,22000);f.clock.tick(22000);assert.equal(f.clock.now,31200);assert.equal(f.controller.state().phase,'playing');f.controller.dispose();
+ const f=fixture({random:()=>1});f.clock.tick(2500);f.clock.tick(8000);assert.equal(f.controller.state().nextDelayMs,22000);f.clock.tick(22000);assert.equal(f.clock.now,32500);assert.equal(f.controller.state().phase,'playing');f.controller.dispose();
 });
 test('hidden/reduced preferences never load textures and immediately stop all visible weather',()=>{
  const f=fixture({hidden:true,reduced:true});assert.equal(f.clock.pending.size,0);assert.ok(f.sheets().every(n=>!n.properties['background-image']));
- f.hide(false);assert.equal(f.clock.pending.size,0);f.reduce(false);assert.equal(f.controller.state().nextDelayMs,1200);f.clock.tick(1200);const stale=[...f.clock.pending.values()][0].fn;
+ f.hide(false);assert.equal(f.clock.pending.size,0);f.reduce(false);assert.equal(f.controller.state().nextDelayMs,2500);f.clock.tick(2500);const stale=[...f.clock.pending.values()][0].fn;
  f.hide(true);assert.equal(f.clock.pending.size,0);assert.ok(f.background.hidden&&f.foreground.hidden);assert.ok(!f.background.classes.has('is-running'));stale();assert.equal(f.clock.pending.size,0);
  f.hide(false);assert.equal(f.controller.state().nextDelayMs,20000);f.clock.tick(20000);f.reduce(true);assert.equal(f.clock.pending.size,0);assert.ok(f.foreground.hidden);f.controller.dispose();
 });
 test('late callbacks recheck document, reduced preference, root and ancestor visibility',()=>{
  for(const mutate of [f=>f.document.hidden=true,f=>f.media.matches=true,f=>f.root.hidden=true,f=>f.root.ancestorHidden=true,f=>f.root.isConnected=false]){
-  const f=fixture();mutate(f);f.clock.tick(1200);assert.equal(f.controller.state().phase,'paused');assert.equal(f.clock.pending.size,0);assert.ok(f.sheets().every(n=>!n.properties['background-image']));f.controller.dispose();
+  const f=fixture();mutate(f);f.clock.tick(2500);assert.equal(f.controller.state().phase,'paused');assert.equal(f.clock.pending.size,0);assert.ok(f.sheets().every(n=>!n.properties['background-image']));f.controller.dispose();
  }
 });
 test('zero-size, empty client rects and thrown geometry pause rather than leak an effect',()=>{
- const f=fixture({width:0,height:0});assert.equal(f.clock.pending.size,0);f.root.clientWidth=378;f.root.clientHeight=530;f.controller.refresh();assert.equal(f.controller.state().nextDelayMs,1200);
- f.root.getClientRects=()=>[];f.clock.tick(1200);assert.equal(f.clock.pending.size,0);f.root.getClientRects=()=>[{}];f.controller.refresh();assert.equal(f.clock.pending.size,1);
- f.root.getBoundingClientRect=()=>{throw Error('detached geometry');};f.clock.tick(1200);assert.equal(f.clock.pending.size,0);assert.ok(f.background.hidden&&f.foreground.hidden);f.controller.dispose();
+ const f=fixture({width:0,height:0});assert.equal(f.clock.pending.size,0);f.root.clientWidth=378;f.root.clientHeight=530;f.controller.refresh();assert.equal(f.controller.state().nextDelayMs,2500);
+ f.root.getClientRects=()=>[];f.clock.tick(2500);assert.equal(f.clock.pending.size,0);f.root.getClientRects=()=>[{}];f.controller.refresh();assert.equal(f.clock.pending.size,1);
+ f.root.getBoundingClientRect=()=>{throw Error('detached geometry');};f.clock.tick(2500);assert.equal(f.clock.pending.size,0);assert.ok(f.background.hidden&&f.foreground.hidden);f.controller.dispose();
 });
 test('resize refreshes clipping without restarting a playing pass or changing approved geometry',()=>{
- const f=fixture();f.clock.tick(1200);const delay=f.controller.state().nextDelayMs,refreshes=f.clipRefreshes();f.root.clientWidth=800;f.root.clientHeight=400;f.resize();
+ const f=fixture();f.clock.tick(2500);const delay=f.controller.state().nextDelayMs,refreshes=f.clipRefreshes();f.root.clientWidth=800;f.root.clientHeight=400;f.resize();
  assert.ok(f.clipRefreshes()>refreshes);assert.equal(f.controller.state().phase,'playing');assert.equal(f.controller.state().nextDelayMs,delay);assert.equal(f.clock.maximum,1);assert.deepEqual(f.root.properties,{});f.controller.dispose();
 });
 test('a clip refresh error stops both planes and leaks no timer',()=>{
- const f=fixture();f.clip.refresh=()=>{throw Error('unavailable clip');};f.clock.tick(1200);assert.equal(f.clock.pending.size,0);assert.ok(f.background.hidden&&f.foreground.hidden);f.controller.dispose();
+ const f=fixture();f.clip.refresh=()=>{throw Error('unavailable clip');};f.clock.tick(2500);assert.equal(f.clock.pending.size,0);assert.ok(f.background.hidden&&f.foreground.hidden);f.controller.dispose();
 });
 test('unsupported, missing or failed portrait clipping never exposes full-field foreground',()=>{
  for(const options of [{clipEnabled:false},{clipEnabled:undefined},{clipThrows:true}]){
   const f=fixture(options);if(Object.hasOwn(options,'clipEnabled')&&options.clipEnabled===undefined)f.clip.enabled=undefined;
-  f.clock.tick(1200);assert.equal(f.controller.state().phase,'playing');assert.equal(f.background.hidden,false);assert.equal(f.foreground.hidden,true);assert.equal(f.foreground.classes.has('is-running'),false);
+  f.clock.tick(2500);assert.equal(f.controller.state().phase,'playing');assert.equal(f.background.hidden,false);assert.equal(f.foreground.hidden,true);assert.equal(f.foreground.classes.has('is-running'),false);
   f.controller.dispose();assert.equal(f.clock.pending.size,0);assert.equal(f.document.count(),0);assert.equal(f.media.count(),0);assert.deepEqual(f.root.children,[f.hero]);
  }
 });
 test('optional observer construction or registration failure does not leak mounted resources',()=>{
  for(const failure of ['constructor','observe']){const f=fixture({observerFailure:failure});assert.equal(f.clock.pending.size,1);assert.equal(f.observerDisposals(),failure==='observe'?1:0);
-  f.clock.tick(1200);f.controller.dispose();assert.equal(f.clock.pending.size,0);assert.equal(f.document.count(),0);assert.equal(f.media.count(),0);assert.equal(f.clipDisposals(),1);assert.deepEqual(f.root.children,[f.hero]);
+  f.clock.tick(2500);f.controller.dispose();assert.equal(f.clock.pending.size,0);assert.equal(f.document.count(),0);assert.equal(f.media.count(),0);assert.equal(f.clipDisposals(),1);assert.deepEqual(f.root.children,[f.hero]);
  }
 });
 test('dispose is idempotent and stale callbacks cannot resurrect weather; clean remount works',()=>{
- for(const playing of [false,true]){const f=fixture({legacy:true});if(playing)f.clock.tick(1200);const stale=[...f.clock.pending.values()][0].fn;f.controller.dispose();f.controller.dispose();stale();f.resize();f.hide(false);f.reduce(false);
+ for(const playing of [false,true]){const f=fixture({legacy:true});if(playing)f.clock.tick(2500);const stale=[...f.clock.pending.values()][0].fn;f.controller.dispose();f.controller.dispose();stale();f.resize();f.hide(false);f.reduce(false);
   assert.equal(f.clock.pending.size,0);assert.equal(f.document.count(),0);assert.equal(f.media.count(),0);assert.equal(f.clipDisposals(),1);assert.equal(f.observerDisposals(),1);assert.deepEqual(f.root.children,[f.hero]);assert.equal(f.controller.state().phase,'disposed');
   const next=mountVikingWeather(f.root,f.options);assert.notEqual(next,f.controller);assert.equal(f.root.children.length,3);next.dispose();assert.equal(f.clock.pending.size,0);}
 });
@@ -128,4 +128,29 @@ test('CSS stays pointer-transparent, finite, portrait-clipped and geometry-aware
  assert.match(css,/prefers-reduced-motion:reduce/);assert.doesNotMatch(css,/\b(?:filter|backdrop-filter|blur|infinite|will-change)\b/);
  assert.doesNotMatch(css,/\.battle-arena|\.arena-hero|\.hp\b|\.arena-shield|background-image:/);
  const script=readFileSync(new URL('../public/arena-viking-weather.js',import.meta.url),'utf8');assert.doesNotMatch(script,/setInterval\s*\(|requestAnimationFrame\s*\(|Math\.random\s*\(|fetch\s*\(|battle-engine|innerHTML|createElement\(['"]canvas/);
+});
+
+test('short battles start the first environmental pass at 2.5 seconds without consuming cadence entropy early',()=>{
+ let calls=0;const f=fixture({random:()=>{calls++;return 1;}});
+ assert.equal(VIKING_WEATHER_TIMING.initialDelayMs,2500);assert.equal(f.controller.state().nextDelayMs,2500);assert.equal(calls,0);
+ f.clock.tick(2499);assert.equal(f.controller.state().phase,'waiting');
+ for(let i=0;i<20;i++)f.controller.refresh();assert.equal(f.clock.pending.size,1);assert.equal(calls,0);
+ f.clock.tick(1);assert.equal(f.clock.now,2500);assert.equal(f.controller.state().phase,'playing');assert.equal(calls,1);
+ f.clock.tick(750);assert.equal(f.controller.state().phase,'playing','a 3.25-second battle reaches the first pass');
+ f.controller.dispose();f.clock.tick(100000);assert.equal(f.clock.pending.size,0);assert.equal(f.controller.state().phase,'disposed');
+});
+test('hiding or reducing motion before the first pass resets its short wait; later resume retains full cadence',()=>{
+ for(const toggle of ['hide','reduce']){
+  const f=fixture();f.clock.tick(1000);const stale=[...f.clock.pending.values()][0].fn;
+  f[toggle](true);assert.equal(f.clock.pending.size,0);f.clock.tick(10000);assert.equal(f.controller.state().phase,'paused');
+  f[toggle](false);assert.equal(f.controller.state().nextDelayMs,2500);stale();assert.equal(f.controller.state().phase,'waiting');
+  f.clock.tick(2499);assert.equal(f.controller.state().phase,'waiting');f.clock.tick(1);assert.equal(f.controller.state().phase,'playing');
+  f[toggle](true);assert.equal(f.clock.pending.size,0);f[toggle](false);assert.equal(f.controller.state().nextDelayMs,20000);
+  f.clock.tick(2500);assert.equal(f.controller.state().phase,'waiting','only the first pass uses the short delay');f.controller.dispose();
+ }
+});
+test('battle completion before 2.5 seconds cancels the initial pass and rematch receives its own short wait',()=>{
+ const f=fixture();f.clock.tick(2499);const stale=[...f.clock.pending.values()][0].fn;
+ f.controller.dispose();f.clock.tick(10001);stale();assert.equal(f.controller.state().phase,'disposed');assert.equal(f.clock.pending.size,0);
+ const next=mountVikingWeather(f.root,f.options);assert.equal(next.state().nextDelayMs,2500);f.clock.tick(2499);assert.equal(next.state().phase,'waiting');f.clock.tick(1);assert.equal(next.state().phase,'playing');next.dispose();assert.equal(f.clock.pending.size,0);
 });

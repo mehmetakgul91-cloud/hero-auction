@@ -1,7 +1,7 @@
 // Approved Viking snow reference: libfile_a26c07e6b2c88191bc8a53758ba6b6c9 v1.
 // Cosmetic-only sheets, not particle emitters; the approved painting never moves.
 import {createPortraitWeatherClip} from './arena-portrait-weather.js';
-export const VIKING_WEATHER_TIMING=Object.freeze({durationMs:8000,initialDelayMs:1200,minIntervalMs:20000,maxIntervalMs:30000});
+export const VIKING_WEATHER_TIMING=Object.freeze({durationMs:8000,initialDelayMs:2500,minIntervalMs:20000,maxIntervalMs:30000});
 export const VIKING_SNOW_LAYERS=Object.freeze([
  Object.freeze({role:'far',texture:'far',dx:160,dy:140,durationMs:8000,delayMs:0,opacity:.70}),
  Object.freeze({role:'middle',texture:'middle',dx:280,dy:220,durationMs:8000,delayMs:0,opacity:.78}),

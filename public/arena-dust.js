@@ -1,6 +1,6 @@
 // Approved savanna v4: cosmetic-only, finite opacity/transform animation.
 import {createPortraitWeatherClip} from './arena-portrait-weather.js';
-export const DUST_TIMING=Object.freeze({durationMs:14000,minIntervalMs:15000,maxIntervalMs:25000});
+export const DUST_TIMING=Object.freeze({durationMs:14000,initialDelayMs:2500,minIntervalMs:15000,maxIntervalMs:25000});
 export const DUST_ENVELOPE=Object.freeze([0,.18,.7,1]);
 export const DUST_LAYERS=Object.freeze([
  Object.freeze({role:'lead',leftPct:-170,topPct:40,widthPct:170,heightPct:38,startTranslatePct:0,startTranslateYPct:0,endTranslatePct:160,endTranslateYPct:-8,rotationDeg:-1.5,peakOpacity:.30,tailOpacity:.22,durationMs:13000,delayMs:0,startScale:.90,endScale:1.12}),
@@ -66,7 +66,7 @@ export function mountSavannaDust(root,options={}){
  const foreground=document.createElement('div');foreground.setAttribute('data-savanna-dust','');foreground.setAttribute('data-savanna-foreground','');foreground.setAttribute('aria-hidden','true');foreground.hidden=true;foreground.style.setProperty('clip-path',clip.styleValue);addLayers(foreground,FOREGROUND_LAYERS);root.append(foreground);
  const stopForeground=()=>{foreground.hidden=true;foreground.classList.remove('is-running');};
 
- let timer=null,generation=0,phase='paused',disposed=false,nextDelayMs=null,ending=false;
+ let timer=null,generation=0,phase='paused',disposed=false,nextDelayMs=null,ending=false,started=false;
  // Foreground layers share this event clock; hook failures never leak it.
  const notifyStart=()=>{clip.refresh();foreground.hidden=!clip.enabled;if(clip.enabled)foreground.classList.add('is-running');try{options.onPassStart?.();}catch{}};
  const notifyEnd=()=>{stopForeground();if(ending)return;ending=true;try{options.onPassEnd?.();}catch{}finally{ending=false;}};
@@ -79,7 +79,7 @@ export function mountSavannaDust(root,options={}){
  function pause(){cancelTimer();phase='paused';overlay.classList.remove('is-running');overlay.hidden=true;notifyEnd();}
  function beginPass(){
   if(disposed)return;if(!mayRun()){pause();return;}
-  phase='playing';overlay.hidden=false;overlay.classList.add('is-running');notifyStart();
+  started=true;phase='playing';overlay.hidden=false;overlay.classList.add('is-running');notifyStart();
   if(disposed||!mayRun()||phase!=='playing')return;
   const interval=dustIntervalMs(random);
   schedule(DUST_TIMING.durationMs,()=>{
@@ -94,7 +94,7 @@ export function mountSavannaDust(root,options={}){
   if(!mayRun()){pause();return;}
   if(phase!=='paused')return;
   for(const image of images)if(!image.src)image.src=textureUrl;
-  phase='waiting';overlay.hidden=false;schedule(dustIntervalMs(random),beginPass);
+  phase='waiting';overlay.hidden=false;schedule(started?dustIntervalMs(random):DUST_TIMING.initialDelayMs,beginPass);
  }
  const onStateChange=()=>resume();
  document.addEventListener('visibilitychange',onStateChange);

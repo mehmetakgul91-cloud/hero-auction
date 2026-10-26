@@ -1,6 +1,6 @@
 // Cosmetic forest wind only: a bounded reusable set, never gameplay randomness.
 import {createPortraitWeatherClip} from './arena-portrait-weather.js';
-export const FOREST_GUST_TIMING=Object.freeze({durationMs:7000,minIntervalMs:20000,maxIntervalMs:30000});
+export const FOREST_GUST_TIMING=Object.freeze({durationMs:7000,initialDelayMs:2500,minIntervalMs:20000,maxIntervalMs:30000});
 export const FOREST_LEAVES=Object.freeze([
  Object.freeze({startX:-8,startY:15,midX:48,midY:38,endX:110,endY:65,size:17,startRotation:-35,midRotation:135,endRotation:325,durationMs:6500,delayMs:0,opacity:.65}),
  Object.freeze({startX:-12,startY:68,midX:45,midY:51,endX:108,endY:27,size:14,startRotation:90,midRotation:-70,endRotation:-225,durationMs:5900,delayMs:400,opacity:.58}),
@@ -45,7 +45,7 @@ export function mountForestGust(root,options={}){
  for(const index of FOREST_FOREGROUND_INDICES)addLeaf(foreground,FOREST_LEAVES[index],true);
  for(const kind of ['light','shadow']){const patch=document.createElement('span');patch.className='forest-gust__'+kind;background.append(patch);}
  root.insertBefore(background,root.firstChild||null);root.append(foreground);
- let disposed=false,phase='paused',timer=null,generation=0,nextDelayMs=null,assetsLoaded=false;
+ let disposed=false,phase='paused',timer=null,generation=0,nextDelayMs=null,assetsLoaded=false,started=false;
  const mayRun=()=>!disposed&&!document.hidden&&!media.matches&&root.isConnected!==false;
  function measure(){
   if(disposed)return false;
@@ -65,7 +65,7 @@ export function mountForestGust(root,options={}){
  function begin(){
   if(!mayRun()||!measure()){pause();return;}
   if(!assetsLoaded){for(const {image}of leaves)image.src=leafUrl;assetsLoaded=true;}
-  phase='playing';background.hidden=false;background.classList.add('is-running');
+  started=true;phase='playing';background.hidden=false;background.classList.add('is-running');
   // Unsupported clipping must never turn the portrait overlay into a HUD veil.
   foreground.hidden=clip.enabled!==true;if(!foreground.hidden)foreground.classList.add('is-running');
   const interval=forestGustInterval(random);
@@ -74,7 +74,7 @@ export function mountForestGust(root,options={}){
    hide();phase='waiting';schedule(interval-FOREST_GUST_TIMING.durationMs,begin);
   });
  }
- function resume(){if(disposed)return;if(!mayRun()||!measure()){pause();return;}if(phase!=='paused')return;phase='waiting';schedule(forestGustInterval(random),begin);}
+ function resume(){if(disposed)return;if(!mayRun()||!measure()){pause();return;}if(phase!=='paused')return;phase='waiting';schedule(started?forestGustInterval(random):FOREST_GUST_TIMING.initialDelayMs,begin);}
  function refresh(){if(disposed)return;if(!measure()){pause();return;}resume();}
  const Observer=options.ResizeObserver||document.defaultView?.ResizeObserver;
  let observer=null;

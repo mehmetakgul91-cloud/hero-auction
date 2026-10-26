@@ -130,23 +130,23 @@ test('mount creates exactly three decorative noninteractive layers before unchan
  f.controller.dispose();
 });
 test('one timeout alternates finite passes and bounded quiet gaps, with no overlap over 100 passes',()=>{
- const f=fixture();assert.deepEqual(f.controller.state(),{phase:'waiting',disposed:false,timerPending:true,nextDelayMs:15000,layerCount:3});
- f.clock.tick(14999);assert.equal(f.overlay.classList.contains('is-running'),false);
+ const f=fixture();assert.deepEqual(f.controller.state(),{phase:'waiting',disposed:false,timerPending:true,nextDelayMs:2500,layerCount:3});
+ f.clock.tick(2499);assert.equal(f.overlay.classList.contains('is-running'),false);
  f.clock.tick(1);assert.equal(f.controller.state().phase,'playing');assert.equal(f.overlay.classList.contains('is-running'),true);assert.equal(f.controller.state().nextDelayMs,14000);
  f.clock.tick(13999);assert.equal(f.controller.state().phase,'playing');
  f.clock.tick(1);assert.equal(f.controller.state().phase,'waiting');assert.equal(f.overlay.classList.contains('is-running'),false);assert.equal(f.overlay.hidden,true);assert.equal(f.controller.state().nextDelayMs,1000);
  f.clock.tick(1000);assert.equal(f.controller.state().phase,'playing');
  f.clock.tick(15000*100);assert.equal(f.clock.maxPending,1);assert.equal(f.clock.pending.size,1);
- for(const {delay} of f.clock.history)assert.ok(delay===14000||delay===1000||delay===15000);
+ for(const {delay} of f.clock.history)assert.ok(delay===14000||delay===1000||delay===2500);
  f.controller.dispose();assert.equal(f.clock.pending.size,0);
 });
 test('maximum cadence keeps start-to-start spacing at 25 seconds, not 39 seconds',()=>{
- const f=fixture({random:()=>1});f.clock.tick(25000);assert.equal(f.controller.state().phase,'playing');
- f.clock.tick(14000);assert.equal(f.controller.state().nextDelayMs,11000);f.clock.tick(11000);assert.equal(f.clock.now,50000);assert.equal(f.controller.state().phase,'playing');
+ const f=fixture({random:()=>1});f.clock.tick(2500);assert.equal(f.controller.state().phase,'playing');
+ f.clock.tick(14000);assert.equal(f.controller.state().nextDelayMs,11000);f.clock.tick(11000);assert.equal(f.clock.now,27500);assert.equal(f.controller.state().phase,'playing');
  assert.equal(f.clock.maxPending,1);f.controller.dispose();
 });
 test('hidden document hard-stops and resets an active pass; resume waits a completely new interval',()=>{
- const f=fixture();f.clock.tick(15000);const stale=[...f.clock.pending.values()][0].fn;
+ const f=fixture();f.clock.tick(2500);const stale=[...f.clock.pending.values()][0].fn;
  f.hide(true);assert.equal(f.controller.state().phase,'paused');assert.equal(f.clock.pending.size,0);assert.equal(f.overlay.hidden,true);assert.equal(f.overlay.classList.contains('is-running'),false);
  stale();assert.equal(f.clock.pending.size,0);f.clock.tick(100000);assert.equal(f.controller.state().phase,'paused');
  f.hide(false);assert.equal(f.controller.state().phase,'waiting');assert.equal(f.controller.state().nextDelayMs,15000);assert.equal(f.overlay.hidden,false);
@@ -156,11 +156,11 @@ test('hidden document hard-stops and resets an active pass; resume waits a compl
 test('reduced motion and initial hidden state create no timer; both restrictions must clear before resume',()=>{
  const f=fixture({hidden:true,reduced:true});assert.equal(f.clock.pending.size,0);assert.equal(f.overlay.hidden,true);
  f.hide(false);assert.equal(f.clock.pending.size,0);f.reduce(false);assert.equal(f.controller.state().phase,'waiting');
- f.clock.tick(15000);f.reduce(true);assert.equal(f.clock.pending.size,0);assert.equal(f.overlay.classList.contains('is-running'),false);assert.equal(f.overlay.hidden,true);
+ f.clock.tick(2500);f.reduce(true);assert.equal(f.clock.pending.size,0);assert.equal(f.overlay.classList.contains('is-running'),false);assert.equal(f.overlay.hidden,true);
  f.hide(true);f.reduce(false);assert.equal(f.clock.pending.size,0);f.hide(false);assert.equal(f.controller.state().nextDelayMs,15000);f.controller.dispose();
 });
 test('late callback rechecks hidden/reduced state even when their events have not yet dispatched',()=>{
- for(const blocked of ['hidden','reduced']){const f=fixture();if(blocked==='hidden')f.document.hidden=true;else f.media.matches=true;f.clock.tick(15000);assert.equal(f.controller.state().phase,'paused');assert.equal(f.clock.pending.size,0);assert.equal(f.overlay.hidden,true);f.controller.dispose();}
+ for(const blocked of ['hidden','reduced']){const f=fixture();if(blocked==='hidden')f.document.hidden=true;else f.media.matches=true;f.clock.tick(2500);assert.equal(f.controller.state().phase,'paused');assert.equal(f.clock.pending.size,0);assert.equal(f.overlay.hidden,true);f.controller.dispose();}
 });
 test('dispose is idempotent, removes all timers/listeners, ignores stale callbacks and allows a clean remount',()=>{
  const f=fixture({legacyMedia:true});const stale=[...f.clock.pending.values()][0].fn;
@@ -170,7 +170,7 @@ test('dispose is idempotent, removes all timers/listeners, ignores stale callbac
 });
 test('optional companion hooks share the finite event clock and reset on end, pause and disposal',()=>{
  const events=[];const f=fixture({onPassStart:()=>events.push('start'),onPassEnd:()=>events.push('end')});
- assert.deepEqual(events,[]);f.clock.tick(15000);assert.deepEqual(events,['start']);f.clock.tick(14000);assert.deepEqual(events,['start','end']);
+ assert.deepEqual(events,[]);f.clock.tick(2500);assert.deepEqual(events,['start']);f.clock.tick(14000);assert.deepEqual(events,['start','end']);
  f.clock.tick(1000);assert.deepEqual(events,['start','end','start']);f.hide(true);assert.equal(events.at(-1),'end');
  f.hide(false);f.clock.tick(15000);assert.equal(events.at(-1),'start');f.reduce(true);assert.equal(events.at(-1),'end');
  f.reduce(false);f.clock.tick(15000);assert.equal(events.at(-1),'start');f.controller.dispose();assert.equal(events.at(-1),'end');
@@ -178,10 +178,10 @@ test('optional companion hooks share the finite event clock and reset on end, pa
 });
 test('hook errors and reentrant disposal never leak timers or preference/document listeners',()=>{
  const broken=fixture({onPassStart:()=>{throw Error('start failed')},onPassEnd:()=>{throw Error('end failed')}});
- broken.clock.tick(29000);assert.equal(broken.controller.state().phase,'waiting');assert.equal(broken.clock.pending.size,1);broken.controller.dispose();assert.equal(broken.clock.pending.size,0);
+ broken.clock.tick(16500);assert.equal(broken.controller.state().phase,'waiting');assert.equal(broken.clock.pending.size,1);broken.controller.dispose();assert.equal(broken.clock.pending.size,0);
  for(const where of ['start','end']){
   let f;const hooks=where==='start'?{onPassStart:()=>f.controller.dispose()}:{onPassEnd:()=>f.controller.dispose()};
-  f=fixture(hooks);f.clock.tick(where==='start'?15000:29000);
+  f=fixture(hooks);f.clock.tick(where==='start'?2500:16500);
   assert.equal(f.controller.state().phase,'disposed');assert.equal(f.clock.pending.size,0);assert.equal(f.document.count(),0);assert.equal(f.media.count(),0);
  }
 });
@@ -204,7 +204,7 @@ test('foreground exactly copies the v4 lead and follower with bounded partial-po
 test('foreground uses the one event timer and always hides on pause, preference and dispose',()=>{
  const f=fixture(),fg=f.root.children.find(n=>'data-savanna-foreground' in n.attributes);
  assert.equal(fg.hidden,true);assert.equal(fg.children.length,2);assert.match(fg.properties['clip-path'],/^url\(#arena-weather-portraits-\d+\)$/);
- f.clock.tick(15000);assert.equal(fg.hidden,false);assert.equal(fg.classList.contains('is-running'),true);assert.equal(f.clock.pending.size,1);
+ f.clock.tick(2500);assert.equal(fg.hidden,false);assert.equal(fg.classList.contains('is-running'),true);assert.equal(f.clock.pending.size,1);
  f.clock.tick(14000);assert.equal(fg.hidden,true);f.clock.tick(1000);assert.equal(fg.hidden,false);
  f.hide(true);assert.equal(fg.hidden,true);assert.equal(f.clock.pending.size,0);
  f.hide(false);f.clock.tick(15000);f.reduce(true);assert.equal(fg.hidden,true);assert.equal(f.clock.pending.size,0);
@@ -219,7 +219,7 @@ test('initial hidden/reduced state does not fetch the selected dust texture unti
 });
 test('detachment/root hiding stops at refresh or callback and reconnect waits a fresh full interval',()=>{
  for(const property of ['isConnected','hidden']){
-  const f=fixture();f.clock.tick(15000);f.root[property]=property==='hidden';f.controller.refresh();
+  const f=fixture();f.clock.tick(2500);f.root[property]=property==='hidden';f.controller.refresh();
   assert.equal(f.controller.state().phase,'paused');assert.equal(f.clock.pending.size,0);assert.equal(f.overlay.hidden,true);
   f.root[property]=property!=='hidden';f.controller.refresh();assert.equal(f.controller.state().nextDelayMs,15000);
   f.root[property]=property==='hidden';f.clock.tick(15000);assert.equal(f.controller.state().phase,'paused');assert.equal(f.clock.pending.size,0);f.controller.dispose();
@@ -228,7 +228,7 @@ test('detachment/root hiding stops at refresh or callback and reconnect waits a 
 test('unsupported clip-path disables foreground while finite background remains available',()=>{
  const f=fixture();f.controller.dispose();f.document.defaultView={CSS:{supports:()=>false}};
  const control=mountSavannaDust(f.root,f.options),fg=f.root.children.find(n=>'data-savanna-foreground' in n.attributes);
- f.clock.tick(15000);assert.equal(control.state().phase,'playing');assert.equal(fg.hidden,true);assert.equal(fg.classList.contains('is-running'),false);control.dispose();
+ f.clock.tick(2500);assert.equal(control.state().phase,'playing');assert.equal(fg.hidden,true);assert.equal(fg.classList.contains('is-running'),false);control.dispose();
 });
 test('production dust CSS stays noninteractive, clipped and finite with transform/opacity-only frames',()=>{
  const all=readFileSync(new URL('../public/theme.css',import.meta.url),'utf8');
@@ -241,4 +241,29 @@ test('production dust CSS stays noninteractive, clipped and finite with transfor
  assert.doesNotMatch(css,/\b(?:filter|backdrop-filter|blur|canvas|infinite|will-change)\b/);
  const frames=css.slice(css.indexOf('@keyframes'),css.indexOf('/* CSS is a second'));
  const names=[...frames.matchAll(/([a-z-]+):[^;}]+/g)].map(match=>match[1]);assert.ok(names.length>=6);assert.ok(names.every(name=>['transform','opacity'].includes(name)));
+});
+
+test('short battles start the first environmental pass at 2.5 seconds without consuming cadence entropy early',()=>{
+ let calls=0;const f=fixture({random:()=>{calls++;return 1;}});
+ assert.equal(DUST_TIMING.initialDelayMs,2500);assert.equal(f.controller.state().nextDelayMs,2500);assert.equal(calls,0);
+ f.clock.tick(2499);assert.equal(f.controller.state().phase,'waiting');
+ for(let i=0;i<20;i++)f.controller.refresh();assert.equal(f.clock.pending.size,1);assert.equal(calls,0);
+ f.clock.tick(1);assert.equal(f.clock.now,2500);assert.equal(f.controller.state().phase,'playing');assert.equal(calls,1);
+ f.clock.tick(750);assert.equal(f.controller.state().phase,'playing','a 3.25-second battle reaches the first pass');
+ f.controller.dispose();f.clock.tick(100000);assert.equal(f.clock.pending.size,0);assert.equal(f.controller.state().phase,'disposed');
+});
+test('hiding or reducing motion before the first pass resets its short wait; later resume retains full cadence',()=>{
+ for(const toggle of ['hide','reduce']){
+  const f=fixture();f.clock.tick(1000);const stale=[...f.clock.pending.values()][0].fn;
+  f[toggle](true);assert.equal(f.clock.pending.size,0);f.clock.tick(10000);assert.equal(f.controller.state().phase,'paused');
+  f[toggle](false);assert.equal(f.controller.state().nextDelayMs,2500);stale();assert.equal(f.controller.state().phase,'waiting');
+  f.clock.tick(2499);assert.equal(f.controller.state().phase,'waiting');f.clock.tick(1);assert.equal(f.controller.state().phase,'playing');
+  f[toggle](true);assert.equal(f.clock.pending.size,0);f[toggle](false);assert.equal(f.controller.state().nextDelayMs,15000);
+  f.clock.tick(2500);assert.equal(f.controller.state().phase,'waiting','only the first pass uses the short delay');f.controller.dispose();
+ }
+});
+test('battle completion before 2.5 seconds cancels the initial pass and rematch receives its own short wait',()=>{
+ const f=fixture();f.clock.tick(2499);const stale=[...f.clock.pending.values()][0].fn;
+ f.controller.dispose();f.clock.tick(10001);stale();assert.equal(f.controller.state().phase,'disposed');assert.equal(f.clock.pending.size,0);
+ const next=mountSavannaDust(f.root,f.options);assert.equal(next.state().nextDelayMs,2500);f.clock.tick(2499);assert.equal(next.state().phase,'waiting');f.clock.tick(1);assert.equal(next.state().phase,'playing');next.dispose();assert.equal(f.clock.pending.size,0);
 });
