@@ -66,7 +66,7 @@ test('returning after a long pause yields after four moves and suppresses catch-
 test('match completion releases wake lock, stops music, and never reacquires on a late response or focus',async()=>{
  let requested=0,released=0,stopped=0,resolveRequest;const listeners=new Map();
  const context={states:[],document:{hidden:false},navigator:{wakeLock:{request:()=>{requested++;return new Promise(resolve=>resolveRequest=resolve);}}},window:{addEventListener:(name,fn)=>listeners.set(name,fn)},Date,setTimeout,
-  stopArenaMusic:()=>stopped++};
+  syncArenaWeather(){},stopArenaMusic:()=>stopped++};
  const active=source.slice(source.indexOf('const arenaActive='),source.indexOf('// Original procedural'));
  const wake=source.slice(source.indexOf('let arenaWakeLock='),source.indexOf('function stop(){'));
  runInNewContext('let battlePresentationFinished=false,leavingBattle=false,arenaMode=true,timer=null;'+active+wake+';this.request=requestArenaWakeLock;',context);

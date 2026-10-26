@@ -16,6 +16,7 @@ import {commanderAbilityStats,commanderAbilityDescription} from '/commander-abil
 import {getArenaLaneLayout} from '/arena-viewport.js?v=equal-lanes-20261026';
 import {heroCombatPresentation,stationaryArenaAction} from '/hero-combat-presentation.js';
 import {createArenaThemePresentation} from '/arena-theme.js';
+import {createArenaWeather} from '/arena-weather.js';
 // Verify the current portal account before accessing any saved arena seat.
 if(window.HeroPlatform){
  const restart=()=>{localStorage.removeItem('hero-auction-session');sessionStorage.removeItem('hero-auction-formation');sessionStorage.removeItem('hero-auction-lanes');window.HeroPlatform.beforeNavigate?.('/crazygames/');location.replace('/crazygames/')};
@@ -42,6 +43,15 @@ if(window.HeroPlatform){
 // Browser-only battle replay preview. No wallet or live room mutations.
 const $=id=>document.getElementById(id);
 const arenaTheme=createArenaThemePresentation({element:$('battle-arena'),language:document.documentElement.lang});
+const arenaWeather=createArenaWeather({root:$('battle-arena')});
+let arenaWeatherReady=false,arenaWeatherPageHidden=false;
+function syncArenaWeather(){
+ // Only an actual loaded, running battle can animate. Preparation, waiting,
+ // summaries, page cache, failed builds and explicit leave release all resources.
+ const active=arenaWeatherReady&&!arenaWeatherPageHidden&&!document.hidden&&!battlePresentationFinished&&!leavingBattle&&(liveArenaMode||timer!==null);
+ arenaWeather.update(arenaTheme.current(),{active});
+}
+
 let demoA=[["Obsidyen Muhafız", "tank", 90, "original"], ["Demir Sur", "tank", 69, "original"], ["Kaya Titanı", "tank", 80, "original"], ["Buz Kalesi", "tank", 83, "original"], ["Gölge Suikastçı", "assassin", 90, "original"]];
 // Preview uses zero credits until verified auction balances are wired in.
 let previewCredits=0;
@@ -240,7 +250,7 @@ let leavingBattle=false;
 async function leaveBattleAndGoHome(event){
  event?.preventDefault();
  if(leavingBattle)return;
- leavingBattle=true;stopArenaMusic(true);
+ leavingBattle=true;syncArenaWeather();stopArenaMusic(true);
  const leavingStoredSeat=localStorage.getItem('hero-auction-session');
  const button=event?.currentTarget;if(button){button.textContent='Ayrılıyor…';button.style.pointerEvents='none'}
  if(auctionMode){
@@ -248,7 +258,7 @@ async function leaveBattleAndGoHome(event){
    const auth=JSON.parse(localStorage.getItem('hero-auction-login')||'null');
    const response=await fetch('/api/room/detach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,authToken:auth?.authToken})});
    if(!response.ok){const result=await response.json();throw Error(result.error||'Odadan ayrılamadın. Tekrar dene.')}
-  }catch(error){leavingBattle=false;if(arenaActive())void startArenaMusic();if(button){button.style.pointerEvents='';button.textContent=document.documentElement.lang==='en'?'Leave match':'Maçtan Ayrıl'}$('message').textContent=document.documentElement.lang==='en'?translate(error.message):error.message;return;}
+  }catch(error){leavingBattle=false;syncArenaWeather();if(arenaActive())void startArenaMusic();if(button){button.style.pointerEvents='';button.textContent=document.documentElement.lang==='en'?'Leave match':'Maçtan Ayrıl'}$('message').textContent=document.documentElement.lang==='en'?translate(error.message):error.message;return;}
  }
  if(battlePoll&&battlePoll!==-1)clearInterval(battlePoll);
  if(timer){clearInterval(timer);timer=null}
@@ -597,6 +607,7 @@ function renderArenaCommanderMatchup(profiles){
 }
 async function build(overrideResult){
  resetVictoryChestPresentation();
+ arenaWeatherReady=false;arenaWeather.clear();
  document.body.classList.remove('arena-results');document.querySelector('.controls').hidden=false;
  stop();if(victoryPendingTimer!==null){clearTimeout(victoryPendingTimer);victoryPendingTimer=null}resetArenaClock();arenaTeamRenderer.reset();battlePresentationFinished=false;cursor=0;events=[];$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;victoryRevealDone=false;if(victoryRevealTimer!==null){clearTimeout(victoryRevealTimer);victoryRevealTimer=null}if($('arena-victory-reveal'))$('arena-victory-reveal').hidden=true;$('next').disabled=true;$('play').disabled=true;
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
@@ -624,8 +635,8 @@ async function build(overrideResult){
   if(arenaMode)void startArenaMusic();
   $('arena-score').hidden=false;$('battle-arena').hidden=false;
   $('message').textContent=liveArenaMode?'Canlı savaş başladı · Komutanını yönet':'Gerçek savaş motoru hazır · '+result.rounds+' tur';
-  render();window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(true);window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position})));window.dispatchEvent(new CustomEvent('heroarena:ready',{detail:{teams:window.heroArenaTeams}}));
- }catch(e){$('message').textContent='⚠ '+e.message}
+  arenaWeatherReady=true;render();window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(true);window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position})));window.dispatchEvent(new CustomEvent('heroarena:ready',{detail:{teams:window.heroArenaTeams}}));
+ }catch(e){arenaWeatherReady=false;arenaWeather.clear();$('message').textContent='⚠ '+e.message}
 }
 function battleEventText(event){
  const names=new Map(states.flat().map(unit=>[unit.id,unit.name]));
@@ -690,6 +701,9 @@ function showVictoryChest(result){
  victoryChestPresentation.update(result);
 }
 window.addEventListener('pagehide',resetVictoryChestPresentation);
+window.addEventListener('pagehide',()=>{arenaWeatherPageHidden=true;arenaWeather.clear();});
+window.addEventListener('pageshow',()=>{arenaWeatherPageHidden=false;syncArenaWeather();});
+window.addEventListener('hero:login-changed',()=>{arenaWeatherReady=false;arenaWeather.clear();});
 window.addEventListener('storage',event=>{if(event.key==='hero-auction-login')resetVictoryChestPresentation()});
 window.addEventListener('hero:login-changed',resetVictoryChestPresentation);
 function render(flash){
@@ -708,6 +722,7 @@ function render(flash){
   $('team-hp-'+suffix+'-track').setAttribute('aria-valuenow',String(Math.round(percent)));
   $('team-hp-'+suffix+'-track').setAttribute('aria-valuetext',Math.round(remainingHp)+' / '+Math.round(maxHp)+' HP');
  }
+ syncArenaWeather();arenaWeather.refresh();
  $('round').textContent=cursor?events[cursor-1].round:'0';
  $('next').disabled=cursor>=events.length;
  $('play').disabled=cursor>=events.length;
@@ -903,7 +918,7 @@ async function requestArenaWakeLock(){
 }
 window.addEventListener('heroarena:battle-finished',()=>{
  for(const team of states)for(const unit of team)delete unit.commanderFocusUntilDeath;
- battlePresentationFinished=true;stopArenaMusic(true);releaseArenaWakeLock();
+ battlePresentationFinished=true;syncArenaWeather();stopArenaMusic(true);releaseArenaWakeLock();
 });
 window.addEventListener('heroarena:connection-lost',()=>{
  battlePresentationFinished=true;stop();stopArenaMusic(true);releaseArenaWakeLock();
@@ -914,7 +929,7 @@ function releaseArenaWakeLock(){
  const lock=arenaWakeLock;arenaWakeLock=null;
  if(lock)void lock.release().catch(()=>{});
 }
-function stop(){if(timer!==null){clearInterval(timer);timer=null}replayDueAt=0;pauseArenaClock();if(!arenaMode){stopArenaMusic();releaseArenaWakeLock();}}
+function stop(){if(timer!==null){clearInterval(timer);timer=null}replayDueAt=0;pauseArenaClock();if(!arenaMode){stopArenaMusic();releaseArenaWakeLock();}syncArenaWeather();}
 function advanceReplay(){
  if(timer===null||!replayDueAt)return;
  if(!document.hidden&&!arenaWakeLock)void requestArenaWakeLock();
@@ -937,6 +952,7 @@ function startReplay(){
  startArenaClock();
  replayDueAt=Date.now()+Math.max(50,duration());
  timer=setInterval(advanceReplay,Math.min(200,Math.max(50,duration())));
+ syncArenaWeather();
  void requestArenaWakeLock();
 
  $('play').textContent='⏸ DURDUR';
@@ -945,6 +961,7 @@ $('play').onclick=()=>{if(timer!==null){stop();$('play').textContent='▶ DEVAM 
 $('speed').onchange=()=>{if(timer!==null){clearInterval(timer);timer=null;replayDueAt=0;startReplay()}};
 let arenaAudioSuspendedByBackground=false;
 function syncArenaAudioVisibility(){
+ syncArenaWeather();
  if(document.hidden||document.visibilityState==='hidden'){
   arenaAudioSuspendedByBackground=true;
   stopArenaMusic();
