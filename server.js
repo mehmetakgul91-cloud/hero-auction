@@ -1,3 +1,4 @@
+import {createPaidEntryMaintenance,isUnsettledPaidRoom} from './paid-entry-maintenance.js';
 import {createMagicDustPolicy,readMagicDustBalance} from './magic-dust.js';
 import {createVictoryChestPolicy,eligibleVictory,victoryMatchId,persistVictoryChestIntent,creditVictoryChest,readVictoryChestRecovery,victoryChestView} from './victory-chests.js';
 import {createDiamondPolicy,commanderProgression,readDiamondBalance,upgradeCommanderWithDiamonds} from './paid-diamonds.js';
@@ -40,6 +41,7 @@ import {createArena3dDemo} from './arena-3d-demo.js';
 import {startRoomArenaTheme,roomArenaPresentation} from './arena-theme.js';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
+const paidEntryMaintenance=createPaidEntryMaintenance({bootPaused:process.env.HERO_PAID_ENTRY_PAUSED==='1'});
 // Explicit opt-in only. Schema is a separate, unapplied migration; no payment handler.
 const diamondPolicy=createDiamondPolicy(process.env);
 const magicDustPolicy=createMagicDustPolicy(process.env);
@@ -122,19 +124,26 @@ const activeSeats=new Map();
 const roomFlushes=new Map();
 const friends=createFriendsService({persist:()=>saveSocial(true),profile:id=>profileOf(id),canInteract:(a,b)=>moderationReady&&!moderation.blocked(a,b)});
 let socialSaveQueue=Promise.resolve();
+let socialSaveNeedsConfirmation=false;
 const ratings=new Map();
 const rankedTier=n=>n>=1800?'Efsane':n>=1500?'Elmas':n>=1250?'Altın':n>=1050?'Gümüş':'Bronz';
 const profileOf=id=>{const p=ratings.get(id)||{rating:1000,wins:0,losses:0,draws:0,name:'Oyuncu'};return {...p,tier:rankedTier(p.rating),matches:p.wins+p.losses+p.draws};};
 async function saveSocial(strict=false){
  if(!database)return;
- // Match writes share the friendship transaction queue: never persist tentative links
- // while a failed friend write is still awaiting its in-memory rollback.
- if(!strict)return friends.afterMutations(()=>saveSocial(true)).catch(e=>console.error('Social persistence:',e.message));
- if(!databaseReady){if(strict)error('Arkadaş sistemi geçici olarak kullanılamıyor.',503);return}
- const run=socialSaveQueue.then(()=>database.query('INSERT INTO hero_auction_social(id,state) VALUES($1,$2) ON CONFLICT(id) DO UPDATE SET state=$2',['global',JSON.stringify({ratings:[...ratings],matches:[...matchRecords],friendships:friends.snapshot(),roomInvites:roomInvites.snapshot(),activeSeats:[...activeSeats]})]));
- socialSaveQueue=run.catch(()=>{});
- try{await run}catch(e){console.error('Social persistence:',e.message);if(strict)error('Arkadaş değişikliği kaydedilemedi. Tekrar dene.',503)}
+ // Track from enqueue, not only after the friendship queue starts executing.
+ // A failed write remains a drain blocker until a complete snapshot succeeds.
+ const finishSocialWrite=paidEntryMaintenance.track('socialWrites');
+ socialSaveNeedsConfirmation=true;
+ try{
+  if(!strict)return await friends.afterMutations(()=>saveSocial(true)).catch(e=>{socialSaveNeedsConfirmation=true;console.error('Social persistence:',e.message)});
+  if(!databaseReady)error('Arkadaş sistemi geçici olarak kullanılamıyor.',503);
+  const run=socialSaveQueue.then(()=>database.query('INSERT INTO hero_auction_social(id,state) VALUES($1,$2) ON CONFLICT(id) DO UPDATE SET state=$2',['global',JSON.stringify({ratings:[...ratings],matches:[...matchRecords],friendships:friends.snapshot(),roomInvites:roomInvites.snapshot(),activeSeats:[...activeSeats]})])).then(()=>{socialSaveNeedsConfirmation=false});
+  socialSaveQueue=run.catch(()=>{});
+  try{await run}catch(e){console.error('Social persistence:',e.message);error('Arkadaş değişikliği kaydedilemedi. Tekrar dene.',503)}
+ }catch(e){socialSaveNeedsConfirmation=true;throw e}
+ finally{finishSocialWrite()}
 }
+
 function recordMatch(r,scores){const id=r.code+':'+(r.matchNumber||1)+':'+r.created;if(matchRecords.has(id))return;const winner=scores[0]===scores[1]?-1:scores[0]>scores[1]?0:1;const participants=r.players.map((p,i)=>({id:p.accountId||null,name:p.name,score:scores[i]}));const before=r.players.map(p=>p.accountId?profileOf(p.accountId):null);const ranked=r.mode!=='bot'&&before.every(Boolean);const deltas=ranked?before.map((p,i)=>{const opponent=before[1-i];const expected=1/(1+Math.pow(10,(opponent.rating-p.rating)/400));const actual=winner<0?0.5:winner===i?1:0;return Math.round(32*(actual-expected))}):[0,0];r.rankChange=ranked?deltas:[0,0];r.rankBefore=before.map(p=>p?.rating??null);matchRecords.set(id,{id,at:Date.now(),mode:r.mode,universe:r.universe,participants,winner,rankChange:r.rankChange});for(let i=0;i<2;i++){const p=r.players[i];if(!p.accountId)continue;const prev=before[i];const next={...prev,name:p.name,wins:prev.wins+(winner===i?1:0),losses:prev.losses+(winner>=0&&winner!==i?1:0),draws:prev.draws+(winner<0?1:0)};if(ranked)next.rating=Math.max(0,prev.rating+deltas[i]);ratings.set(p.accountId,next)}while(matchRecords.size>2000)matchRecords.delete(matchRecords.keys().next().value);void saveSocial()}
 
 let moderationReady=!database;
@@ -173,10 +182,43 @@ async function initializeModeration(){
 let databaseReady=false;
 function markRoom(r){if(database&&r)dirtyRooms.add(r.code)}
 async function initializeDatabase(){if(!database)return;try{await database.query('CREATE TABLE IF NOT EXISTS hero_auction_rooms (code VARCHAR(3) PRIMARY KEY, state JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_wallets (account_id TEXT PRIMARY KEY, gold INTEGER NOT NULL DEFAULT 500 CHECK(gold>=0))');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_user_profiles(account_id TEXT PRIMARY KEY,display_name TEXT NOT NULL,updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_admin_accounts (account_id TEXT PRIMARY KEY, banned BOOLEAN NOT NULL DEFAULT false)');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_admin_audit (id BIGSERIAL PRIMARY KEY, account_id TEXT NOT NULL, actor_id TEXT NOT NULL, action TEXT NOT NULL, old_gold INTEGER, new_gold INTEGER, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_commanders (account_id TEXT PRIMARY KEY, profile JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_invite_joins (invite_id TEXT PRIMARY KEY, state JSONB NOT NULL)');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_social (id TEXT PRIMARY KEY, state JSONB NOT NULL)');const social=await database.query('SELECT state FROM hero_auction_social WHERE id=$1',['global']);if(social.rows[0]){const state=social.rows[0].state;for(const [k,v] of state.ratings||[])ratings.set(k,v);for(const [k,v] of state.matches||[])matchRecords.set(k,v);roomInvites.restore(state.roomInvites);for(const [id,seat] of state.activeSeats||[])activeSeats.set(id,seat);if(state.friendships)friends.restore(state.friendships);else friends.migrate(state.friends||[],ratings)}await database.query('CREATE TABLE IF NOT EXISTS hero_auction_gold_awards (award_id TEXT PRIMARY KEY, account_id TEXT NOT NULL, amount INTEGER NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_rewarded_claims (provider_event_id TEXT PRIMARY KEY, account_id TEXT NOT NULL, reward_day DATE NOT NULL, amount INTEGER NOT NULL CHECK(amount=100), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');await database.query('CREATE INDEX IF NOT EXISTS hero_auction_rewarded_claims_account_day ON hero_auction_rewarded_claims(account_id,reward_day)');const result=await database.query('SELECT code,state FROM hero_auction_rooms');for(const row of result.rows){const r=row.state;if(r&&r.code===row.code&&r.players&&r.cards){rooms.set(row.code,r);if(r.phase==='finished'&&r.goldAward)queueGoldAward(r);if(r.phase==='finished'&&r.goldRefunds)for(const a of r.goldRefunds)pendingGold.set(a.id,a);if(r.phase==='matching'&&!r.players[1])waiting.set(row.code,{code:row.code,universe:r.universe,created:r.created})}}const legacySeats=new Map();for(const r of [...rooms.values()].sort((a,b)=>b.created-a.created))r.players.forEach((p,seat)=>{if(p?.accountId&&!activeSeats.has(p.accountId)){const all=legacySeats.get(p.accountId)||[];all.push({code:r.code,created:r.created,matchNumber:r.matchNumber||1,seat,unsettled:r.phase==='auction'||(r.phase==='finished'&&!r.matchSettled)});legacySeats.set(p.accountId,all)}});for(const [id,all] of legacySeats)activeSeats.set(id,all.filter(p=>p.unsettled).length>1?{ambiguous:true}:all.find(p=>p.unsettled)||all[0]);for(const [id,pointer] of activeSeats){const newer=[...rooms.values()].some(r=>r.players.some(p=>p?.accountId===id)&&(r.phase==='auction'||(r.phase==='finished'&&!r.matchSettled))&&(r.created>(pointer?.created??pointer?.at??0)||(r.code===pointer?.code&&r.created===pointer?.created&&(r.matchNumber||1)!==pointer?.matchNumber)));if(newer)activeSeats.set(id,{ambiguous:true})}friends.seed([...ratings].map(([id,p])=>[id,p.name]));friends.seed([...rooms.values()].flatMap(r=>r.players.filter(p=>p?.accountId).map(p=>[p.accountId,p.name])));databaseReady=true;await initializeModeration();await saveSocial(true);console.log('PostgreSQL connected; restored',rooms.size,'rooms')}catch(e){databaseReady=false;console.error('PostgreSQL initialization failed:',e.message)}}
-async function flushRooms(){if(!database||!databaseReady||!dirtyRooms.size)return;const codes=[...dirtyRooms];dirtyRooms.clear();for(const code of codes){const r=rooms.get(code);if(r?.inviteJoining){dirtyRooms.add(code);continue}try{if(r){const write=database.query('INSERT INTO hero_auction_rooms(code,state,updated_at) VALUES($1,$2,NOW()) ON CONFLICT(code) DO UPDATE SET state=EXCLUDED.state,updated_at=NOW()',[code,JSON.stringify(r)]);roomFlushes.set(code,write);try{await write}finally{if(roomFlushes.get(code)===write)roomFlushes.delete(code)}}else await database.query('DELETE FROM hero_auction_rooms WHERE code=$1',[code])}catch(e){dirtyRooms.add(code);console.error('Room persistence error:',e.message)}}}
+async function flushRooms(){
+ if(!database||!databaseReady||!dirtyRooms.size)return;
+ // Count the entire batch, including writes queued behind another room and
+ // deletes. Per-code promises alone can hide queued or overlapping work.
+ const finishRoomBatch=paidEntryMaintenance.track('roomBatches');
+ const codes=[...dirtyRooms];dirtyRooms.clear();
+ try{for(const code of codes){
+  const r=rooms.get(code);if(r?.inviteJoining){dirtyRooms.add(code);continue}
+  try{
+   if(r){
+    const write=database.query('INSERT INTO hero_auction_rooms(code,state,updated_at) VALUES($1,$2,NOW()) ON CONFLICT(code) DO UPDATE SET state=EXCLUDED.state,updated_at=NOW()',[code,JSON.stringify(r)]);
+    roomFlushes.set(code,write);try{await write}finally{if(roomFlushes.get(code)===write)roomFlushes.delete(code)}
+   }else await database.query('DELETE FROM hero_auction_rooms WHERE code=$1',[code]);
+  }catch(e){dirtyRooms.add(code);console.error('Room persistence error:',e.message)}
+ }}finally{finishRoomBatch()}
+}
+
 
 function queueGoldAward(r){const a=r.goldAward;if(a&&a.accountId&&a.id)pendingGold.set(a.id,a)}
 async function goldBalance(accountId){if(previewGuestMode&&!databaseReady){if(!previewGuestWallets.has(accountId))previewGuestWallets.set(accountId,500);return previewGuestWallets.get(accountId)}if(!database||!databaseReady)error('Altın sistemi geçici olarak kullanılamıyor.',503);await database.query('INSERT INTO hero_auction_wallets(account_id,gold) VALUES($1,500) ON CONFLICT DO NOTHING',[accountId]);const result=await database.query('SELECT gold FROM hero_auction_wallets WHERE account_id=$1',[accountId]);return Number(result.rows[0]?.gold||0)}
+async function initializePaidEntryMaintenance(){
+ try{await paidEntryMaintenance.initialize(database&&databaseReady?database:null,{volatile:!database&&previewGuestMode});}
+ catch(error){console.error('Paid-entry maintenance state unavailable:',error.message);}
+}
+async function paidEntryDrainStatus(){
+ let healthy=false;
+ if(database&&databaseReady){try{await database.query({text:'SELECT 1',query_timeout:3000});healthy=true}catch{}}
+ const paid=room=>room?.mode!=='bot'&&room?.entryPaid===true;
+ return paidEntryMaintenance.status({
+  activePaidMatches:[...rooms.values()].filter(isUnsettledPaidRoom).length,
+  pendingGold:pendingGold.size,unconfirmedSocialWrites:socialSaveNeedsConfirmation?1:0,
+  dirtyPaidRooms:[...dirtyRooms].filter(code=>!rooms.has(code)||paid(rooms.get(code))).length,
+  paidRoomWritesInFlight:[...roomFlushes.keys()].filter(code=>paid(rooms.get(code))).length,
+  uncertainInvitations:[...rooms.values()].filter(room=>room.inviteUncertain).length,
+  pendingVictoryChests:pendingVictoryChests.size,victoryChestWritesInFlight:victoryChestFlights.size
+ },healthy);
+}
 async function walletSummary(accountId){
  const gold=await goldBalance(accountId),result={gold,diamonds:null,magicDust:null,currencies:{gold:{available:true,reason:null},diamonds:{available:false,reason:'disabled'},magicDust:{available:false,reason:'disabled'}}};
  for(const [name,enabled,read] of [['diamonds',diamondPolicy.enabled,readDiamondBalance],['magicDust',magicDustPolicy.enabled,readMagicDustBalance]]){
@@ -268,8 +310,8 @@ function requireVictoryChestProgression(accountIds){
  const inJobs=[...pendingVictoryChests.values()].some(job=>(job.accountIds||job.room?.players.map(p=>p?.accountId)||[]).some(id=>ids.has(id)));
  if(inRooms||inJobs)error('Önceki maçının sandık ödülü doğrulanıyor. Tamamlanınca yeni maça geçebilirsin.',409);
 }
-async function chargeEntry(accountIds,matchId){requireVictoryChestStorage();requireVictoryChestProgression(accountIds);const ids=[...new Set(accountIds.filter(Boolean))];if(ids.length!==accountIds.filter(Boolean).length)error('Aynı hesap iki oyuncu olarak katılamaz.');if(previewGuestMode&&!databaseReady){const before=new Map(ids.map(id=>[id,previewGuestWallets.get(id)??500]));if([...before.values()].some(gold=>gold<50))error('Maça katılmak için en az 50 altın gerekli.');for(const [id,gold] of before)previewGuestWallets.set(id,gold-50);return true}if(!database||!databaseReady)error('Altın sistemi şu anda kullanılamıyor.',503);const client=await database.connect();try{await client.query('BEGIN');for(const id of ids.sort()){await client.query('INSERT INTO hero_auction_wallets(account_id,gold) VALUES($1,500) ON CONFLICT DO NOTHING',[id]);const paid=await client.query('UPDATE hero_auction_wallets SET gold=gold-50 WHERE account_id=$1 AND gold>=50 RETURNING gold',[id]);if(!paid.rowCount)error('Maça katılmak için en az 50 altın gerekli.')}await client.query('COMMIT');return true}catch(e){await client.query('ROLLBACK').catch(()=>{});throw e}finally{client.release()}}
-async function flushGold(){if(!database||!databaseReady)return;for(const [id,a] of [...pendingGold]){const client=await database.connect().catch(()=>null);if(!client)break;try{await client.query('BEGIN');const inserted=await client.query('INSERT INTO hero_auction_gold_awards(award_id,account_id,amount) VALUES($1,$2,$3) ON CONFLICT DO NOTHING RETURNING award_id',[id,a.accountId,a.amount]);if(inserted.rowCount){await client.query('INSERT INTO hero_auction_wallets(account_id,gold) VALUES($1,$2) ON CONFLICT(account_id) DO UPDATE SET gold=hero_auction_wallets.gold+$2',[a.accountId,a.amount])}await client.query('COMMIT');pendingGold.delete(id)}catch(e){await client.query('ROLLBACK').catch(()=>{});console.error('Gold reward error:',e.message)}finally{client.release()}}}
+async function chargeEntry(accountIds,matchId){requireVictoryChestStorage();requireVictoryChestProgression(accountIds);const ids=[...new Set(accountIds.filter(Boolean))];if(ids.length!==accountIds.filter(Boolean).length)error('Aynı hesap iki oyuncu olarak katılamaz.');if(previewGuestMode&&!databaseReady){const before=new Map(ids.map(id=>[id,previewGuestWallets.get(id)??500]));if([...before.values()].some(gold=>gold<50))error('Maça katılmak için en az 50 altın gerekli.');for(const [id,gold] of before)previewGuestWallets.set(id,gold-50);return true}if(!database||!databaseReady)error('Altın sistemi şu anda kullanılamıyor.',503);const client=await database.connect();let commitIssued=false;try{await client.query('BEGIN');for(const id of ids.sort()){await client.query('INSERT INTO hero_auction_wallets(account_id,gold) VALUES($1,500) ON CONFLICT DO NOTHING',[id]);const paid=await client.query('UPDATE hero_auction_wallets SET gold=gold-50 WHERE account_id=$1 AND gold>=50 RETURNING gold',[id]);if(!paid.rowCount)error('Maça katılmak için en az 50 altın gerekli.')}commitIssued=true;await client.query('COMMIT');return true}catch(e){await client.query('ROLLBACK').catch(()=>{});if(commitIssued)void paidEntryMaintenance.latchLegacyUncertainty().catch(()=>console.error('Uncertain legacy entry: durable pause could not be confirmed.'));throw e}finally{client.release()}}
+async function flushGold(){if(!database||!databaseReady||!pendingGold.size)return;const finishGoldWrite=paidEntryMaintenance.track('goldWrites');try{for(const [id,a] of [...pendingGold]){const client=await database.connect().catch(()=>null);if(!client)break;try{await client.query('BEGIN');const inserted=await client.query('INSERT INTO hero_auction_gold_awards(award_id,account_id,amount) VALUES($1,$2,$3) ON CONFLICT DO NOTHING RETURNING award_id',[id,a.accountId,a.amount]);if(inserted.rowCount){await client.query('INSERT INTO hero_auction_wallets(account_id,gold) VALUES($1,$2) ON CONFLICT(account_id) DO UPDATE SET gold=hero_auction_wallets.gold+$2',[a.accountId,a.amount])}await client.query('COMMIT');pendingGold.delete(id)}catch(e){await client.query('ROLLBACK').catch(()=>{});console.error('Gold reward error:',e.message)}finally{client.release()}}}finally{finishGoldWrite()}}
 function onlineStats(){
  const now=Date.now();
  for(const [id,p] of onlineVisitors)if(now-p.seen>45000)onlineVisitors.delete(id);
@@ -408,6 +450,8 @@ async function adminApi(url,b){
  const user=readLogin(b.authToken);
  if(!user||!ADMIN_GOOGLE_EMAIL||user.email!==ADMIN_GOOGLE_EMAIL||user.sub.startsWith('guest:'))error('Yönetici yetkisi gerekli.',403);
  if(!database||!databaseReady)error('Veritabanı kullanılamıyor.',503);
+ if(url==='/api/admin/economy/status')return paidEntryDrainStatus();
+ if(url==='/api/admin/economy/pause'){await paidEntryMaintenance.setPaused(b.paused,b.expectedBootId,b.expectedRevision);return paidEntryDrainStatus();}
  if(url==='/api/admin/moderation/list'||url==='/api/admin/moderation/review'){if(!moderationReady)error('Denetim sistemi geçici olarak kullanılamıyor.',503);return url.endsWith('/list')?moderation.adminList(user):moderation.review(user,b)}
  if(url==='/api/admin/list'){
   const search=String(b.search||'').slice(0,100);
@@ -467,9 +511,14 @@ function applyInvitationReceipt(invite,receipt){
  return true;
 }
 async function commitInvitationJoin(invite,r,user){
+ if(paidEntryMaintenance.isPaused()){
+  if(database&&databaseReady){const existing=await database.query('SELECT state FROM hero_auction_invite_joins WHERE invite_id=$1',[invite.id]);if(existing.rows[0])return applyInvitationReceipt(invite,existing.rows[0].state);}
+  return false;
+ }
  requireVictoryChestStorage();requireVictoryChestProgression([invite.from,invite.to]);
  // Reserve before awaiting DB: normal /join cannot pass its existing joinPending check.
  if(r.joinPending&&!r.inviteUncertain)return false;
+ const finishAdmission=paidEntryMaintenance.beginAdmission();
  r.joinPending=true;r.inviteJoining=true;
  const before={...invite},beforeSeat=activeSeats.get(user.sub);const joined=structuredClone(r);delete joined.inviteJoining;delete joined.joinPending;
  const t=token();joined.entryPaid=true;joined.players[1]={name:user.name,token:t,accountId:user.sub,credits:20,team:[]};joined.phase='auction';joined.turn=0;joined.deadline=Date.now()+20000;
@@ -503,7 +552,7 @@ async function commitInvitationJoin(invite,r,user){
    try{const found=await database.query('SELECT state FROM hero_auction_invite_joins WHERE invite_id=$1',[invite.id]);if(found.rows[0])return restoreReceipt(found.rows[0].state)}catch{keepReserved=true;r.inviteUncertain=true;e.uncertain=true}
   }
   for(const key of Object.keys(invite))delete invite[key];Object.assign(invite,before);if(beforeSeat!==undefined)activeSeats.set(user.sub,beforeSeat);else activeSeats.delete(user.sub);throw e;
- }finally{client?.release();if(!keepReserved){delete r.inviteJoining;delete r.joinPending;delete r.inviteUncertain}}
+ }finally{client?.release();if(!keepReserved){delete r.inviteJoining;delete r.joinPending;delete r.inviteUncertain}finishAdmission();}
 
 }
 async function invitationApi(url,b){
@@ -574,6 +623,9 @@ async function api(url,b){
  const user=readLogin(b.authToken);if(!user)error('Odaya erişmek için giriş yapmalısın.',401);
  await friends.register(user.sub,user.name);
  return friends.afterMutations(async()=>{
+  const paidRoute=['/api/join','/api/match'].includes(url)||url==='/api/rematch'&&rooms.get(String(b.code||''))?.mode!=='bot';
+  const finishAdmission=paidRoute?paidEntryMaintenance.beginAdmission():null;
+  try{
   requireModerationForInteraction(moderationReady,url);
   if([...roomInvites.items.values()].some(i=>[i.from,i.to].includes(user.sub)&&i.status==='queued'&&rooms.get(i.code)?.inviteUncertain))error('Davet işlemi doğrulanıyor. Biraz sonra tekrar dene.',503);
   if([...roomInvites.items.values()].some(i=>i.to===user.sub&&i.status==='joined'&&!i.delivered&&activeSeats.get(user.sub)?.code===i.code&&activeSeats.get(user.sub)?.created===i.created))error('Davet odasına geçiş tamamlanıyor. Biraz sonra tekrar dene.',409);
@@ -594,6 +646,7 @@ async function api(url,b){
    await saveSocial(true).catch(e=>console.error('Current room persistence:',e.message));
   }
   return result;
+  }finally{finishAdmission?.();}
  });
 }
 async function apiAction(url,b){if(url.startsWith('/api/admin/'))return adminApi(url,b);if(url==='/api/auth/check'){const user=readLogin(b.authToken);if(!user)error('Oturumun sona erdi. Yeniden giriş yap.',401);await rememberDisplayName(user);return{user:{sub:user.sub,name:user.name,provider:user.provider},gold:await goldBalance(user.sub)}}if(url==='/api/auth/crazygames'){const user=await verifyCrazyGamesToken(b.credential);user.provider='crazygames';await rememberDisplayName(user);for(const r of rooms.values()){let changed=false;for(const p of r.players){if(p?.accountId===user.sub&&p.name!==user.name){p.name=user.name;changed=true}}if(changed)publish(r)}return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}if(url==='/api/auth/guest'){const name=assertModeratedText(b.name||'Oyuncu',{kind:'name'});const user={sub:'guest:'+crypto.randomUUID(),name,provider:'guest'};await rememberDisplayName(user);return{user:{name},authToken:signLogin(user),gold:await goldBalance(user.sub)}}
@@ -1066,9 +1119,9 @@ if(r.mode==='bot'&&r.turn===1){
  r.lastActivity=Date.now();publish(r);continue;
 }
 if(r.deadline&&Date.now()>=r.deadline){const expiredSeat=r.turn;log(r,`${r.players[expiredSeat].name} süresi dolduğu için otomatik pas geçti.`);if(r.topSeat!==null){finishAuction(r);}else if(r.openingPassSeat===1-expiredSeat){finishUnbidCard(r);}else{r.openingPassSeat=expiredSeat;r.turn=1-expiredSeat;r.deadline=Date.now()+20000;log(r,`Sıra ${r.players[r.turn].name} oyuncusuna geçti.`);}r.lastActivity=Date.now();publish(r);}
-}for(const [id,r]of rooms){const age=Date.now()-(r.lastActivity||r.created);const expiry=r.phase==='finished'?24*3600_000:r.phase==='waiting'?2*3600_000:r.phase==='matching'?5*60_000:r.phase==='auction'?6*3600_000:24*3600_000;if(age>expiry&&!r.victoryChestPending){liveArenaLifecycle.endRoom(id);liveArenaMatchKeys.delete(id);rooms.delete(id);dirtyRooms.add(id);waiting.delete(id);const clients=listeners.get(id);if(clients){for(const c of clients){try{c.res.end()}catch{}}listeners.delete(id)}}}for(const [id,w]of waiting)if(!rooms.has(w.code)||Date.now()-w.created>60000)waiting.delete(id)},500).unref();
+}for(const [id,r]of rooms){const age=Date.now()-(r.lastActivity||r.created);const expiry=r.phase==='finished'?24*3600_000:r.phase==='waiting'?2*3600_000:r.phase==='matching'?5*60_000:r.phase==='auction'?6*3600_000:24*3600_000;if(age>expiry&&!r.victoryChestPending&&!(paidEntryMaintenance.isPaused()&&isUnsettledPaidRoom(r))){liveArenaLifecycle.endRoom(id);liveArenaMatchKeys.delete(id);rooms.delete(id);dirtyRooms.add(id);waiting.delete(id);const clients=listeners.get(id);if(clients){for(const c of clients){try{c.res.end()}catch{}}listeners.delete(id)}}}for(const [id,w]of waiting)if(!rooms.has(w.code)||Date.now()-w.created>60000)waiting.delete(id)},500).unref();
 setInterval(()=>{flushRooms().catch(e=>console.error('Database flush:',e.message));flushGold().catch(e=>console.error('Gold flush:',e.message));flushVictoryChests().catch(e=>console.error('Chest flush:',e.message))},1000).unref();
-initializeDatabase().then(initializeVictoryChests).then(()=>{server.listen(PORT,'0.0.0.0',()=>console.log(`Hero Auction http://localhost:${PORT} | characters: ${catalogue.size}`));});
+initializeDatabase().then(initializePaidEntryMaintenance).then(initializeVictoryChests).then(()=>{server.listen(PORT,'0.0.0.0',()=>console.log(`Hero Auction http://localhost:${PORT} | characters: ${catalogue.size}`));});
 
 // Moderation evidence expiry only; no account deletion or native transport changes.
 setInterval(()=>{if(moderationReady&&(!database||databaseReady))moderation.prune().catch(e=>console.error('Moderation retention cleanup:',e.message))},3600000).unref();

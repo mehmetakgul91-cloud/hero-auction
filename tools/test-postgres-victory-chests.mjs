@@ -71,8 +71,8 @@ async function withFailure(table,event,sub,run){
 
 
 const FIXTURE_SIGNING_SECRET='51'.repeat(32); // Known synthetic fixture only; never a production signing key.
-function fixtureAuth(sub,name){
- const data=Buffer.from(JSON.stringify({sub,name,provider:'google',expires:Date.now()+3600000})).toString('base64url');
+function fixtureAuth(sub,name,email=null){
+ const data=Buffer.from(JSON.stringify({sub,name,email,provider:'google',expires:Date.now()+3600000})).toString('base64url');
  return data+'.'+createHmac('sha256',Buffer.from(FIXTURE_SIGNING_SECRET,'hex')).update(data).digest('base64url');
 }
 async function startFixtureServer(){
@@ -82,6 +82,7 @@ async function startFixtureServer(){
  const port=socket.address().port;await new Promise(resolve=>socket.close(resolve));
  const child=spawn(process.execPath,['server.js'],{cwd:new URL('..',import.meta.url),env:{
   PORT:String(port),DATABASE_URL:APPROVED,AUTH_SIGNING_SECRET:FIXTURE_SIGNING_SECRET,NODE_ENV:'test',
+  ADMIN_GOOGLE_EMAIL:'fixture-admin@example.invalid',
   HERO_DIAMONDS_ENABLED:'1',HERO_MAGIC_DUST_ENABLED:'1',HERO_VICTORY_CHESTS_ENABLED:'1',
   HERO_DIAMOND_EXCHANGE_ENABLED:'0',HERO_DIAMOND_SIGNUP_BONUS_ENABLED:'0',HERO_LOGIN_REWARDS_ENABLED:'0',
   COMMANDER_TEST_GUEST_MODE:'0',EXPERIMENTAL_COMMANDER_TURNS:'0'
@@ -141,7 +142,8 @@ try{
   await sql('CREATE TABLE IF NOT EXISTS hero_auction_rooms(code VARCHAR(3) PRIMARY KEY,state JSONB NOT NULL,updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');
   await sql('INSERT INTO hero_auction_rooms(code,state) VALUES($1,$2::jsonb)',[pending.code,JSON.stringify(pending)]);
   assert.equal((await sql('SELECT count(*)::int AS n FROM hero_auction_victory_chest_intents WHERE match_id=$1',[victoryMatchId(pending)])).rows[0].n,0);
-  let app,receipt,creditedOwner,unchangedLoser;
+  const adminAuth={authToken:fixtureAuth(owner,'Synthetic release operator','fixture-admin@example.invalid')};
+  let app,receipt,creditedOwner,unchangedLoser,previousBoot;
   try{
    app=await startFixtureServer();
    const winner=(await app.post('/api/state',ownerAuth)).room,other=(await app.post('/api/state',loserAuth)).room;
@@ -152,6 +154,21 @@ try{
    assert.equal(creditedOwner.gold,20000+receipt.rewards.gold);assert.equal(creditedOwner.diamonds,20+receipt.rewards.diamonds);assert.equal(creditedOwner.magicDust,20+receipt.rewards.magicDust);
    assert.equal(creditedOwner.intents,1);assert.equal(creditedOwner.chests,1);assert.equal(creditedOwner.awards,1);
    assert.equal(unchangedLoser.gold,20000);assert.equal(unchangedLoser.diamonds,20);assert.equal(unchangedLoser.magicDust,20);assert.equal(unchangedLoser.chests,0);
+   // Real existing-admin authorization, read-only status, current-boot guard,
+   // durable pause and no-debit rejection use only this synthetic server/DB.
+   await app.post('/api/admin/economy/status',{},403);
+   await app.post('/api/admin/economy/status',ownerAuth,403);
+   const open=await app.post('/api/admin/economy/status',adminAuth);assert.equal(open.paused,false);assert.equal(open.loaded,true);previousBoot=open.bootId;
+   await app.post('/api/admin/economy/pause',{...adminAuth,paused:true,expectedBootId:'stale-fixture-boot',expectedRevision:open.revision},409);
+   assert.equal((await app.post('/api/admin/economy/status',adminAuth)).paused,false);
+   const paused=await app.post('/api/admin/economy/pause',{...adminAuth,paused:true,expectedBootId:previousBoot,expectedRevision:open.revision});assert.equal(paused.paused,true);assert.equal(paused.persistenceConfirmed,true);
+   await app.post('/api/admin/economy/pause',{...adminAuth,paused:false,expectedBootId:previousBoot,expectedRevision:open.revision},409);
+   const durable=(await sql("SELECT state FROM hero_auction_social WHERE id='economy-maintenance'")).rows[0].state;assert.equal(durable.paused,true);assert.equal(durable.uncertainLegacyEntry,false);
+   await app.post('/api/rematch',ownerAuth,503);await app.post('/api/rematch',loserAuth,503);
+   assert.deepEqual(await snapshot(owner),creditedOwner);assert.deepEqual(await snapshot(loser),unchangedLoser);
+   let drained=paused;for(let i=0;!drained.ready&&i<100;i++){await new Promise(resolve=>setTimeout(resolve,50));drained=await app.post('/api/admin/economy/status',adminAuth)}
+   assert.equal(drained.ready,true,JSON.stringify(drained));assert.equal(drained.activePaidMatches,0);assert.equal(drained.pendingGold,0);assert.equal(drained.paidEntriesInFlight,0);
+
   }finally{await app?.stop()}
   // Simulate the precise crash window: durable receipt committed, but room JSON
   // still has its original pending marker. Only this synthetic fixture is reset.
@@ -162,6 +179,11 @@ try{
    const again=(await app.post('/api/state',ownerAuth)).room,other=(await app.post('/api/state',loserAuth)).room;
    assert.deepEqual(again.victoryChest,receipt);assert.equal(again.victoryChestPending,false);assert.deepEqual(again.series,[1,0]);assert.equal(other.victoryChest,null);
    assert.deepEqual(await snapshot(owner),creditedOwner);assert.deepEqual(await snapshot(loser),unchangedLoser);
+   const restoredPause=await app.post('/api/admin/economy/status',adminAuth);assert.equal(restoredPause.paused,true);assert.equal(restoredPause.persistenceConfirmed,true);assert.notEqual(restoredPause.bootId,previousBoot);
+   await app.post('/api/admin/economy/pause',{...adminAuth,paused:false,expectedBootId:previousBoot,expectedRevision:restoredPause.revision},409);
+   await app.post('/api/rematch',ownerAuth,503);
+   const resumed=await app.post('/api/admin/economy/pause',{...adminAuth,paused:false,expectedBootId:restoredPause.bootId,expectedRevision:restoredPause.revision});assert.equal(resumed.paused,false);assert.equal(resumed.persistenceConfirmed,true);
+   assert.equal((await sql("SELECT state FROM hero_auction_social WHERE id='economy-maintenance'")).rows[0].state.paused,false);
    // Both real HTTP approvals prove recovery no longer blocks the room. Only
    // the normal synthetic 50-gold entry fee is charged; no reward is rerolled.
    assert.equal((await app.post('/api/rematch',ownerAuth)).room.rematch[0],true);

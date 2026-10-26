@@ -17,8 +17,8 @@ async function load(){
   }
   const h=await api('history');$('history').replaceChildren();
   for(const a of h.history){const p=document.createElement('p');p.textContent=new Date(a.created_at).toLocaleString('tr-TR')+' • '+a.account_id+' • '+a.action+' • '+a.old_gold+' → '+a.new_gold;$('history').append(p)}
-  status(d.accounts.length+' hesap listelendi.');void loadModeration();
- }catch(e){status(e.message);$('dashboard').hidden=true;$('historyPanel').hidden=true;$('moderationPanel').hidden=true;$('moderation-reports').replaceChildren()}
+  status(d.accounts.length+' hesap listelendi.');void loadModeration();window.dispatchEvent(new Event('hero:admin-verified'));
+ }catch(e){window.dispatchEvent(new Event('hero:admin-unverified'));status(e.message);$('dashboard').hidden=true;$('historyPanel').hidden=true;$('moderationPanel').hidden=true;$('moderation-reports').replaceChildren()}
 }
 async function act(path,data){try{await api(path,data);await load()}catch(e){alert(e.message)}}
 $('login').onclick=()=>{if(!login?.authToken){status('Önce ana sayfada yetkili Google hesabıyla giriş yapın.');return}load()};

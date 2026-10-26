@@ -24,7 +24,7 @@ const status=expected=>error=>error.status===expected;
 function fixture({enabled=true,requested=enabled,healthy=true,ready=true,restored=[],recovery=[]}={}){
  const counters={connections:0,persist:0,credit:0},actions=[],queries=[],failCredit=new Set(),failIntent=new Set(),credited=new Set();
  const balances=new Map(['winner','loser','unrelated','opponent'].map(id=>[id,500]));
- const ctx={Map,Set,structuredClone,console:{error(){}},eligibleVictory,victoryMatchId,
+ const ctx={paidEntryMaintenance:{isPaused:()=>false,beginAdmission:()=>()=>{},latchLegacyUncertainty:async()=>{}},Map,Set,structuredClone,console:{error(){}},eligibleVictory,victoryMatchId,
   victoryChestPolicy:{enabled,requested},victoryChestStorageReady:ready,victoryChestCreditHealthy:healthy,databaseReady:true,previewGuestMode:false,
   rooms:new Map(restored.map(r=>[r.code,r])),pendingVictoryChests:new Map(),victoryChestFlights:new Set(),activeSeats:new Map(),roomFlushes:new Map(),
   roomInvites:{items:new Map()},readLogin:authToken=>({sub:authToken,name:authToken}),friends:{register:async()=>{},afterMutations:fn=>fn()},
