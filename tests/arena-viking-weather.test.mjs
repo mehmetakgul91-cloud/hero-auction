@@ -120,7 +120,7 @@ test('four tiny local SVG sheets preserve source depth counts without scripts, o
  assert.ok(total<12000,'All source-derived sheets together should remain below 12 KB');
 });
 test('CSS stays pointer-transparent, finite, portrait-clipped and geometry-aware; no moving scenery',()=>{
- const css=readFileSync(new URL('../public/theme.css',import.meta.url),'utf8').split('/* Viking snow:')[1];
+ const css=readFileSync(new URL('../public/theme.css',import.meta.url),'utf8').split('/* Viking snow:')[1].split('/* Forest/savanna full composition:')[0];
  assert.match(css,/\[data-viking-weather\]\{[^}]*pointer-events:none;z-index:-1/);assert.match(css,/\[data-viking-weather="foreground"\]\{z-index:20/);
  assert.match(css,/top:var\(--arena-viking-mist-top,100%\);bottom:0;overflow:hidden/);
  for(const name of ['left','top','right','bottom'])assert.ok(css.includes('--arena-viking-floor-'+name));

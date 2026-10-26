@@ -18,6 +18,7 @@ import {heroCombatPresentation,stationaryArenaAction} from '/hero-combat-present
 import {createArenaThemePresentation} from '/arena-theme.js';
 import {createArenaWeather} from '/arena-weather.js';
 import {mountVikingLayout} from '/arena-viking-layout.js';
+import {mountArenaSceneLayout} from '/arena-scene-layout.js';
 // Verify the current portal account before accessing any saved arena seat.
 if(window.HeroPlatform){
  const restart=()=>{localStorage.removeItem('hero-auction-session');sessionStorage.removeItem('hero-auction-formation');sessionStorage.removeItem('hero-auction-lanes');window.HeroPlatform.beforeNavigate?.('/crazygames/');location.replace('/crazygames/')};
@@ -46,7 +47,7 @@ const $=id=>document.getElementById(id);
 const arenaTheme=createArenaThemePresentation({element:$('battle-arena'),language:document.documentElement.lang});
 const arenaWeather=createArenaWeather({root:$('battle-arena')});
 // Static floor geometry survives replay pause/results; it never depends on motion.
-const arenaSceneLayout=createArenaWeather({root:$('battle-arena'),mounts:{fjord:mountVikingLayout}});
+const arenaSceneLayout=createArenaWeather({root:$('battle-arena'),mounts:{ruins:mountArenaSceneLayout,savanna:mountArenaSceneLayout,fjord:mountVikingLayout}});
 let arenaWeatherReady=false,arenaWeatherPageHidden=false;
 function syncArenaWeather(){
  // Only an actual loaded, running battle can animate. Pause/results release

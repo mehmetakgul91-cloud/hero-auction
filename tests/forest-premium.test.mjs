@@ -29,11 +29,17 @@ test('approved Viking ground is the byte-locked bounded WebP delivery derivative
  assert.equal(b.length,672316);assert.ok(statSync(asset).size<800*1024);
  assert.equal(createHash('sha256').update(b).digest('hex'),'69a2e75fbe726b812d7a4ac469f86911df7959464eb726ff3fac571da14b04c6');
 });
-test('forest uses proportional cover and responsive crop without a broad dark veil',()=>{
+test('forest and savanna preserve the entire proportional painting instead of responsive cover cropping',()=>{
  assert.match(rule,/background-image:url\('\/images\/arena-themes\/ruins-premium\.webp'\)/);
- assert.match(rule,/background-size:cover/);assert.match(rule,/background-position:center 18%/);
  assert.doesNotMatch(rule,/gradient|inset 0 0|filter|opacity|animation|transition|transform|100% 100%/);
- assert.match(css,/@media\(max-width:600px\)\{body:has\(#battle-arena\) \.battle-arena\{background-position:center center\}\}/);
+ for(const theme of ['ruins','savanna']){
+  const fallback=css.match(new RegExp('\\.battle-arena\\[data-arena-theme="'+theme+'"\\]\\{([^}]+)\\}'));
+  assert.ok(fallback,theme);assert.match(fallback[1],/background-size:contain/);
+ }
+ const selected=css.split('/* Forest/savanna full composition:')[1];assert.ok(selected);
+ assert.match(selected,/background-size:var\(--arena-scene-art-width\) var\(--arena-scene-art-height\)/);
+ assert.match(selected,/background-position:var\(--arena-scene-art-left\) var\(--arena-scene-art-top\)/);
+ assert.doesNotMatch(selected,/background-size:cover|100% 100%|filter:|transform:|animation:/);
 });
 test('only approved forest, savanna and Viking use rasters; no eager theme loading or original PNG',()=>{
  for(const id of ['ruins','savanna','fjord'])assert.equal((css.match(new RegExp(id+'-premium\\.webp','g'))||[]).length,1);
