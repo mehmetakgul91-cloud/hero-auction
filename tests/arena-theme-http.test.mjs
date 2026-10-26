@@ -60,11 +60,12 @@ test('real HTTP room, both seats, lane edits, rematch, bot, preview-room and CG 
    assert.equal(response.status,200);assert.match(response.headers.get('content-type'),/image\/webp/);
    assert.deepEqual(Buffer.from(await response.arrayBuffer()),readFileSync(new URL('../public'+path,import.meta.url)));
   }
-  for(const prefix of ['', '/crazygames'])for(const module of ['arena-weather.js','arena-dust.js','arena-forest-gust.js','arena-portrait-weather.js','arena-viking-layout.js','arena-viking-weather.js']){
+  for(const prefix of ['', '/crazygames'])for(const module of ['arena-weather.js','arena-dust.js','arena-forest-gust.js','arena-portrait-weather.js','arena-viking-layout.js','arena-viking-weather.js','arena-scene-layout.js']){
    const response=await fetch(base+prefix+'/'+module);assert.equal(response.status,200);const source=readFileSync(new URL('../public/'+module,import.meta.url),'utf8');assert.equal(await response.text(),prefix?crazyGamesSource(source,'.js'):source);
   }
   for(const prefix of ['', '/crazygames'])for(const file of ['forest-leaf.svg','viking-snow-far.svg','viking-snow-middle.svg','viking-snow-near.svg','viking-snow-gust.svg']){const path='/images/arena-themes/'+file,response=await fetch(base+prefix+path);assert.equal(response.status,200);assert.match(response.headers.get('content-type'),/image\/svg\+xml/);assert.equal(await response.text(),readFileSync(new URL('../public'+path,import.meta.url),'utf8'));}
   const cgBattle=await fetch(base+'/crazygames/battle-preview.js');assert.match(await cgBattle.text(),/from '\/crazygames\/arena-theme\.js'/);
   assert.match(await(await fetch(base+'/crazygames/battle-preview.js')).text(),/from '\/crazygames\/arena-weather\.js'/);
+  assert.match(await(await fetch(base+'/crazygames/battle-preview.js')).text(),/from '\/crazygames\/arena-scene-layout\.js'/);
  }finally{child.kill('SIGTERM');await new Promise(resolve=>{if(child.exitCode!==null)return resolve();child.once('exit',resolve);setTimeout(resolve,2000).unref()})}
 });

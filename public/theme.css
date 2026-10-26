@@ -633,9 +633,9 @@ body:has(#battle-arena) .battle-arena{
  color:#e7edf1;
 }
 /* Approved forest painting: preserve proportions and natural lighting, no dark veil. */
-body:has(#battle-arena) .battle-arena[data-arena-theme="ruins"]{border-color:#7d9176}
+body:has(#battle-arena) .battle-arena[data-arena-theme="ruins"]{border-color:#7d9176;background-size:contain}
 /* Approved savanna painting is requested only when this match selects savanna. */
-body:has(#battle-arena) .battle-arena[data-arena-theme="savanna"]{background-image:url('/images/arena-themes/savanna-premium.webp');border-color:#aa8a5b}
+body:has(#battle-arena) .battle-arena[data-arena-theme="savanna"]{background-image:url('/images/arena-themes/savanna-premium.webp');border-color:#aa8a5b;background-size:contain}
 /* Approved Viking painting: its selected-only layout maps heroes to the stone floor. */
 body:has(#battle-arena) .battle-arena[data-arena-theme="fjord"]{background-image:url('/images/arena-themes/fjord-premium.webp');border-color:#9fb5c4}
 @media(max-width:600px){body:has(#battle-arena) .battle-arena{background-position:center center}}
@@ -846,3 +846,22 @@ body:has(#battle-arena) #battle-arena[data-arena-theme="fjord"][data-viking-layo
  [data-viking-weather]{display:none!important}
  [data-viking-weather] .viking-weather__snow,[data-viking-weather] .viking-weather__powder,[data-viking-weather] .viking-weather__mist{animation:none!important;opacity:0;transform:none}
 }
+
+/* Forest/savanna full composition: the complete approved painting, never cover.
+   Keep the existing shell height, native scrolling, independent 60-track lanes,
+   compact short-field sizing and input targets. Scene edges may sit under heroes. */
+body:has(#battle-arena) #battle-arena:is([data-arena-theme="ruins"],[data-arena-theme="savanna"])[data-arena-scene-layout="ready"]{padding:0;gap:0;border:0;background-origin:padding-box;background-size:var(--arena-scene-art-width) var(--arena-scene-art-height);background-position:var(--arena-scene-art-left) var(--arena-scene-art-top);background-repeat:no-repeat}
+body:has(#battle-arena) #battle-arena[data-arena-theme="ruins"][data-arena-scene-layout="ready"]{background-color:#24322b}
+body:has(#battle-arena) #battle-arena[data-arena-theme="savanna"][data-arena-scene-layout="ready"]{background-color:#3b3325}
+#battle-arena:is([data-arena-theme="ruins"],[data-arena-theme="savanna"])[data-arena-scene-layout="ready"]:after{display:none}
+#battle-arena:is([data-arena-theme="ruins"],[data-arena-theme="savanna"])[data-arena-scene-layout="ready"]>.arena-side{position:absolute;top:var(--arena-scene-grid-top);width:var(--arena-scene-team-width);height:var(--arena-scene-grid-height);min-height:0;padding:0;border:0;background:none;box-shadow:none;overflow:visible}
+#battle-arena:is([data-arena-theme="ruins"],[data-arena-theme="savanna"])[data-arena-scene-layout="ready"]>.arena-blue{left:var(--arena-scene-blue-left)}
+#battle-arena:is([data-arena-theme="ruins"],[data-arena-theme="savanna"])[data-arena-scene-layout="ready"]>.arena-red{left:var(--arena-scene-red-left)}
+#battle-arena:is([data-arena-theme="ruins"],[data-arena-theme="savanna"])[data-arena-scene-layout="ready"]>.arena-side>h2{display:none}
+#battle-arena:is([data-arena-theme="ruins"],[data-arena-theme="savanna"])[data-arena-scene-layout="ready"]>.arena-side>.team{height:100%;min-height:0;grid-template-columns:repeat(2,var(--arena-scene-card-width));grid-template-rows:repeat(60,minmax(0,1fr));row-gap:0;column-gap:var(--arena-scene-column-gap);align-content:stretch;align-items:center;justify-items:center}
+#battle-arena:is([data-arena-theme="ruins"],[data-arena-theme="savanna"])[data-arena-scene-layout="ready"] .arena-side .arena-hero{grid-row:var(--arena-fitted-row)!important;display:grid;grid-template-rows:minmax(0,1fr) 11px 5px 4px;gap:2px;justify-items:center;align-self:center;width:var(--arena-scene-card-width);height:calc(100% - 3px);max-width:84px;max-height:90px;min-height:0;padding:0;border:0;background:transparent;border-radius:8px;container-type:size}
+#battle-arena:is([data-arena-theme="ruins"],[data-arena-theme="savanna"])[data-arena-scene-layout="ready"] .arena-portrait{width:min(64px,100cqw,calc(100cqh - 26px));height:min(64px,100cqw,calc(100cqh - 26px));max-width:none;max-height:none;min-width:0;min-height:0;aspect-ratio:1;align-self:end;border-radius:8px}
+#battle-arena:is([data-arena-theme="ruins"],[data-arena-theme="savanna"])[data-arena-scene-layout="ready"] .arena-hero-label{width:100%;max-width:100%;height:11px;margin:0;font-size:10px;line-height:11px}
+#battle-arena:is([data-arena-theme="ruins"],[data-arena-theme="savanna"])[data-arena-scene-layout="ready"] .arena-hero .hp{width:min(100%,64px);height:5px;min-height:5px;margin:0}
+#battle-arena:is([data-arena-theme="ruins"],[data-arena-theme="savanna"])[data-arena-scene-layout="ready"] .arena-hero .arena-shield{width:min(100%,64px);height:4px;min-height:4px;margin:0}
+@media(forced-colors:active){body:has(#battle-arena) #battle-arena:is([data-arena-theme="ruins"],[data-arena-theme="savanna"])[data-arena-scene-layout="ready"]{background:Canvas;color:CanvasText}}
