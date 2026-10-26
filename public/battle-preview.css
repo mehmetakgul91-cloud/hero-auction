@@ -533,3 +533,10 @@ body:not(.arena-room) .formation{margin-top:6px;padding:10px}
 [data-ultimate-energy-fill]{background:#d6a4ff}
 .arena-commander-dock #experimental-commander-controls [data-energy-meters]{height:auto!important;gap:2px}
 .arena-commander-dock #experimental-commander-controls>p:first-of-type{white-space:normal;line-height:12px}
+
+/* Equal independent front/back lanes: no vacant fixed slots, no mid-hit shifts.
+   Every hero spans its lane's share of 60 tracks (LCM of 1,2,3,4,5).
+   Zero row gap avoids multiplying gutters across these presentation tracks. */
+.arena-room .arena-side .team,.arena-side .team{grid-template-rows:repeat(60,minmax(0,1fr));row-gap:0;min-height:calc(var(--arena-row-count,5) * 110px)}
+.arena-room.arena-fit .arena-side .team{grid-template-rows:repeat(60,minmax(0,1fr));row-gap:0;min-height:0}
+.arena-room.arena-fit .arena-side .arena-hero{height:calc(100% - 3px);align-self:center}

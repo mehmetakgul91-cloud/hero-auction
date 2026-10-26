@@ -80,3 +80,33 @@ test('native header preserves accessibility and has no click, claim, purchase or
  assert.match(crazyGamesSource(html,'.html'),/id="magic-dust-balance"/);
  const app=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');assert.equal((app.match(/setInterval\(refreshGold,/g)||[]).length,1);assert.match(crazyGamesSource(app,'.js'),/from '\/crazygames\/header-wallet.js'/);
 });
+
+test('all currencies keep full small and maximum values; only long values request a wider presentation',()=>{
+ for(const lang of ['tr','en'])for(const key of keys){
+  const f=setup(lang);signIn(f);
+  for(const value of [0,5990,99999,100000,2147483647]){
+   f.wallet.receive({...balances,[key]:value},f.wallet.begin(),{complete:true});
+   const formatted=value.toLocaleString(lang==='en'?'en-US':'tr-TR');
+   assert.equal(f.values()[keys.indexOf(key)],formatted);
+   const item=f.nodes[{gold:'header-gold',magicDust:'header-magic-dust',diamonds:'header-diamonds'}[key]];
+   assert.ok(item.attrs['aria-label'].endsWith(': '+formatted));assert.ok(item.attrs.title.endsWith(': '+formatted));
+   assert.equal(f.nodes['gold-wallet'].dataset.wideValues,String(formatted.length>6));
+  }
+  f.wallet.setLogin(null);assert.equal(f.nodes['gold-wallet'].dataset.wideValues,'false');
+ }
+});
+test('numeric CSS never wraps or truncates and provides full-width fallback independently of names and labels',()=>{
+ const css=readFileSync(new URL('../public/header-wallet.css',import.meta.url),'utf8');
+ const number=css.match(/\.header-wallet \.header-currency-number\{([^}]+)\}/)[1];
+ assert.match(number,/white-space:nowrap/);assert.match(number,/overflow-wrap:normal/);assert.match(number,/word-break:normal/);
+ assert.match(number,/grid-column:1\/-1/);assert.match(number,/min-width:max-content/);assert.doesNotMatch(number,/overflow:hidden|ellipsis|line-clamp/);
+ assert.match(css,/\.header-currency-copy\{display:contents\}/);
+ assert.match(css,/data-wide-values="true"[^}]+grid-column:1\/-1;grid-row:2;width:100%;max-width:100%/);
+ // Conservative monospace character budgets, not browser-rendered measurements.
+ for(const [viewport,wallet,padding,font] of [[320,151,3,11],[390,166,5,12],[844,236,8,13]]){
+  assert.ok(6*font*.61<(wallet-4)/3-2*padding,`${viewport}: compact six-character balance`);
+  const headerSides=viewport<=350?14:viewport<=390?18:22;
+  const full=viewport-20-headerSides;
+  assert.ok(13*font*.61<(full-4)/3-2*padding,`${viewport}: full maximum balance`);
+ }
+});

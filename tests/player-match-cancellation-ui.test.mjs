@@ -15,7 +15,7 @@ function fixture({english=false,activeTail=true}={}){
  const counts={tail:0,flights:0,reveal:0,wallet:0,chat:0,leave:0,normalPath:0},platform=[];nodes.leave.click=()=>counts.leave++;
  const ctx={room:{code:'123',matchKey:'123:1:99',revision:11,phase:'finished'},session:{code:'123',token:'seat'},lastCardKey:'old',tailReveal:activeTail?{active:true,cancel:()=>counts.tail++}:null,
   document:{documentElement:{lang:english?'en':'tr'},createElement:tag=>new Node(tag)},$:id=>nodes[id],window:{HeroPlatform:{setRoom:r=>platform.push(r),gameplay:active=>platform.push(active)}},displayPlayerName:p=>p?.name||'Player',cancelAwardFlights:()=>counts.flights++,cancelAuctionReveal:()=>counts.reveal++,renderChat:()=>counts.chat++,refreshGold:()=>counts.wallet++,signedIn:()=>true,isStaleAuctionSnapshot,storefrontUI:{close(){}},roomInvitesUI:{setRoom(){}},friendsUI:{setRoom(){}},collectTailAwards(){counts.normalPath++;throw Error('cancelled room entered normal result branch')}};
- vm.createContext(ctx);vm.runInContext(source.slice(source.indexOf('function showCancelledRoom(r)'),source.indexOf('function renderChat(r)')),ctx);
+ vm.createContext(ctx);vm.runInContext(source.slice(source.indexOf('function showCancelledRoom(r)'),source.indexOf('// Recover game progress')),ctx);
  return{ctx,nodes,counts,platform};
 }
 const all=node=>[node,...node.children.flatMap(all)];
@@ -42,6 +42,6 @@ test('invalid refund metadata never invents a50gold grant; English message is ex
  const english=fixture({english:true});english.ctx.show(cancelledRoom({me:1}));assert.match(english.nodes.stage.textContent,/Your 50 gold entry fee has been refunded/);assert.match(english.nodes.stage.textContent,/No winner or league result was recorded/);assert.match(english.nodes.player0.textContent,/Bob/);
 });
 test('cancellation guard is ahead of tail capture, preparation and results; no grant or cancellation API in player renderer',()=>{
- const show=source.slice(source.indexOf('function show(r)'),source.indexOf('function renderChat(r)'));const guard=show.indexOf("r.cancellation?.reason==='admin-entry-refund'");assert.ok(guard>0);assert.ok(guard<show.indexOf('tailReveal?.active'));assert.ok(guard<show.indexOf('collectTailAwards'));assert.ok(guard<show.indexOf('const winnerIndex'));
+ const show=source.slice(source.indexOf('function show(r)'),source.indexOf('// Recover game progress'));const guard=show.indexOf("r.cancellation?.reason==='admin-entry-refund'");assert.ok(guard>0);assert.ok(guard<show.indexOf('tailReveal?.active'));assert.ok(guard<show.indexOf('collectTailAwards'));assert.ok(guard<show.indexOf('const winnerIndex'));
  const render=source.slice(source.indexOf('function showCancelledRoom(r)'),source.indexOf('function show(r)'));assert.doesNotMatch(render,/fetch\(|post\(|rankChange\s*=|series\s*=|history\s*=|gold\s*\+=/);
 });

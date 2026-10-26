@@ -79,7 +79,7 @@ test('background final snapshot preserves unseen cards until visible instead of 
  h.context.document.hidden=false;h.context.show(h.context.room);assert.equal(h.queues.length,1);assert.equal(h.queues[0].items.length,2);
  await h.queues[0].options.startAfter;h.queues[0].options.onArrive(done.tailAwards[0]);
  const listeners={};h.context.document.addEventListener=(name,fn)=>listeners[name]=fn;h.context.syncRoomSnapshot=()=>Promise.resolve();
- const start=app.indexOf("document.addEventListener('visibilitychange'"),end=app.indexOf('\n// Delegate focus',start);vm.runInContext(app.slice(start,end),h.context);
+ const start=app.indexOf("document.addEventListener('visibilitychange'"),end=app.indexOf('\n// PokeAPI species',start);vm.runInContext(app.slice(start,end),h.context);
  h.context.document.hidden=true;listeners.visibilitychange();assert.equal(h.context.tailReveal,null);
  h.context.document.hidden=false;listeners.visibilitychange();assert.equal(h.queues.length,2);assert.deepEqual(h.queues[1].items,[done.tailAwards[1]]);
 });

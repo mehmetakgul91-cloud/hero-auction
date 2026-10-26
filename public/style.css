@@ -1009,3 +1009,9 @@ body:has(#game[data-phase="auction"]:not([hidden])) .shell{padding-top:8px}
 .delivery-count{font-size:12px;color:#8de9f2;margin:4px 0}.delivery-slot{height:56px;border:1px dashed #83a5c9;border-radius:9px;display:grid;place-items:center;padding:5px;color:#d6e8ff;font-size:12px;line-height:1.2;text-align:center}.delivered-card{font-weight:800}
 #game.auction-delivery-active .auction-tail-sequence{top:calc(50% - 65px);max-height:calc(100dvh - 170px)}
 .auction-summary{max-width:900px;margin:auto}.auction-summary h2{font-size:clamp(20px,4vw,28px)}.auction-calculation{width:100%;border-collapse:collapse;table-layout:fixed;margin:18px 0 24px;text-align:right;font-variant-numeric:tabular-nums}.auction-calculation caption{position:absolute;clip:rect(0,0,0,0);width:1px;height:1px;overflow:hidden}.auction-calculation th,.auction-calculation td{border-bottom:1px solid #3d536b;padding:13px 7px;overflow-wrap:anywhere}.auction-calculation th:first-child{text-align:left;width:44%}.auction-calculation small{display:block;font-size:11px;color:#a7bbd2;margin-top:5px}.auction-calculation .calculation-total{color:#79f3f0;font-weight:900;background:#153347}.auction-calculation thead{font-size:13px}.auction-calculation tbody{font-size:14px}
+
+/* A primary action is normally full-width. The chat composer is not: reserve a
+   content-sized send target and give the remaining width to the editable text. */
+#game #chat-panel .chat-compose{display:flex;min-width:0;gap:8px;margin:10px 0 0}
+#game #chat-input{flex:1 1 0%;width:0;min-width:0;max-width:100%;min-height:48px}
+#game #chat-send{flex:0 0 auto;width:auto;min-width:74px;min-height:48px;padding:12px;white-space:nowrap}
