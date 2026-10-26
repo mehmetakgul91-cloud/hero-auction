@@ -37,7 +37,7 @@ function fixture({hidden=false,reduced=false,random=()=>0,legacy=false,width=378
   hide(on){document.hidden=on;document.emit('visibilitychange');},reduce(on){media.matches=on;media.emit('change');}};
 }
 test('forest uses four background paths and two portrait copies, all finite within seven seconds',()=>{
- assert.deepEqual(FOREST_GUST_TIMING,{durationMs:7000,minIntervalMs:20000,maxIntervalMs:30000});assert.equal(FOREST_LEAVES.length,4);assert.deepEqual(FOREST_FOREGROUND_INDICES,[0,2]);
+ assert.deepEqual(FOREST_GUST_TIMING,{durationMs:7000,initialDelayMs:2500,minIntervalMs:20000,maxIntervalMs:30000});assert.equal(FOREST_LEAVES.length,4);assert.deepEqual(FOREST_FOREGROUND_INDICES,[0,2]);
  for(const l of FOREST_LEAVES){assert.ok(l.startX<0&&l.endX>100);assert.ok(l.durationMs+l.delayMs<=7000);assert.ok(l.size>=12&&l.size<=20);assert.ok(l.opacity<=.7);assert.notEqual(l.startRotation,l.endRotation);}
  assert.equal(new Set(FOREST_LEAVES.map(l=>l.durationMs)).size,4);
 });
@@ -55,49 +55,49 @@ test('mount is idempotent and preserves hero DOM and root geometry; leaves are d
  assert.equal(f.document.count(),1);assert.equal(f.media.count(),1);assert.equal(f.clock.pending.size,1);f.controller.dispose();
 });
 test('one timer drives 100 gusts without accumulating nodes or repeatedly loading the leaf asset',()=>{
- const f=fixture();const nodes=f.leaves();f.clock.tick(19999);assert.equal(f.controller.state().phase,'waiting');f.clock.tick(1);assert.equal(f.controller.state().phase,'playing');
+ const f=fixture();const nodes=f.leaves();f.clock.tick(2499);assert.equal(f.controller.state().phase,'waiting');f.clock.tick(1);assert.equal(f.controller.state().phase,'playing');
  assert.ok(nodes.every(n=>n.src==='/images/arena-themes/forest-leaf.svg'&&n.srcAssignments===1));
  f.clock.tick(7000);assert.equal(f.controller.state().phase,'waiting');assert.equal(f.controller.state().nextDelayMs,13000);assert.ok(f.background.hidden&&f.foreground.hidden);
  f.clock.tick(20000*100);assert.equal(f.clock.maximum,1);assert.equal(f.root.children.length,3);assert.deepEqual(f.leaves(),nodes);assert.ok(nodes.every(n=>n.srcAssignments===1));
- assert.ok(f.clock.history.every(n=>[7000,13000,20000].includes(n)));f.controller.dispose();assert.equal(f.clock.pending.size,0);
+ assert.ok(f.clock.history.every(n=>[2500,7000,13000].includes(n)));f.controller.dispose();assert.equal(f.clock.pending.size,0);
 });
 test('maximum cadence is start-to-start thirty seconds, not thirty-seven',()=>{
- const f=fixture({random:()=>1});f.clock.tick(30000);assert.equal(f.controller.state().phase,'playing');f.clock.tick(7000);assert.equal(f.controller.state().nextDelayMs,23000);f.clock.tick(23000);assert.equal(f.clock.now,60000);assert.equal(f.controller.state().phase,'playing');f.controller.dispose();
+ const f=fixture({random:()=>1});f.clock.tick(2500);assert.equal(f.controller.state().phase,'playing');f.clock.tick(7000);assert.equal(f.controller.state().nextDelayMs,23000);f.clock.tick(23000);assert.equal(f.clock.now,32500);assert.equal(f.controller.state().phase,'playing');f.controller.dispose();
 });
 test('hidden/reduced states never schedule or load leaves, and stop both planes immediately',()=>{
  const f=fixture({hidden:true,reduced:true});assert.equal(f.clock.pending.size,0);assert.ok(f.leaves().every(n=>n.src===undefined));
- f.hide(false);assert.equal(f.clock.pending.size,0);f.reduce(false);assert.equal(f.controller.state().nextDelayMs,20000);f.clock.tick(20000);const stale=[...f.clock.pending.values()][0].fn;
+ f.hide(false);assert.equal(f.clock.pending.size,0);f.reduce(false);assert.equal(f.controller.state().nextDelayMs,2500);f.clock.tick(2500);const stale=[...f.clock.pending.values()][0].fn;
  f.hide(true);assert.equal(f.clock.pending.size,0);assert.ok(f.background.hidden&&f.foreground.hidden);assert.ok(!f.background.classes.has('is-running'));stale();assert.equal(f.clock.pending.size,0);
  f.hide(false);assert.equal(f.controller.state().nextDelayMs,20000);f.clock.tick(20000);f.reduce(true);assert.equal(f.clock.pending.size,0);assert.ok(f.foreground.hidden);f.controller.dispose();
 });
 test('late callback rechecks a hidden document or reduced preference without waiting for events',()=>{
- for(const state of ['hidden','reduced']){const f=fixture();if(state==='hidden')f.document.hidden=true;else f.media.matches=true;f.clock.tick(20000);assert.equal(f.controller.state().phase,'paused');assert.equal(f.clock.pending.size,0);assert.ok(f.leaves().every(n=>!n.src));f.controller.dispose();}
+ for(const state of ['hidden','reduced']){const f=fixture();if(state==='hidden')f.document.hidden=true;else f.media.matches=true;f.clock.tick(2500);assert.equal(f.controller.state().phase,'paused');assert.equal(f.clock.pending.size,0);assert.ok(f.leaves().every(n=>!n.src));f.controller.dispose();}
 });
-test('zero-size or detached arenas pause; a fresh visible refresh starts a full wait',()=>{
- const f=fixture({width:0,height:0});assert.equal(f.clock.pending.size,0);f.root.clientWidth=378;f.root.clientHeight=530;f.controller.refresh();assert.equal(f.controller.state().nextDelayMs,20000);
- f.root.isConnected=false;f.clock.tick(20000);assert.equal(f.clock.pending.size,0);f.root.isConnected=true;f.controller.refresh();assert.equal(f.clock.pending.size,1);f.controller.dispose();
+test('zero-size or detached arenas pause; first visible refresh starts the initial wait',()=>{
+ const f=fixture({width:0,height:0});assert.equal(f.clock.pending.size,0);f.root.clientWidth=378;f.root.clientHeight=530;f.controller.refresh();assert.equal(f.controller.state().nextDelayMs,2500);
+ f.root.isConnected=false;f.clock.tick(2500);assert.equal(f.clock.pending.size,0);f.root.isConnected=true;f.controller.refresh();assert.equal(f.clock.pending.size,1);f.controller.dispose();
 });
 test('resize updates coordinates and the clip without restarting a playing gust',()=>{
- const f=fixture();f.clock.tick(20000);const pending=f.controller.state().nextDelayMs,refreshes=f.clipRefreshes();f.root.clientWidth=800;f.root.clientHeight=400;f.resize();
+ const f=fixture();f.clock.tick(2500);const pending=f.controller.state().nextDelayMs,refreshes=f.clipRefreshes();f.root.clientWidth=800;f.root.clientHeight=400;f.resize();
  assert.equal(f.leaves()[0].properties['--leaf-mid-x'],'384px');assert.equal(f.leaves()[0].properties['--leaf-mid-y'],'152px');assert.ok(f.clipRefreshes()>refreshes);assert.equal(f.controller.state().phase,'playing');assert.equal(f.controller.state().nextDelayMs,pending);assert.equal(f.clock.maximum,1);f.controller.dispose();
 });
 test('measurement failure is cosmetic-only, stops the event and does not leak a timer',()=>{
- const f=fixture();f.clip.refresh=()=>{throw Error('unavailable clip');};f.clock.tick(20000);assert.equal(f.clock.pending.size,0);assert.ok(f.background.hidden&&f.foreground.hidden);f.controller.dispose();
+ const f=fixture();f.clip.refresh=()=>{throw Error('unavailable clip');};f.clock.tick(2500);assert.equal(f.clock.pending.size,0);assert.ok(f.background.hidden&&f.foreground.hidden);f.controller.dispose();
 });
 test('unsupported or failed clipping leaves foreground hidden while background gust stays usable',()=>{
  for(const options of [{clipEnabled:false},{clipEnabled:undefined},{clipThrows:true}]){
   const f=fixture(options);if(Object.hasOwn(options,'clipEnabled')&&options.clipEnabled===undefined)f.clip.enabled=undefined;
-  f.clock.tick(20000);assert.equal(f.controller.state().phase,'playing');assert.equal(f.background.hidden,false);assert.equal(f.foreground.hidden,true);assert.equal(f.foreground.classes.has('is-running'),false);
+  f.clock.tick(2500);assert.equal(f.controller.state().phase,'playing');assert.equal(f.background.hidden,false);assert.equal(f.foreground.hidden,true);assert.equal(f.foreground.classes.has('is-running'),false);
   f.controller.dispose();assert.equal(f.clock.pending.size,0);assert.equal(f.document.count(),0);assert.equal(f.media.count(),0);assert.deepEqual(f.root.children,[f.hero]);
  }
 });
 test('observer construction or observe failure cannot leak partially mounted effect resources',()=>{
  for(const failure of ['constructor','observe']){const f=fixture({observerFailure:failure});assert.equal(f.clock.pending.size,1);assert.equal(f.observerDisposals(),failure==='observe'?1:0);
-  f.clock.tick(20000);assert.equal(f.controller.state().phase,'playing');f.controller.dispose();assert.equal(f.clock.pending.size,0);assert.equal(f.document.count(),0);assert.equal(f.media.count(),0);assert.equal(f.clipDisposals(),1);assert.deepEqual(f.root.children,[f.hero]);
+  f.clock.tick(2500);assert.equal(f.controller.state().phase,'playing');f.controller.dispose();assert.equal(f.clock.pending.size,0);assert.equal(f.document.count(),0);assert.equal(f.media.count(),0);assert.equal(f.clipDisposals(),1);assert.deepEqual(f.root.children,[f.hero]);
  }
 });
 test('dispose is idempotent in waiting/playing phases and removes every listener, observer, clip and node',()=>{
- for(const playing of [false,true]){const f=fixture({legacy:true});if(playing)f.clock.tick(20000);const stale=[...f.clock.pending.values()][0].fn;f.controller.dispose();f.controller.dispose();stale();f.resize();f.hide(false);f.reduce(false);
+ for(const playing of [false,true]){const f=fixture({legacy:true});if(playing)f.clock.tick(2500);const stale=[...f.clock.pending.values()][0].fn;f.controller.dispose();f.controller.dispose();stale();f.resize();f.hide(false);f.reduce(false);
   assert.equal(f.clock.pending.size,0);assert.equal(f.document.count(),0);assert.equal(f.media.count(),0);assert.equal(f.clipDisposals(),1);assert.equal(f.observerDisposals(),1);assert.deepEqual(f.root.children,[f.hero]);assert.equal(f.controller.state().phase,'disposed');
   const next=mountForestGust(f.root,f.options);assert.notEqual(next,f.controller);assert.equal(f.root.children.length,3);next.dispose();assert.equal(f.clock.pending.size,0);}
 });
@@ -111,4 +111,29 @@ test('production CSS keeps leaves pointer-transparent, finite and behind/inside 
  assert.match(source,/forest-leaf-drift var\(--leaf-duration\) linear var\(--leaf-delay\) 1 both/);assert.match(source,/opacity:\.035/);assert.match(source,/width:34%;height:30%/);
  assert.doesNotMatch(source,/\b(?:filter|backdrop-filter|blur|infinite|will-change)\b/);
  const script=readFileSync(new URL('../public/arena-forest-gust.js',import.meta.url),'utf8');assert.doesNotMatch(script,/setInterval\s*\(|requestAnimationFrame\s*\(|Math\.random\s*\(|fetch\s*\(|battle-engine/);
+});
+
+test('short battles start the first environmental pass at 2.5 seconds without consuming cadence entropy early',()=>{
+ let calls=0;const f=fixture({random:()=>{calls++;return 1;}});
+ assert.equal(FOREST_GUST_TIMING.initialDelayMs,2500);assert.equal(f.controller.state().nextDelayMs,2500);assert.equal(calls,0);
+ f.clock.tick(2499);assert.equal(f.controller.state().phase,'waiting');
+ for(let i=0;i<20;i++)f.controller.refresh();assert.equal(f.clock.pending.size,1);assert.equal(calls,0);
+ f.clock.tick(1);assert.equal(f.clock.now,2500);assert.equal(f.controller.state().phase,'playing');assert.equal(calls,1);
+ f.clock.tick(750);assert.equal(f.controller.state().phase,'playing','a 3.25-second battle reaches the first pass');
+ f.controller.dispose();f.clock.tick(100000);assert.equal(f.clock.pending.size,0);assert.equal(f.controller.state().phase,'disposed');
+});
+test('hiding or reducing motion before the first pass resets its short wait; later resume retains full cadence',()=>{
+ for(const toggle of ['hide','reduce']){
+  const f=fixture();f.clock.tick(1000);const stale=[...f.clock.pending.values()][0].fn;
+  f[toggle](true);assert.equal(f.clock.pending.size,0);f.clock.tick(10000);assert.equal(f.controller.state().phase,'paused');
+  f[toggle](false);assert.equal(f.controller.state().nextDelayMs,2500);stale();assert.equal(f.controller.state().phase,'waiting');
+  f.clock.tick(2499);assert.equal(f.controller.state().phase,'waiting');f.clock.tick(1);assert.equal(f.controller.state().phase,'playing');
+  f[toggle](true);assert.equal(f.clock.pending.size,0);f[toggle](false);assert.equal(f.controller.state().nextDelayMs,20000);
+  f.clock.tick(2500);assert.equal(f.controller.state().phase,'waiting','only the first pass uses the short delay');f.controller.dispose();
+ }
+});
+test('battle completion before 2.5 seconds cancels the initial pass and rematch receives its own short wait',()=>{
+ const f=fixture();f.clock.tick(2499);const stale=[...f.clock.pending.values()][0].fn;
+ f.controller.dispose();f.clock.tick(10001);stale();assert.equal(f.controller.state().phase,'disposed');assert.equal(f.clock.pending.size,0);
+ const next=mountForestGust(f.root,f.options);assert.equal(next.state().nextDelayMs,2500);f.clock.tick(2499);assert.equal(next.state().phase,'waiting');f.clock.tick(1);assert.equal(next.state().phase,'playing');next.dispose();assert.equal(f.clock.pending.size,0);
 });

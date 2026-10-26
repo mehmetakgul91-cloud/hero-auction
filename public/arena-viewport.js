@@ -9,6 +9,14 @@ export function getArenaLaneLayout(teams){
  return {rows,teams:counts.map(lanes=>({front:place(lanes.front),back:place(lanes.back)}))};
 }
 
+// Apply final framing synchronously before exposing a newly loaded battle.
+// Mutation/resize observers still maintain normal responsive orientation changes.
+const viewportRefreshers=new WeakMap();
+export function refreshArenaViewport({document=globalThis.document}={}){
+ const arena=document?.getElementById('battle-arena');
+ if(arena)viewportRefreshers.get(arena)?.();
+}
+
 // Fit the active battle to the visible viewport, including mobile browser bars.
 export function mountArenaViewport({window,document}){
  const arena=document.getElementById('battle-arena');
@@ -28,6 +36,8 @@ export function mountArenaViewport({window,document}){
   const height=viewport&&viewport.scale===1?viewport.height:window.innerHeight;
   if(height>0)root.style.setProperty('--arena-viewport-height',Math.floor(height)+'px');
  }
+ function refresh(){if(frame!==null)window.cancelAnimationFrame(frame);sync();}
+ viewportRefreshers.set(arena,refresh);
  function schedule(){if(frame===null)frame=window.requestAnimationFrame(sync);}
  const observer=new window.MutationObserver(schedule);
  observer.observe(arena,{attributes:true,attributeFilter:['hidden']});
@@ -37,6 +47,7 @@ export function mountArenaViewport({window,document}){
  sync();
  return ()=>{
   observer.disconnect();
+  if(viewportRefreshers.get(arena)===refresh)viewportRefreshers.delete(arena);
   window.removeEventListener('resize',schedule);
   viewport?.removeEventListener('resize',schedule);
   if(frame!==null)window.cancelAnimationFrame(frame);

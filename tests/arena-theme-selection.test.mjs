@@ -8,34 +8,43 @@ import {crazyGamesSource} from '../crazygames-build.js';
 const room=(extra={})=>({code:'123',created:1793000000000,matchNumber:1,players:[{token:'a'},{token:'b'}],...extra});
 const fixture=()=>{let writes=0;const dataset={};const attributes={};const element={dataset:new Proxy(dataset,{set(object,key,value){writes++;object[key]=value;return true}}),setAttribute(key,value){writes++;attributes[key]=value}};return {element,dataset,attributes,writes:()=>writes}};
 
-test('forest and savanna cosmetic draw has exact distribution bounds; returned objects do not mutate room storage',()=>{
+test('forest, savanna and Viking cosmetic draw has exact distribution bounds; returned objects do not mutate room storage',()=>{
  const counts=Object.fromEntries(ARENA_THEME_IDS.map(id=>[id,0]));
- for(let sample=0;sample<500;sample++){
-  const r=room({code:String(sample)}),view=startRoomArenaTheme(r,{randomIndex:bound=>{assert.equal(bound,2);return sample%bound}});
+ for(let sample=0;sample<600;sample++){
+  const r=room({code:String(sample)}),view=startRoomArenaTheme(r,{randomIndex:bound=>{assert.equal(bound,3);return sample%bound}});
   assert.equal(view.matchKey,arenaMatchKey(r));assert.equal(view.version,1);counts[view.theme]++;
   view.theme='invalid';assert.ok(ARENA_THEME_IDS.includes(r.arenaPresentation.theme));
  }
- assert.deepEqual(counts,{ruins:250,savanna:250});
- for(const invalid of [-1,2,5,Infinity,NaN,.5])assert.throws(()=>startRoomArenaTheme(room(),{randomIndex:()=>invalid}),RangeError);
+ assert.deepEqual(counts,{ruins:200,savanna:200,fjord:200});
+ for(const invalid of [-1,3,5,Infinity,NaN,.5])assert.throws(()=>startRoomArenaTheme(room(),{randomIndex:()=>invalid}),RangeError);
 });
-test('one match draws once; polling, roster swaps, side changes and serialized reload keep the same scene',()=>{
- const r=room();let draws=0;const rng=()=>{draws++;return 0};
- const first=startRoomArenaTheme(r,{randomIndex:rng});
- for(let i=0;i<1000;i++){
-  r.round=i;r.players.reverse();r.battleSync={key:'ignored',ready:[i,i]};
-  assert.deepEqual(startRoomArenaTheme(r,{randomIndex:rng}),first);
-  assert.deepEqual(roomArenaPresentation(r),first);
+test('all three matches draw once; polling, roster swaps, sides and serialized reload retain the scene',()=>{
+ for(const initial of [0,1,2]){
+  const r=room();let draws=0;const rng=()=>{draws++;return initial};
+  const first=startRoomArenaTheme(r,{randomIndex:rng});
+  for(let i=0;i<1000;i++){
+   r.round=i;r.players.reverse();r.battleSync={key:'ignored',ready:[i,i]};
+   assert.deepEqual(startRoomArenaTheme(r,{randomIndex:rng}),first);
+   assert.deepEqual(roomArenaPresentation(r),first);
+  }
+  assert.equal(draws,1);assert.deepEqual(roomArenaPresentation(JSON.parse(JSON.stringify(r))),first);
  }
- assert.equal(draws,1);assert.deepEqual(roomArenaPresentation(JSON.parse(JSON.stringify(r))),first);
 });
-test('new rooms draw independently while rematches avoid repeating either active theme',()=>{
- for(const initial of [0,1]){
-  const r=room(),first=startRoomArenaTheme(r,{randomIndex:bound=>{assert.equal(bound,2);return initial}});
+test('new rooms draw independently and every active scene can rematch into either other scene',()=>{
+ for(const initial of [0,1,2])for(const nextIndex of [0,1]){
+  const r=room(),first=startRoomArenaTheme(r,{randomIndex:bound=>{assert.equal(bound,3);return initial}});
   r.matchNumber++;r.created++;
-  const second=startRoomArenaTheme(r,{randomIndex:bound=>{assert.equal(bound,1);return 0}});
+  const second=startRoomArenaTheme(r,{randomIndex:bound=>{assert.equal(bound,2);return nextIndex}});
+  assert.equal(second.theme,ARENA_THEME_IDS.filter(theme=>theme!==first.theme)[nextIndex]);
   assert.notEqual(second.theme,first.theme);assert.notEqual(second.matchKey,first.matchKey);
-  const unrelated=startRoomArenaTheme(room({code:'456'}),{randomIndex:bound=>{assert.equal(bound,2);return initial}});
+  const unrelated=startRoomArenaTheme(room({code:'456'}),{randomIndex:bound=>{assert.equal(bound,3);return initial}});
   assert.equal(unrelated.theme,first.theme,'unrelated room does not share previous-theme state');
+ }
+ for(const invalid of [-1,2,Infinity,NaN,.5]){
+  const r=room();startRoomArenaTheme(r,{randomIndex:()=>0});r.matchNumber++;
+  const before=JSON.stringify(r.arenaPresentation);
+  assert.throws(()=>startRoomArenaTheme(r,{randomIndex:()=>invalid}),RangeError);
+  assert.equal(JSON.stringify(r.arenaPresentation),before,'invalid cosmetic draw never overwrites room metadata');
  }
 });
 test('legacy or stale persisted metadata falls back deterministically without mutating room state',()=>{
@@ -60,6 +69,8 @@ test('client changes only cosmetic attributes once per match, never flips during
  const next={version:1,matchKey:'123:2:2',theme:'savanna'};assert.deepEqual(p.apply(next,next.matchKey),next);
  assert.equal(h.dataset.arenaTheme,'savanna');assert.match(h.attributes['aria-label'],/Afrika savanası/);assert.equal(h.writes(),writes+2);assert.deepEqual(Object.keys(p.current()).sort(),['matchKey','theme','version']);
  const copy=p.current();copy.theme='courtyard';assert.equal(p.current().theme,'savanna');
+ const viking={version:1,matchKey:'123:3:3',theme:'fjord'};assert.deepEqual(p.apply(viking,viking.matchKey),viking);assert.equal(h.writes(),writes+4);assert.match(h.attributes['aria-label'],/Viking taş arenası/);
+ for(const theme of ARENA_THEME_IDS)assert.deepEqual(p.apply({...viking,theme},viking.matchKey),viking);assert.equal(h.writes(),writes+4);
 });
 test('legacy client fallback is identical for two seats, reloads and preview keys, with English CG label',()=>{
  const key='123:1:1793000000000';const values=[];
@@ -82,7 +93,7 @@ test('presentation code has no combat dependency, per-frame effects, storage, na
 });
 
 test('saved active scenes stay unchanged and retired scenes normalize to a shared active fallback without rewriting rooms',()=>{
- assert.deepEqual(ARENA_THEME_IDS,['ruins','savanna']);assert.deepEqual(ARENA_THEME_CATALOG_IDS,['courtyard','savanna','fjord','ruins','space']);
+ assert.deepEqual(ARENA_THEME_IDS,['ruins','savanna','fjord']);assert.deepEqual(ARENA_THEME_CATALOG_IDS,['courtyard','savanna','fjord','ruins','space']);
  for(const theme of ARENA_THEME_CATALOG_IDS){
   const r=room();r.arenaPresentation={version:1,matchKey:arenaMatchKey(r),theme};const before=JSON.stringify(r);
   const expected=ARENA_THEME_IDS.includes(theme)?theme:fallbackArenaTheme(arenaMatchKey(r));
@@ -95,16 +106,23 @@ test('saved active scenes stay unchanged and retired scenes normalize to a share
   assert.equal(JSON.stringify(r),before);
  }
 });
-test('hundreds of rematches alternate forest and savanna with no zero draw or stale match key',()=>{
- const r=room();let last=null,previous=null;
- for(let n=0;n<500;n++){
-  r.matchNumber=n+1;const view=startRoomArenaTheme(r,{randomIndex:bound=>{assert.equal(bound,n===0?2:1);return 0}});
-  assert.equal(view.theme,ARENA_THEME_IDS[n%2]);assert.notEqual(view.theme,previous);assert.notEqual(view.matchKey,last);
+test('hundreds of three-scene rematches exclude the previous scene without a fixed two-scene alternation',()=>{
+ const r=room();let last=null,previous=null;const seen=new Set();
+ for(let n=0;n<600;n++){
+  const expected=ARENA_THEME_IDS[n%3],choices=ARENA_THEME_IDS.filter(theme=>theme!==previous);
+  r.matchNumber=n+1;
+  const view=startRoomArenaTheme(r,{randomIndex:bound=>{assert.equal(bound,n===0?3:2);return choices.indexOf(expected)}});
+  assert.equal(view.theme,expected);assert.notEqual(view.theme,previous);assert.notEqual(view.matchKey,last);seen.add(view.theme);
+  for(const seat of [0,1]){
+   const f=fixture(),p=createArenaThemePresentation({element:f.element,language:seat?'en':'tr'});
+   assert.deepEqual(p.apply(roomArenaPresentation(JSON.parse(JSON.stringify(r))),view.matchKey),view);
+  }
   last=view.matchKey;previous=view.theme;
  }
+ assert.equal(seen.size,3);
 });
-test('legacy fallback covers only both active themes deterministically across seats and match identities',()=>{
- const counts={ruins:0,savanna:0};
+test('legacy fallback covers only all three active themes deterministically across seats and match identities',()=>{
+ const counts={ruins:0,savanna:0,fjord:0};
  for(let n=0;n<500;n++){
   const r=room({code:String(n)}),key=arenaMatchKey(r),theme=fallbackArenaTheme(key);counts[theme]++;
   assert.ok(ARENA_THEME_IDS.includes(theme));
@@ -112,9 +130,9 @@ test('legacy fallback covers only both active themes deterministically across se
   for(const p of seats)assert.equal(p.apply(undefined,key).theme,theme);
   assert.equal(roomArenaPresentation(JSON.parse(JSON.stringify(r))).theme,theme);
  }
- assert.ok(counts.ruins>150&&counts.savanna>150,'legacy fallback is not accidentally pinned to one theme');
+ assert.ok(Object.values(counts).every(count=>count>100&&count<250),'legacy fallback reaches all active scenes with bounded counts');
 });
-test('both active authoritative themes survive independent player presenters, serialization and refreshed presenters',()=>{
+test('all three active authoritative themes survive independent player presenters, serialization and refreshed presenters',()=>{
  for(const theme of ARENA_THEME_IDS){
   const r=room();r.arenaPresentation={version:1,matchKey:arenaMatchKey(r),theme};
   for(let seat=0;seat<2;seat++)for(let reload=0;reload<3;reload++){

@@ -540,3 +540,8 @@ body:not(.arena-room) .formation{margin-top:6px;padding:10px}
 .arena-room .arena-side .team,.arena-side .team{grid-template-rows:repeat(60,minmax(0,1fr));row-gap:0;min-height:calc(var(--arena-row-count,5) * 110px)}
 .arena-room.arena-fit .arena-side .team{grid-template-rows:repeat(60,minmax(0,1fr));row-gap:0;min-height:0}
 .arena-room.arena-fit .arena-side .arena-hero{height:calc(100% - 3px);align-self:center}
+
+/* Reserve the commander dock before late control initialization. The initial
+   visible arena therefore has its final field height, not a cover-crop resize. */
+.arena-room.arena-fit .arena-commander-dock{min-height:142px}
+@media(min-width:600px) and (max-height:600px){.arena-room.arena-fit .arena-commander-dock{min-height:180px}}

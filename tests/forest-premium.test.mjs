@@ -23,24 +23,30 @@ test('approved savanna scene and v4 dust texture are byte-locked bounded WebP as
   assert.equal(createHash('sha256').update(b).digest('hex'),sha256,file);
  }
 });
+test('approved Viking ground is the byte-locked bounded WebP delivery derivative',()=>{
+ const asset=new URL('../public/images/arena-themes/fjord-premium.webp',import.meta.url),b=readFileSync(asset);
+ assert.equal(b.toString('ascii',0,4),'RIFF');assert.equal(b.toString('ascii',8,12),'WEBP');
+ assert.equal(b.length,672316);assert.ok(statSync(asset).size<800*1024);
+ assert.equal(createHash('sha256').update(b).digest('hex'),'69a2e75fbe726b812d7a4ac469f86911df7959464eb726ff3fac571da14b04c6');
+});
 test('forest uses proportional cover and responsive crop without a broad dark veil',()=>{
  assert.match(rule,/background-image:url\('\/images\/arena-themes\/ruins-premium\.webp'\)/);
  assert.match(rule,/background-size:cover/);assert.match(rule,/background-position:center 18%/);
  assert.doesNotMatch(rule,/gradient|inset 0 0|filter|opacity|animation|transition|transform|100% 100%/);
  assert.match(css,/@media\(max-width:600px\)\{body:has\(#battle-arena\) \.battle-arena\{background-position:center center\}\}/);
 });
-test('only approved forest and savanna use rasters; no eager theme loading or original PNG',()=>{
- for(const id of ['ruins','savanna'])assert.equal((css.match(new RegExp(id+'-premium\\.webp','g'))||[]).length,1);
+test('only approved forest, savanna and Viking use rasters; no eager theme loading or original PNG',()=>{
+ for(const id of ['ruins','savanna','fjord'])assert.equal((css.match(new RegExp(id+'-premium\\.webp','g'))||[]).length,1);
  for(const id of ['courtyard','savanna','fjord','space']){assert.ok(statSync(new URL('../public/images/arena-themes/'+id+'.svg',import.meta.url)).size>0);assert.ok(!css.includes("url('/images/arena-themes/"+id+".svg')"));}
- for(const f of ['public/battle-preview.html','public/battle-preview.js','public/arena-theme.js'])assert.doesNotMatch(read(f),/ruins-premium|savanna-premium|Premium-Konsept|new Image\(|rel=["']preload/);
+ for(const f of ['public/battle-preview.html','public/battle-preview.js','public/arena-theme.js'])assert.doesNotMatch(read(f),/ruins-premium|savanna-premium|fjord-premium|Premium-Konsept|new Image\(|rel=["']preload/);
 });
-test('both active scenes retain a local name plate and AA even over the brightest possible background',()=>{
+test('all active scenes retain a local name plate and AA even over the brightest possible background',()=>{
  assert.match(css,/\.battle-arena \.arena-hero-label\{background:#17212be6;border-radius:3px;text-shadow:0 1px 2px #000\}/);
  const luminance=rgb=>rgb.map(v=>v/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((s,v,i)=>s+v*[.2126,.7152,.0722][i],0);
  const plate=[23,33,43].map(v=>v*230/255+255*25/255);
  assert.ok((luminance([231,237,241])+.05)/(luminance(plate)+.05)>4.5);
 });
-test('preview follows current independent 60-track placement, not the rejected fixed-row layout',()=>{
+test('forest preview follows current independent 60-track placement, not the rejected fixed-row layout',()=>{
  const compositor=read('tools/arena-theme-preview/build-forest-composites.py');
  assert.match(compositor,/start-1\+span\/2\)\/60\*teamh/);
  assert.match(compositor,/forest-web-delivery\.png/);

@@ -13,10 +13,11 @@ import {createBattleReplayHealth} from '/battle-replay-health.js';
 import {createArenaTeamRenderer} from '/arena-team-renderer.js';
 import {summarizeBattle} from '/battle-summary-data.js?v=complete-results-20261021';
 import {commanderAbilityStats,commanderAbilityDescription} from '/commander-ability-rules.js?v=commander-attack-fix-20261021';
-import {getArenaLaneLayout} from '/arena-viewport.js?v=equal-lanes-20261026';
+import {getArenaLaneLayout,refreshArenaViewport} from '/arena-viewport.js?v=equal-lanes-20261026';
 import {heroCombatPresentation,stationaryArenaAction} from '/hero-combat-presentation.js';
 import {createArenaThemePresentation} from '/arena-theme.js';
 import {createArenaWeather} from '/arena-weather.js';
+import {mountVikingLayout} from '/arena-viking-layout.js';
 // Verify the current portal account before accessing any saved arena seat.
 if(window.HeroPlatform){
  const restart=()=>{localStorage.removeItem('hero-auction-session');sessionStorage.removeItem('hero-auction-formation');sessionStorage.removeItem('hero-auction-lanes');window.HeroPlatform.beforeNavigate?.('/crazygames/');location.replace('/crazygames/')};
@@ -44,11 +45,15 @@ if(window.HeroPlatform){
 const $=id=>document.getElementById(id);
 const arenaTheme=createArenaThemePresentation({element:$('battle-arena'),language:document.documentElement.lang});
 const arenaWeather=createArenaWeather({root:$('battle-arena')});
+// Static floor geometry survives replay pause/results; it never depends on motion.
+const arenaSceneLayout=createArenaWeather({root:$('battle-arena'),mounts:{fjord:mountVikingLayout}});
 let arenaWeatherReady=false,arenaWeatherPageHidden=false;
 function syncArenaWeather(){
- // Only an actual loaded, running battle can animate. Preparation, waiting,
- // summaries, page cache, failed builds and explicit leave release all resources.
- const active=arenaWeatherReady&&!arenaWeatherPageHidden&&!document.hidden&&!battlePresentationFinished&&!leavingBattle&&(liveArenaMode||timer!==null);
+ // Only an actual loaded, running battle can animate. Pause/results release
+ // weather; static floor geometry stays until the arena is hidden or left.
+ const visible=arenaWeatherReady&&!arenaWeatherPageHidden&&!document.hidden&&!leavingBattle;
+ const active=visible&&!battlePresentationFinished&&(liveArenaMode||timer!==null);
+ arenaSceneLayout.update(arenaTheme.current(),{active:visible});
  arenaWeather.update(arenaTheme.current(),{active});
 }
 
@@ -425,7 +430,8 @@ function enterArenaWithoutReload(url){
  document.body.classList.add('arena-room');
  document.querySelector('.formation').hidden=true;
  $('battle-lobby').hidden=true;
- $('battle-arena').hidden=false;
+ // Keep the painting hidden while waiting; reveal only its final fitted frame.
+ $('battle-arena').hidden=true;
 
  $('play').textContent='▶ SAVAŞI BAŞLAT';
  $('play').disabled=true;
@@ -473,7 +479,7 @@ async function lockFormation(){
    }
    prepDone=true;enterArenaWithoutReload('/battle-preview.html?room=arena');return;
   }
-  prepDone=true;document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;
+  prepDone=true;document.querySelector('.formation').hidden=true;$('battle-arena').hidden=true;
   if(prepTimer!==null){clearInterval(prepTimer);prepTimer=null}
   $('apply-roles').textContent='✓ HAZIR';$('ready-a').textContent='🔵 Sen: Hazır';$('prep-note').textContent='İki taraf hazır. Savaş başlıyor!';stop();$('events').replaceChildren();$('play').textContent='▶ SAVAŞI OYNAT';
   await build();if(events.length)$('play').click();
@@ -487,7 +493,7 @@ function startPreparation(){
 }
 const roleIcons={tank:'🛡️',fighter:'⚔️',energy:'⚡',assassin:'🗡️',support:'💚'};
 $('apply-roles').onclick=lockFormation;
-if(arenaMode){document.body.classList.add('arena-room');document.querySelector('.formation').hidden=true;$('battle-arena').hidden=false;$('play').textContent='▶ SAVAŞI BAŞLAT';mountCommanderDock()}else{renderBoard();if(!auctionMode)startPreparation();else{$('apply-roles').disabled=true;$('prep-clock').textContent='--:--';$('prep-note').textContent='Açık artırma kartları doğrulanıyor…'}}
+if(arenaMode){document.body.classList.add('arena-room');document.querySelector('.formation').hidden=true;$('battle-arena').hidden=true;$('play').textContent='▶ SAVAŞI BAŞLAT';mountCommanderDock()}else{renderBoard();if(!auctionMode)startPreparation();else{$('apply-roles').disabled=true;$('prep-clock').textContent='--:--';$('prep-note').textContent='Açık artırma kartları doğrulanıyor…'}}
 const motion=()=> !document.hidden&&!document.body.classList.contains('arena-catching-up')&&$('motion').checked&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const duration=()=>Number($('speed').value);
 function comicBattleCue(e){
@@ -607,7 +613,8 @@ function renderArenaCommanderMatchup(profiles){
 }
 async function build(overrideResult){
  resetVictoryChestPresentation();
- arenaWeatherReady=false;arenaWeather.clear();
+ $('battle-arena').hidden=true;
+ arenaWeatherReady=false;arenaWeather.clear();arenaSceneLayout.clear();
  document.body.classList.remove('arena-results');document.querySelector('.controls').hidden=false;
  stop();if(victoryPendingTimer!==null){clearTimeout(victoryPendingTimer);victoryPendingTimer=null}resetArenaClock();arenaTeamRenderer.reset();battlePresentationFinished=false;cursor=0;events=[];$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;victoryRevealDone=false;if(victoryRevealTimer!==null){clearTimeout(victoryRevealTimer);victoryRevealTimer=null}if($('arena-victory-reveal'))$('arena-victory-reveal').hidden=true;$('next').disabled=true;$('play').disabled=true;
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
@@ -634,9 +641,12 @@ async function build(overrideResult){
   if(liveArenaMode)startArenaClock();
   if(arenaMode)void startArenaMusic();
   $('arena-score').hidden=false;$('battle-arena').hidden=false;
+  // One synchronous reveal: final HUD, viewport fit, scene layout and heroes
+  // are prepared in this task, never an intermediate cover-cropped waiting board.
+  refreshArenaViewport();
   $('message').textContent=liveArenaMode?'Canlı savaş başladı · Komutanını yönet':'Gerçek savaş motoru hazır · '+result.rounds+' tur';
   arenaWeatherReady=true;render();window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(true);window.heroArenaTeams=states.map(t=>t.map(u=>({id:u.id,name:u.name,hp:u.hp,maxHp:u.maxHp,power:u.power,rarity:u.rarity,lane:u.lane,position:u.position})));window.dispatchEvent(new CustomEvent('heroarena:ready',{detail:{teams:window.heroArenaTeams}}));
- }catch(e){arenaWeatherReady=false;arenaWeather.clear();$('message').textContent='⚠ '+e.message}
+ }catch(e){$('battle-arena').hidden=true;arenaWeatherReady=false;arenaWeather.clear();arenaSceneLayout.clear();refreshArenaViewport();$('message').textContent='⚠ '+e.message}
 }
 function battleEventText(event){
  const names=new Map(states.flat().map(unit=>[unit.id,unit.name]));
@@ -701,9 +711,9 @@ function showVictoryChest(result){
  victoryChestPresentation.update(result);
 }
 window.addEventListener('pagehide',resetVictoryChestPresentation);
-window.addEventListener('pagehide',()=>{arenaWeatherPageHidden=true;arenaWeather.clear();});
+window.addEventListener('pagehide',()=>{arenaWeatherPageHidden=true;arenaWeather.clear();arenaSceneLayout.clear();});
 window.addEventListener('pageshow',()=>{arenaWeatherPageHidden=false;syncArenaWeather();});
-window.addEventListener('hero:login-changed',()=>{arenaWeatherReady=false;arenaWeather.clear();});
+window.addEventListener('hero:login-changed',()=>{arenaWeatherReady=false;arenaWeather.clear();arenaSceneLayout.clear();});
 window.addEventListener('storage',event=>{if(event.key==='hero-auction-login')resetVictoryChestPresentation()});
 window.addEventListener('hero:login-changed',resetVictoryChestPresentation);
 function render(flash){
@@ -722,7 +732,7 @@ function render(flash){
   $('team-hp-'+suffix+'-track').setAttribute('aria-valuenow',String(Math.round(percent)));
   $('team-hp-'+suffix+'-track').setAttribute('aria-valuetext',Math.round(remainingHp)+' / '+Math.round(maxHp)+' HP');
  }
- syncArenaWeather();arenaWeather.refresh();
+ syncArenaWeather();arenaSceneLayout.refresh();arenaWeather.refresh();
  $('round').textContent=cursor?events[cursor-1].round:'0';
  $('next').disabled=cursor>=events.length;
  $('play').disabled=cursor>=events.length;

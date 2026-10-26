@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mountArenaViewport,getArenaLaneLayout} from '../public/arena-viewport.js';
+import {mountArenaViewport,getArenaLaneLayout,refreshArenaViewport} from '../public/arena-viewport.js';
 
 test('every front/back split has exact equal lane slices centred without integer rounding',()=>{
  const team=front=>Array.from({length:5},(_,i)=>({id:i,lane:i<front?'front':'back',hp:100}));
@@ -35,7 +35,7 @@ function fixture({width=390,height=700}={}){
  const document={body,documentElement:root,getElementById:()=>arena};
  const destroy=mountArenaViewport({window,document});
  const flush=()=>{for(const [id,fn]of [...frames]){frames.delete(id);fn();}};
- return {window,viewport,properties,classes,arena,frames,scrolls,destroy,flush,
+ return {window,document,viewport,properties,classes,arena,frames,scrolls,destroy,flush,notify:()=>notify(),
   enter(){classes.add('arena-room');arena.hidden=false;notify();flush();},
   finish(){arena.hidden=true;notify();flush();},
   disconnected:()=>disconnected};
@@ -81,3 +81,11 @@ test('pinch zoom keeps the full layout instead of shrinking the controls',()=>{
  assert.equal(h.properties.get('--arena-viewport-height'),h.window.innerHeight+'px');
  h.destroy();
 });
+
+ test('loaded arena can fit synchronously before first paint and cancels obsolete queued frame',()=>{
+ const h=fixture();h.classes.add('arena-room');h.arena.hidden=false;h.notify();assert.equal(h.frames.size,1);assert.equal(h.classes.has('arena-fit'),false);
+ refreshArenaViewport({document:h.document});assert.equal(h.frames.size,0);assert.equal(h.classes.has('arena-fit'),true);assert.equal(h.properties.get('--arena-viewport-height'),'700px');assert.equal(h.scrolls.length,1);
+ for(let i=0;i<10;i++)refreshArenaViewport({document:h.document});assert.equal(h.scrolls.length,1);
+ h.arena.hidden=true;refreshArenaViewport({document:h.document});assert.equal(h.classes.has('arena-fit'),false);h.destroy();h.arena.hidden=false;refreshArenaViewport({document:h.document});assert.equal(h.classes.has('arena-fit'),false);
+ });
+ test('synchronous fit safely ignores absent/unmounted arenas',()=>{assert.doesNotThrow(()=>refreshArenaViewport({document:{getElementById:()=>null}}));assert.doesNotThrow(()=>refreshArenaViewport({document:{getElementById:()=>({})}}));});

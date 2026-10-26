@@ -3,7 +3,8 @@
 import {isArenaTheme,validArenaMatchKey} from './arena-theme.js';
 import {mountSavannaDust} from './arena-dust.js';
 import {mountForestGust} from './arena-forest-gust.js';
-export function createArenaWeather({root,mounts={savanna:mountSavannaDust,ruins:mountForestGust}}={}){
+import {mountVikingWeather} from './arena-viking-weather.js';
+export function createArenaWeather({root,mounts={savanna:mountSavannaDust,ruins:mountForestGust,fjord:mountVikingWeather}}={}){
  let instance=null,binding=null,disposed=false;
  function clear(){const old=instance;instance=null;binding=null;try{old?.dispose?.();}catch{/* Decoration cannot interrupt a match. */}}
  return {
