@@ -1,3 +1,7 @@
+import {assertCancellableRoom,cancellationMatchId,cancellationIdentity,cancellationDigest,cancellationCandidate,publicCancellationCandidate,normalizeCancellationSelections,cancellationReceiptKey,cancelPaidMatches} from './paid-match-cancellation.js';
+import {createPaidEntryMaintenance,isUnsettledPaidRoom} from './paid-entry-maintenance.js';
+import {createMagicDustPolicy,readMagicDustBalance} from './magic-dust.js';
+import {createVictoryChestPolicy,eligibleVictory,victoryMatchId,persistVictoryChestIntent,creditVictoryChest,readVictoryChestRecovery,victoryChestView} from './victory-chests.js';
 import {createDiamondPolicy,commanderProgression,readDiamondBalance,upgradeCommanderWithDiamonds} from './paid-diamonds.js';
 import {createDiamondExchangePolicy,diamondExchangeView,exchangeDiamondsForGold} from './paid-diamond-exchange.js';
 import {createDiamondSignupPolicy,registerDiamondMember} from './diamond-signup-bonus.js';
@@ -35,16 +39,24 @@ import {isLiveCommanderApiAvailable} from './commander-live-api-access.js';
 import {settleLiveBattle} from './live-battle-settlement.js';
 import {orientBattleSummary} from './public/battle-summary-data.js';
 import {createArena3dDemo} from './arena-3d-demo.js';
+import {startRoomArenaTheme,roomArenaPresentation} from './arena-theme.js';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
+const paidEntryMaintenance=createPaidEntryMaintenance({bootPaused:process.env.HERO_PAID_ENTRY_PAUSED==='1',canResume:()=>cancellationReservations.size===0});
 // Explicit opt-in only. Schema is a separate, unapplied migration; no payment handler.
 const diamondPolicy=createDiamondPolicy(process.env);
+const magicDustPolicy=createMagicDustPolicy(process.env);
+const victoryChestPolicy=createVictoryChestPolicy(process.env);
+let victoryChestStorageReady=false;
+const pendingVictoryChests=new Map();
+const victoryChestFlights=new Set();
+let victoryChestCreditHealthy=true;
 const diamondExchangePolicy=createDiamondExchangePolicy(process.env);
 const diamondSignupPolicy=createDiamondSignupPolicy(process.env);
 const loginRewardPolicy=createLoginRewardPolicy(process.env);
 console.info('Login reward policy:',JSON.stringify({enabled:loginRewardPolicy.enabled,timezone:'Europe/Istanbul',day7Diamonds:5}));
 // Non-secret release evidence: never log environment values, credentials or wallets.
-console.info('Commander economy policy:',JSON.stringify({diamondsEnabled:diamondPolicy.enabled,signupBonusEnabled:diamondSignupPolicy.enabled,exchangeEnabled:diamondExchangePolicy.enabled,purchaseAvailable:false}));
+console.info('Commander economy policy:',JSON.stringify({diamondsEnabled:diamondPolicy.enabled,signupBonusEnabled:diamondSignupPolicy.enabled,exchangeEnabled:diamondExchangePolicy.enabled,purchaseAvailable:false,magicDustEnabled:magicDustPolicy.enabled,victoryChestsEnabled:victoryChestPolicy.enabled}));
 const GOOGLE_CLIENT_ID=process.env.GOOGLE_CLIENT_ID||'742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
 const ADMIN_GOOGLE_EMAIL=String(process.env.ADMIN_GOOGLE_EMAIL||'').trim().toLowerCase();
 const authSecret=process.env.AUTH_SIGNING_SECRET?Buffer.from(process.env.AUTH_SIGNING_SECRET,'hex'):crypto.randomBytes(32);
@@ -111,21 +123,31 @@ const matchRecords=new Map();
 const roomInvites=createRoomInvites();
 const activeSeats=new Map();
 const roomFlushes=new Map();
+const cancellationPlans=new Map();
+const cancellationReservations=new Map();
+const battlePreparationFlights=new Map();
 const friends=createFriendsService({persist:()=>saveSocial(true),profile:id=>profileOf(id),canInteract:(a,b)=>moderationReady&&!moderation.blocked(a,b)});
 let socialSaveQueue=Promise.resolve();
+let socialSaveNeedsConfirmation=false;
 const ratings=new Map();
 const rankedTier=n=>n>=1800?'Efsane':n>=1500?'Elmas':n>=1250?'Altın':n>=1050?'Gümüş':'Bronz';
 const profileOf=id=>{const p=ratings.get(id)||{rating:1000,wins:0,losses:0,draws:0,name:'Oyuncu'};return {...p,tier:rankedTier(p.rating),matches:p.wins+p.losses+p.draws};};
 async function saveSocial(strict=false){
  if(!database)return;
- // Match writes share the friendship transaction queue: never persist tentative links
- // while a failed friend write is still awaiting its in-memory rollback.
- if(!strict)return friends.afterMutations(()=>saveSocial(true)).catch(e=>console.error('Social persistence:',e.message));
- if(!databaseReady){if(strict)error('Arkadaş sistemi geçici olarak kullanılamıyor.',503);return}
- const run=socialSaveQueue.then(()=>database.query('INSERT INTO hero_auction_social(id,state) VALUES($1,$2) ON CONFLICT(id) DO UPDATE SET state=$2',['global',JSON.stringify({ratings:[...ratings],matches:[...matchRecords],friendships:friends.snapshot(),roomInvites:roomInvites.snapshot(),activeSeats:[...activeSeats]})]));
- socialSaveQueue=run.catch(()=>{});
- try{await run}catch(e){console.error('Social persistence:',e.message);if(strict)error('Arkadaş değişikliği kaydedilemedi. Tekrar dene.',503)}
+ // Track from enqueue, not only after the friendship queue starts executing.
+ // A failed write remains a drain blocker until a complete snapshot succeeds.
+ const finishSocialWrite=paidEntryMaintenance.track('socialWrites');
+ socialSaveNeedsConfirmation=true;
+ try{
+  if(!strict)return await friends.afterMutations(()=>saveSocial(true)).catch(e=>{socialSaveNeedsConfirmation=true;console.error('Social persistence:',e.message)});
+  if(!databaseReady)error('Arkadaş sistemi geçici olarak kullanılamıyor.',503);
+  const run=socialSaveQueue.then(()=>database.query('INSERT INTO hero_auction_social(id,state) VALUES($1,$2) ON CONFLICT(id) DO UPDATE SET state=$2',['global',JSON.stringify({ratings:[...ratings],matches:[...matchRecords],friendships:friends.snapshot(),roomInvites:roomInvites.snapshot(),activeSeats:[...activeSeats]})])).then(()=>{socialSaveNeedsConfirmation=false});
+  socialSaveQueue=run.catch(()=>{});
+  try{await run}catch(e){console.error('Social persistence:',e.message);error('Arkadaş değişikliği kaydedilemedi. Tekrar dene.',503)}
+ }catch(e){socialSaveNeedsConfirmation=true;throw e}
+ finally{finishSocialWrite()}
 }
+
 function recordMatch(r,scores){const id=r.code+':'+(r.matchNumber||1)+':'+r.created;if(matchRecords.has(id))return;const winner=scores[0]===scores[1]?-1:scores[0]>scores[1]?0:1;const participants=r.players.map((p,i)=>({id:p.accountId||null,name:p.name,score:scores[i]}));const before=r.players.map(p=>p.accountId?profileOf(p.accountId):null);const ranked=r.mode!=='bot'&&before.every(Boolean);const deltas=ranked?before.map((p,i)=>{const opponent=before[1-i];const expected=1/(1+Math.pow(10,(opponent.rating-p.rating)/400));const actual=winner<0?0.5:winner===i?1:0;return Math.round(32*(actual-expected))}):[0,0];r.rankChange=ranked?deltas:[0,0];r.rankBefore=before.map(p=>p?.rating??null);matchRecords.set(id,{id,at:Date.now(),mode:r.mode,universe:r.universe,participants,winner,rankChange:r.rankChange});for(let i=0;i<2;i++){const p=r.players[i];if(!p.accountId)continue;const prev=before[i];const next={...prev,name:p.name,wins:prev.wins+(winner===i?1:0),losses:prev.losses+(winner>=0&&winner!==i?1:0),draws:prev.draws+(winner<0?1:0)};if(ranked)next.rating=Math.max(0,prev.rating+deltas[i]);ratings.set(p.accountId,next)}while(matchRecords.size>2000)matchRecords.delete(matchRecords.keys().next().value);void saveSocial()}
 
 let moderationReady=!database;
@@ -164,10 +186,156 @@ async function initializeModeration(){
 let databaseReady=false;
 function markRoom(r){if(database&&r)dirtyRooms.add(r.code)}
 async function initializeDatabase(){if(!database)return;try{await database.query('CREATE TABLE IF NOT EXISTS hero_auction_rooms (code VARCHAR(3) PRIMARY KEY, state JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_wallets (account_id TEXT PRIMARY KEY, gold INTEGER NOT NULL DEFAULT 500 CHECK(gold>=0))');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_user_profiles(account_id TEXT PRIMARY KEY,display_name TEXT NOT NULL,updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_admin_accounts (account_id TEXT PRIMARY KEY, banned BOOLEAN NOT NULL DEFAULT false)');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_admin_audit (id BIGSERIAL PRIMARY KEY, account_id TEXT NOT NULL, actor_id TEXT NOT NULL, action TEXT NOT NULL, old_gold INTEGER, new_gold INTEGER, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_commanders (account_id TEXT PRIMARY KEY, profile JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_invite_joins (invite_id TEXT PRIMARY KEY, state JSONB NOT NULL)');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_social (id TEXT PRIMARY KEY, state JSONB NOT NULL)');const social=await database.query('SELECT state FROM hero_auction_social WHERE id=$1',['global']);if(social.rows[0]){const state=social.rows[0].state;for(const [k,v] of state.ratings||[])ratings.set(k,v);for(const [k,v] of state.matches||[])matchRecords.set(k,v);roomInvites.restore(state.roomInvites);for(const [id,seat] of state.activeSeats||[])activeSeats.set(id,seat);if(state.friendships)friends.restore(state.friendships);else friends.migrate(state.friends||[],ratings)}await database.query('CREATE TABLE IF NOT EXISTS hero_auction_gold_awards (award_id TEXT PRIMARY KEY, account_id TEXT NOT NULL, amount INTEGER NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');await database.query('CREATE TABLE IF NOT EXISTS hero_auction_rewarded_claims (provider_event_id TEXT PRIMARY KEY, account_id TEXT NOT NULL, reward_day DATE NOT NULL, amount INTEGER NOT NULL CHECK(amount=100), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');await database.query('CREATE INDEX IF NOT EXISTS hero_auction_rewarded_claims_account_day ON hero_auction_rewarded_claims(account_id,reward_day)');const result=await database.query('SELECT code,state FROM hero_auction_rooms');for(const row of result.rows){const r=row.state;if(r&&r.code===row.code&&r.players&&r.cards){rooms.set(row.code,r);if(r.phase==='finished'&&r.goldAward)queueGoldAward(r);if(r.phase==='finished'&&r.goldRefunds)for(const a of r.goldRefunds)pendingGold.set(a.id,a);if(r.phase==='matching'&&!r.players[1])waiting.set(row.code,{code:row.code,universe:r.universe,created:r.created})}}const legacySeats=new Map();for(const r of [...rooms.values()].sort((a,b)=>b.created-a.created))r.players.forEach((p,seat)=>{if(p?.accountId&&!activeSeats.has(p.accountId)){const all=legacySeats.get(p.accountId)||[];all.push({code:r.code,created:r.created,matchNumber:r.matchNumber||1,seat,unsettled:r.phase==='auction'||(r.phase==='finished'&&!r.matchSettled)});legacySeats.set(p.accountId,all)}});for(const [id,all] of legacySeats)activeSeats.set(id,all.filter(p=>p.unsettled).length>1?{ambiguous:true}:all.find(p=>p.unsettled)||all[0]);for(const [id,pointer] of activeSeats){const newer=[...rooms.values()].some(r=>r.players.some(p=>p?.accountId===id)&&(r.phase==='auction'||(r.phase==='finished'&&!r.matchSettled))&&(r.created>(pointer?.created??pointer?.at??0)||(r.code===pointer?.code&&r.created===pointer?.created&&(r.matchNumber||1)!==pointer?.matchNumber)));if(newer)activeSeats.set(id,{ambiguous:true})}friends.seed([...ratings].map(([id,p])=>[id,p.name]));friends.seed([...rooms.values()].flatMap(r=>r.players.filter(p=>p?.accountId).map(p=>[p.accountId,p.name])));databaseReady=true;await initializeModeration();await saveSocial(true);console.log('PostgreSQL connected; restored',rooms.size,'rooms')}catch(e){databaseReady=false;console.error('PostgreSQL initialization failed:',e.message)}}
-async function flushRooms(){if(!database||!databaseReady||!dirtyRooms.size)return;const codes=[...dirtyRooms];dirtyRooms.clear();for(const code of codes){const r=rooms.get(code);if(r?.inviteJoining){dirtyRooms.add(code);continue}try{if(r){const write=database.query('INSERT INTO hero_auction_rooms(code,state,updated_at) VALUES($1,$2,NOW()) ON CONFLICT(code) DO UPDATE SET state=EXCLUDED.state,updated_at=NOW()',[code,JSON.stringify(r)]);roomFlushes.set(code,write);try{await write}finally{if(roomFlushes.get(code)===write)roomFlushes.delete(code)}}else await database.query('DELETE FROM hero_auction_rooms WHERE code=$1',[code])}catch(e){dirtyRooms.add(code);console.error('Room persistence error:',e.message)}}}
+async function flushRooms(){
+ if(!database||!databaseReady||!dirtyRooms.size)return;
+ // Count the entire batch, including writes queued behind another room and
+ // deletes. Per-code promises alone can hide queued or overlapping work.
+ const finishRoomBatch=paidEntryMaintenance.track('roomBatches');
+ const codes=[...dirtyRooms];dirtyRooms.clear();
+ try{for(const code of codes){
+  const r=rooms.get(code);if(r?.inviteJoining||r&&isCancellationReserved(r)){dirtyRooms.add(code);continue}
+  try{
+   if(r){
+    const write=database.query('INSERT INTO hero_auction_rooms(code,state,updated_at) VALUES($1,$2,NOW()) ON CONFLICT(code) DO UPDATE SET state=EXCLUDED.state,updated_at=NOW()',[code,JSON.stringify(r)]);
+    roomFlushes.set(code,write);try{await write}finally{if(roomFlushes.get(code)===write)roomFlushes.delete(code)}
+   }else await database.query('DELETE FROM hero_auction_rooms WHERE code=$1',[code]);
+  }catch(e){dirtyRooms.add(code);console.error('Room persistence error:',e.message)}
+ }}finally{finishRoomBatch()}
+}
+
 
 function queueGoldAward(r){const a=r.goldAward;if(a&&a.accountId&&a.id)pendingGold.set(a.id,a)}
 async function goldBalance(accountId){if(previewGuestMode&&!databaseReady){if(!previewGuestWallets.has(accountId))previewGuestWallets.set(accountId,500);return previewGuestWallets.get(accountId)}if(!database||!databaseReady)error('Altın sistemi geçici olarak kullanılamıyor.',503);await database.query('INSERT INTO hero_auction_wallets(account_id,gold) VALUES($1,500) ON CONFLICT DO NOTHING',[accountId]);const result=await database.query('SELECT gold FROM hero_auction_wallets WHERE account_id=$1',[accountId]);return Number(result.rows[0]?.gold||0)}
+async function initializePaidEntryMaintenance(){
+ try{await paidEntryMaintenance.initialize(database&&databaseReady?database:null,{volatile:!database&&previewGuestMode});}
+ catch(error){console.error('Paid-entry maintenance state unavailable:',error.message);}
+}
+async function paidEntryDrainStatus(){
+ let healthy=false;
+ if(database&&databaseReady){try{await database.query({text:'SELECT 1',query_timeout:3000});healthy=true}catch{}}
+ const paid=room=>room?.mode!=='bot'&&room?.entryPaid===true;
+ return paidEntryMaintenance.status({
+  activePaidMatches:[...rooms.values()].filter(isUnsettledPaidRoom).length,
+  pendingMatchCancellations:cancellationReservations.size,pendingGold:pendingGold.size,unconfirmedSocialWrites:socialSaveNeedsConfirmation?1:0,
+  dirtyPaidRooms:[...dirtyRooms].filter(code=>!rooms.has(code)||paid(rooms.get(code))).length,
+  paidRoomWritesInFlight:[...roomFlushes.keys()].filter(code=>paid(rooms.get(code))).length,
+  uncertainInvitations:[...rooms.values()].filter(room=>room.inviteUncertain).length,
+  pendingVictoryChests:pendingVictoryChests.size,victoryChestWritesInFlight:victoryChestFlights.size
+ },healthy);
+}
+function isCancellationReserved(room){return !!room&&cancellationReservations.has(cancellationIdentity(room));}
+function requireBattleNotCancelled(room){if(room.cancelled)throw Object.assign(Error('Bu maç yönetici tarafından iptal edildi; giriş ücreti iade edildi.'),{status:409,cancellation:{reason:'admin-entry-refund',refundGoldPerSeat:50}});if(isCancellationReserved(room))error('Bu maçın iptal işlemi doğrulanıyor.',503);}
+function assertCancellationRuntime(plan){
+ const room=rooms.get(plan.room.code),matchId=cancellationMatchId(plan.room);
+ if(!room||cancellationMatchId(room)!==matchId)error('Maç kimliği değişti.',409);
+ assertCancellableRoom(room);
+ if(cancellationDigest({snapshot:room,durableDigest:plan.durableDigest})!==plan.digest)error('Oda önizlemeden sonra değişti.',409);
+ if(liveArenaMatchKeys.has(room.code)||liveArenaLifecycle.status(matchId)||battlePreparationFlights.get(matchId)||pendingVictoryChests.has(matchId)||victoryChestFlights.has(matchId)||roomFlushes.has(room.code))error('Maçta devam eden savaş veya kayıt işlemi var.',409);
+ if([...pendingGold.keys()].some(id=>id===matchId||id.startsWith(room.code+':refund:')&&id.endsWith(':'+(room.matchNumber||1)+':'+room.created)))error('Maçın ödül veya iade işlemi bekliyor.',409);
+}
+async function cancellationPreview(){
+ const status=await paidEntryDrainStatus();
+ if(!status.paused||!status.persistenceConfirmed||!status.databaseHealthy||status.controlWritesInFlight||status.paidEntriesInFlight||status.roomFlushBatchesInFlight||status.goldFlushesInFlight||status.socialWritesInFlight||status.unconfirmedSocialWrites||status.uncertainLegacyEntries)error('Önce kalıcı duraklatmayı ve bekleyen kayıtları doğrulayın.',409);
+ const durable=new Map((await database.query('SELECT code,state FROM hero_auction_rooms')).rows.map(row=>[row.code,row.state]));
+ const candidates=[];
+ for(const room of rooms.values()){
+  try{
+   if(isCancellationReserved(room)||dirtyRooms.has(room.code))continue;
+   const plan=cancellationCandidate(room,durable.get(room.code));assertCancellationRuntime(plan);
+   cancellationPlans.set(plan.id,plan);candidates.push(publicCancellationCandidate(plan));
+  }catch{}
+ }
+ for(const [id,plan] of cancellationPlans)if(!cancellationReservations.has(id)&&(!rooms.has(plan.room.code)||cancellationIdentity(rooms.get(plan.room.code))!==id))cancellationPlans.delete(id);
+ return{bootId:status.bootId,revision:status.revision,paused:status.paused,persistenceConfirmed:status.persistenceConfirmed,candidates,requiredSelectionCount:3};
+}
+async function executeCancellations(body,user){
+ const selected=normalizeCancellationSelections(body.candidates),receiptKey=cancellationReceiptKey(selected);
+ return paidEntryMaintenance.runPaused(body.expectedBootId,body.expectedRevision,async()=>{
+  if([...cancellationReservations.values()].some(value=>value.receiptKey!==receiptKey))error('Önce bekleyen iptal işleminin sonucunu doğrulayın.',409);
+  if(pendingGold.size||pendingVictoryChests.size||victoryChestFlights.size||socialSaveNeedsConfirmation||[...rooms.values()].some(room=>room.inviteUncertain))error('Önce bekleyen ödül veya kayıt işlemlerini tamamlayın.',409);
+  const existingIds=new Set(cancellationReservations.keys());
+  for(const item of selected){const plan=cancellationPlans.get(item.id);if(plan&&plan.digest===item.digest&&!rooms.get(plan.room.code)?.cancelled)assertCancellationRuntime(plan);}
+  // Synchronous reservation precedes every DB await. Preview/formation/start
+  // recheck it, including after the commander-profile await.
+  for(const item of selected)cancellationReservations.set(item.id,{receiptKey,digest:item.digest});
+  let durableOutcome=false;
+  try{
+   const outcome=await cancelPaidMatches({database,selections:selected,plans:cancellationPlans,actorId:user.sub,expectedRevision:body.expectedRevision,validateLive:chosen=>chosen.forEach(assertCancellationRuntime)});
+   durableOutcome=true;
+   for(const closed of outcome.rooms){
+    const current=rooms.get(closed.code);
+    if(!current||cancellationMatchId(current)!==cancellationMatchId(closed)||current.cancelled?.receiptKey===receiptKey)continue;
+    const plan=cancellationPlans.get(cancellationIdentity(closed));
+    // Never overwrite a newer rematch or changed in-memory snapshot on replay.
+    if(!plan||cancellationDigest({snapshot:current,durableDigest:plan.durableDigest})!==plan.digest)error('İade kaydedildi; oda görünümü yeniden doğrulanmalı.',503);
+    Object.assign(current,structuredClone(closed));publish(current);
+   }
+   for(const item of selected)cancellationReservations.delete(item.id);
+   return outcome.result;
+  }catch(cause){
+   if(durableOutcome)cause.uncertain=true;
+   if(!cause.uncertain)for(const item of selected)if(!existingIds.has(item.id))cancellationReservations.delete(item.id);
+   throw cause;
+  }
+ });
+}
+async function walletSummary(accountId){
+ const gold=await goldBalance(accountId),result={gold,diamonds:null,magicDust:null,currencies:{gold:{available:true,reason:null},diamonds:{available:false,reason:'disabled'},magicDust:{available:false,reason:'disabled'}}};
+ for(const [name,enabled,read] of [['diamonds',diamondPolicy.enabled,readDiamondBalance],['magicDust',magicDustPolicy.enabled,readMagicDustBalance]]){
+  if(!enabled)continue;
+  if(!database||!databaseReady){result.currencies[name].reason='storage_unavailable';continue;}
+  try{result[name]=await read(database,accountId);result.currencies[name]={available:true,reason:null};}
+  catch{result.currencies[name].reason='storage_unavailable';}
+ }
+ return result;
+}
+async function initializeVictoryChests(){
+ if(!victoryChestPolicy.enabled||!database||!databaseReady)return;
+ try{
+  // Preflight only; never create/alter schema on application startup.
+  await database.query('SELECT magic_dust FROM hero_auction_magic_dust_wallets LIMIT 0');
+  await database.query('SELECT magic_dust_cost FROM hero_auction_upgrade_receipts LIMIT 0');
+  await database.query('SELECT delta FROM hero_auction_magic_dust_upgrade_ledger LIMIT 0');
+  const recovery=await readVictoryChestRecovery(database,[...rooms.values()].map(victoryMatchId));
+  victoryChestStorageReady=true;
+  for(const item of recovery){
+   let current=rooms.get(item.room_state.code);
+   const same=current&&victoryMatchId(current)===item.match_id;
+   const newer=!current||Number(item.room_state.created)>Number(current.created)||Number(item.room_state.created)===Number(current.created)&&(item.room_state.matchNumber||1)>(current.matchNumber||1);
+   // A durable final outcome repairs an older/unfinished room snapshot, never
+   // overwriting a newer match that reused this three-digit room code.
+   if(same&&!current.matchSettled||newer){current=structuredClone(item.room_state);rooms.set(current.code,current);markRoom(current);}
+   const belongs=current&&victoryMatchId(current)===item.match_id;
+   if(!item.credited_match_id||belongs&&!current.matchSettled)pendingVictoryChests.set(item.match_id,{room:belongs?current:null,winner:item.winner_seat,accountIds:item.room_state.players.map(p=>p?.accountId).filter(Boolean),intentSaved:true});
+  }
+  // A room flush may have committed the pending marker just before the intent
+  // transaction failed/crashed. Requeue that server-owned final outcome too.
+  for(const room of rooms.values()){
+   const matchId=victoryMatchId(room);
+   if(room.victoryChestPending&&!room.matchSettled&&!room.victoryChestReceipt&&eligibleVictory(room,room.victoryChestWinner)&&!pendingVictoryChests.has(matchId))pendingVictoryChests.set(matchId,{room,winner:room.victoryChestWinner,accountIds:room.players.map(p=>p?.accountId).filter(Boolean),intentSaved:false});
+  }
+  await flushVictoryChests();
+ }catch(error){victoryChestStorageReady=false;console.error('Victory chest storage unavailable:',error.message);}
+}
+async function flushVictoryChests(){
+ if(!victoryChestPolicy.enabled||!victoryChestStorageReady||!databaseReady)return;
+ for(const [matchId,job] of [...pendingVictoryChests]){
+  if(victoryChestFlights.has(matchId))continue;
+  victoryChestFlights.add(matchId);
+  try{
+   if(!job.intentSaved){await persistVictoryChestIntent({database,room:job.room,winner:job.winner,policy:victoryChestPolicy});job.intentSaved=true;}
+   const {receipt}=await creditVictoryChest({database,matchId});
+   const room=job.room;
+   if(room&&rooms.get(room.code)===room&&victoryMatchId(room)===matchId){
+    room.victoryChestReceipt=receipt;room.victoryChestPending=false;
+    settleFinishedMatch(room,job.winner);publish(room);
+   }
+   pendingVictoryChests.delete(matchId);
+  }catch(error){victoryChestCreditHealthy=false;console.error('Victory chest settlement pending:',matchId,error.message);}
+  finally{victoryChestFlights.delete(matchId);}
+ }
+ if(!pendingVictoryChests.size)victoryChestCreditHealthy=true;
+}
 async function rewardedAdStatus(accountId){
   if(!database||!databaseReady)return {enabled:false,rewardGold:REWARDED_AD_GOLD,dailyLimit:REWARDED_AD_DAILY_LIMIT,remaining:0,message:'Reklam ödülleri için veritabanı bağlantısı bekleniyor.'};
   const result=await database.query("SELECT COUNT(*)::int AS used FROM hero_auction_rewarded_claims WHERE account_id=$1 AND reward_day=(NOW() AT TIME ZONE 'UTC')::date",[accountId]);
@@ -194,8 +362,16 @@ async function applyVerifiedReward(accountId,providerEventId){
     return {credited:true,amount:REWARDED_AD_GOLD};
   }catch(e){await client.query('ROLLBACK').catch(()=>{});throw e}finally{client.release()}
 }
-async function chargeEntry(accountIds,matchId){const ids=[...new Set(accountIds.filter(Boolean))];if(ids.length!==accountIds.filter(Boolean).length)error('Aynı hesap iki oyuncu olarak katılamaz.');if(previewGuestMode&&!databaseReady){const before=new Map(ids.map(id=>[id,previewGuestWallets.get(id)??500]));if([...before.values()].some(gold=>gold<50))error('Maça katılmak için en az 50 altın gerekli.');for(const [id,gold] of before)previewGuestWallets.set(id,gold-50);return true}if(!database||!databaseReady)error('Altın sistemi şu anda kullanılamıyor.',503);const client=await database.connect();try{await client.query('BEGIN');for(const id of ids.sort()){await client.query('INSERT INTO hero_auction_wallets(account_id,gold) VALUES($1,500) ON CONFLICT DO NOTHING',[id]);const paid=await client.query('UPDATE hero_auction_wallets SET gold=gold-50 WHERE account_id=$1 AND gold>=50 RETURNING gold',[id]);if(!paid.rowCount)error('Maça katılmak için en az 50 altın gerekli.')}await client.query('COMMIT');return true}catch(e){await client.query('ROLLBACK').catch(()=>{});throw e}finally{client.release()}}
-async function flushGold(){if(!database||!databaseReady)return;for(const [id,a] of [...pendingGold]){const client=await database.connect().catch(()=>null);if(!client)break;try{await client.query('BEGIN');const inserted=await client.query('INSERT INTO hero_auction_gold_awards(award_id,account_id,amount) VALUES($1,$2,$3) ON CONFLICT DO NOTHING RETURNING award_id',[id,a.accountId,a.amount]);if(inserted.rowCount){await client.query('INSERT INTO hero_auction_wallets(account_id,gold) VALUES($1,$2) ON CONFLICT(account_id) DO UPDATE SET gold=hero_auction_wallets.gold+$2',[a.accountId,a.amount])}await client.query('COMMIT');pendingGold.delete(id)}catch(e){await client.query('ROLLBACK').catch(()=>{});console.error('Gold reward error:',e.message)}finally{client.release()}}}
+function requireVictoryChestStorage(){if(victoryChestPolicy.requested&&(!victoryChestPolicy.enabled||!victoryChestStorageReady||!victoryChestCreditHealthy))error('Zafer sandığı altyapısı hazırlanıyor; canlı maça giriş geçici olarak kapalı.',503)}
+function requireVictoryChestProgression(accountIds){
+ if(!victoryChestPolicy.enabled)return;
+ const ids=new Set(accountIds.filter(Boolean));
+ const inRooms=[...rooms.values()].some(r=>r.victoryChestPending&&r.players.some(p=>ids.has(p?.accountId)));
+ const inJobs=[...pendingVictoryChests.values()].some(job=>(job.accountIds||job.room?.players.map(p=>p?.accountId)||[]).some(id=>ids.has(id)));
+ if(inRooms||inJobs)error('Önceki maçının sandık ödülü doğrulanıyor. Tamamlanınca yeni maça geçebilirsin.',409);
+}
+async function chargeEntry(accountIds,matchId){requireVictoryChestStorage();requireVictoryChestProgression(accountIds);const ids=[...new Set(accountIds.filter(Boolean))];if(ids.length!==accountIds.filter(Boolean).length)error('Aynı hesap iki oyuncu olarak katılamaz.');if(previewGuestMode&&!databaseReady){const before=new Map(ids.map(id=>[id,previewGuestWallets.get(id)??500]));if([...before.values()].some(gold=>gold<50))error('Maça katılmak için en az 50 altın gerekli.');for(const [id,gold] of before)previewGuestWallets.set(id,gold-50);return true}if(!database||!databaseReady)error('Altın sistemi şu anda kullanılamıyor.',503);const client=await database.connect();let commitIssued=false;try{await client.query('BEGIN');for(const id of ids.sort()){await client.query('INSERT INTO hero_auction_wallets(account_id,gold) VALUES($1,500) ON CONFLICT DO NOTHING',[id]);const paid=await client.query('UPDATE hero_auction_wallets SET gold=gold-50 WHERE account_id=$1 AND gold>=50 RETURNING gold',[id]);if(!paid.rowCount)error('Maça katılmak için en az 50 altın gerekli.')}commitIssued=true;await client.query('COMMIT');return true}catch(e){await client.query('ROLLBACK').catch(()=>{});if(commitIssued)void paidEntryMaintenance.latchLegacyUncertainty().catch(()=>console.error('Uncertain legacy entry: durable pause could not be confirmed.'));throw e}finally{client.release()}}
+async function flushGold(){if(!database||!databaseReady||!pendingGold.size)return;const finishGoldWrite=paidEntryMaintenance.track('goldWrites');try{for(const [id,a] of [...pendingGold]){const client=await database.connect().catch(()=>null);if(!client)break;try{await client.query('BEGIN');const inserted=await client.query('INSERT INTO hero_auction_gold_awards(award_id,account_id,amount) VALUES($1,$2,$3) ON CONFLICT DO NOTHING RETURNING award_id',[id,a.accountId,a.amount]);if(inserted.rowCount){await client.query('INSERT INTO hero_auction_wallets(account_id,gold) VALUES($1,$2) ON CONFLICT(account_id) DO UPDATE SET gold=hero_auction_wallets.gold+$2',[a.accountId,a.amount])}await client.query('COMMIT');pendingGold.delete(id)}catch(e){await client.query('ROLLBACK').catch(()=>{});console.error('Gold reward error:',e.message)}finally{client.release()}}}finally{finishGoldWrite()}}
 function onlineStats(){
  const now=Date.now();
  for(const [id,p] of onlineVisitors)if(now-p.seen>45000)onlineVisitors.delete(id);
@@ -222,7 +398,7 @@ const rand=n=>crypto.randomInt(n);
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
 const code=()=>String(crypto.randomInt(100,1000));
 const token=()=>crypto.randomBytes(24).toString('hex');
-const publicRoom=(r,seat)=>({...auctionRevealSnapshot(r),code:r.code,universe:r.universe,phase:r.phase,round:r.round,turn:r.turn,deadline:r.deadline||null,series:r.series||[0,0],rematch:r.rematch||[false,false],mode:r.mode||"friend",difficulty:r.mode==='bot'?(r.difficulty||'medium'):null,rankChange:r.phase==='finished'?(r.rankChange||[0,0]):null,rankBefore:r.phase==='finished'?(r.rankBefore||[null,null]):null,topBid:r.topBid,topSeat:r.topSeat,history:r.history,chat:(r.chat||[]).filter(message=>moderationReady&&seat>=0&&!moderation.blocked(r.players[seat]?.accountId,r.players[message.seat]?.accountId)),players:r.players.map((p,i)=>p?{name:p.name,credits:p.credits,team:p.team.map(x=>({name:x.name,universe:x.universe,cost:x.cost,rarity:rarityForPower(x.power)})),connected:true,seat:i,playerId:seat>=0&&p.accountId?friends.playerId(p.accountId):null}:null),card:r.phase==='auction'?{name:r.cards[r.round].name,universe:r.cards[r.round].universe,rarity:rarityForPower(r.cards[r.round].power)}:null,final:r.phase==='finished'?r.players.map(p=>({name:p.name,score:Math.round(p.team.reduce((a,c)=>a+c.power,0)*(1+p.credits*0.01)*100)/100,credits:p.credits,team:p.team.map(c=>({name:c.name,universe:c.universe,cost:c.cost,power:c.power,rarity:rarityForPower(c.power)}))})):null,me:seat,catalogueCount:catalogue.size});
+const publicRoom=(r,seat)=>({...auctionRevealSnapshot(r),cancellation:r.cancelled?{reason:'admin-entry-refund',refundGoldPerSeat:50}:null,arenaPresentation:roomArenaPresentation(r),...victoryChestView(r,seat),code:r.code,universe:r.universe,phase:r.phase,round:r.round,turn:r.turn,deadline:r.deadline||null,series:r.series||[0,0],rematch:r.rematch||[false,false],mode:r.mode||"friend",difficulty:r.mode==='bot'?(r.difficulty||'medium'):null,rankChange:r.phase==='finished'?(r.rankChange||[0,0]):null,rankBefore:r.phase==='finished'?(r.rankBefore||[null,null]):null,topBid:r.topBid,topSeat:r.topSeat,history:r.history,chat:(r.chat||[]).filter(message=>moderationReady&&seat>=0&&!moderation.blocked(r.players[seat]?.accountId,r.players[message.seat]?.accountId)),players:r.players.map((p,i)=>p?{name:p.name,credits:p.credits,team:p.team.map(x=>({name:x.name,universe:x.universe,cost:x.cost,rarity:rarityForPower(x.power)})),connected:true,seat:i,playerId:seat>=0&&p.accountId?friends.playerId(p.accountId):null}:null),card:r.phase==='auction'?{name:r.cards[r.round].name,universe:r.cards[r.round].universe,rarity:rarityForPower(r.cards[r.round].power)}:null,final:r.phase==='finished'?r.players.map(p=>({name:p.name,score:Math.round(p.team.reduce((a,c)=>a+c.power,0)*(1+p.credits*0.01)*100)/100,credits:p.credits,team:p.team.map(c=>({name:c.name,universe:c.universe,cost:c.cost,power:c.power,rarity:rarityForPower(c.power)}))})):null,me:seat,catalogueCount:catalogue.size});
 function publish(r){r.revision=(Number.isSafeInteger(r.revision)?r.revision:0)+1;markRoom(r);for(const client of listeners.get(r.code)||[]){try{client.res.write(`data: ${JSON.stringify(publicRoom(r,client.seat))}\n\n`)}catch{}}}
 function log(r,msg){r.history.push(msg);if(r.history.length>30)r.history.shift();}
 function forcedCardCost(card){return ({common:2,advanced:3,rare:4,legendary:5})[rarityForPower(card.power)]||2}
@@ -267,15 +443,24 @@ function advanceRound(r){
 }
 function settleFinishedMatch(r,winner,scores){
  if(r.matchSettled)return;
+ if(r.victoryChestReceipt&&r.victoryChestReceipt.matchId!==victoryMatchId(r))throw Error('Chest receipt belongs to another match');
  if(r.phase!=='finished')throw Error('Match must finish before settlement');
  if(winner!==null&&winner!==0&&winner!==1)throw Error('Invalid match winner');
+ if(victoryChestPolicy.enabled&&eligibleVictory(r,winner)&&!r.victoryChestReceipt){
+  r.victoryChestWinner=winner;r.victoryChestPending=true;
+  const matchId=victoryMatchId(r);
+  if(!pendingVictoryChests.has(matchId))pendingVictoryChests.set(matchId,{room:r,winner,accountIds:r.players.map(p=>p?.accountId).filter(Boolean),intentSaved:false});
+  markRoom(r);void flushVictoryChests();return;
+ }
  r.matchSettled=true;
  const rankedScores=winner===null?[0,0]:winner===0?[1,0]:[0,1];
  recordMatch(r,rankedScores);
  if(winner!==null){
   r.series[winner]++;
   const accountId=r.players[winner].accountId;
-  if(accountId&&r.entryPaid&&r.mode!=='bot'){
+  if(r.victoryChestReceipt){
+   log(r,'🏆 Zafer sandığı ödülleri hesabına eklendi.');
+  }else if(accountId&&r.entryPaid&&r.mode!=='bot'){
    r.goldAward={id:r.code+':'+(r.matchNumber||1)+':'+(r.created||0),accountId,amount:MATCH_WIN_GOLD};queueGoldAward(r);
    log(r,`🏆 Savaşı kazanan oyuncu ${MATCH_WIN_GOLD} altın kazandı!`);
   }
@@ -325,6 +510,10 @@ async function adminApi(url,b){
  const user=readLogin(b.authToken);
  if(!user||!ADMIN_GOOGLE_EMAIL||user.email!==ADMIN_GOOGLE_EMAIL||user.sub.startsWith('guest:'))error('Yönetici yetkisi gerekli.',403);
  if(!database||!databaseReady)error('Veritabanı kullanılamıyor.',503);
+ if(url==='/api/admin/economy/status')return paidEntryDrainStatus();
+ if(url==='/api/admin/economy/cancellations/preview')return cancellationPreview();
+ if(url==='/api/admin/economy/cancellations/execute')return executeCancellations(b,user);
+ if(url==='/api/admin/economy/pause'){if(b.paused===false&&cancellationReservations.size)error('Önce bekleyen iptal işlemini doğrulayın.',409);await paidEntryMaintenance.setPaused(b.paused,b.expectedBootId,b.expectedRevision);return paidEntryDrainStatus();}
  if(url==='/api/admin/moderation/list'||url==='/api/admin/moderation/review'){if(!moderationReady)error('Denetim sistemi geçici olarak kullanılamıyor.',503);return url.endsWith('/list')?moderation.adminList(user):moderation.review(user,b)}
  if(url==='/api/admin/list'){
   const search=String(b.search||'').slice(0,100);
@@ -384,8 +573,14 @@ function applyInvitationReceipt(invite,receipt){
  return true;
 }
 async function commitInvitationJoin(invite,r,user){
+ if(paidEntryMaintenance.isPaused()){
+  if(database&&databaseReady){const existing=await database.query('SELECT state FROM hero_auction_invite_joins WHERE invite_id=$1',[invite.id]);if(existing.rows[0])return applyInvitationReceipt(invite,existing.rows[0].state);}
+  return false;
+ }
+ requireVictoryChestStorage();requireVictoryChestProgression([invite.from,invite.to]);
  // Reserve before awaiting DB: normal /join cannot pass its existing joinPending check.
  if(r.joinPending&&!r.inviteUncertain)return false;
+ const finishAdmission=paidEntryMaintenance.beginAdmission();
  r.joinPending=true;r.inviteJoining=true;
  const before={...invite},beforeSeat=activeSeats.get(user.sub);const joined=structuredClone(r);delete joined.inviteJoining;delete joined.joinPending;
  const t=token();joined.entryPaid=true;joined.players[1]={name:user.name,token:t,accountId:user.sub,credits:20,team:[]};joined.phase='auction';joined.turn=0;joined.deadline=Date.now()+20000;
@@ -419,7 +614,7 @@ async function commitInvitationJoin(invite,r,user){
    try{const found=await database.query('SELECT state FROM hero_auction_invite_joins WHERE invite_id=$1',[invite.id]);if(found.rows[0])return restoreReceipt(found.rows[0].state)}catch{keepReserved=true;r.inviteUncertain=true;e.uncertain=true}
   }
   for(const key of Object.keys(invite))delete invite[key];Object.assign(invite,before);if(beforeSeat!==undefined)activeSeats.set(user.sub,beforeSeat);else activeSeats.delete(user.sub);throw e;
- }finally{client?.release();if(!keepReserved){delete r.inviteJoining;delete r.joinPending;delete r.inviteUncertain}}
+ }finally{client?.release();if(!keepReserved){delete r.inviteJoining;delete r.joinPending;delete r.inviteUncertain}finishAdmission();}
 
 }
 async function invitationApi(url,b){
@@ -472,23 +667,27 @@ async function api(url,b){
   const commanderRoute=['/api/commander/get','/api/commander/select','/api/commander/change','/api/commander/upgrade'].includes(url);
   // Preflight diamond reads BEFORE gold-only selection/change can commit. A
   // missing unapplied schema must not turn a successful mutation into a 503.
-  let diamonds=null;
+  let diamonds=null,magicDust=null;
   if(commanderRoute&&diamondPolicy.enabled){
    const user=readLogin(b.authToken);if(!user)error('Odaya erişmek için giriş yapmalısın.',401);
    diamonds=database&&databaseReady?await readDiamondBalance(database,user.sub):0;
   }
+  if(commanderRoute&&magicDustPolicy.enabled){const user=readLogin(b.authToken);if(!user)error('Giriş gerekli.',401);if(!database||!databaseReady)error('Büyü tozu altyapısı kullanılamıyor.',503);magicDust=await readMagicDustBalance(database,user.sub);}
   const result=await apiAction(url,b);
   if(commanderRoute){
    const exchange=diamondExchangeView(diamondExchangePolicy);
    const welcomeBonus={enabled:diamondSignupPolicy.enabled,amount:10,eligibleProviders:['google']};
    if(result.progression)return{...result,exchange,progression:{...result.progression,welcomeBonus}}; // Already constructed under transaction locks.
-   return{...result,diamonds,exchange,progression:{...commanderProgression(result.profile,{gold:result.gold,diamonds},diamondPolicy),welcomeBonus}};
+   return{...result,diamonds,magicDust,exchange,progression:{...commanderProgression(result.profile,{gold:result.gold,diamonds,magicDust},diamondPolicy,magicDustPolicy),welcomeBonus}};
   }
   return result;
  }
  const user=readLogin(b.authToken);if(!user)error('Odaya erişmek için giriş yapmalısın.',401);
  await friends.register(user.sub,user.name);
  return friends.afterMutations(async()=>{
+  const paidRoute=['/api/join','/api/match'].includes(url)||url==='/api/rematch'&&rooms.get(String(b.code||''))?.mode!=='bot';
+  const finishAdmission=paidRoute?paidEntryMaintenance.beginAdmission():null;
+  try{
   requireModerationForInteraction(moderationReady,url);
   if([...roomInvites.items.values()].some(i=>[i.from,i.to].includes(user.sub)&&i.status==='queued'&&rooms.get(i.code)?.inviteUncertain))error('Davet işlemi doğrulanıyor. Biraz sonra tekrar dene.',503);
   if([...roomInvites.items.values()].some(i=>i.to===user.sub&&i.status==='joined'&&!i.delivered&&activeSeats.get(user.sub)?.code===i.code&&activeSeats.get(user.sub)?.created===i.created))error('Davet odasına geçiş tamamlanıyor. Biraz sonra tekrar dene.',409);
@@ -500,6 +699,7 @@ async function api(url,b){
   }
   if([...roomInvites.items.values()].some(i=>i.to===user.sub&&i.status==='queued'&&i.expiresAt>Date.now()))error('Önce kabul ettiğin daveti tamamla veya iptal et.',409);
   if(url==='/api/rematch'){const {r}=authorize(b);if(moderation.blocked(r.players[0]?.accountId,r.players[1]?.accountId))error('Bu oyuncuyla etkileşim kullanılamıyor.',403);if(r.players.some(p=>[...roomInvites.items.values()].some(i=>i.to===p?.accountId&&i.status==='queued'&&i.expiresAt>Date.now())))error('Bir oyuncu kabul ettiği daveti bekliyor.',409)}
+  requireVictoryChestProgression([user.sub]);
   const result=await apiAction(url,b);
   const r=result.room&&rooms.get(result.room.code);if(r){const seat=r.players.findIndex(p=>p?.accountId===user.sub);if(seat>=0)activeSeats.set(user.sub,{code:r.code,created:r.created,matchNumber:r.matchNumber||1,seat});
    if(url==='/api/rematch')r.players.forEach((p,index)=>{if(p?.accountId&&activeSeats.get(p.accountId)?.code===r.code)activeSeats.set(p.accountId,{code:r.code,created:r.created,matchNumber:r.matchNumber||1,seat:index})});
@@ -508,10 +708,12 @@ async function api(url,b){
    await saveSocial(true).catch(e=>console.error('Current room persistence:',e.message));
   }
   return result;
+  }finally{finishAdmission?.();}
  });
 }
 async function apiAction(url,b){if(url.startsWith('/api/admin/'))return adminApi(url,b);if(url==='/api/auth/check'){const user=readLogin(b.authToken);if(!user)error('Oturumun sona erdi. Yeniden giriş yap.',401);await rememberDisplayName(user);return{user:{sub:user.sub,name:user.name,provider:user.provider},gold:await goldBalance(user.sub)}}if(url==='/api/auth/crazygames'){const user=await verifyCrazyGamesToken(b.credential);user.provider='crazygames';await rememberDisplayName(user);for(const r of rooms.values()){let changed=false;for(const p of r.players){if(p?.accountId===user.sub&&p.name!==user.name){p.name=user.name;changed=true}}if(changed)publish(r)}return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}if(url==='/api/auth/guest'){const name=assertModeratedText(b.name||'Oyuncu',{kind:'name'});const user={sub:'guest:'+crypto.randomUUID(),name,provider:'guest'};await rememberDisplayName(user);return{user:{name},authToken:signLogin(user),gold:await goldBalance(user.sub)}}
 if(!url.startsWith('/api/auth/')){const user=readLogin(b.authToken);if(!user)error('Odaya erişmek için giriş yapmalısın.',401);if(databaseReady){const block=await database.query('SELECT banned FROM hero_auction_admin_accounts WHERE account_id=$1',[user.sub]);if(block.rows[0]?.banned)error('Hesap askıya alınmıştır.',403)}}
+if(b.code&&url!=='/api/state'){const selectedRoom=rooms.get(String(b.code).toUpperCase());if(selectedRoom&&isCancellationReserved(selectedRoom))error('Bu maçın iptal işlemi doğrulanıyor.',503);}
 if(url==='/api/store/status'){
  const user=readLogin(b.authToken),storageReady=!!database&&databaseReady;
  // Capability/status reads never create a wallet, streak or reward receipt.
@@ -591,7 +793,7 @@ if(url==='/api/commander/change'){
 if(url==='/api/commander/upgrade'){
  const user=readLogin(b.authToken);
  if(!database||!databaseReady)error('Komutan sistemi geçici olarak kullanılamıyor.',503);
- if(diamondPolicy.enabled)return upgradeCommanderWithDiamonds({database,accountId:user.sub,request:b,policy:diamondPolicy});
+ if(diamondPolicy.enabled)return upgradeCommanderWithDiamonds({database,accountId:user.sub,request:b,policy:diamondPolicy,magicDustPolicy});
  const stat=String(b.stat||'');
  if(!COMMANDER_STATS.includes(stat))error('Geçersiz geliştirme alanı.',400);
  const client=await database.connect();
@@ -627,14 +829,14 @@ if(url==='/api/spectate/list'){return{matches:[...rooms.values()].filter(r=>r.ph
 if(url==='/api/spectate'){const r=rooms.get(String(b.code||''));if(!r||r.phase!=='auction'||r.mode==='bot'||r.players.some(p=>moderation.blocked(readLogin(b.authToken).sub,p?.accountId)))error('İzlenebilir maç bulunamadı.',404);return{room:publicRoom(r,-1)}}
 if(url==='/api/rewarded/status'){return await rewardedAdStatus(readLogin(b.authToken).sub)}
 if(url==='/api/rewarded/claim'){error('Ödüllü reklam sistemi henüz etkin değil.',503)}
-if(url==='/api/wallet'){return{gold:await goldBalance(readLogin(b.authToken).sub)}}
+if(url==='/api/wallet'){return walletSummary(readLogin(b.authToken).sub)}
 if(url==='/api/auth/google'){const credential=String(b.credential||'');if(credential.length<100||credential.length>8000)error('Geçersiz Google kimliği.');const response=await fetch('https://oauth2.googleapis.com/tokeninfo?id_token='+encodeURIComponent(credential),{signal:AbortSignal.timeout(8000)});if(!response.ok)error('Google kimliği doğrulanamadı.',401);const claims=await response.json();if(claims.aud!==GOOGLE_CLIENT_ID||!['accounts.google.com','https://accounts.google.com'].includes(claims.iss)||(!Number.isFinite(Number(claims.exp))||Number(claims.exp)*1000<=Date.now())||typeof claims.sub!=='string'||!claims.sub.length||claims.sub.length>200||/[\u0000-\u0020\u007f:]/.test(claims.sub)||claims.email_verified!=='true')error('Google kimliği doğrulanamadı.',401);const user={sub:claims.sub,provider:'google',name:String(claims.name||claims.given_name||'Oyuncu').slice(0,24),email:String(claims.email||'').toLowerCase()};await registerVerifiedDiamondMember(user,'google');await rememberDisplayName(user);return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}
-if(url==='/api/create'){const name=chosenName(b,'Oyuncu 1');const universe='mixed';const cards=newCards(universe);let id;do{id=code()}while(rooms.has(id));const t=token();const accountId=readLogin(b.authToken).sub;const r={code:id,universe,cards,round:0,phase:'waiting',turn:0,topBid:0,topSeat:null,players:[{name,token:t,accountId,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],deadline:null,mode:'friend'};rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
+if(url==='/api/create'){const name=chosenName(b,'Oyuncu 1');const universe='mixed';const cards=newCards(universe);let id;do{id=code()}while(rooms.has(id));const t=token();const accountId=readLogin(b.authToken).sub;const r={code:id,universe,cards,round:0,phase:'waiting',turn:0,topBid:0,topSeat:null,players:[{name,token:t,accountId,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],deadline:null,mode:'friend'};startRoomArenaTheme(r);rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/join'){const r=rooms.get(String(b.code||'').toUpperCase());if(!r)error('Oda bulunamadı.',404);if(moderation.blocked(readLogin(b.authToken).sub,r.players[0]?.accountId))error('Bu oyuncuyla etkileşim kullanılamıyor.',403);if(r.players[1]||r.joinPending)error('Oda dolu.');if(r.phase!=='waiting'||r.mode!=='friend'||activeSeats.get(r.players[0]?.accountId)?.code!==r.code||activeSeats.get(r.players[0]?.accountId)?.created!==r.created)error('Davet odası artık açık değil.',409);r.joinPending=true;try{await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name:chosenName(b,'Oyuncu 2'),token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;log(r,`Oyun başladı. 1. kart için açılış: ${r.players[0].name}`);publish(r);return{token:t,room:publicRoom(r,1)}}finally{r.joinPending=false}}
 if(url==='/api/rematch'){
  const{r,seat}=authorize(b);
  if(r.rematchPending)error('Rövanş hazırlanıyor.',409);
- if(r.battleSettlementPending&&!r.matchSettled)error('Savaş sonucu henüz kesinleşmedi.');
+ if((r.battleSettlementPending||r.victoryChestPending)&&!r.matchSettled)error('Savaş sonucu ve ödülleri henüz kesinleşmedi.');
  if(r.players.every(p=>p?.team?.length===5)&&r.battleSync?.result&&!r.battleCompleted?.[seat])error('Önce 2.0 savaşını tamamlamalısın.');
  if(r.phase!=='finished')error('Maç henüz bitmedi.');
  r.rematch[seat]=true;if(r.mode==='bot')r.rematch[1]=true;
@@ -645,21 +847,22 @@ if(url==='/api/rematch'){
    liveArenaLifecycle.endRoom(r.code);liveArenaMatchKeys.delete(r.code);
    if(r.mode==='bot')assignBotCommander(r);
    r.entryPaid=r.mode!=='bot';r.goldRefunds=null;r.matchNumber=(r.matchNumber||1)+1;
-   r.goldAward=null;r.rankChange=null;r.rankBefore=null;r.cards=newCards(r.universe);
+   r.goldAward=null;r.victoryChestReceipt=null;r.victoryChestPending=false;r.victoryChestWinner=null;r.rankChange=null;r.rankBefore=null;r.cards=newCards(r.universe);
    r.round=0;r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.topBid=0;r.topSeat=null;
    r.history=[];r.openingPassSeat=null;r.rematch=[false,false];r.battleCompleted=[false,false];
    r.tailAwards=[];r.revision=0;
-   r.matchSettled=false;r.battleSettlementPending=false;r.battleSync=null;r.created=Date.now();r.lastActivity=Date.now();
+   r.cancelled=null;r.matchSettled=false;r.battleSettlementPending=false;r.battleSync=null;r.created=Date.now();r.lastActivity=Date.now();
+   startRoomArenaTheme(r);
    for(const p of r.players){p.credits=20;p.team=[];}
    log(r,'Rövanş başladı!');
   }finally{r.rematchPending=false}
  }
  publish(r);return{room:publicRoom(r,seat)};
 }
-if(url==='/api/bot'){const difficulty=['easy','medium','hard'].includes(b.difficulty)?b.difficulty:'medium';const universe='mixed';const name=chosenName(b,'Oyuncu');let id;do{id=code()}while(rooms.has(id));const t=token();const r={entryPaid:false,code:id,universe,cards:newCards(universe),round:0,phase:'auction',turn:0,deadline:Date.now()+20000,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},{name:'Bilgisayar',token:token(),credits:20,team:[]}],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'bot',difficulty};assignBotCommander(r);rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
-if(url==='/api/match'){const universe='mixed';const name=chosenName(b,'Oyuncu');for(const [key,item] of waiting){if(item.universe!==universe||Date.now()-item.created>60000)continue;const r=rooms.get(item.code);if(r&&moderation.blocked(readLogin(b.authToken).sub,r.players[0]?.accountId))continue;if(!r||r.players[1]||r.joinPending||activeSeats.get(r.players[0]?.accountId)?.code!==r.code||activeSeats.get(r.players[0]?.accountId)?.created!==r.created){waiting.delete(key);continue;}await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.mode='random';waiting.delete(key);publish(r);return{token:t,room:publicRoom(r,1)}}let id;do{id=code()}while(rooms.has(id));const t=token();const r={code:id,universe,cards:newCards(universe),round:0,phase:'matching',turn:0,deadline:null,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'random'};rooms.set(id,r);markRoom(r);waiting.set(id,{code:id,universe,created:Date.now()});return{token:t,room:publicRoom(r,0)}}
+if(url==='/api/bot'){const difficulty=['easy','medium','hard'].includes(b.difficulty)?b.difficulty:'medium';const universe='mixed';const name=chosenName(b,'Oyuncu');let id;do{id=code()}while(rooms.has(id));const t=token();const r={entryPaid:false,code:id,universe,cards:newCards(universe),round:0,phase:'auction',turn:0,deadline:Date.now()+20000,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},{name:'Bilgisayar',token:token(),credits:20,team:[]}],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'bot',difficulty};assignBotCommander(r);startRoomArenaTheme(r);rooms.set(id,r);markRoom(r);return{token:t,room:publicRoom(r,0)}}
+if(url==='/api/match'){const universe='mixed';const name=chosenName(b,'Oyuncu');for(const [key,item] of waiting){if(item.universe!==universe||Date.now()-item.created>60000)continue;const r=rooms.get(item.code);if(r&&moderation.blocked(readLogin(b.authToken).sub,r.players[0]?.accountId))continue;if(!r||r.players[1]||r.joinPending||activeSeats.get(r.players[0]?.accountId)?.code!==r.code||activeSeats.get(r.players[0]?.accountId)?.created!==r.created){waiting.delete(key);continue;}await chargeEntry([r.players[0].accountId,readLogin(b.authToken).sub],r.code);const t=token();r.entryPaid=true;r.players[1]={name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]};r.phase='auction';r.turn=0;r.deadline=Date.now()+20000;r.mode='random';waiting.delete(key);publish(r);return{token:t,room:publicRoom(r,1)}}let id;do{id=code()}while(rooms.has(id));const t=token();const r={code:id,universe,cards:newCards(universe),round:0,phase:'matching',turn:0,deadline:null,topBid:0,topSeat:null,players:[{name,token:t,accountId:readLogin(b.authToken).sub,credits:20,team:[]},null],history:[],created:Date.now(),series:[0,0],rematch:[false,false],mode:'random'};startRoomArenaTheme(r);rooms.set(id,r);markRoom(r);waiting.set(id,{code:id,universe,created:Date.now()});return{token:t,room:publicRoom(r,0)}}
 if(url==='/api/chat'){const{r,seat}=authorize(b);if(moderation.blocked(r.players[0]?.accountId,r.players[1]?.accountId))error('Bu oyuncuyla sohbet kullanılamıyor.',403);if(r.mode==='bot')error('Sohbet yalnızca gerçek oyuncularla kullanılabilir.');const message=assertModeratedText(b.message);if(!message||message.length>240)error('Mesaj 1–240 karakter olmalı.');if(Date.now()-(r.lastChatAt?.[seat]||0)<1000)error('Yeni mesaj için bir saniye bekle.');r.lastChatAt??=[0,0];r.lastChatAt[seat]=Date.now();r.chat??=[];r.chat.push({seat,name:r.players[seat].name,message,time:Date.now()});if(r.chat.length>60)r.chat.shift();r.lastActivity=Date.now();publish(r);return{room:publicRoom(r,seat)}}
-if(url==='/api/state'){const{r,seat}=authorize(b);r.lastActivity=Date.now();return{room:publicRoom(r,seat)}}
+if(url==='/api/state'){const{r,seat}=authorize(b);if(!isCancellationReserved(r))r.lastActivity=Date.now();return{room:publicRoom(r,seat)}}
 if(url==='/api/bid'){const{r,seat}=authorize(b);if(r.phase!=='auction')error('İhale aktif değil.');if(r.turn!==seat)error('Teklif sırası sende değil.');const amount=Number(b.amount);if(!Number.isInteger(amount)||amount<=r.topBid||amount>r.players[seat].credits)error('Teklif tutarı geçersiz.');if(r.players[seat].team.length>=5)error('Takımın tamamlandı.');r.topBid=amount;r.topSeat=seat;r.openingPassSeat=null;log(r,`${r.players[seat].name} ${amount} kredi teklif etti.`);const other=1-seat;if(r.players[other].credits<=amount||r.players[other].team.length>=5){finishAuction(r);}else{r.turn=other;r.deadline=Date.now()+20000;}publish(r);return{room:publicRoom(r,seat)}}
 if(url==='/api/pass'){const{r,seat}=authorize(b);if(r.phase!=='auction'||r.turn!==seat)error('Şu an çekilemezsin.');if(r.topSeat===null){if(r.openingPassSeat===1-seat){finishUnbidCard(r);}else{r.openingPassSeat=seat;r.turn=1-seat;r.deadline=Date.now()+20000;log(r,r.players[seat].name+' pas geçti.');}}else finishAuction(r);publish(r);return{room:publicRoom(r,seat)}}
 error('Bilinmeyen işlem.',404)}
@@ -676,11 +879,12 @@ const battleSessions=new Map();
 setInterval(()=>{for(const [code,s] of battleSessions)if(Date.now()-s.created>2*3600_000)battleSessions.delete(code)},60000).unref();
 const battleIdsA=["original:01", "original:02", "original:03", "original:04", "original:05"];
 const battleIdsB=["original:06", "original:07", "original:08", "original:09", "original:10"];
-function battleSessionView(session,token){const seat=session.players.findIndex(p=>p?.token===token);if(seat<0||session.players[seat].left)return null;return {code:session.code,seat,ready:session.players.map(p=>Boolean(p?.ready)),joined:session.players.map(Boolean),started:Boolean(session.result),result:session.result,created:session.created};}
+function battleSessionView(session,token){const seat=session.players.findIndex(p=>p?.token===token);if(seat<0||session.players[seat].left)return null;return {code:session.code,seat,arenaPresentation:roomArenaPresentation(session),ready:session.players.map(p=>Boolean(p?.ready)),joined:session.players.map(Boolean),started:Boolean(session.result),result:session.result,created:session.created};}
 // Draft formation belongs to the completed auction, not a browser or account profile.
 // Creation does not imply Ready; both existing confirmation gates remain unchanged.
 function preparationTeams(teams){return teams.map(team=>team.map(card=>{const hero=battleRoster.find(hero=>hero.id===card.id);return {...card,role:hero.role,laneModifiers:hero.laneModifiers}}))}
 function ensureBattlePreparation(room,teams){
+ requireBattleNotCancelled(room);
  const matchKey=String(room.matchNumber||1)+':'+String(room.created);
  let changed=false;
  if(room.battleSync?.key!==matchKey){room.battleSync={key:matchKey,ready:[null,null],result:null};changed=true;}
@@ -694,7 +898,7 @@ function preparationView(sync,seat){
  const formation=sync.ready[seat]||sync.drafts[seat];
  return {matchKey:sync.key,positions:[...formation.positions],lanes:[...formation.lanes],roles:[...formation.roles],ready:Boolean(sync.ready[seat])};
 }
-function battleSessionResult(session){const cards=(ids,formation)=>formation.map((index,slot)=>({id:ids[index],power:stablePower(ids[index]),lane:session.players[ids===battleIdsA?0:1].lanes?.[slot]||(slot<2?'front':'back'),role:session.players[ids===battleIdsA?0:1].roles?.[slot]||((slot<2)?'tank':'energy')}));const a=cards(battleIdsA,session.players[0].positions),b=cards(battleIdsB,session.players[1].positions);const result=simulateRosterBattle(a,b,{seed:'battle-room-'+session.code+'-'+session.created});return {winner:result.winner,rounds:result.rounds,teams:result.teams,initialShields:result.initialShields,log:result.log};}
+function battleSessionResult(session){const cards=(ids,formation)=>formation.map((index,slot)=>({id:ids[index],power:stablePower(ids[index]),lane:session.players[ids===battleIdsA?0:1].lanes?.[slot]||(slot<2?'front':'back'),role:session.players[ids===battleIdsA?0:1].roles?.[slot]||((slot<2)?'tank':'energy')}));const a=cards(battleIdsA,session.players[0].positions),b=cards(battleIdsB,session.players[1].positions);const result=simulateRosterBattle(a,b,{seed:'battle-room-'+session.code+'-'+session.created});return {arenaPresentation:roomArenaPresentation(session),winner:result.winner,rounds:result.rounds,teams:result.teams,initialShields:result.initialShields,log:result.log};}
 function validBattlePositions(v){return Array.isArray(v)&&v.length===5&&new Set(v).size===5&&v.every(x=>Number.isInteger(x)&&x>=0&&x<5)}
 const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data))};try{const url=new URL(req.url,'http://localhost');if(req.method==='POST'&&url.pathname==='/api/battle-auction-complete'){
  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>1000)return send(413,{error:'İstek çok büyük'})}
@@ -710,7 +914,7 @@ const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.w
   try{if(!liveArenaLifecycle.snapshot({matchKey:key,token:body.token}).finished)return send(409,{error:'Canlı savaş henüz tamamlanmadı'});}
   catch{return send(409,{error:'Canlı savaş sonucu henüz kesinleşmedi'});}
  }
- room.battleCompleted??=[false,false];room.battleCompleted[seat]=true;markRoom(room);return send(200,{ok:true,completed:room.battleCompleted,series:room.series||[0,0],seat,players:room.players.map(p=>({name:p?.name||'Oyuncu'}))});
+ room.battleCompleted??=[false,false];room.battleCompleted[seat]=true;markRoom(room);return send(200,{ok:true,...victoryChestView(room,seat),completed:room.battleCompleted,series:room.series||[0,0],seat,players:room.players.map(p=>({name:p?.name||'Oyuncu'}))});
 }
 if(url.pathname==='/api/experimental/live-room-binding'&&req.method==='GET'){
  if(!commanderTurnApiEnabled)return send(404,{error:'Experimental commander API disabled'});
@@ -786,6 +990,8 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
  const room=rooms.get(String(body?.code||'').toUpperCase());const seat=room?.players?.findIndex(p=>p?.token===body?.token)??-1;
  if(!room||seat<0)return send(403,{error:'Yetkisiz oda'});
  if(room.phase!=='finished')return send(409,{error:'Açık artırma tamamlanmadı'});
+ try{requireBattleNotCancelled(room)}catch(e){return send(e.status||409,{error:e.message,...(e.cancellation?{cancellation:e.cancellation}:{})})}
+ const preparationId=cancellationMatchId(room);battlePreparationFlights.set(preparationId,(battlePreparationFlights.get(preparationId)||0)+1);
  try{const state=auctionRoomToBattleState(room),teams=prepareBattleTeams(state);
  const metadata=preparationTeams(teams),sync=ensureBattlePreparation(room,metadata),matchKey=sync.key;
  if(req.method==='POST'&&body.matchKey!==undefined&&body.matchKey!==matchKey)return send(409,{error:'Diziliş başka bir maça ait.'});
@@ -808,6 +1014,7 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
   const ids=accountIds.filter(Boolean);
   if(ids.length){
    const records=await database.query('SELECT account_id,profile FROM hero_auction_commanders WHERE account_id=ANY($1::text[])',[ids]);
+   requireBattleNotCancelled(room);
    const byId=new Map(records.rows.map(row=>[row.account_id,row.profile]));
     for(let i=0;i<2;i++){
     const profile=byId.get(accountIds[i]);
@@ -841,8 +1048,8 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
  if(!sync.result.live&&room.battleSettlementPending&&!room.matchSettled){settleFinishedMatch(room,result.winner);room.battleSettlementPending=false;}
  }markRoom(room);
  }
- return send(200,{ready:sync.ready.map(Boolean),started:Boolean(sync.result),result:sync.result?{...sync.result,commanderEnergy:seat===0?sync.result.commanderEnergy:sync.result.commanderEnergy?.slice().reverse(),commanderUltimateEnergy:seat===0?sync.result.commanderUltimateEnergy:sync.result.commanderUltimateEnergy?.slice().reverse(),ultimateUsed:seat===0?sync.result.ultimateUsed:sync.result.ultimateUsed?.slice().reverse(),revivalUsed:seat===0?sync.result.revivalUsed:sync.result.revivalUsed?.slice().reverse(),summary:orientBattleSummary(sync.result.summary,seat),winner:sync.result.winner===null?null:sync.result.winner===seat?0:1,teams:seat===0?sync.result.teams:[...sync.result.teams].reverse(),initialShields:seat===0?sync.result.initialShields:sync.result.initialShields?.slice().reverse(),commanders:seat===0?sync.result.commanders:[...sync.result.commanders].reverse(),log:seat===0?sync.result.log:sync.result.log.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side,energy:Array.isArray(e.energy)?e.energy.slice().reverse():e.energy,ultimateEnergy:Array.isArray(e.ultimateEnergy)?e.ultimateEnergy.slice().reverse():e.ultimateEnergy,shieldSnapshot:e.shieldSnapshot?.slice().reverse()}))}:null});
- }catch(e){return send(422,{error:e.message})}
+ return send(200,{arenaPresentation:roomArenaPresentation(room),ready:sync.ready.map(Boolean),started:Boolean(sync.result),result:sync.result?{...sync.result,arenaPresentation:roomArenaPresentation(room),...victoryChestView(room,seat),commanderEnergy:seat===0?sync.result.commanderEnergy:sync.result.commanderEnergy?.slice().reverse(),commanderUltimateEnergy:seat===0?sync.result.commanderUltimateEnergy:sync.result.commanderUltimateEnergy?.slice().reverse(),ultimateUsed:seat===0?sync.result.ultimateUsed:sync.result.ultimateUsed?.slice().reverse(),revivalUsed:seat===0?sync.result.revivalUsed:sync.result.revivalUsed?.slice().reverse(),summary:orientBattleSummary(sync.result.summary,seat),winner:sync.result.winner===null?null:sync.result.winner===seat?0:1,teams:seat===0?sync.result.teams:[...sync.result.teams].reverse(),initialShields:seat===0?sync.result.initialShields:sync.result.initialShields?.slice().reverse(),commanders:seat===0?sync.result.commanders:[...sync.result.commanders].reverse(),log:seat===0?sync.result.log:sync.result.log.map(e=>({...e,side:typeof e.side==='number'?1-e.side:e.side,energy:Array.isArray(e.energy)?e.energy.slice().reverse():e.energy,ultimateEnergy:Array.isArray(e.ultimateEnergy)?e.ultimateEnergy.slice().reverse():e.ultimateEnergy,shieldSnapshot:e.shieldSnapshot?.slice().reverse()}))}:null});
+ }catch(e){return send(e.status||422,{error:e.message,...(e.cancellation?{cancellation:e.cancellation}:{})})}finally{const remaining=(battlePreparationFlights.get(preparationId)||1)-1;if(remaining)battlePreparationFlights.set(preparationId,remaining);else battlePreparationFlights.delete(preparationId)}
 }
 if(req.method==='POST'&&url.pathname==='/api/battle-auction-formation'){
  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>4000)return send(413,{error:'İstek çok büyük'})}
@@ -858,7 +1065,7 @@ if(req.method==='POST'&&url.pathname==='/api/battle-auction-formation'){
   sync.drafts[seat]={positions:[...body.positions],lanes:[...body.lanes],roles:[...body.roles]};
   markRoom(room);
   return send(200,{preparation:preparationView(sync,seat)});
- }catch(e){return send(422,{error:e.message})}
+ }catch(e){return send(e.status||422,{error:e.message,...(e.cancellation?{cancellation:e.cancellation}:{})})}
 }
 if(req.method==='GET'&&url.pathname==='/api/battle-auction-team'){
  const room=rooms.get(String(url.searchParams.get('code')||'').toUpperCase());
@@ -869,11 +1076,11 @@ if(req.method==='GET'&&url.pathname==='/api/battle-auction-team'){
   const state=auctionRoomToBattleState(room);
   const teams=prepareBattleTeams(state);
   const sync=ensureBattlePreparation(room,preparationTeams(teams));
-  return send(200,{ready:true,seat,preparation:preparationView(sync,seat),credits:[state.remainingCreditsA,state.remainingCreditsB],teams:teams.map(team=>team.map(card=>{const hero=battleRoster.find(h=>h.id===card.id);return {...card,name:hero.name,universe:hero.universe,role:hero.role,laneModifiers:hero.laneModifiers}}))});
- }catch(e){return send(422,{error:'Bu açık artırma 2.0 savaşına uygun değil: '+e.message})}
+  return send(200,{ready:true,seat,arenaPresentation:roomArenaPresentation(room),preparation:preparationView(sync,seat),credits:[state.remainingCreditsA,state.remainingCreditsB],teams:teams.map(team=>team.map(card=>{const hero=battleRoster.find(h=>h.id===card.id);return {...card,name:hero.name,universe:hero.universe,role:hero.role,laneModifiers:hero.laneModifiers}}))});
+ }catch(e){return send(e.status||422,{error:e.message,...(e.cancellation?{cancellation:e.cancellation}:{})})}
 }
 if(req.method==='GET'&&url.pathname==='/api/battle-room'){const session=battleSessions.get(String(url.searchParams.get('code')||'').toUpperCase());const view=session&&battleSessionView(session,url.searchParams.get('token'));return view?send(200,view):send(404,{error:'Oda veya oturum bulunamadı.'})}
-if(req.method==='POST'&&url.pathname==='/api/battle-room'){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>4000)return send(413,{error:'İstek çok büyük'})}let body;try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz veri'})}const action=body?.action;let session;if(action==='create'){let code;do{code=String(100000+crypto.randomInt(900000))}while(battleSessions.has(code));session={code,created:Date.now(),players:[{token:crypto.randomBytes(24).toString('hex'),ready:false,positions:null},null],result:null};battleSessions.set(code,session);return send(200,{...battleSessionView(session,session.players[0].token),token:session.players[0].token})}
+if(req.method==='POST'&&url.pathname==='/api/battle-room'){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>4000)return send(413,{error:'İstek çok büyük'})}let body;try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz veri'})}const action=body?.action;let session;if(action==='create'){let code;do{code=String(100000+crypto.randomInt(900000))}while(battleSessions.has(code));session={code,created:Date.now(),players:[{token:crypto.randomBytes(24).toString('hex'),ready:false,positions:null},null],result:null};startRoomArenaTheme(session);battleSessions.set(code,session);return send(200,{...battleSessionView(session,session.players[0].token),token:session.players[0].token})}
  session=battleSessions.get(String(body?.code||'').toUpperCase());if(!session)return send(404,{error:'Oda bulunamadı'});
  if(action==='join'){if(session.players[1]&&!session.players[1].left)return send(409,{error:'Oda dolu'});session.players[1]={token:crypto.randomBytes(24).toString('hex'),ready:false,positions:null};return send(200,{...battleSessionView(session,session.players[1].token),token:session.players[1].token})}
  const seat=session.players.findIndex(p=>p?.token===body?.token);if(seat<0||session.players[seat].left)return send(403,{error:'Geçersiz oturum'});if(action==='leave'){session.players[seat].left=true;session.players[seat].ready=false;if(session.players.every(p=>!p||p.left))battleSessions.delete(session.code);return send(200,{ok:true,left:true})}if(action==='ready'){if(!validBattlePositions(body.positions))return send(400,{error:'Geçersiz diziliş'});if(session.result)return send(409,{error:'Savaş başladı'});if(!Array.isArray(body.lanes)||body.lanes.length!==5||body.lanes.some(l=>l!=='front'&&l!=='back'))return send(400,{error:'Geçersiz ön/arka saf dizilişi'});if(!Array.isArray(body.roles)||body.roles.length!==5||body.roles.some(role=>!['tank','fighter','energy','assassin','support'].includes(role)))return send(400,{error:'Geçersiz savaş rolü'});session.players[seat].roles=body.roles;session.players[seat].lanes=body.lanes;session.players[seat].positions=body.positions;session.players[seat].ready=true;if(session.players.every(p=>p?.ready))session.result=battleSessionResult(session);return send(200,battleSessionView(session,body.token))}return send(400,{error:'Geçersiz işlem'})}
@@ -944,7 +1151,7 @@ if(req.method==='GET'&&url.pathname==='/api/online'){
  onlineVisitors.set(id,{seen:Date.now(),code:belongs?code:null});
  return send(200,onlineStats());
 }
-if(req.method==='GET'&&url.pathname==='/api/info')return send(200,{catalogueCount:catalogue.size,counts:Object.fromEntries(['original'].map(k=>[k,[...catalogue.values()].filter(x=>x.universe===k).length]))});
+if(req.method==='GET'&&url.pathname==='/api/info')return send(200,{catalogueCount:catalogue.size,paidMatches:{paused:paidEntryMaintenance.isPaused()},victoryChests:{enabled:victoryChestPolicy.enabled,available:victoryChestPolicy.enabled&&victoryChestStorageReady&&victoryChestCreditHealthy,goldOptions:victoryChestPolicy.config?.gold||[],goldWeights:victoryChestPolicy.config?.goldWeights||[],magicDustOptions:victoryChestPolicy.config?.magicDust||[],magicDustChance:(victoryChestPolicy.config?.magicDustChance??0)/100,diamondChance:(victoryChestPolicy.config?.diamondChance??0)/100},counts:Object.fromEntries(['original'].map(k=>[k,[...catalogue.values()].filter(x=>x.universe===k).length]))});
 if(req.method==='POST'&&url.pathname.startsWith('/api/')){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>12000)error('İstek çok büyük.')}let body;try{body=JSON.parse(raw)}catch{error('Geçersiz JSON')}return send(200,await api(url.pathname,body))}
 const audioHead=req.method==='HEAD'&&path.extname(decodeURIComponent(url.pathname)).toLowerCase()==='.mp3';
 if((req.method==='GET'||audioHead)&&(url.pathname==='/crazygames'||url.pathname.startsWith('/crazygames/'))){
@@ -979,9 +1186,9 @@ if(r.mode==='bot'&&r.turn===1){
  r.lastActivity=Date.now();publish(r);continue;
 }
 if(r.deadline&&Date.now()>=r.deadline){const expiredSeat=r.turn;log(r,`${r.players[expiredSeat].name} süresi dolduğu için otomatik pas geçti.`);if(r.topSeat!==null){finishAuction(r);}else if(r.openingPassSeat===1-expiredSeat){finishUnbidCard(r);}else{r.openingPassSeat=expiredSeat;r.turn=1-expiredSeat;r.deadline=Date.now()+20000;log(r,`Sıra ${r.players[r.turn].name} oyuncusuna geçti.`);}r.lastActivity=Date.now();publish(r);}
-}for(const [id,r]of rooms){const age=Date.now()-(r.lastActivity||r.created);const expiry=r.phase==='finished'?24*3600_000:r.phase==='waiting'?2*3600_000:r.phase==='matching'?5*60_000:r.phase==='auction'?6*3600_000:24*3600_000;if(age>expiry){liveArenaLifecycle.endRoom(id);liveArenaMatchKeys.delete(id);rooms.delete(id);dirtyRooms.add(id);waiting.delete(id);const clients=listeners.get(id);if(clients){for(const c of clients){try{c.res.end()}catch{}}listeners.delete(id)}}}for(const [id,w]of waiting)if(!rooms.has(w.code)||Date.now()-w.created>60000)waiting.delete(id)},500).unref();
-setInterval(()=>{flushRooms().catch(e=>console.error('Database flush:',e.message));flushGold().catch(e=>console.error('Gold flush:',e.message))},1000).unref();
-initializeDatabase().then(()=>{server.listen(PORT,'0.0.0.0',()=>console.log(`Hero Auction http://localhost:${PORT} | characters: ${catalogue.size}`));});
+}for(const [id,r]of rooms){const age=Date.now()-(r.lastActivity||r.created);const expiry=r.phase==='finished'?24*3600_000:r.phase==='waiting'?2*3600_000:r.phase==='matching'?5*60_000:r.phase==='auction'?6*3600_000:24*3600_000;if(age>expiry&&!r.victoryChestPending&&!(paidEntryMaintenance.isPaused()&&isUnsettledPaidRoom(r))){liveArenaLifecycle.endRoom(id);liveArenaMatchKeys.delete(id);rooms.delete(id);dirtyRooms.add(id);waiting.delete(id);const clients=listeners.get(id);if(clients){for(const c of clients){try{c.res.end()}catch{}}listeners.delete(id)}}}for(const [id,w]of waiting)if(!rooms.has(w.code)||Date.now()-w.created>60000)waiting.delete(id)},500).unref();
+setInterval(()=>{flushRooms().catch(e=>console.error('Database flush:',e.message));flushGold().catch(e=>console.error('Gold flush:',e.message));flushVictoryChests().catch(e=>console.error('Chest flush:',e.message))},1000).unref();
+initializeDatabase().then(initializePaidEntryMaintenance).then(initializeVictoryChests).then(()=>{server.listen(PORT,'0.0.0.0',()=>console.log(`Hero Auction http://localhost:${PORT} | characters: ${catalogue.size}`));});
 
 // Moderation evidence expiry only; no account deletion or native transport changes.
 setInterval(()=>{if(moderationReady&&(!database||databaseReady))moderation.prune().catch(e=>console.error('Moderation retention cleanup:',e.message))},3600000).unref();

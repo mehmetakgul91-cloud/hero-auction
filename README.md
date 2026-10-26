@@ -175,3 +175,19 @@ Oyuncu, ultinin hedefini yaşayan rakiplerden seçer. Hedef seçimi ve iptal ene
 ### Son Kale ve büyücü normal becerisi
 Son Kale koruması, kullanıldığı anda seçilen en düşük can oranlı müttefikte ilk ölümcül darbeye kadar tur sınırı olmadan kalır; 1 canla kurtardıktan sonra tüketilir. Başka kahramana geçmez. Kalkan miktarı değişmez.
 Büyücünün normal becerisi tek rakibin sonraki ilk gerçek saldırısını zayıflatır. Temel oran %35; 10 seviyede %38,5, 20 seviyede %42. Saldırana kadar bekler; aynı saldırının alan hasarı da etkilenir, iyileştirme/kalkan eylemleri ve komutan saldırıları hakkı tüketmez. Tek yük tutulur; tekrar kullanım ek yük biriktirmez. Önceki çok turlu etkinin yerini alır; bu değişiklik için yeni kapsamlı denge simülasyonu yapılmamıştır.
+
+## Zafer sandığı ve büyü tozu — ayrı etkinleştirmeli hazırlık
+
+Onaylanan yeni ekonomi: gerçek oyunculu galibiyetin120altını yerine tek sandık;
+%100altın (100/105/110/115/120, eşit), bağımsız%40ihtimalle3–5büyü tozu ve
+%10ihtimalle1elmas. Botlar ödülsüz antrenman, beraberlik kişi başı50altın iadesi.
+15→16gelişimi5büyü tozu, sonraki hedefler ilk tabandan×1,2yukarı yuvarlama;
+eski seviyelere geriye dönük ücret yok. Üst menü üç gerçek bakiyeyi gösterir;
+kapalı/ulaşılamayan bakiye0değil`—`görünür.
+
+Yeni `HERO_MAGIC_DUST_ENABLED` ve `HERO_VICTORY_CHESTS_ENABLED` varsayılan
+kapalıdır; ikisi de mevcut `HERO_DIAMONDS_ENABLED` ve doğrulanmış şema
+bağımlılıklarına sahiptir. Karşılama, günlük ödül ve dönüşüm ayrı kapalı kalır.
+`migrations/005-victory-chests-magic-dust.sql` uygulama başlangıcında çalışmaz.
+Detay, kurtarma ve test sınırları: [sandık/büyü tozu](docs/victory-chests-magic-dust.md).
+Beş kozmetik arena sahnesi: [arena temaları](docs/arena-themes.md).

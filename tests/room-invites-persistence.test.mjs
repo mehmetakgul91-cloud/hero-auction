@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 const source=fs.readFileSync(new URL('../server.js',import.meta.url),'utf8');
 const functions=source.slice(source.indexOf('function sameSeat('),source.indexOf('function seatRoom('))+source.slice(source.indexOf('function applyInvitationReceipt('),source.indexOf('async function invitationApi('));
-function fixture({gold=[500,500],lostCommit=false,receiptReadFails=false}={}){
+function fixture({gold=[500,500],lostCommit=false,receiptReadFails=false,paused=false}={}){
  const room={code:'123',created:1,matchNumber:1,mode:'friend',phase:'waiting',players:[{accountId:'host',name:'Host',token:'hosttoken',team:[]},null],history:[]};
  const invite={id:'invite-1',from:'host',to:'guest',code:'123',created:1,status:'queued'};
  const durable={gold:new Map([['host',gold[0]],['guest',gold[1]]]),receipt:null,room:null,social:null};let staged=null;const statements=[];
@@ -21,9 +21,10 @@ function fixture({gold=[500,500],lostCommit=false,receiptReadFails=false}={}){
   if(sql.startsWith('INSERT INTO hero_auction_social')){staged.social=JSON.parse(args[1]);return{}}
   throw Error('unexpected query '+sql);
  }};
- const ctx={structuredClone,Map,Date,JSON,console,roomFlushes:new Map(),rooms:new Map([['123',room]]),activeSeats:new Map(),token:()=> 'guest-room-token',log:(r,text)=>r.history.push(text),publish:()=>{},previewGuestMode:false,databaseReady:true,ratings:new Map(),matchRecords:new Map(),friends:{snapshot:()=>({})},roomInvites:{snapshot:()=>[['invite-1',invite]]},error:(message,status=400)=>{throw Object.assign(Error(message),{status})},database:{connect:async()=>client,query:async()=>{if(receiptReadFails)throw Error('database unavailable');return{rows:durable.receipt?[{state:durable.receipt}]:[]}}}};
+ const maintenance={isPaused:()=>paused,beginAdmission:()=>()=>{}};
+ const ctx={paidEntryMaintenance:maintenance,requireVictoryChestStorage(){},requireVictoryChestProgression(){},structuredClone,Map,Date,JSON,console,roomFlushes:new Map(),rooms:new Map([['123',room]]),activeSeats:new Map(),token:()=> 'guest-room-token',log:(r,text)=>r.history.push(text),publish:()=>{},previewGuestMode:false,databaseReady:true,ratings:new Map(),matchRecords:new Map(),friends:{snapshot:()=>({})},roomInvites:{snapshot:()=>[['invite-1',invite]]},error:(message,status=400)=>{throw Object.assign(Error(message),{status})},database:{connect:async()=>client,query:async()=>{if(receiptReadFails)throw Error('database unavailable');return{rows:durable.receipt?[{state:durable.receipt}]:[]}}}};
  vm.createContext(ctx);vm.runInContext(functions,ctx);
- return{ctx,room,invite,durable,statements,join:()=>ctx.commitInvitationJoin(invite,room,{sub:'guest',name:'Guest'})};
+ return{ctx,room,invite,durable,statements,setPaused:value=>paused=value,join:()=>ctx.commitInvitationJoin(invite,room,{sub:'guest',name:'Guest'})};
 }
 test('durable invitation atomically stores unique receipt, both debits, room and social before COMMIT',async()=>{
  const f=fixture();assert.equal(await f.join(),true);assert.deepEqual([...f.durable.gold.values()],[450,450]);assert.equal(f.durable.room.players[1].token,'guest-room-token');assert.equal(f.durable.social.roomInvites[0][1].status,'joined');
@@ -45,7 +46,7 @@ test('unconfirmed commit reserves room and surfaces uncertainty instead of charg
 
 test('uncertain invitation blocks either actor entry and detach before mutation',async()=>{
  const wrapper=source.slice(source.indexOf('async function api(url,b)'),source.indexOf('async function apiAction(url,b)'));
- const ctx={requireModerationForInteraction,moderationReady:true,rooms:new Map([['123',{inviteUncertain:true}]]),roomInvites:{items:new Map([['i',{from:'host',to:'guest',code:'123',status:'queued'}]])},readLogin:value=>({sub:value,name:value}),friends:{register:async()=>{},afterMutations:fn=>fn()},error:(message,status)=>{throw Object.assign(Error(message),{status})},apiAction:()=>{throw Error('must not mutate')},authorize:()=>{throw Error('must not detach')}};
+ const ctx={paidEntryMaintenance:{beginAdmission:()=>()=>{}},requireModerationForInteraction,moderationReady:true,rooms:new Map([['123',{inviteUncertain:true}]]),roomInvites:{items:new Map([['i',{from:'host',to:'guest',code:'123',status:'queued'}]])},readLogin:value=>({sub:value,name:value}),friends:{register:async()=>{},afterMutations:fn=>fn()},error:(message,status)=>{throw Object.assign(Error(message),{status})},apiAction:()=>{throw Error('must not mutate')},authorize:()=>{throw Error('must not detach')}};
  vm.createContext(ctx);vm.runInContext(wrapper,ctx);
  for(const actor of ['host','guest'])for(const path of ['/api/create','/api/join','/api/match','/api/bot','/api/rematch','/api/room/detach'])await assert.rejects(ctx.api(path,{authToken:actor}),e=>e.status===503);
 });
@@ -57,4 +58,9 @@ test('startup fails closed when durable unfinished rematch has same timestamp bu
  const begin=source.indexOf('for(const [id,pointer] of activeSeats){const newer=');const end=source.indexOf('friends.seed(',begin);assert.ok(begin>=0&&end>begin);
  const pointer={code:'123',created:10,matchNumber:1,seat:1};const ctx={activeSeats:new Map([['guest',pointer]]),rooms:new Map([['123',{code:'123',created:10,matchNumber:2,phase:'auction',players:[{accountId:'host'},{accountId:'guest'}]}]])};
  vm.createContext(ctx);vm.runInContext(source.slice(begin,end),ctx);assert.equal(ctx.activeSeats.get('guest').ambiguous,true);
+});
+
+test('paused invitation stays queued without charging, while committed receipt recovery is permitted',async()=>{
+ const f=fixture({paused:true});assert.equal(await f.join(),false);assert.equal(f.invite.status,'queued');assert.equal(f.room.players[1],null);assert.deepEqual([...f.durable.gold.values()],[500,500]);assert.equal(f.statements.length,0);
+ f.setPaused(false);assert.equal(await f.join(),true);f.setPaused(true);f.invite.status='queued';f.room.phase='waiting';f.room.players[1]=null;assert.equal(await f.join(),true);assert.deepEqual([...f.durable.gold.values()],[450,450]);assert.equal(f.invite.status,'joined');assert.equal(f.room.players[1].accountId,'guest');
 });

@@ -37,7 +37,7 @@ test('formation validation rejects duplicates, missing or invalid slots, lanes, 
 test('server room snapshots restore drafts and preserve confirmed historical formations without overwriting',()=>{
  const source=readFileSync(new URL('../server.js',import.meta.url),'utf8');
  const code=source.slice(source.indexOf('function ensureBattlePreparation('),source.indexOf('function battleSessionResult('));
- const context={buildDefaultFormation,marks:0,markRoom(){context.marks++}};
+ const context={requireBattleNotCancelled(){},buildDefaultFormation,marks:0,markRoom(){context.marks++}};
  runInNewContext(`${code};this.ensure=ensureBattlePreparation;this.view=preparationView`,context);
  const teams=[team,battleRoster.slice(5,10)],room={created:123,matchNumber:1};
  let sync=context.ensure(room,teams);

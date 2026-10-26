@@ -1,7 +1,7 @@
 const $=id=>document.getElementById(id);
 let login=null;try{login=JSON.parse(localStorage.getItem('hero-auction-login')||'null')}catch{}
 const status=t=>$('status').textContent=t;
-async function api(path,body={}){const auth=login?.authToken;const r=await fetch('/api/admin/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,authToken:auth})});const j=await r.json();if(auth!==login?.authToken)throw Error('Yönetici oturumu değişti. Yeniden doğrulayın.');if(!r.ok)throw Error(j.error||'İşlem başarısız');return j}
+async function api(path,body={}){const auth=login?.authToken;const r=await fetch('/api/admin/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,authToken:auth})});const j=await r.json();if(auth!==login?.authToken)throw Error('Yönetici oturumu değişti. Yeniden doğrulayın.');if(!r.ok)throw Object.assign(Error(j.error||'İşlem başarısız'),{status:r.status});return j}
 async function load(){
  try{
   const d=await api('list',{search:$('search').value});
@@ -17,8 +17,8 @@ async function load(){
   }
   const h=await api('history');$('history').replaceChildren();
   for(const a of h.history){const p=document.createElement('p');p.textContent=new Date(a.created_at).toLocaleString('tr-TR')+' • '+a.account_id+' • '+a.action+' • '+a.old_gold+' → '+a.new_gold;$('history').append(p)}
-  status(d.accounts.length+' hesap listelendi.');void loadModeration();
- }catch(e){status(e.message);$('dashboard').hidden=true;$('historyPanel').hidden=true;$('moderationPanel').hidden=true;$('moderation-reports').replaceChildren()}
+  status(d.accounts.length+' hesap listelendi.');void loadModeration();window.dispatchEvent(new Event('hero:admin-verified'));
+ }catch(e){window.dispatchEvent(new Event('hero:admin-unverified'));status(e.message);$('dashboard').hidden=true;$('historyPanel').hidden=true;$('moderationPanel').hidden=true;$('moderation-reports').replaceChildren()}
 }
 async function act(path,data){try{await api(path,data);await load()}catch(e){alert(e.message)}}
 $('login').onclick=()=>{if(!login?.authToken){status('Önce ana sayfada yetkili Google hesabıyla giriş yapın.');return}load()};
