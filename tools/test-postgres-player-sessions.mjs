@@ -7,17 +7,18 @@ import {randomUUID} from 'node:crypto';
 import pg from 'pg';
 import {createPlayerAnalyticsPolicy,recordPlayerSession,readPlayerAnalytics,cleanupPlayerAnalytics,preflightPlayerAnalytics} from '../player-sessions.js';
 const expected='postgresql://test:test@127.0.0.1:55432/hero_analytics_test';
-if(Object.hasOwn(process.env,'DATABASE_URL'))throw Error('Refusing inherited DATABASE_URL; no production credential is permitted.');
+if(Object.keys(process.env).some(key=>key==='DATABASE_URL'||/^PG[A-Z_]*$/.test(key)))throw Error('Refusing inherited DATABASE_URL or PG overrides; no production credential is permitted.');
 if(process.env.HERO_ANALYTICS_TEST_DB!==expected)throw Error('Requires exact disposable loopback analytics fixture URL.');
 const schema='analytics_fixture_'+randomUUID().replaceAll('-','');
-const root=new pg.Client({connectionString:expected,connectionTimeoutMillis:5000});
+const root=new pg.Client({connectionString:expected,ssl:false,connectionTimeoutMillis:5000});
 let pool;let created=false;
 try{
  await root.connect();
- const identity=(await root.query("SELECT current_database() AS db,current_user AS username,host(inet_server_addr()) AS address")).rows[0];
- assert.equal(identity.db,'hero_analytics_test');assert.equal(identity.username,'test');assert.equal(identity.address,'127.0.0.1');
+ const identity=(await root.query("SELECT current_database() AS db,current_user AS username,inet_server_port() AS port,current_setting('server_version_num') AS version")).rows[0];
+ assert.equal(identity.db,'hero_analytics_test');assert.equal(identity.username,'test');assert.ok([5432,55432].includes(identity.port),'Expected native fixture or Docker-published PostgreSQL port');assert.ok(Number(identity.version)>=180000&&Number(identity.version)<190000);
  await root.query(`CREATE SCHEMA "${schema}"`);created=true;
- pool=new pg.Pool({connectionString:expected,options:`-c search_path=${schema}`,max:6,connectionTimeoutMillis:5000});
+ // Loopback is enforced at the client; container server addresses are private.
+ pool=new pg.Pool({connectionString:expected,ssl:false,options:`-c search_path=${schema}`,max:6,connectionTimeoutMillis:5000});
  await pool.query('CREATE TABLE hero_auction_wallets(account_id TEXT PRIMARY KEY,gold INTEGER NOT NULL DEFAULT 500 CHECK(gold>=0))');
  await pool.query(readFileSync(new URL('../migrations/007-player-sessions.sql',import.meta.url),'utf8'));
  await preflightPlayerAnalytics(pool);

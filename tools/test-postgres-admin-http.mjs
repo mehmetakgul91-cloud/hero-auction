@@ -8,9 +8,10 @@ import {createHmac} from 'node:crypto';
 import pg from 'pg';
 
 const APPROVED='postgresql://test:test@127.0.0.1:55432/hero_admin_http_test';
-if(process.env.HERO_ADMIN_HTTP_TEST_DB!==APPROVED||process.env.DATABASE_URL){
- console.error('REFUSED: exact disposable loopback HERO_ADMIN_HTTP_TEST_DB required, with no DATABASE_URL. No connection attempted.');process.exit(1);
+if(process.env.HERO_ADMIN_HTTP_TEST_DB!==APPROVED||Object.keys(process.env).some(key=>key==='DATABASE_URL'||/^PG[A-Z_]*$/.test(key))){
+ console.error('REFUSED: exact disposable loopback HERO_ADMIN_HTTP_TEST_DB required, with no DATABASE_URL or ambient PG overrides. No connection attempted.');process.exit(1);
 }
+// The client remains pinned to loopback 55432; Docker reports internal port 5432.
 const SCHEMA='hero_admin_http_fixture',MISSING_SCHEMA='hero_admin_http_missing';
 const secret='5b'.repeat(32),owner={sub:'http-fixture-owner',provider:'google',email:'http-owner@example.invalid',name:'Fixture Owner'},player={sub:'http-fixture-player',provider:'google',email:'player@example.invalid',name:'Fixture Player'};
 const pool=new pg.Pool({host:'127.0.0.1',port:55432,database:'hero_admin_http_test',user:'test',password:'test',ssl:false,max:5,
@@ -56,7 +57,7 @@ const creditRequest={requestId:'http-fixture-credit-0001',accountId:player.sub,c
 const session={sessionId:'http-fixture-session-001',sequence:0,foreground:true,platform:'web',device:'desktop'};
 try{
  const identity=(await query("SELECT current_database() AS db,current_user AS role,inet_server_port() AS port,current_setting('server_version_num') AS version")).rows[0];
- assert.equal(identity.db,'hero_admin_http_test');assert.equal(identity.role,'test');assert.equal(identity.port,55432);assert.ok(Number(identity.version)>=180000&&Number(identity.version)<190000);
+ assert.equal(identity.db,'hero_admin_http_test');assert.equal(identity.role,'test');assert.ok([5432,55432].includes(identity.port),'Expected native fixture or Docker-published PostgreSQL port');assert.ok(Number(identity.version)>=180000&&Number(identity.version)<190000);
  for(const name of [SCHEMA,MISSING_SCHEMA])assert.equal((await query('SELECT to_regnamespace($1) AS name',[name])).rows[0].name,null,'REFUSED: fixture schema already exists; no reset/drop attempted');
  await query('CREATE SCHEMA hero_admin_http_fixture; CREATE SCHEMA hero_admin_http_missing');
  await query(`CREATE TABLE hero_auction_wallets(account_id TEXT PRIMARY KEY,gold INTEGER NOT NULL DEFAULT 500 CHECK(gold>=0));

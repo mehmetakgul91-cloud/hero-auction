@@ -10,9 +10,10 @@ import {createMagicDustPolicy,magicDustUpgradeCost} from '../magic-dust.js';
 import {createDiamondExchangePolicy,exchangeDiamondsForGold} from '../paid-diamond-exchange.js';
 
 const APPROVED='postgresql://test:test@127.0.0.1:55432/hero_admin_test';
-if(process.env.HERO_ADMIN_TEST_DB!==APPROVED||process.env.DATABASE_URL){
- console.error('REFUSED: exact dedicated loopback HERO_ADMIN_TEST_DB required, with no DATABASE_URL. No connection attempted.');process.exit(1);
+if(process.env.HERO_ADMIN_TEST_DB!==APPROVED||Object.keys(process.env).some(key=>key==='DATABASE_URL'||/^PG[A-Z_]*$/.test(key))){
+ console.error('REFUSED: exact dedicated loopback HERO_ADMIN_TEST_DB required, with no DATABASE_URL or ambient PG overrides. No connection attempted.');process.exit(1);
 }
+// The client remains pinned to loopback 55432; Docker reports internal port 5432.
 const SCHEMA='hero_admin_wallet_test';
 const pool=new pg.Pool({host:'127.0.0.1',port:55432,database:'hero_admin_test',user:'test',password:'test',ssl:false,max:20,
  connectionTimeoutMillis:5000,idleTimeoutMillis:1000,application_name:'hero-disposable-admin-wallet-test',
@@ -47,7 +48,7 @@ async function rejectWrite(table,event,id,run){
 }
 try{
  const identity=(await query("SELECT current_database() AS db,current_user AS role,inet_server_port() AS port,current_setting('server_version_num') AS version")).rows[0];
- assert.equal(identity.db,'hero_admin_test');assert.equal(identity.role,'test');assert.equal(identity.port,55432);assert.ok(Number(identity.version)>=180000&&Number(identity.version)<190000);
+ assert.equal(identity.db,'hero_admin_test');assert.equal(identity.role,'test');assert.ok([5432,55432].includes(identity.port),'Expected native fixture or Docker-published PostgreSQL port');assert.ok(Number(identity.version)>=180000&&Number(identity.version)<190000);
  assert.equal((await query('SELECT to_regnamespace($1) AS name',[SCHEMA])).rows[0].name,null,'REFUSED: fixture schema already exists; no reset/drop attempted');
  await query('CREATE SCHEMA hero_admin_wallet_test');
  assert.equal((await query('SELECT current_schema() AS name')).rows[0].name,SCHEMA);
