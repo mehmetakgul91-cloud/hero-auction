@@ -256,7 +256,7 @@ try{
   let app,selection,boot,committed;
   try{
    app=await startFixtureServer();await waitCancellationWrites(app,admin);await app.post(previewPath,{},403);await app.post(previewPath,{authToken:fixtureAuth(batch.accounts[0],'Not an admin')},403);
-   const preview=await app.post(previewPath,admin);assert.equal(preview.paused,true);assert.equal(preview.persistenceConfirmed,true);assert.equal(preview.requiredSelectionCount,3);
+   const preview=await app.post(previewPath,admin);assert.equal(preview.paused,true);assert.equal(preview.persistenceConfirmed,true);assert.equal(preview.minSelectionCount,1);assert.equal(preview.maxSelectionCount,3);
    boot=preview.bootId;const ids=new Set(batch.rooms.map(cancellationIdentity));selection=preview.candidates.filter(value=>ids.has(value.id)).map(({id,digest})=>({id,digest}));assert.equal(selection.length,3);
    const request={...admin,expectedBootId:boot,expectedRevision:preview.revision,candidates:selection};
    await app.post(executePath,{...request,authToken:fixtureAuth(batch.accounts[0],'Not an admin')},403);
@@ -333,7 +333,7 @@ try{
    await cancellationMaintenance(50,state);const before=await cancellationProof(batch);await assert.rejects(cancelBatch(batch),error=>error.status===409);assert.deepEqual(await cancellationProof(batch),before);
   }
   await cancellationMaintenance();const before=await cancellationProof(batch);
-  for(const selections of [batch.selections.slice(0,2),[...batch.selections,{...batch.selections[0]}],batch.selections.map((item,index)=>index?item:{...item,digest:'0'.repeat(64)})]){
+  for(const selections of [[],[...batch.selections,{...batch.selections[0]}],batch.selections.map((item,index)=>index?item:{...item,digest:'0'.repeat(64)})]){
    await assert.rejects(cancelBatch(batch,{selections}),error=>[400,409].includes(error.status));assert.deepEqual(await cancellationProof(batch),before);
   }
   assert.equal(cancellationIdentity(batch.rooms[0]),batch.selections[0].id);
