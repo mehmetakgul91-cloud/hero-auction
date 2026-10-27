@@ -1,4 +1,5 @@
 import {grantCommanderStun} from './commander-stun-status.js';
+import {COMMANDER_HUNT_ATTACK_RATE,grantCommanderHunt,expireCommanderHunt} from './commander-hunt-status.js';
 import {applyHeroDamage,grantLastStand,isLastStandActive} from './battle-hp-damage.js';
 import {commanderAbilityStats} from './public/commander-ability-rules.js';
 import {commanderAttackPower,distributeCommanderAttack} from './commander-attack-damage.js';
@@ -24,6 +25,7 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
   const selected=enemies.find(unit=>unit.id===targetIds[0]);if(!selected)throw Error('Selected enemy is no longer alive or is invalid');
   const focused=grantCommanderFocus(allies,enemies,round,selected.id);if(!focused)throw Error('Focus order already active');value=focused.allyIds.length;
   impacts.push({target:focused.targetId,kind:'focus',value:focused.allyIds.length,untilDeath:true});
+  for(const ally of allies){grantCommanderHunt(ally);impacts.push({target:ally.id,kind:'hunt-buff',value:COMMANDER_HUNT_ATTACK_RATE*100,nextAttack:true});}
  }else if(commanderId==='attack'){
   const budget=distributeCommanderAttack(attackBasis??commanderAttackPower(next[side]),rate,enemies.length);
   for(const[index,u]of enemies.entries()){
@@ -59,6 +61,7 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
   impacts.push({target:target.id,kind:'stun',value:1,nextAttack:true});
  }
  expireCommanderFocus(next,round);
+ expireCommanderHunt(next);
  log.push({round,side,actor:'commander:'+side,action:'commander-'+commanderId+'-'+ability,value,impacts,...(commanderId==='attack'&&strong?{focusUntilDeath:true}:{}),commanderLevel:stats.level,abilityBonusPercent:stats.bonusPercent});
  return {teams:next,log,revivalUsed:nextRevivalUsed,finished:next.some(team=>team.every(u=>u.hp<=0))};
 }

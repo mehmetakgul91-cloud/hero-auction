@@ -1,3 +1,4 @@
+import {consumeCommanderHunt,expireCommanderHunt} from './commander-hunt-status.js';
 import {consumeCommanderStun,expireCommanderStun} from './commander-stun-status.js';
 import {finishHeroDelay} from './battle-delay.js';
 import {consumeCommanderWeaken,expireCommanderWeaken} from './commander-weaken-status.js';
@@ -93,14 +94,15 @@ export function applyServerHeroAction(combat,{side,actorId,targetId,action='atta
   actor.shield=(actor.shield||0)+amount;
  }
  if(action==='attack')consumeCommanderWeaken(actor);
+ const huntAttackConsumed=action==='attack'&&consumeCommanderHunt(actor);
  combat.teams=next;
  combat.version++;
- const event={round,side,actor:actorId,action,target:targetId,value:applied,absorbed,version:combat.version,...(guardTriggered?{guardTriggered:true}:{}),...(lastStandImmortalUntilRound?{lastStandTriggeredRound,lastStandImmortalUntilRound}:{}),...(arcaneTransfer?{arcaneTransfer}:{})};
+ const event={round,side,actor:actorId,action,target:targetId,value:applied,absorbed,version:combat.version,...(huntAttackConsumed?{huntAttackConsumed:true}:{}),...(guardTriggered?{guardTriggered:true}:{}),...(lastStandImmortalUntilRound?{lastStandTriggeredRound,lastStandImmortalUntilRound}:{}),...(arcaneTransfer?{arcaneTransfer}:{})};
  if(applyThorns&&action==='attack'&&actor.passive?.effect==='thorns')event.thornsShield=Math.floor(actor.defense*actor.passive.value);
  combat.events.push(event);
  // Preserve the existing per-casualty energy bonus once, per affected side.
  if(action==='attack'&&target.hp===0)grantLiveCommanderEnergy(combat.abilities,targetSide,10);
- expireCommanderFocus(next,round);
+ expireCommanderFocus(next,round);expireCommanderHunt(next);
  combat.finished=next.some(team=>team.every(u=>u.hp<=0));
  combat.abilities.finished=combat.finished;
  return {version:combat.version,event,teams:structuredClone(next),finished:combat.finished};
@@ -110,7 +112,7 @@ export function beginServerCombatRound(combat,round){
  combat.round=round;
  expireLastStandGuards(combat.teams,round);
  expireCommanderUltimateStatuses(combat.teams,round);
- expireCommanderFocus(combat.teams,round);
+ expireCommanderFocus(combat.teams,round);expireCommanderHunt(combat.teams);
  expireCommanderWeaken(combat.teams,round);
  expireCommanderStun(combat.teams);
  for(let side=0;side<2;side++)grantLiveCommanderEnergy(combat.abilities,side,commanderEnergyPerRound(combat.commanders[side]));

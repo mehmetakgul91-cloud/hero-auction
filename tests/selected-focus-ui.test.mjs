@@ -18,7 +18,7 @@ for(const side of [0,1])test(`Av Emri bridge seat ${side} selects opponent, canc
  cancel=false;await elements.ultimateButton.click();assert.deepEqual(sent,[{side,ability:'ultimate',targetIds:[teams[1-side][0].id]}]);bridge.destroy();
 });
 test('Av Emri text says selected living enemy instead of automatic lowest-health target',()=>{
- assert.match(commanderUltimateDescription('attack'),/Seçilen yaşayan rakibi/);const en=commanderUltimateDescription('attack',{english:true});assert.match(en,/selected living enemy/);assert.doesNotMatch(en,/lowest health ratio/);assert.match(commanderUltimateDescription('attack'),/Hedef ölünceye kadar/);assert.match(en,/Until the target dies.*all allied attacks.*no round or attack-count limit/);assert.match(en,/first death.*does not return if it revives/);assert.match(en,/no extra attack or damage/);assert.doesNotMatch(en,/next attack|next round/);
+ assert.match(commanderUltimateDescription('attack'),/Seçilen yaşayan rakibi/);const en=commanderUltimateDescription('attack',{english:true});assert.match(en,/selected living enemy/);assert.doesNotMatch(en,/lowest health ratio/);assert.match(commanderUltimateDescription('attack'),/Hedef ölünceye kadar/);assert.match(en,/Until the target dies.*all allied attacks.*no round or attack-count limit/);assert.match(en,/first death.*does not return if it revives/);assert.match(en,/no extra attack/);assert.match(en,/every ally alive when cast by 20% for its next attack only/);assert.match(en,/does not stack/);assert.doesNotMatch(en,/next round/);
 });
 
 test('full Hunt Order description translates all duration, healing and area-target rules',()=>{

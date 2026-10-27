@@ -48,7 +48,7 @@ export function expireCommanderUltimateStatuses(teams,round){
   if(!Number.isInteger(unit.arcaneSurgeUntilRound)||round>unit.arcaneSurgeUntilRound)for(const key of arcaneFields)delete unit[key];
  }
 }
-const revivalClearFields=[...arcaneFields,'commanderStunNextAttack','commanderWeaken','commanderWeakenUntilRound','commanderWeakenNextAttack','delayDueRound','delayProtectedThroughRound','lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound','commanderFocusTargetId','commanderFocusUntilRound','commanderFocusUntilDeath','focusTargetId','focusUntilRound','focusRemaining'];
+const revivalClearFields=[...arcaneFields,'commanderHuntNextAttack','commanderStunNextAttack','commanderWeaken','commanderWeakenUntilRound','commanderWeakenNextAttack','delayDueRound','delayProtectedThroughRound','lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound','commanderFocusTargetId','commanderFocusUntilRound','commanderFocusUntilDeath','focusTargetId','focusUntilRound','focusRemaining'];
 // The cast transaction validates own-side selection, combat still running and
 // its once-per-battle allowance BEFORE calling this helper. It charges energy
 // only after successful effect validation. This helper rejects an already-live

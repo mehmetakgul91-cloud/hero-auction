@@ -13,6 +13,7 @@ export function describeBattleEvent(event, {english=false, names=new Map()}={}) 
   if(Number(e.absorbed)>0)effect+=' · '+e.absorbed+' '+t('kalkan engelledi','blocked by shield');
   if(e.guardTriggered)effect+=' · '+t('Ölümcül darbeden 1 canla korundu','Survived a lethal hit at 1 health');
   if(Number.isInteger(e.lastStandImmortalUntilRound))effect+=' · '+t('Son Kale: ','Last Bastion: ')+t(e.lastStandImmortalUntilRound+'. tur sonuna kadar can en az 1','health stays at least 1 through round '+e.lastStandImmortalUntilRound);
+  if(e.huntAttackConsumed===true)effect+=' · '+t('Av Emri: tek saldırılık +%20 saldırı kullanıldı','Hunt Order: one-attack +20% attack used');
   if(Number(e.executedDamage)>0)effect+=' · '+t('Bitirici','Finisher')+' +'+e.executedDamage;
  }else if(['revive','commander-revive'].includes(action))effect=t('Diriliş','Revival')+' · '+amount+' '+t('can','health');
  else if(action==='commander-attack-ultimate')effect=e.focusUntilDeath===true?t('Av Emri · Hedef ölünceye kadar odaklan','Hunt Order · Focus until the target dies'):t('Av Emri · Sonraki saldırıda hedefe odaklan · Sonraki tur sonuna kadar','Hunt Order · Focus target on the next attack · Through next round');
@@ -30,6 +31,7 @@ export function describeBattleEvent(event, {english=false, names=new Map()}={}) 
  else if(action==='rage')effect=t('Öfke · Saldırı','Rage · Attack')+' '+amount;
  else if(action.startsWith('commander-attack-'))effect=t('Komutan saldırısı','Commander attack')+' · '+amount+' '+t('toplam hasar','total damage');
  else effect=t('Yetenek etkisi','Ability effect');
+ if(action==='commander-attack-ultimate'&&e.impacts?.some(impact=>impact.kind==='hunt-buff'&&impact.nextAttack===true&&impact.value===20))effect+=' · '+t('Kullanım anında yaşayan her müttefike sonraki tek saldırı için +%20 saldırı','Every ally alive when cast gains +20% attack for its next attack only');
  const guardedAlly=action==='commander-defense-ultimate'?e.impacts?.find(impact=>impact.kind==='guard'&&impact.immortalRounds===2):null;
  if(guardedAlly)effect+=' → '+name(guardedAlly.target);
  if(action.startsWith('commander-')&&action!=='commander-hit')effect=t(action.endsWith('-ultimate')?'Nihai beceri':'Normal beceri',action.endsWith('-ultimate')?'Ultimate ability':'Normal ability')+' · '+effect;
