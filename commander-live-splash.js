@@ -14,10 +14,10 @@ export function applyServerSplashAction(combat,{side,actorId,primaryTargetId,pri
  if(!splashRaw)throw Error('No splash effect');
  const events=[],killed=[];
  for(const target of next[1-side].filter(u=>u!==primary&&u.hp>0)){
-  const {damage,absorbed,guardTriggered,arcaneTransfer}=applyHeroDamage(target,splashRaw,{round,allies:next[1-side]});
+  const {damage,absorbed,guardTriggered,lastStandTriggeredRound,lastStandImmortalUntilRound,arcaneTransfer}=applyHeroDamage(target,splashRaw,{round,allies:next[1-side]});
   actor.damage=(actor.damage||0)+damage;
   if(target.hp===0){actor.kills=(actor.kills||0)+1;killed.push(target.id);}
-  events.push({round,side,actor:actorId,action:'splash',target:target.id,value:damage,absorbed,rawDamage:splashRaw,damageType:'splash',...(guardTriggered?{guardTriggered:true}:{}),...(arcaneTransfer?{arcaneTransfer}:{})});
+  events.push({round,side,actor:actorId,action:'splash',target:target.id,value:damage,absorbed,rawDamage:splashRaw,damageType:'splash',...(guardTriggered?{guardTriggered:true}:{}),...(lastStandImmortalUntilRound?{lastStandTriggeredRound,lastStandImmortalUntilRound}:{}),...(arcaneTransfer?{arcaneTransfer}:{})});
  }
  combat.teams=next;
  combat.version++;

@@ -87,6 +87,8 @@ export function chooseBotCast(snapshot,commanderId,difficulty,{now=Date.now(),la
   friendlyTarget=[...allies].filter(u=>(u.attack||0)>0&&(!Number.isInteger(u.arcaneSurgeUntilRound)||u.arcaneSurgeUntilRound<snapshot.round))
    .sort((a,b)=>(b.attack||0)-(a.attack||0)||Number(b.role==='energy')-Number(a.role==='energy')||String(a.id).localeCompare(String(b.id)))[0]??null;
   if(!friendlyTarget)cast='normal';
+ }else if(cast==='ultimate'&&commanderId==='defense'){
+  friendlyTarget=[...allies].sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp||String(a.id).localeCompare(String(b.id)))[0];
  }else if(cast==='ultimate'&&commanderId==='support'){
   if(!snapshot.revivalUsed?.[side])friendlyTarget=[...ownTeam].filter(u=>u.hp===0&&u.maxHp>0)
    .sort((a,b)=>(b.power||0)-(a.power||0)||(b.maxHp||0)-(a.maxHp||0)||String(a.id).localeCompare(String(b.id)))[0]??null;

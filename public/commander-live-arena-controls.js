@@ -12,7 +12,7 @@ export function createLiveArenaCommanderControls({normalButton,ultimateButton,en
   const id=state?.commanderId||'defense',revivalUsed=id==='support'&&(Array.isArray(state?.revivalUsed)?!!state.revivalUsed[state.side??0]:state?.revivalUsed===true);
   const ultimateUsed=(Array.isArray(state?.ultimateUsed)?!!state.ultimateUsed[state.side??0]:state?.ultimateUsed===true)||revivalUsed;
   energyLabel.textContent='Normal: '+energy+'/100 · Ulti: '+(ultimateUsed?'Kullanıldı':ultimateEnergy+'/100');
-  const targetAvailable=!['attack','magic','support'].includes(id)||state?.ultimateTargetAvailable===true;
+  const targetAvailable=!['attack','defense','magic','support'].includes(id)||state?.ultimateTargetAvailable===true;
   ultimateButton.disabled=pending||!!state?.finished||ultimateEnergy<getCommanderAbilityCost(id,'ultimate')||effectLockMs>0||state?.canUseUltimate===false||ultimateUsed||!targetAvailable;
   const ready=!ultimateButton.disabled;ultimateButton.classList?.toggle('commander-ultimate-ready',ready);
   normalButton.textContent='Normal · '+getCommanderAbilityCost(id,'normal');ultimateButton.textContent=commanderUltimateName(id)+' · '+(ultimateUsed?'Kullanıldı':getCommanderAbilityCost(id,'ultimate')+(ready?' · Hazır':''));ultimateButton.title=commanderUltimateDescription(id);

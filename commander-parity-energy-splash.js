@@ -22,10 +22,10 @@ export function stepParityEnergySplash(combat,{side,actorId,round=combat?.round,
  const raw=calculateHeroRawDamage({unit:actor,target,special:true,critical,guarded,weakened,round});
  const events=[],dead=[];
  function hit(unit,amount,action){
-  const {damage,absorbed,guardTriggered,arcaneTransfer}=applyHeroDamage(unit,amount,{round,allies:enemies});
+  const {damage,absorbed,guardTriggered,lastStandTriggeredRound,lastStandImmortalUntilRound,arcaneTransfer}=applyHeroDamage(unit,amount,{round,allies:enemies});
   actor.damage=(actor.damage||0)+damage;
   if(unit.hp===0){actor.kills=(actor.kills||0)+1;dead.push(unit.id);}
-  events.push({round,side,actor:actorId,action,target:unit.id,value:damage,absorbed,rawDamage:amount,damageType:action==='splash'?'splash':'special',...(guardTriggered?{guardTriggered:true}:{}),...(arcaneTransfer?{arcaneTransfer}:{}),...(action==='special'?{critical}:{})});
+  events.push({round,side,actor:actorId,action,target:unit.id,value:damage,absorbed,rawDamage:amount,damageType:action==='splash'?'splash':'special',...(guardTriggered?{guardTriggered:true}:{}),...(lastStandImmortalUntilRound?{lastStandTriggeredRound,lastStandImmortalUntilRound}:{}),...(arcaneTransfer?{arcaneTransfer}:{}),...(action==='special'?{critical}:{})});
  }
  // Legacy engine applies splash before recording the primary event, but the
  // primary damage and shield changes themselves happen first.

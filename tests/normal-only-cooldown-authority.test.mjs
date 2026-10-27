@@ -27,7 +27,7 @@ for(const kind of ['magic','support'])test(`${kind}: ultimate retry/conflict pre
 });
 test('opponent global effect lock remains shared while normal timer and rematch reset stay independent',()=>{
  const f=fixture();f.normal();f.cast('ultimate',1200,['a0']);
- const other=now=>f.registry.cast({matchKey:f.matchKey,token:'token-b',side:0,ability:'ultimate',requestId:'opponent_ultimate',now});
+ const other=now=>f.registry.cast({matchKey:f.matchKey,token:'token-b',side:0,ability:'ultimate',requestId:'opponent_ultimate',targetIds:['b0'],now});
  const before=structuredClone(f.combat);assert.throws(()=>other(2399),/efekti/);assert.deepEqual(f.combat,before);other(2400);
  assert.deepEqual(f.combat.abilities.cooldownUntil,[5000,0]);assert.deepEqual(f.combat.abilities.ultimateUsed,[true,true]);
  assert.equal(f.registry.snapshot({matchKey:f.matchKey,token:'token-b',now:3599}).abilities[1].canUseNormal,false);

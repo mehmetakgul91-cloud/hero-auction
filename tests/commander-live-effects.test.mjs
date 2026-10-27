@@ -12,7 +12,7 @@ test('attack deals damage to enemy only, preserving input',()=>{
  assert.ok(out.log.some(e=>e.action==='commander-hit'));
 });
 test('defense adds shields only to allies',()=>{
- const out=applyLiveCommanderEffect(teams(),{side:0,ability:'ultimate',commanderId:'defense'});
+ const out=applyLiveCommanderEffect(teams(),{side:0,ability:'ultimate',commanderId:'defense',targetIds:['0']});
  assert.ok(out.teams[0].every(u=>u.shield>0));
  assert.ok(out.teams[1].every(u=>u.shield===0));
 });
@@ -57,9 +57,9 @@ test('healing impact records only the injured recipients actually healed',()=>{
 });
 test('shield impact records exclude dead heroes and report gained shield, not total shield',()=>{
  const input=teams();input[1][0].hp=0;input[1][1].shield=100;
- const out=applyLiveCommanderEffect(input,{side:1,ability:'ultimate',commanderId:'defense'});
+ const out=applyLiveCommanderEffect(input,{side:1,ability:'ultimate',commanderId:'defense',targetIds:['1']});
  const shields=out.log.at(-1).impacts.filter(e=>e.kind==='shield'),guards=out.log.at(-1).impacts.filter(e=>e.kind==='guard');
- assert.equal(shields.length,4);assert.deepEqual(guards,[{target:'1',kind:'guard',value:1}]);
+ assert.equal(shields.length,4);assert.deepEqual(guards,[{target:'1',kind:'guard',value:1,immortalRounds:2}]);
  for(const impact of shields){assert.equal(impact.kind,'shield');assert.equal(impact.value,20);assert.notEqual(impact.target,'0');}
  assert.equal(out.teams[1][1].shield,120);
 });

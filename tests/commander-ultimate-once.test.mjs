@@ -4,7 +4,7 @@ import {createLiveCommanderAbilities,viewLiveCommanderAbilities,castLiveCommande
 import {createLiveCommanderCombat,castLiveCommanderCombat,viewLiveCommanderCombat} from '../commander-live-combat.js';
 import {chooseBotCast} from '../bot-strategy.js';
 const make=kind=>createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'once-match',energy:[100,100],now:0}),teams:[[0,1,2].map(i=>({id:'a'+i,hp:i===2?0:80,maxHp:100,attack:40,defense:20,shield:0,power:80})),[{id:'b0',hp:1000,maxHp:1000,attack:30,defense:20,shield:0}]],commanders:[{commanderId:kind},{commanderId:'defense'}]});
-const cast=(c,kind,extra={})=>castLiveCommanderCombat(c,{side:0,ability:'ultimate',requestId:'ultimate_001',matchKey:'once-match',now:1000,...(kind==='magic'?{targetIds:['a0']}:kind==='support'?{targetIds:['a2']}:kind==='attack'?{targetIds:['b0']}:{}),...extra});
+const cast=(c,kind,extra={})=>castLiveCommanderCombat(c,{side:0,ability:'ultimate',requestId:'ultimate_001',matchKey:'once-match',now:1000,...(['magic','defense'].includes(kind)?{targetIds:['a0']}:kind==='support'?{targetIds:['a2']}:kind==='attack'?{targetIds:['b0']}:{}),...extra});
 for(const kind of ['attack','defense','magic','support'])test(`${kind}: one successful ultimate, duplicates safe, normal repeats, fresh rematch resets`,()=>{
  const c=make(kind);cast(c,kind);assert.deepEqual(c.ultimateUsed,[true,false]);assert.deepEqual(viewLiveCommanderCombat(c).ultimateUsed,[true,false]);
  const snapshot=viewLiveCommanderCombat(c);snapshot.ultimateUsed[0]=false;assert.equal(c.ultimateUsed[0],true);
@@ -18,7 +18,7 @@ for(const kind of ['attack','defense','magic','support'])test(`${kind}: one succ
  assert.equal(c.abilities.energy[0],20);assert.deepEqual(make(kind).ultimateUsed,[false,false]);
 });
 test('invalid target and insufficient energy do not consume ultimate or mutate effects',()=>{
- for(const kind of ['magic','support']){const c=make(kind),before=viewLiveCommanderCombat(c);assert.throws(()=>cast(c,kind,{targetIds:['missing']}));assert.deepEqual(viewLiveCommanderCombat(c),before);assert.equal(c.abilities.energy[0],100);cast(c,kind);}
+ for(const kind of ['defense','magic','support']){const c=make(kind),before=viewLiveCommanderCombat(c);assert.throws(()=>cast(c,kind,{targetIds:['missing']}));assert.deepEqual(viewLiveCommanderCombat(c),before);assert.equal(c.abilities.energy[0],100);cast(c,kind);}
  for(const kind of ['attack','defense','magic','support']){const c=make(kind);c.abilities.ultimateEnergy[0]=0;const before=viewLiveCommanderCombat(c);assert.throws(()=>cast(c,kind),/energy/);assert.deepEqual(viewLiveCommanderCombat(c),before);assert.deepEqual(c.ultimateUsed,[false,false]);}
 });
 test('low-level authoritative ability gate persists across views, is per-side and duplicate-safe',()=>{
@@ -35,7 +35,7 @@ test('legacy simulation records per-side usage, rejects second ultimate and rese
  const team=prefix=>Array.from({length:5},(_,i)=>({id:prefix+i,power:100,role:'tank',lane:'front',passive:{effect:'regen',value:1}}));
  for(const kind of ['attack','defense','magic']){
   const opts={seed:'ultimate-once',maxRounds:15,commanders:[{commanderId:kind,levels:{attack:40,defense:40,magic:40,support:40}},{commanderId:'defense',levels:{attack:0,defense:0,magic:0,support:0}}]};
-  const first={side:0,round:4,ability:'ultimate',...(kind==='magic'?{targetIds:['a0']}:kind==='attack'?{targetIds:['b0']}:{})};
+  const first={side:0,round:4,ability:'ultimate',...(['magic','defense'].includes(kind)?{targetIds:['a0']}:kind==='attack'?{targetIds:['b0']}:{})};
   const one=simulateBattle(team('a'),team('b'),{...opts,commanderActions:[first]});assert.deepEqual(one.ultimateUsed,[true,false]);
   assert.throws(()=>simulateBattle(team('a'),team('b'),{...opts,commanderActions:[first,{...first,round:9}]}),/already used/);
   assert.deepEqual(simulateBattle(team('a'),team('b'),{...opts,commanderActions:[]}).ultimateUsed,[false,false]);

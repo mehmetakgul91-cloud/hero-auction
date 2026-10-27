@@ -26,10 +26,10 @@ export function stepParityDamageSpecial(combat,{side,actorId,round=combat?.round
  const raw=calculateHeroRawDamage({unit:actor,target,skill,special:true,critical,guarded,weakened,round});
  const events=[],deaths=[];
  function hit(victim,amount,action,isSecondary=false){
-  const {damage,absorbed,guardTriggered,arcaneTransfer}=applyHeroDamage(victim,amount,{round,allies:enemies});
+  const {damage,absorbed,guardTriggered,lastStandTriggeredRound,lastStandImmortalUntilRound,arcaneTransfer}=applyHeroDamage(victim,amount,{round,allies:enemies});
   actor.damage=(actor.damage||0)+damage;
   if(victim.hp===0){actor.kills=(actor.kills||0)+1;deaths.push(victim.id)}
-  events.push({round,side,actor:actorId,action,target:victim.id,value:damage,absorbed,rawDamage:amount,damageType:isSecondary?'splash':'special',...(guardTriggered?{guardTriggered:true}:{}),...(arcaneTransfer?{arcaneTransfer}:{}),...(isSecondary?{}:{critical})});
+  events.push({round,side,actor:actorId,action,target:victim.id,value:damage,absorbed,rawDamage:amount,damageType:isSecondary?'splash':'special',...(guardTriggered?{guardTriggered:true}:{}),...(lastStandImmortalUntilRound?{lastStandTriggeredRound,lastStandImmortalUntilRound}:{}),...(arcaneTransfer?{arcaneTransfer}:{}),...(isSecondary?{}:{critical})});
  }
  hit(target,raw,skill.name||'special');
  if(skill.effect==='splash'||actor.role==='energy'){

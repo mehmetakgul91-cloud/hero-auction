@@ -7,10 +7,10 @@ export function applyEnergySpecialSplash({actor,enemies,target,raw,round,side,ev
  const amount=calculateSplashRawDamage(raw,{skill:actor.active,role:actor.role,special:true});
  let deaths=0;
  for(const victim of enemies.filter(unit=>unit!==target&&unit.hp>0)){
-  const {damage,absorbed,guardTriggered,arcaneTransfer}=applyHeroDamage(victim,amount,{round,allies:enemies});
+  const {damage,absorbed,guardTriggered,lastStandTriggeredRound,lastStandImmortalUntilRound,arcaneTransfer}=applyHeroDamage(victim,amount,{round,allies:enemies});
   actor.damage=(actor.damage||0)+damage;
   if(victim.hp===0){actor.kills=(actor.kills||0)+1;deaths++;}
-  events.push({round,side,actor:actor.id,action:'splash',target:victim.id,value:damage,absorbed,rawDamage:amount,damageType:'splash',...(guardTriggered?{guardTriggered:true}:{}),...(arcaneTransfer?{arcaneTransfer}:{})});
+  events.push({round,side,actor:actor.id,action:'splash',target:victim.id,value:damage,absorbed,rawDamage:amount,damageType:'splash',...(guardTriggered?{guardTriggered:true}:{}),...(lastStandImmortalUntilRound?{lastStandTriggeredRound,lastStandImmortalUntilRound}:{}),...(arcaneTransfer?{arcaneTransfer}:{})});
  }
  return deaths;
 }

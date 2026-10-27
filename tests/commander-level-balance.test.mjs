@@ -16,7 +16,7 @@ for(const kind of ['attack','defense','magic','support'])test(kind+' normal foll
  assert.equal(upgraded.log.at(-1).abilityBonusPercent,40);
 });
 test('defense ultimate retains level-scaled shields and one fixed lethal guard',()=>{
- const cast=level=>applyLiveCommanderEffect(teams(),{side:0,ability:'ultimate',commanderId:'defense',commanderProfile:profile('defense',level)});
+ const cast=level=>applyLiveCommanderEffect(teams(),{side:0,ability:'ultimate',commanderId:'defense',commanderProfile:profile('defense',level),targetIds:['0-0']});
  const base=cast(0),upgraded=cast(40);
  assert.equal(upgraded.log.at(-1).value,base.log.at(-1).value*1.4);
  for(const result of [base,upgraded])assert.equal(result.log.at(-1).impacts.filter(i=>i.kind==='guard').length,1);

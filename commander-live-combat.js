@@ -74,9 +74,9 @@ export function applyServerHeroAction(combat,{side,actorId,targetId,action='atta
  const target=next[targetSide].find(u=>u.id===targetId&&u.hp>0);
  if(!actor||!target)throw Error('Invalid living actor or target');
  if(action==='attack'){const skipped=applyServerStunSkip(combat,{side,actorId,round});if(skipped)return skipped;}
- let applied=0,absorbed=0,guardTriggered=false,arcaneTransfer;
+ let applied=0,absorbed=0,guardTriggered=false,lastStandTriggeredRound,lastStandImmortalUntilRound,arcaneTransfer;
  if(action==='attack'){
-  ({damage:applied,absorbed,guardTriggered,arcaneTransfer}=applyHeroDamage(target,value,{round,allies:next[targetSide]}));
+  ({damage:applied,absorbed,guardTriggered,lastStandTriggeredRound,lastStandImmortalUntilRound,arcaneTransfer}=applyHeroDamage(target,value,{round,allies:next[targetSide]}));
   actor.damage=(actor.damage||0)+applied;
   if(target.hp===0)actor.kills=(actor.kills||0)+1;
  }else if(action==='shield'){
@@ -95,7 +95,7 @@ export function applyServerHeroAction(combat,{side,actorId,targetId,action='atta
  if(action==='attack')consumeCommanderWeaken(actor);
  combat.teams=next;
  combat.version++;
- const event={round,side,actor:actorId,action,target:targetId,value:applied,absorbed,version:combat.version,...(guardTriggered?{guardTriggered:true}:{}),...(arcaneTransfer?{arcaneTransfer}:{})};
+ const event={round,side,actor:actorId,action,target:targetId,value:applied,absorbed,version:combat.version,...(guardTriggered?{guardTriggered:true}:{}),...(lastStandImmortalUntilRound?{lastStandTriggeredRound,lastStandImmortalUntilRound}:{}),...(arcaneTransfer?{arcaneTransfer}:{})};
  if(applyThorns&&action==='attack'&&actor.passive?.effect==='thorns')event.thornsShield=Math.floor(actor.defense*actor.passive.value);
  combat.events.push(event);
  // Preserve the existing per-casualty energy bonus once, per affected side.

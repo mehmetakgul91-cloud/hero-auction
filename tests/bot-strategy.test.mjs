@@ -81,7 +81,7 @@ test('hard healing waits for damage and emergency beats energy saving; shield av
  s.abilities[1].canUseUltimate=true;s.abilities[1].energy=getCommanderAbilityCost('defense','ultimate');
  assert.equal(chooseBotCast(s,'defense','hard',options),null);
  s.teams[1][0].shield=0;
- assert.deepEqual(chooseBotCast(s,'defense','hard',options),{ability:'ultimate'});
+ assert.deepEqual(chooseBotCast(s,'defense','hard',options),{ability:'ultimate',targetIds:['ally']});
 });
 
 test('hard magic targets strongest unstunned enemy and executes legally in live combat',()=>{

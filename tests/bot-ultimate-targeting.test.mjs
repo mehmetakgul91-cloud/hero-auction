@@ -32,7 +32,7 @@ test('active attack focus prevents waste; expired or dead-target marks do not',(
  s.teams[1][0].commanderFocusUntilRound=5;s.teams[1][0].commanderFocusTargetId='already-dead';assert.deepEqual(chooseBotCast(s,'attack','hard',options),{ability:'ultimate',targetIds:['enemy']});
 });
 test('active last stand does not invalidate useful defense shielding',()=>{
- const s=snapshot();s.teams[1][0].lastStandReady=true;s.teams[1][0].lastStandUntilRound=4;assert.deepEqual(chooseBotCast(s,'defense','hard',options),{ability:'ultimate'});
+ const s=snapshot();s.teams[1][0].lastStandReady=true;s.teams[1][0].lastStandUntilRound=4;assert.deepEqual(chooseBotCast(s,'defense','hard',options),{ability:'ultimate',targetIds:['ally-a']});
 });
 test('uses shared per-archetype costs and authoritative cast flags rather than hardcoded100',()=>{
  for(const id of ['attack','defense','magic','support']){

@@ -1,7 +1,7 @@
 import {commanderUltimateDescription} from '../public/commander-ultimate-presentation.js';
 import {describeBattleEvent} from '../public/battle-event-text.js';
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {runInNewContext} from 'node:vm';
-import {getCommanderAbilityCost} from '../public/commander-ability-rules.js';import {trainingCommanderResources,trainingCommanderEnemyTargets} from '../public/commander-training-resources.js';
+import {getCommanderAbilityCost} from '../public/commander-ability-rules.js';import {trainingCommanderResources,trainingCommanderEnemyTargets,trainingCommanderFriendlyTargets} from '../public/commander-training-resources.js';
 test('training targets use only authoritative living enemy snapshots, never approximate HP',()=>{
  const result={teams:[[{id:'ally',name:'Ally'}],[{id:'high',name:'High'},{id:'low',name:'Low'},{id:'dead',name:'Dead'}]],commanderResourcesByRound:[{round:4,targets:[[{id:'ally',hp:100}],[{id:'high',hp:90},{id:'low',hp:1},{id:'dead',hp:0},{id:'forged',hp:100}]]}]};
  assert.deepEqual(trainingCommanderEnemyTargets(result,4),[{id:'high',name:'High'},{id:'low',name:'Low'}]);assert.deepEqual(trainingCommanderEnemyTargets(result,5),[]);assert.deepEqual(trainingCommanderEnemyTargets(null,1),[]);
@@ -10,7 +10,7 @@ test('training Av Emri requires explicit dropdown choice, cancels without fee, c
  const source=readFileSync(new URL('../public/commander-training.html',import.meta.url),'utf8').split('<script type="module">')[1].split('</script>')[0].replace(/^import .*;\n/gm,'');
  class Node{style={};value='attack';disabled=false;textContent='';hidden=false;replaceChildren(){}append(){}}
  const nodes=new Map(),requests=[],document={getElementById:id=>{if(!nodes.has(id))nodes.set(id,new Node());return nodes.get(id)},createElement:()=>new Node()};
- runInNewContext(source,{document,getCommanderAbilityCost,trainingCommanderResources,trainingCommanderEnemyTargets,commanderUltimateDescription,describeBattleEvent,fetch:(url,options)=>new Promise(resolve=>requests.push({url,options,resolve}))});
+ runInNewContext(source,{document,getCommanderAbilityCost,trainingCommanderResources,trainingCommanderEnemyTargets,trainingCommanderFriendlyTargets,commanderUltimateDescription,describeBattleEvent,fetch:(url,options)=>new Promise(resolve=>requests.push({url,options,resolve}))});
  const data=()=>({rounds:15,teams:[[],[{id:'high',name:'High',maxHp:100},{id:'low',name:'Low',maxHp:100}]],log:[],commanderResourcesByRound:Array.from({length:15},(_,i)=>({round:i+1,energy:[100,100],ultimateEnergy:[100,100],ultimateUsed:[false,false],targets:[[],[{id:'high',hp:i<5?90:0},{id:'low',hp:1}]]}))});
  const reply=async(index,value,ok=true)=>{requests[index].resolve({ok,json:async()=>value});await new Promise(r=>setImmediate(r))};await reply(0,data());
  assert.equal(nodes.get('ultimate').disabled,true);assert.equal(nodes.get('focus-target').value,'');assert.equal(nodes.get('focus-target-field').hidden,false);
@@ -26,7 +26,7 @@ for(const english of [false,true])test(`training shares Hunt Order description, 
  const nodes=new Map(),document={documentElement:{lang:english?'en':'tr'},getElementById:id=>{if(!nodes.has(id))nodes.set(id,new Node());return nodes.get(id)},createElement:()=>new Node()};
  const event={round:1,side:0,actor:'commander:0',action:'commander-attack-ultimate',value:1,focusUntilDeath:true};
  const data={rounds:15,teams:[[],[]],log:[event],commanderResourcesByRound:[{round:1,energy:[100,100],ultimateEnergy:[25,100],ultimateUsed:[true,false],targets:[[],[]]}]};
- runInNewContext(source,{document,getCommanderAbilityCost,trainingCommanderResources,trainingCommanderEnemyTargets,commanderUltimateDescription,describeBattleEvent,fetch:async()=>({ok:true,json:async()=>data})});
+ runInNewContext(source,{document,getCommanderAbilityCost,trainingCommanderResources,trainingCommanderEnemyTargets,trainingCommanderFriendlyTargets,commanderUltimateDescription,describeBattleEvent,fetch:async()=>({ok:true,json:async()=>data})});
  await new Promise(r=>setImmediate(r));
  const expected=commanderUltimateDescription('attack',{english});
  assert.equal(nodes.get('ultimate-description').textContent,expected);assert.equal(nodes.get('ultimate').title,expected);

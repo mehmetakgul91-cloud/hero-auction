@@ -21,7 +21,7 @@ export function stepParityShieldDrain(combat,{side,actorId,round=combat?.round,c
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
  const weakened=commanderWeakenRate(actor,round);
  const raw=calculateHeroRawDamage({unit:actor,target,skill:actor.active,special:true,critical,guarded,weakened,round});
- const {damage,absorbed,guardTriggered,arcaneTransfer}=applyHeroDamage(target,raw,{round,allies:enemies});
+ const {damage,absorbed,guardTriggered,lastStandTriggeredRound,lastStandImmortalUntilRound,arcaneTransfer}=applyHeroDamage(target,raw,{round,allies:enemies});
  actor.damage=(actor.damage||0)+damage;
  const killed=target.hp===0;
  if(killed)actor.kills=(actor.kills||0)+1;
@@ -40,7 +40,7 @@ export function stepParityShieldDrain(combat,{side,actorId,round=combat?.round,c
   ally.shield=(ally.shield||0)+amount;
   events.push({round,side,actor:actorId,action:'tank-front-shield',target:ally.id,value:amount});
  }
- events.push({round,side,actor:actorId,action:actor.active.name||'special',target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:'special',...(guardTriggered?{guardTriggered:true}:{}),...(arcaneTransfer?{arcaneTransfer}:{})});
+ events.push({round,side,actor:actorId,action:actor.active.name||'special',target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:'special',...(guardTriggered?{guardTriggered:true}:{}),...(lastStandImmortalUntilRound?{lastStandTriggeredRound,lastStandImmortalUntilRound}:{}),...(arcaneTransfer?{arcaneTransfer}:{})});
  if(actor.role==='tank'){
   const amount=Math.round(actor.defense*abilityValue(actor.active,'tankShieldRate'));
   actor.shield=(actor.shield||0)+amount;

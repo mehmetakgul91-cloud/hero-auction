@@ -31,7 +31,7 @@ for(const kind of ['defense','support','magic'])test(kind+' normal preserves its
 });
 test('defense ultimate preserves shield scaling plus one guard at every level and survivor count',()=>{
  for(const level of [0,1,10,20,40])for(const side of [0,1])for(const survivors of [5,2,1]){
-  const c=combat('defense',level);for(let i=survivors;i<5;i++)c.teams[side][i].hp=0;const before=structuredClone(c.teams),rate=Number((.2*(1+level*.01)).toFixed(4));const result=cast(c,'ultimate',side),summary=result.events.at(-1),expected=Math.round(survivors*1000*rate);
+  const c=combat('defense',level);for(let i=survivors;i<5;i++)c.teams[side][i].hp=0;const before=structuredClone(c.teams),rate=Number((.2*(1+level*.01)).toFixed(4));const result=cast(c,'ultimate',side,[side+'-0']),summary=result.events.at(-1),expected=Math.round(survivors*1000*rate);
   assert.equal(c.abilities.ultimateEnergy[side],15);assert.equal(summary.value,expected);assert.equal(summary.impacts.filter(u=>u.kind==='shield').reduce((sum,u)=>sum+u.value,0),expected);assert.equal(summary.impacts.filter(u=>u.kind==='guard').length,1);assert.deepEqual(c.teams[side].filter(u=>u.hp===0),before[side].filter(u=>u.hp===0));assert.deepEqual(c.teams[1-side],before[1-side]);assert.equal(c.teams[side][0].lastStandPersistent,true);assert.equal(c.teams[side][0].lastStandUntilRound,undefined);
  }
 });
@@ -48,7 +48,7 @@ test('support ultimate revives one chosen casualty at fixed40 percent without le
  }
 });
 test('level-one defense ultimate keeps its extra shield points instead of dropping the remainder',()=>{
- const c=combat('defense',1);for(const u of c.teams[0]){u.maxHp=100;u.hp=50;u.shield=7;}const result=cast(c,'ultimate');assert.equal(result.events.at(-1).value,101);assert.deepEqual(c.teams[0].map(u=>u.shield),[28,27,27,27,27]);
+ const c=combat('defense',1);for(const u of c.teams[0]){u.maxHp=100;u.hp=50;u.shield=7;}const result=cast(c,'ultimate',0,['0-0']);assert.equal(result.events.at(-1).value,101);assert.deepEqual(c.teams[0].map(u=>u.shield),[28,27,27,27,27]);
 });
 test('support normal heals a one-point wound, but rejects healthy/fallen-only targets without charging',()=>{
  for(const level of [0,1,10,20,40]){
@@ -78,6 +78,6 @@ test('magic ultimate doubles selected ally damage for three rounds at all levels
 });
 test('legacy defense preserves the full shield budget too',()=>{
  const team=prefix=>Array.from({length:5},(_,i)=>({id:prefix+i,power:100,role:'tank',lane:'front',passive:{effect:'regen',value:1}}));
- const result=simulateBattle(team('a'),team('b'),{seed:'shield-scaling',maxRounds:7,commanders:[profile('defense',1),profile('defense')],commanderActions:[{side:0,round:7,ability:'ultimate'}]});
+ const result=simulateBattle(team('a'),team('b'),{seed:'shield-scaling',maxRounds:7,commanders:[profile('defense',1),profile('defense')],commanderActions:[{side:0,round:7,ability:'ultimate',targetIds:['a0']}]});
  assert.equal(result.log.find(e=>e.action==='commander-defense-ultimate').value,182);
 });

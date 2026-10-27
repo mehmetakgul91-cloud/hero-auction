@@ -8,12 +8,12 @@ export function mountLiveArenaCommanderBridge({normalButton,ultimateButton,energ
  const readState=()=>{
   const state=snapshot?.abilities?.[side];
   const selectorAvailable=typeof transport.selectCommanderTargets==='function'||commanderId==='magic'&&typeof transport.selectMagicTargets==='function';
-  const ultimateTargetAvailable=commanderId==='attack'?selectorAvailable&&(snapshot?.teams?.[1-side]||[]).some(hero=>hero.hp>0):commanderId==='support'?selectorAvailable&&(snapshot?.teams?.[side]||[]).some(hero=>hero.hp<=0):commanderId==='magic'?selectorAvailable&&(snapshot?.teams?.[side]||[]).some(hero=>hero.hp>0&&!(Number.isInteger(hero.arcaneSurgeUntilRound)&&hero.arcaneSurgeUntilRound>=snapshot.round)):true;
+  const ultimateTargetAvailable=commanderId==='attack'?selectorAvailable&&(snapshot?.teams?.[1-side]||[]).some(hero=>hero.hp>0):commanderId==='defense'?selectorAvailable&&(snapshot?.teams?.[side]||[]).some(hero=>hero.hp>0):commanderId==='support'?selectorAvailable&&(snapshot?.teams?.[side]||[]).some(hero=>hero.hp<=0):commanderId==='magic'?selectorAvailable&&(snapshot?.teams?.[side]||[]).some(hero=>hero.hp>0&&!(Number.isInteger(hero.arcaneSurgeUntilRound)&&hero.arcaneSurgeUntilRound>=snapshot.round)):true;
   return state?{...state,commanderId,side,ultimateTargetAvailable,ultimateUsed:snapshot.ultimateUsed??state.ultimateUsed,revivalUsed:snapshot.revivalUsed??state.revivalUsed}:{energy:0,ultimateEnergy:0,cooldownMs:0,finished:true};
  };
  const controls=createLiveArenaCommanderControls({
   normalButton,ultimateButton,energyLabel,statusLabel,readState,
-  onMagicTarget:['attack','magic','support'].includes(commanderId)?async ability=>{
+  onMagicTarget:['attack','defense','magic','support'].includes(commanderId)?async ability=>{
    const mode=commanderTargetMode(commanderId,ability);if(!mode)return false;
    const selector=transport.selectCommanderTargets??(commanderId==='magic'?transport.selectMagicTargets:null);
    if(typeof selector!=='function')throw Error('Commander target selector unavailable');
