@@ -9,11 +9,11 @@ export const COMMANDER_BRANCHES=Object.freeze([
  {id:'magic',icon:'✦',name:['Arkane Güç','Arcane Power'],role:['Enerji','Energy'],effect:['Saldırı artışı','Attack increase'],basis:['Enerji kahramanlarının saldırısı bu oranda artar.','Energy heroes gain this percentage of their attack.']},
  {id:'support',icon:'❧',name:['Yaşam Enerjisi','Life Energy'],role:['Destek','Support'],effect:['Azami can · 2× temel güç oranı','Max health · 2× base power ratio'],basis:['Temel kahraman gücünün 2 katı × bu oran, azami cana eklenir.','Twice the base hero power × this ratio is added to max health.']}
 ]);
-const normalNames={attack:['Güçlü Darbe','Power Strike'],defense:['Koruyucu Kalkan','Protective Shield'],magic:['Zayıflatma','Weaken'],support:['Şifa Dokunuşu','Healing Touch']};
+const normalNames={attack:['Güçlü Darbe','Power Strike'],defense:['Koruyucu Kalkan','Protective Shield'],magic:['Sersemletme','Stun'],support:['Şifa Dokunuşu','Healing Touch']};
 const normalDetails={
  attack:['Savaş başındaki takım saldırısının bu oranı, toplam hasar olarak yaşayan düşmanlara bölünür.','This share of the team’s starting attack is divided as total damage among living enemies.'],
  defense:['Yaşayan takımın azami canının bu oranı, toplam kalkan olarak paylaşılır.','This share of the living team’s max health is distributed as a total shield.'],
- magic:['Seçilen rakibin bir sonraki saldırısını zayıflatır; aynı saldırının alan vuruşlarına da uygulanır. Şifa ve kalkan değişmez.','Weakens the selected enemy’s next attack, including its area hits. Healing and shields are unchanged.'],
+ magic:['Seçilen yaşayan rakibi sersemletir; bir sonraki saldırısı ve o saldırının tüm alan vuruşları atlanır. Tur değişiminde bitmez. Şifa ve kalkan eylemleri etkilenmez. Birikmez; her seviyede 1 saldırı atlanır.','Stuns the selected living enemy; skips its next attack and all area hits of that attack. Persists across rounds. Healing and shield actions are unaffected. Does not stack; skips 1 attack at every level.'],
  support:['Eksik canın bu oranını iyileştirir. Can oranı en düşük kahraman önceliklidir.','Heals this percentage of missing health, prioritizing the hero with the lowest health ratio.']
 };
 const number=(value,english)=>value.toLocaleString(english?'en-US':'tr-TR',{maximumFractionDigits:2});
@@ -64,11 +64,12 @@ export function renderCommanderSkills(root,profile,{english=false,document=root.
   const top=el('div','cp-skill-top');
   top.append(el('span','',ultimate?pick(['NİHAİ BECERİ','ULTIMATE']):pick(['NORMAL BECERİ','NORMAL ABILITY'])),el('b','',getCommanderAbilityCost(id,ability)+' '+(ultimate?pick(['ULTİ DOLUMU','ULTIMATE CHARGE']):pick(['NORMAL ENERJİ','NORMAL ENERGY']))));
   const main=el('div','cp-skill-main');
-  if(!ultimate||id==='defense')main.append(el('strong','',percent((ultimate?stats.ultimateRate:stats.normalRate)*100,english)));
+  if(!ultimate&&id==='magic')main.append(el('strong','',pick(['1 SALDIRI','1 ATTACK'])));
+  else if(!ultimate||id==='defense')main.append(el('strong','',percent((ultimate?stats.ultimateRate:stats.normalRate)*100,english)));
   main.append(el('span','',ultimate?commanderUltimateName(id,{english}):pick(normalNames[id])));
   card.append(top,main);
   if(ultimate){
-   const summaries={attack:['Hedef ölünceye kadar takımın saldırıları seçilen rakibe odaklanır.','All allied attacks focus the selected enemy until the target dies.'],defense:['Takım kalkanı + en düşük can oranındaki müttefike ölümcül darbede 1 can koruması.','Team shield + the lowest-health-ratio ally survives a lethal hit at 1 health.'],magic:['Seçilen müttefike 3 hareket turu ek vuruş gücü.','Extra hit power for the selected ally for 3 action rounds.'],support:['Seçilen düşen müttefik %40 azami canla döner.','The selected fallen ally returns at 40% max health.']};
+   const summaries={attack:['Hedef ölünceye kadar takımın saldırıları seçilen rakibe odaklanır.','All allied attacks focus the selected enemy until the target dies.'],defense:['Takım kalkanı + seçilen müttefike ölümcül darbeden sonra kalan tur ve sonraki 2 tam tur 1 can koruması.','Team shield + the selected ally stays at 1 health or above after a lethal hit, for the rest of that round and the next 2 full rounds.'],magic:['Seçilen müttefike 3 hareket turu ek vuruş gücü.','Extra hit power for the selected ally for 3 action rounds.'],support:['Seçilen düşen müttefik %40 azami canla döner.','The selected fallen ally returns at 40% max health.']};
    card.append(el('p','',pick(summaries[id])),el('small','cp-once',pick(['Savaşta 1 kez · ayrı dolum','Once per battle · separate charge'])));
    const details=el('details','cp-skill-details');details.append(el('summary','',pick(['Nasıl çalışır?','How it works'])),el('p','',commanderUltimateDescription(id,{english})));card.append(details);
   }else card.append(el('p','',pick(normalDetails[id])));
@@ -113,12 +114,13 @@ export function renderCommanderDevelopment(root,profile,{selected=profile.comman
  const row=(label,current,next)=>{const line=el('div','cp-preview-row');line.append(el('dt','',label));const value=el('dd','');value.append(el('span','',current));if(!chosen.maxed){const arrow=el('span','cp-arrow','→');arrow.setAttribute('aria-label',pick(['sonraki','next']));value.append(arrow,el('b','',next));}line.append(value);effects.append(line);};
  row(pick({attack:['Saldırı · temel güç','Attack · base power'],defense:['Savunma · temel güç','Defense · base power'],magic:['Saldırı artışı','Attack increase'],support:['Can · 2× temel güç','HP · 2× base power']}[chosen.id]),'+'+pct(chosen.bonus),'+'+pct(chosen.nextBonus));
  if(chosen.primary){
-  row(pick(['Normal beceri etkisi','Normal ability effect']),pct(chosen.stats.normalRate*100),pct(chosen.nextStats.normalRate*100));
+  if(chosen.id==='magic')row(pick(['Sersemletme · sabit etki','Stun · fixed effect']),pick(['1 saldırı atlanır','1 attack skipped']),pick(['1 saldırı atlanır','1 attack skipped']));
+  else row(pick(['Normal beceri etkisi','Normal ability effect']),pct(chosen.stats.normalRate*100),pct(chosen.nextStats.normalRate*100));
   row(pick(['Her dolum / tur','Each pool / round']),'+'+chosen.stats.energyPerRound,'+'+chosen.nextStats.energyPerRound);
   if(chosen.id==='defense')row(pick(['Son Kale · kalkan','Last Bastion · shield']),pct(chosen.stats.ultimateRate*100),pct(chosen.nextStats.ultimateRate*100));
  }
  const explanation=el('details','cp-detail-help');explanation.append(el('summary','',pick(['Etki ayrıntıları','Effect details'])),el('p','cp-basis',pick(chosen.basis)+' '+pick(['Değerler savaşta tam sayıya yuvarlanır.','Values are rounded to whole numbers in battle.'])));
- if(chosen.primary)explanation.append(el('p','cp-fixed-note',chosen.id==='defense'?pick(['Ölümcül darbeden 1 canla kurtulma kuralı değişmez.','The 1-health lethal-hit protection is unchanged.']):pick(['Nihai becerinin hedefi, süresi ve özel etkisi seviyeden bağımsızdır.','The ultimate’s targeting, duration and special effect do not scale with level.'])));
+ if(chosen.primary)explanation.append(el('p','cp-fixed-note',chosen.id==='defense'?pick(['Ölümcül darbede başlayan 1 can koruması kalan tur ve sonraki 2 tam tur sürer; seviyeden bağımsızdır.','The 1-health floor starts on a lethal hit and lasts through the rest of that round and the next 2 full rounds, at every level.']):pick(['Nihai becerinin hedefi, süresi ve özel etkisi seviyeden bağımsızdır.','The ultimate’s targeting, duration and special effect do not scale with level.'])));
  panel.append(effects);
  const button=el('button','cp-upgrade-button');button.type='button';button.dataset.upgrade=chosen.id;
  const blocked={pricing_unavailable:progression?.magicDustEnabled?pick(['GELİŞTİRME FİYATI KULLANILAMIYOR','UPGRADE PRICE UNAVAILABLE']):pick(['ELMAS FİYATI HENÜZ BELİRLENMEDİ','DIAMOND PRICE NOT SET']),insufficient_gold:pick(['ALTIN YETERSİZ','NOT ENOUGH GOLD']),insufficient_diamonds:pick(['ELMAS YETERSİZ','NOT ENOUGH DIAMONDS']),insufficient_magic_dust:pick(['BÜYÜ TOZU YETERSİZ','NOT ENOUGH MAGIC DUST'])};

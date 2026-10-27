@@ -35,3 +35,13 @@ test('early-normal-then-reserve permits one early normal then saves for ultimate
  c.round=3;assert.equal(chooseAuditAction(c,0,a,'early-normal-then-reserve',true),null);
  assert.equal(chooseAuditAction(c,0,{...a,canUseUltimate:true},'early-normal-then-reserve',true,{earlyNormalUsed:true}).ability,'ultimate');
 });
+
+test('defense audit explicitly chooses a living ally by lowest ratio with deterministic ID ties',()=>{
+ const allies=[hero('dead',{hp:0}),hero('b',{hp:100,maxHp:1000}),hero('a',{hp:10,maxHp:100}),hero('healthy')];
+ const combat={round:3,teams:[allies,[hero('enemy')]],commanders:[{commanderId:'defense'},{commanderId:'attack'}],ultimateUsed:[false,false]};
+ const before=structuredClone(combat);
+ assert.deepEqual(chooseAuditAction(combat,0,{canUseNormal:false,canUseUltimate:true},'reserve-ultimate',true),{ability:'ultimate',targetIds:['a']});
+ assert.deepEqual(combat,before);
+ combat.teams.reverse();combat.commanders.reverse();
+ assert.deepEqual(chooseAuditAction(combat,1,{canUseNormal:false,canUseUltimate:true},'reserve-ultimate',true),{ability:'ultimate',targetIds:['a']});
+});

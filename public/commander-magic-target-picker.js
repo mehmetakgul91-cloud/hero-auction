@@ -2,6 +2,7 @@
 export function commanderTargetMode(commanderId,ability){
  if(!['normal','ultimate'].includes(ability))throw Error('Invalid commander selection');
  if(commanderId==='magic')return ability==='normal'?'enemy-alive':'ally-alive';
+ if(commanderId==='defense'&&ability==='ultimate')return 'ally-alive';
  if(commanderId==='attack'&&ability==='ultimate')return 'enemy-alive';
  if(commanderId==='support'&&ability==='ultimate')return 'ally-dead';
  return null;

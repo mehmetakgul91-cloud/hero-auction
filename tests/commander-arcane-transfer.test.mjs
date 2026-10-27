@@ -33,7 +33,10 @@ test('repeated transfers keep original expiry and clear old bearers',()=>{
 test('execute transfers but a last-stand lethal guard prevents transfer until actual death',()=>{
  const {original,high,allies}=setup();grantLastStand(original,1);
  const guarded=applyHeroDamage(original,1,{round:1,executeThreshold:.12,allies});assert.equal(guarded.guardTriggered,true);assert.equal(original.hp,1);assert.equal(high.arcaneSurgeUntilRound,undefined);
- const death=applyHeroDamage(original,0,{round:1,executeThreshold:.12,allies});assert.equal(death.executedDamage,1);assert.equal(original.hp,0);assert.equal(high.arcaneSurgeUntilRound,3);
+ const protectedHit=applyHeroDamage(original,0,{round:1,executeThreshold:.12,allies});assert.equal(protectedHit.executedDamage,0);assert.equal(original.hp,1);assert.equal(high.arcaneSurgeUntilRound,undefined);
+ // The original surge expires while immortality protects its bearer. A later
+ // independent surge may transfer only after true post-protection death.
+ grantArcaneSurge(original,4);const death=applyHeroDamage(original,0,{round:4,executeThreshold:.12,allies});assert.equal(death.executedDamage,1);assert.equal(original.hp,0);assert.equal(high.arcaneSurgeUntilRound,6);
 });
 test('reviving original does not steal back transferred surge',()=>{
  const {original,high,allies}=setup();applyHeroDamage(original,100,{round:1,allies});reviveCommanderAlly(original,2);

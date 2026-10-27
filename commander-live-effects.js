@@ -1,11 +1,10 @@
-import {grantCommanderWeaken} from './commander-weaken-status.js';
+import {grantCommanderStun} from './commander-stun-status.js';
 import {applyHeroDamage,grantLastStand,isLastStandActive} from './battle-hp-damage.js';
 import {commanderAbilityStats} from './public/commander-ability-rules.js';
 import {commanderAttackPower,distributeCommanderAttack} from './commander-attack-damage.js';
 import {commanderShieldAmounts,commanderHealingBudget} from './commander-protection-budget.js';
 import {grantCommanderFocus,expireCommanderFocus} from './battle-commander-focus.js';
 import {grantArcaneSurge,reviveCommanderAlly} from './commander-ultimate-status.js';
-const lowestHealth=units=>[...units].sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp||a.id.localeCompare(b.id))[0];
 function selectedFriendly(allies,targetIds,{dead=false}={}){
  if(!Array.isArray(targetIds)||targetIds.length!==1||typeof targetIds[0]!=='string')throw Error('Select one friendly hero');
  const target=allies.find(u=>u.id===targetIds[0]&&(dead?u.hp===0:u.hp>0));
@@ -29,16 +28,18 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
   const budget=distributeCommanderAttack(attackBasis??commanderAttackPower(next[side]),rate,enemies.length);
   for(const[index,u]of enemies.entries()){
    const hit=applyHeroDamage(u,budget[index],{round,allies:next[1-side]});value+=hit.damage;
-   impacts.push({target:u.id,kind:'damage',value:hit.damage,absorbed:hit.absorbed,...(hit.guardTriggered?{guardTriggered:true}:{}),...(hit.arcaneTransfer?{arcaneTransfer:hit.arcaneTransfer}:{})});
-   log.push({round,side,actor:'commander:'+side,action:'commander-hit',target:u.id,value:hit.damage,absorbed:hit.absorbed,rawDamage:budget[index],damageType:'commander',...(hit.guardTriggered?{guardTriggered:true}:{}),...(hit.arcaneTransfer?{arcaneTransfer:hit.arcaneTransfer}:{})});
+   impacts.push({target:u.id,kind:'damage',value:hit.damage,absorbed:hit.absorbed,...(hit.guardTriggered?{guardTriggered:true}:{}),...(hit.lastStandImmortalUntilRound?{lastStandTriggeredRound:hit.lastStandTriggeredRound,lastStandImmortalUntilRound:hit.lastStandImmortalUntilRound}:{}),...(hit.arcaneTransfer?{arcaneTransfer:hit.arcaneTransfer}:{})});
+   log.push({round,side,actor:'commander:'+side,action:'commander-hit',target:u.id,value:hit.damage,absorbed:hit.absorbed,rawDamage:budget[index],damageType:'commander',...(hit.guardTriggered?{guardTriggered:true}:{}),...(hit.lastStandImmortalUntilRound?{lastStandTriggeredRound:hit.lastStandTriggeredRound,lastStandImmortalUntilRound:hit.lastStandImmortalUntilRound}:{}),...(hit.arcaneTransfer?{arcaneTransfer:hit.arcaneTransfer}:{})});
   }
  }else if(commanderId==='defense'){
+  // Validate the chosen own living ally before preparing any shield effects.
+  const selected=strong?selectedFriendly(next[side],targetIds):null;
   const amounts=commanderShieldAmounts(allies,rate);
   for(const[index,u]of allies.entries()){const each=amounts[index];u.shield=(u.shield||0)+each;value+=each;if(each>0)impacts.push({target:u.id,kind:'shield',value:each});}
   if(strong){
    // Never accumulate several simultaneous death guards or refresh a live one.
    const already=allies.some(u=>isLastStandActive(u,round));
-   if(!already){const target=lowestHealth(allies);if(grantLastStand(target,round))impacts.push({target:target.id,kind:'guard',value:1});}
+   if(!already){if(grantLastStand(selected,round))impacts.push({target:selected.id,kind:'guard',value:1,immortalRounds:2});}
   }
  }else if(commanderId==='support'&&strong){
   if(revivalUsed)throw Error('Revival already used this battle');
@@ -54,8 +55,8 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
   value=target.arcaneSurgeBonusAttack;impacts.push({target:target.id,kind:'buff',value,fromRound:target.arcaneSurgeFromRound,untilRound:target.arcaneSurgeUntilRound});
  }else{
   if(!Array.isArray(targetIds)||targetIds.length!==1||typeof targetIds[0]!=='string'||!enemies.some(u=>u.id===targetIds[0]))throw Error('Invalid magic targets');
-  const target=enemies.find(u=>u.id===targetIds[0]);grantCommanderWeaken(target,rate,round);value=1;
-  impacts.push({target:target.id,kind:'weaken',value:Number((target.commanderWeaken*100).toFixed(1))});
+  const target=enemies.find(u=>u.id===targetIds[0]);grantCommanderStun(target);value=1;
+  impacts.push({target:target.id,kind:'stun',value:1,nextAttack:true});
  }
  expireCommanderFocus(next,round);
  log.push({round,side,actor:'commander:'+side,action:'commander-'+commanderId+'-'+ability,value,impacts,...(commanderId==='attack'&&strong?{focusUntilDeath:true}:{}),commanderLevel:stats.level,abilityBonusPercent:stats.bonusPercent});

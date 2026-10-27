@@ -12,11 +12,14 @@ export function describeBattleEvent(event, {english=false, names=new Map()}={}) 
   effect=kind+' · '+amount+' '+t('hasar','damage');
   if(Number(e.absorbed)>0)effect+=' · '+e.absorbed+' '+t('kalkan engelledi','blocked by shield');
   if(e.guardTriggered)effect+=' · '+t('Ölümcül darbeden 1 canla korundu','Survived a lethal hit at 1 health');
+  if(Number.isInteger(e.lastStandImmortalUntilRound))effect+=' · '+t('Son Kale: ','Last Bastion: ')+t(e.lastStandImmortalUntilRound+'. tur sonuna kadar can en az 1','health stays at least 1 through round '+e.lastStandImmortalUntilRound);
   if(Number(e.executedDamage)>0)effect+=' · '+t('Bitirici','Finisher')+' +'+e.executedDamage;
  }else if(['revive','commander-revive'].includes(action))effect=t('Diriliş','Revival')+' · '+amount+' '+t('can','health');
  else if(action==='commander-attack-ultimate')effect=e.focusUntilDeath===true?t('Av Emri · Hedef ölünceye kadar odaklan','Hunt Order · Focus until the target dies'):t('Av Emri · Sonraki saldırıda hedefe odaklan · Sonraki tur sonuna kadar','Hunt Order · Focus target on the next attack · Through next round');
- else if(action==='commander-defense-ultimate')effect=t('Son Kale · Kalkan ve ölümcül darbe koruması','Last Bastion · Shield and lethal-hit protection');
+ else if(action==='commander-defense-ultimate')effect=e.impacts?.some(impact=>impact.kind==='guard'&&impact.immortalRounds===2)?t('Son Kale · Takım kalkanı · Seçilen müttefik ölümcül darbeden sonra kalan tur ve sonraki 2 tam tur korunur','Last Bastion · Team shield · Selected ally protected after a lethal hit for the rest of that round and the next 2 full rounds'):t('Son Kale · Kalkan ve ölümcül darbe koruması','Last Bastion · Shield and lethal-hit protection');
  else if(action==='commander-magic-ultimate')effect=t('Aşırı Yük · Sabit ek vuruş gücü · 3 hareket turu','Arcane Surge · Fixed extra hit power · 3 action rounds');
+ else if(action==='commander-magic-normal'&&e.impacts?.some(impact=>impact.kind==='stun'))effect=t('Sersemletme · Sonraki saldırı atlanır','Stun · Next attack skipped');
+ else if(action==='stun-skip')effect=t('Sersemledi · Saldırı atlandı','Stunned · Attack skipped');
  else if(action==='commander-support-ultimate')effect=t('Diriliş','Revival');
  else if(['heal','passive-heal'].includes(action)||action.startsWith('commander-support-'))effect='+'+amount+' '+t('can yenilendi','health restored');
  else if(action==='shield'||action.startsWith('commander-defense-'))effect='+'+amount+' '+t('kalkan','shield');
@@ -27,6 +30,8 @@ export function describeBattleEvent(event, {english=false, names=new Map()}={}) 
  else if(action==='rage')effect=t('Öfke · Saldırı','Rage · Attack')+' '+amount;
  else if(action.startsWith('commander-attack-'))effect=t('Komutan saldırısı','Commander attack')+' · '+amount+' '+t('toplam hasar','total damage');
  else effect=t('Yetenek etkisi','Ability effect');
+ const guardedAlly=action==='commander-defense-ultimate'?e.impacts?.find(impact=>impact.kind==='guard'&&impact.immortalRounds===2):null;
+ if(guardedAlly)effect+=' → '+name(guardedAlly.target);
  if(action.startsWith('commander-')&&action!=='commander-hit')effect=t(action.endsWith('-ultimate')?'Nihai beceri':'Normal beceri',action.endsWith('-ultimate')?'Ultimate ability':'Normal ability')+' · '+effect;
  if(e.arcaneTransfer?.targetId)effect+=' · '+t('Aşırı Yük aktarımı','Arcane Surge transfer')+' → '+name(e.arcaneTransfer.targetId)+' · +'+e.arcaneTransfer.bonusAttack+' '+t('vuruş gücü; süre yenilenmez','hit power; duration is not reset');
  return actor+(target?' → '+target:'')+' · '+effect;

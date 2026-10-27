@@ -56,7 +56,7 @@ for(const [name,actor,step]of[
  ...['shield','drain'].map(effect=>[effect,{active:{effect,name:effect,power:1.12}},c=>stepParityShieldDrain(c,{side:0,actorId:'actor'})])
 ])test(name+' honors persistent focus on successive attacks without changing secondary AoE targets',()=>{
  const c=make({round:3,actor});if(name==='headshot')grantLastStand(marked(c),3);cast(c);
- for(let i=0;i<2;i++){const r=step(c),events=r.events??[r.event],damage=events.filter(e=>e.rawDamage!==undefined);assert.equal(damage[0].target,'chosen');for(const e of damage.slice(1))assert.equal(e.target,'front');assert.equal(marked(c).commanderFocusUntilDeath,name==='headshot'&&i===1?undefined:true);}
+ for(let i=0;i<2;i++){const r=step(c),events=r.events??[r.event],damage=events.filter(e=>e.rawDamage!==undefined);assert.equal(damage[0].target,'chosen');for(const e of damage.slice(1))assert.equal(e.target,'front');assert.equal(marked(c).commanderFocusUntilDeath,true);}
 });
 
 test('first death cancels immediately; next hero returns to normal targeting, revival never restores focus',()=>{
@@ -65,8 +65,10 @@ test('first death cancels immediately; next hero returns to normal targeting, re
  reviveCommanderAlly(marked(c),1);assert.equal(selectBattleTarget(c.teams[1],c.teams[0][0],2).id,'front');assert.equal(marked(c).commanderFocusUntilDeath,undefined);
  assert.throws(()=>castLiveCommanderCombat(c,{side:0,ability:'ultimate',targetIds:['chosen'],requestId:'hunt-second',matchKey:'hunt',now:5000}),/ultimate already used/);
 });
-test('a 1-HP Last Bastion guard does not end focus; the following lethal hit does',()=>{
+test('Last Bastion keeps focus through repeated protected hits; only post-expiry death ends it',()=>{
  const c=make({target:{hp:2}});grantLastStand(marked(c),1);cast(c);const hit=stepParityBasicAttack(c,{side:0,actorId:'actor'});assert.equal(hit.event.guardTriggered,true);assert.equal(marked(c).hp,1);assert.equal(marked(c).commanderFocusUntilDeath,true);
+ assert.equal(stepParityBasicAttack(c,{side:0,actorId:'ally'}).event.target,'chosen');assert.equal(marked(c).hp,1);assert.equal(marked(c).commanderFocusUntilDeath,true);
+ for(let round=2;round<=4;round++)beginServerCombatRound(c,round);
  assert.equal(stepParityBasicAttack(c,{side:0,actorId:'ally'}).event.target,'chosen');assert.equal(marked(c).hp,0);assert.equal(marked(c).commanderFocusUntilDeath,undefined);
 });
 test('execute cancels on the atomic death before any expiry pass or revival',()=>{

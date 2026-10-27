@@ -1,6 +1,6 @@
 import {chooseCommanderFocusEnemy,hasCommanderFocus} from './battle-commander-focus.js';
-import {commanderWeakenRate} from './commander-weaken-status.js';
-import {commanderAbilityStats,getCommanderAbilityCost} from './public/commander-ability-rules.js';
+import {hasCommanderStun} from './commander-stun-status.js';
+import {getCommanderAbilityCost} from './public/commander-ability-rules.js';
 // Server-owned decisions, restricted to information a player can observe.
 // Difficulty changes choices, reaction time and the temporary commander profile.
 // Combat bonuses/energy still follow the same progression rules as human profiles.
@@ -76,8 +76,6 @@ export function chooseBotCast(snapshot,commanderId,difficulty,{now=Date.now(),la
  if(!ability||snapshot.finished||![0,1].includes(side)||!COMMANDERS.some(c=>c.id===commanderId)||now-Math.max(startedAt,lastCastAt)<BOT_REACTION_MS[level])return null;
  const available=cast=>(cast!=='ultimate'||!snapshot.ultimateUsed?.[side])&&ability[cast==='ultimate'?'canUseUltimate':'canUseNormal']===true&&(!Number.isFinite(ability[cast==='ultimate'?'ultimateEnergy':'energy'])||ability[cast==='ultimate'?'ultimateEnergy':'energy']>=getCommanderAbilityCost(commanderId,cast));
  const canNormal=available('normal'),canUltimate=level!=='easy'&&available('ultimate');
- const ownRate=snapshot.side===side&&snapshot.commanderId===commanderId?snapshot.abilityStats?.normalRate:null;
- const normalRate=Number.isFinite(ownRate)&&ownRate>=0&&ownRate<=1?ownRate:commanderAbilityStats(snapshot.commanders?.[side]??{commanderId,levels:{}}).normalRate;
  if(!canNormal&&!canUltimate)return null;
  const ownTeam=snapshot.teams[side],allies=ownTeam.filter(u=>u.hp>0),enemies=snapshot.teams[1-side].filter(u=>u.hp>0);
  if(!allies.length||!enemies.length)return null;
@@ -89,6 +87,8 @@ export function chooseBotCast(snapshot,commanderId,difficulty,{now=Date.now(),la
   friendlyTarget=[...allies].filter(u=>(u.attack||0)>0&&(!Number.isInteger(u.arcaneSurgeUntilRound)||u.arcaneSurgeUntilRound<snapshot.round))
    .sort((a,b)=>(b.attack||0)-(a.attack||0)||Number(b.role==='energy')-Number(a.role==='energy')||String(a.id).localeCompare(String(b.id)))[0]??null;
   if(!friendlyTarget)cast='normal';
+ }else if(cast==='ultimate'&&commanderId==='defense'){
+  friendlyTarget=[...allies].sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp||String(a.id).localeCompare(String(b.id)))[0];
  }else if(cast==='ultimate'&&commanderId==='support'){
   if(!snapshot.revivalUsed?.[side])friendlyTarget=[...ownTeam].filter(u=>u.hp===0&&u.maxHp>0)
    .sort((a,b)=>(b.power||0)-(a.power||0)||(b.maxHp||0)-(a.maxHp||0)||String(a.id).localeCompare(String(b.id)))[0]??null;
@@ -109,8 +109,8 @@ export function chooseBotCast(snapshot,commanderId,difficulty,{now=Date.now(),la
    const shields=allies.reduce((n,u)=>n+(u.shield||0),0);
    if(shields>maxHp*.3&&!urgent)return null;
   }else if(commanderId==='magic'&&cast==='normal'){
-   // Normal spell remains the existing enemy debuff, not an ally buff.
-   const worthwhile=enemies.some(u=>commanderWeakenRate(u,snapshot.round)<normalRate);
+   // Do not spend normal energy reapplying the same one-attack stun.
+   const worthwhile=enemies.some(u=>!hasCommanderStun(u));
    if(!worthwhile)return null;
 
   }
@@ -120,7 +120,7 @@ export function chooseBotCast(snapshot,commanderId,difficulty,{now=Date.now(),la
  else if(cast==='ultimate'&&friendlyTarget)result.targetIds=[friendlyTarget.id];
  else if(commanderId==='magic'){
   const ranked=level==='hard'?[...enemies].sort((a,b)=>{
-   const value=u=>(u.attack||u.baseAttack||0)*Math.max(0,normalRate-commanderWeakenRate(u,snapshot.round))*(u.hp/u.maxHp>.2?1:.6);
+   const value=u=>(u.attack||u.baseAttack||0)*(hasCommanderStun(u)?0:1)*(u.hp/u.maxHp>.2?1:.6);
    return value(b)-value(a)||String(a.id).localeCompare(String(b.id));
   }):enemies;
   result.targetIds=ranked.slice(0,1).map(u=>u.id);

@@ -1,3 +1,4 @@
+import {consumeCommanderStun,expireCommanderStun} from './commander-stun-status.js';
 import {commanderWeakenRate,consumeCommanderWeaken,expireCommanderWeaken} from './commander-weaken-status.js';
 import {applyHeroDamage,expireLastStandGuards} from './battle-hp-damage.js';
 import {expireCommanderUltimateStatuses} from './commander-ultimate-status.js';
@@ -115,7 +116,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
   for(let round=1;round<=maxRounds;round++){
     actionId=null;
     expireLastStandGuards(teams,round);expireCommanderUltimateStatuses(teams,round);expireCommanderFocus(teams,round);
-    expireCommanderWeaken(teams,round);
+    expireCommanderWeaken(teams,round);expireCommanderStun(teams);
     for(let side=0;side<2;side++){
       commanderEnergy[side]=commanderRoundEnergy(commanderEnergy[side],round,commanders?.[side]);
       if(!ultimateUsed[side])commanderUltimateEnergy[side]=commanderRoundEnergy(commanderUltimateEnergy[side],round,commanders?.[side]);
@@ -148,6 +149,11 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
           continue;
         }
       }
+      if(consumeCommanderStun(unit)){
+        unit.lastActionRound=round;finishHeroDelay(unit,round);
+        record({round,side,actor:unit.id,action:'stun-skip',target:unit.id,value:0});
+        continue;
+      }
       const target=selectBattleTarget(enemies,unit,round);
       if(!target)break;
       const critical=random()<.08;
@@ -166,8 +172,8 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       if(skill?.effect==='weaken'){target.attack=Math.max(5,Math.floor(target.attack*(1-abilityValue(skill,'weakenRate'))));record({round,side,actor:unit.id,action:'weaken',target:target.id,value:0});}
       if(skill?.effect==='haste'){const before=unit.speed;unit.speed=Math.max(before,Math.min(150,before+abilityValue(skill,'hasteAmount')));record({round,side,actor:unit.id,action:'haste',target:unit.id,value:unit.speed-before});}
       // Log primary settlement before secondary deaths so status transfer replay is chronological.
-      record({round,side,actor:unit.id,action:skill?.name|| (special?'special':'attack'),target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:special?'special':'normal',executedDamage,...(hit.guardTriggered?{guardTriggered:true}:{}),...(hit.arcaneTransfer?{arcaneTransfer:hit.arcaneTransfer}:{})});
-      if(skill?.effect==='splash'||unit.role==='energy'&&special)for(const other of enemies.filter(x=>x!==target&&x.hp>0)){const splashRaw=calculateSplashRawDamage(raw,{skill,role:unit.role,special});const splashHit=applyHeroDamage(other,splashRaw,{round,allies:teams[1-side]});const splashAbsorbed=splashHit.absorbed,extra=splashHit.damage;unit.damage+=extra;if(other.hp===0){unit.kills++;commanderEnergy[1-side]=Math.min(100,commanderEnergy[1-side]+10);if(!ultimateUsed[1-side])commanderUltimateEnergy[1-side]=Math.min(100,commanderUltimateEnergy[1-side]+10);}record({round,side,actor:unit.id,action:'splash',target:other.id,value:extra,absorbed:splashAbsorbed,rawDamage:splashRaw,damageType:'splash',...(splashHit.guardTriggered?{guardTriggered:true}:{}),...(splashHit.arcaneTransfer?{arcaneTransfer:splashHit.arcaneTransfer}:{})});}
+      record({round,side,actor:unit.id,action:skill?.name|| (special?'special':'attack'),target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:special?'special':'normal',executedDamage,...(hit.guardTriggered?{guardTriggered:true}:{}),...(hit.lastStandImmortalUntilRound?{lastStandTriggeredRound:hit.lastStandTriggeredRound,lastStandImmortalUntilRound:hit.lastStandImmortalUntilRound}:{}),...(hit.arcaneTransfer?{arcaneTransfer:hit.arcaneTransfer}:{})});
+      if(skill?.effect==='splash'||unit.role==='energy'&&special)for(const other of enemies.filter(x=>x!==target&&x.hp>0)){const splashRaw=calculateSplashRawDamage(raw,{skill,role:unit.role,special});const splashHit=applyHeroDamage(other,splashRaw,{round,allies:teams[1-side]});const splashAbsorbed=splashHit.absorbed,extra=splashHit.damage;unit.damage+=extra;if(other.hp===0){unit.kills++;commanderEnergy[1-side]=Math.min(100,commanderEnergy[1-side]+10);if(!ultimateUsed[1-side])commanderUltimateEnergy[1-side]=Math.min(100,commanderUltimateEnergy[1-side]+10);}record({round,side,actor:unit.id,action:'splash',target:other.id,value:extra,absorbed:splashAbsorbed,rawDamage:splashRaw,damageType:'splash',...(splashHit.guardTriggered?{guardTriggered:true}:{}),...(splashHit.lastStandImmortalUntilRound?{lastStandTriggeredRound:splashHit.lastStandTriggeredRound,lastStandImmortalUntilRound:splashHit.lastStandImmortalUntilRound}:{}),...(splashHit.arcaneTransfer?{arcaneTransfer:splashHit.arcaneTransfer}:{})});}
       if(unit.passive?.effect==='thorns'&&unit.hp>0)unit.shield+=Math.floor(unit.defense*unit.passive.value);
       if(unit.role==='tank'&&special)unit.shield+=Math.round(unit.defense*abilityValue(skill,'tankShieldRate'));
       consumeCommanderWeaken(unit);unit.lastActionRound=round;finishHeroDelay(unit,round);consumeCommanderFocus(unit);expireCommanderFocus(teams,round);

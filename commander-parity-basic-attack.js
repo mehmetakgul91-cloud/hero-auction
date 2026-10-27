@@ -4,7 +4,7 @@ import {commanderWeakenRate} from './commander-weaken-status.js';
 import {calculateHeroRawDamage} from './battle-damage-formula.js';
 import {abilityValue} from './public/hero-ability-rules.js';
 import {selectBattleTarget} from './battle-target-selection.js';
-import {applyServerHeroAction} from './commander-live-combat.js';
+import {applyServerHeroAction,applyServerStunSkip} from './commander-live-combat.js';
 export function stepParityBasicAttack(combat,{side,actorId,round=combat?.round,critical=false,specialFallback=false,allowHealActive=false,allowShieldDrainActive=false,allowStatActive=false,allowExecuteActive=false,allowDamageActive=false,allowThornsPassive=false,allowRoundPassives=false}={}){
  if(!combat||combat.finished||![0,1].includes(side)||round!==combat.round||typeof critical!=='boolean'||typeof specialFallback!=='boolean')throw Error('Invalid parity combat step');
  const actor=combat.teams[side].find(u=>u.id===actorId&&u.hp>0);
@@ -14,6 +14,7 @@ export function stepParityBasicAttack(combat,{side,actorId,round=combat?.round,c
  const enemies=combat.teams[1-side];
  const target=selectBattleTarget(enemies,actor,round);
  if(!target)throw Error('No living target');
+ const skipped=applyServerStunSkip(combat,{side,actorId,round});if(skipped)return skipped;
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
  const weakened=commanderWeakenRate(actor,round);
  const raw=calculateHeroRawDamage({unit:actor,target,skill:specialFallback?actor.active:null,special:specialFallback,critical,guarded,weakened,round});

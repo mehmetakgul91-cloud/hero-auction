@@ -81,18 +81,18 @@ test('hard healing waits for damage and emergency beats energy saving; shield av
  s.abilities[1].canUseUltimate=true;s.abilities[1].energy=getCommanderAbilityCost('defense','ultimate');
  assert.equal(chooseBotCast(s,'defense','hard',options),null);
  s.teams[1][0].shield=0;
- assert.deepEqual(chooseBotCast(s,'defense','hard',options),{ability:'ultimate'});
+ assert.deepEqual(chooseBotCast(s,'defense','hard',options),{ability:'ultimate',targetIds:['ally']});
 });
 
-test('hard magic targets strongest unweakened enemy and executes legally in live combat',()=>{
+test('hard magic targets strongest unstunned enemy and executes legally in live combat',()=>{
  const s=state();
  assert.deepEqual(chooseBotCast(s,'magic','hard',options),{ability:'normal',targetIds:['enemy-b']});
- s.teams[0][1].commanderWeaken=.35;s.teams[0][1].commanderWeakenUntilRound=6;
+ s.teams[0][1].commanderStunNextAttack=true;
  const choice=chooseBotCast(s,'magic','hard',options);
  assert.deepEqual(choice,{ability:'normal',targetIds:['enemy-a']});
  const combat=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'test',energy:[60,60],now:0}),teams:s.teams,commanders:[chooseBotCommander(undefined,()=>0),{commanderId:'magic',levels:{attack:0,defense:0,magic:0,support:0}}]});
  castLiveCommanderCombat(combat,{side:1,...choice,requestId:'bot-test-1',matchKey:'test',now:10000});
- assert.equal(combat.teams[0][0].commanderWeaken,.35);
+ assert.equal(combat.teams[0][0].commanderStunNextAttack,true);assert.equal(combat.teams[0][0].commanderWeaken,undefined);
  assert.equal(combat.abilities.energy[1],20);
  assert.equal(combat.abilities.cooldownUntil[1],15000);
 });

@@ -6,9 +6,12 @@ export function trainingCommanderResources(result,round){
  return {energy:entry.energy[0],ultimateEnergy:entry.ultimateEnergy[0],ultimateUsed:entry.ultimateUsed[0]===true};
 }
 
-export function trainingCommanderEnemyTargets(result,round){
- const entry=result?.commanderResourcesByRound?.find(value=>value.round===round),heroes=result?.teams?.[1];
- if(!Array.isArray(entry?.targets?.[1])||!Array.isArray(heroes))return [];
+function trainingCommanderTargets(result,round,side){
+ const entry=result?.commanderResourcesByRound?.find(value=>value.round===round),heroes=result?.teams?.[side];
+ if(!Array.isArray(entry?.targets?.[side])||!Array.isArray(heroes))return [];
  const names=new Map(heroes.map(hero=>[hero.id,hero.name||hero.id]));
- return entry.targets[1].filter(hero=>typeof hero?.id==='string'&&Number.isFinite(hero.hp)&&hero.hp>0&&names.has(hero.id)).map(hero=>({id:hero.id,name:names.get(hero.id)}));
+ return entry.targets[side].filter(hero=>typeof hero?.id==='string'&&Number.isFinite(hero.hp)&&hero.hp>0&&names.has(hero.id)).map(hero=>({id:hero.id,name:names.get(hero.id)}));
 }
+
+export const trainingCommanderEnemyTargets=(result,round)=>trainingCommanderTargets(result,round,1);
+export const trainingCommanderFriendlyTargets=(result,round)=>trainingCommanderTargets(result,round,0);

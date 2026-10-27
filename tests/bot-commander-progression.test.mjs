@@ -37,14 +37,14 @@ for(const [difficulty,level,gain] of [['easy',5,14],['medium',10,17],['hard',15,
    const castAt=p=>{
     const castTeams=teams();if(id==='support'&&ability==='ultimate')castTeams[1][4].hp=0;
     const c=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'cast',energy:[100,100],now:0}),teams:castTeams,commanders:[createCommanderProfile('attack'),p]});
-    const out=castLiveCommanderCombat(c,{side:1,ability,requestId:'test-cast-01',matchKey:'cast',now:1000,targetIds:id==='magic'?(ability==='normal'?['0-0']:['1-0']):id==='support'&&ability==='ultimate'?['1-4']:id==='attack'&&ability==='ultimate'?['0-0']:undefined});
+    const out=castLiveCommanderCombat(c,{side:1,ability,requestId:'test-cast-01',matchKey:'cast',now:1000,targetIds:id==='magic'?(ability==='normal'?['0-0']:['1-0']):id==='support'&&ability==='ultimate'?['1-4']:id==='attack'&&ability==='ultimate'?['0-0']:id==='defense'&&ability==='ultimate'?['1-0']:undefined});
     assert.equal(c.abilities[ability==='ultimate'?'ultimateEnergy':'energy'][1],100-getCommanderAbilityCost(id,ability));assert.equal(c.abilities[ability==='ultimate'?'energy':'ultimateEnergy'][1],100);assert.equal(c.abilities.cooldownUntil[1],ability==='normal'?6000:0);
     return out;
    };
    const base=castAt(createCommanderProfile(id)),upgraded=castAt(profile);
    assert.equal(upgraded.events.at(-1).commanderLevel,level);
    assert.equal(upgraded.events.at(-1).abilityBonusPercent,level);
-   if(id==='magic'&&ability==='normal')assert.equal(upgraded.teams[0][0].commanderWeaken,commanderAbilityStats(profile).normalRate);
+   if(id==='magic'&&ability==='normal'){assert.equal(upgraded.teams[0][0].commanderStunNextAttack,true);assert.equal(upgraded.teams[0][0].commanderWeaken,undefined);assert.deepEqual(upgraded.events.at(-1).impacts,base.events.at(-1).impacts,'normal stun is one skipped attack at every difficulty');}
    else if(ability==='ultimate'&&id==='magic'){
     assert.equal(upgraded.teams[1][0].attack,1000);assert.equal(upgraded.teams[1][0].arcaneSurgeBonusAttack,1000);assert.equal(upgraded.teams[1][0].arcaneSurgeFromRound,1);assert.equal(upgraded.teams[1][0].arcaneSurgeUntilRound,3);
     assert.equal(upgraded.events.at(-1).value,base.events.at(-1).value,'surge utility duration and snapshot multiplier do not grow with level');

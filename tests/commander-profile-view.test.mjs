@@ -97,9 +97,9 @@ test('disabled, exact-funds and busy states guard callbacks as well as buttons',
  assert.match(render(profile('attack'),{gold:199}).textContent,/1 altın daha gerekiyor/);
 });
 
-test('active magic9→10 shows exact weakened attack38.15→38.5 and each pool16→17; side branch does not imply ability growth',()=>{
+test('active magic9→10 shows fixed one-attack stun and each pool16→17; side branch does not imply ability growth',()=>{
  const root=render(profile('magic',9),{selected:'magic',english:true});
- assert.match(root.textContent,/38.15% → 38.5%/);assert.match(root.textContent,/Each pool \/ round \+16 → \+17/);assert.match(root.textContent,/1,032 GOLD/);
+ assert.match(root.textContent,/Stun · fixed effect 1 attack skipped → 1 attack skipped/);assert.doesNotMatch(root.textContent,/38.15%|38.5%/);assert.match(root.textContent,/Each pool \/ round \+16 → \+17/);assert.match(root.textContent,/1,032 GOLD/);
  assert.match(root.textContent,/do not scale with level/);
  assert.doesNotMatch(render(profile('magic',9),{selected:'attack',english:true}).textContent,/Normal ability effect|Each pool/);
 });

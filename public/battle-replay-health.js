@@ -3,18 +3,35 @@
 export function createBattleReplayHealth(teams){
  const health=teams.map(team=>team.map(hero=>Math.max(0,Number(hero.maxHp)||0)));
  const surgeKeys=['arcaneSurgeBonusAttack','arcaneSurgeFromRound','arcaneSurgeUntilRound'];
+ const lastStandKeys=['lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'];
+ const clearLastStand=status=>{for(const key of lastStandKeys)delete status[key];};
  const statuses=teams.map(team=>team.map(()=>({}))); // Supplied teams may be FINAL battle results.
- const seen=new Set(),objects=new WeakSet();
- const copy=()=>{if(health.some(team=>team.every(hp=>hp<=0)))for(const team of statuses)for(const status of team)delete status.commanderFocusUntilDeath;for(let side=0;side<health.length;side++)for(let i=0;i<health[side].length;i++)if(health[side][i]<=0){for(const key of surgeKeys)delete statuses[side][i][key];delete statuses[side][i].commanderFocusUntilDeath;}return health.map(team=>team.slice());};
+ const seen=new Set(),objects=new WeakSet();let currentRound=0;
+ const copy=()=>{if(health.some(team=>team.every(hp=>hp<=0)))for(const team of statuses)for(const status of team){delete status.commanderFocusUntilDeath;delete status.commanderStunNextAttack;clearLastStand(status);}for(let side=0;side<health.length;side++)for(let i=0;i<health[side].length;i++)if(health[side][i]<=0){for(const key of surgeKeys)delete statuses[side][i][key];delete statuses[side][i].commanderFocusUntilDeath;delete statuses[side][i].commanderStunNextAttack;clearLastStand(statuses[side][i]);}return health.map(team=>team.slice());};
  const amount=value=>Number.isFinite(Number(value))?Math.max(0,Number(value)):0;
  const identity=entry=>entry.eventId!=null?'event:'+entry.eventId:
   entry.actionId!=null||entry.version!=null?JSON.stringify([entry.actionId??entry.version,entry.side,entry.actor,entry.action,entry.target,entry.damageType,entry.value,entry.absorbed,entry.executedDamage]):null;
- return {finish(){for(const team of statuses)for(const status of team)delete status.commanderFocusUntilDeath;return copy();},statusSnapshot(){return statuses.map(team=>team.map(status=>({...status})));},apply(entry){
+ return {finish(){for(const team of statuses)for(const status of team){delete status.commanderFocusUntilDeath;delete status.commanderStunNextAttack;clearLastStand(status);}return copy();},statusSnapshot(){return statuses.map(team=>team.map(status=>({...status})));},apply(entry){
   if(!entry||typeof entry!=='object')return copy();
   const key=identity(entry);
   if(objects.has(entry)||(key!==null&&seen.has(key)))return copy();
   objects.add(entry);if(key!==null)seen.add(key);
+  if(Number.isInteger(entry.round))currentRound=Math.max(currentRound,entry.round);
   for(const team of statuses)for(const status of team)if(Number.isInteger(entry.round)&&entry.round>status.arcaneSurgeUntilRound)for(const key of surgeKeys)delete status[key];
+  for(const team of statuses)for(const status of team)if(Number.isInteger(entry.round)&&entry.round>status.lastStandImmortalUntilRound)clearLastStand(status);
+  // Only explicit new-rule metadata grants multi-round protection in replay.
+  // Historical one-hit logs must never be reinterpreted as immortality.
+  if(entry.action==='commander-defense-ultimate'&&[0,1].includes(entry.side))for(const impact of entry.impacts||[]){
+   const index=teams[entry.side].findIndex(hero=>hero.id===impact.target);
+   if(impact.kind==='guard'&&impact.immortalRounds===2&&index>=0&&health[entry.side][index]>0)Object.assign(statuses[entry.side][index],{lastStandReady:true,lastStandPersistent:true,lastStandImmortalRounds:2});
+  }
+  if(entry.guardTriggered===true&&[0,1].includes(entry.side)){
+   const targetSide=1-entry.side,index=teams[targetSide].findIndex(hero=>hero.id===entry.target);
+   if(index>=0&&health[targetSide][index]>0){
+    clearLastStand(statuses[targetSide][index]);
+    if(Number.isInteger(entry.lastStandTriggeredRound)&&entry.lastStandTriggeredRound>=1&&Number.isInteger(entry.lastStandImmortalUntilRound)&&entry.lastStandImmortalUntilRound===entry.lastStandTriggeredRound+2&&Number.isInteger(entry.round)&&entry.round>=entry.lastStandTriggeredRound&&entry.round<=entry.lastStandImmortalUntilRound&&currentRound<=entry.lastStandImmortalUntilRound)Object.assign(statuses[targetSide][index],{lastStandTriggeredRound:entry.lastStandTriggeredRound,lastStandImmortalUntilRound:entry.lastStandImmortalUntilRound});
+   }
+  }
   if(entry.action==='commander-magic-ultimate'&&[0,1].includes(entry.side))for(const impact of entry.impacts||[]){
    const index=teams[entry.side].findIndex(hero=>hero.id===impact.target);
    if(impact.kind==='buff'&&index>=0&&health[entry.side][index]>0&&Number.isFinite(impact.value)&&impact.value>=0&&Number.isInteger(impact.fromRound)&&Number.isInteger(impact.untilRound)&&impact.untilRound>=impact.fromRound){
@@ -24,6 +41,14 @@ export function createBattleReplayHealth(teams){
   if(entry.action==='commander-attack-ultimate'&&entry.focusUntilDeath===true&&[0,1].includes(entry.side))for(const impact of entry.impacts||[]){
    const targetSide=1-entry.side,index=teams[targetSide].findIndex(hero=>hero.id===impact.target);
    if(impact.kind==='focus'&&impact.untilDeath===true&&index>=0&&health[targetSide][index]>0)statuses[targetSide][index].commanderFocusUntilDeath=true;
+  }
+  if(entry.action==='commander-magic-normal'&&[0,1].includes(entry.side))for(const impact of entry.impacts||[]){
+   const targetSide=1-entry.side,index=teams[targetSide].findIndex(hero=>hero.id===impact.target);
+   if(impact.kind==='stun'&&impact.nextAttack===true&&impact.value===1&&index>=0&&health[targetSide][index]>0)statuses[targetSide][index].commanderStunNextAttack=true;
+  }
+  if(['stun-skip','revive','commander-revive'].includes(entry.action)&&[0,1].includes(entry.side)){
+   const id=entry.action==='stun-skip'?entry.actor:entry.target,index=teams[entry.side].findIndex(hero=>hero.id===id);
+   if(index>=0){delete statuses[entry.side][index].commanderStunNextAttack;if(entry.action!=='stun-skip')clearLastStand(statuses[entry.side][index]);}
   }
   const transfer=entry.arcaneTransfer;
   if(transfer&&Number.isFinite(transfer.bonusAttack)&&transfer.bonusAttack>=0&&Number.isInteger(transfer.fromRound)&&Number.isInteger(transfer.untilRound)&&transfer.untilRound>=transfer.fromRound){

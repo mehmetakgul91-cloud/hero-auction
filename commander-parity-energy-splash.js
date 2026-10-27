@@ -1,3 +1,4 @@
+import {applyServerStunSkip} from './commander-live-combat.js';
 import {expireCommanderFocus} from './battle-commander-focus.js';
 import {commanderWeakenRate,consumeCommanderWeaken} from './commander-weaken-status.js';
 import {applyHeroDamage} from './battle-hp-damage.js';
@@ -15,15 +16,16 @@ export function stepParityEnergySplash(combat,{side,actorId,round=combat?.round,
  if(!actor||actor.role!=='energy'||actor.active||(actor.passive&&!((allowThornsPassive&&actor.passive.effect==='thorns')||(allowRoundPassives&&['guard','resist','focus','evasion','momentum','regen','rage'].includes(actor.passive.effect)))))throw Error('Unsupported energy splash hero');
  const enemies=next[1-side],target=selectBattleTarget(enemies,actor,round);
  if(!target)throw Error('No living target');
+ const skipped=applyServerStunSkip(combat,{side,actorId,round});if(skipped)return skipped;
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
  const weakened=commanderWeakenRate(actor,round);
  const raw=calculateHeroRawDamage({unit:actor,target,special:true,critical,guarded,weakened,round});
  const events=[],dead=[];
  function hit(unit,amount,action){
-  const {damage,absorbed,guardTriggered,arcaneTransfer}=applyHeroDamage(unit,amount,{round,allies:enemies});
+  const {damage,absorbed,guardTriggered,lastStandTriggeredRound,lastStandImmortalUntilRound,arcaneTransfer}=applyHeroDamage(unit,amount,{round,allies:enemies});
   actor.damage=(actor.damage||0)+damage;
   if(unit.hp===0){actor.kills=(actor.kills||0)+1;dead.push(unit.id);}
-  events.push({round,side,actor:actorId,action,target:unit.id,value:damage,absorbed,rawDamage:amount,damageType:action==='splash'?'splash':'special',...(guardTriggered?{guardTriggered:true}:{}),...(arcaneTransfer?{arcaneTransfer}:{}),...(action==='special'?{critical}:{})});
+  events.push({round,side,actor:actorId,action,target:unit.id,value:damage,absorbed,rawDamage:amount,damageType:action==='splash'?'splash':'special',...(guardTriggered?{guardTriggered:true}:{}),...(lastStandImmortalUntilRound?{lastStandTriggeredRound,lastStandImmortalUntilRound}:{}),...(arcaneTransfer?{arcaneTransfer}:{}),...(action==='special'?{critical}:{})});
  }
  // Legacy engine applies splash before recording the primary event, but the
  // primary damage and shield changes themselves happen first.

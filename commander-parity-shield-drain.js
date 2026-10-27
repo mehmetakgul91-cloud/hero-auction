@@ -1,3 +1,4 @@
+import {applyServerStunSkip} from './commander-live-combat.js';
 import {expireCommanderFocus} from './battle-commander-focus.js';
 import {commanderWeakenRate,consumeCommanderWeaken} from './commander-weaken-status.js';
 import {abilityValue} from './public/hero-ability-rules.js';
@@ -16,10 +17,11 @@ export function stepParityShieldDrain(combat,{side,actorId,round=combat?.round,c
  if(!actor||(actor.passive&&!((allowThornsPassive&&actor.passive.effect==='thorns')||(allowRoundPassives&&['guard','resist','focus','evasion','momentum','regen','rage'].includes(actor.passive.effect))))||!['shield','drain'].includes(effect)||!Number.isFinite(actor.attack)||!Number.isFinite(actor.defense))throw Error('Unsupported special attack');
  const enemies=teams[1-side],target=selectBattleTarget(enemies,actor,round);
  if(!target)throw Error('No living target');
+ const skipped=applyServerStunSkip(combat,{side,actorId,round});if(skipped)return skipped;
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
  const weakened=commanderWeakenRate(actor,round);
  const raw=calculateHeroRawDamage({unit:actor,target,skill:actor.active,special:true,critical,guarded,weakened,round});
- const {damage,absorbed,guardTriggered,arcaneTransfer}=applyHeroDamage(target,raw,{round,allies:enemies});
+ const {damage,absorbed,guardTriggered,lastStandTriggeredRound,lastStandImmortalUntilRound,arcaneTransfer}=applyHeroDamage(target,raw,{round,allies:enemies});
  actor.damage=(actor.damage||0)+damage;
  const killed=target.hp===0;
  if(killed)actor.kills=(actor.kills||0)+1;
@@ -38,7 +40,7 @@ export function stepParityShieldDrain(combat,{side,actorId,round=combat?.round,c
   ally.shield=(ally.shield||0)+amount;
   events.push({round,side,actor:actorId,action:'tank-front-shield',target:ally.id,value:amount});
  }
- events.push({round,side,actor:actorId,action:actor.active.name||'special',target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:'special',...(guardTriggered?{guardTriggered:true}:{}),...(arcaneTransfer?{arcaneTransfer}:{})});
+ events.push({round,side,actor:actorId,action:actor.active.name||'special',target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:'special',...(guardTriggered?{guardTriggered:true}:{}),...(lastStandImmortalUntilRound?{lastStandTriggeredRound,lastStandImmortalUntilRound}:{}),...(arcaneTransfer?{arcaneTransfer}:{})});
  if(actor.role==='tank'){
   const amount=Math.round(actor.defense*abilityValue(actor.active,'tankShieldRate'));
   actor.shield=(actor.shield||0)+amount;

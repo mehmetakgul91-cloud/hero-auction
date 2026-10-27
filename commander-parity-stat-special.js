@@ -1,3 +1,4 @@
+import {applyServerStunSkip} from './commander-live-combat.js';
 import {expireCommanderFocus} from './battle-commander-focus.js';
 import {commanderWeakenRate,consumeCommanderWeaken} from './commander-weaken-status.js';
 import {abilityValue} from './public/hero-ability-rules.js';
@@ -15,10 +16,11 @@ export function stepParityStatSpecial(combat,{side,actorId,round=combat?.round,c
  if(!actor||(actor.passive&&!((allowThornsPassive&&actor.passive.effect==='thorns')||(allowRoundPassives&&['guard','resist','focus','evasion','momentum','regen','rage'].includes(actor.passive.effect))))||!['sunder','weaken','haste'].includes(effect)||actor.role==='tank')throw Error('Unsupported stat special');
  const enemies=teams[1-side],target=selectBattleTarget(enemies,actor,round);
  if(!target)throw Error('No living target');
+ const skipped=applyServerStunSkip(combat,{side,actorId,round});if(skipped)return skipped;
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
  const weakened=commanderWeakenRate(actor,round);
  const raw=calculateHeroRawDamage({unit:actor,target,skill:actor.active,special:true,critical,guarded,weakened,round});
- const {damage,absorbed,guardTriggered,arcaneTransfer}=applyHeroDamage(target,raw,{round,allies:enemies});
+ const {damage,absorbed,guardTriggered,lastStandTriggeredRound,lastStandImmortalUntilRound,arcaneTransfer}=applyHeroDamage(target,raw,{round,allies:enemies});
  actor.damage=(actor.damage||0)+damage;
  const killed=target.hp===0;
  if(killed)actor.kills=(actor.kills||0)+1;
@@ -28,7 +30,7 @@ export function stepParityStatSpecial(combat,{side,actorId,round=combat?.round,c
  else{const before=actor.speed;actor.speed=Math.max(before,Math.min(150,before+abilityValue(actor.active,'hasteAmount')));action='haste';value=actor.speed-before;recipient=actor.id;}
  const events=[
   {round,side,actor:actorId,action,target:recipient,value},
-  {round,side,actor:actorId,action:actor.active.name||'special',target:target.id,value:damage,absorbed,critical,rawDamage:raw,damageType:'special',...(guardTriggered?{guardTriggered:true}:{}),...(arcaneTransfer?{arcaneTransfer}:{})}
+  {round,side,actor:actorId,action:actor.active.name||'special',target:target.id,value:damage,absorbed,critical,rawDamage:raw,damageType:'special',...(guardTriggered?{guardTriggered:true}:{}),...(lastStandImmortalUntilRound?{lastStandTriggeredRound,lastStandImmortalUntilRound}:{}),...(arcaneTransfer?{arcaneTransfer}:{})}
  ];
  const splashDeaths=applyEnergySpecialSplash({actor,enemies,target,raw,round,side,events});
  const thornsShield=applyAttackThorns(actor,{enabled:allowThornsPassive});
