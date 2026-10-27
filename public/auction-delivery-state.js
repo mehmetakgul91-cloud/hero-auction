@@ -17,6 +17,8 @@ export function createTailReceipts({storage=()=>null,scope='web'}={}){
  const id=award=>award.id||`${award.round??''}:${award.seat}:${award.card.universe}:${award.card.name}`;
  return {
   pending(room,awards){const seen=records.get(match(room));return awards.filter(award=>!seen?.has(id(award)));},
+  reviewPending(room,awards){return awards.length>0&&!records.get(match(room))?.has('@review-confirmed');},
+  confirmReview(room){this.received(room,[{id:'@review-confirmed'}]);},
   received(room,awards){
    const identity=match(room),seen=records.get(identity)||new Set();
    awards.forEach(award=>seen.add(id(award)));records.delete(identity);records.set(identity,seen);

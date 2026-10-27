@@ -1015,3 +1015,42 @@ body:has(#game[data-phase="auction"]:not([hidden])) .shell{padding-top:8px}
 #game #chat-panel .chat-compose{display:flex;min-width:0;gap:8px;margin:10px 0 0}
 #game #chat-input{flex:1 1 0%;width:0;min-width:0;max-width:100%;min-height:48px}
 #game #chat-send{flex:0 0 auto;width:auto;min-width:74px;min-height:48px;padding:12px;white-space:nowrap}
+
+/* Remaining-card reveal is a reviewable step, not a shortcut to calculations. */
+#game .auction-tail-values{position:absolute;top:10px;left:8px;right:8px;z-index:2;padding:7px;border-radius:7px;background:#07111ae6;color:#fff;font-size:12px;font-weight:700;line-height:1.4;text-align:center}
+.auction-card-glide .auction-tail-values{display:none}
+#game .auction-tail-review{width:min(560px,calc(100vw - 24px));padding:18px;color:#203047}
+#game .auction-tail-review-list{display:grid;gap:9px;margin:14px 0}
+#game .auction-tail-review-card{display:flex;align-items:center;gap:12px;padding:10px;border:1px solid #c8cfd2;border-radius:12px;background:#f4f5f1;text-align:left}
+#game .auction-tail-review-portrait{position:relative;flex:0 0 48px;width:48px;height:58px;border-radius:8px;overflow:hidden;background:#223c51}
+#game .auction-tail-review-portrait img{width:100%;height:100%;object-fit:cover}
+#game .auction-tail-review-card>div:last-child{display:grid;gap:4px;min-width:0}
+#game .auction-tail-review-card small{color:#586676;font-size:11px}
+#game .auction-tail-review-card strong{font-size:14px;overflow-wrap:anywhere;color:#203047}
+#game .auction-tail-review-card span{font-size:12px;line-height:1.4;color:#405363}
+#game .auction-tail-review button[hidden]{display:none}
+@media(max-width:420px){#game .auction-tail-review{padding:12px}#game .auction-tail-review-card{gap:9px;padding:8px}#game .auction-tail-review-card span{font-size:11px}}
+
+/* Compact hero breakdown within the calculation view, never another card gallery. */
+#game .auction-summary{max-width:1100px}
+.auction-calculation-teams{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:20px 0 12px;text-align:left}
+.calculation-team{min-width:0;border:1px solid var(--theme-border,#3d536b);border-radius:14px;background:var(--theme-surface,#132239);overflow:hidden}
+.calculation-team-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 14px;background:var(--theme-panel,#192d45);border-bottom:1px solid var(--theme-border,#3d536b)}
+.calculation-team-heading h3{margin:0;color:var(--theme-ink,#e6f0fa);font-size:14px;letter-spacing:0;text-transform:none}
+.calculation-team-heading p{margin:4px 0 0;font-size:12px;color:var(--theme-muted,#a7bbd2);overflow-wrap:anywhere}
+.calculation-credit{flex:none;text-align:right}.calculation-credit>span{display:block;font-size:10px;color:var(--theme-muted,#a7bbd2)}.calculation-credit strong{display:block;font-size:19px;margin-top:3px;color:var(--theme-ink,#e6f0fa)}.calculation-credit small{font-size:11px;font-weight:600}
+#game .auction-hero-calculation{margin:0;font-size:12px}
+#game .auction-hero-calculation th,#game .auction-hero-calculation td{padding:11px 9px;vertical-align:middle}
+#game .auction-hero-calculation thead th{font-size:10px;line-height:1.35;color:var(--theme-muted,#a7bbd2);font-weight:650}
+#game .auction-hero-calculation th:first-child{width:43%}
+#game .auction-hero-calculation tbody th{font-size:12px;font-weight:650}
+#game .auction-hero-calculation td{font-size:12px;white-space:nowrap}
+.calculation-identity{display:flex;gap:8px;align-items:center;min-width:0;line-height:1.3}
+.calculation-portrait{display:grid;place-items:center;flex:0 0 32px;width:32px;height:36px;overflow:hidden;border:1.5px solid #94a3a8;border-radius:6px;background:#263548;color:#e9eee9}
+.calculation-portrait img{display:block;width:100%;height:100%;object-fit:cover}
+.calculation-portrait[data-rarity="advanced"]{border-color:#4ba879}.calculation-portrait[data-rarity="rare"]{border-color:#9b73d7}.calculation-portrait[data-rarity="legendary"]{border-color:#c59b43}
+.calculation-adjustment{color:var(--theme-muted,#a7bbd2)}.calculation-final{font-weight:800;color:var(--theme-ink,#e6f0fa)}
+#game .auction-hero-calculation .calculation-total th{font-size:10px;letter-spacing:.3px}#game .auction-hero-calculation .calculation-total td{font-size:12px;font-weight:850}#game .auction-hero-calculation .calculation-total>*{border-bottom:0;padding-top:14px;padding-bottom:14px}
+.auction-calculation-note{margin:13px 2px 20px;font-size:11px;line-height:1.65;text-align:left;color:var(--theme-muted,#a7bbd2)}
+@media(max-width:780px){.auction-calculation-teams{grid-template-columns:minmax(0,1fr);gap:14px}.calculation-team-heading{padding:13px 12px}#game .auction-hero-calculation th,#game .auction-hero-calculation td{padding:10px 8px}}
+@media(max-width:380px){#game .auction-hero-calculation th,#game .auction-hero-calculation td{padding:9px 5px}#game .auction-hero-calculation th:first-child{width:41%}.calculation-identity{gap:5px}.calculation-portrait{flex-basis:26px;width:26px;height:31px}#game .auction-hero-calculation tbody th{font-size:11px}#game .auction-hero-calculation td{font-size:11px}}
