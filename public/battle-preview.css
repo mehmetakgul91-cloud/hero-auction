@@ -503,6 +503,14 @@ body:not(.arena-room) .formation{margin-top:6px;padding:10px}
 .arena-audio-credits{padding:4px 16px 16px;text-align:center;font-size:12px}
 .arena-audio-credits a{display:inline-flex;align-items:center;min-height:44px;color:#a6d5ff;text-underline-offset:3px}
 
+
+/* Result casualties: mute the portrait and row palette, not numeric opacity. */
+.arena-results .battle-hero-stat-row--defeated{background:#ffffff06}
+.arena-results .battle-hero-stat-row--defeated .summary-hero-portrait{filter:grayscale(1);opacity:.5}
+.arena-results .battle-hero-stat-row.battle-hero-stat-row--defeated strong,.arena-results .battle-hero-stat-row.battle-hero-stat-row--defeated>span{color:#aab8c6}
+.battle-hero-stat-row .battle-stat-status{display:block;width:max-content;max-width:100%;margin-top:3px;padding:1px 5px;border:1px solid currentColor;border-radius:4px;font-size:10px;font-weight:600;line-height:1.35;color:inherit;text-align:left}
+@media(forced-colors:active){.arena-results .battle-hero-stat-row--defeated .summary-hero-portrait{opacity:1}.battle-stat-status{color:CanvasText}}
+
 /* Static inner rarity frame; outer blue/red team and selection borders stay intact.
    Badge lives inside the portrait, never on names, HP, shield or lane controls. */
 [data-rarity="common"]{--hero-rarity:#aab0bb}

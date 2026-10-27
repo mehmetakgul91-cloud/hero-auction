@@ -1,5 +1,6 @@
 import {createVictoryChestPresentation} from '/victory-chest.js';
 import {applyHeroRarity,createSummaryHeroIdentity} from '/hero-rarity.js';
+import {applySummaryHeroStatus,captureFinalHeroHealth} from '/battle-summary-status.js';
 import {ARENA_TRACKS} from '/arena-music-tracks.js';
 import {createArenaPlaylist} from '/arena-playlist.js';
 import {createArenaAudio} from '/arena-audio.js';
@@ -686,7 +687,7 @@ window.addEventListener('heroarena:experimental-round-end',e=>{
  render();
  $('round').textContent=String(e.detail.round||0);$('message').textContent=e.detail.finished?'Canlı savaş tamamlandı':'Canlı savaş · Tur '+e.detail.round;
  if(!e.detail.finished&&fresh.length)showBattleFeedback(fresh[fresh.length-1]);
- if(liveArenaMode&&e.detail.finished){finalResult={...finalResult,winner:[0,1].includes(e.detail.winner)?e.detail.winner:null,rounds:Number(e.detail.round)||0,teams:states,summary:e.detail.summary,log:[...(finalResult?.log||[]),...(e.detail.events||[])]};showVictoryReveal();}
+ if(liveArenaMode&&e.detail.finished){finalResult={...finalResult,winner:[0,1].includes(e.detail.winner)?e.detail.winner:null,rounds:Number(e.detail.round)||0,teams:states,finalHealthTeams:captureFinalHeroHealth(snapshot),summary:e.detail.summary,log:[...(finalResult?.log||[]),...(e.detail.events||[])]};showVictoryReveal();}
 });
 const arenaArtCache=new Map();
 let finalResult=null;
@@ -845,6 +846,9 @@ function showBattleSummary(){
   for(const {hero,dealt,taken,blocked,healing} of rankedHeroes){
    const line=document.createElement('div');line.className='battle-hero-stat-row';
    line.append(createSummaryHeroIdentity(document,hero));
+   // Server result HP for replays; the uncoerced terminal snapshot for live battles.
+   const finalHero=(finalResult.finalHealthTeams||finalResult.teams)?.[side]?.find(unit=>unit.id===hero.id);
+   applySummaryHeroStatus(document,line,finalHero);
    for(const [label,value] of [['Hasar',dealt],['Alınan',taken],['Kalkan',blocked],['Şifa',healing]]){
     const number=document.createElement('span');number.textContent=Number(value).toLocaleString('tr-TR');number.setAttribute('aria-label',label+': '+value);line.append(number);
    }
