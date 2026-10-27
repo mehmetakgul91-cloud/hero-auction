@@ -83,3 +83,20 @@ test('background final snapshot preserves unseen cards until visible instead of 
  h.context.document.hidden=true;listeners.visibilitychange();assert.equal(h.context.tailReveal,null);
  h.context.document.hidden=false;listeners.visibilitychange();assert.equal(h.queues.length,2);assert.deepEqual(h.queues[1].items,[done.tailAwards[1]]);
 });
+
+test('revealed cards remain reviewable across refresh until the separate confirmation, independently per seat and rematch',async()=>{
+ const memory=new Map(),storage={getItem:key=>memory.get(key),setItem:(key,value)=>memory.set(key,value)},receipts=()=>createTailReceipts({storage:()=>storage});
+ const {done}=snapshots(1,3),first=harness(null,{receipts:receipts()});first.context.show(done);await first.queues[0].options.startAfter;
+ first.queues[0].options.onReview();assert.deepEqual(first.context.tailReceipts.pending(done,done.tailAwards),[]);assert.equal(first.context.results,0);
+ assert.equal(first.elements.player1.count.textContent,'5 / 5');
+ first.context.show({...done,revision:22});assert.equal(first.queues.length,1,'poll must not replace review');
+ first.queues[0].cancel();const resumed=harness(null,{receipts:receipts()});resumed.context.show(done);assert.equal(resumed.queues.length,1);assert.equal(resumed.queues[0].items.length,0);assert.deepEqual(resumed.queues[0].options.reviewItems,done.tailAwards);
+ resumed.queues[0].options.onComplete();assert.equal(resumed.context.results,1);const confirmed=harness(null,{receipts:receipts()});confirmed.context.show(done);assert.equal(confirmed.queues.length,0);
+ const opponent=harness(null,{receipts:receipts()});opponent.context.show({...done,me:1});assert.equal(opponent.queues[0].items.length,3);
+ const rematch=harness(null,{receipts:receipts()});rematch.context.show({...done,matchKey:'123:2:200',matchNumber:2,created:200});assert.equal(rematch.queues[0].items.length,3);
+});
+test('hidden-tab snapshot cannot silently confirm a fully revealed review',async()=>{
+ const {done}=snapshots(),receipts=createTailReceipts();receipts.received(done,done.tailAwards);
+ const h=harness(null,{receipts});h.context.document.hidden=true;h.context.show(done);assert.equal(h.context.results,0);assert.equal(h.queues.length,0);
+ h.context.document.hidden=false;h.context.show(done);assert.equal(h.queues.length,1);assert.equal(h.queues[0].items.length,0);assert.equal(h.queues[0].options.reviewItems.length,done.tailAwards.length);
+});

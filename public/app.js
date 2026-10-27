@@ -587,17 +587,17 @@ function showCancelledRoom(r){
  $('log').replaceChildren(...(r.history||[]).slice().reverse().map(value=>{const event=document.createElement('div');event.className='event';event.textContent=value;return event}));
  renderChat(r);if(firstNotice)void refreshGold();
 }
-function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAuctionSnapshot(room,r))return;storefrontUI.close();roomInvitesUI.setRoom(r,session?.token);friendsUI.setRoom(r);if(r.cancellation?.reason==='admin-entry-refund'){showCancelledRoom(r);return;}if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.matchKey===auctionMatchKey(r)&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const tailAwards=tailReceipts.pending(r,collectTailAwards(room,r));
+function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAuctionSnapshot(room,r))return;storefrontUI.close();roomInvitesUI.setRoom(r,session?.token);friendsUI.setRoom(r);if(r.cancellation?.reason==='admin-entry-refund'){showCancelledRoom(r);return;}if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.matchKey===auctionMatchKey(r)&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const allTailAwards=collectTailAwards(room,r),tailAwards=tailReceipts.pending(r,allTailAwards),reviewPending=tailReceipts.reviewPending(r,allTailAwards);
  if(room?.code!==r.code||(r.phase==='auction'&&room?.phase!=='auction')||(r.phase==='auction'&&r.round<room?.round))cancelAwardFlights();
  const offeredAwards=collectOfferedAwards(room,r),offeredArt=document.querySelector('#stage .card-art');
  const deliveryCounts=r.phase==='finished'?(r.final||[]).map((p,seat)=>p.team.length-tailAwards.filter(a=>a.seat===seat).length-offeredAwards.filter(a=>a.seat===seat).length):[];
  const offeredSnapshot=offeredArt?{element:offeredArt.cloneNode(true),rect:offeredArt.getBoundingClientRect()}:null;
  cancelAuctionReveal($('stage'));$('game').classList.remove('auction-results-only','auction-delivery-active');
  // A background tab must not consume unseen receipts; visibility resumes them.
- if(document.hidden&&r.phase==='finished'&&tailAwards.length){room=r;return;}
+ if(document.hidden&&r.phase==='finished'&&(tailAwards.length||reviewPending)){room=r;return;}
  // Keep the auction presentation until every already-awarded card has opened.
  // Authoritative state still advances immediately; no bidding or server timers are paused.
- if(r.phase==='finished'&&(tailAwards.length||offeredAwards.length||awardFlights.size)){
+ if(r.phase==='finished'&&(tailAwards.length||offeredAwards.length||awardFlights.size||reviewPending)){
   room=r;window.HeroPlatform?.setRoom(r);window.HeroPlatform?.gameplay(false);refreshGold();
   offeredAwards.forEach(award=>animateWonAuctionCard(award,r.me,offeredSnapshot));
   let deliveryController;
@@ -610,6 +610,14 @@ function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAu
    box.querySelector('.delivery-count').textContent=deliveryCounts[seat]+' / 5';
    box.querySelector('.delivery-slot').innerHTML=`<span translate="no" class="delivered-card rarity-${esc(card.rarity||'common')}">✓ ${esc(card.name)}</span>`;
   };
+  const showReviewReceipts=()=>{
+   tailReceipts.received(r,allTailAwards);
+   for(let seat=0;seat<2;seat++){
+    const box=$('player'+displaySeat(seat,r.me)),count=box.querySelector('.delivery-count'),slot=box.querySelector('.delivery-slot');
+    if(count)count.textContent=r.final[seat].team.length+' / 5';
+    if(slot)slot.textContent=document.documentElement.lang==='en'?'All cards revealed':'Tüm kartlar açıldı';
+   }
+  };
   // The already-open offered card was allocated too; reflect it when its flight arrives.
   const startAfter=previousFlights.then(()=>{
    if(tailReveal!==deliveryController||!tailReveal?.active||room?.code!==r.code||room?.phase!=='finished')return;
@@ -620,11 +628,12 @@ function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAu
     $('player'+visual).innerHTML=`<div class="name">${esc(displayPlayerName(p,r.mode==='bot'&&seat===1))}</div><div class="delivery-count">${deliveryCounts[seat]} / 5</div><div class="delivery-slot" role="status">${document.documentElement.lang==='en'?'Receiving cards':'Kartlar geliyor'}</div>`;
    }
    offeredAwards.forEach(receiveCard);
+   if(tailReveal.reviewing)showReviewReceipts();
   });
 
   $('phase').textContent=document.documentElement.lang==='en'?'REMAINING HEROES':'KALAN KAHRAMANLAR';renderChat(r);
-  tailReveal=mountTailReveal(stage,null,tailAwards,{english:document.documentElement.lang==='en',me:r.me,reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,startAfter,resolveDestination:seat=>$('player'+displaySeat(seat,r.me)).querySelector('.delivery-slot'),onArrive:award=>{receiveCard(award);tailReceipts.received(r,[award]);},onComplete:({restoreFocus}={})=>{
-   tailReceipts.received(r,tailAwards);cancelAwardFlights();tailReveal=null;show(room);
+  tailReveal=mountTailReveal(stage,null,tailAwards,{english:document.documentElement.lang==='en',me:r.me,reviewItems:allTailAwards,onReview:showReviewReceipts,reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,startAfter,resolveDestination:seat=>$('player'+displaySeat(seat,r.me)).querySelector('.delivery-slot'),onArrive:award=>{receiveCard(award);tailReceipts.received(r,[award]);},onComplete:({restoreFocus}={})=>{
+   tailReceipts.received(r,allTailAwards);tailReceipts.confirmReview(r);cancelAwardFlights();tailReveal=null;show(room);
    if(restoreFocus)$('confirm-arena-entry')?.focus({preventScroll:true});
   },loadArt:async card=>{
    const response=await fetch('/api/art?universe='+encodeURIComponent(card.universe)+'&name='+encodeURIComponent(card.name));
