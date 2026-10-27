@@ -689,6 +689,11 @@ body:has(#battle-arena) :is(.battle-hero-stat-row,.battle-stat-head){border-colo
 body:has(#battle-arena) :is(.battle-hero-stat-row>span,.battle-stat-head,#battle-summary-detail){color:#586676}
 body:has(#battle-arena) .battle-hero-stat-row>span:nth-child(2){color:#735626}
 body:has(#battle-arena) .battle-hero-stat-row>span:last-child{color:#28654d}
+
+/* Defeated result rows stay readable on the accepted light surface. */
+body:has(#battle-arena) .battle-hero-stat-row--defeated{background:#f0f2ee}
+body:has(#battle-arena) #battle-summary .battle-hero-stat-row.battle-hero-stat-row--defeated strong,body:has(#battle-arena) #battle-summary .battle-hero-stat-row.battle-hero-stat-row--defeated>span{color:#5a6570}
+
 body:has(#battle-arena) .battle-commander-stats{background:#e2dce9;color:#634675}
 body:has(#battle-arena) .arena-series-scoreline span:first-child{color:#28627f}
 body:has(#battle-arena) .arena-series-scoreline span:last-child{color:#973b59}
