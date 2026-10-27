@@ -205,9 +205,11 @@ test('maxed, unaffordable and logged-out actions never send a purchase',async()=
  for(const mutate of [context=>context.walletGold=199,context=>context.commanderProfile=profile('attack',40),context=>context.login=null]){const h=upgradeHarness(()=>{throw Error('Unexpected request');});mutate(h.context);await h.run('attack');assert.equal(h.calls.length,0);}
 });
 
-for(const english of [false,true])test(`Hunt Order profile summary and detail both state until-death focus (${english?'EN':'TR'})`,()=>{
+for(const english of [false,true])test(`Hunt Order profile separates until-death focus from the one-attack bonus (${english?'EN':'TR'})`,()=>{
  const root=new Element();renderCommanderSkills(root,profile('attack',20),{document,english});
  const summary=root.children[1].children.find(child=>child.tagName==='p');
  assert.match(summary.textContent,english?/until the target dies/:/Hedef ölünceye kadar/);
- assert.doesNotMatch(root.children[1].textContent,/next attack|next round|sonraki saldırısı|Sonraki tur/);
+ assert.match(summary.textContent,english?/Every ally alive when cast gains \+20% attack for its next attack only/:/Kullanım anında yaşayan her müttefike sonraki tek saldırısı için \+%20 saldırı/);
+ assert.match(root.children[1].textContent,english?/no round or attack-count limit/:/tur veya saldırı sayısı sınırı yoktur/);
+ assert.doesNotMatch(root.children[1].textContent,/next round|Sonraki tur/);
 });

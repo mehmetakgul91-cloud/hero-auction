@@ -5,6 +5,7 @@ import {commanderWeakenRate} from './commander-weaken-status.js';
 import {applyServerHeroAction,beginServerCombatRound} from './commander-live-combat.js';
 import {selectBattleTarget} from './battle-target-selection.js';
 import {arcaneDamageAttack} from './commander-ultimate-status.js';
+import {commanderHuntAttackBonus} from './commander-hunt-status.js';
 
 const alive=team=>team.filter(unit=>unit.hp>0);
 export function stepBasicHeroCombat(combat,{side,actorId,round=combat?.round}={}){
@@ -19,7 +20,7 @@ export function stepBasicHeroCombat(combat,{side,actorId,round=combat?.round}={}
  // A deliberately bounded basic-attack formula, not a substitute for the
  // existing battle engine's crits, skills, defense, and other mechanics.
  const weaken=commanderWeakenRate(actor,round);
- const effectiveAttack=Math.round(arcaneDamageAttack(actor,round)*(1-weaken));
+ const effectiveAttack=Math.round((arcaneDamageAttack(actor,round)+commanderHuntAttackBonus(actor))*(1-weaken));
  const raw=Math.max(1,Math.round(effectiveAttack-Math.max(0,target.defense||0)*0.35));
  return applyServerHeroAction(combat,{side,actorId,targetId:target.id,value:raw,round});
 }

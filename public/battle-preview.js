@@ -636,7 +636,7 @@ async function build(overrideResult){
   renderArenaCommanderMatchup(result.commanders);
   liveArenaMode=!!result.live;
   states=result.teams.map((team,side)=>team.map((u,index)=>({...u,hp:u.maxHp,shieldKnown:liveArenaMode||Number.isFinite(result.initialShields?.[side]?.[index]),shield:liveArenaMode?(Number(u.shield)||0):(Number(result.initialShields?.[side]?.[index])||0)})));
-  if(!liveArenaMode)for(const unit of states.flat())for(const key of ['arcaneSurgeBonusAttack','arcaneSurgeFromRound','arcaneSurgeUntilRound','commanderFocusUntilDeath','commanderStunNextAttack','lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'])delete unit[key];
+  if(!liveArenaMode)for(const unit of states.flat())for(const key of ['arcaneSurgeBonusAttack','arcaneSurgeFromRound','arcaneSurgeUntilRound','commanderFocusUntilDeath','commanderStunNextAttack','commanderHuntNextAttack','lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'])delete unit[key];
   const lookup=new Map(states.flat().map(u=>[u.id,u.name]));
   const replayHealth=createBattleReplayHealth(states);
   events=(liveArenaMode?[]:result.log).map(entry=>({
@@ -679,7 +679,7 @@ window.addEventListener('heroarena:experimental-round-end',e=>{
  const snapshot=e.detail.teams;
  for(let side=0;side<2;side++){
   const hpById=new Map((snapshot[side]||[]).map(u=>[u.id,u.hp]));
-  for(const unit of states[side])if(hpById.has(unit.id)){const live=snapshot[side].find(u=>u.id===unit.id);delete unit.commanderFocusUntilDeath;delete unit.commanderStunNextAttack;for(const key of ['lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'])delete unit[key];Object.assign(unit,live);if(e.detail.finished){delete unit.commanderFocusUntilDeath;delete unit.commanderStunNextAttack;for(const key of ['lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'])delete unit[key];}unit.hp=Math.max(0,Math.min(unit.maxHp,Number(live.hp)||0));unit.shield=Number(live.shield)||0;unit.shieldKnown=true;}
+  for(const unit of states[side])if(hpById.has(unit.id)){const live=snapshot[side].find(u=>u.id===unit.id);delete unit.commanderFocusUntilDeath;delete unit.commanderStunNextAttack;delete unit.commanderHuntNextAttack;for(const key of ['lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'])delete unit[key];Object.assign(unit,live);if(e.detail.finished){delete unit.commanderFocusUntilDeath;delete unit.commanderStunNextAttack;delete unit.commanderHuntNextAttack;for(const key of ['lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'])delete unit[key];}unit.hp=Math.max(0,Math.min(unit.maxHp,Number(live.hp)||0));unit.shield=Number(live.shield)||0;unit.shieldKnown=true;}
  }
  const fresh=(e.detail.events||[]).filter(entry=>Number.isSafeInteger(entry.version)&&entry.version>feedbackVersion);
  for(const entry of fresh){appendBattleFeedback(entry);feedbackVersion=Math.max(feedbackVersion,entry.version);}
@@ -902,7 +902,7 @@ function step(){
  if(!batch.length){batch.push(events[cursor++])}
  const last=batch[batch.length-1];
  const previous=states.map(team=>team.map(unit=>unit.hp));
- states.forEach((t,side)=>t.forEach((u,i)=>{u.hp=last.snapshot[side][i];if(last.statusSnapshot){for(const key of ['arcaneSurgeBonusAttack','arcaneSurgeFromRound','arcaneSurgeUntilRound','commanderFocusUntilDeath','commanderStunNextAttack','lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'])delete u[key];Object.assign(u,last.statusSnapshot[side][i]);}u.shieldKnown=Number.isFinite(last.shieldSnapshot?.[side]?.[i]);if(u.shieldKnown)u.shield=Math.max(0,last.shieldSnapshot[side][i]);}));
+ states.forEach((t,side)=>t.forEach((u,i)=>{u.hp=last.snapshot[side][i];if(last.statusSnapshot){for(const key of ['arcaneSurgeBonusAttack','arcaneSurgeFromRound','arcaneSurgeUntilRound','commanderFocusUntilDeath','commanderStunNextAttack','commanderHuntNextAttack','lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'])delete u[key];Object.assign(u,last.statusSnapshot[side][i]);}u.shieldKnown=Number.isFinite(last.shieldSnapshot?.[side]?.[i]);if(u.shieldKnown)u.shield=Math.max(0,last.shieldSnapshot[side][i]);}));
  const defeatedSide=states.findIndex((team,side)=>previous[side].some(hp=>hp>0)&&team.every(u=>u.hp<=0));
  const lastFallen=defeatedSide<0?null:states[defeatedSide].find((u,i)=>previous[defeatedSide][i]>0&&u.hp<=0);
  for(const e of batch){
@@ -935,7 +935,7 @@ async function requestArenaWakeLock(){
  finally{arenaWakeRequestPending=false}
 }
 window.addEventListener('heroarena:battle-finished',()=>{
- for(const team of states)for(const unit of team){delete unit.commanderFocusUntilDeath;delete unit.commanderStunNextAttack;for(const key of ['lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'])delete unit[key];}
+ for(const team of states)for(const unit of team){delete unit.commanderFocusUntilDeath;delete unit.commanderStunNextAttack;delete unit.commanderHuntNextAttack;for(const key of ['lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'])delete unit[key];}
  battlePresentationFinished=true;syncArenaWeather();stopArenaMusic(true);releaseArenaWakeLock();
 });
 window.addEventListener('heroarena:connection-lost',()=>{

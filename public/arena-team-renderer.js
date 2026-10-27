@@ -32,8 +32,9 @@ export function createArenaTeamRenderer({document,loadArt,onDefeated=()=>{}}){
     const shieldFill=document.createElement('span');shieldBar.append(shieldFill);
     const stunBadge=document.createElement('span');stunBadge.className='arena-stun-status';stunBadge.hidden=true;
     const lastStandBadge=document.createElement('span');lastStandBadge.className='arena-last-stand-status';lastStandBadge.hidden=true;
-    card.append(portrait,label,bar,shieldBar,stunBadge,lastStandBadge);parent.append(card);
-    entry={card,portrait,bar,fill,shieldBar,shieldFill,stunBadge,lastStandBadge,name:unit.name,hp:unit.hp};cards.set(unit.id,entry);
+    const huntBadge=document.createElement('span');huntBadge.className='arena-hunt-status';huntBadge.hidden=true;
+    card.append(portrait,label,bar,shieldBar,stunBadge,lastStandBadge,huntBadge);parent.append(card);
+    entry={card,portrait,bar,fill,shieldBar,shieldFill,stunBadge,lastStandBadge,huntBadge,name:unit.name,hp:unit.hp};cards.set(unit.id,entry);
     Promise.resolve(loadArt(unit)).then(url=>{
      if(!url||!portrait.isConnected)return;
      const image=document.createElement('img');image.className='arena-portrait-image';image.alt=unit.name;image.decoding='async';
@@ -41,7 +42,7 @@ export function createArenaTeamRenderer({document,loadArt,onDefeated=()=>{}}){
      image.src=url;
     }).catch(()=>{});
    }
-   const {card,portrait,bar,fill,shieldBar,shieldFill,stunBadge,lastStandBadge}=entry,lane=unit.lane==='front'?'front':'back',laneIndex=laneIndices[lane]++;
+   const {card,portrait,bar,fill,shieldBar,shieldFill,stunBadge,lastStandBadge,huntBadge}=entry,lane=unit.lane==='front'?'front':'back',laneIndex=laneIndices[lane]++;
    if(parent.children[index]!==card)parent.insertBefore(card,parent.children[index]||null);
    card.classList.toggle('frontline',lane==='front');card.classList.toggle('backline',lane==='back');card.classList.toggle('dead',unit.hp<=0);
    card.classList.toggle('cast',flash?.action!=='stun-skip'&&flash?.actorId===unit.id);card.classList.toggle('hit',flash?.action!=='stun-skip'&&flash?.targetId===unit.id);
@@ -69,6 +70,11 @@ export function createArenaTeamRenderer({document,loadArt,onDefeated=()=>{}}){
    const lastStandDescription=immortal?(english?'Last Bastion: health cannot fall below 1 through round '+unit.lastStandImmortalUntilRound:'Son Kale: '+unit.lastStandImmortalUntilRound+'. tur sonuna kadar can 1’in altına düşmez'):(english?'Last Bastion armed: waiting for the first lethal hit':'Son Kale hazır: ilk ölümcül darbeyi bekliyor');
    lastStandBadge.title=lastStandDescription;lastStandBadge.setAttribute('aria-label',lastStandDescription);
    if(immortal||armed)card.title+=' · '+lastStandDescription;
+   const huntReady=unit.hp>0&&unit.commanderHuntNextAttack===true;
+   huntBadge.hidden=!huntReady;huntBadge.textContent=english?'⚔ +20% ATK':'⚔ +%20 SAL';
+   const huntDescription=english?'Hunt Order: +20% attack for the next attack only':'Av Emri: sonraki tek saldırı için +%20 saldırı';
+   huntBadge.title=huntDescription;huntBadge.setAttribute('aria-label',huntDescription);
+   if(huntReady)card.title+=' · '+huntDescription;
    if(entry.hp>0&&unit.hp<=0)onDefeated(card);
    entry.hp=unit.hp;
   });

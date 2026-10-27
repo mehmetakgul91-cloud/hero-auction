@@ -1,3 +1,4 @@
+import {consumeCommanderHunt,expireCommanderHunt} from './commander-hunt-status.js';
 import {applyServerStunSkip} from './commander-live-combat.js';
 import {expireCommanderFocus} from './battle-commander-focus.js';
 import {commanderWeakenRate,consumeCommanderWeaken} from './commander-weaken-status.js';
@@ -35,11 +36,12 @@ export function stepParityEnergySplash(combat,{side,actorId,round=combat?.round,
  const thornsShield=applyAttackThorns(actor,{enabled:allowThornsPassive});
  if(thornsShield)events.push({round,side,actor:actorId,action:'thorns-shield',target:actorId,value:thornsShield});
  consumeCommanderWeaken(actor);
+ if(consumeCommanderHunt(actor))events.find(event=>['normal','special'].includes(event.damageType)).huntAttackConsumed=true;
  combat.teams=next;
  combat.version++;
  for(const event of events){event.version=combat.version;combat.events.push(event);}
  for(const id of dead)grantLiveCommanderEnergy(combat.abilities,1-side,10);
- expireCommanderFocus(next,round);
+ expireCommanderFocus(next,round);expireCommanderHunt(next);
  combat.finished=next.some(team=>team.every(u=>u.hp<=0));
  combat.abilities.finished=combat.finished;
  return {version:combat.version,events,teams:structuredClone(next),finished:combat.finished};

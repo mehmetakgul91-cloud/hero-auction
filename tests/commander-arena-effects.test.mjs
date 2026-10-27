@@ -219,3 +219,14 @@ for(const english of [false,true])test(`mage stun impact uses authoritative enem
  assert.equal(h.impacts()[0].querySelectorAll('.stun-next-attack').length,1);assert.match(css,/strong\.stun-next-attack\{[^}]*white-space:normal/);
  h.advance(2400);assert.equal(h.impacts()[0].removed,true);assert.equal(h.timers.size,0);
 });
+
+for(const english of [false,true])for(const side of [0,1])test(`Hunt Order shows selected enemy focus and own next-attack bonus separately (${english?'EN':'TR'}, seat ${side})`,()=>{
+ const h=effectHarness({english}),entry={action:'commander-attack-ultimate',side,sequence:1,focusUntilDeath:true,impacts:[{target:'same',kind:'focus',value:2,untilDeath:true},{target:'same',kind:'hunt-buff',value:20,nextAttack:true},{target:'other',kind:'hunt-buff',value:20,nextAttack:true}]};
+ h.emit(entry);h.emit(entry);assert.equal(h.targetFx().length,3);assert.equal(h.targetFx()[0].parentElement,h.portraits[1-side][0]);assert.equal(h.targetFx()[1].parentElement,h.portraits[side][0]);assert.equal(h.targetFx()[2].parentElement,h.portraits[side][1]);
+ h.advance(1200);assert.equal(h.impacts().length,3);const own=h.impacts().filter(e=>e.style.left===side*200+'px');assert.equal(own.length,2);
+ for(const impact of own){assert.match(textOf(impact),english?/\+20% ATTACK · NEXT ATTACK/:/\+%20 SALDIRI · TEK SALDIRI/);assert.doesNotMatch(textOf(impact),/HP DAMAGE|CAN HASARI|3 ROUNDS|3 TUR/);assert.equal(impact.querySelectorAll('.hunt-next-attack').length,1);}
+ assert.match(css,/strong\.hunt-next-attack\{[^}]*white-space:normal/);h.advance(2400);assert.equal(h.timers.size,0);
+});
+test('Hunt Order cosmetic bonus requires explicit next-attack metadata, not an inferred focus mark',()=>{
+ const h=effectHarness();h.emit({action:'commander-attack-ultimate',side:0,sequence:1,impacts:[{target:'same',kind:'hunt-buff',value:20},{target:'other',kind:'hunt-buff',value:40,nextAttack:true}]});assert.equal(h.targetFx().length,0);h.advance(1200);assert.equal(h.impacts().length,0);
+});

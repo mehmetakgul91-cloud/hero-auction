@@ -389,6 +389,7 @@ body.arena-fit{height:auto;min-height:var(--arena-viewport-height,100vh);min-hei
 .commander-impact-label strong{font-size:clamp(15px,3.5vw,24px);line-height:1.05}.commander-impact-label small{font-size:9px}
 .commander-impact-label strong.stun-next-attack{max-width:90px;font-size:11px;line-height:1.15;white-space:normal}
 .commander-impact-label strong.focus-until-death{max-width:90px;font-size:11px;line-height:1.15;white-space:normal}
+.commander-impact-label strong.hunt-next-attack{max-width:90px;font-size:11px;line-height:1.15;white-space:normal}
 @keyframes commanderImpact{0%{opacity:0;transform:scale(.9)}12%,80%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.04)}}
 @media(prefers-reduced-motion:reduce){.commander-hero-impact{animation:none}}
 
@@ -548,6 +549,9 @@ body:not(.arena-room) .formation{margin-top:6px;padding:10px}
 /* Lethal-hit protection is server-owned; this badge never runs a local timer. */
 .arena-last-stand-status{position:absolute;left:50%;top:16px;transform:translateX(-50%);z-index:5;max-width:94%;padding:2px 4px;border:1px solid #a7d7ff;border-radius:5px;background:#102c49ed;color:#dbf1ff;font:800 8px/1.1 system-ui,sans-serif;white-space:nowrap;pointer-events:none}
 .arena-last-stand-status[data-state="active"]{border-color:#ffe69c;background:#3c310fed;color:#fff0b9}
+
+/* One pending server-owned attack bonus; it can coexist with stun/protection. */
+.arena-hunt-status{position:absolute;left:50%;top:30px;transform:translateX(-50%);z-index:5;max-width:94%;padding:2px 4px;border:1px solid #ffc17c;border-radius:5px;background:#42260fed;color:#ffe4c1;font:800 8px/1.1 system-ui,sans-serif;white-space:nowrap;pointer-events:none}
 
 /* Reserve the commander dock before late control initialization. The initial
    visible arena therefore has its final field height, not a cover-crop resize. */

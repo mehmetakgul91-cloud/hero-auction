@@ -7,11 +7,11 @@ export function createBattleReplayHealth(teams){
  const clearLastStand=status=>{for(const key of lastStandKeys)delete status[key];};
  const statuses=teams.map(team=>team.map(()=>({}))); // Supplied teams may be FINAL battle results.
  const seen=new Set(),objects=new WeakSet();let currentRound=0;
- const copy=()=>{if(health.some(team=>team.every(hp=>hp<=0)))for(const team of statuses)for(const status of team){delete status.commanderFocusUntilDeath;delete status.commanderStunNextAttack;clearLastStand(status);}for(let side=0;side<health.length;side++)for(let i=0;i<health[side].length;i++)if(health[side][i]<=0){for(const key of surgeKeys)delete statuses[side][i][key];delete statuses[side][i].commanderFocusUntilDeath;delete statuses[side][i].commanderStunNextAttack;clearLastStand(statuses[side][i]);}return health.map(team=>team.slice());};
+ const copy=()=>{if(health.some(team=>team.every(hp=>hp<=0)))for(const team of statuses)for(const status of team){delete status.commanderFocusUntilDeath;delete status.commanderStunNextAttack;delete status.commanderHuntNextAttack;clearLastStand(status);}for(let side=0;side<health.length;side++)for(let i=0;i<health[side].length;i++)if(health[side][i]<=0){for(const key of surgeKeys)delete statuses[side][i][key];delete statuses[side][i].commanderFocusUntilDeath;delete statuses[side][i].commanderStunNextAttack;delete statuses[side][i].commanderHuntNextAttack;clearLastStand(statuses[side][i]);}return health.map(team=>team.slice());};
  const amount=value=>Number.isFinite(Number(value))?Math.max(0,Number(value)):0;
  const identity=entry=>entry.eventId!=null?'event:'+entry.eventId:
   entry.actionId!=null||entry.version!=null?JSON.stringify([entry.actionId??entry.version,entry.side,entry.actor,entry.action,entry.target,entry.damageType,entry.value,entry.absorbed,entry.executedDamage]):null;
- return {finish(){for(const team of statuses)for(const status of team){delete status.commanderFocusUntilDeath;delete status.commanderStunNextAttack;clearLastStand(status);}return copy();},statusSnapshot(){return statuses.map(team=>team.map(status=>({...status})));},apply(entry){
+ return {finish(){for(const team of statuses)for(const status of team){delete status.commanderFocusUntilDeath;delete status.commanderStunNextAttack;delete status.commanderHuntNextAttack;clearLastStand(status);}return copy();},statusSnapshot(){return statuses.map(team=>team.map(status=>({...status})));},apply(entry){
   if(!entry||typeof entry!=='object')return copy();
   const key=identity(entry);
   if(objects.has(entry)||(key!==null&&seen.has(key)))return copy();
@@ -42,13 +42,22 @@ export function createBattleReplayHealth(teams){
    const targetSide=1-entry.side,index=teams[targetSide].findIndex(hero=>hero.id===impact.target);
    if(impact.kind==='focus'&&impact.untilDeath===true&&index>=0&&health[targetSide][index]>0)statuses[targetSide][index].commanderFocusUntilDeath=true;
   }
+  // Grant only from explicit new-rule metadata; historical focus-only logs stay unchanged.
+  if(entry.action==='commander-attack-ultimate'&&[0,1].includes(entry.side))for(const impact of entry.impacts||[]){
+   const index=teams[entry.side].findIndex(hero=>hero.id===impact.target);
+   if(impact.kind==='hunt-buff'&&impact.nextAttack===true&&impact.value===20&&index>=0&&health[entry.side][index]>0)statuses[entry.side][index].commanderHuntNextAttack=true;
+  }
+  if(entry.huntAttackConsumed===true&&[0,1].includes(entry.side)){
+   const index=teams[entry.side].findIndex(hero=>hero.id===entry.actor);
+   if(index>=0)delete statuses[entry.side][index].commanderHuntNextAttack;
+  }
   if(entry.action==='commander-magic-normal'&&[0,1].includes(entry.side))for(const impact of entry.impacts||[]){
    const targetSide=1-entry.side,index=teams[targetSide].findIndex(hero=>hero.id===impact.target);
    if(impact.kind==='stun'&&impact.nextAttack===true&&impact.value===1&&index>=0&&health[targetSide][index]>0)statuses[targetSide][index].commanderStunNextAttack=true;
   }
   if(['stun-skip','revive','commander-revive'].includes(entry.action)&&[0,1].includes(entry.side)){
    const id=entry.action==='stun-skip'?entry.actor:entry.target,index=teams[entry.side].findIndex(hero=>hero.id===id);
-   if(index>=0){delete statuses[entry.side][index].commanderStunNextAttack;if(entry.action!=='stun-skip')clearLastStand(statuses[entry.side][index]);}
+   if(index>=0){delete statuses[entry.side][index].commanderStunNextAttack;if(entry.action!=='stun-skip'){clearLastStand(statuses[entry.side][index]);delete statuses[entry.side][index].commanderHuntNextAttack;}}
   }
   const transfer=entry.arcaneTransfer;
   if(transfer&&Number.isFinite(transfer.bonusAttack)&&transfer.bonusAttack>=0&&Number.isInteger(transfer.fromRound)&&Number.isInteger(transfer.untilRound)&&transfer.untilRound>=transfer.fromRound){
