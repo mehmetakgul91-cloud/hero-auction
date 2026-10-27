@@ -55,9 +55,10 @@ test('real HTTP room, both seats, lane edits, rematch, bot, preview-room and CG 
   for(const p of [p0,p1])await post('/api/battle-room',{action:'ready',code:p.code,token:p.token,positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:['tank','tank','tank','tank','assassin'],arenaPresentation:forged});
   for(const p of [p0,p1]){const view=await get('/api/battle-room',{code:p.code,token:p.token});assert.deepEqual(view.arenaPresentation,p0.arenaPresentation);assert.deepEqual(view.result.arenaPresentation,p0.arenaPresentation);}
   const normal=await fetch(base+'/arena-theme.js'),cg=await fetch(base+'/crazygames/arena-theme.js');assert.equal(normal.status,200);assert.equal(cg.status,200);assert.equal(await normal.text(),await cg.text());
-  for(const prefix of ['', '/crazygames'])for(const file of ['ruins-premium.webp','savanna-premium.webp','fjord-premium.webp','savanna-dust.webp']){
+  for(const prefix of ['', '/crazygames'])for(const file of ['ruins-premium.webp','savanna-premium.webp','fjord-premium.webp','savanna-dust.webp','ruins-side-extension-3a5fb26a.webp','savanna-side-extension-88137c78.webp']){
    const path='/images/arena-themes/'+file,response=await fetch(base+prefix+path);
    assert.equal(response.status,200);assert.match(response.headers.get('content-type'),/image\/webp/);
+   assert.equal(response.headers.get('cache-control'),file.includes('-side-extension-')?'public, max-age=31536000, immutable':'no-store');
    assert.deepEqual(Buffer.from(await response.arrayBuffer()),readFileSync(new URL('../public'+path,import.meta.url)));
   }
   for(const prefix of ['', '/crazygames'])for(const module of ['arena-weather.js','arena-dust.js','arena-forest-gust.js','arena-portrait-weather.js','arena-viking-layout.js','arena-viking-weather.js','arena-scene-layout.js']){

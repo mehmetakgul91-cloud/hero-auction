@@ -69,7 +69,7 @@ test('publishing increments one revision shared by both seats, reads do not incr
 test('actual rematch reset clears tail metadata and changes match identity before first new publish',async()=>{
  const room={code:'123',phase:'finished',created:45,matchNumber:1,revision:8,tailAwards:[{id:'old'}],players:[0,1].map(()=>({team:Array(5).fill(card(0)),credits:-3})),rematch:[false,true],mode:'friend',universe:'mixed'};
  const oldKey=auctionMatchKey(room),oldTheme=startRoomArenaTheme(room,{randomIndex:()=>0});let published;
- const context={startRoomArenaTheme,b:{},authorize:()=>({r:room,seat:0}),error:message=>{throw Error(message)},chargeEntry:async()=>{},liveArenaLifecycle:{endRoom(){}},liveArenaMatchKeys:new Map(),newCards:()=>Array.from({length:10},(_,n)=>card(n)),log(){},publish:r=>{r.revision++;published=auctionRevealSnapshot(r)},publicRoom:r=>auctionRevealSnapshot(r),Date};
+ const context={auctionAdmissions:new WeakSet(),refreshAuctionCommanders:async()=>{},markRoom(){},startRoomArenaTheme,b:{},authorize:()=>({r:room,seat:0}),error:message=>{throw Error(message)},chargeEntry:async()=>{},liveArenaLifecycle:{endRoom(){}},liveArenaMatchKeys:new Map(),newCards:()=>Array.from({length:10},(_,n)=>card(n)),log(){},publish:r=>{r.revision++;published=auctionRevealSnapshot(r)},publicRoom:r=>auctionRevealSnapshot(r),Date};
  const start=server.lastIndexOf("if(url==='/api/rematch'){")+"if(url==='/api/rematch')".length,end=server.indexOf("if(url==='/api/bot')",start);
  vm.createContext(context);vm.runInContext('async function rematch()'+server.slice(start,end),context);
  await context.rematch();

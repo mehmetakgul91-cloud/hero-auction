@@ -1,11 +1,12 @@
 // Cosmetic forest wind only: a bounded reusable set, never gameplay randomness.
+// More legible leaves and shorter quiet gaps, without adding animated nodes.
 import {createPortraitWeatherClip} from './arena-portrait-weather.js';
-export const FOREST_GUST_TIMING=Object.freeze({durationMs:7000,initialDelayMs:2500,minIntervalMs:20000,maxIntervalMs:30000});
+export const FOREST_GUST_TIMING=Object.freeze({durationMs:7000,initialDelayMs:1500,minIntervalMs:12000,maxIntervalMs:18000});
 export const FOREST_LEAVES=Object.freeze([
- Object.freeze({startX:-8,startY:15,midX:48,midY:38,endX:110,endY:65,size:17,startRotation:-35,midRotation:135,endRotation:325,durationMs:6500,delayMs:0,opacity:.65}),
- Object.freeze({startX:-12,startY:68,midX:45,midY:51,endX:108,endY:27,size:14,startRotation:90,midRotation:-70,endRotation:-225,durationMs:5900,delayMs:400,opacity:.58}),
- Object.freeze({startX:-10,startY:42,midX:54,midY:62,endX:111,endY:82,size:20,startRotation:-90,midRotation:85,endRotation:245,durationMs:6100,delayMs:650,opacity:.68}),
- Object.freeze({startX:-7,startY:88,midX:46,midY:68,endX:109,endY:50,size:12,startRotation:35,midRotation:-100,endRotation:-270,durationMs:5600,delayMs:1100,opacity:.52})
+ Object.freeze({startX:-8,startY:15,midX:48,midY:38,endX:110,endY:65,size:22,startRotation:-35,midRotation:135,endRotation:325,durationMs:6500,delayMs:0,opacity:.82}),
+ Object.freeze({startX:-12,startY:68,midX:45,midY:51,endX:108,endY:27,size:19,startRotation:90,midRotation:-70,endRotation:-225,durationMs:5900,delayMs:400,opacity:.76}),
+ Object.freeze({startX:-10,startY:42,midX:54,midY:62,endX:111,endY:82,size:25,startRotation:-90,midRotation:85,endRotation:245,durationMs:6100,delayMs:650,opacity:.85}),
+ Object.freeze({startX:-7,startY:88,midX:46,midY:68,endX:109,endY:50,size:17,startRotation:35,midRotation:-100,endRotation:-270,durationMs:5600,delayMs:1100,opacity:.70})
 ]);
 export const FOREST_FOREGROUND_INDICES=Object.freeze([0,2]);
 const mounts=new WeakMap();
@@ -37,7 +38,7 @@ export function mountForestGust(root,options={}){
  function addLeaf(parent,spec,isForeground){
   const image=document.createElement('img');image.className='forest-gust__leaf';image.alt='';image.draggable=false;image.decoding='async';
   image.style.setProperty('--leaf-size',spec.size+'px');image.style.setProperty('--leaf-duration',spec.durationMs+'ms');image.style.setProperty('--leaf-delay',spec.delayMs+'ms');
-  image.style.setProperty('--leaf-opacity',String(isForeground ? .48 : spec.opacity));
+  image.style.setProperty('--leaf-opacity',String(isForeground ? .58 : spec.opacity));
   for(const position of ['start','mid','end'])image.style.setProperty('--leaf-'+position+'-rotation',spec[position+'Rotation']+'deg');
   parent.append(image);leaves.push({image,spec});
  }

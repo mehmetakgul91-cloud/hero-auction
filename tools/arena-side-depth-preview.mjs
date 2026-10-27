@@ -1,0 +1,21 @@
+// Static SVG layout mockup, not a browser screenshot. Original source art is never edited.
+import fs from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+import {computeArenaSceneLayout} from '../public/arena-scene-layout.js';
+const [reference,output]=process.argv.slice(2);if(!reference||!output)throw Error('reference preview PNG and output SVG required');
+const root=fileURLToPath(new URL('../public',import.meta.url));
+const data=p=>{const bytes=p.endsWith('.webp')?execFileSync('magick',[p,'png:-'],{maxBuffer:30*1024*1024}):fs.readFileSync(p);return 'data:image/png;base64,'+bytes.toString('base64')};
+const rect=(x,y,w,h,fill,rx=0)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${fill.length===9?fill.slice(0,7):fill}" fill-opacity="${fill.length===9?parseInt(fill.slice(7),16)/255:1}"/>`;
+const image=(p,x,y,w,h,extra='')=>`<image x="${x}" y="${y}" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice" xlink:href="${data(p)}" ${extra}/>`;
+const text=(x,y,t)=>`<text x="${x}" y="${y}" font-family="DejaVu Sans" text-anchor="middle" font-size="9" font-weight="600" fill="#e7edf1">${t}</text>`;
+const roster=JSON.parse(fs.readFileSync(new URL('../battle-roster.json',import.meta.url))).characters,l=computeArenaSceneLayout(378,400),ax=6,ay=165;
+const cards=[['Gölge Suikastçı',0,0,3],['Fırtına Çağıran',0,1,3],['Brunn',0,2,3],['Demir Sur',1,0,2],['Alev Zırhı',1,1,2],['Demir Düellocu',2,0,2],['Fener Şifacısı',2,1,2],['Ruh Dokuyucu',3,0,3],['Ay Rahibesi',3,1,3],['Obsidyen Muhafız',3,2,3]];
+let s='<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="390" height="820"><defs><clipPath id="arena"><rect x="6" y="165" width="378" height="400" rx="14"/></clipPath>';
+cards.forEach((c,i)=>{const x=ax+l.centers[c[1]]-32,y=ay+l.gridTop+(c[2]+.5)*l.gridHeight/c[3]-45;s+=`<clipPath id="hero${i}"><rect x="${x}" y="${y}" width="64" height="64" rx="7"/></clipPath>`});
+s+='</defs>'+image(reference,0,0,390,820)+'<g clip-path="url(#arena)">'+image(root+'/images/arena-themes/ruins-side-extension-3a5fb26a.webp',ax+(378-l.art.width*3)/2,ay,l.art.width*3,l.art.height)+rect(ax,ay,378,400,'#10171038');
+const left=ax+l.art.left,top=ay+l.art.top;for(const[n,color]of [[10,'#00000022'],[6,'#00000066'],[3,'#302b21'],[1,'#c3ae7c']])s+=rect(left-n,top-n,l.art.width+n*2,l.art.height+n*2,color);
+s+=image(root+'/images/arena-themes/ruins-premium.webp',left,top,l.art.width,l.art.height);
+cards.forEach(([name,col,index,count],i)=>{const hero=roster.find(h=>h.name===name),x=ax+l.centers[col],y=ay+l.gridTop+(index+.5)*l.gridHeight/count-45,color=col<2?'#4fb8ed':'#ef689c';s+=rect(x-34,y-2,68,68,color,8)+image(root+hero.portrait,x-32,y,64,64,`clip-path="url(#hero${i})"`)+rect(x-41,y+67,82,12,'#17212be6',2)+text(x,y+76,name)+rect(x-31,y+81,62,4,'#273c47',2)+rect(x-31,y+81,50-i%3*6,4,'#5ee0b6',2)+rect(x-31,y+87,62,3,'#296079',1)});
+s+='</g>'+rect(0,760,390,60,'#edf0eb')+'<g font-family="DejaVu Sans" fill="#697570" text-anchor="middle"><text x="195" y="778" font-size="11" font-weight="600">YENİ ORMAN ÇEVRESİ · ÖNİZLEME</text><text x="195" y="797" font-size="10">Statik tasarım maketi · Canlı tarayıcı testi değildir</text></g></svg>';
+fs.writeFileSync(output,s);

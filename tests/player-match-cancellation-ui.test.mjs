@@ -13,7 +13,7 @@ const cancelledRoom=(patch={})=>({code:'123',matchKey:'123:1:99',revision:12,pha
 function fixture({english=false,activeTail=true}={}){
  const ids=['stage','game','login-gate','home','room-title','phase','player0','player1','log','leave'],nodes=Object.fromEntries(ids.map(id=>[id,new Node()]));
  const counts={tail:0,flights:0,reveal:0,wallet:0,chat:0,leave:0,normalPath:0},platform=[];nodes.leave.click=()=>counts.leave++;
- const ctx={room:{code:'123',matchKey:'123:1:99',revision:11,phase:'finished'},session:{code:'123',token:'seat'},lastCardKey:'old',tailReveal:activeTail?{active:true,cancel:()=>counts.tail++}:null,
+ const ctx={auctionCommanderDialog:{sync(){}},room:{code:'123',matchKey:'123:1:99',revision:11,phase:'finished'},session:{code:'123',token:'seat'},lastCardKey:'old',tailReveal:activeTail?{active:true,cancel:()=>counts.tail++}:null,
   document:{documentElement:{lang:english?'en':'tr'},createElement:tag=>new Node(tag)},$:id=>nodes[id],window:{HeroPlatform:{setRoom:r=>platform.push(r),gameplay:active=>platform.push(active)}},displayPlayerName:p=>p?.name||'Player',cancelAwardFlights:()=>counts.flights++,cancelAuctionReveal:()=>counts.reveal++,renderChat:()=>counts.chat++,refreshGold:()=>counts.wallet++,signedIn:()=>true,isStaleAuctionSnapshot,storefrontUI:{close(){}},roomInvitesUI:{setRoom(){}},friendsUI:{setRoom(){}},collectTailAwards(){counts.normalPath++;throw Error('cancelled room entered normal result branch')}};
  vm.createContext(ctx);vm.runInContext(source.slice(source.indexOf('function showCancelledRoom(r)'),source.indexOf('// Recover game progress')),ctx);
  return{ctx,nodes,counts,platform};
