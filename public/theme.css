@@ -637,7 +637,7 @@ body:has(#battle-arena) .battle-arena[data-arena-theme="ruins"]{border-color:#7d
 /* Approved savanna painting is requested only when this match selects savanna. */
 body:has(#battle-arena) .battle-arena[data-arena-theme="savanna"]{background-image:url('/images/arena-themes/savanna-premium.webp');border-color:#aa8a5b;background-size:contain}
 /* Approved Viking painting: its selected-only layout maps heroes to the stone floor. */
-body:has(#battle-arena) .battle-arena[data-arena-theme="fjord"]{background-image:url('/images/arena-themes/fjord-premium.webp');border-color:#9fb5c4}
+body:has(#battle-arena) .battle-arena[data-arena-theme="fjord"]{background-image:url('/images/arena-themes/fjord-ground-v2.webp');background-size:contain;background-repeat:no-repeat;background-position:center;background-color:#c8d5e1;border-color:#9fb5c4}
 @media(max-width:600px){body:has(#battle-arena) .battle-arena{background-position:center center}}
 body:has(#battle-arena) .battle-arena::before{background:none}
 body:has(#battle-arena) .battle-arena:after{background:#303a3f;border-color:#aaac93;color:#f0e7cd;box-shadow:0 2px 8px #10191f66}
@@ -793,27 +793,24 @@ body:has(.demo-shell),body:has(.model-shell){background:radial-gradient(ellipse 
 @keyframes forest-shadow-gust{0%,100%{opacity:0}55%{opacity:.035}}
 @media(prefers-reduced-motion:reduce){[data-forest-gust]{display:none!important}[data-forest-gust] .forest-gust__leaf,[data-forest-gust] .forest-gust__light,[data-forest-gust] .forest-gust__shadow{animation:none!important;opacity:0}}
 
-/* Viking wide-floor layout: scoped to the selected fjord, never other arenas.
-   Existing renderer-owned 60-track rows and living/defeated hero identities stay put. */
-.arena-room.arena-fit .shell:has(> #battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"]:not([hidden])){height:auto;min-height:var(--arena-viewport-height,100vh);min-height:var(--arena-viewport-height,100dvh);grid-template-rows:44px 64px minmax(530px,1fr) auto 44px}
-body:has(#battle-arena) #battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"]{min-height:530px;padding:0;gap:0;border:0;background-color:#26343c;background-origin:padding-box;background-size:var(--arena-viking-art-width) var(--arena-viking-art-height);background-position:var(--arena-viking-art-left) var(--arena-viking-art-top);background-repeat:no-repeat}
+/* Viking ground-level square composition: no cliff, rim, forced height or crop. */
+body:has(#battle-arena) #battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"]{padding:0;gap:0;border:0;background-color:#c8d5e1;background-origin:padding-box;background-size:var(--arena-viking-art-width) var(--arena-viking-art-height),auto,auto;background-position:var(--arena-viking-art-left) var(--arena-viking-art-top),center,center;background-repeat:no-repeat;background-image:url('/images/arena-themes/fjord-ground-v2.webp'),radial-gradient(ellipse at 15% 10%,#f0f3f6aa,transparent 65%),radial-gradient(ellipse at 80% 90%,#a0b1c488,transparent 70%)}
+#battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"]::before{background:none;box-shadow:none}
 #battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"]:after{display:none}
 #battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"]>.arena-side{position:absolute;top:var(--arena-viking-grid-top);width:var(--arena-viking-team-width);height:var(--arena-viking-grid-height);min-height:0;padding:0;border:0;background:none;box-shadow:none;overflow:visible}
 #battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"]>.arena-blue{left:var(--arena-viking-blue-left)}
 #battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"]>.arena-red{left:var(--arena-viking-red-left)}
 #battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"]>.arena-side>h2{display:none}
 #battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"]>.arena-side>.team{height:100%;min-height:0;grid-template-columns:repeat(2,var(--arena-viking-card-width));grid-template-rows:repeat(60,minmax(0,1fr));row-gap:0;column-gap:var(--arena-viking-column-gap);align-content:stretch;align-items:center;justify-items:center}
-#battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"] .arena-side .arena-hero{grid-row:var(--arena-fitted-row)!important;display:grid;grid-template-rows:64px 11px 5px 4px;gap:2px;justify-items:center;align-self:center;width:var(--arena-viking-card-width);height:90px;min-width:64px;max-width:none;min-height:90px;max-height:90px;padding:0;border:0;background:transparent;border-radius:8px;container-type:size}
-#battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"] .arena-portrait{width:64px;height:64px;min-width:64px;min-height:64px;max-width:64px;max-height:64px;aspect-ratio:1;align-self:end;border-radius:8px}
+#battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"] .arena-side .arena-hero{grid-row:var(--arena-fitted-row)!important;display:grid;grid-template-rows:minmax(0,1fr) 11px 5px 4px;gap:2px;justify-items:center;align-self:center;width:var(--arena-viking-card-width);height:calc(100% - 3px);max-width:84px;max-height:90px;min-height:0;padding:0;border:0;background:transparent;border-radius:8px;container-type:size}
+#battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"] .arena-portrait{width:min(64px,100cqw,calc(100cqh - 26px));height:min(64px,100cqw,calc(100cqh - 26px));max-width:none;max-height:none;min-width:0;min-height:0;aspect-ratio:1;align-self:end;border-radius:8px}
 #battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"] .arena-hero-label{width:100%;max-width:100%;height:11px;margin:0;font-size:10px;line-height:11px}
-#battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"] .arena-hero .hp{width:64px;height:5px;min-height:5px;margin:0}
-#battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"] .arena-hero .arena-shield{width:64px;height:4px;min-height:4px;margin:0}
-@media(min-width:600px) and (max-height:600px){.arena-room.arena-fit .shell:has(> #battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"]:not([hidden])){grid-template-rows:44px 56px minmax(486px,1fr) 44px}}
+#battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"] .arena-hero .hp{width:min(100%,64px);height:5px;min-height:5px;margin:0}
+#battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"] .arena-hero .arena-shield{width:min(100%,64px);height:4px;min-height:4px;margin:0}
 @media(forced-colors:active){body:has(#battle-arena) #battle-arena[data-arena-theme="fjord"][data-viking-layout="ready"]{background:Canvas;color:CanvasText}}
-
 /* End Viking wide-floor layout. */
 
-/* Viking snow: approved v1 direction/density; bounded finite sheets, static painting. */
+/* Viking snow: dense three-depth flakes, no cliff/powder veil or moving scenery. */
 [data-viking-weather]{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;z-index:-1}
 [data-viking-weather="foreground"]{z-index:20}
 [data-viking-weather][hidden]{display:none!important}
@@ -824,32 +821,12 @@ body:has(#battle-arena) #battle-arena[data-arena-theme="fjord"][data-viking-layo
 [data-viking-weather].is-running .viking-weather__snow{animation:viking-snow-pass var(--snow-duration) linear var(--snow-delay) 1 both}
 @keyframes viking-snow-pass{
  0%{transform:translate(0,0);opacity:0}
- 12%,78%{opacity:var(--snow-opacity)}
+ 4%,94%{opacity:var(--snow-opacity)}
  100%{transform:translate(var(--snow-dx),var(--snow-dy));opacity:0}
 }
-/* Layout provides the art-space ground/cliff boundaries; missing geometry hides both. */
-[data-viking-weather] .viking-weather__ground{position:absolute;inset:0;overflow:hidden;clip-path:inset(var(--arena-viking-floor-top,100%) calc(100% - var(--arena-viking-floor-right,0px)) calc(100% - var(--arena-viking-floor-bottom,0px)) var(--arena-viking-floor-left,100%));pointer-events:none}
-[data-viking-weather] .viking-weather__powder{
- position:absolute;left:-90%;top:var(--powder-y);width:90%;height:3%;min-height:8px;pointer-events:none;opacity:0;
- background:radial-gradient(ellipse at 23% 48%,#edf5fa 0%,#edf5fa8c 20%,transparent 65%),radial-gradient(ellipse at 66% 56%,#edf5fac7,transparent 66%);
-}
-[data-viking-weather].is-running .viking-weather__powder{animation:viking-ground-powder var(--powder-duration) linear var(--powder-delay) 1 both}
-@keyframes viking-ground-powder{
- 0%{transform:translate(0,0);opacity:0}
- 18%,72%{opacity:var(--powder-opacity)}
- 100%{transform:translate(220%,-65%);opacity:0}
-}
-[data-viking-weather] .viking-weather__cliff{position:absolute;left:0;right:0;top:var(--arena-viking-mist-top,100%);bottom:0;overflow:hidden;pointer-events:none}
-[data-viking-weather] .viking-weather__mist{
- position:absolute;left:-22%;top:22%;width:90%;height:100%;pointer-events:none;opacity:0;
- background:radial-gradient(ellipse at 28% 48%,#dcecf2a8,transparent 57%),radial-gradient(ellipse at 68% 62%,#edf5fa94,transparent 60%);
-}
-[data-viking-weather] .viking-weather__mist[data-mist-layer="1"]{left:35%;top:50%;width:78%;height:80%}
-[data-viking-weather].is-running .viking-weather__mist{animation:viking-cliff-mist 8s ease-in-out 1 both}
-@keyframes viking-cliff-mist{0%{transform:translate(0,0);opacity:0}22%,76%{opacity:.28}100%{transform:translate(15%,-6%);opacity:0}}
 @media(prefers-reduced-motion:reduce){
  [data-viking-weather]{display:none!important}
- [data-viking-weather] .viking-weather__snow,[data-viking-weather] .viking-weather__powder,[data-viking-weather] .viking-weather__mist{animation:none!important;opacity:0;transform:none}
+ [data-viking-weather] .viking-weather__snow{animation:none!important;opacity:0;transform:none}
 }
 
 /* Forest/savanna full composition: the complete approved painting, never cover.

@@ -43,7 +43,8 @@ test('forest and savanna preserve the entire proportional painting instead of re
 });
 test('only approved forest, savanna and Viking use rasters; no eager theme loading or original PNG',()=>{
  // Forest/savanna have a fallback declaration and the selected layered scene.
- for(const id of ['ruins','savanna','fjord'])assert.equal((css.match(new RegExp(id+'-premium\\.webp','g'))||[]).length,id==='fjord'?1:2);
+ for(const id of ['ruins','savanna'])assert.equal((css.match(new RegExp(id+'-premium\\.webp','g'))||[]).length,2);
+ assert.equal((css.match(/fjord-ground-v2\.webp/g)||[]).length,2);
  for(const id of ['ruins','savanna'])assert.equal((css.match(new RegExp(id+'-side-extension-[a-f0-9]{8}\\.webp','g'))||[]).length,1);
  for(const id of ['courtyard','savanna','fjord','space']){assert.ok(statSync(new URL('../public/images/arena-themes/'+id+'.svg',import.meta.url)).size>0);assert.ok(!css.includes("url('/images/arena-themes/"+id+".svg')"));}
  for(const f of ['public/battle-preview.html','public/battle-preview.js','public/arena-theme.js'])assert.doesNotMatch(read(f),/ruins-premium|savanna-premium|fjord-premium|Premium-Konsept|new Image\(|rel=["']preload/);

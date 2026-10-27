@@ -75,7 +75,7 @@ test('actual rematch reset clears tail metadata and changes match identity befor
  await context.rematch();
  assert.equal(room.phase,'auction');assert.equal(room.matchNumber,2);assert.notEqual(published.matchKey,oldKey);assert.equal(published.revision,1);assert.deepEqual(clone(room.tailAwards),[]);assert.equal('tailAwards' in published,false);
  assert.equal(roomArenaPresentation(room).matchKey,published.matchKey);
- assert.equal(roomArenaPresentation(room).theme,'savanna','two-theme rematch excludes forest without changing auction allocation');
+ assert.ok(['savanna','fjord'].includes(roomArenaPresentation(room).theme),'three-theme rematch excludes forest without changing auction allocation');
  assert.notEqual(roomArenaPresentation(room).theme,oldTheme.theme);
  assert.notEqual(roomArenaPresentation(room).matchKey,oldTheme.matchKey,'cosmetic identity still resets with the new match');
 });

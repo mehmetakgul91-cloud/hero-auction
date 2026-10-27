@@ -1,38 +1,31 @@
-// Presentation only: the same renderer-owned heroes and 60-track lane rows.
-// Keep the approved raster proportional, with its cliff below a mapped stone floor.
-export const VIKING_LAYOUT=Object.freeze({
- referenceWidth:378,referenceHeight:530,minWidth:288,minHeight:530,
- artWidth:1024,artHeight:1536,artTop:-18.5,
- cardWidth:84,cardHeight:90,portraitSize:64,gridTop:6.5,gridHeight:465,
- centers:Object.freeze([62,147,231,316]),
- safeFloor:Object.freeze([70,55,970,1370]),mistSourceY:1440
-});
+// Cliff-free square artwork, proportionally contained; no forced stage growth.
+export const VIKING_LAYOUT=Object.freeze({artWidth:1254,artHeight:1254,minWidth:256,minFieldWidth:348,cardWidth:84,cardHeight:90,portraitSize:64,maxGridHeight:465});
 const mounts=new WeakMap();
 const PREFIX='--arena-viking-';
 const MARKER='data-viking-layout';
 export function computeVikingLayout(width,height){
  width=Number(width);height=Number(height);
- if(!Number.isFinite(width)||!Number.isFinite(height)||width<VIKING_LAYOUT.minWidth||height<=0)return null;
- const stageHeight=Math.max(VIKING_LAYOUT.minHeight,height);
- const artWidth=Math.max(378,Math.min(width,stageHeight*378/530));
- const scale=artWidth/378,panelWidth=Math.min(width,artWidth),panelLeft=(width-panelWidth)/2;
- const sceneTop=(stageHeight-530*scale)/2;
- const art={left:(width-artWidth)/2,top:sceneTop-18.5*scale,width:artWidth,height:artWidth*1.5};
- const artScale=artWidth/1024;
- const floor={left:Math.max(0,art.left+70*artScale),top:Math.max(0,art.top+55*artScale),right:Math.min(width,art.left+970*artScale),bottom:Math.min(stageHeight,art.top+1370*artScale)};
- const centers=VIKING_LAYOUT.centers.map(x=>panelLeft+x*panelWidth/378);
- const cardWidth=Math.min(84,84*panelWidth/378),teamWidth=centers[1]-centers[0]+cardWidth;
- return Object.freeze({width,height:stageHeight,art:Object.freeze(art),floor:Object.freeze(floor),centers:Object.freeze(centers),
-  cardWidth,cardHeight:90,portraitSize:64,gridTop:sceneTop+6.5*scale,gridHeight:465*scale,
-  teamWidth,columnGap:centers[1]-centers[0]-cardWidth,blueLeft:centers[0]-cardWidth/2,redLeft:centers[2]-cardWidth/2,
-  // The floor edge is irregular; use the lower cliff-face strip, not the safe-floor bound.
-  mistTop:Math.min(stageHeight,Math.max(0,art.top+VIKING_LAYOUT.mistSourceY*artScale))});
+ if(!Number.isFinite(width)||!Number.isFinite(height)||width<VIKING_LAYOUT.minWidth||height<=18)return null;
+ const scale=Math.min(width/1254,height/1254),artWidth=1254*scale,artHeight=1254*scale;
+ const art={left:(width-artWidth)/2,top:(height-artHeight)/2,width:artWidth,height:artHeight};
+ // On short screens, retain readable column widths in the side margins.
+ // Do not enlarge/crop the art, impose a minimum height, or wrap logical lanes.
+ const fieldWidth=Math.min(width,Math.max(artWidth,VIKING_LAYOUT.minFieldWidth));
+ const fieldLeft=(width-fieldWidth)/2,pitch=fieldWidth/4,cardWidth=Math.min(84,pitch-3);
+ const centers=[0,1,2,3].map(i=>fieldLeft+(i+.5)*pitch);
+ // Match the least-padded existing short-viewport field (height-12). The normal
+ // field was height-18; using the larger budget cannot shrink its compact cards.
+ // Keep the accepted 530px composition capped at the same 465px lane field.
+ const gridHeight=Math.min(465,height-12),gridTop=(height-gridHeight)/2;
+ return Object.freeze({width,height,art:Object.freeze(art),centers:Object.freeze(centers),
+  fieldWidth,fieldLeft,cardWidth,cardHeight:90,portraitSize:64,gridTop,gridHeight,
+  teamWidth:pitch+cardWidth,columnGap:pitch-cardWidth,
+  blueLeft:centers[0]-cardWidth/2,redLeft:centers[2]-cardWidth/2});
 }
 function properties(layout){
  return {
   'art-left':layout.art.left,'art-top':layout.art.top,'art-width':layout.art.width,'art-height':layout.art.height,
-  'floor-left':layout.floor.left,'floor-top':layout.floor.top,'floor-right':layout.floor.right,'floor-bottom':layout.floor.bottom,
-  'mist-top':layout.mistTop,'grid-top':layout.gridTop,'grid-height':layout.gridHeight,
+  'grid-top':layout.gridTop,'grid-height':layout.gridHeight,
   'blue-left':layout.blueLeft,'red-left':layout.redLeft,'team-width':layout.teamWidth,'column-gap':layout.columnGap,'card-width':layout.cardWidth
  };
 }
@@ -52,7 +45,7 @@ export function mountVikingLayout(root,options={}){
  function refresh(){
   if(disposed)return;
   if(root.dataset?.arenaTheme!=='fjord'||root.hidden||root.isConnected===false){restore();return;}
-  // The scoped marker enables a 530px minimum grid track before measuring.
+  // Only presentation styling is enabled before measuring the existing field.
   if(root.getAttribute(MARKER)!=='ready')root.setAttribute(MARKER,'ready');
   let next;
   try{next=computeVikingLayout(root.clientWidth,root.clientHeight);}catch{restore();return;}
