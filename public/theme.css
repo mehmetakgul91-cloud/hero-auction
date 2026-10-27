@@ -849,10 +849,15 @@ body:has(#battle-arena) #battle-arena[data-arena-theme="fjord"][data-viking-layo
 
 /* Forest/savanna full composition: the complete approved painting, never cover.
    Keep the existing shell height, native scrolling, independent 60-track lanes,
-   compact short-field sizing and input targets. Scene edges may sit under heroes. */
-body:has(#battle-arena) #battle-arena:is([data-arena-theme="ruins"],[data-arena-theme="savanna"])[data-arena-scene-layout="ready"]{padding:0;gap:0;border:0;background-origin:padding-box;background-size:var(--arena-scene-art-width) var(--arena-scene-art-height);background-position:var(--arena-scene-art-left) var(--arena-scene-art-top);background-repeat:no-repeat}
-body:has(#battle-arena) #battle-arena[data-arena-theme="ruins"][data-arena-scene-layout="ready"]{background-color:#24322b}
-body:has(#battle-arena) #battle-arena[data-arena-theme="savanna"][data-arena-scene-layout="ready"]{background-color:#3b3325}
+   compact short-field sizing and input targets. Scene edges may sit under heroes. The original opaque artwork remains the
+   upper background layer. A dimmed decorative panorama is a separate lower
+   plane, not a seamless extension. Only that decorative panorama uses cover;
+   the approved upper image stays fully contained. The outward-only rim never
+   covers the art. */
+body:has(#battle-arena) #battle-arena:is([data-arena-theme="ruins"],[data-arena-theme="savanna"])[data-arena-scene-layout="ready"]{padding:0;gap:0;border:0;background-origin:padding-box;background-size:var(--arena-scene-art-width) var(--arena-scene-art-height),auto,cover;background-position:var(--arena-scene-art-left) var(--arena-scene-art-top),center,center;background-repeat:no-repeat}
+body:has(#battle-arena) #battle-arena[data-arena-theme="ruins"][data-arena-scene-layout="ready"]{background-color:#24322b;background-image:url('/images/arena-themes/ruins-premium.webp'),linear-gradient(#10171038,#10171038),url('/images/arena-themes/ruins-side-extension-3a5fb26a.webp')}
+body:has(#battle-arena) #battle-arena[data-arena-theme="savanna"][data-arena-scene-layout="ready"]{background-color:#3b3325;background-image:url('/images/arena-themes/savanna-premium.webp'),linear-gradient(#10171038,#10171038),url('/images/arena-themes/savanna-side-extension-88137c78.webp')}
+body:has(#battle-arena) #battle-arena:is([data-arena-theme="ruins"],[data-arena-theme="savanna"])[data-arena-scene-layout="ready"]::before{inset:auto;left:var(--arena-scene-art-left);top:var(--arena-scene-art-top);width:var(--arena-scene-art-width);height:var(--arena-scene-art-height);background:none;box-shadow:0 0 0 1px #c3ae7c,0 0 0 3px #302b21,0 0 0 6px #0006,0 0 0 10px #0002}
 #battle-arena:is([data-arena-theme="ruins"],[data-arena-theme="savanna"])[data-arena-scene-layout="ready"]:after{display:none}
 #battle-arena:is([data-arena-theme="ruins"],[data-arena-theme="savanna"])[data-arena-scene-layout="ready"]>.arena-side{position:absolute;top:var(--arena-scene-grid-top);width:var(--arena-scene-team-width);height:var(--arena-scene-grid-height);min-height:0;padding:0;border:0;background:none;box-shadow:none;overflow:visible}
 #battle-arena:is([data-arena-theme="ruins"],[data-arena-theme="savanna"])[data-arena-scene-layout="ready"]>.arena-blue{left:var(--arena-scene-blue-left)}

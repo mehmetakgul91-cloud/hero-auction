@@ -1054,3 +1054,20 @@ body:has(#game[data-phase="auction"]:not([hidden])) .shell{padding-top:8px}
 .auction-calculation-note{margin:13px 2px 20px;font-size:11px;line-height:1.65;text-align:left;color:var(--theme-muted,#a7bbd2)}
 @media(max-width:780px){.auction-calculation-teams{grid-template-columns:minmax(0,1fr);gap:14px}.calculation-team-heading{padding:13px 12px}#game .auction-hero-calculation th,#game .auction-hero-calculation td{padding:10px 8px}}
 @media(max-width:380px){#game .auction-hero-calculation th,#game .auction-hero-calculation td{padding:9px 5px}#game .auction-hero-calculation th:first-child{width:41%}.calculation-identity{gap:5px}.calculation-portrait{flex-basis:26px;width:26px;height:31px}#game .auction-hero-calculation tbody th{font-size:11px}#game .auction-hero-calculation td{font-size:11px}}
+
+/* Class-only commander identity beside each auction player name. */
+.auction-player-heading{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.auction-player-heading>.name{min-width:0;flex:1 1 65px;overflow-wrap:anywhere}
+#game .auction-commander{display:flex;align-items:center;justify-content:center;gap:5px;min-height:44px;max-width:100%;padding:3px 6px;font-size:11px;line-height:1.2;border:1px solid #6f809a;border-radius:8px;background:#172338;color:#eef4ff;cursor:pointer}
+.auction-commander img{width:28px;height:34px;object-fit:cover;border-radius:4px;flex:none}
+.auction-commander span{overflow-wrap:anywhere}
+.auction-commander:focus-visible,.auction-commander-dialog button:focus-visible{outline:3px solid #80ddff;outline-offset:3px}
+.auction-commander-dialog{box-sizing:border-box;width:min(420px,calc(100% - 28px));max-height:calc(100dvh - 36px);overflow:auto;padding:22px;border:1px solid #7087a4;border-radius:16px;background:#122039;color:#edf5ff;box-shadow:0 18px 70px #0009}
+.auction-commander-dialog::backdrop{background:#050d1bbd}
+.auction-commander-dialog-heading{display:flex;align-items:center;gap:14px}
+.auction-commander-dialog-heading img{object-fit:cover;border-radius:7px;flex:none}
+.auction-commander-dialog h2{font-size:20px;margin:0;line-height:1.3}
+.auction-commander-dialog h3{font-size:14px;margin:20px 0 6px;color:#b9d9f8}
+.auction-commander-dialog p{font-size:14px;line-height:1.6;margin:0}
+.auction-commander-dialog form{display:flex;justify-content:flex-end;margin-top:20px}
+.auction-commander-dialog button{min-height:44px;padding:8px 20px;cursor:pointer}
