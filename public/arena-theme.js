@@ -1,6 +1,6 @@
 // Cosmetic presentation only. Never read hero stats, seats, turns or combat RNG.
-// Active pool is forest + savanna + Viking; retired IDs remain readable for saved rooms.
-export const ARENA_THEME_IDS=Object.freeze(['ruins','savanna','fjord']);
+// Active pool is forest + savanna; retired IDs remain readable for saved rooms.
+export const ARENA_THEME_IDS=Object.freeze(['ruins','savanna']);
 export const ARENA_THEME_CATALOG_IDS=Object.freeze(['courtyard','savanna','fjord','ruins','space']);
 export const ARENA_THEME_LABELS=Object.freeze({
  courtyard:Object.freeze({tr:'Çin esintili avlu',en:'Chinese-inspired courtyard'}),
