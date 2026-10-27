@@ -5,6 +5,10 @@ on:
       - 'admin-wallet-credits.js'
       - 'player-sessions.js'
       - 'server.js'
+      - 'paid-match-cancellation.js'
+      - 'tests/paid-match-cancellation.test.mjs'
+      - 'public/admin-maintenance.js'
+      - 'tests/admin-cancellations-ui.test.mjs'
       - 'migrations/**'
       - 'tools/test-postgres-admin-*.mjs'
       - 'tools/test-postgres-player-sessions.mjs'
@@ -19,6 +23,10 @@ on:
       - 'admin-wallet-credits.js'
       - 'player-sessions.js'
       - 'server.js'
+      - 'paid-match-cancellation.js'
+      - 'tests/paid-match-cancellation.test.mjs'
+      - 'public/admin-maintenance.js'
+      - 'tests/admin-cancellations-ui.test.mjs'
       - 'migrations/**'
       - 'tools/test-postgres-admin-*.mjs'
       - 'tools/test-postgres-player-sessions.mjs'
@@ -46,6 +54,9 @@ jobs:
           - database: hero_admin_http_test
             variable: HERO_ADMIN_HTTP_TEST_DB
             script: tools/test-postgres-admin-http.mjs
+          - database: hero_admin_cancel_test
+            variable: HERO_ADMIN_CANCEL_TEST_DB
+            script: tools/test-postgres-admin-cancellations.mjs
     services:
       postgres:
         image: postgres:18@sha256:edb0c08dc33befd0262ab3b5cf1c4f3f8cfd8b09e88c05b45adee29d6761ddb6

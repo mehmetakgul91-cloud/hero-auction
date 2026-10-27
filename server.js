@@ -251,7 +251,7 @@ async function cancellationPreview(){
   }catch{}
  }
  for(const [id,plan] of cancellationPlans)if(!cancellationReservations.has(id)&&(!rooms.has(plan.room.code)||cancellationIdentity(rooms.get(plan.room.code))!==id))cancellationPlans.delete(id);
- return{bootId:status.bootId,revision:status.revision,paused:status.paused,persistenceConfirmed:status.persistenceConfirmed,candidates,requiredSelectionCount:3};
+ return{bootId:status.bootId,revision:status.revision,paused:status.paused,persistenceConfirmed:status.persistenceConfirmed,candidates,minSelectionCount:1,maxSelectionCount:3};
 }
 async function executeCancellations(body,user){
  const selected=normalizeCancellationSelections(body.candidates),receiptKey=cancellationReceiptKey(selected);
