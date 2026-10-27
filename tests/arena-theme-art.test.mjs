@@ -16,12 +16,12 @@ test('five archived vector scene assets remain intact and below 4 KB each',()=>{
  assert.equal(new Set(assets).size,5,'not merely recoloured copies');
  assert.match(assets[0],/pattern id="paving"/);assert.match(assets[1],/Afrika savanası/);assert.match(assets[2],/pattern id="slabs"/);assert.match(assets[3],/sarmaşıklar/);assert.match(assets[4],/pattern id="panels"/);
 });
-test('only forest and savanna are active while Viking, courtyard and space stay archived',()=>{
- assert.deepEqual(ARENA_THEME_IDS,['ruins','savanna']);
+test('forest, savanna and Viking active; courtyard and space archived',()=>{
+ assert.deepEqual(ARENA_THEME_IDS,['ruins','savanna','fjord']);
  assert.ok(css.includes("url('/images/arena-themes/ruins-premium.webp')"));
  assert.match(css,/\.battle-arena\[data-arena-theme="savanna"\]\{[^}]*background-image:url\('\/images\/arena-themes\/savanna-premium\.webp'\)/);
- assert.match(css,/\.battle-arena\[data-arena-theme="fjord"\]\{[^}]*background-image:url\('\/images\/arena-themes\/fjord-premium\.webp'\)/);
- for(const id of ['courtyard','fjord','space']){
+ assert.match(css,/\.battle-arena\[data-arena-theme="fjord"\]\{[^}]*background-image:url\('\/images\/arena-themes\/fjord-ground-v2\.webp'\)/);
+ for(const id of ['courtyard','space']){
   assert.ok(!ARENA_THEME_IDS.includes(id));assert.ok(statSync(path(id)).size>0);
   assert.ok(!css.includes("url('/images/arena-themes/"+id+".svg')"));
  }
