@@ -17,6 +17,8 @@ export function describeBattleEvent(event, {english=false, names=new Map()}={}) 
  else if(action==='commander-attack-ultimate')effect=e.focusUntilDeath===true?t('Av Emri · Hedef ölünceye kadar odaklan','Hunt Order · Focus until the target dies'):t('Av Emri · Sonraki saldırıda hedefe odaklan · Sonraki tur sonuna kadar','Hunt Order · Focus target on the next attack · Through next round');
  else if(action==='commander-defense-ultimate')effect=t('Son Kale · Kalkan ve ölümcül darbe koruması','Last Bastion · Shield and lethal-hit protection');
  else if(action==='commander-magic-ultimate')effect=t('Aşırı Yük · Sabit ek vuruş gücü · 3 hareket turu','Arcane Surge · Fixed extra hit power · 3 action rounds');
+ else if(action==='commander-magic-normal'&&e.impacts?.some(impact=>impact.kind==='stun'))effect=t('Sersemletme · Sonraki saldırı atlanır','Stun · Next attack skipped');
+ else if(action==='stun-skip')effect=t('Sersemledi · Saldırı atlandı','Stunned · Attack skipped');
  else if(action==='commander-support-ultimate')effect=t('Diriliş','Revival');
  else if(['heal','passive-heal'].includes(action)||action.startsWith('commander-support-'))effect='+'+amount+' '+t('can yenilendi','health restored');
  else if(action==='shield'||action.startsWith('commander-defense-'))effect='+'+amount+' '+t('kalkan','shield');

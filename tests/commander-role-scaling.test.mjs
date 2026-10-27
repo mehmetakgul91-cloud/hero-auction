@@ -12,7 +12,7 @@ function combat(kind,level=0){
 }
 const cast=(c,ability,side=0,targetIds)=>castLiveCommanderCombat(c,{side,ability,targetIds,requestId:'roles_'+ability,matchKey:'roles',now:2000});
 
-for(const kind of ['defense','support','magic'])test(kind+' normal retains level scaling on either seat and after casualties',()=>{
+for(const kind of ['defense','support','magic'])test(kind+' normal preserves its declared magnitude on either seat and after casualties',()=>{
  const base={defense:.08,support:.12,magic:.35}[kind];
  for(const level of [0,1,10,20,40])for(const side of [0,1])for(const survivors of [5,2,1]){
   const c=combat(kind,level);for(let i=survivors;i<5;i++){c.teams[side][i].hp=0;c.teams[1-side][i].hp=0;}
@@ -21,8 +21,8 @@ for(const kind of ['defense','support','magic'])test(kind+' normal retains level
   assert.equal(c.abilities.energy[side],60);assert.deepEqual(c.teams[side].filter(u=>u.hp===0),before[side].filter(u=>u.hp===0));
   if(kind==='magic'){
    assert.deepEqual(c.teams[side],before[side]);assert.equal(summary.value,1);
-   for(const u of c.teams[1-side])assert.equal(u.commanderWeaken,u.id===target?rate:undefined);
-   assert.deepEqual(summary.impacts,[{target,kind:'weaken',value:Number((rate*100).toFixed(1))}]);
+   for(const u of c.teams[1-side]){assert.equal(u.commanderStunNextAttack,u.id===target?true:undefined);assert.equal(u.commanderWeaken,undefined);}
+   assert.deepEqual(summary.impacts,[{target,kind:'stun',value:1,nextAttack:true}]);
   }else{
    assert.deepEqual(c.teams[1-side],before[1-side]);const expected=Math.round(survivors*(kind==='defense'?1000:600)*rate);
    assert.equal(summary.value,expected);assert.equal(summary.impacts.reduce((sum,u)=>sum+u.value,0),expected);for(const u of c.teams[side])assert.ok(u.hp<=u.maxHp);
@@ -57,10 +57,17 @@ test('support normal heals a one-point wound, but rejects healthy/fallen-only ta
   const healthy=combat('support',level);for(const u of healthy.teams[0])u.hp=u.maxHp;healthy.teams[0][4].hp=0;const before=structuredClone(healthy);assert.throws(()=>cast(healthy,'normal'),/yaralı kahraman yok/);assert.deepEqual(healthy,before);
  }
 });
-test('magic normal lowers only the next attack with level scaling',()=>{
+test('magic normal skips one attack at every level, without stacking level-based weakening',()=>{
  for(const level of [0,1,10,20,40]){
-  const c=combat('magic',level);cast(c,'normal',0,['1-0']);const rate=Number((.35*(1+level*.01)).toFixed(4));
-  for(let round=1;round<=4;round++){if(round>1)beginServerCombatRound(c,round);const hit=stepParityBasicAttack(c,{side:1,actorId:'1-0'});assert.equal(hit.event.rawDamage,Math.floor(100*(round===1?1-rate:1)*.7));}
+  const c=combat('magic',level);cast(c,'normal',0,['1-0']);
+  for(let round=1;round<=4;round++){
+   if(round>1)beginServerCombatRound(c,round);
+   const before=c.teams[0].map(u=>u.hp),hit=stepParityBasicAttack(c,{side:1,actorId:'1-0'});
+   if(round===1){assert.equal(hit.event.action,'stun-skip');assert.equal(hit.event.value,0);assert.deepEqual(c.teams[0].map(u=>u.hp),before);}
+   else assert.equal(hit.event.rawDamage,70);
+   assert.equal(c.teams[1][0].commanderStunNextAttack,undefined);
+   assert.equal(c.teams[1][0].commanderWeaken,undefined);
+  }
  }
 });
 test('magic ultimate doubles selected ally damage for three rounds at all levels then restores base',()=>{

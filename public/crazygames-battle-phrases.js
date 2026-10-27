@@ -223,6 +223,7 @@ export function translateCommanderDescription(text) {
   .replace(/Normal: eksik canın %([\d,]+)'i iyileştirilir\. Can oranı en düşük kahraman önceliklidir\./g,(_,n)=>`Normal: restores ${percent(n)}% of missing health, prioritizing the hero with the lowest health ratio.`)
   .replace(/Normal: seçilen 1 rakibin saldırısı %([\d,]+) azalır\./g,(_,n)=>`Normal: reduces 1 selected enemy's attack by ${percent(n)}%.`)
   .replace(/Normal: seçilen 1 rakibin yapacağı ilk saldırının gücü %([\d,]+) azalır\. Etki saldırana kadar bekler; aynı saldırının tüm alan vuruşlarına uygulanır\. Şifa ve kalkan etkilenmez\./g,(_,n)=>`Normal: reduces the power of 1 selected enemy's next actual attack by ${percent(n)}%. Waits until it attacks; also affects every area hit of that attack. Healing and shields are unaffected.`)
+  .replace(/Normal: seçilen yaşayan rakibi sersemletir; bir sonraki saldırısı, alan vuruşlarıyla birlikte atlanır\. Saldırana kadar bekler; tur değişiminde bitmez\. Şifa ve kalkan eylemleri etkilenmez\. Birikmez; her seviyede 1 saldırı atlanır\./g,"Normal: stuns the selected living enemy; skips its next attack and all area hits. Waits until it attacks and persists across rounds. Healing and shield actions are unaffected. Does not stack; skips 1 attack at every level.")
   .replace(/Nihai \((\d+) enerji\):/g,'Ultimate ($1 energy):')
   .replace(/Normal beceri 40 normal enerji harcar; ulti dolumu azalmaz\./g,'Normal abilities spend 40 normal energy; ultimate charge is unaffected.')
   .replace(/Nihai \((\d+) ulti dolumu\):/g,'Ultimate ($1 ultimate charge):');

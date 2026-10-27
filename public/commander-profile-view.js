@@ -9,11 +9,11 @@ export const COMMANDER_BRANCHES=Object.freeze([
  {id:'magic',icon:'✦',name:['Arkane Güç','Arcane Power'],role:['Enerji','Energy'],effect:['Saldırı artışı','Attack increase'],basis:['Enerji kahramanlarının saldırısı bu oranda artar.','Energy heroes gain this percentage of their attack.']},
  {id:'support',icon:'❧',name:['Yaşam Enerjisi','Life Energy'],role:['Destek','Support'],effect:['Azami can · 2× temel güç oranı','Max health · 2× base power ratio'],basis:['Temel kahraman gücünün 2 katı × bu oran, azami cana eklenir.','Twice the base hero power × this ratio is added to max health.']}
 ]);
-const normalNames={attack:['Güçlü Darbe','Power Strike'],defense:['Koruyucu Kalkan','Protective Shield'],magic:['Zayıflatma','Weaken'],support:['Şifa Dokunuşu','Healing Touch']};
+const normalNames={attack:['Güçlü Darbe','Power Strike'],defense:['Koruyucu Kalkan','Protective Shield'],magic:['Sersemletme','Stun'],support:['Şifa Dokunuşu','Healing Touch']};
 const normalDetails={
  attack:['Savaş başındaki takım saldırısının bu oranı, toplam hasar olarak yaşayan düşmanlara bölünür.','This share of the team’s starting attack is divided as total damage among living enemies.'],
  defense:['Yaşayan takımın azami canının bu oranı, toplam kalkan olarak paylaşılır.','This share of the living team’s max health is distributed as a total shield.'],
- magic:['Seçilen rakibin bir sonraki saldırısını zayıflatır; aynı saldırının alan vuruşlarına da uygulanır. Şifa ve kalkan değişmez.','Weakens the selected enemy’s next attack, including its area hits. Healing and shields are unchanged.'],
+ magic:['Seçilen yaşayan rakibi sersemletir; bir sonraki saldırısı ve o saldırının tüm alan vuruşları atlanır. Tur değişiminde bitmez. Şifa ve kalkan eylemleri etkilenmez. Birikmez; her seviyede 1 saldırı atlanır.','Stuns the selected living enemy; skips its next attack and all area hits of that attack. Persists across rounds. Healing and shield actions are unaffected. Does not stack; skips 1 attack at every level.'],
  support:['Eksik canın bu oranını iyileştirir. Can oranı en düşük kahraman önceliklidir.','Heals this percentage of missing health, prioritizing the hero with the lowest health ratio.']
 };
 const number=(value,english)=>value.toLocaleString(english?'en-US':'tr-TR',{maximumFractionDigits:2});
@@ -64,7 +64,8 @@ export function renderCommanderSkills(root,profile,{english=false,document=root.
   const top=el('div','cp-skill-top');
   top.append(el('span','',ultimate?pick(['NİHAİ BECERİ','ULTIMATE']):pick(['NORMAL BECERİ','NORMAL ABILITY'])),el('b','',getCommanderAbilityCost(id,ability)+' '+(ultimate?pick(['ULTİ DOLUMU','ULTIMATE CHARGE']):pick(['NORMAL ENERJİ','NORMAL ENERGY']))));
   const main=el('div','cp-skill-main');
-  if(!ultimate||id==='defense')main.append(el('strong','',percent((ultimate?stats.ultimateRate:stats.normalRate)*100,english)));
+  if(!ultimate&&id==='magic')main.append(el('strong','',pick(['1 SALDIRI','1 ATTACK'])));
+  else if(!ultimate||id==='defense')main.append(el('strong','',percent((ultimate?stats.ultimateRate:stats.normalRate)*100,english)));
   main.append(el('span','',ultimate?commanderUltimateName(id,{english}):pick(normalNames[id])));
   card.append(top,main);
   if(ultimate){
@@ -113,7 +114,8 @@ export function renderCommanderDevelopment(root,profile,{selected=profile.comman
  const row=(label,current,next)=>{const line=el('div','cp-preview-row');line.append(el('dt','',label));const value=el('dd','');value.append(el('span','',current));if(!chosen.maxed){const arrow=el('span','cp-arrow','→');arrow.setAttribute('aria-label',pick(['sonraki','next']));value.append(arrow,el('b','',next));}line.append(value);effects.append(line);};
  row(pick({attack:['Saldırı · temel güç','Attack · base power'],defense:['Savunma · temel güç','Defense · base power'],magic:['Saldırı artışı','Attack increase'],support:['Can · 2× temel güç','HP · 2× base power']}[chosen.id]),'+'+pct(chosen.bonus),'+'+pct(chosen.nextBonus));
  if(chosen.primary){
-  row(pick(['Normal beceri etkisi','Normal ability effect']),pct(chosen.stats.normalRate*100),pct(chosen.nextStats.normalRate*100));
+  if(chosen.id==='magic')row(pick(['Sersemletme · sabit etki','Stun · fixed effect']),pick(['1 saldırı atlanır','1 attack skipped']),pick(['1 saldırı atlanır','1 attack skipped']));
+  else row(pick(['Normal beceri etkisi','Normal ability effect']),pct(chosen.stats.normalRate*100),pct(chosen.nextStats.normalRate*100));
   row(pick(['Her dolum / tur','Each pool / round']),'+'+chosen.stats.energyPerRound,'+'+chosen.nextStats.energyPerRound);
   if(chosen.id==='defense')row(pick(['Son Kale · kalkan','Last Bastion · shield']),pct(chosen.stats.ultimateRate*100),pct(chosen.nextStats.ultimateRate*100));
  }

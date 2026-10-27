@@ -68,7 +68,7 @@ export function chooseAuditAction(combat,side,availability,policy,ultimatesEnabl
   if(id==='attack')return {ability:'normal'};
   if(id==='defense'&&allies.reduce((n,u)=>n+(u.shield||0),0)<allies.reduce((n,u)=>n+u.maxHp,0)*.10)return {ability:'normal'};
   if(id==='support'&&allies.reduce((n,u)=>n+u.maxHp-u.hp,0)>=allies.reduce((n,u)=>n+u.maxHp,0)*.10)return {ability:'normal'};
-  if(id==='magic'){const target=strongest(enemies.filter(u=>!(u.commanderWeakenUntilRound>=round)));if(target)return {ability:'normal',targetIds:[target.id]};}
+  if(id==='magic'){const target=strongest(enemies.filter(u=>!u.commanderStunNextAttack));if(target)return {ability:'normal',targetIds:[target.id]};}
  }
  if(!ultimatesEnabled||!availability.canUseUltimate||combat.ultimateUsed?.[side])return null;
  if(id==='attack'&&hasCommanderFocus(allies,enemies,round))return null;

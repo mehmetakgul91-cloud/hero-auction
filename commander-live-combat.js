@@ -1,3 +1,5 @@
+import {consumeCommanderStun,expireCommanderStun} from './commander-stun-status.js';
+import {finishHeroDelay} from './battle-delay.js';
 import {consumeCommanderWeaken,expireCommanderWeaken} from './commander-weaken-status.js';
 import {expireCommanderFocus} from './battle-commander-focus.js';
 import {expireCommanderUltimateStatuses} from './commander-ultimate-status.js';
@@ -47,6 +49,20 @@ export function viewLiveCommanderCombat(combat,{sinceVersion=0}={}){
   events:combat.events.filter(e=>e.version>sinceVersion),finished:combat.finished};
 }
 
+// A skipped attack is one authoritative action, but never damage, a special,
+// an AoE hit or a focus charge. Healing/shield-only callers do not invoke this.
+export function applyServerStunSkip(combat,{side,actorId,round=combat?.round}){
+ if(!combat||combat.finished||![0,1].includes(side)||round!==combat.round)throw Error('Invalid stun action');
+ const actor=combat.teams[side].find(u=>u.id===actorId&&u.hp>0);
+ if(!actor)throw Error('Invalid acting hero');
+ if(!consumeCommanderStun(actor))return null;
+ actor.lastActionRound=round;finishHeroDelay(actor,round);
+ combat.version++;
+ const event={round,side,actor:actorId,action:'stun-skip',target:actorId,value:0,version:combat.version};
+ combat.events.push(event);
+ return {version:combat.version,event,teams:structuredClone(combat.teams),finished:combat.finished};
+}
+
 // Advance a trusted, server-calculated hero action on the same authoritative
 // snapshot as commander abilities. Never accept this action from an HTTP client.
 export function applyServerHeroAction(combat,{side,actorId,targetId,action='attack',value,round=combat?.round,applyThorns=false}){
@@ -57,6 +73,7 @@ export function applyServerHeroAction(combat,{side,actorId,targetId,action='atta
  const targetSide=action==='heal'||action==='shield'?side:1-side;
  const target=next[targetSide].find(u=>u.id===targetId&&u.hp>0);
  if(!actor||!target)throw Error('Invalid living actor or target');
+ if(action==='attack'){const skipped=applyServerStunSkip(combat,{side,actorId,round});if(skipped)return skipped;}
  let applied=0,absorbed=0,guardTriggered=false,arcaneTransfer;
  if(action==='attack'){
   ({damage:applied,absorbed,guardTriggered,arcaneTransfer}=applyHeroDamage(target,value,{round,allies:next[targetSide]}));
@@ -95,6 +112,7 @@ export function beginServerCombatRound(combat,round){
  expireCommanderUltimateStatuses(combat.teams,round);
  expireCommanderFocus(combat.teams,round);
  expireCommanderWeaken(combat.teams,round);
+ expireCommanderStun(combat.teams);
  for(let side=0;side<2;side++)grantLiveCommanderEnergy(combat.abilities,side,commanderEnergyPerRound(combat.commanders[side]));
  combat.version++;
  const event={round,action:'round-start',energy:[...combat.abilities.energy],ultimateEnergy:[...combat.abilities.ultimateEnergy],version:combat.version};

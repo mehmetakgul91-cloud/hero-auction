@@ -69,7 +69,7 @@ export class Arena3dScene{
  select(key){this.selected=key;this.models.forEach(m=>{m.selectRing.visible=m.key===key;m.label.classList.toggle('selected',m.key===key);});}
  startFrame(frame){
   const action=primaryAction(frame);this.active={frame,action,prior:this.teams};
-  if(!action)return;
+  if(!action||action.action==='stun-skip')return;
   const actor=this.models.get(action.side+':'+action.actor);
   const heal=action.action==='heal'||action.action==='passive-heal';
   const targetSide=heal||action.action==='shield'?action.side:1-action.side;

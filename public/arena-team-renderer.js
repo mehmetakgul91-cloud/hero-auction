@@ -30,8 +30,9 @@ export function createArenaTeamRenderer({document,loadArt,onDefeated=()=>{}}){
     const bar=document.createElement('div');bar.className='hp';const fill=document.createElement('span');bar.append(fill);
     const shieldBar=document.createElement('div');shieldBar.className='arena-shield';shieldBar.setAttribute('role','meter');shieldBar.setAttribute('aria-valuemin','0');
     const shieldFill=document.createElement('span');shieldBar.append(shieldFill);
-    card.append(portrait,label,bar,shieldBar);parent.append(card);
-    entry={card,portrait,bar,fill,shieldBar,shieldFill,name:unit.name,hp:unit.hp};cards.set(unit.id,entry);
+    const stunBadge=document.createElement('span');stunBadge.className='arena-stun-status';stunBadge.hidden=true;
+    card.append(portrait,label,bar,shieldBar,stunBadge);parent.append(card);
+    entry={card,portrait,bar,fill,shieldBar,shieldFill,stunBadge,name:unit.name,hp:unit.hp};cards.set(unit.id,entry);
     Promise.resolve(loadArt(unit)).then(url=>{
      if(!url||!portrait.isConnected)return;
      const image=document.createElement('img');image.className='arena-portrait-image';image.alt=unit.name;image.decoding='async';
@@ -39,10 +40,10 @@ export function createArenaTeamRenderer({document,loadArt,onDefeated=()=>{}}){
      image.src=url;
     }).catch(()=>{});
    }
-   const {card,portrait,bar,fill,shieldBar,shieldFill}=entry,lane=unit.lane==='front'?'front':'back',laneIndex=laneIndices[lane]++;
+   const {card,portrait,bar,fill,shieldBar,shieldFill,stunBadge}=entry,lane=unit.lane==='front'?'front':'back',laneIndex=laneIndices[lane]++;
    if(parent.children[index]!==card)parent.insertBefore(card,parent.children[index]||null);
    card.classList.toggle('frontline',lane==='front');card.classList.toggle('backline',lane==='back');card.classList.toggle('dead',unit.hp<=0);
-   card.classList.toggle('cast',flash?.actorId===unit.id);card.classList.toggle('hit',flash?.targetId===unit.id);
+   card.classList.toggle('cast',flash?.action!=='stun-skip'&&flash?.actorId===unit.id);card.classList.toggle('hit',flash?.action!=='stun-skip'&&flash?.targetId===unit.id);
    card.dataset.lane=lane;card.dataset.role=unit.role||'';
    card.style.gridColumn=lane==='front'?(side?'1':'2'):(side?'2':'1');card.style.gridRow=String(laneRows[lane][laneIndex]);card.style.setProperty('--arena-fitted-row',String(fittedRows[lane][laneIndex]));
    const rarityLabel=applyHeroRarity(document,portrait,unit);
@@ -55,6 +56,11 @@ export function createArenaTeamRenderer({document,loadArt,onDefeated=()=>{}}){
    if(unit.shieldKnown===false)shieldBar.removeAttribute('aria-valuenow');else shieldBar.setAttribute('aria-valuenow',String(shield.current));
    shieldBar.setAttribute('aria-valuemax',String(Math.max(shield.current,shield.reference,1)));shieldBar.setAttribute('aria-valuetext',shield.label);
    card.title+=' · '+shield.label;
+   const stunned=unit.hp>0&&unit.commanderStunNextAttack===true,english=document.documentElement?.lang==='en';
+   stunBadge.hidden=!stunned;stunBadge.textContent=english?'✦ STUN':'✦ SERSEM';
+   const stunDescription=english?'Stunned: next attack skipped':'Sersemledi: sonraki saldırı atlanır';
+   stunBadge.title=stunDescription;stunBadge.setAttribute('aria-label',stunDescription);
+   if(stunned)card.title+=' · '+stunDescription;
    if(entry.hp>0&&unit.hp<=0)onDefeated(card);
    entry.hp=unit.hp;
   });

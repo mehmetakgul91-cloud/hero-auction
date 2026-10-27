@@ -1,3 +1,4 @@
+import {applyServerStunSkip} from './commander-live-combat.js';
 import {expireCommanderFocus} from './battle-commander-focus.js';
 import {commanderWeakenRate,consumeCommanderWeaken} from './commander-weaken-status.js';
 import {abilityValue} from './public/hero-ability-rules.js';
@@ -19,6 +20,7 @@ export function stepParityDamageSpecial(combat,{side,actorId,round=combat?.round
  if(!actor||!effects.has(skill?.effect)||(actor.passive&&!((allowThornsPassive&&actor.passive.effect==='thorns')||(allowRoundPassives&&roundEffects.has(actor.passive.effect)))))throw Error('Unsupported damage special');
  const enemies=teams[1-side],target=selectBattleTarget(enemies,actor,round);
  if(!target)throw Error('No living target');
+ const skipped=applyServerStunSkip(combat,{side,actorId,round});if(skipped)return skipped;
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
  const weakened=commanderWeakenRate(actor,round);
  const raw=calculateHeroRawDamage({unit:actor,target,skill,special:true,critical,guarded,weakened,round});

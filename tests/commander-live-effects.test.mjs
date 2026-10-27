@@ -63,8 +63,12 @@ test('shield impact records exclude dead heroes and report gained shield, not to
  for(const impact of shields){assert.equal(impact.kind,'shield');assert.equal(impact.value,20);assert.notEqual(impact.target,'0');}
  assert.equal(out.teams[1][1].shield,120);
 });
-test('magic impact records only chosen targets and preserve an existing stronger weakening',()=>{
+test('magic stun records only the chosen target without applying another weakening',()=>{
  const input=teams();input[1][2].commanderWeaken=.4;input[1][2].commanderWeakenNextAttack=true;
  const out=applyLiveCommanderEffect(input,{side:0,ability:'normal',commanderId:'magic',targetIds:['2']});
- assert.deepEqual(out.log.at(-1).impacts,[{target:'2',kind:'weaken',value:40}]);
+ assert.deepEqual(out.log.at(-1).impacts,[{target:'2',kind:'stun',value:1,nextAttack:true}]);
+ assert.equal(out.teams[1][2].commanderStunNextAttack,true);
+ assert.equal(out.teams[1][2].commanderWeaken,.4,'pre-existing legacy weakening is not amplified');
+ assert.equal(out.teams[1].filter(u=>u.commanderStunNextAttack).length,1);
+ assert.equal(input[1][2].commanderStunNextAttack,undefined,'effect preparation leaves its input unchanged');
 });

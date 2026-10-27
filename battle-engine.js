@@ -1,3 +1,4 @@
+import {consumeCommanderStun,expireCommanderStun} from './commander-stun-status.js';
 import {commanderWeakenRate,consumeCommanderWeaken,expireCommanderWeaken} from './commander-weaken-status.js';
 import {applyHeroDamage,expireLastStandGuards} from './battle-hp-damage.js';
 import {expireCommanderUltimateStatuses} from './commander-ultimate-status.js';
@@ -115,7 +116,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
   for(let round=1;round<=maxRounds;round++){
     actionId=null;
     expireLastStandGuards(teams,round);expireCommanderUltimateStatuses(teams,round);expireCommanderFocus(teams,round);
-    expireCommanderWeaken(teams,round);
+    expireCommanderWeaken(teams,round);expireCommanderStun(teams);
     for(let side=0;side<2;side++){
       commanderEnergy[side]=commanderRoundEnergy(commanderEnergy[side],round,commanders?.[side]);
       if(!ultimateUsed[side])commanderUltimateEnergy[side]=commanderRoundEnergy(commanderUltimateEnergy[side],round,commanders?.[side]);
@@ -147,6 +148,11 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
           unit.lastActionRound=round;finishHeroDelay(unit,round);
           continue;
         }
+      }
+      if(consumeCommanderStun(unit)){
+        unit.lastActionRound=round;finishHeroDelay(unit,round);
+        record({round,side,actor:unit.id,action:'stun-skip',target:unit.id,value:0});
+        continue;
       }
       const target=selectBattleTarget(enemies,unit,round);
       if(!target)break;

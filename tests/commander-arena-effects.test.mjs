@@ -210,3 +210,12 @@ for(const english of [false,true])test(`Hunt Order committed until-death impact 
  assert.match(css,/strong\.focus-until-death\{[^}]*max-width:90px[^}]*font-size:11px[^}]*white-space:normal/);
  assert.doesNotMatch(description,/NEXT ATTACK|SONRAKİ SALDIRI|5.*(?:DAMAGE|HASAR)/);
 });
+
+for(const english of [false,true])test(`mage stun impact uses authoritative enemy side without fabricated percent or damage (${english?'EN':'TR'})`,()=>{
+ const h=effectHarness({english});const event={action:'commander-magic-normal',side:1,sequence:1,impacts:[{target:'same',kind:'stun',value:1,nextAttack:true}]};
+ h.emit(event);h.emit(event);assert.equal(h.targetFx().length,1);assert.equal(h.targetFx()[0].parentElement,h.portraits[0][0]);assert.equal(h.targetFx()[0].getAttribute('data-effect'),'stun');
+ assert.match(textOf(h.cues()[0]),english?/Stun/:/Sersemletme/);h.advance(1200);assert.equal(h.impacts().length,1);
+ const text=textOf(h.impacts()[0]);assert.match(text,english?/NEXT ATTACK SKIPPED/:/SONRAKİ SALDIRI ATLANIR/);assert.doesNotMatch(text,/%|DAMAGE|HASAR|HEALING|ŞİFA|3 TUR|3 ROUNDS/);
+ assert.equal(h.impacts()[0].querySelectorAll('.stun-next-attack').length,1);assert.match(css,/strong\.stun-next-attack\{[^}]*white-space:normal/);
+ h.advance(2400);assert.equal(h.impacts()[0].removed,true);assert.equal(h.timers.size,0);
+});

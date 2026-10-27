@@ -1,3 +1,4 @@
+import {applyServerStunSkip} from './commander-live-combat.js';
 import {expireCommanderFocus} from './battle-commander-focus.js';
 import {commanderWeakenRate,consumeCommanderWeaken} from './commander-weaken-status.js';
 import {abilityValue} from './public/hero-ability-rules.js';
@@ -13,6 +14,7 @@ export function stepParityExecute(combat,{side,actorId,round=combat?.round,criti
  if(!actor||(actor.passive&&!((allowThornsPassive&&actor.passive.effect==='thorns')||(allowRoundPassives&&['guard','resist','focus','evasion','momentum','regen','rage'].includes(actor.passive.effect))))||actor.active?.effect!=='execute'||['tank','energy'].includes(actor.role))throw Error('Unsupported execute hero');
  const enemies=teams[1-side],target=selectBattleTarget(enemies,actor,round);
  if(!target)throw Error('No living target');
+ const skipped=applyServerStunSkip(combat,{side,actorId,round});if(skipped)return skipped;
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
  const weakened=commanderWeakenRate(actor,round);
  const raw=calculateHeroRawDamage({unit:actor,target,skill:actor.active,special:true,critical,guarded,weakened,round});

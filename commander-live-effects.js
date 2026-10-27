@@ -1,4 +1,4 @@
-import {grantCommanderWeaken} from './commander-weaken-status.js';
+import {grantCommanderStun} from './commander-stun-status.js';
 import {applyHeroDamage,grantLastStand,isLastStandActive} from './battle-hp-damage.js';
 import {commanderAbilityStats} from './public/commander-ability-rules.js';
 import {commanderAttackPower,distributeCommanderAttack} from './commander-attack-damage.js';
@@ -54,8 +54,8 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
   value=target.arcaneSurgeBonusAttack;impacts.push({target:target.id,kind:'buff',value,fromRound:target.arcaneSurgeFromRound,untilRound:target.arcaneSurgeUntilRound});
  }else{
   if(!Array.isArray(targetIds)||targetIds.length!==1||typeof targetIds[0]!=='string'||!enemies.some(u=>u.id===targetIds[0]))throw Error('Invalid magic targets');
-  const target=enemies.find(u=>u.id===targetIds[0]);grantCommanderWeaken(target,rate,round);value=1;
-  impacts.push({target:target.id,kind:'weaken',value:Number((target.commanderWeaken*100).toFixed(1))});
+  const target=enemies.find(u=>u.id===targetIds[0]);grantCommanderStun(target);value=1;
+  impacts.push({target:target.id,kind:'stun',value:1,nextAttack:true});
  }
  expireCommanderFocus(next,round);
  log.push({round,side,actor:'commander:'+side,action:'commander-'+commanderId+'-'+ability,value,impacts,...(commanderId==='attack'&&strong?{focusUntilDeath:true}:{}),commanderLevel:stats.level,abilityBonusPercent:stats.bonusPercent});
