@@ -11,7 +11,7 @@
     "battle:balance": "node tools/battle-balance.mjs"
   },
   "engines": {
-    "node": ">=18"
+    "node": "26.12.1"
   },
   "dependencies": {
     "pg": "^8.16.3",

@@ -29,7 +29,7 @@ test('real HTTP room, both seats, lane edits, rematch, bot, preview-room and CG 
   let previous=null;
   for(let match=0;match<3;match++){
    let room=(await post('/api/state',{code,...players[0]})).room;const meta=room.arenaPresentation;checkMeta(meta);
-   if(previous){assert.notEqual(meta.matchKey,previous.matchKey);assert.notEqual(meta.theme,previous.theme,'three-theme rematch excludes the previous approved scene');}
+   if(previous){assert.notEqual(meta.matchKey,previous.matchKey);assert.notEqual(meta.theme,previous.theme,'two-theme rematch switches to the other approved scene');}
    Object.assign(forged,{version:1,matchKey:meta.matchKey,theme:ARENA_THEME_IDS.find(theme=>theme!==meta.theme)});
    for(let i=0;room.phase==='auction'&&i<40;i++){room=(await post('/api/pass',{code,...players[room.turn],arenaPresentation:forged})).room;assert.deepEqual(room.arenaPresentation,meta)}
    assert.equal(room.phase,'finished');
