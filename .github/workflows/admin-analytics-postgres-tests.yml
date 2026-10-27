@@ -1,0 +1,110 @@
+name: Admin wallet and session PostgreSQL integration
+on:
+  pull_request:
+    paths:
+      - 'admin-wallet-credits.js'
+      - 'player-sessions.js'
+      - 'server.js'
+      - 'migrations/**'
+      - 'tools/test-postgres-admin-*.mjs'
+      - 'tools/test-postgres-player-sessions.mjs'
+      - 'tools/admin-analytics-*'
+      - 'tools/apply-admin-analytics-migrations.mjs'
+      - 'tests/admin-analytics-release-tools.test.mjs'
+      - 'package*.json'
+      - '.github/workflows/admin-analytics-postgres-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'admin-wallet-credits.js'
+      - 'player-sessions.js'
+      - 'server.js'
+      - 'migrations/**'
+      - 'tools/test-postgres-admin-*.mjs'
+      - 'tools/test-postgres-player-sessions.mjs'
+      - 'tools/admin-analytics-*'
+      - 'tools/apply-admin-analytics-migrations.mjs'
+      - 'tests/admin-analytics-release-tools.test.mjs'
+      - 'package*.json'
+      - '.github/workflows/admin-analytics-postgres-tests.yml'
+permissions:
+  contents: read
+jobs:
+  isolated-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - database: hero_admin_test
+            variable: HERO_ADMIN_TEST_DB
+            script: tools/test-postgres-admin-wallets.mjs
+          - database: hero_analytics_test
+            variable: HERO_ANALYTICS_TEST_DB
+            script: tools/test-postgres-player-sessions.mjs
+          - database: hero_admin_http_test
+            variable: HERO_ADMIN_HTTP_TEST_DB
+            script: tools/test-postgres-admin-http.mjs
+    services:
+      postgres:
+        image: postgres:18@sha256:edb0c08dc33befd0262ab3b5cf1c4f3f8cfd8b09e88c05b45adee29d6761ddb6
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: ${{ matrix.database }}
+        ports:
+          - '127.0.0.1:55432:5432'
+        options: >-
+          --health-cmd "pg_isready -U test -d ${{ matrix.database }}"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Disposable PostgreSQL integration only
+        run: env '${{ matrix.variable }}=postgresql://test:test@127.0.0.1:55432/${{ matrix.database }}' node '${{ matrix.script }}'
+  explicit-release-operator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        commit-response: [normal, lost-commit]
+    services:
+      postgres:
+        image: postgres:18@sha256:edb0c08dc33befd0262ab3b5cf1c4f3f8cfd8b09e88c05b45adee29d6761ddb6
+        env:
+          POSTGRES_USER: hero_auction_db_user
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: hero_auction_db
+        ports:
+          - '127.0.0.1:55433:5432'
+        options: >-
+          --health-cmd "pg_isready -U hero_auction_db_user -d hero_auction_db"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node --test tests/admin-analytics-release-tools.test.mjs
+      - name: Exact-target operator against disposable local fixture only
+        env:
+          HERO_ADMIN_RELEASE_TEST_DB: postgresql://hero_auction_db_user:test@127.0.0.1:55433/hero_auction_db
+          HERO_ADMIN_RELEASE_TEST_CONFIRM: CREATE_DISPOSABLE_ADMIN_OPERATOR_FIXTURE
+          HERO_ADMIN_RELEASE_TEST_COMMIT_RESPONSE: ${{ matrix.commit-response }}
+        run: node tools/test-postgres-admin-release.mjs

@@ -191,3 +191,7 @@ bağımlılıklarına sahiptir. Karşılama, günlük ödül ve dönüşüm ayr�
 `migrations/005-victory-chests-magic-dust.sql` uygulama başlangıcında çalışmaz.
 Detay, kurtarma ve test sınırları: [sandık/büyü tozu](docs/victory-chests-magic-dust.md).
 Beş kozmetik arena sahnesi: [arena temaları](docs/arena-themes.md).
+
+### Yönetici ziyaret ölçümleri ve bakiye ekleme — inceleme taslağı
+
+Mevcut altın düzenleme korunarak elmas/büyü tozu ekleme makbuzları ve son 30 günlük, birinci taraf ön-plan oturum ölçümleri ayrı varsayılan-kapalı bayraklarla hazırlanmıştır. Kullanıcı tercihiyle konum özelliği kapsam dışıdır. Yeni migrationlar otomatik uygulanmaz; geçmiş veri üretilmez. Yayın/etkinleştirme ve gizlilik değerlendirmesi ayrıdır: [kapsam, güvenlik, test ve yayın notları](docs/admin-player-analytics-wallets.md).

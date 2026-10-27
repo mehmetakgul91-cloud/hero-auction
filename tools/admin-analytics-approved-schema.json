@@ -1,0 +1,545 @@
+{
+  "version": 1,
+  "postgresMajor": 18,
+  "schemaSha256": "c5b8a36e86ff992e2bb10413acf8c25945985585f22bab1e637a37a2021bcfac",
+  "tables": [
+    {
+      "name": "hero_auction_admin_wallet_credits",
+      "kind": "r",
+      "persistence": "p",
+      "rls": false,
+      "force_rls": false,
+      "user_triggers": 0,
+      "columns": [
+        {
+          "name": "request_id",
+          "type": "character varying(100)",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "account_id",
+          "type": "text",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "actor_id",
+          "type": "text",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "currency",
+          "type": "text",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "amount",
+          "type": "integer",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "reason",
+          "type": "character varying(300)",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "balance_before",
+          "type": "integer",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "balance_after",
+          "type": "integer",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "notnull": true,
+          "default": "clock_timestamp()"
+        }
+      ],
+      "constraints": [
+        {
+          "type": "c",
+          "definition": "CHECK ((((length((request_id)::text) >= 16) AND (length((request_id)::text) <= 100)) AND ((request_id)::text !~ '[^a-zA-Z0-9_-]'::text)))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "c",
+          "definition": "CHECK ((((length(btrim((reason)::text)) >= 3) AND (length(btrim((reason)::text)) <= 300)) AND ((reason)::text = btrim((reason)::text))))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "c",
+          "definition": "CHECK (((amount >= 1) AND (amount <= 1000000)))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "c",
+          "definition": "CHECK (((balance_after >= 0) AND ((balance_after)::bigint = ((balance_before)::bigint + (amount)::bigint))))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "c",
+          "definition": "CHECK (((length(actor_id) >= 1) AND (length(actor_id) <= 200)))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "c",
+          "definition": "CHECK ((balance_before >= 0))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "c",
+          "definition": "CHECK ((currency = ANY (ARRAY['gold'::text, 'diamonds'::text, 'magicDust'::text])))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "f",
+          "definition": "FOREIGN KEY (account_id) REFERENCES hero_auction_wallets(account_id)",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL account_id",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL actor_id",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL amount",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL balance_after",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL balance_before",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL created_at",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL currency",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL reason",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL request_id",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "p",
+          "definition": "PRIMARY KEY (request_id)",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        }
+      ],
+      "indexes": [
+        {
+          "valid": true,
+          "ready": true,
+          "definition": "CREATE INDEX ON public.hero_auction_admin_wallet_credits USING btree (created_at DESC, request_id DESC)"
+        },
+        {
+          "valid": true,
+          "ready": true,
+          "definition": "CREATE UNIQUE INDEX ON public.hero_auction_admin_wallet_credits USING btree (request_id)"
+        }
+      ]
+    },
+    {
+      "name": "hero_auction_player_activity",
+      "kind": "r",
+      "persistence": "p",
+      "rls": false,
+      "force_rls": false,
+      "user_triggers": 0,
+      "columns": [
+        {
+          "name": "account_id",
+          "type": "text",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "last_seen_at",
+          "type": "timestamp with time zone",
+          "notnull": true,
+          "default": "clock_timestamp()"
+        },
+        {
+          "name": "last_credit_at",
+          "type": "timestamp with time zone",
+          "notnull": false,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "type": "c",
+          "definition": "CHECK (((last_credit_at IS NULL) OR (last_credit_at <= last_seen_at)))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "f",
+          "definition": "FOREIGN KEY (account_id) REFERENCES hero_auction_wallets(account_id) ON DELETE CASCADE",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL account_id",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL last_seen_at",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "p",
+          "definition": "PRIMARY KEY (account_id)",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        }
+      ],
+      "indexes": [
+        {
+          "valid": true,
+          "ready": true,
+          "definition": "CREATE UNIQUE INDEX ON public.hero_auction_player_activity USING btree (account_id)"
+        }
+      ]
+    },
+    {
+      "name": "hero_auction_player_sessions",
+      "kind": "r",
+      "persistence": "p",
+      "rls": false,
+      "force_rls": false,
+      "user_triggers": 0,
+      "columns": [
+        {
+          "name": "account_id",
+          "type": "text",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "session_id",
+          "type": "character varying(100)",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "sequence",
+          "type": "integer",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "last_seen_at",
+          "type": "timestamp with time zone",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "ended_at",
+          "type": "timestamp with time zone",
+          "notnull": false,
+          "default": null
+        },
+        {
+          "name": "foreground",
+          "type": "boolean",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "active_ms",
+          "type": "bigint",
+          "notnull": true,
+          "default": "0"
+        },
+        {
+          "name": "source",
+          "type": "text",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "source_provenance",
+          "type": "text",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "platform",
+          "type": "text",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "device",
+          "type": "text",
+          "notnull": true,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "type": "c",
+          "definition": "CHECK ((((length((session_id)::text) >= 16) AND (length((session_id)::text) <= 100)) AND ((session_id)::text !~ '[^a-zA-Z0-9_-]'::text)))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "c",
+          "definition": "CHECK (((active_ms >= 0) AND (active_ms <= 86400000)))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "c",
+          "definition": "CHECK (((ended_at IS NULL) OR (ended_at >= started_at)))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "c",
+          "definition": "CHECK (((ended_at IS NULL) OR (foreground = false)))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "c",
+          "definition": "CHECK (((sequence >= 0) AND (sequence <= 100000)))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "c",
+          "definition": "CHECK ((device = ANY (ARRAY['desktop'::text, 'mobile'::text, 'tablet'::text, 'unknown'::text])))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "c",
+          "definition": "CHECK ((last_seen_at >= started_at))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "c",
+          "definition": "CHECK ((platform = ANY (ARRAY['web'::text, 'android'::text, 'unknown'::text])))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "c",
+          "definition": "CHECK ((source = ANY (ARRAY['direct_or_unknown'::text, 'google_search'::text, 'invite'::text, 'crazygames'::text, 'external'::text])))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "c",
+          "definition": "CHECK ((source_provenance = ANY (ARRAY['client_reported'::text, 'verified_platform'::text])))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "f",
+          "definition": "FOREIGN KEY (account_id) REFERENCES hero_auction_player_activity(account_id) ON DELETE CASCADE",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL account_id",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL active_ms",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL device",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL foreground",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL last_seen_at",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL platform",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL sequence",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL session_id",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL source",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL source_provenance",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL started_at",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "p",
+          "definition": "PRIMARY KEY (account_id, session_id)",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        }
+      ],
+      "indexes": [
+        {
+          "valid": true,
+          "ready": true,
+          "definition": "CREATE INDEX ON public.hero_auction_player_sessions USING btree (account_id, last_seen_at DESC)"
+        },
+        {
+          "valid": true,
+          "ready": true,
+          "definition": "CREATE INDEX ON public.hero_auction_player_sessions USING btree (started_at)"
+        },
+        {
+          "valid": true,
+          "ready": true,
+          "definition": "CREATE UNIQUE INDEX ON public.hero_auction_player_sessions USING btree (account_id, session_id)"
+        }
+      ]
+    }
+  ]
+}
