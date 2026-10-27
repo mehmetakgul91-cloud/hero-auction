@@ -1,3 +1,4 @@
+import {createPlayerSessionTracker} from '/player-session-client.js';
 import {createRoomChat} from '/room-chat.js';
 import {isAuctionEntry,resetAuctionEntryViewport} from '/auction-entry.js';
 import {victoryChestReceipt} from '/victory-chest.js';
@@ -62,6 +63,11 @@ let login=null;try{login=JSON.parse(localStorage.getItem('hero-auction-login')||
 let platformStoredLogin=window.HeroPlatform?login:null;
 if(window.HeroPlatform)login=null;
 const signedIn=()=>!!login?.authToken;
+// Disabled until the server explicitly advertises reviewed analytics capability.
+const playerSessionTracker=createPlayerSessionTracker();
+let playerAnalyticsInvalidatedToken=null;
+window.addEventListener('hero:login-changed',()=>playerSessionTracker.setIdentity(login?.authToken===playerAnalyticsInvalidatedToken?null:login));
+window.addEventListener('storage',event=>{if(event.key===null||event.key==='hero-auction-login'){playerAnalyticsInvalidatedToken=login?.authToken||null;playerSessionTracker.setIdentity(null);}});
 const friendsUI=createFriendsUI({translate:uiText,notify:message=>notify(message),onInvite:playerId=>roomInvitesUI.sendTo(playerId),onOpen:()=>{storefrontUI.close();const panel=$('home-play-panel');if(panel)panel.hidden=true;$('home-play-tab')?.setAttribute('aria-expanded','false');$('home-play-tab')?.classList.remove('selected');}});
 
 const roomInvitesUI=createRoomInvitesUI({translate:uiText,onStateChange:state=>friendsUI.setInvitations(state),canStart:()=>roomEntryPending===0,onHosted:({token,room:r})=>{save(token,r);commanderVisibility();},onJoined:({token,room:r})=>{save(token,r);commanderVisibility();notify(uiText('Davet edilen odaya katıldın.'));}});
@@ -751,7 +757,7 @@ window.addEventListener('hero:platform-auth',()=>{
 });
 // End CrazyGames session bridge.
 
-(async()=>{try{const r=await fetch('/api/info');const j=await r.json();renderLobbyEconomy(j.victoryChests);$('catalogue').textContent=`Şu anda ${j.catalogueCount} özgün kahraman hazır`;}catch{renderLobbyEconomy(null)}if(window.HeroPlatform)await startPlatform();else await restoreGame();loadPokeMap();refreshOnline()})();
+(async()=>{try{const r=await fetch('/api/info');const j=await r.json();playerSessionTracker.setEnabled(r.ok&&j.playerAnalytics?.enabled===true);renderLobbyEconomy(j.victoryChests);$('catalogue').textContent=`Şu anda ${j.catalogueCount} özgün kahraman hazır`;}catch{renderLobbyEconomy(null)}if(window.HeroPlatform)await startPlatform();else await restoreGame();loadPokeMap();refreshOnline()})();
 
 async function loadHeroInfo(card){
  const key=card.universe+':'+card.name;

@@ -25,8 +25,8 @@ function fixture(options={}){
   if(handler){const result=await handler(path,payload);if(result!==undefined)return result;}
   if(path==='economy/status')return structuredClone(status);
   if(path==='economy/pause'){status={...status,paused:payload.paused,revision:status.revision+1};return structuredClone(status)}
-  if(path==='economy/cancellations/preview')return structuredClone(preview||{...status,requiredSelectionCount:3,candidates});
-  if(path==='economy/cancellations/execute')return{ok:true,replayed:false,cancelled:payload.candidates.map(({id})=>({id,refundGold:100})),refundGold:300};
+  if(path==='economy/cancellations/preview')return structuredClone(preview||{...status,minSelectionCount:1,maxSelectionCount:3,candidates});
+  if(path==='economy/cancellations/execute')return{ok:true,replayed:false,cancelled:payload.candidates.map(({id})=>({id,refundGold:100})),refundGold:payload.candidates.length*100};
   throw Error('Unexpected API path '+path);
  }};
  vm.createContext(context);vm.runInContext(source,context);
@@ -47,19 +47,23 @@ test('verification reads status only; preview requires durable healthy pause and
 test('read-only preview shows full immutable IDs, recent activity and50 per paid seat; starts unchecked',async()=>{
  const f=await previewed();assert.equal(inputs(f).length,4);assert.equal(inputs(f).every(input=>!input.checked),true);assert.match(button(f,'candidates').textContent,new RegExp(candidates[0].id));assert.match(button(f,'candidates').textContent,/2 ücretli koltuk.*50 altın/);assert.match(button(f,'message').textContent,/iptal veya iade yapılmadı/);assert.equal(mutations(f).length,0);assert.equal(button(f,'execute').disabled,true);
 });
-test('exactly three explicit selections and confirmation are required; fourth selection cannot expand scope',async()=>{
- const f=await previewed();select(f,2);button(f,'execute').onclick();await tick();assert.equal(f.prompts.length,0);assert.equal(mutations(f).length,0);
- const third=inputs(f)[2];third.checked=true;third.onchange();assert.equal(button(f,'execute').disabled,false);assert.equal(inputs(f)[3].disabled,true);
+test('one to three explicit selections and exact-count confirmation are required; zero/four cannot expand scope',async()=>{
+ const f=await previewed();button(f,'execute').onclick();await tick();assert.equal(f.prompts.length,0);assert.equal(mutations(f).length,0);
+ select(f,3);assert.equal(button(f,'execute').disabled,false);assert.equal(inputs(f)[3].disabled,true);
  inputs(f)[3].checked=true;inputs(f)[3].onchange();assert.equal(inputs(f)[3].checked,false);
- f.allow(false);button(f,'execute').onclick();await tick();assert.equal(mutations(f).length,0);assert.equal(f.memory.size,0);assert.match(f.prompts[0],/TAM ÜÇ/);for(const item of candidates.slice(0,3))assert.ok(f.prompts[0].includes(item.id));assert.ok(!f.prompts[0].includes(candidates[3].id));assert.match(f.prompts[0],/Sunucu: first-boot · Sürüm: 7/);
+ f.allow(false);button(f,'execute').onclick();await tick();assert.equal(mutations(f).length,0);assert.equal(f.memory.size,0);assert.match(f.prompts[0],/TAM 3/);for(const item of candidates.slice(0,3))assert.ok(f.prompts[0].includes(item.id));assert.ok(!f.prompts[0].includes(candidates[3].id));assert.match(f.prompts[0],/Sunucu: first-boot · Sürüm: 7/);
+ for(const count of [1,2,3]){
+  const selected=await previewed();select(selected,count);assert.equal(button(selected,'execute').disabled,false);selected.allow(false);button(selected,'execute').onclick();await tick();assert.match(selected.prompts[0],new RegExp('TAM '+count));assert.equal(mutations(selected).length,0);assert.equal(selected.memory.size,0);
+  for(const item of candidates.slice(0,count))assert.ok(selected.prompts[0].includes(item.id));for(const item of candidates.slice(count))assert.ok(!selected.prompts[0].includes(item.id));
+ }
 });
 test('one confirmed action sends exact captured identifiers and boot proof, with no tokens or amounts from the UI',async()=>{
  const f=await previewed();select(f);button(f,'execute').onclick();button(f,'execute').onclick();await tick();
- assert.equal(mutations(f).length,1);assert.deepEqual(mutations(f)[0].body,body());assert.equal(f.memory.size,0);assert.match(button(f,'message').textContent,/Üç iptal makbuzu doğrulandı.*300 altın/);assert.equal(inputs(f).length,0);assert.equal(button(f,'execute').disabled,true);assert.equal(f.calls.at(-1).path,'economy/status');
+ assert.equal(mutations(f).length,1);assert.deepEqual(mutations(f)[0].body,body());assert.equal(f.memory.size,0);assert.match(button(f,'message').textContent,/3 iptal makbuzu doğrulandı.*300 altın/);assert.equal(inputs(f).length,0);assert.equal(button(f,'execute').disabled,true);assert.equal(f.calls.at(-1).path,'economy/status');
 });
 test('preview rejects stale boot/revision, unpaused responses, malformed or duplicate identities',async()=>{
- const base={...paused,requiredSelectionCount:3,candidates};
- for(const preview of [{...base,bootId:'old'},{...base,revision:6},{...base,paused:false},{...base,persistenceConfirmed:false},{...base,requiredSelectionCount:2},{...base,candidates:[candidates[0],candidates[0]]},{...base,candidates:[{...candidates[0],digest:'bad'}]},{...base,candidates:[{...candidates[0],refundGoldPerSeat:100}]},{...base,candidates:[{...candidates[0],lastActivity:null}]}]){
+ const base={...paused,minSelectionCount:1,maxSelectionCount:3,candidates};
+ for(const preview of [{...base,bootId:'old'},{...base,revision:6},{...base,paused:false},{...base,persistenceConfirmed:false},{...base,minSelectionCount:0},{...base,minSelectionCount:2},{...base,maxSelectionCount:4},{...base,maxSelectionCount:2},{...base,minSelectionCount:'1'},{...base,minSelectionCount:undefined,maxSelectionCount:undefined,requiredSelectionCount:3},{...base,candidates:[candidates[0],candidates[0]]},{...base,candidates:[{...candidates[0],digest:'bad'}]},{...base,candidates:[{...candidates[0],refundGoldPerSeat:100}]},{...base,candidates:[{...candidates[0],lastActivity:null}]}]){
   const f=await previewed({preview});assert.equal(inputs(f).length,0);assert.equal(button(f,'execute').disabled,true);assert.equal(mutations(f).length,0);assert.match(button(f,'message').textContent,/eşleşmiyor/);
  }
 });
@@ -95,7 +99,7 @@ test('corrupt or inaccessible journal blocks execution; a failed journal write s
 });
 test('receipt IDs, unique count and refund totals must match before successful completion is shown',async()=>{
  for(const result of [{ok:true,replayed:false,cancelled:[],refundGold:0},{ok:true,replayed:false,cancelled:candidates.slice(1).map(({id})=>({id,refundGold:100})),refundGold:300},{ok:true,replayed:false,cancelled:candidates.slice(0,3).map(({id})=>({id,refundGold:100})),refundGold:200}]){
-  const f=await previewed({handler:async path=>path.endsWith('/execute')?result:undefined});select(f);button(f,'execute').onclick();await tick();assert.ok(f.memory.has(journalKey));assert.doesNotMatch(button(f,'message').textContent,/Üç iptal makbuzu doğrulandı/);assert.match(button(f,'message').textContent,/doğrulanamadı/);
+  const f=await previewed({handler:async path=>path.endsWith('/execute')?result:undefined});select(f);button(f,'execute').onclick();await tick();assert.ok(f.memory.has(journalKey));assert.doesNotMatch(button(f,'message').textContent,/3 iptal makbuzu doğrulandı/);assert.match(button(f,'message').textContent,/doğrulanamadı/);
  }
 });
 test('auth switch during preview/execute discards stale UI while preserving unknown exact request for original admin',async()=>{
@@ -103,7 +107,7 @@ test('auth switch during preview/execute discards stale UI while preserving unkn
   let resolve;const f=await verified({handler:async name=>name===path?new Promise(done=>resolve=done):undefined});button(f,'preview').onclick();await tick();
   if(path.endsWith('/execute')){select(f);button(f,'execute').onclick();await tick();}
   f.events.storage({key:'hero-auction-login'});f.context.login={user:{sub:'other-admin'}};
-  resolve(path.endsWith('/preview')?{...paused,requiredSelectionCount:3,candidates}:{ok:true,replayed:false,cancelled:candidates.slice(0,3).map(({id})=>({id,refundGold:100})),refundGold:300});await tick();
+  resolve(path.endsWith('/preview')?{...paused,minSelectionCount:1,maxSelectionCount:3,candidates}:{ok:true,replayed:false,cancelled:candidates.slice(0,3).map(({id})=>({id,refundGold:100})),refundGold:300});await tick();
   assert.equal(f.nodes['economy-maintenance-panel'].hidden,true);assert.equal(inputs(f).length,0);assert.equal(button(f,'execute').disabled,true);
   if(path.endsWith('/execute'))assert.ok(f.memory.has(journalKey));
   f.events['hero:admin-verified']();await tick();assert.equal(button(f,'reconcile').hidden,true);
@@ -113,4 +117,42 @@ test('backend HTTP status is preserved by existing admin helper; page keeps norm
  const admin=readFileSync(new URL('../public/admin.js',import.meta.url),'utf8');assert.match(admin,/Object\.assign\(Error\(j.error\|\|'İşlem başarısız'\),\{status:r.status\}\)/);
  assert.match(html,/id="economy-cancellation-panel" aria-labelledby="economy-cancellation-title"/);assert.match(html,/id="economy-cancellation-message" role="status" aria-live="polite"/);
  assert.doesNotMatch(source,/fetch\(|\.authToken|prompt\(/);assert.match(source,/api\('economy\/cancellations\/preview'\)/);assert.match(source,/api\('economy\/cancellations\/execute',payload\)/);
+});
+test('one/two/three selections execute exactly once and validate their dynamic receipt totals',async()=>{
+ for(const count of [1,2,3]){
+  const f=await previewed({preview:{...paused,minSelectionCount:1,maxSelectionCount:3,candidates:candidates.slice(0,count)}});
+  assert.equal(inputs(f).length,count);assert.equal(inputs(f).every(input=>!input.checked),true);
+  select(f,count);button(f,'execute').onclick();button(f,'execute').onclick();await tick();
+  assert.equal(mutations(f).length,1);assert.deepEqual(mutations(f)[0].body,body(candidates.slice(0,count)));assert.equal(f.memory.size,0);
+  assert.match(f.prompts[0],new RegExp('TAM '+count));assert.match(button(f,'message').textContent,new RegExp(count+' iptal makbuzu doğrulandı.*'+count*100+' altın'));
+  assert.equal(inputs(f).length,0);assert.equal(button(f,'execute').disabled,true);
+ }
+});
+test('one/two/legacy-three pending intents recover only the exact identities with current boot/revision',async()=>{
+ for(const count of [1,2,3]){
+  const original=body(candidates.slice(0,count)),memory=new Map([[journalKey,JSON.stringify({version:1,request:original})]]);
+  const f=await verified({memory,status:{bootId:'restarted',revision:42},handler:async(path,payload)=>path.endsWith('/execute')?{ok:true,replayed:true,cancelled:payload.candidates.map(({id})=>({id,refundGold:100})),refundGold:payload.candidates.length*100}:undefined});
+  assert.equal(mutations(f).length,0);assert.equal(button(f,'preview').disabled,true);button(f,'reconcile').onclick();button(f,'reconcile').onclick();await tick();
+  assert.equal(mutations(f).length,1);assert.deepEqual(mutations(f)[0].body,body(candidates.slice(0,count),{bootId:'restarted',revision:42}));assert.match(f.prompts[0],new RegExp('bu '+count+' iptal kaydının'));assert.equal(memory.size,0);assert.match(button(f,'message').textContent,/ikinci ödeme yapılmadı/);
+ }
+});
+test('zero/four/duplicate pending selections fail closed without rewriting the journal',async()=>{
+ for(const selection of [[],candidates,[candidates[0],candidates[0]]]){
+  const raw=JSON.stringify({version:1,request:body(selection)}),memory=new Map([[journalKey,raw]]),f=await verified({memory});
+  button(f,'reconcile').onclick();button(f,'execute').onclick();await tick();assert.equal(mutations(f).length,0);assert.equal(memory.get(journalKey),raw);assert.equal(button(f,'execute').disabled,true);assert.match(button(f,'pending').textContent,/işlem kaydı/);
+ }
+});
+test('dynamic receipt count/ID/amount mismatch preserves one/two/three pending requests',async()=>{
+ for(const count of [1,2,3])for(const kind of ['missing','extra','duplicate','foreign','total']){
+  const selected=candidates.slice(0,count),cancelled=selected.map(({id})=>({id,refundGold:100}));
+  if(kind==='missing')cancelled.pop();if(kind==='extra')cancelled.push({id:candidates[count].id,refundGold:100});if(kind==='duplicate')cancelled.push({...cancelled[0]});if(kind==='foreign')cancelled[0].id=candidates[3].id;
+  const result={ok:true,replayed:false,cancelled,refundGold:kind==='total'?count*100-50:cancelled.length*100};
+  const f=await previewed({handler:async path=>path.endsWith('/execute')?result:undefined});select(f,count);button(f,'execute').onclick();await tick();
+  assert.equal(mutations(f).length,1);assert.ok(f.memory.has(journalKey));assert.deepEqual(JSON.parse(f.memory.get(journalKey)).request,body(selected));assert.match(button(f,'message').textContent,/doğrulanamadı/);assert.equal(button(f,'preview').disabled,true);
+ }
+});
+test('an empty preview never enables execution, and identity changes during consent or response cannot clear another owner journal',async()=>{
+ const empty=await previewed({preview:{...paused,minSelectionCount:1,maxSelectionCount:3,candidates:[]}});button(empty,'execute').onclick();await tick();assert.equal(mutations(empty).length,0);assert.match(button(empty,'message').textContent,/Uygun kayıt olmadığından/);
+ let f;f=await previewed({onConfirm:()=>{f.context.login={user:{sub:'other-owner'}}}});select(f,1);button(f,'execute').onclick();await tick();assert.equal(mutations(f).length,0);assert.equal(f.memory.size,0);assert.equal(f.nodes['economy-maintenance-panel'].hidden,true);
+ let resolve;const delayed=await previewed({handler:async path=>path.endsWith('/execute')?new Promise(done=>resolve=done):undefined});select(delayed,2);button(delayed,'execute').onclick();await tick();delayed.context.login={user:{sub:'other-owner'}};resolve({ok:true,replayed:false,cancelled:candidates.slice(0,2).map(({id})=>({id,refundGold:100})),refundGold:200});await tick();assert.ok(delayed.memory.has(journalKey));assert.equal(delayed.nodes['economy-maintenance-panel'].hidden,true);assert.equal(button(delayed,'execute').disabled,true);
 });

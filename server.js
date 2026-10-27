@@ -1,5 +1,7 @@
 import {assertCancellableRoom,cancellationMatchId,cancellationIdentity,cancellationDigest,cancellationCandidate,publicCancellationCandidate,normalizeCancellationSelections,cancellationReceiptKey,cancelPaidMatches} from './paid-match-cancellation.js';
 import {createPaidEntryMaintenance,isUnsettledPaidRoom} from './paid-entry-maintenance.js';
+import {isOwnerAdmin,createAdminWalletCreditPolicy,adminWalletCreditView,creditAdminWallet,readAdminWalletCreditReceipt,readAdminWalletCredits,adminWalletCreditStorageReady,readAdminWalletBalances} from './admin-wallet-credits.js';
+import {createPlayerAnalyticsPolicy,preflightPlayerAnalytics,recordPlayerSession,readPlayerAnalytics,cleanupPlayerAnalytics} from './player-sessions.js';
 import {createMagicDustPolicy,readMagicDustBalance} from './magic-dust.js';
 import {createVictoryChestPolicy,eligibleVictory,victoryMatchId,persistVictoryChestIntent,creditVictoryChest,readVictoryChestRecovery,victoryChestView} from './victory-chests.js';
 import {createDiamondPolicy,commanderProgression,readDiamondBalance,upgradeCommanderWithDiamonds} from './paid-diamonds.js';
@@ -54,6 +56,9 @@ let victoryChestCreditHealthy=true;
 const diamondExchangePolicy=createDiamondExchangePolicy(process.env);
 const diamondSignupPolicy=createDiamondSignupPolicy(process.env);
 const loginRewardPolicy=createLoginRewardPolicy(process.env);
+const adminWalletCreditPolicy=createAdminWalletCreditPolicy(process.env);
+const playerAnalyticsPolicy=createPlayerAnalyticsPolicy(process.env);
+let playerAnalyticsStorageReady=false;
 console.info('Login reward policy:',JSON.stringify({enabled:loginRewardPolicy.enabled,timezone:'Europe/Istanbul',day7Diamonds:5}));
 // Non-secret release evidence: never log environment values, credentials or wallets.
 console.info('Commander economy policy:',JSON.stringify({diamondsEnabled:diamondPolicy.enabled,signupBonusEnabled:diamondSignupPolicy.enabled,exchangeEnabled:diamondExchangePolicy.enabled,purchaseAvailable:false,magicDustEnabled:magicDustPolicy.enabled,victoryChestsEnabled:victoryChestPolicy.enabled}));
@@ -246,7 +251,7 @@ async function cancellationPreview(){
   }catch{}
  }
  for(const [id,plan] of cancellationPlans)if(!cancellationReservations.has(id)&&(!rooms.has(plan.room.code)||cancellationIdentity(rooms.get(plan.room.code))!==id))cancellationPlans.delete(id);
- return{bootId:status.bootId,revision:status.revision,paused:status.paused,persistenceConfirmed:status.persistenceConfirmed,candidates,requiredSelectionCount:3};
+ return{bootId:status.bootId,revision:status.revision,paused:status.paused,persistenceConfirmed:status.persistenceConfirmed,candidates,minSelectionCount:1,maxSelectionCount:3};
 }
 async function executeCancellations(body,user){
  const selected=normalizeCancellationSelections(body.candidates),receiptKey=cancellationReceiptKey(selected);
@@ -508,8 +513,10 @@ async function registerVerifiedDiamondMember(user,provider){
 async function rememberDisplayName(user){if(user?.name){try{user.name=assertModeratedText(user.name,{kind:'name'})}catch{user.name='Oyuncu'}}if(user?.sub&&(!database||databaseReady))await friends.register(user.sub,user.name);if(database&&databaseReady&&user?.sub&&user?.name)await database.query('INSERT INTO hero_auction_user_profiles(account_id,display_name) VALUES($1,$2) ON CONFLICT(account_id) DO UPDATE SET display_name=EXCLUDED.display_name,updated_at=NOW()',[user.sub,user.name]);}
 async function adminApi(url,b){
  const user=readLogin(b.authToken);
- if(!user||!ADMIN_GOOGLE_EMAIL||user.email!==ADMIN_GOOGLE_EMAIL||user.sub.startsWith('guest:'))error('Yönetici yetkisi gerekli.',403);
+ if(!user||!ADMIN_GOOGLE_EMAIL||user.email!==ADMIN_GOOGLE_EMAIL||!isOwnerAdmin(user,ADMIN_GOOGLE_EMAIL))error('Yönetici yetkisi gerekli.',403);
  if(!database||!databaseReady)error('Veritabanı kullanılamıyor.',503);
+ if(url==='/api/admin/wallet/credit')return creditAdminWallet({database,user,ownerEmail:ADMIN_GOOGLE_EMAIL,request:b,policy:adminWalletCreditPolicy});
+ if(url==='/api/admin/wallet/receipt')return readAdminWalletCreditReceipt({database,user,ownerEmail:ADMIN_GOOGLE_EMAIL,requestId:b.requestId});
  if(url==='/api/admin/economy/status')return paidEntryDrainStatus();
  if(url==='/api/admin/economy/cancellations/preview')return cancellationPreview();
  if(url==='/api/admin/economy/cancellations/execute')return executeCancellations(b,user);
@@ -518,11 +525,26 @@ async function adminApi(url,b){
  if(url==='/api/admin/list'){
   const search=String(b.search||'').slice(0,100);
   const rows=await database.query("SELECT w.account_id,COALESCE(p.display_name,w.account_id) AS display_name,w.gold,COALESCE(a.banned,false) AS banned FROM hero_auction_wallets w LEFT JOIN hero_auction_admin_accounts a ON a.account_id=w.account_id LEFT JOIN hero_auction_user_profiles p ON p.account_id=w.account_id WHERE ($1='' OR w.account_id ILIKE '%'||$1||'%' OR p.display_name ILIKE '%'||$1||'%') ORDER BY p.display_name NULLS LAST,w.account_id LIMIT 200",[search]);
-  const accounts=rows.rows.map(row=>{const known=ratings.get(row.account_id)?.name;return {...row,display_name:row.display_name===row.account_id&&known&&known!=='Oyuncu'?known:row.display_name}});return {accounts};
+  const ids=rows.rows.map(row=>row.account_id);
+  const [balances,creditStorage,analytics]=await Promise.all([
+   readAdminWalletBalances(database,ids,adminWalletCreditPolicy),adminWalletCreditStorageReady(database),
+   readPlayerAnalytics({database,policy:playerAnalyticsPolicy,accountIds:ids})
+  ]);
+  const walletCredits=adminWalletCreditView(adminWalletCreditPolicy);
+  walletCredits.available=walletCredits.enabled&&creditStorage;
+  walletCredits.legacyGoldSetAvailable=true; // Preserve the existing gold workflow independently of new grants.
+  for(const currency of ['gold','diamonds','magicDust']){
+   if(walletCredits.currencies[currency].available&&(!creditStorage||(currency!=='gold'&&!balances.currencies[currency].available)))walletCredits.currencies[currency]={available:false,reason:'storage_unavailable'};
+  }
+  const currencyAvailability={gold:{available:true,reason:null},...balances.currencies};
+  const accounts=rows.rows.map(row=>{const known=ratings.get(row.account_id)?.name;return {...row,...balances.byAccount[row.account_id],currencyAvailability,analytics:analytics.accounts[row.account_id]??null,display_name:row.display_name===row.account_id&&known&&known!=='Oyuncu'?known:row.display_name}});
+  return {accounts,viewer:{accountId:user.sub},walletCredits,playerAnalytics:{enabled:analytics.enabled,available:analytics.available,retentionDays:analytics.retentionDays}};
  }
  if(url==='/api/admin/history'){
   const rows=await database.query('SELECT account_id,action,old_gold,new_gold,created_at FROM hero_auction_admin_audit ORDER BY id DESC LIMIT 100');
-  return {history:rows.rows};
+  const creditsAvailable=await adminWalletCreditStorageReady(database);
+  const credits=creditsAvailable?(await readAdminWalletCredits({database,user,ownerEmail:ADMIN_GOOGLE_EMAIL})).credits:[];
+  return {history:rows.rows,credits,creditsAvailable};
  }
  if(url==='/api/admin/gold'||url==='/api/admin/ban'){
   const id=String(b.accountId||'').trim();
@@ -713,6 +735,14 @@ async function api(url,b){
 }
 async function apiAction(url,b){if(url.startsWith('/api/admin/'))return adminApi(url,b);if(url==='/api/auth/check'){const user=readLogin(b.authToken);if(!user)error('Oturumun sona erdi. Yeniden giriş yap.',401);await rememberDisplayName(user);return{user:{sub:user.sub,name:user.name,provider:user.provider},gold:await goldBalance(user.sub)}}if(url==='/api/auth/crazygames'){const user=await verifyCrazyGamesToken(b.credential);user.provider='crazygames';await rememberDisplayName(user);for(const r of rooms.values()){let changed=false;for(const p of r.players){if(p?.accountId===user.sub&&p.name!==user.name){p.name=user.name;changed=true}}if(changed)publish(r)}return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}if(url==='/api/auth/guest'){const name=assertModeratedText(b.name||'Oyuncu',{kind:'name'});const user={sub:'guest:'+crypto.randomUUID(),name,provider:'guest'};await rememberDisplayName(user);return{user:{name},authToken:signLogin(user),gold:await goldBalance(user.sub)}}
 if(!url.startsWith('/api/auth/')){const user=readLogin(b.authToken);if(!user)error('Odaya erişmek için giriş yapmalısın.',401);if(databaseReady){const block=await database.query('SELECT banned FROM hero_auction_admin_accounts WHERE account_id=$1',[user.sub]);if(block.rows[0]?.banned)error('Hesap askıya alınmıştır.',403)}}
+if(url.startsWith('/api/player-sessions/')){
+ const event=url.slice('/api/player-sessions/'.length);
+ if(!['start','heartbeat','end'].includes(event))error('Bilinmeyen işlem.',404);
+ if(!playerAnalyticsPolicy.enabled||!playerAnalyticsStorageReady||!database||!databaseReady)error('Oturum ölçümü etkin değil.',503);
+ // The signed account and provider are server-derived. No client geo, URL, IP,
+ // forwarded headers or accountId enters the analytics service.
+ return recordPlayerSession({database,identity:readLogin(b.authToken),policy:playerAnalyticsPolicy,request:{sessionId:b.sessionId,sequence:b.sequence,event,foreground:b.foreground,reset:b.reset===true,source:b.source,platform:b.platform,device:b.device}});
+}
 if(b.code&&url!=='/api/state'){const selectedRoom=rooms.get(String(b.code).toUpperCase());if(selectedRoom&&isCancellationReserved(selectedRoom))error('Bu maçın iptal işlemi doğrulanıyor.',503);}
 if(url==='/api/store/status'){
  const user=readLogin(b.authToken),storageReady=!!database&&databaseReady;
@@ -1151,7 +1181,7 @@ if(req.method==='GET'&&url.pathname==='/api/online'){
  onlineVisitors.set(id,{seen:Date.now(),code:belongs?code:null});
  return send(200,onlineStats());
 }
-if(req.method==='GET'&&url.pathname==='/api/info')return send(200,{catalogueCount:catalogue.size,paidMatches:{paused:paidEntryMaintenance.isPaused()},victoryChests:{enabled:victoryChestPolicy.enabled,available:victoryChestPolicy.enabled&&victoryChestStorageReady&&victoryChestCreditHealthy,goldOptions:victoryChestPolicy.config?.gold||[],goldWeights:victoryChestPolicy.config?.goldWeights||[],magicDustOptions:victoryChestPolicy.config?.magicDust||[],magicDustChance:(victoryChestPolicy.config?.magicDustChance??0)/100,diamondChance:(victoryChestPolicy.config?.diamondChance??0)/100},counts:Object.fromEntries(['original'].map(k=>[k,[...catalogue.values()].filter(x=>x.universe===k).length]))});
+if(req.method==='GET'&&url.pathname==='/api/info')return send(200,{playerAnalytics:{enabled:playerAnalyticsPolicy.enabled&&playerAnalyticsStorageReady,retentionDays:playerAnalyticsPolicy.retentionDays},catalogueCount:catalogue.size,paidMatches:{paused:paidEntryMaintenance.isPaused()},victoryChests:{enabled:victoryChestPolicy.enabled,available:victoryChestPolicy.enabled&&victoryChestStorageReady&&victoryChestCreditHealthy,goldOptions:victoryChestPolicy.config?.gold||[],goldWeights:victoryChestPolicy.config?.goldWeights||[],magicDustOptions:victoryChestPolicy.config?.magicDust||[],magicDustChance:(victoryChestPolicy.config?.magicDustChance??0)/100,diamondChance:(victoryChestPolicy.config?.diamondChance??0)/100},counts:Object.fromEntries(['original'].map(k=>[k,[...catalogue.values()].filter(x=>x.universe===k).length]))});
 if(req.method==='POST'&&url.pathname.startsWith('/api/')){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>12000)error('İstek çok büyük.')}let body;try{body=JSON.parse(raw)}catch{error('Geçersiz JSON')}return send(200,await api(url.pathname,body))}
 const audioHead=req.method==='HEAD'&&path.extname(decodeURIComponent(url.pathname)).toLowerCase()==='.mp3';
 if((req.method==='GET'||audioHead)&&(url.pathname==='/crazygames'||url.pathname.startsWith('/crazygames/'))){
@@ -1188,7 +1218,15 @@ if(r.mode==='bot'&&r.turn===1){
 if(r.deadline&&Date.now()>=r.deadline){const expiredSeat=r.turn;log(r,`${r.players[expiredSeat].name} süresi dolduğu için otomatik pas geçti.`);if(r.topSeat!==null){finishAuction(r);}else if(r.openingPassSeat===1-expiredSeat){finishUnbidCard(r);}else{r.openingPassSeat=expiredSeat;r.turn=1-expiredSeat;r.deadline=Date.now()+20000;log(r,`Sıra ${r.players[r.turn].name} oyuncusuna geçti.`);}r.lastActivity=Date.now();publish(r);}
 }for(const [id,r]of rooms){const age=Date.now()-(r.lastActivity||r.created);const expiry=r.phase==='finished'?24*3600_000:r.phase==='waiting'?2*3600_000:r.phase==='matching'?5*60_000:r.phase==='auction'?6*3600_000:24*3600_000;if(age>expiry&&!r.victoryChestPending&&!(paidEntryMaintenance.isPaused()&&isUnsettledPaidRoom(r))){liveArenaLifecycle.endRoom(id);liveArenaMatchKeys.delete(id);rooms.delete(id);dirtyRooms.add(id);waiting.delete(id);const clients=listeners.get(id);if(clients){for(const c of clients){try{c.res.end()}catch{}}listeners.delete(id)}}}for(const [id,w]of waiting)if(!rooms.has(w.code)||Date.now()-w.created>60000)waiting.delete(id)},500).unref();
 setInterval(()=>{flushRooms().catch(e=>console.error('Database flush:',e.message));flushGold().catch(e=>console.error('Gold flush:',e.message));flushVictoryChests().catch(e=>console.error('Chest flush:',e.message))},1000).unref();
-initializeDatabase().then(initializePaidEntryMaintenance).then(initializeVictoryChests).then(()=>{server.listen(PORT,'0.0.0.0',()=>console.log(`Hero Auction http://localhost:${PORT} | characters: ${catalogue.size}`));});
+initializeDatabase().then(initializePaidEntryMaintenance).then(initializeVictoryChests).then(initializePlayerAnalytics).then(()=>{server.listen(PORT,'0.0.0.0',()=>console.log(`Hero Auction http://localhost:${PORT} | characters: ${catalogue.size}`));});
 
 // Moderation evidence expiry only; no account deletion or native transport changes.
 setInterval(()=>{if(moderationReady&&(!database||databaseReady))moderation.prune().catch(e=>console.error('Moderation retention cleanup:',e.message))},3600000).unref();
+
+// Only preflight and bounded expiry: applying migrations is a separate release action.
+async function initializePlayerAnalytics(){
+ if(!database||!databaseReady)return;
+ try{playerAnalyticsStorageReady=await preflightPlayerAnalytics(database);if(playerAnalyticsStorageReady)await cleanupPlayerAnalytics({database,policy:playerAnalyticsPolicy});}
+ catch{playerAnalyticsStorageReady=false;console.error('Player session storage unavailable.');}
+}
+setInterval(()=>{if(playerAnalyticsStorageReady&&database&&databaseReady)cleanupPlayerAnalytics({database,policy:playerAnalyticsPolicy}).catch(()=>console.error('Player session retention cleanup unavailable.'))},3600000).unref();

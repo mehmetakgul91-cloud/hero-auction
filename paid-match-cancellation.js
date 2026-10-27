@@ -22,7 +22,7 @@ export function cancellationCandidate(room,durableRoom){
 }
 export const publicCancellationCandidate=plan=>({id:plan.id,digest:plan.digest,lastActivity:plan.room.lastActivity||plan.room.created,refundGoldPerSeat:50,paidSeats:2});
 export function normalizeCancellationSelections(selections){
- if(!Array.isArray(selections)||selections.length!==3||selections.some(value=>!value||!(/^[a-f0-9]{64}$/).test(value.id)||!(/^[a-f0-9]{64}$/).test(value.digest))||new Set(selections.map(value=>value.id)).size!==3)throw error('Tam olarak üç farklı doğrulanmış maç seçilmeli.',400);
+ if(!Array.isArray(selections)||(selections.length<1||selections.length>3)||selections.some(value=>!value||!(/^[a-f0-9]{64}$/).test(value.id)||!(/^[a-f0-9]{64}$/).test(value.digest))||new Set(selections.map(value=>value.id)).size!==selections.length)throw error('Bir ila üç farklı doğrulanmış maç seçilmeli.',400);
  return selections.map(({id,digest})=>({id,digest})).sort((a,b)=>a.id.localeCompare(b.id));
 }
 export const cancellationReceiptKey=selections=>'paid-cancel-batch:'+cancellationDigest(normalizeCancellationSelections(selections));
@@ -40,7 +40,7 @@ export async function cancelPaidMatches({database,selections,plans,actorId,expec
   const previous=(await client.query('SELECT state FROM hero_auction_social WHERE id=$1',[receiptKey])).rows[0]?.state;
   if(previous){
    receiptObserved=true;
-   if(previous.version!==1||previous.kind!=='paid-match-cancellation'||cancellationDigest(previous.selections)!==cancellationDigest(selected)||!Array.isArray(previous.rooms)||previous.rooms.length!==3)throw error('İade makbuzu doğrulanamadı.',503);
+   if(previous.version!==1||previous.kind!=='paid-match-cancellation'||cancellationDigest(previous.selections)!==cancellationDigest(selected)||!Array.isArray(previous.rooms)||previous.rooms.length!==selected.length)throw error('İade makbuzu doğrulanamadı.',503);
    const expectedAwards=[];
    for(const room of previous.rooms){
     const id=cancellationIdentity(room),item=selected.find(value=>value.id===id);
@@ -51,10 +51,10 @@ export async function cancelPaidMatches({database,selections,plans,actorId,expec
      expectedAwards.push(award);
     }
    }
-   if(new Set(previous.rooms.map(cancellationIdentity)).size!==3)throw error('İade maçları doğrulanamadı.',503);
+   if(new Set(previous.rooms.map(cancellationIdentity)).size!==selected.length)throw error('İade maçları doğrulanamadı.',503);
    const awards=(await client.query('SELECT award_id,account_id,amount FROM hero_auction_gold_awards WHERE award_id=ANY($1::text[])',[expectedAwards.map(award=>award.id)])).rows;
-   if(awards.length!==6||expectedAwards.some(expected=>!awards.some(row=>row.award_id===expected.id&&row.account_id===expected.accountId&&Number(row.amount)===50)))throw error('Kalıcı iade kayıtları doğrulanamadı.',503);
-   commitIssued=true;await client.query('COMMIT');return{result:{ok:true,replayed:true,cancelled:selected.map(item=>({id:item.id,refundGold:100})),refundGold:300},rooms:previous.rooms};
+   if(awards.length!==selected.length*2||expectedAwards.some(expected=>!awards.some(row=>row.award_id===expected.id&&row.account_id===expected.accountId&&Number(row.amount)===50)))throw error('Kalıcı iade kayıtları doğrulanamadı.',503);
+   commitIssued=true;await client.query('COMMIT');return{result:{ok:true,replayed:true,cancelled:selected.map(item=>({id:item.id,refundGold:100})),refundGold:selected.length*100},rooms:previous.rooms};
   }
   const chosen=selected.map(item=>{const plan=plans?.get(item.id);if(!plan||plan.digest!==item.digest)throw error('Önizleme değişti veya bu sunucuda bulunamadı. Yeni önizleme gerekli.');assertCancellableRoom(plan.room);return plan});
   validateLive(chosen);
@@ -92,7 +92,7 @@ export async function cancelPaidMatches({database,selections,plans,actorId,expec
    await client.query('UPDATE hero_auction_rooms SET state=$2::jsonb,updated_at=NOW() WHERE code=$1',[room.code,JSON.stringify(room)]);closed.push(room);
   }
   validateLive(chosen);
-  const result={ok:true,replayed:false,cancelled:chosen.map(plan=>({id:plan.id,refundGold:100})),refundGold:300};
+  const result={ok:true,replayed:false,cancelled:chosen.map(plan=>({id:plan.id,refundGold:100})),refundGold:selected.length*100};
   const receipt={version:1,kind:'paid-match-cancellation',selections:selected,result,rooms:closed,actorId,at};
   await client.query('INSERT INTO hero_auction_social(id,state) VALUES($1,$2::jsonb)',[receiptKey,JSON.stringify(receipt)]);
   commitIssued=true;await client.query('COMMIT');return{result,rooms:closed};
