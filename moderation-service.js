@@ -38,6 +38,7 @@ export function createModerationService({now=Date.now,persist=async()=>{},resolv
    const report={id:crypto.randomUUID(),reporter:actor,target:other,reason:input.reason,details,evidence:structuredClone(verified),createdAt:now(),status:'open',reviewedAt:null,reviewedBy:null,note:''};reports.set(report.id,report);return receipt(report);
   })},
   adminList(user){admin(user);return{reports:[...reports.values()].filter(r=>now()-r.createdAt<MODERATION_RETENTION_MS).sort((a,b)=>(a.status==='open'?0:1)-(b.status==='open'?0:1)||(a.status==='open'?a.createdAt-b.createdAt:b.createdAt-a.createdAt)).slice(0,200).map(r=>structuredClone(r)),retentionDays:30}},
+  adminGet(user,id){admin(user);const report=reports.get(String(id));if(!report||now()-report.createdAt>=MODERATION_RETENTION_MS)fail('Şikâyet bulunamadı veya saklama süresi doldu.',404);return structuredClone(report)},
   review(user,{reportId,status,note}={}){admin(user);return mutate(()=>{const report=reports.get(String(reportId));if(!report)fail('Şikâyet bulunamadı.',404);if(!TERMINAL.has(status)||typeof note!=='string'||!note.trim()||note.length>500)fail('Karar ve 1–500 karakter açıklama gerekli.');if(report.status!=='open')fail('Şikâyet daha önce değerlendirildi.',409);report.status=status;report.note=note.trim();report.reviewedBy=user.sub;report.reviewedAt=now();return{ok:true}})},
   prune(){return mutate(()=>({ok:true}))}
 

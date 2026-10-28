@@ -1,6 +1,7 @@
 import {createNativeCors} from './native-cors.js';
 import {createLocationResolver,preflightPlayerLocations} from './player-location.js';
 import {readAdminSessionReport} from './admin-player-reports.js';
+import {listAdminMatches,readAdminMatch,matchIdentity} from './admin-match-records.js';
 import {arenaDecorativeCacheControl} from './arena-decorative-assets.js';
 import {auctionAdmissions,publicAuctionCommander,setAuctionCommanderIdentity,hydrateAuctionCommanders as hydrateAuctionIdentity,refreshAuctionCommanders as refreshAuctionIdentity} from './auction-commander-identity.js';
 import {assertCancellableRoom,cancellationMatchId,cancellationIdentity,cancellationDigest,cancellationCandidate,publicCancellationCandidate,normalizeCancellationSelections,cancellationReceiptKey,cancelPaidMatches} from './paid-match-cancellation.js';
@@ -188,7 +189,7 @@ const moderation=createModerationService({
  persist:async state=>{if(database){if(!databaseReady||!moderationReady)error('Denetim sistemi kullanılamıyor.',503);try{await database.query({text:'INSERT INTO hero_auction_moderation(id,state) VALUES($1,$2) ON CONFLICT(id) DO UPDATE SET state=$2',values:['global',JSON.stringify(state)],query_timeout:5000})}catch(e){moderationReady=false;console.error('Moderation persistence unresolved; peer interactions paused until reload.');throw e}}},
  evidence:(actor,target,context)=>{
   const r=rooms.get(String(context.code||''));
-  if(r&&r.players.some(p=>p?.accountId===actor&&p.token===context.token)&&r.players.some(p=>p?.accountId===target))return{kind:'room',code:r.code,created:r.created,names:r.players.map(p=>p?.name||''),chat:(r.chat||[]).slice(-20).map(({seat,name,message,time})=>({seat,name,message,time}))};
+  if(r&&r.players.some(p=>p?.accountId===actor&&p.token===context.token)&&r.players.some(p=>p?.accountId===target))return{kind:'room',code:r.code,created:r.created,matchId:matchIdentity(r),names:r.players.map(p=>p?.name||''),chat:(r.chat||[]).slice(-20).map(({seat,name,message,time})=>({seat,name,message,time}))};
   const state=friends.state(actor),playerId=friends.playerId(target);
   if([...state.friends,...state.incoming,...state.outgoing].some(p=>p.playerId===playerId))return{kind:'friend',playerId,name:friends.publicPlayer(target)?.name};
   return null;
@@ -550,6 +551,12 @@ async function adminApi(url,b){
  if(url==='/api/admin/moderation/list'||url==='/api/admin/moderation/review'){if(!moderationReady)error('Denetim sistemi geçici olarak kullanılamıyor.',503);return url.endsWith('/list')?moderation.adminList(user):moderation.review(user,b)}
  if(url==='/api/admin/daily-sessions')return readDailySessionSummary({database,policy:playerAnalyticsPolicy,days:b.days??7});
  if(url==='/api/admin/session-report')return readAdminSessionReport({database,policy:playerAnalyticsPolicy,request:b,locationsAvailable:playerLocationsStorageReady});
+ if(url==='/api/admin/matches')return listAdminMatches({records:matchRecords,request:b});
+ if(url==='/api/admin/match'){
+  if(b.reportId&&!moderationReady)error('Denetim sistemi geçici olarak kullanılamıyor.',503);
+  const report=b.reportId?moderation.adminGet(user,b.reportId):null;
+  return readAdminMatch({records:matchRecords,rooms,request:b,report});
+ }
  if(url==='/api/admin/list'){
   const search=String(b.search||'').trim().slice(0,100),offset=b.offset??0;
   const activity=b.activity??'all',state=b.state??'all';

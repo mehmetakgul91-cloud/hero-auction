@@ -18,7 +18,7 @@ test('owner-only route boundary precedes every admin database read or action',as
   creditAdminWallet:async args=>{calls.push(args);return {ok:true};},readAdminWalletCreditReceipt:async args=>{calls.push(args);return {receipt:null};},adminWalletCreditPolicy:{enabled:true}};
  vm.createContext(context);vm.runInContext(body,context);
  const forbidden=[null,{...owner,provider:'guest',sub:'guest:owner'},{...owner,provider:'crazygames',sub:'crazygames:1:owner'},{...owner,email:'other@example.invalid'},{...owner,provider:undefined},{...owner,sub:'guest:forged'}];
- for(const user of forbidden)for(const path of ['list','history','wallet/credit','wallet/receipt','gold','ban','daily-sessions','session-report'])await assert.rejects(context.adminApi('/api/admin/'+path,{authToken:user,accountId:'fixture',currency:'diamonds',amount:100,actorId:owner.sub}),e=>e.status===403);
+ for(const user of forbidden)for(const path of ['list','history','wallet/credit','wallet/receipt','gold','ban','daily-sessions','session-report','matches','match'])await assert.rejects(context.adminApi('/api/admin/'+path,{authToken:user,accountId:'fixture',currency:'diamonds',amount:100,actorId:owner.sub}),e=>e.status===403);
  assert.equal(calls.length,0);
  await context.adminApi('/api/admin/wallet/credit',{authToken:owner,actorId:'forged-owner',accountId:'fixture',requestId:'fixture-key-0000001'});
  assert.deepEqual(calls[0].user,owner);assert.equal(calls[0].ownerEmail,owner.email);
