@@ -5,10 +5,10 @@ timeout 15s adb logcat -c
 adb logcat -s HeroSmoke:I > artifacts/device-progress.txt &
 log_pid=$!
 trap 'kill "$log_pid" 2>/dev/null || true' EXIT
-# Resizing an already booted Pixel image can leave its launcher in an ANR.
-# Stop only the fixture launcher, never the game, before instrumentation starts.
-echo 'Resetting resized fixture launcher (15-second limit)'
-timeout 15s adb shell am force-stop com.google.android.apps.nexuslauncher || true
+# Display dimensions are configured before boot; never resize a live compositor.
+timeout 15s adb shell wm size > artifacts/device-display.txt
+timeout 15s adb shell wm density >> artifacts/device-display.txt
+timeout 15s adb shell settings get system font_scale >> artifacts/device-display.txt
 timeout 15s adb shell wm dismiss-keyguard || true
 echo 'Starting app instrumentation (7-minute limit)'
 # Both APKs were compiled before emulator boot. Run the same AndroidJUnitRunner

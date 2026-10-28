@@ -72,10 +72,10 @@ jobs:
           arch: x86_64
           profile: pixel_7
           disable-animations: true
-          # The action defaults to deprecated swiftshader_indirect. Use the
-          # current emulator's supported software backend on headless runners.
-          emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim
-          script: adb reverse tcp:3443 tcp:3443 && adb shell wm size ${{ matrix.size }} && adb shell wm density 320 && adb shell settings put system font_scale ${{ matrix.font }} && bash mobile/scripts/device-test.sh
+          ram-size: 2048M
+          pre-emulator-launch-script: python3 mobile/scripts/configure-emulator.py ${{ matrix.size }}
+          emulator-options: -no-window -gpu swiftshader -feature -Vulkan -no-snapshot -noaudio -no-boot-anim
+          script: adb reverse tcp:3443 tcp:3443 && adb shell settings put system font_scale ${{ matrix.font }} && bash mobile/scripts/device-test.sh
       - name: Stop disposable backend
         if: always()
         run: |
@@ -89,3 +89,58 @@ jobs:
             mobile/android/app/build/reports/androidTests/
             mobile/android/app/build/outputs/androidTest-results/
           retention-days: 14
+  phone-apk:
+    needs: portrait
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - name: Build installable APK for the existing guest test server
+        run: |
+          npm ci --no-audit --no-fund
+          npm --prefix mobile ci --no-audit --no-fund
+          mkdir -p artifacts
+          node mobile/scripts/configure-phone.mjs
+          npm --prefix mobile run sync
+          cd mobile/android
+          ./gradlew --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest
+      - name: Verify phone package and system certificate policy
+        run: |
+          python3 mobile/scripts/verify-apk.py mobile/android/app/build/outputs/apk/debug/app-debug.apk > artifacts/apk-verification.json
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs mobile/android/app/build/outputs/apk/debug/app-debug.apk > artifacts/apk-signature.txt
+          test ! -d mobile/android/app/src/debug
+          cp mobile/package-report.json artifacts/package-report.json
+          cp mobile/www/native-build.json artifacts/native-build.json
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Exact phone APK through a complete match on the public test server
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          disable-animations: true
+          ram-size: 2048M
+          pre-emulator-launch-script: python3 mobile/scripts/configure-emulator.py 780x1688
+          emulator-options: -no-window -gpu swiftshader -feature -Vulkan -no-snapshot -noaudio -no-boot-anim
+          script: adb shell settings put system font_scale 1.3 && bash mobile/scripts/device-test.sh
+      - name: Collect installable test APK
+        run: cp mobile/android/app/build/outputs/apk/debug/app-debug.apk artifacts/Hero-Auction-Test-0.2.1.apk
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hero-auction-phone-test
+          path: artifacts/
+          retention-days: 30
