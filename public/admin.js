@@ -93,7 +93,7 @@ async function load(){
    }
    for(const currency of ['gold','diamonds','magicDust']){const button=appendText(td,'button',currencyLabel(currency)+' ekle');button.type='button';button.disabled=true;button.onclick=()=>selectCredit(a,currency);creditButtons.push({button,currency});}
    const ban=appendText(td,'button',a.banned?'Etkinleştir':'Askıya al');ban.type='button';ban.disabled=a.account_id===viewerAccount;if(ban.disabled)ban.title='Kendi yönetici hesabınızı askıya alamazsınız.';ban.onclick=async()=>{if(!confirm(a.account_id+' için üyelik durumu değiştirilsin mi?'))return;ban.disabled=true;try{await act('ban',{accountId:a.account_id,banned:!a.banned})}finally{ban.disabled=false}};
-   const visits=appendText(td,'button','Girişleri gör');visits.type='button';visits.onclick=()=>{$('report-search').value='';void reports.load({accountId:a.account_id});$('daily-report').scrollIntoView({behavior:'smooth'});};
+   const visits=appendText(td,'button','Girişleri gör');visits.type='button';visits.onclick=()=>{$('report-search').value=a.account_id;void reports.load({accountId:a.account_id});$('daily-report').scrollIntoView({behavior:'smooth'});};
    tr.append(td);const labels=['Oyuncu','Hesap ID','Bakiyeler','Son 30 gün','Kaynak / cihaz','Durum','İşlemler'];Array.from(tr.children).forEach((cell,i)=>cell.setAttribute('data-label',labels[i]));tbody.append(tr);
   }
   if(changed||!creditController.snapshot().verified)creditController.setIdentity(true);else{creditController.syncJournal();renderCreditState(creditController.snapshot());}

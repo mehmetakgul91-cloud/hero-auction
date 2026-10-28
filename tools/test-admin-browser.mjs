@@ -33,8 +33,12 @@ try{
   await page.goto(origin+'/admin');await page.waitForSelector('#session-rows tr');
   assert.equal(await page.locator('#accounts tr').count(),2);assert.equal(await page.locator('#accounts img').count(),0);assert.equal(await page.locator('#accounts tr').nth(1).getByRole('button',{name:'Askıya al',exact:true}).isDisabled(),true);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'no document overflow at '+width);
+  await page.locator('#accounts tr').first().getByRole('button',{name:'Girişleri gör',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelector('#daily-status').textContent.includes('Son 7'));
+  assert.equal(await page.inputValue('#report-search'),'fixture-player');
   await page.selectOption('#daily-range','30');await page.waitForFunction(()=>document.querySelector('#daily-status').textContent.includes('Son 30'));
   assert.equal(await page.locator('#daily-rows tr').count(),30);
+  assert.ok(requests.some(r=>r.path==='/api/admin/session-report'&&r.body.days===30&&r.body.accountId==='fixture-player'));
   const downloaded=page.waitForEvent('download');await page.click('#session-export');const download=await downloaded;const text=await readFile(await download.path(),'utf8');assert.ok(text.includes("'=Oyuncu; İzmir <img src=x>"));assert.ok(text.includes('Manisa'));assert.ok(text.includes('Türkiye'));assert.ok(requests.at(-1).body.export===true);
   await page.fill('#search','%_');await page.click('#find');await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('hesap listelendi'));
   assert.ok(requests.some(r=>r.path==='/api/admin/list'&&r.body.search==='%_'&&r.body.offset===0));
