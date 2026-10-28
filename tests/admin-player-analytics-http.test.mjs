@@ -18,8 +18,14 @@ test('owner-only route boundary precedes every admin database read or action',as
   creditAdminWallet:async args=>{calls.push(args);return {ok:true};},readAdminWalletCreditReceipt:async args=>{calls.push(args);return {receipt:null};},adminWalletCreditPolicy:{enabled:true}};
  vm.createContext(context);vm.runInContext(body,context);
  const forbidden=[null,{...owner,provider:'guest',sub:'guest:owner'},{...owner,provider:'crazygames',sub:'crazygames:1:owner'},{...owner,email:'other@example.invalid'},{...owner,provider:undefined},{...owner,sub:'guest:forged'}];
- for(const user of forbidden)for(const path of ['list','history','wallet/credit','wallet/receipt','gold','ban','daily-sessions','session-report','matches','match'])await assert.rejects(context.adminApi('/api/admin/'+path,{authToken:user,accountId:'fixture',currency:'diamonds',amount:100,actorId:owner.sub}),e=>e.status===403);
+ for(const user of forbidden)for(const path of ['list','history','wallet/credit','wallet/receipt','gold','ban','daily-sessions','session-report','location-status','matches','match'])await assert.rejects(context.adminApi('/api/admin/'+path,{authToken:user,accountId:'fixture',currency:'diamonds',amount:100,actorId:owner.sub}),e=>e.status===403);
  assert.equal(calls.length,0);
+ const requestContext={socket:{remoteAddress:'synthetic-private-peer'},headers:{'cf-connecting-ip':'synthetic-ip'}};
+ context.playerLocationsStorageReady=true;
+ context.playerLocationResolver={available:true,buildDate:'2026-10-01T00:00:00.000Z',proxyMode:'render-cloudflare',lookup(req){assert.equal(req,requestContext);return {country:'TR',city:'Izmir'};}};
+ const diagnostic=await context.adminApi('/api/admin/location-status',{authToken:owner,ip:'forged'},requestContext);
+ assert.deepEqual(JSON.parse(JSON.stringify(diagnostic)),{available:true,buildDate:'2026-10-01T00:00:00.000Z',proxyMode:'render-cloudflare',location:{country:'TR',city:'Izmir'}});
+ assert.equal(calls.length,0,'location check has no database writes');
  await context.adminApi('/api/admin/wallet/credit',{authToken:owner,actorId:'forged-owner',accountId:'fixture',requestId:'fixture-key-0000001'});
  assert.deepEqual(calls[0].user,owner);assert.equal(calls[0].ownerEmail,owner.email);
  await context.adminApi('/api/admin/wallet/receipt',{authToken:owner,requestId:'fixture-key-0000001'});
