@@ -26,7 +26,7 @@ window.EventSource = class extends OriginalEventSource {
 };
 function notice(message) {
   const status = document.getElementById('native-status');
-  if (status) status.textContent = message;
+  if (status) {status.textContent = message;status.dataset.notice='true';}
   const menu=document.getElementById('native-game-menu');if(menu)menu.open=true;
 }
 function startUI() {

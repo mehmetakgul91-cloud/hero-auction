@@ -1,11 +1,11 @@
-:root{color-scheme:dark}body{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);overscroll-behavior-y:none}#native-status{position:relative;z-index:1000;padding:8px 14px;text-align:center;font:600 12px/1.5 system-ui,sans-serif;background:#17233a;color:#d5e5ff;border-bottom:1px solid #34517a}.native-google-note{font-size:.85rem;color:#b7c8e4}.landing-divider,.rewarded-ad-panel{display:none!important}a,button{-webkit-tap-highlight-color:transparent}
+body{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);overscroll-behavior-y:none}#native-status{position:relative;z-index:1000;padding:8px 14px;text-align:center;font:600 12px/1.5 system-ui,sans-serif;background:#17233a;color:#d5e5ff;border-bottom:1px solid #34517a}.native-google-note{font-size:.85rem;color:#b7c8e4}.landing-divider,.rewarded-ad-panel{display:none!important}a,button{-webkit-tap-highlight-color:transparent}
 
 /* Android-only compact play. Keep scrolling as a safety fallback for keyboard,
    larger text, split-screen and unusual formations; never clip the document. */
 .hero-native{--native-label-height:max(14px,.875rem);--native-card-min-height:calc(60px + var(--native-label-height));--native-arena-min-height:calc(var(--native-rows,3) * var(--native-card-min-height) + 32px)}
-.hero-native body.native-arena,.hero-native body.native-auction{padding:0;min-height:var(--native-viewport-height,100dvh);overflow-x:hidden;overflow-y:auto}
+.hero-native body.native-arena{padding:0;min-height:var(--native-viewport-height,100dvh);overflow-x:hidden;overflow-y:auto}
 .hero-native :is(button,summary,input,select,a.arena-home-link){touch-action:manipulation}
-.hero-native :is(button,summary,input:not([type="checkbox"]),select){min-height:44px}
+.hero-native body:not(.native-auction) :is(button,summary,input:not([type="checkbox"]),select){min-height:44px}
 .hero-native :is(button,summary,a,input,select):focus-visible{outline:3px solid #ffe491;outline-offset:2px}
 .hero-native #native-game-menu{position:relative;flex:0 0 auto;margin:0;z-index:1010;color:#eef8ff}
 .hero-native #native-game-menu>summary{display:flex;align-items:center;justify-content:center;min-width:64px;min-height:44px;padding:6px 10px;border:1px solid #71cae1;border-radius:10px;background:#163447;cursor:pointer;font-size:.8125rem;font-weight:800;list-style:none}
@@ -47,67 +47,20 @@
 }
 .hero-native .native-arena.arena-fit:is(.native-keyboard,.native-zoomed) .shell{height:auto;min-height:var(--native-viewport-height,100dvh)}
 
-/* Essential auction card/bid/budgets stay side by side; complete descriptions,
-   owned-card costs, chat, history and safety remain in disclosures/Menu. */
-.hero-native .native-auction>.shell{max-width:1050px;padding:max(4px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(4px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left))}
-.hero-native .native-auction #game>.friend-opponent-bar{display:none}
-.hero-native .native-auction #game .room-tools{min-height:44px;margin:0 0 4px;padding:0;border:0;gap:4px;flex-wrap:nowrap}
-.hero-native .native-auction #game .room-tools :is(button,summary){min-height:44px;padding:6px;font-size:.6875rem}
-.hero-native .native-auction #game #phase{letter-spacing:0;font-size:.6875rem}
-.hero-native .native-auction #game .arena-layout{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
-.hero-native .native-auction #game .player-side{position:relative;padding:5px;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px;align-items:center}
-.hero-native .native-auction #game .player-side .name{font-size:.75rem;line-height:1.2}
-.hero-native .native-auction #game .player-side .credit{font-size:1.125rem;margin:0;white-space:nowrap}
-.hero-native .native-auction #game .player-side .credit small{font-size:.625rem;margin:0}
-.hero-native .native-auction #game .native-player-details{grid-column:1/-1;min-width:0}
-.hero-native .native-auction #game .native-player-details>summary{display:flex;align-items:center;justify-content:center;min-height:44px;padding:3px;font-size:.6875rem;cursor:pointer;background:#112b42;border-radius:7px}
-.hero-native .native-auction #game .native-player-details[open]{grid-column:1/-1}
-.hero-native .native-auction #game .native-player-details .teams{max-height:none;overflow:visible;font-size:.75rem}
-.hero-native .native-auction #game .arena-stage{grid-column:1/-1;grid-row:2;padding:6px;overflow:visible}
-.hero-native .native-auction #game .auction-main{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:6px;align-items:start}
-.hero-native .native-auction #game .auction-deck-scene{width:min(100%,150px);margin:14px auto 24px}
-.hero-native .native-auction #game .auction-hero .card-art{height:clamp(96px,22dvh,180px);width:100%;margin:0}
-.hero-native .native-auction #game .auction-hero .card-name{font-size:1rem;margin:4px 0;line-height:1.15}
-.hero-native .native-auction #game .auction-hero :is(.tag,.rarity-feature){font-size:.625rem;padding:3px;line-height:1.25;letter-spacing:0}
-.hero-native .native-auction #game .native-hero-details>summary{display:flex;align-items:center;min-height:44px;padding:5px;border:1px solid #466b8a;border-radius:8px;cursor:pointer;font-size:.75rem;font-weight:750}
-.hero-native .native-auction #game .native-hero-details :is(.hero-description,.auction-abilities){font-size:.8125rem!important;line-height:1.4!important;text-align:left}
-.hero-native .native-auction #game .auction-action{align-self:start;padding:6px}
-.hero-native .native-auction #game .auction-budget{margin-bottom:4px;gap:4px}
-.hero-native .native-auction #game .auction-budget>div{padding:5px 2px}
-.hero-native .native-auction #game .auction-budget strong{font-size:1.25rem}
-.hero-native .native-auction #game .auction-budget small{font-size:.625rem}
-.hero-native .native-auction #game .auction-action .status{font-size:.75rem;margin:4px 0;line-height:1.3}
-.hero-native .native-auction #game .auction-action .bid-stepper{gap:3px;margin:4px 0}
-.hero-native .native-auction #game .auction-action .bid-stepper button{flex:0 0 44px;width:44px;min-width:44px;height:44px;padding:2px;font-size:1.5rem}
-.hero-native .native-auction #game .auction-action .big-bid{font-size:.8125rem;line-height:1.2;overflow-wrap:anywhere}
-.hero-native .native-auction #game #bidrange{min-height:44px;margin:0;padding:0}
-.hero-native .native-auction #game .auction-action .controls{gap:4px}
-.hero-native .native-auction #game .auction-action .controls button{min-height:44px;padding:6px 3px;font-size:.6875rem;white-space:normal}
-@media(min-width:600px) and (max-height:600px){
- .hero-native .native-auction #game .arena-layout{grid-template-columns:minmax(100px,.8fr) minmax(0,3fr) minmax(100px,.8fr)}
- .hero-native .native-auction #game .arena-stage{grid-column:2;grid-row:1}
- .hero-native .native-auction #game .player-side{grid-column:auto;grid-row:1;display:block}
- .hero-native .native-auction #game #player0{grid-column:1}.hero-native .native-auction #game #player1{grid-column:3}
- .hero-native .native-auction #game .auction-hero .card-art{height:clamp(80px,28dvh,130px)}
-}
+/* The auction uses the unmodified shared responsive stylesheet and DOM.
+   Keep the test banner on the home screen; explicit Back/error notices remain
+   available without moving the web controls into an Android-only menu. */
+.hero-native .native-auction>#native-status:not([data-notice]){display:none}
+.hero-native .native-auction>#native-status[data-notice]{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:11000}
 .hero-native #native-game-menu[open]::before{content:'';position:fixed;inset:0;background:#030916bd;z-index:1009}
 .hero-native #commander-bonus-detail summary{min-height:44px;display:flex;align-items:center}
 .hero-native .battle-board .lane-switch{min-height:44px;min-width:44px}
 
-/* Portrait-first native flow. Never reserve fixed-height tracks for wrapping
-   navigation/status text, and never let a sticky bid panel cover the card. */
-.hero-native .native-auction #game .room-tools{display:flex;flex-wrap:wrap}
-.hero-native .native-auction #game .auction-action{position:static;min-width:0}
-.hero-native .native-auction #game .player-side{grid-row:1;min-width:0;top:auto;bottom:auto}
-.hero-native .native-auction #game .player-side .name{overflow-wrap:anywhere}
+/* Portrait arena keeps wrapping navigation and status text in document flow. */
 .hero-native #native-game-menu[open]{z-index:11000}
 .hero-native .native-menu-panel{box-sizing:border-box}
 .hero-native .formation .preparation-ready-bar{position:static;bottom:auto}
 @media(max-width:599px){
- .hero-native .native-auction #game .auction-main{grid-template-columns:minmax(0,1fr);gap:12px}
- .hero-native .native-auction #game .auction-deck-scene{width:min(100%,200px)}
- .hero-native .native-auction #game .auction-hero .card-art{height:clamp(120px,24dvh,200px)}
- .hero-native .native-auction #game .auction-action{width:100%;box-sizing:border-box}
  .hero-native .native-arena.arena-fit .shell{height:auto;min-height:var(--native-viewport-height,100dvh);grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto auto}
  .hero-native .native-arena.arena-fit .arena-room-nav{height:auto;min-height:44px;flex-wrap:wrap}
  .hero-native .native-arena.arena-fit .score{height:auto;min-height:64px}

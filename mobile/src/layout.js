@@ -1,5 +1,5 @@
-// Native-only presentation. Move existing controls, never clone their handlers or
-// edit gameplay/auth state. Restore every parked node when leaving live play.
+// Native arena presentation only. The auction keeps the shared web DOM and CSS.
+// Restore every parked node when leaving the arena; never edit gameplay state.
 export function nativeViewport({height, rows=3}) {
   return {height:Math.max(0,Math.floor(Number(height)||0)),
     arenaMin:Math.max(1,Math.min(5,Number(rows)||3))*74+32};
@@ -8,8 +8,7 @@ export function mountNativeLayout({window,document}) {
   const root=document.documentElement,body=document.body;
   if(!root||!body||!window.MutationObserver)return ()=>{};
   let frame=null,mode='',menu=null,panel=null,summary=null;
-  const parked=new Map(),disclosureState=new Map();
-  let heroKey='';
+  const parked=new Map();
   const find=s=>document.querySelector(s);
   function park(node) {
     if(!node||node===menu||panel.contains(node))return;
@@ -36,15 +35,6 @@ export function mountNativeLayout({window,document}) {
     panel.append(close);menu.append(summary,panel);host.append(menu);
     menu.addEventListener('toggle',()=>{if(menu?.open)close.focus();});
   }
-  function collapseInfo(node,selector,label,className,key) {
-    if(!node||node.querySelector('.'+className))return;
-    const content=[...node.querySelectorAll(selector)];if(!content.length)return;
-    const details=document.createElement('details');details.className=className;
-    const caption=document.createElement('summary');caption.textContent=label;details.append(caption);
-    details.open=disclosureState.get(key)??false;
-    details.addEventListener('toggle',()=>{if(details.isConnected)disclosureState.set(key,details.open);});
-    content[0].before(details);for(const part of content)details.append(part);
-  }
   function sync() {
     frame=null;
     const game=find('#game');
@@ -52,20 +42,13 @@ export function mountNativeLayout({window,document}) {
     if(next!==mode){restore();mode=next;}
     body.classList.toggle('native-arena',mode==='arena');
     body.classList.toggle('native-auction',mode==='auction');
-    if(!mode)return;
-    const host=find(mode==='arena'?'.arena-room-nav':'.room-tools');if(!host)return;
+    // Track auction state only to suppress native chrome. Do not move player
+    // panels, expose the web-hidden room toolbar, or collapse abilities/teams.
+    if(mode!=='arena')return;
+    const host=find('.arena-room-nav');if(!host)return;
     ensureMenu(host);
     park(find('#native-status'));park(find('#moderation-panel'));
-    if(mode==='arena') {
-      for(const selector of ['#arena-friend-opponent','.arena-invites-inbox','.arena-prep-link','.shell>.log','.controls>.settings'])park(find(selector));
-    } else {
-      for(const selector of ['.shell>header','.account-bar','#friend-opponent','.room-invites-inbox','#chat-panel','#activity','#leave','.shell>footer'])park(find(selector));
-      for(const side of document.querySelectorAll('#game .player-side'))collapseInfo(side,'.spent-credit,.side-team-title,.teams','Takım ve harcamalar','native-player-details',side.id);
-      // Complete ability/lane/description text stays one tap away, not discarded.
-      const hero=find('.auction-hero');const key='hero:'+hero?.querySelector('.eyebrow')?.textContent+':'+hero?.querySelector('.card-name')?.textContent;
-      if(key!==heroKey){disclosureState.delete(heroKey);heroKey=key;}
-      collapseInfo(hero,'#auction-lane-bonuses,#auction-abilities,#hero-description','Yetenekler ve saf bonusları','native-hero-details',key);
-    }
+    for(const selector of ['#arena-friend-opponent','.arena-invites-inbox','.arena-prep-link','.shell>.log','.controls>.settings'])park(find(selector));
     const vp=window.visualViewport,focused=document.activeElement;
     const keyboard=Boolean(focused?.matches?.('input:not([type="range"]):not([type="checkbox"]),textarea,select'));
     const rows=Math.max(1,...[...document.querySelectorAll('.arena-side .team')].map(team=>Number(team.style.getPropertyValue('--arena-row-count'))||3));

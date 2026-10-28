@@ -112,6 +112,24 @@ public class GameSmokeTest {
         tap(".native-menu-close");
         until("native menu closes", "!document.getElementById('native-game-menu').open",10);
     }
+    private void auctionMatchesWeb() throws Exception {
+        js("window.scrollTo({top:0,behavior:'instant'})");
+        assertTrue("auction: no horizontal document overflow",is("document.documentElement.scrollWidth<=innerWidth+1"));
+        assertTrue("auction: card and bid controls share the web row",is("(()=>{const h=document.querySelector('.auction-hero').getBoundingClientRect(),b=document.querySelector('.auction-action').getBoundingClientRect();return b.left>=h.right-1&&Math.abs(b.top-h.top)<2})()"));
+        assertTrue("auction: collected teams stay below the bidding stage",is("[...document.querySelectorAll('#game .player-side')].every(e=>e.getBoundingClientRect().top>=document.querySelector('.arena-stage').getBoundingClientRect().bottom-1)"));
+        assertTrue("auction: abilities remain visible without opening Android disclosures",is("document.querySelector('#auction-abilities').getBoundingClientRect().height>0&&!document.querySelector('.native-hero-details,.native-player-details')"));
+        assertTrue("auction: no additional Android toolbar",is("!document.querySelector('#native-game-menu')&&getComputedStyle(document.querySelector('.room-tools')).display==='none'"));
+
+        // Render the identical live snapshot in a second document with only the
+        // shared web styles. Compare geometry, fonts and visibility on the same
+        // Android WebView/font scale instead of asserting an Android redesign.
+        js("(()=>{window.__webParityReady=false;const copy=document.documentElement.cloneNode(true);copy.classList.remove('hero-native');copy.querySelectorAll('script,#native-status,link[href*=\"native.css\"],iframe').forEach(e=>e.remove());copy.querySelector('body').classList.remove('native-auction');const f=document.createElement('iframe');f.id='web-auction-reference';f.style.cssText='position:fixed;left:-20000px;top:0;border:0;width:'+innerWidth+'px;height:'+innerHeight+'px';f.onload=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>window.__webParityReady=true));f.srcdoc='<!doctype html>'+copy.outerHTML;document.body.append(f)})()");
+        until("shared web reference paints", "window.__webParityReady",15);
+        String comparison=js("(()=>{const w=document.getElementById('web-auction-reference').contentWindow;const selectors=['.arena-stage','.auction-main','.auction-hero','.auction-action','.auction-budget','#player0','#player1','#auction-abilities','#auction-lane-bonuses','.room-tools'];const errors=[];for(const s of selectors){const a=document.querySelector(s),b=w.document.querySelector(s),ra=a.getBoundingClientRect(),rb=b.getBoundingClientRect(),ca=getComputedStyle(a),cb=w.getComputedStyle(b);for(const p of ['width','height','x','y'])if(Math.abs(ra[p]-rb[p])>1)errors.push(s+' '+p+': '+ra[p]+' vs web '+rb[p]);for(const p of ['display','fontSize','gridTemplateColumns','position'])if(ca[p]!==cb[p])errors.push(s+' '+p+': '+ca[p]+' vs web '+cb[p]);}return errors})()");
+        js("document.getElementById('web-auction-reference').remove()");
+        assertEquals("auction geometry and type must match the shared mobile web layout: "+comparison,"[]",comparison);
+        Log.i("HeroSmoke","PASS: auction matches shared mobile web geometry, fonts and visibility");
+    }
     @Test(timeout=360000) public void guestCanPlayThroughAuctionAndArena() throws Exception {
         Intent intent=new Intent(instrumentation.getTargetContext(),MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         MainActivity activity=(MainActivity)instrumentation.startActivitySync(intent);
@@ -130,9 +148,7 @@ public class GameSmokeTest {
         tap("#bot");
         until("bot match opens auction", "!document.getElementById('game').hidden && document.getElementById('game').dataset.phase==='auction'", 60);
         until("auction card portrait loads", "[...document.querySelectorAll('#stage .card-art img')].some(i=>i.complete&&i.naturalWidth>0)", 30);
-        portraitLayout("auction", ".auction-hero|.auction-action");
-        assertTrue("auction player panels must not cover the card heading",is("document.querySelector('.arena-stage').getBoundingClientRect().top>=Math.max(...[...document.querySelectorAll('#game .player-side')].map(e=>e.getBoundingClientRect().bottom))-1"));
-        verifyMenu();
+        auctionMatchesWeb();
         screenshot("auction");
         js("document.getElementById('bidbutton').scrollIntoView({block:'center',behavior:'instant'})");
         screenshot("auction-bids");

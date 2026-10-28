@@ -118,7 +118,7 @@ jobs:
           python3 mobile/scripts/verify-apk.py mobile/android/app/build/outputs/apk/debug/app-debug.apk > artifacts/apk-verification.json
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs mobile/android/app/build/outputs/apk/debug/app-debug.apk > artifacts/apk-signature.txt
           test ! -d mobile/android/app/src/debug
-          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk artifacts/Hero-Auction-Test-0.2.1.apk
+          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk artifacts/Hero-Auction-Test-0.2.2.apk
           cp mobile/package-report.json artifacts/package-report.json
           cp mobile/www/native-build.json artifacts/native-build.json
       - name: Enable emulator acceleration

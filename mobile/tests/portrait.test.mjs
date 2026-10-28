@@ -9,11 +9,11 @@ test('Android requests portrait launch and keyboard viewport resize',()=>{
  assert.match(manifest,/android:screenOrientation="portrait"/);
  assert.match(manifest,/android:windowSoftInputMode="adjustResize"/);
 });
-test('narrow native auction stacks card and bids and restores hidden room menu',()=>{
- assert.match(portrait,/\.auction-main\{grid-template-columns:minmax\(0,1fr\)/);
- assert.match(css,/\.room-tools\{display:flex;flex-wrap:wrap\}/);
- assert.match(css,/\.auction-action\{position:static;min-width:0\}/);
- assert.match(css,/\.player-side\{grid-row:1;min-width:0;top:auto;bottom:auto\}/);
+test('auction inherits the shared responsive geometry without Android panel overrides',()=>{
+ assert.doesNotMatch(css,/\.native-auction[^{}]*#game/);
+ assert.doesNotMatch(css,/native-player-details|native-hero-details/);
+ assert.match(css,/body:not\(\.native-auction\) :is\(button,summary,input/);
+ assert.match(css,/>#native-status:not\(\[data-notice\]\)\{display:none\}/);
 });
 test('portrait arena uses content-height tracks and definite scrollable battlefield',()=>{
  assert.match(portrait,/\.shell\{height:auto;[^}]*grid-template-rows:auto auto auto auto auto/);

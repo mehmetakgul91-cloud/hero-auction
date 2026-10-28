@@ -47,6 +47,10 @@ test('complete native assets build with no admin/development distribution',async
   await access(new URL('../www/index.html',import.meta.url));
   await access(new URL('../www/images/lobby-crest.svg',import.meta.url));
   await access(new URL('../www/moderation.js',import.meta.url));
+  for(const stylesheet of ['style.css','theme.css'])assert.deepEqual(
+    await readFile(new URL('../www/'+stylesheet,import.meta.url)),
+    await readFile(new URL('../../public/'+stylesheet,import.meta.url)),
+    stylesheet+' keeps the shared web appearance byte-for-byte');
   for(const file of ['admin.html','admin.js','admin-maintenance.js','admin-wallet-credits.js','platform.js','arena-3d.html','original-heroes.html','commander-training.html','images/original/hero-10.png','images/original/expansion-09.webp'])await assert.rejects(access(new URL('../www/'+file,import.meta.url)));
   const roster=JSON.parse(await readFile(new URL('../../commander-original-roster.json',import.meta.url),'utf8'));
   const aliases=JSON.parse(await readFile(new URL('../www/native-image-aliases.json',import.meta.url),'utf8'));

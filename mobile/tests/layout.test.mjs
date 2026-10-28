@@ -48,15 +48,25 @@ test('late safety mount moves only once and observer settles; closing menu resto
   h.find('#native-game-menu').open=true;const escape=new h.dom.Event('keydown');escape.key='Escape';h.document.dispatchEvent(escape);assert.equal(h.find('#native-game-menu').open,false);assert.equal(focus,2);
  }finally{h.destroy();}
 });
-test('auction keeps identity, bid callbacks and complete text, and persists disclosures across snapshots',async()=>{
+test('auction preserves the shared web tree, visible ability content and original callbacks across snapshots',async()=>{
  const h=await harness('auction');try{
+  const game=h.find('#game'),header=h.find('#header'),safety=h.find('#moderation-panel');
+  assert.ok(h.document.body.classList.contains('native-auction'));
+  assert.equal(h.find('#native-game-menu'),null);
+  assert.equal(h.find('.native-hero-details'),null);
+  assert.equal(h.find('.native-player-details'),null);
+  assert.equal(header.parentNode,h.find('.shell'));
+  assert.equal(safety.parentNode,h.document.body);
+  assert.equal(h.find('#leave').parentNode,game);
+  assert.equal(h.find('#chat-panel').parentNode,game);
+  for(const selector of ['#auction-lane-bonuses','#auction-abilities','#hero-description'])assert.equal(h.find(selector).parentNode,h.find('.auction-hero'));
+  assert.equal(h.find('#player0 .teams').parentNode,h.find('#player0'));
   let bid=0;h.find('#bidbutton').addEventListener('click',()=>bid++);h.find('#bidbutton').click();assert.equal(bid,1);
-  assert.equal(h.find('#hero-description').textContent,'Eksiksiz açıklama');assert.ok(h.find('.native-hero-details').contains(h.find('#auction-abilities')));
-  for(const selector of ['#player0 .native-player-details','.native-hero-details']){const d=h.find(selector);d.open=true;d.dispatchEvent(new h.dom.Event('toggle'));}
-  h.find('#player0').innerHTML=player();h.find('#stage').innerHTML=hero();await h.flush();
-  assert.equal(h.find('#player0 .native-player-details').open,true);assert.equal(h.find('.native-hero-details').open,true);
-  h.find('#stage').innerHTML=hero(2);await h.flush();assert.equal(h.find('.native-hero-details').open,false);
-  h.find('#game').hidden=true;await h.flush();assert.equal(h.find('#header').parentNode,h.find('.shell'));assert.equal(h.find('#leave').parentNode,h.find('#game'));assert.equal(h.find('#moderation-panel').parentNode,h.document.body);
+  h.find('#player0').innerHTML=player();h.find('#stage').innerHTML=hero(2);
+  const snapshot=game.innerHTML;await h.flush();assert.equal(game.innerHTML,snapshot);
+  h.window.dispatchEvent(new Event('resize'));await h.flush();assert.equal(game.innerHTML,snapshot);
+  game.dataset.phase='finished';await h.flush();assert.ok(!h.document.body.classList.contains('native-auction'));
+  assert.equal(h.find('#native-game-menu'),null);
  }finally{h.destroy();}
 });
 test('keyboard visual viewport and pinch zoom preserve scroll fallback without gameplay navigation',async()=>{

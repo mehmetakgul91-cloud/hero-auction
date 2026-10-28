@@ -20,7 +20,7 @@ function harness(config={apiOrigin:'https://test.example',publicOrigin:'https://
  const context=vm.createContext({window,document,location,Event,Request,URLSearchParams,apiUrl,linkAction,readConfig,mountNativeLayout,Capacitor:{isNativePlatform:()=>true},App:{addListener:async(name,fn)=>listeners.set(name,fn),minimizeApp:async()=>{minimized++}},Browser:{open:async value=>opened.push(value)}});
  vm.runInContext(runtime,context);
  for(const name of ['hero:native-pause','hero:native-resume','pagehide','pageshow'])window.addEventListener(name,()=>events.push(name));
- const node=(id,props={})=>{const n={hidden:false,clicked:0,getClientRects(){return this.hidden?[]:[{}]},click(){this.clicked++},...props};nodes.set(id,n);return n};
+ const node=(id,props={})=>{const n={hidden:false,clicked:0,dataset:{},getClientRects(){return this.hidden?[]:[{}]},click(){this.clicked++},...props};nodes.set(id,n);return n};
  return {context,window,document,location,nodes,node,listeners,requests,opened,events,get minimized(){return minimized}};
 }
 test('fetch adapter rewrites POST/Request URL without changing auth body, denies redirects and cookies',async()=>{
@@ -45,6 +45,7 @@ test('Back dismisses keyboard, tutorial cancel, panels; repeated Back never deta
  let cancelled=0,closed=0;const dialog=h.node('guide',{kind:'dialog',open:true,dispatchEvent(){cancelled++;this.open=false;return false},close(){closed++}});back();assert.equal(cancelled,1);assert.equal(closed,0);
  const panel=h.node('friends-panel'),close=h.node('friends-close',{click(){this.clicked++;panel.hidden=true}});back();assert.equal(close.clicked,1);
  const game=h.node('game');h.node('native-status');back();back();assert.equal(h.minimized,0);assert.equal(h.requests.length,0);assert.match(h.nodes.get('native-status').textContent,/Maç korunuyor/);
+ assert.equal(h.nodes.get('native-status').dataset.notice,'true','Back notices remain visible while the auction test banner is suppressed');
  game.hidden=true;h.location.pathname='/battle-preview.html';h.location.search='?auctionCode=123';back();assert.equal(h.opened.length,0);
  h.location.search='';back();assert.equal(h.opened[0],'/');h.location.pathname='/';back();assert.equal(h.minimized,1);
 });
