@@ -45,12 +45,12 @@ test('privacy aliases stay accessible but not indexable; homepage remains indexa
   assert.match(home,/<link rel="canonical" href="https:\/\/heroauction\.com\.tr\/">/);
   assert.match(home,/href="\/privacy"/);
   assert.match(home,/<link rel="icon" type="image\/png" sizes="96x96" href="\/favicon.png">/);
-  const image='https://heroauction.com.tr/images/original/hero-01.png';
+  const image='https://heroauction.com.tr/images/social/hero-auction-share.jpg';
   assert.ok(home.includes(`<meta property="og:image" content="${image}">`));
   assert.ok(home.includes(`<meta name="twitter:image" content="${image}">`));
   assert.match(home,/<meta name="twitter:card" content="summary_large_image">/);
-  assert.match(home,/<meta property="og:image:width" content="1374">/);
-  assert.match(home,/<meta property="og:image:height" content="1145">/);
+  assert.match(home,/<meta property="og:image:width" content="960">/);
+  assert.match(home,/<meta property="og:image:height" content="800">/);
   const game=JSON.parse(home.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
   assert.equal(game.image,image);
   assert.equal(game['@type'],'VideoGame');
@@ -67,6 +67,17 @@ test('privacy aliases stay accessible but not indexable; homepage remains indexa
     assert.equal(bytes.readUInt32BE(20),height);
    }
   }
+  for(const prefix of ['', '/crazygames']){
+   for(const path of ['/images/social/hero-auction-share.jpg','/images/screenshots/auction.jpg','/images/screenshots/formation.jpg','/images/screenshots/battle.jpg']){
+    const response=await fetch(base+prefix+path);
+    assert.equal(response.status,200,prefix+path);
+    assert.equal(response.headers.get('content-type'),'image/jpeg');
+    assert.deepEqual(Buffer.from(await response.arrayBuffer()),await readFile(new URL('../public'+path,import.meta.url)));
+   }
+  }
+  const invited=await fetch(base+'/?join=123');
+  assert.equal(invited.status,200);
+  assert.ok((await invited.text()).includes(`<meta property="og:image" content="${image}">`));
   const robotsResponse=await fetch(base+'/robots.txt');
   assert.equal(robotsResponse.status,200);
   assert.match(robotsResponse.headers.get('content-type'),/^text\/plain/);
