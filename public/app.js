@@ -1,3 +1,4 @@
+import {mountFirstSession,describeFirstCommander} from '/first-session.js';
 import {auctionCommanderMarkup,createAuctionCommanderDialog} from '/auction-commander.js';
 import {createPlayerSessionTracker} from '/player-session-client.js';
 import {createRoomChat} from '/room-chat.js';
@@ -117,10 +118,12 @@ function renderCommanderOnboarding(){
  for(const c of commanderOptions){
   const b=document.createElement('button');b.type='button';b.className='commander-option'+(commanderPending===c.id?' chosen':'');
   const img=document.createElement('img');img.src=commanderPortrait(c.id);img.alt='';img.loading='lazy';const label=document.createElement('span');label.textContent=c.name+' · '+c.detail;b.append(img,label);
+  b.dataset.commander=c.id;
   b.setAttribute('aria-pressed',String(commanderPending===c.id));
-  b.onclick=()=>{commanderPending=c.id;renderCommanderOnboarding()};
+  b.onclick=()=>{commanderPending=c.id;renderCommanderOnboarding();root.querySelector(`[data-commander="${c.id}"]`)?.focus()};
   root.append(b);
  }
+ describeFirstCommander(root,commanderPending,{document});
  $('commander-select-confirm').disabled=!commanderPending||commanderBusy;
 }
 function renderCommanderRoster(){
@@ -444,6 +447,7 @@ $('lobby-home').onclick=async()=>{
 
 const homeGuidePlay=$('home-guide-play');if(homeGuidePlay)homeGuidePlay.onclick=()=>{if(homePlayPanel.hidden)homePlayTab.click();else homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'});};
 if(homePlayTab&&homePlayPanel){homePlayTab.onclick=()=>{storefrontUI.close();friendsUI.close();homePlayPanel.hidden=false;homePlayTab.setAttribute('aria-expanded','true');homePlayTab.classList.add('selected');homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'});};const lobbyBack=$('play-lobby-back');if(lobbyBack)lobbyBack.onclick=()=>{webInvite?.cancel();homePlayPanel.hidden=true;homePlayTab.setAttribute('aria-expanded','false');homePlayTab.classList.remove('selected');homePlayTab.scrollIntoView({behavior:'smooth',block:'start'});};}
+mountFirstSession(document,{enabled:!!window.HeroPlatform});
 webInvite=createWebInvite({
  url:location.href,platform:!!window.HeroPlatform,
  view:state=>{if(!window.HeroPlatform)renderWebInvite(document,state);},
@@ -650,7 +654,7 @@ function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAu
  }
  if(r.phase==='finished')tailReceipts.received(r,tailAwards);
  window.HeroPlatform?.gameplay(r.phase==='auction');const currentCardKey=r.phase==='auction'?r.code+':'+r.round+':'+r.card?.name:null;const isNewCard=!!currentCardKey&&currentCardKey!==lastCardKey;lastCardKey=currentCardKey;const wasFinished=room?.phase==='finished'&&room?.code===r.code;const enteredAuction=isAuctionEntry(room,r);room=r;$('game').dataset.phase=r.phase;window.HeroPlatform?.setRoom(r);if(window.HeroPlatform)commanderVisibility();if(enteredAuction)refreshGold();if(r.phase==='finished'&&!wasFinished){refreshGold();}
- for(let i=0;i<2;i++){const seat=r.me===1?1-i:i;const p=r.players[seat];$('player'+i).className='player player-side'+(r.me===seat?' me':'')+(r.phase==='auction'&&r.turn===seat?' active-turn':'');$('player'+i).innerHTML=p?`<div class="auction-player-heading"><div class="name">${esc(displayPlayerName(p,r.mode==='bot'&&seat===1))} ${r.me===seat?'(SEN)':''}</div>${r.phase==='auction'?auctionCommanderMarkup(p.commander,seat,{english:document.documentElement.lang==='en'}):''}</div><div class="credit">${p.credits} <small>kalan kredi</small></div><div class="spent-credit">💸 ${20-p.credits} kredi kullanıldı</div><div class="side-team-title">🎴 KARTLAR (${p.team.length})</div><div class="teams">${p.team.map(x=>`<span class="side-hero"><span class="side-hero-name">${esc(x.name)} <small class="rarity rarity-${esc(x.rarity||'common')}">${rarityLabel(x.rarity)}</small></span><small class="side-hero-role">${esc(specialtyLabel(x))}</small><span class="side-hero-cost">${Number(x.cost)||0} <small>kredi</small></span></span>`).join('')||'Henüz karakter yok'}</div>`:'<div class="name">2. OYUNCU</div><p class="status">Katılması bekleniyor…</p>'}
+ for(let i=0;i<2;i++){const seat=r.me===1?1-i:i;const p=r.players[seat];$('player'+i).className='player player-side'+(r.me===seat?' me':'')+(r.phase==='auction'&&r.turn===seat?' active-turn':'');$('player'+i).innerHTML=p?`<div class="auction-player-heading">${(r.phase==='auction'?auctionCommanderMarkup(p.commander,seat,{english:document.documentElement.lang==='en',playerName:displayPlayerName(p,r.mode==='bot'&&seat===1),isMe:r.me===seat}):'')||`<div class="name">${esc(displayPlayerName(p,r.mode==='bot'&&seat===1))} ${r.me===seat?'(SEN)':''}</div>`}</div><div class="credit">${p.credits} <small>kalan kredi</small></div><div class="spent-credit">💸 ${20-p.credits} kredi kullanıldı</div><div class="side-team-title">🎴 KARTLAR (${p.team.length})</div><div class="teams">${p.team.map(x=>`<span class="side-hero"><span class="side-hero-name">${esc(x.name)} <small class="rarity rarity-${esc(x.rarity||'common')}">${rarityLabel(x.rarity)}</small></span><small class="side-hero-role">${esc(specialtyLabel(x))}</small><span class="side-hero-cost">${Number(x.cost)||0} <small>kredi</small></span></span>`).join('')||'Henüz karakter yok'}</div>`:'<div class="name">2. OYUNCU</div><p class="status">Katılması bekleniyor…</p>'}
  for(const award of offeredAwards)animateWonAuctionCard(award,r.me,offeredSnapshot);
  if(r.phase==='finished'&&r.final?.length===2&&r.final.every(p=>p.team?.length===5)&&session?.token){
   $('game').classList.add('auction-results-only');
