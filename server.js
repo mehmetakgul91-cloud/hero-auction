@@ -3,7 +3,7 @@ import {auctionAdmissions,publicAuctionCommander,setAuctionCommanderIdentity,hyd
 import {assertCancellableRoom,cancellationMatchId,cancellationIdentity,cancellationDigest,cancellationCandidate,publicCancellationCandidate,normalizeCancellationSelections,cancellationReceiptKey,cancelPaidMatches} from './paid-match-cancellation.js';
 import {createPaidEntryMaintenance,isUnsettledPaidRoom} from './paid-entry-maintenance.js';
 import {isOwnerAdmin,createAdminWalletCreditPolicy,adminWalletCreditView,creditAdminWallet,readAdminWalletCreditReceipt,readAdminWalletCredits,adminWalletCreditStorageReady,readAdminWalletBalances} from './admin-wallet-credits.js';
-import {createPlayerAnalyticsPolicy,preflightPlayerAnalytics,recordPlayerSession,readPlayerAnalytics,cleanupPlayerAnalytics} from './player-sessions.js';
+import {createPlayerAnalyticsPolicy,preflightPlayerAnalytics,recordPlayerSession,readPlayerAnalytics,readDailySessionSummary,cleanupPlayerAnalytics} from './player-sessions.js';
 import {createMagicDustPolicy,readMagicDustBalance} from './magic-dust.js';
 import {createVictoryChestPolicy,eligibleVictory,victoryMatchId,persistVictoryChestIntent,creditVictoryChest,readVictoryChestRecovery,victoryChestView} from './victory-chests.js';
 import {createDiamondPolicy,commanderProgression,readDiamondBalance,upgradeCommanderWithDiamonds} from './paid-diamonds.js';
@@ -542,6 +542,7 @@ async function adminApi(url,b){
  if(url==='/api/admin/economy/cancellations/execute')return executeCancellations(b,user);
  if(url==='/api/admin/economy/pause'){if(b.paused===false&&cancellationReservations.size)error('Önce bekleyen iptal işlemini doğrulayın.',409);await paidEntryMaintenance.setPaused(b.paused,b.expectedBootId,b.expectedRevision);return paidEntryDrainStatus();}
  if(url==='/api/admin/moderation/list'||url==='/api/admin/moderation/review'){if(!moderationReady)error('Denetim sistemi geçici olarak kullanılamıyor.',503);return url.endsWith('/list')?moderation.adminList(user):moderation.review(user,b)}
+ if(url==='/api/admin/daily-sessions')return readDailySessionSummary({database,policy:playerAnalyticsPolicy,days:b.days===30?30:7});
  if(url==='/api/admin/list'){
   const search=String(b.search||'').slice(0,100);
   const rows=await database.query("SELECT w.account_id,COALESCE(p.display_name,w.account_id) AS display_name,w.gold,COALESCE(a.banned,false) AS banned FROM hero_auction_wallets w LEFT JOIN hero_auction_admin_accounts a ON a.account_id=w.account_id LEFT JOIN hero_auction_user_profiles p ON p.account_id=w.account_id WHERE ($1='' OR w.account_id ILIKE '%'||$1||'%' OR p.display_name ILIKE '%'||$1||'%') ORDER BY p.display_name NULLS LAST,w.account_id LIMIT 200",[search]);
