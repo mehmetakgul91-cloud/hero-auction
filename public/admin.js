@@ -152,10 +152,10 @@ async function loadDailyReport(){
   const count=Number($('daily-range').value);
   for(let i=0;i<count;i++){
    const day=new Date(start-i*86400000).toISOString().slice(0,10),r=byDay.get(day),tr=document.createElement('tr');
-   for(const value of [day,r?.sessions??0,r?.uniqueAccounts??0,r?.crazygamesSessions??0,r?.reportedInviteSessions??0])appendText(tr,'td',String(value));
+   for(const value of [day,r?.sessions??'—',r?.uniqueAccounts??'—',r?.crazygamesSessions??'—',r?.reportedInviteSessions??'—'])appendText(tr,'td',String(value));
    body.append(tr);
   }
-  $('daily-status').textContent='Son '+count+' günün kaydedilmiş oturumları. Kaydı olmayan günler 0 gösterilir; ölçüm öncesi geçmiş bilinmez.';
+  $('daily-status').textContent='Son '+count+' günün kaydedilmiş oturumları. Kaydı olmayan günler — olarak gösterilir; ölçüm öncesi geçmiş ve gerçekten sıfır giriş yapılan günler ayırt edilemez.';
  }catch(e){$('daily-status').textContent='Rapor yüklenemedi: '+e.message;}
 }
 $('daily-range').onchange=loadDailyReport;
