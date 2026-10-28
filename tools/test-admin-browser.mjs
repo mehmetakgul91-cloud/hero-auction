@@ -25,7 +25,8 @@ try{
     if(delayedReport)await new Promise(r=>setTimeout(r,200));
     const until=body.until||new Date().toISOString(),day=new Date(new Date(until).getTime()+10800000).toISOString().slice(0,10);
     data={available:true,options:{...body,until,limit:50,offset:0},total:2,summary:{sessions:2,uniqueAccounts:2,additionalSessions:0,androidSessions:1},days:[{day,sessions:2,uniqueAccounts:2,crazygamesSessions:0,reportedInviteSessions:1,googleSearchSessions:1,externalSessions:0,directSessions:0}],entries:fixtures.map((a,i)=>({accountId:a.account_id,name:a.display_name,startedAt:until,source:i?'google_search':'invite',platform:i?'web':'android',device:i?'desktop':'mobile',country:'TR',city:i?'İzmir':'Manisa'}))};
-   }else if(url.pathname.endsWith('/history'))data={history:[],credits:[],creditsAvailable:true};
+   }else if(url.pathname.endsWith('/location-status'))data={available:true,buildDate:'2026-10-01T00:00:00Z',location:{country:'TR',city:'İzmir'}};
+   else if(url.pathname.endsWith('/history'))data={history:[],credits:[],creditsAvailable:true};
    else if(url.pathname.endsWith('/moderation/list'))data={reports:[{id:'fixture-report',reason:'harassment',status:'open',createdAt:Date.now(),reporter:'fixture-owner',target:'fixture-player',details:'Sentetik inceleme kaydı',evidence:{kind:'room',code:'123',created:1793217600000,names:['Oyuncu','Yönetici'],chat:[]}}]};
    else if(url.pathname.endsWith('/matches'))data={matches:[{id:'123:1:1793217600000',at:Date.now(),mode:'friend',participants:[{id:'fixture-player',name:'Deneme oyuncusu',score:3},{id:'fixture-owner',name:'Yönetici',score:1}],winner:0,rankChange:[16,-16]}],pagination:{offset:0,limit:25,total:1,hasMore:false},recordLimit:2000};
    else if(url.pathname.endsWith('/match')){if(delayedMatch)await new Promise(r=>setTimeout(r,200));data={record:{id:'123:1:1793217600000',at:Date.now(),mode:'friend',participants:[{id:'fixture-player',name:'Deneme oyuncusu',score:3},{id:'fixture-owner',name:'Yönetici',score:1}],winner:0,rankChange:[16,-16]},room:null,detailAvailable:false,reportEvidence:body.reportId?{reportId:'fixture-report',capturedAt:Date.now(),kind:'room',chat:[{name:'Deneme oyuncusu',message:'<img src=x> güvenli metin',time:Date.now()}]}:null};}
@@ -40,6 +41,7 @@ try{
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'no document overflow at '+width);
   await page.locator('#accounts tr').first().locator('summary').click();await page.locator('#accounts tr').first().getByRole('button',{name:'Girişleri gör',exact:true}).click();assert.equal(await page.locator('#daily-report').isVisible(),true);assert.equal(await page.locator('#dashboard').isHidden(),true);
   await page.waitForFunction(()=>document.querySelector('#daily-status').textContent.includes('Son 7'));
+  await page.getByText('Yaklaşık konum kontrolü',{exact:true}).click();await page.click('#location-check');await page.waitForFunction(()=>document.querySelector('#location-status').textContent.includes('TR · İzmir'));
   assert.equal(await page.inputValue('#report-search'),'fixture-player');
   await page.selectOption('#daily-range','30');await page.waitForFunction(()=>document.querySelector('#daily-status').textContent.includes('Son 30'));
   assert.equal(await page.locator('#daily-rows tr').count(),30);

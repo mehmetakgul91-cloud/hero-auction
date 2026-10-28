@@ -1,10 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {clientPublicAddress,trustedNetworks,coarseLocation,createLocationResolver} from '../player-location.js';
+import {clientPublicAddress,trustedNetworks,coarseLocation,createLocationResolver,renderClientPublicAddress} from '../player-location.js';
 const req=(peer,forwarded)=>({socket:{remoteAddress:peer},headers:{'x-forwarded-for':forwarded,'cf-ipcity':'forged','x-real-ip':'8.8.8.8'}});
 test('untrusted peers cannot forge forwarded, real-IP or city headers',()=>{
  assert.equal(clientPublicAddress(req('1.1.1.1','8.8.8.8')),'1.1.1.1');
  assert.equal(clientPublicAddress(req('::ffff:1.1.1.1','8.8.8.8')),'1.1.1.1');
+});
+test('Render mode requires explicit web-runtime opt-in and one valid edge address',async()=>{
+ const env={RENDER:'true',RENDER_SERVICE_TYPE:'web',HERO_PLAYER_GEO_ENABLED:'1',HERO_GEOIP_PROXY_MODE:'render-cloudflare',HERO_GEOIP_DATABASE:'/fixture/city.mmdb'};
+ const request={socket:{remoteAddress:'10.20.0.5'},headers:{'cf-connecting-ip':'193.140.1.1','cf-ray':'0123456789abcdef-FRA','x-forwarded-for':'8.8.8.8','cf-ipcountry':'US','cf-ipcity':'forged'}};
+ assert.equal(renderClientPublicAddress(request,env),'193.140.1.1');
+ for(const wrongEnv of [{},{...env,RENDER:'false'},{...env,RENDER_SERVICE_TYPE:'pserv'}])assert.equal(renderClientPublicAddress(request,wrongEnv),null);
+ for(const peer of ['1.1.1.1','bad'])assert.equal(renderClientPublicAddress({...request,socket:{remoteAddress:peer}},env),null);
+ for(const value of [undefined,'','8.8.8.8, 1.1.1.1',['8.8.8.8'],'127.0.0.1','192.0.2.1','2a06:98c0:3600::103'])assert.equal(renderClientPublicAddress({...request,headers:{...request.headers,'cf-connecting-ip':value}},env),null);
+ assert.equal(renderClientPublicAddress({...request,headers:{...request.headers,'cf-ray':'forged'}},env),null);
+ assert.equal(renderClientPublicAddress({...request,headers:{...request.headers,'cf-connecting-ip':'2606:4700:4700::1111'}},env),'2606:4700:4700::1111');
+ const resolver=await createLocationResolver(env,async()=>({metadata:{databaseType:'DBIP-City-Lite',buildEpoch:new Date()},get:ip=>({country:{iso_code:ip==='193.140.1.1'?'TR':'US'},city:{names:{en:'Istanbul'}}})}));
+ assert.deepEqual(resolver.lookup(request),{country:'TR',city:'Istanbul'});
+ assert.equal((await createLocationResolver({...env,RENDER:'false'},async()=>{throw Error('must not open');})).available,false);
 });
 test('trusted proxy chains stop at closest untrusted hop, not attacker-controlled leftmost IP',()=>{
  const networks=trustedNetworks('10.20.0.0/16, 2001:4860::/32');

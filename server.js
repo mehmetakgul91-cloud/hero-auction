@@ -1,5 +1,6 @@
 import {createNativeCors} from './native-cors.js';
-import {createLocationResolver,preflightPlayerLocations} from './player-location.js';
+import {preflightPlayerLocations} from './player-location.js';
+import {createManagedLocationResolver} from './player-geoip-database.js';
 import {readAdminSessionReport} from './admin-player-reports.js';
 import {listAdminMatches,readAdminMatch,matchIdentity} from './admin-match-records.js';
 import {arenaDecorativeCacheControl} from './arena-decorative-assets.js';
@@ -66,7 +67,7 @@ const loginRewardPolicy=createLoginRewardPolicy(process.env);
 const adminWalletCreditPolicy=createAdminWalletCreditPolicy(process.env);
 const playerAnalyticsPolicy=createPlayerAnalyticsPolicy(process.env);
 let playerAnalyticsStorageReady=false;
-const playerLocationResolver=await createLocationResolver(process.env);
+const playerLocationResolver=await createManagedLocationResolver(process.env);
 let playerLocationsStorageReady=false;
 console.info('Login reward policy:',JSON.stringify({enabled:loginRewardPolicy.enabled,timezone:'Europe/Istanbul',day7Diamonds:5}));
 // Non-secret release evidence: never log environment values, credentials or wallets.
@@ -538,10 +539,11 @@ async function registerVerifiedDiamondMember(user,provider){
  await registerDiamondMember({database,accountId:user.sub,provider,policy:diamondSignupPolicy});
 }
 async function rememberDisplayName(user){if(user?.name){try{user.name=assertModeratedText(user.name,{kind:'name'})}catch{user.name='Oyuncu'}}if(user?.sub&&(!database||databaseReady))await friends.register(user.sub,user.name);if(database&&databaseReady&&user?.sub&&user?.name)await database.query('INSERT INTO hero_auction_user_profiles(account_id,display_name) VALUES($1,$2) ON CONFLICT(account_id) DO UPDATE SET display_name=EXCLUDED.display_name,updated_at=NOW()',[user.sub,user.name]);}
-async function adminApi(url,b){
+async function adminApi(url,b,requestContext){
  const user=readLogin(b.authToken);
  if(!user||!ADMIN_GOOGLE_EMAIL||user.email!==ADMIN_GOOGLE_EMAIL||!isOwnerAdmin(user,ADMIN_GOOGLE_EMAIL))error('Yönetici yetkisi gerekli.',403);
  if(!database||!databaseReady)error('Veritabanı kullanılamıyor.',503);
+ if(url==='/api/admin/location-status')return {available:playerLocationsStorageReady&&playerLocationResolver.available,buildDate:playerLocationResolver.buildDate||null,proxyMode:playerLocationResolver.proxyMode||null,location:playerLocationsStorageReady?playerLocationResolver.lookup(requestContext):null};
  if(url==='/api/admin/wallet/credit')return creditAdminWallet({database,user,ownerEmail:ADMIN_GOOGLE_EMAIL,request:b,policy:adminWalletCreditPolicy});
  if(url==='/api/admin/wallet/receipt')return readAdminWalletCreditReceipt({database,user,ownerEmail:ADMIN_GOOGLE_EMAIL,requestId:b.requestId});
  if(url==='/api/admin/economy/status')return paidEntryDrainStatus();
@@ -779,7 +781,7 @@ async function api(url,b,requestContext){
   }finally{finishAdmission?.();}
  });
 }
-async function apiAction(url,b,requestContext){if(url.startsWith('/api/admin/'))return adminApi(url,b);if(url==='/api/auth/check'){const user=readLogin(b.authToken);if(!user)error('Oturumun sona erdi. Yeniden giriş yap.',401);await rememberDisplayName(user);return{user:{sub:user.sub,name:user.name,provider:user.provider},gold:await goldBalance(user.sub)}}if(url==='/api/auth/crazygames'){const user=await verifyCrazyGamesToken(b.credential);user.provider='crazygames';await rememberDisplayName(user);for(const r of rooms.values()){let changed=false;for(const p of r.players){if(p?.accountId===user.sub&&p.name!==user.name){p.name=user.name;changed=true}}if(changed)publish(r)}return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}if(url==='/api/auth/guest'){const name=assertModeratedText(b.name||'Oyuncu',{kind:'name'});const user={sub:'guest:'+crypto.randomUUID(),name,provider:'guest'};await rememberDisplayName(user);return{user:{name},authToken:signLogin(user),gold:await goldBalance(user.sub)}}
+async function apiAction(url,b,requestContext){if(url.startsWith('/api/admin/'))return adminApi(url,b,requestContext);if(url==='/api/auth/check'){const user=readLogin(b.authToken);if(!user)error('Oturumun sona erdi. Yeniden giriş yap.',401);await rememberDisplayName(user);return{user:{sub:user.sub,name:user.name,provider:user.provider},gold:await goldBalance(user.sub)}}if(url==='/api/auth/crazygames'){const user=await verifyCrazyGamesToken(b.credential);user.provider='crazygames';await rememberDisplayName(user);for(const r of rooms.values()){let changed=false;for(const p of r.players){if(p?.accountId===user.sub&&p.name!==user.name){p.name=user.name;changed=true}}if(changed)publish(r)}return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}if(url==='/api/auth/guest'){const name=assertModeratedText(b.name||'Oyuncu',{kind:'name'});const user={sub:'guest:'+crypto.randomUUID(),name,provider:'guest'};await rememberDisplayName(user);return{user:{name},authToken:signLogin(user),gold:await goldBalance(user.sub)}}
 if(!url.startsWith('/api/auth/')){const user=readLogin(b.authToken);if(!user)error('Odaya erişmek için giriş yapmalısın.',401);if(databaseReady){const block=await database.query('SELECT banned FROM hero_auction_admin_accounts WHERE account_id=$1',[user.sub]);if(block.rows[0]?.banned)error('Hesap askıya alınmıştır.',403)}}
 if(url.startsWith('/api/player-sessions/')){
  const event=url.slice('/api/player-sessions/'.length);

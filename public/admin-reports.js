@@ -24,7 +24,7 @@
   const $=id=>document.getElementById(id);let generation=0,report=null,busy=false,selectedAccount='';
   const message=text=>$('daily-status').textContent=text;
   function controls(){for(const id of ['daily-export','session-export'])$(id).disabled=busy||!report; $('session-prev').disabled=busy||!report||report.options.offset===0;$('session-next').disabled=busy||!report||report.options.offset+report.entries.length>=report.total;}
-  function clear(){++generation;report=null;busy=false;selectedAccount='';for(const id of ['daily-rows','session-rows','report-summary'])$(id).replaceChildren();$('daily-report').hidden=true;controls();}
+  function clear(){++generation;report=null;busy=false;selectedAccount='';for(const id of ['daily-rows','session-rows','report-summary'])$(id).replaceChildren();if($('location-status'))$('location-status').textContent='';$('daily-report').hidden=true;controls();}
   function append(parent,tag,value){const el=document.createElement(tag);el.textContent=String(value);parent.append(el);return el;}
   function tableRows(id,rows,headers){const body=$(id);body.replaceChildren();for(const values of rows){const tr=document.createElement('tr');values.forEach((value,i)=>append(tr,'td',value).setAttribute('data-label',headers[i]));body.append(tr);}}
   async function load({offset=0,accountId,keep=false}={}){
@@ -55,6 +55,12 @@
   $('daily-range').onchange=()=>load();$('report-source').onchange=()=>load();$('report-platform').onchange=()=>load();$('report-find').onclick=()=>load({accountId:''});$('report-search').addEventListener('keydown',e=>{if(e.key==='Enter')void load({accountId:''});});
   $('session-prev').onclick=()=>load({offset:Math.max(0,report.options.offset-report.options.limit),keep:true});$('session-next').onclick=()=>load({offset:report.options.offset+report.options.limit,keep:true});
   $('daily-export').onclick=()=>{if(report&&!busy&&isVerified())download(csv([dailyHeaders,...dailyRows(report)]),'hero-auction-gunluk-oturumlar.csv');};$('session-export').onclick=exportEntries;
+  if($('location-check'))$('location-check').onclick=async()=>{
+   if(!isVerified())return;const token=generation;const button=$('location-check');button.disabled=true;$('location-status').textContent='Konum kontrol ediliyor…';
+   try{const data=await request('location-status',{});if(token!==generation||!isVerified())return;
+    $('location-status').textContent=!data.available?'Yaklaşık konum şu anda kullanılamıyor.':data.location?`Bu bağlantı: ${data.location.country} · ${data.location.city||'Şehir bilinmiyor'}. Veritabanı: ${new Date(data.buildDate).toLocaleDateString('tr-TR')}. Yalnız yaklaşık konumdur; test yeni oyuncu kaydı oluşturmaz.`:'Altyapı hazır; bu bağlantı için konum bulunamadı. VPN, ara sunucu veya veri kapsamı nedeniyle bilinmiyor olabilir.';
+   }catch(e){if(token===generation)$('location-status').textContent='Konum kontrol edilemedi: '+e.message;}finally{button.disabled=false;}
+  };
   controls();return {load,clear};
  }
  root.HeroAdminReports={create,csv,entryValues,entryHeaders,dailyRows,dailyHeaders};

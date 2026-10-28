@@ -56,3 +56,34 @@ Maç incelemesi mevcut `matchRecords` sonuç özetlerini ve varsa aynı maçın 
 Güncel yerel doğrulama: **2.489/2.489** test ve strict **50/50**; Chromium 1440/390/320px, tek bölüm gezinmesi, altın formu, filtre sıfırlama, CSV, şikâyet → maç kanıtı ve geç yanıt/oturum kapanması geçti. GitHub Actions son yayın commit'i için ayrıca doğrulanır.
 
 Kullanıcının canlı yayın onayı alındı. 29 Ekim ön kontrolünde servis `srv-db72kiaj9qps73b0b5tg` doğru workspace'te, PostgreSQL 18.6 ve mevcut analytics/credits bayrakları açık doğrulandı. Geo dosyası ve güvenilir proxy yapılandırması yok: konum etkinleştirilmedi. UI ek isteği sırasında merge/deploy/008 yapılmadı; maç girişleri açık bırakıldı. Güncel yedek, maç kuyruğu, kesin commit ve son yayın sonucu işlemler tamamlandığında PR kaydında raporlanır.
+
+
+## 29 Ekim 2026: yaklaşık konum kurulumu
+
+Ülke/şehir, `HERO_PLAYER_GEO_ENABLED=1`, `HERO_GEOIP_PROVIDER=dbip-lite`,
+`HERO_GEOIP_DATABASE=/opt/render/project/src/.geoip/dbip-city-lite.mmdb` ve
+`HERO_GEOIP_PROXY_MODE=render-cloudflare` ile bu Render web servisinde etkinleştirilir.
+Genel barındırmada eski açık CIDR modu geçerlidir. Render modu ayrıca belgelenmiş
+`RENDER=true` ve `RENDER_SERVICE_TYPE=web`, özel ağ soketi, geçerli CF-Ray ve tek
+bir genel CF-Connecting-IP gerektirir. Sahte X-Forwarded-For, ülke/şehir başlıkları,
+özel IP ve Cloudflare Worker ortak adresi konum kaynağı yapılmaz.
+Render'ın public edge tarafından üzerine yazılan başlık sözleşmesi:
+https://render.com/articles/host-pocketbase-on-render
+
+DB-IP City Lite, CC BY 4.0 ile yerel kullanılır; yönetici raporunda ve gizlilik
+sayfasında sağlayıcı atfı vardır. Yalnız sabit HTTPS sağlayıcısından güncel aylık
+veritabanı indirilir. İndirmede oyuncu IP'si veya hesap verisi gönderilmez.
+https://db-ip.com/db/download/ip-to-city-lite
+
+Başlangıçta ve her 24 saatte güncel ay denetlenir; güncel dosya yeniden indirilmez.
+Aynı servis örneği yeni aya geçtiğinde de güncellenir. Sıkıştırılmış/açılmış boyut
+sınırı ve 60 saniye süre sınırı vardır. Yeni dosya tür/tarih denetiminden sonra
+atomik taşınır; başarısız indirmede geçerli eski dosya korunur. 90 günü aşan dosya
+sorgulanmaz, eksik konum oyunu/girişi engellemez. Dosya public dizine veya Git'e
+konmaz; yeniden dağıtımda güvenle yeniden oluşturulur.
+
+Yönetici → Giriş raporları → Yaklaşık konum kontrolü → Bu bağlantıda konumu test et,
+yalnız o bağlantının yaklaşık ülke/şehrini ve veri tarihini gösterir. Aynı sahip
+kimlik doğrulaması kullanılır, ham IP dönmez ve yeni oyuncu/oturum kaydı yazmaz.
+Geçmiş konumsuz oturumlar uydurulmaz; yalnız yeni oturum başlangıcında konum eklenir.
+Kapatmak için yalnız HERO_PLAYER_GEO_ENABLED=0 yeterlidir; tablo/veri silinmez.
