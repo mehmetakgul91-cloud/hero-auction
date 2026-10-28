@@ -46,6 +46,14 @@ public class GameSmokeTest {
         fail("Timed out: " + label);
     }
     private void tap(String selector) throws Exception {
+        long focusDeadline=SystemClock.elapsedRealtime()+30000;
+        AtomicReference<Boolean> focused=new AtomicReference<>(false);
+        do {
+            instrumentation.runOnMainSync(()->focused.set(web.hasWindowFocus()));
+            if(focused.get())break;
+            SystemClock.sleep(200);
+        } while(SystemClock.elapsedRealtime()<focusDeadline);
+        assertTrue("Android app window must regain focus before tapping "+selector,focused.get());
         String quoted = org.json.JSONObject.quote(selector);
         // CSS smooth scrolling can still be moving when a hardware tap is injected.
         // Force instant scroll and verify hit-testing before sending the gesture.

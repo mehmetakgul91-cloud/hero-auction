@@ -2,6 +2,10 @@
 set -uo pipefail
 mkdir -p artifacts
 adb logcat -c
+# Resizing an already booted Pixel image can leave its launcher in an ANR.
+# Stop only the fixture launcher, never the game, before instrumentation starts.
+adb shell am force-stop com.google.android.apps.nexuslauncher
+adb shell wm dismiss-keyguard
 cd mobile/android
 # Only run the application's tests, not the bundled Capacitor library projects'
 # unrelated sample suites and their legacy Kotlin test dependencies.
