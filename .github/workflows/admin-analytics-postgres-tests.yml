@@ -4,6 +4,11 @@ on:
     paths:
       - 'admin-wallet-credits.js'
       - 'player-sessions.js'
+      - 'player-location.js'
+      - 'admin-player-reports.js'
+      - 'public/admin*'
+      - 'tests/admin-player-reports*'
+      - 'tests/player-location*'
       - 'server.js'
       - 'paid-match-cancellation.js'
       - 'tests/paid-match-cancellation.test.mjs'
@@ -22,6 +27,11 @@ on:
     paths:
       - 'admin-wallet-credits.js'
       - 'player-sessions.js'
+      - 'player-location.js'
+      - 'admin-player-reports.js'
+      - 'public/admin*'
+      - 'tests/admin-player-reports*'
+      - 'tests/player-location*'
       - 'server.js'
       - 'paid-match-cancellation.js'
       - 'tests/paid-match-cancellation.test.mjs'
@@ -45,6 +55,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - database: hero_admin_reports_test
+            variable: HERO_ADMIN_REPORTS_TEST_DB
+            script: tools/test-postgres-admin-reports.mjs
           - database: hero_admin_test
             variable: HERO_ADMIN_TEST_DB
             script: tools/test-postgres-admin-wallets.mjs

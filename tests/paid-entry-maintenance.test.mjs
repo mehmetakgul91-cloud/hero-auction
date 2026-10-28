@@ -66,7 +66,7 @@ test('failed admin refresh invalidates prior drain proof instead of leaving stal
 });
 
 test('actual paid route admission remains counted through room installation and secondary persistence',async()=>{
- const {control}=await fixture();const source=readFileSync(new URL('../server.js',import.meta.url),'utf8');const body=source.slice(source.indexOf('async function api(url,b)'),source.indexOf('async function apiAction(url,b)'));
+ const {control}=await fixture();const source=readFileSync(new URL('../server.js',import.meta.url),'utf8');const body=source.slice(source.indexOf('async function api(url,b,requestContext)'),source.indexOf('async function apiAction(url,b,requestContext)'));
  let finishSave;const saving=new Promise(resolve=>finishSave=resolve);const room={code:'123',created:1,matchNumber:1,players:[{accountId:'player'}]};
  const ctx={paidEntryMaintenance:control,rooms:new Map([['123',room]]),activeSeats:new Map(),roomInvites:{items:new Map()},friends:{register:async()=>{},afterMutations:fn=>fn()},readLogin:()=>({sub:'player',name:'Fixture'}),requireModerationForInteraction(){},moderationReady:true,requireVictoryChestProgression(){},apiAction:async()=>({room:{code:'123'}}),saveSocial:()=>saving,console:{error(){}},error:(message,status)=>{throw Object.assign(Error(message),{status})}};
  vm.createContext(ctx);vm.runInContext(body,ctx);const admission=ctx.api('/api/join',{});await tick();assert.equal(control.status(zeros,true).paidEntriesInFlight,1);assert.equal(ctx.activeSeats.get('player').code,'123');await control.setPaused(true,'fixture-boot',0);assert.equal(control.status(zeros,true).ready,false);finishSave();await admission;assert.equal(control.status(zeros,true).paidEntriesInFlight,0);

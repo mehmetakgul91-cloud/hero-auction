@@ -86,6 +86,7 @@ class Element{
  constructor(tag='div'){this.tag=tag;this.children=[];this.hidden=false;this.disabled=false;this.value='';this.attributes={};this.copy='';}
  set textContent(value){this.copy=String(value);this.children=[]}get textContent(){return this.copy+this.children.map(child=>typeof child==='string'?child:child.textContent).join(' ')}
  append(...items){this.children.push(...items)}replaceChildren(...items){this.children=items;this.copy=''}setAttribute(name,value){this.attributes[name]=value}focus(){this.focused=true}scrollIntoView(){}
+ addEventListener(type,handler){this['on'+type]=handler;}
  querySelectorAll(tag){return this.children.flatMap(child=>typeof child==='string'?[]:[...(child.tag===tag?[child]:[]),...child.querySelectorAll(tag)])}
 }
 async function pageFixture(options={}){
@@ -101,20 +102,21 @@ async function pageFixture(options={}){
   const body=JSON.parse(options.body);requests.push({url,body});let data;
   if(url.endsWith('/list')&&!url.includes('moderation'))data=list;
   else if(url.endsWith('/gold'))data={ok:true,gold:body.gold,action:'gold'};
+  else if(url.endsWith('/session-report'))data={available:false,reason:'disabled'};
   else if(url.endsWith('/history'))data={history:[],credits:[],creditsAvailable:true};
   else if(url.endsWith('/moderation/list'))data={reports:[]};
   else if(url.endsWith('/wallet/credit')){if(options.failCredit)throw Error('offline');data={ok:true,receipt:{...body,actorId:'owner-account',balanceBefore:10,balanceAfter:10+body.amount,createdAt:'2026-10-27T12:00:00Z'}};delete data.receipt.authToken;}
   else throw Error('Unexpected request '+url);
   return {ok:true,status:200,json:async()=>data};
  }};
- vm.createContext(context);vm.runInContext(source,context);vm.runInContext(admin,context);await tick();await tick();
+ vm.createContext(context);vm.runInContext(source,context);vm.runInContext(readFileSync(new URL('../public/admin-reports.js',import.meta.url),'utf8'),context);vm.runInContext(admin,context);await tick();await tick();
  return {nodes,requests,events,list,window,storageMemory,context,prompts,confirmations};
 }
 test('admin page integrates authoritative viewer, original gold editor, two additions and honest analytics without interpreting user HTML',async()=>{
  const f=await pageFixture();assert.equal(f.nodes.dashboard.hidden,false);
- const rows=f.nodes.accounts.children;assert.equal(rows.length,1);assert.match(rows[0].textContent,/Safe <player>/);assert.match(rows[0].textContent,/Altın: 500/);assert.match(rows[0].textContent,/Elmas: —/);assert.match(rows[0].textContent,/Büyü tozu: 3/);assert.match(rows[0].textContent,/Oturum: 2 · Ek oturum: 1/);assert.match(rows[0].textContent,/1 dk 5 sn/);assert.doesNotMatch(rows[0].textContent,/Ülke|Şehir|konum/);assert.doesNotMatch(admin,/last\.country|last\.city|geoProvenance/);assert.doesNotMatch(html,/yaklaşık konum|Şehir|Ülke/);
- const buttons=rows[0].querySelectorAll('button');assert.deepEqual(buttons.map(b=>b.textContent),['Altın düzenle','Elmas ekle','Büyü tozu ekle','Askıya al']);assert.equal(buttons[1].disabled,false);
- buttons[1].onclick();assert.equal(f.nodes['wallet-credit-form'].hidden,false);assert.equal(f.nodes['wallet-credit-amount'].focused,true);f.nodes['wallet-credit-amount'].value='7';f.nodes['wallet-credit-reason'].value='Support correction';await f.nodes['wallet-credit-form'].onsubmit({preventDefault(){}});await tick();
+ const rows=f.nodes.accounts.children;assert.equal(rows.length,1);assert.match(rows[0].textContent,/Safe <player>/);assert.match(rows[0].textContent,/Altın: 500/);assert.match(rows[0].textContent,/Elmas: —/);assert.match(rows[0].textContent,/Büyü tozu: 3/);assert.match(rows[0].textContent,/Oturum: 2 · Ek oturum: 1/);assert.match(rows[0].textContent,/1 dk 5 sn/);assert.doesNotMatch(rows[0].textContent,/Ülke|Şehir|konum/);assert.doesNotMatch(admin,/last\.country|last\.city|geoProvenance/);assert.match(html,/Yaklaşık ülke/);
+ const buttons=rows[0].querySelectorAll('button');assert.deepEqual(buttons.map(b=>b.textContent),['Altın düzenle','Altın ekle','Elmas ekle','Büyü tozu ekle','Askıya al','Girişleri gör']);assert.equal(buttons[1].disabled,false);
+ buttons[2].onclick();assert.equal(f.nodes['wallet-credit-form'].hidden,false);assert.equal(f.nodes['wallet-credit-amount'].focused,true);f.nodes['wallet-credit-amount'].value='7';f.nodes['wallet-credit-reason'].value='Support correction';await f.nodes['wallet-credit-form'].onsubmit({preventDefault(){}});await tick();
  const credit=f.requests.find(r=>r.url.endsWith('/wallet/credit'));assert.equal(credit.body.accountId,'player-one');assert.equal(credit.body.currency,'diamonds');assert.equal(credit.body.authToken,'test-owner-token');assert.equal(f.storageMemory.has(key),false);assert.match(f.nodes['wallet-credit-message'].textContent,/Makbuz doğrulandı/);
 });
 test('disabled server capabilities keep new credit controls inert; no analytics claimed retroactively',async()=>{
@@ -126,12 +128,12 @@ test('default-off policy preserves the original gold SET control while new curre
  const buttons=f.nodes.accounts.children[0].querySelectorAll('button'),gold=buttons.find(b=>b.textContent==='Altın düzenle');
  assert.ok(gold);assert.equal(gold.disabled,false);assert.equal(buttons.filter(b=>b.textContent.endsWith(' ekle')).every(b=>b.disabled),true);
  await gold.onclick();await tick();
- const set=f.requests.filter(r=>r.url.endsWith('/gold'));assert.equal(set.length,1);assert.deepEqual(set[0].body,{accountId:'player-one',gold:800,authToken:'test-owner-token'});
+ const set=f.requests.filter(r=>r.url.endsWith('/gold'));assert.equal(set.length,1);assert.deepEqual(set[0].body,{accountId:'player-one',gold:800,expectedGold:500,authToken:'test-owner-token'});
  assert.equal(f.prompts[0].copy,'Yeni altın miktarı (0–100000000)');assert.equal(f.prompts[0].initial,'500');assert.equal(f.confirmations[0],'Altın bakiyesi 800 olarak ayarlansın mı?');assert.equal(f.requests.some(r=>r.url.endsWith('/wallet/credit')),false);
 });
 test('legacy gold retains its original zero/maximum bounds and cancellation checks, with no silent ADD fallback',async()=>{
  for(const value of ['0','100000000']){const f=await pageFixture({disabled:true,legacyGoldSetAvailable:true,legacyGoldValue:value});await f.nodes.accounts.children[0].querySelectorAll('button').find(b=>b.textContent==='Altın düzenle').onclick();assert.equal(f.requests.find(r=>r.url.endsWith('/gold')).body.gold,Number(value));}
  for(const legacyGoldValue of [null,'','-1','1.5','100000001','1e3']){const f=await pageFixture({disabled:true,legacyGoldSetAvailable:true,legacyGoldValue});await f.nodes.accounts.children[0].querySelectorAll('button').find(b=>b.textContent==='Altın düzenle').onclick();assert.equal(f.requests.some(r=>r.url.endsWith('/gold')),false);assert.equal(f.requests.some(r=>r.url.endsWith('/wallet/credit')),false);}
  const cancelled=await pageFixture({disabled:true,legacyGoldSetAvailable:true,confirm:false});await cancelled.nodes.accounts.children[0].querySelectorAll('button').find(b=>b.textContent==='Altın düzenle').onclick();assert.equal(cancelled.requests.some(r=>r.url.endsWith('/gold')),false);
- const enabled=await pageFixture({legacyGoldValue:'700'});const enabledButtons=enabled.nodes.accounts.children[0].querySelectorAll('button');assert.equal(enabledButtons.some(b=>b.textContent==='Altın ekle'),false);assert.equal(enabledButtons.filter(b=>b.textContent.endsWith(' ekle')).every(b=>!b.disabled),true);await enabledButtons.find(b=>b.textContent==='Altın düzenle').onclick();assert.equal(enabled.requests.find(r=>r.url.endsWith('/gold')).body.gold,700);
+ const enabled=await pageFixture({legacyGoldValue:'700'});const enabledButtons=enabled.nodes.accounts.children[0].querySelectorAll('button');assert.equal(enabledButtons.some(b=>b.textContent==='Altın ekle'),true);assert.equal(enabledButtons.filter(b=>b.textContent.endsWith(' ekle')).every(b=>!b.disabled),true);await enabledButtons.find(b=>b.textContent==='Altın düzenle').onclick();assert.equal(enabled.requests.find(r=>r.url.endsWith('/gold')).body.gold,700);
 });

@@ -52,7 +52,7 @@ export function playerActivityDelta({previousSeen,now,previousForeground,lastCre
  const credited=lastCredit===null||lastCredit===undefined?before:milliseconds(lastCredit);
  return Math.max(0,current-Math.max(before,current-PLAYER_ANALYTICS_MAX_CREDIT_MS,credited));
 }
-export async function recordPlayerSession({database,identity,policy,request}){
+export async function recordPlayerSession({database,identity,policy,request,location=null}){
  if(!policy?.enabled)throw failure('Oyuncu oturum ölçümü etkin değil.');
  const accountId=accountIdOf(identity),event=normalizeRequest(request);
  if(!database)throw failure('Oyuncu oturum ölçümü geçici olarak kullanılamıyor.');
@@ -76,6 +76,12 @@ export async function recordPlayerSession({database,identity,policy,request}){
    const attribution=normalizePlayerAttribution(identity,event),at=stamp(now);
    row={session_id:event.sessionId,sequence:0,started_at:at,last_seen_at:at,ended_at:null,foreground:event.foreground,active_ms:0,source:attribution.source,source_provenance:attribution.sourceProvenance,platform:attribution.platform,device:attribution.device};
    await client.query('INSERT INTO hero_auction_player_sessions(account_id,session_id,sequence,started_at,last_seen_at,foreground,active_ms,source,source_provenance,platform,device) VALUES($1,$2,0,$3::timestamptz,$3::timestamptz,$4,0,$5,$6,$7,$8)',[accountId,event.sessionId,at,event.foreground,row.source,row.source_provenance,row.platform,row.device]);
+   if(location&&/^[A-Z]{2}$/.test(location.country)&&(!location.city||typeof location.city==='string'&&location.city.length<=100&&!/[\p{C}]/u.test(location.city))){
+    await client.query('SAVEPOINT coarse_location');
+    try{await client.query('INSERT INTO hero_auction_player_session_locations(account_id,session_id,country,city) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING',[accountId,event.sessionId,location.country,location.city||null]);}
+    catch{await client.query('ROLLBACK TO SAVEPOINT coarse_location');}
+    await client.query('RELEASE SAVEPOINT coarse_location');
+   }
    await client.query('UPDATE hero_auction_player_activity SET last_seen_at=$2::timestamptz WHERE account_id=$1',[accountId,at]);
    result=publicSession(row);
   }else if(event.sequence<=Number(row.sequence)||row.ended_at){

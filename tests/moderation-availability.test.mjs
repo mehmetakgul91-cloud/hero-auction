@@ -16,9 +16,9 @@ test('ambiguous moderation write disables peers and later writes without disabli
  await assert.rejects(options.persist({version:1,blocks:[],reports:[]}),e=>e.status===503);assert.equal(writes,1);
 });
 test('queued peer admission rechecks store availability after earlier work fails',async()=>{
- const source=fs.readFileSync(new URL('../server.js',import.meta.url),'utf8');const body=source.slice(source.indexOf('async function api(url,b)'),source.indexOf('async function apiAction(url,b)'));
+ const source=fs.readFileSync(new URL('../server.js',import.meta.url),'utf8');const body=source.slice(source.indexOf('async function api(url,b,requestContext)'),source.indexOf('async function apiAction(url,b,requestContext)'));
  const context=vm.createContext({paidEntryMaintenance:{beginAdmission:()=>()=>{}},requireModerationForInteraction,moderationReady:true,readLogin:()=>({sub:'a',name:'A'}),friends:{register:async()=>{context.moderationReady=false},afterMutations:task=>task()},error:(message,status)=>{throw Object.assign(Error(message),{status})},apiAction:()=>{throw Error('must not admit')},roomInvites:{items:new Map()},rooms:new Map()});vm.runInContext(body,context);
  await assert.rejects(context.api('/api/match',{authToken:'local'}),e=>e.status===503);
- const invitation=source.slice(source.indexOf('async function invitationApi('),source.indexOf('async function api(url,b)'));
+ const invitation=source.slice(source.indexOf('async function invitationApi('),source.indexOf('async function api(url,b,requestContext)'));
  assert.match(invitation,/friends\.afterMutations\(async\(\)=>\{\s*requireModerationForInteraction\(moderationReady,url\)/);
 });

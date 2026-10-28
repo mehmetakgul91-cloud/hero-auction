@@ -18,7 +18,7 @@ test('owner-only route boundary precedes every admin database read or action',as
   creditAdminWallet:async args=>{calls.push(args);return {ok:true};},readAdminWalletCreditReceipt:async args=>{calls.push(args);return {receipt:null};},adminWalletCreditPolicy:{enabled:true}};
  vm.createContext(context);vm.runInContext(body,context);
  const forbidden=[null,{...owner,provider:'guest',sub:'guest:owner'},{...owner,provider:'crazygames',sub:'crazygames:1:owner'},{...owner,email:'other@example.invalid'},{...owner,provider:undefined},{...owner,sub:'guest:forged'}];
- for(const user of forbidden)for(const path of ['list','history','wallet/credit','wallet/receipt','gold','ban'])await assert.rejects(context.adminApi('/api/admin/'+path,{authToken:user,accountId:'fixture',currency:'diamonds',amount:100,actorId:owner.sub}),e=>e.status===403);
+ for(const user of forbidden)for(const path of ['list','history','wallet/credit','wallet/receipt','gold','ban','daily-sessions','session-report'])await assert.rejects(context.adminApi('/api/admin/'+path,{authToken:user,accountId:'fixture',currency:'diamonds',amount:100,actorId:owner.sub}),e=>e.status===403);
  assert.equal(calls.length,0);
  await context.adminApi('/api/admin/wallet/credit',{authToken:owner,actorId:'forged-owner',accountId:'fixture',requestId:'fixture-key-0000001'});
  assert.deepEqual(calls[0].user,owner);assert.equal(calls[0].ownerEmail,owner.email);
@@ -27,12 +27,14 @@ test('owner-only route boundary precedes every admin database read or action',as
  const legacyQueries=[];context.database.connect=async()=>({query:async(sql,args)=>{legacyQueries.push({sql,args});return sql.startsWith('SELECT gold')?{rowCount:1,rows:[{gold:500}]}:{rowCount:1,rows:[]};},release(){}});
  for(const enabled of [false,true]){context.adminWalletCreditPolicy.enabled=enabled;const result=await context.adminApi('/api/admin/gold',{authToken:owner,accountId:'fixture',gold:100});assert.equal(result.gold,100);assert.equal(result.action,'gold');}
  assert.equal(legacyQueries.filter(row=>row.sql.startsWith('UPDATE hero_auction_wallets SET gold=$2')).length,2);
+ await assert.rejects(context.adminApi('/api/admin/gold',{authToken:owner,accountId:'fixture',gold:0,expectedGold:400}),e=>e.status===409);
+ assert.equal(legacyQueries.filter(row=>row.sql.startsWith('UPDATE hero_auction_wallets SET gold=$2')).length,2);
  assert.equal(calls.length,2);
 });
 
 test('analytics API uses signed identity and only a minimal event allowlist',async()=>{
  const body=source.slice(source.indexOf('async function apiAction('),source.indexOf("if(url==='/api/store/status')"))+'\n}';
- const calls=[];const context={readLogin:value=>value,error,databaseReady:true,database:{query:async()=>({rows:[]})},playerAnalyticsPolicy:{enabled:true},playerAnalyticsStorageReady:true,
+ const calls=[];const context={readLogin:value=>value,error,databaseReady:true,database:{query:async()=>({rows:[]})},playerAnalyticsPolicy:{enabled:true},playerAnalyticsStorageReady:true,playerLocationsStorageReady:false,
   recordPlayerSession:async args=>{calls.push(args);return {ok:true};}};
  vm.createContext(context);vm.runInContext(body,context);
  await context.apiAction('/api/player-sessions/start',{authToken:owner,event:'end',sessionId:'session-fixture-0001',sequence:0,foreground:true,reset:true,source:'external',platform:'android',device:'mobile',accountId:'victim',provider:'crazygames',country:'TR',city:'Istanbul',ip:'1.2.3.4',url:'https://private.invalid/?secret=x',headers:{'cf-ipcity':'Istanbul'}});
@@ -41,6 +43,12 @@ test('analytics API uses signed identity and only a minimal event allowlist',asy
  context.database.query=async()=>({rows:[{banned:true}]});
  await assert.rejects(context.apiAction('/api/player-sessions/heartbeat',{authToken:owner}),e=>e.status===403);
  assert.equal(calls.length,1);
+ context.database.query=async()=>({rows:[]});context.playerLocationsStorageReady=true;
+ const requestContext={socket:{remoteAddress:'1.1.1.1'},headers:{}};
+ context.playerLocationResolver={lookup:ctx=>{assert.equal(ctx,requestContext);return {country:'TR',city:'Manisa'};}};
+ await context.apiAction('/api/player-sessions/start',{authToken:owner,sessionId:'server-location-0001',sequence:0,foreground:false,country:'US',city:'forged'},requestContext);
+ assert.deepEqual(calls[1].location,{country:'TR',city:'Manisa'});
+ assert.equal(Object.hasOwn(calls[1].request,'country'),false);
 });
 
 test('real HTTP defaults are off; forged identities cannot reach admin or collection', {timeout:20000},async()=>{

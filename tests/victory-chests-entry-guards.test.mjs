@@ -16,7 +16,7 @@ const functions=[
  section('function requireVictoryChestStorage(){','async function flushGold(){'),
  section('async function initializeVictoryChests(){','async function rewardedAdStatus('),
  section('async function commitInvitationJoin(','async function invitationApi('),
- section('async function api(url,b){','async function apiAction(url,b){')
+ section('async function api(url,b,requestContext){','async function apiAction(url,b,requestContext){')
 ].join('\n');
 const pendingRoom=(extra={})=>({code:'123',created:1000,matchNumber:1,phase:'finished',mode:'friend',entryPaid:true,matchSettled:false,victoryChestPending:true,victoryChestWinner:0,players:[{accountId:'winner',name:'Winner'},{accountId:'loser',name:'Loser'}],...extra});
 const routes=['/api/create','/api/join','/api/match','/api/bot','/api/rematch'];
