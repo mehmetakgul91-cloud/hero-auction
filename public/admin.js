@@ -63,7 +63,12 @@ async function load(){
   $('analytics-summary').textContent=enabled?'Ziyaret ölçümleri yalnız son 30 günde gözlenen hesap oturumlarıdır. Ön planda etkin süre, pencerenin açık kaldığı toplam süre veya kesin insan oyun süresi değildir. Sayfa yenileme ve yeni sekme ayrı oturum sayılır; ek oturum, yeniden kimlik doğrulama sayısı değildir. Eski veri tamamlanmaz. Kaynak ve cihaz bilgisi sınırlı tarayıcı bildirimi olabilir. Android, Android tarayıcı bildirimi anlamına gelir; yerel uygulama kanıtı değildir.':'Ziyaret ölçümü kapalı veya henüz kullanılamıyor. Geçmiş giriş kaynağı ve süreleri tahmin edilmez.';
   $('wallet-credit-availability').textContent=walletCreditPolicy?.enabled&&walletCreditPolicy.available?'Ekleme yalnız sunucuda izin verilen para birimlerinde kullanılabilir. “—” sıfır bakiye değil, kapalı veya doğrulanamayan para birimidir.':'Bakiye ekleme sunucuda kapalı veya altyapısı hazır değil. Bu panel özellikleri etkinleştirmez.';
   const tbody=$('accounts');tbody.replaceChildren();creditButtons=[];
-  for(const a of d.accounts){
+  const activityFilter=$('activity-filter').value;
+  const now=new Date(),startToday=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+  const cutoff=activityFilter==='today'?startToday:activityFilter==='week'?Date.now()-7*86400000:activityFilter==='month'?Date.now()-30*86400000:null;
+  const visible=d.accounts.filter(a=>{if(cutoff===null)return true;const last=a.analytics?.lastSeen;return last&&Number.isFinite(new Date(last).getTime())&&new Date(last).getTime()>=cutoff;});
+  $('activity-filter-summary').textContent=activityFilter==='all'?d.accounts.length+' hesap gösteriliyor.':visible.length+' hesap seçili dönemde son görülme kaydı taşıyor. Bu sayı günlük giriş veya tekil ziyaret sayısı değildir; eski/eksik kayıtlar dahil değildir.';
+  for(const a of visible){
    const tr=document.createElement('tr');appendText(tr,'td',a.display_name);appendText(tr,'td',a.account_id,'account-id');
    const balances=document.createElement('td');balances.className='admin-balance';
    for(const currency of ['gold','diamonds','magicDust'])appendText(balances,'div',currencyLabel(currency)+': '+(Number.isSafeInteger(a[currency])?a[currency]:'—'));
@@ -90,12 +95,12 @@ async function load(){
   const history=[...(h.history||[]).map(a=>({at:a.created_at,copy:shownDate(a.created_at)+' • '+a.account_id+' • '+a.action+' • '+a.old_gold+' → '+a.new_gold})),...(h.credits||[]).map(a=>({at:a.createdAt,copy:shownDate(a.createdAt)+' • '+a.accountId+' • +'+a.amount+' '+currencyLabel(a.currency)+' • '+a.balanceBefore+' → '+a.balanceAfter+' • '+a.reason+' • Yönetici: '+a.actorId+' • Makbuz: '+a.requestId}))].sort((a,b)=>new Date(b.at)-new Date(a.at));
   if(h.creditsAvailable===false)appendText($('history'),'p','Yeni bakiye ekleme makbuzları kullanılamıyor; bu durum işlem yapılmadığını kanıtlamaz.');
   for(const entry of history)appendText($('history'),'p',entry.copy);
-  status(d.accounts.length+' hesap listelendi.');void loadModeration();window.dispatchEvent(new Event('hero:admin-verified'));
+  status(visible.length+' hesap listelendi.');void loadModeration();window.dispatchEvent(new Event('hero:admin-verified'));
  }catch(e){if(generation!==loadGeneration||auth!==login?.authToken)return;creditController.setIdentity(false);window.dispatchEvent(new Event('hero:admin-unverified'));status(e.message);$('dashboard').hidden=true;$('historyPanel').hidden=true;$('moderationPanel').hidden=true;$('moderation-reports').replaceChildren()}
 }
 async function act(path,data){try{await api(path,data);await load()}catch(e){alert(e.message)}}
 $('login').onclick=()=>{if(!login?.authToken){status('Önce ana sayfada yetkili Google hesabıyla giriş yapın.');return}load()};
-$('refresh').onclick=load;$('find').onclick=load;
+$('refresh').onclick=load;$('find').onclick=load;$('activity-filter').onchange=load;$('search').addEventListener('keydown',event=>{if(event.key==='Enter')load()});
 if(login?.authToken)load();else status('Önce oyuna yönetici Google hesabınızla giriş yapın.');
 const googleClientId='742640702245-3e3t9m7t29fbqlkubpcqtso63l8v8bv6.apps.googleusercontent.com';
 window.heroAdminGoogleCallback=async response=>{try{const r=await fetch('/api/auth/google',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({credential:response.credential})});const data=await r.json();if(!r.ok)throw Error(data.error||'Google oturumu açılamadı');++loadGeneration;viewerAccount=null;creditController.setIdentity(false);login={type:'google',user:data.user,authToken:data.authToken};localStorage.setItem('hero-auction-login',JSON.stringify(login));await load()}catch(e){status(e.message)}};
