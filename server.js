@@ -1,3 +1,4 @@
+import {createNativeCors} from './native-cors.js';
 import {arenaDecorativeCacheControl} from './arena-decorative-assets.js';
 import {auctionAdmissions,publicAuctionCommander,setAuctionCommanderIdentity,hydrateAuctionCommanders as hydrateAuctionIdentity,refreshAuctionCommanders as refreshAuctionIdentity} from './auction-commander-identity.js';
 import {assertCancellableRoom,cancellationMatchId,cancellationIdentity,cancellationDigest,cancellationCandidate,publicCancellationCandidate,normalizeCancellationSelections,cancellationReceiptKey,cancelPaidMatches} from './paid-match-cancellation.js';
@@ -46,6 +47,7 @@ import {createArena3dDemo} from './arena-3d-demo.js';
 import {startRoomArenaTheme,roomArenaPresentation} from './arena-theme.js';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.PORT||3000);
+const nativeCors=createNativeCors(process.env.NATIVE_ALLOWED_ORIGINS||'');
 const paidEntryMaintenance=createPaidEntryMaintenance({bootPaused:process.env.HERO_PAID_ENTRY_PAUSED==='1',canResume:()=>cancellationReservations.size===0});
 // Explicit opt-in only. Schema is a separate, unapplied migration; no payment handler.
 const diamondPolicy=createDiamondPolicy(process.env);
@@ -952,7 +954,7 @@ function preparationView(sync,seat){
 }
 function battleSessionResult(session){const cards=(ids,formation)=>formation.map((index,slot)=>({id:ids[index],power:stablePower(ids[index]),lane:session.players[ids===battleIdsA?0:1].lanes?.[slot]||(slot<2?'front':'back'),role:session.players[ids===battleIdsA?0:1].roles?.[slot]||((slot<2)?'tank':'energy')}));const a=cards(battleIdsA,session.players[0].positions),b=cards(battleIdsB,session.players[1].positions);const result=simulateRosterBattle(a,b,{seed:'battle-room-'+session.code+'-'+session.created});return {arenaPresentation:roomArenaPresentation(session),winner:result.winner,rounds:result.rounds,teams:result.teams,initialShields:result.initialShields,log:result.log};}
 function validBattlePositions(v){return Array.isArray(v)&&v.length===5&&new Set(v).size===5&&v.every(x=>Number.isInteger(x)&&x>=0&&x<5)}
-const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data))};try{const url=new URL(req.url,'http://localhost');if(req.method==='POST'&&url.pathname==='/api/battle-auction-complete'){
+const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data))};try{const url=new URL(req.url,'http://localhost');if(nativeCors(req,res,url.pathname))return;if(req.method==='POST'&&url.pathname==='/api/battle-auction-complete'){
  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>1000)return send(413,{error:'İstek çok büyük'})}
  let body;try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz veri'})}
  const room=rooms.get(String(body?.code||'').toUpperCase());const seat=room?.players?.findIndex(p=>p?.token===body?.token)??-1;

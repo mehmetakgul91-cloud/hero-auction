@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Hero Auction Test</string>
+    <string name="title_activity_main">Hero Auction Test</string>
+    <string name="package_name">tr.com.heroauction.android.test</string>
+    <string name="custom_url_scheme">tr.com.heroauction.android.test</string>
+</resources>
