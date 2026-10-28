@@ -36,7 +36,7 @@ test('server account identity update reaches all account seats and publishes cha
  assert.deepEqual(a.players[0].commander,{commanderId:'magic'});assert.deepEqual(b.players[1].commander,{commanderId:'magic'});assert.equal(other.players[0].commander,null);assert.deepEqual(published,[a,b]);
 });
 test('server updates auction identity only after successful select/change, using authenticated account and saved profile',async()=>{
- const source=fs.readFileSync(new URL('../server.js',import.meta.url),'utf8');const wrapper=source.slice(source.indexOf('async function api(url,b)'),source.indexOf('async function apiAction(url,b)'));
+ const source=fs.readFileSync(new URL('../server.js',import.meta.url),'utf8');const wrapper=source.slice(source.indexOf('async function api(url,b,requestContext)'),source.indexOf('async function apiAction(url,b,requestContext)'));
  let fail=false;const updates=[],saved={commanderId:'defense',levels:{defense:3}};
  const context={requireModerationForInteraction(){},moderationReady:true,diamondPolicy:{enabled:false},magicDustPolicy:{enabled:false},diamondExchangePolicy:{},diamondSignupPolicy:{enabled:false},diamondExchangeView:()=>({}),readLogin:()=>({sub:'verified-account'}),apiAction:async()=>{if(fail)throw Error('insufficient gold');return{profile:saved,progression:{}}},updateAuctionCommandersForAccount:(id,profile)=>updates.push({id,profile})};
  vm.createContext(context);vm.runInContext(wrapper,context);

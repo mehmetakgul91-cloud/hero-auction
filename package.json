@@ -8,12 +8,17 @@
     "dev": "node --watch server.js",
     "audit": "node tools/audit-cards.mjs",
     "audit:strict": "node tools/audit-cards.mjs --strict",
-    "battle:balance": "node tools/battle-balance.mjs"
+    "battle:balance": "node tools/battle-balance.mjs",
+    "test": "node --test *.test.js tests/*.test.* test/*.test.js",
+    "test:admin": "node --test tests/admin-*.test.mjs tests/player-*.test.mjs tests/native-cors.test.mjs",
+    "test:admin-browser": "node tools/test-admin-browser.mjs"
   },
   "engines": {
     "node": "26.12.1"
   },
   "dependencies": {
+    "ipaddr.js": "2.5.0",
+    "maxmind": "5.0.7",
     "pg": "^8.16.3",
     "three": "0.186.1"
   }

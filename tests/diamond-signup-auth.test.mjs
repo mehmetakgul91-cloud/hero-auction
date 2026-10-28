@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 
 const source=readFileSync(new URL('../server.js',import.meta.url),'utf8');
-const handlers=source.slice(source.indexOf('async function apiAction(url,b)'),source.indexOf('const mime='));
+const handlers=source.slice(source.indexOf('async function apiAction(url,b,requestContext)'),source.indexOf('const mime='));
 function fixture(extraClaims={},ok=true){
  const calls=[];
  const claims={sub:'verified-google-subject',aud:'isolated-google-client',iss:'https://accounts.google.com',exp:String(Math.floor(Date.now()/1000)+1000),email_verified:'true',name:'Member',email:'member@example.test',...extraClaims};

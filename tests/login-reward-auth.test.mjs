@@ -26,7 +26,7 @@ test('claim HTTP handler passes only trusted identity and requested receipt date
  const context=vm.createContext({readLogin:()=>identity,databaseReady:true,database:{query:async()=>({rows:[]})},loginRewardPolicy:createLoginRewardPolicy({HERO_DIAMONDS_ENABLED:'1',HERO_LOGIN_REWARDS_ENABLED:'1'}),
   claimLoginReward:async args=>{calls.push(args);return{receipt:{day:1,gold:100,diamonds:0,rewardDate:'2026-10-25'}}},
   error:(message,status)=>{throw Object.assign(Error(message),{status})}});
- vm.runInContext(source.slice(source.indexOf('async function apiAction(url,b)'),source.indexOf('const mime=')),context);
+ vm.runInContext(source.slice(source.indexOf('async function apiAction(url,b,requestContext)'),source.indexOf('const mime=')),context);
  await context.apiAction('/api/login-rewards/claim',{authToken:'signed',rewardDate:'2026-10-25',accountId:'victim',provider:'google',day:7,gold:999999,diamonds:999999,email:'forged@example.test',now:'2099-01-01'});
  assert.equal(calls.length,1);assert.equal(calls[0].identity,identity);assert.deepEqual(JSON.parse(JSON.stringify(calls[0].request)),{rewardDate:'2026-10-25'});
 });

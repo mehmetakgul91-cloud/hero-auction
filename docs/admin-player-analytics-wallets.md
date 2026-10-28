@@ -1,5 +1,7 @@
 # Yönetici oturum ölçümleri ve güvenli bakiye ekleme
 
+> Bu belge 27 Ekim sürümünün kayıtlarıdır. 28 Ekim geliştirmesi, yaklaşık ülke/şehir talebi, yeni raporlar ve 008 migration için [güncel notlara](admin-dashboard-20261028.md) bakın. Önceki konum kapsam dışı kararı yeni kullanıcı isteğiyle değişti; 006/007 onayları 008 veya yeni canlı yayın için onay değildir.
+
 Durum: 27 Ekim 2026 tarihinde kod yayını, üç ek tablo ve iki yeni özellik bayrağının etkinleştirilmesi kullanıcı tarafından onaylandı; yayın/ön kontrol adımları aşağıdadır. Başlangıç commit'i: `b66184d158c258534de43cef7927265bfdf8ed1e`.
 
 ## Panelde ne değişiyor?
