@@ -109,7 +109,7 @@ public class GameSmokeTest {
         tap(".native-menu-close");
         until("native menu closes", "!document.getElementById('native-game-menu').open",10);
     }
-    @Test public void guestCanPlayThroughAuctionAndArena() throws Exception {
+    @Test(timeout=360000) public void guestCanPlayThroughAuctionAndArena() throws Exception {
         Intent intent=new Intent(instrumentation.getTargetContext(),MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         MainActivity activity=(MainActivity)instrumentation.startActivitySync(intent);
         web=activity.getBridge().getWebView();
