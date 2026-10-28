@@ -15,7 +15,7 @@ const failures=[],requests=[];let delayedReport=false;let delayedMatch=false;
 const fixtures=[{account_id:'fixture-player',display_name:'=Oyuncu; İzmir <img src=x>',gold:750,diamonds:3,magicDust:4,banned:false,analytics:{sessionCount:3,repeatVisits:2,activeMs:65000,lastSeen:new Date().toISOString(),latest:{source:'invite',platform:'android',device:'mobile'}}},{account_id:'fixture-owner',display_name:'Yönetici',gold:500,banned:false}];
 try{
  for(const width of [1440,390,320]){
-  const context=await browser.newContext({viewport:{width,height:900},acceptDownloads:true});const page=await context.newPage();page.on('pageerror',e=>failures.push(e.message));
+  const context=await browser.newContext({viewport:{width,height:900},timezoneId:'America/Los_Angeles',acceptDownloads:true});const page=await context.newPage();page.on('pageerror',e=>failures.push(e.message));
   await page.addInitScript(()=>{localStorage.setItem('hero-auction-login',JSON.stringify({authToken:'synthetic-local-token',user:{sub:'fixture-owner'},type:'google'}));window.google={accounts:{id:{initialize(){},renderButton(){}}}};});
   await page.route('**/*',async route=>{
    const url=new URL(route.request().url());if(url.origin!==origin)return route.abort();if(!url.pathname.startsWith('/api/'))return route.continue();
@@ -41,7 +41,7 @@ try{
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'no document overflow at '+width);
   await page.locator('#accounts tr').first().locator('summary').click();await page.locator('#accounts tr').first().getByRole('button',{name:'Girişleri gör',exact:true}).click();assert.equal(await page.locator('#daily-report').isVisible(),true);assert.equal(await page.locator('#dashboard').isHidden(),true);
   await page.waitForFunction(()=>document.querySelector('#daily-status').textContent.includes('Son 7'));
-  await page.getByText('Yaklaşık konum kontrolü',{exact:true}).click();await page.click('#location-check');await page.waitForFunction(()=>document.querySelector('#location-status').textContent.includes('TR · İzmir'));
+  await page.getByText('Yaklaşık konum kontrolü',{exact:true}).click();await page.click('#location-check');await page.waitForFunction(()=>document.querySelector('#location-status').textContent.includes('TR · İzmir'));assert.ok((await page.locator('#location-status').innerText()).includes('01.10.2026'));
   assert.equal(await page.inputValue('#report-search'),'fixture-player');
   await page.selectOption('#daily-range','30');await page.waitForFunction(()=>document.querySelector('#daily-status').textContent.includes('Son 30'));
   assert.equal(await page.locator('#daily-rows tr').count(),30);

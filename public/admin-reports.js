@@ -58,7 +58,7 @@
   if($('location-check'))$('location-check').onclick=async()=>{
    if(!isVerified())return;const token=generation;const button=$('location-check');button.disabled=true;$('location-status').textContent='Konum kontrol ediliyor…';
    try{const data=await request('location-status',{});if(token!==generation||!isVerified())return;
-    $('location-status').textContent=!data.available?'Yaklaşık konum şu anda kullanılamıyor.':data.location?`Bu bağlantı: ${data.location.country} · ${data.location.city||'Şehir bilinmiyor'}. Veritabanı: ${new Date(data.buildDate).toLocaleDateString('tr-TR')}. Yalnız yaklaşık konumdur; test yeni oyuncu kaydı oluşturmaz.`:'Altyapı hazır; bu bağlantı için konum bulunamadı. VPN, ara sunucu veya veri kapsamı nedeniyle bilinmiyor olabilir.';
+    $('location-status').textContent=!data.available?'Yaklaşık konum şu anda kullanılamıyor.':data.location?`Bu bağlantı: ${data.location.country} · ${data.location.city||'Şehir bilinmiyor'}. Veritabanı: ${new Date(data.buildDate).toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'})}. Yalnız yaklaşık konumdur; test yeni oyuncu kaydı oluşturmaz.`:'Altyapı hazır; bu bağlantı için konum bulunamadı. VPN, ara sunucu veya veri kapsamı nedeniyle bilinmiyor olabilir.';
    }catch(e){if(token===generation)$('location-status').textContent='Konum kontrol edilemedi: '+e.message;}finally{button.disabled=false;}
   };
   controls();return {load,clear};
