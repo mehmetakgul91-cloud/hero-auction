@@ -43,6 +43,7 @@ public class GameSmokeTest {
             SystemClock.sleep(400);
         }
         Log.e("HeroSmoke", "State: " + js("JSON.stringify({path:location.pathname,ready:document.readyState,native:!!window.HeroNative,guestHandler:!!document.getElementById('guest-login')?.onclick,toast:document.getElementById('toast')?.textContent,status:document.getElementById('native-status')?.textContent,errors:window.__smokeErrors})"));
+        captureScreen("failure");
         fail("Timed out: " + label);
     }
     private void tap(String selector) throws Exception {
@@ -82,6 +83,9 @@ public class GameSmokeTest {
         js("window.__capturePainted=false;requestAnimationFrame(()=>requestAnimationFrame(()=>window.__capturePainted=true))");
         until("capture frame settled: "+name,"window.__capturePainted",10);
         SystemClock.sleep(350); // Allow the compositor to present the frame after DOM assertions.
+        captureScreen(name);
+    }
+    private void captureScreen(String name) throws Exception {
         // Gradle uninstalls the app after tests, deleting its cache before adb
         // artifact collection. Shell-owned diagnostic files survive teardown.
         try(java.io.InputStream input=new android.os.ParcelFileDescriptor.AutoCloseInputStream(
@@ -131,7 +135,11 @@ public class GameSmokeTest {
         screenshot("auction-bids");
         long end=SystemClock.elapsedRealtime()+180000;
         while(SystemClock.elapsedRealtime()<end && !is("document.getElementById('confirm-arena-entry') && !document.getElementById('confirm-arena-entry').disabled")) {
-            if(is("document.getElementById('passbutton') && !document.getElementById('passbutton').disabled"))tap("#passbutton");
+            if(is("document.querySelector('.auction-tail-review>button.primary:not([hidden]):not([disabled])')")) {
+                assertTrue("remaining cards are available for review",is("document.querySelectorAll('.auction-tail-review-card').length>0"));
+                screenshot("auction-review");
+                tap(".auction-tail-review>button.primary");
+            } else if(is("document.getElementById('passbutton') && !document.getElementById('passbutton').disabled"))tap("#passbutton");
             SystemClock.sleep(1200);
         }
         until("auction delivers all ten cards", "document.getElementById('confirm-arena-entry') && !document.getElementById('confirm-arena-entry').disabled", 20);

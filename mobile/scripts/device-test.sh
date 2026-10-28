@@ -15,7 +15,7 @@ cd ../..
 # Do not publish auth query strings from Capacitor's verbose local-request log.
 adb logcat -d -s HeroSmoke:I Capacitor/Console:E AndroidRuntime:E chromium:E > artifacts/device-errors.txt
 adb exec-out screencap -p > artifacts/device-last-screen.png
-for stage in auction auction-bids formation formation-ready arena arena-controls result; do
+for stage in auction auction-bids auction-review formation formation-ready arena arena-controls result failure; do
   adb pull "/sdcard/Download/hero-portrait-$stage.png" "artifacts/$stage.png" || rm -f "artifacts/$stage.png"
 done
 exit "$result"
