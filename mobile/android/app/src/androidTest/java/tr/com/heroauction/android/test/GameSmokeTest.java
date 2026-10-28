@@ -56,6 +56,9 @@ public class GameSmokeTest {
         } while(SystemClock.elapsedRealtime()<focusDeadline);
         assertTrue("Android app window must regain focus before tapping "+selector,focused.get());
         String quoted = org.json.JSONObject.quote(selector);
+        // Input injection can return before the preceding handler reveals its
+        // next panel. Scrolling a still-hidden control is a no-op.
+        until("tap target rendered: "+selector, "(()=>{const e=document.querySelector("+quoted+");return e&&e.getClientRects().length>0&&e.getBoundingClientRect().height>0})()", 15);
         // CSS smooth scrolling can still be moving when a hardware tap is injected.
         // Force instant scroll and verify hit-testing before sending the gesture.
         js("document.querySelector("+quoted+").scrollIntoView({block:'center',behavior:'instant'})");
