@@ -41,6 +41,8 @@ export const phrases = {
 "İki ayrı dolum · her biri en fazla 100":"Two separate pools · each capped at 100",
 "Elmas":"Diamonds",
 "♫ Müzik kredileri":"♫ Music credits",
+"Yardım / Bildir":"Help / Report",
+"Yardım / Bilgi":"Help / Info",
 "Diziliş başka bir maça ait.":"This formation belongs to another match.",
 "Hazır diziliş değiştirilemez.":"A confirmed formation cannot be changed.",
 "Geçersiz diziliş veya kart türü":"Invalid formation or hero type",

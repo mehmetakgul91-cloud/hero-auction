@@ -14,6 +14,7 @@ export function crazyGamesSource(source, extension){
   .replace(/<link\b[^>]*href=["']\/moderation\.css["'][^>]*>/gi,'')
   .replace(/<a class="arena-3d-launch"[^>]*>[\s\S]*?<\/a>/g,'')
   .replace(/<html lang="tr">/, '<html lang="en">')
+  .replace(/>Yardım \/ Bildir</g,'>Yardım / Bilgi<')
   // Remove external login/ads before parsing: hiding them after load is insufficient.
   .replace(/<script\b[^>]*src=["']https:\/\/(?:pagead2\.googlesyndication\.com|accounts\.google\.com)[^"']*["'][^>]*><\/script>/gi,'')
   .replace(/<script\b[^>]*src=["']\/ad-rewards\.js[^"']*["'][^>]*><\/script>/gi,'')
