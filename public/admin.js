@@ -58,7 +58,7 @@ async function load(){
   const d=await api('list',{search:$('search').value});if(generation!==loadGeneration||auth!==login?.authToken)return;
   if(typeof d.viewer?.accountId!=='string'||!d.viewer.accountId)throw Error('Yönetici kimliği doğrulanamadı.');
   const changed=viewerAccount!==d.viewer.accountId;viewerAccount=d.viewer.accountId;walletCreditPolicy=d.walletCredits||null;
-  $('dashboard').hidden=false;$('historyPanel').hidden=false;$('refresh').hidden=false;$('moderationPanel').hidden=false;
+  $('dashboard').hidden=false;$('daily-report').hidden=false;void loadDailyReport();$('historyPanel').hidden=false;$('refresh').hidden=false;$('moderationPanel').hidden=false;
   const enabled=d.playerAnalytics?.enabled===true&&d.playerAnalytics?.available===true;
   $('analytics-summary').textContent=enabled?'Ziyaret ölçümleri yalnız son 30 günde gözlenen hesap oturumlarıdır. Ön planda etkin süre, pencerenin açık kaldığı toplam süre veya kesin insan oyun süresi değildir. Sayfa yenileme ve yeni sekme ayrı oturum sayılır; ek oturum, yeniden kimlik doğrulama sayısı değildir. Eski veri tamamlanmaz. Kaynak ve cihaz bilgisi sınırlı tarayıcı bildirimi olabilir. Android, Android tarayıcı bildirimi anlamına gelir; yerel uygulama kanıtı değildir.':'Ziyaret ölçümü kapalı veya henüz kullanılamıyor. Geçmiş giriş kaynağı ve süreleri tahmin edilmez.';
   $('wallet-credit-availability').textContent=walletCreditPolicy?.enabled&&walletCreditPolicy.available?'Ekleme yalnız sunucuda izin verilen para birimlerinde kullanılabilir. “—” sıfır bakiye değil, kapalı veya doğrulanamayan para birimidir.':'Bakiye ekleme sunucuda kapalı veya altyapısı hazır değil. Bu panel özellikleri etkinleştirmez.';
@@ -139,3 +139,23 @@ window.addEventListener('storage',event=>{
  $('accounts').replaceChildren();$('history').replaceChildren();$('moderation-reports').replaceChildren();
  status('Oturum değişti. Yönetici hesabınızı yeniden doğrulayın.');
 });
+
+async function loadDailyReport(){
+ const body=$('daily-rows');body.replaceChildren();$('daily-status').textContent='Rapor yükleniyor…';
+ try{
+  const d=await api('daily-sessions',{days:Number($('daily-range').value)});
+  if(!d.available){$('daily-status').textContent='Giriş ölçümü kapalı veya veri tabanı hazır değil. Geçmiş veri tahmin edilemez.';return;}
+  const byDay=new Map(d.days.map(row=>[row.day,row]));
+  const formatter=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Istanbul',year:'numeric',month:'2-digit',day:'2-digit'});
+  const parts=formatter.formatToParts(new Date());const get=k=>parts.find(p=>p.type===k).value;
+  const start=Date.UTC(Number(get('year')),Number(get('month'))-1,Number(get('day')));
+  const count=Number($('daily-range').value);
+  for(let i=0;i<count;i++){
+   const day=new Date(start-i*86400000).toISOString().slice(0,10),r=byDay.get(day),tr=document.createElement('tr');
+   for(const value of [day,r?.sessions??0,r?.uniqueAccounts??0,r?.crazygamesSessions??0,r?.reportedInviteSessions??0])appendText(tr,'td',String(value));
+   body.append(tr);
+  }
+  $('daily-status').textContent='Son '+count+' günün kaydedilmiş oturumları. Kaydı olmayan günler 0 gösterilir; ölçüm öncesi geçmiş bilinmez.';
+ }catch(e){$('daily-status').textContent='Rapor yüklenemedi: '+e.message;}
+}
+$('daily-range').onchange=loadDailyReport;
