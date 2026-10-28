@@ -147,3 +147,20 @@ export async function cleanupPlayerAnalytics({database}={}){
   await client.query('COMMIT');return{sessionsDeleted:sessions.rowCount||0,accountsDeleted:accounts.rowCount||0};
  }catch(e){await client.query('ROLLBACK').catch(()=>{});if(e.code==='42P01'||e.code==='42703')return{sessionsDeleted:0,accountsDeleted:0,unavailable:true};throw e;}finally{client.release();}
 }
+
+/** Observed session starts by Istanbul calendar day, not verified human logins. */
+export async function readDailySessionSummary({database,policy,days=7}={}){
+ if(!Number.isInteger(days)||days<1||days>30)throw failure('Geçersiz rapor aralığı.',400);
+ if(!policy?.enabled||!database)return {available:false,days:[],reason:!policy?.enabled?'disabled':'storage_unavailable'};
+ try{
+  const result=await database.query(`SELECT to_char(started_at AT TIME ZONE 'Europe/Istanbul','YYYY-MM-DD') AS day,
+   COUNT(*)::int AS sessions,COUNT(DISTINCT account_id)::int AS unique_accounts,
+   COUNT(*) FILTER(WHERE source='crazygames')::int AS crazygames_sessions,
+   COUNT(*) FILTER(WHERE source='invite')::int AS reported_invite_sessions
+   FROM hero_auction_player_sessions
+   WHERE started_at >= (date_trunc('day',clock_timestamp() AT TIME ZONE 'Europe/Istanbul') - ($1::int-1)*interval '1 day') AT TIME ZONE 'Europe/Istanbul'
+   AND started_at <= clock_timestamp()
+   GROUP BY 1 ORDER BY 1 DESC`,[days]);
+  return {available:true,timezone:'Europe/Istanbul',days:result.rows.map(r=>({day:r.day,sessions:Number(r.sessions),uniqueAccounts:Number(r.unique_accounts),crazygamesSessions:Number(r.crazygames_sessions),reportedInviteSessions:Number(r.reported_invite_sessions)}))};
+ }catch(e){if(e.code==='42P01'||e.code==='42703')return {available:false,days:[],reason:'storage_unavailable'};throw e;}
+}
