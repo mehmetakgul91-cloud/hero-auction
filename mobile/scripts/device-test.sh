@@ -17,6 +17,11 @@ free -m > artifacts/host-memory-before.txt
 result=1
 if timeout 90s adb install -r -t mobile/android/app/build/outputs/apk/debug/app-debug.apk &&
    timeout 90s adb install -r -t mobile/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk; then
+  # The Google APIs fixture's Pixel Launcher can show an ANR after a font-scale
+  # change. Close that unrelated launcher immediately before starting the app;
+  # keep all game focus and real touch assertions enabled.
+  timeout 15s adb shell am force-stop com.google.android.apps.nexuslauncher
+  timeout 15s adb shell wm dismiss-keyguard
   timeout --signal=TERM --kill-after=10s 7m adb shell am instrument -w \
     tr.com.heroauction.android.test.test/androidx.test.runner.AndroidJUnitRunner \
     > artifacts/instrumentation.txt 2>&1
