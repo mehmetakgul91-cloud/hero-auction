@@ -16,12 +16,12 @@ test('normal costs 40 and blocks both abilities for five seconds',()=>{
  assert.throws(()=>castLiveCommanderAbility(s,{side:0,ability:'normal',matchKey:'583:1',now:6999,requestId:'request_002'}),/cooldown/);
  assert.equal(castLiveCommanderAbility(s,{side:0,ability:'normal',matchKey:'583:1',now:7000,requestId:'request_002'}).energy,20);
 });
-test('ultimate costs 100 and never fires without enough energy',()=>{
+test('ultimate costs 85 and never fires without enough energy',()=>{
  const s=setup();
- assert.equal(castLiveCommanderAbility(s,{side:1,ability:'ultimate',matchKey:'583:1',now:2000,requestId:'request_001'}).energy,0);
- assert.throws(()=>castLiveCommanderAbility(s,{side:1,ability:'normal',matchKey:'583:1',now:7000,requestId:'request_002'}),/energy/);
+ assert.equal(castLiveCommanderAbility(s,{side:1,ability:'ultimate',matchKey:'583:1',now:2000,requestId:'request_001'}).ultimateEnergy,15);
+ assert.equal(castLiveCommanderAbility(s,{side:1,ability:'normal',matchKey:'583:1',now:7000,requestId:'request_002'}).energy,60);
  grantLiveCommanderEnergy(s,1,50);
- assert.equal(viewLiveCommanderAbilities(s,1,7000).canUseNormal,true);
+ assert.equal(viewLiveCommanderAbilities(s,1,12000).canUseNormal,true);
 });
 test('personal cooldown stays independent after the shared 1.2-second effect lock',()=>{
  const s=setup();

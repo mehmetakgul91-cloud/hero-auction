@@ -18,7 +18,7 @@ function harness(previous,{receipts=createTailReceipts(),reducedMotion=false}={}
  const makeBox=()=>({count:{textContent:''},slot:{innerHTML:''},set innerHTML(html){this.count.textContent=html.match(/class="delivery-count">([^<]+)/)?.[1]||'';},querySelector(selector){return selector==='.delivery-count'?this.count:this.slot;}});
  const classes=new Set(),elements={stage:{children:[],querySelectorAll:()=>[]},game:{hidden:true,dataset:{phase:'auction'},classList:{remove:(...xs)=>xs.forEach(x=>classes.delete(x)),add:x=>classes.add(x)}},phase:{},'login-gate':{},home:{},'room-title':{},player0:makeBox(),player1:makeBox()};
  const queues=[];let cancels=0;
- const context={session:null,roomInvitesUI:{setRoom(){}},friendsUI:{setRoom(){}},esc:String,displaySeat,auctionMatchKey,isStaleAuctionSnapshot,tailReceipts:receipts,room:previous,tailReveal:null,awardFlights:new Set(),collectTailAwards,collectOfferedAwards,cancelAwardFlights(){},animateWonAuctionCard:()=>Promise.resolve(),Promise,signedIn:()=>true,cancelAuctionReveal(){},renderChat(){},refreshGold(){},$:id=>elements[id],window:{matchMedia:()=>({matches:reducedMotion})},document:{documentElement:{lang:'en'},querySelector:()=>null},results:0,mountTailReveal(root,button,items,options){const queue={items,options,active:true,cancel(){this.active=false;cancels++;}};queues.push(queue);return queue;}};
+ const context={auctionCommanderDialog:{sync(){}},session:null,roomInvitesUI:{setRoom(){}},storefrontUI:{close(){}},friendsUI:{setRoom(){}},esc:String,displaySeat,auctionMatchKey,isStaleAuctionSnapshot,tailReceipts:receipts,room:previous,tailReveal:null,awardFlights:new Set(),collectTailAwards,collectOfferedAwards,cancelAwardFlights(){},animateWonAuctionCard:()=>Promise.resolve(),Promise,signedIn:()=>true,cancelAuctionReveal(){},renderChat(){},refreshGold(){},$:id=>elements[id],window:{matchMedia:()=>({matches:reducedMotion})},document:{documentElement:{lang:'en'},querySelector:()=>null},results:0,mountTailReveal(root,button,items,options){const queue={items,options,active:true,cancel(){this.active=false;cancels++;}};queues.push(queue);return queue;}};
  const start=app.indexOf('function show(r)'),end=app.indexOf(" window.HeroPlatform?.gameplay(r.phase==='auction')",start);
  vm.createContext(context);vm.runInContext(app.match(/const displayPlayerName=[^;]+;/)[0],context);vm.runInContext(app.slice(start,end)+" results++;room=r;$('game').dataset.phase=r.phase;}",context);
  return {context,elements,queues,get cancels(){return cancels;}};
@@ -67,7 +67,7 @@ test('authoritative tail order excludes already-known offered purchases and cann
 });
 test('state recovery applies phase/revision changes without chat and ignores responses after switching session',async()=>{
  const start=app.indexOf('async function syncRoomSnapshot('),end=app.indexOf('\nfunction connect()',start),{before,done}=snapshots();
- let release;const updates=[],session={code:'123',token:'test'};const context={session,login:{authToken:'auth'},room:before,post:()=>new Promise(r=>release=r),show:r=>updates.push(r)};
+ let release;const updates=[],session={code:'123',token:'test'};const context={auctionCommanderDialog:{sync(){}},session,login:{authToken:'auth'},room:before,post:()=>new Promise(r=>release=r),show:r=>updates.push(r)};
  vm.createContext(context);vm.runInContext(app.slice(start,end),context);
  let pending=context.syncRoomSnapshot();release({room:done});await pending;assert.deepEqual(updates,[done]);
  pending=context.syncRoomSnapshot();context.session={code:'456',token:'other'};release({room:done});await pending;assert.equal(updates.length,1);
@@ -79,7 +79,24 @@ test('background final snapshot preserves unseen cards until visible instead of 
  h.context.document.hidden=false;h.context.show(h.context.room);assert.equal(h.queues.length,1);assert.equal(h.queues[0].items.length,2);
  await h.queues[0].options.startAfter;h.queues[0].options.onArrive(done.tailAwards[0]);
  const listeners={};h.context.document.addEventListener=(name,fn)=>listeners[name]=fn;h.context.syncRoomSnapshot=()=>Promise.resolve();
- const start=app.indexOf("document.addEventListener('visibilitychange'"),end=app.indexOf('\n// Delegate focus',start);vm.runInContext(app.slice(start,end),h.context);
+ const start=app.indexOf("document.addEventListener('visibilitychange'"),end=app.indexOf('\n// PokeAPI species',start);vm.runInContext(app.slice(start,end),h.context);
  h.context.document.hidden=true;listeners.visibilitychange();assert.equal(h.context.tailReveal,null);
  h.context.document.hidden=false;listeners.visibilitychange();assert.equal(h.queues.length,2);assert.deepEqual(h.queues[1].items,[done.tailAwards[1]]);
+});
+
+test('revealed cards remain reviewable across refresh until the separate confirmation, independently per seat and rematch',async()=>{
+ const memory=new Map(),storage={getItem:key=>memory.get(key),setItem:(key,value)=>memory.set(key,value)},receipts=()=>createTailReceipts({storage:()=>storage});
+ const {done}=snapshots(1,3),first=harness(null,{receipts:receipts()});first.context.show(done);await first.queues[0].options.startAfter;
+ first.queues[0].options.onReview();assert.deepEqual(first.context.tailReceipts.pending(done,done.tailAwards),[]);assert.equal(first.context.results,0);
+ assert.equal(first.elements.player1.count.textContent,'5 / 5');
+ first.context.show({...done,revision:22});assert.equal(first.queues.length,1,'poll must not replace review');
+ first.queues[0].cancel();const resumed=harness(null,{receipts:receipts()});resumed.context.show(done);assert.equal(resumed.queues.length,1);assert.equal(resumed.queues[0].items.length,0);assert.deepEqual(resumed.queues[0].options.reviewItems,done.tailAwards);
+ resumed.queues[0].options.onComplete();assert.equal(resumed.context.results,1);const confirmed=harness(null,{receipts:receipts()});confirmed.context.show(done);assert.equal(confirmed.queues.length,0);
+ const opponent=harness(null,{receipts:receipts()});opponent.context.show({...done,me:1});assert.equal(opponent.queues[0].items.length,3);
+ const rematch=harness(null,{receipts:receipts()});rematch.context.show({...done,matchKey:'123:2:200',matchNumber:2,created:200});assert.equal(rematch.queues[0].items.length,3);
+});
+test('hidden-tab snapshot cannot silently confirm a fully revealed review',async()=>{
+ const {done}=snapshots(),receipts=createTailReceipts();receipts.received(done,done.tailAwards);
+ const h=harness(null,{receipts});h.context.document.hidden=true;h.context.show(done);assert.equal(h.context.results,0);assert.equal(h.queues.length,0);
+ h.context.document.hidden=false;h.context.show(done);assert.equal(h.queues.length,1);assert.equal(h.queues[0].items.length,0);assert.equal(h.queues[0].options.reviewItems.length,done.tailAwards.length);
 });

@@ -19,11 +19,11 @@ test('rejects a stale turn',()=>{
  assert.throws(()=>submitTurnCommand(createTurnSubmissionState(4),{side:0,round:3,command:'pass',energy:48,commanderId:'attack'}),/Stale or future/);
 });
 test('rejects insufficient energy and missing commander',()=>{
- assert.throws(()=>validateTurnCommand('ultimate',{side:0,round:9,energy:99,commanderId:'attack'}),/Insufficient/);
+ assert.throws(()=>validateTurnCommand('ultimate',{side:0,round:9,energy:100,ultimateEnergy:74,commanderId:'attack'}),/Insufficient/);
  assert.throws(()=>validateTurnCommand('normal',{side:0,round:4,energy:48,commanderId:null}),/not selected/);
 });
-test('accepts ultimate at 100 energy',()=>{
- assert.equal(validateTurnCommand('ultimate',{side:1,round:9,energy:100,commanderId:'support'}).ability,'ultimate');
+test('accepts support ultimate at 100 energy',()=>{
+ assert.equal(validateTurnCommand('ultimate',{side:1,round:9,energy:0,ultimateEnergy:100,commanderId:'support'}).ability,'ultimate');
 });
 
 test('turn cannot resolve until both players submit',()=>{

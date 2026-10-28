@@ -1,3 +1,4 @@
+@import url('/victory-chest.css');
 :root{color-scheme:dark;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#070d1d;color:#edf5ff}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0,#192e59,#070d1d 65%)}.shell{max-width:1050px;margin:auto;padding:18px 14px 60px}header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px}header a{color:#9fcaff}header strong{font-size:17px}header strong span{color:#00e6ff}.tag{border:1px solid #57739e;border-radius:30px;padding:7px;color:#b7c8e8}h1{text-align:center;font-size:clamp(24px,5vw,44px);letter-spacing:1px;margin:30px 0 8px}.intro,.disclaimer{text-align:center;color:#a5b6d2;font-size:13px}.score{display:grid;grid-template-columns:1fr 100px 1fr;align-items:center;text-align:center;margin:24px 0;padding:15px;background:#101e36;border:1px solid #2b476d;border-radius:16px}.score>div{display:grid;gap:5px}.score b{font-size:24px}.score small{color:#9db6d8}.round{font-size:12px;color:#fff}.round strong{font-size:30px;color:#00e6ff}.teams{display:grid;grid-template-columns:1fr 1fr;gap:14px}.teams section{min-width:0}.teams h2,.log h2{font-size:15px;letter-spacing:1px}.team{display:grid;gap:10px}.hero{background:#121f37;border:1px solid #315078;border-radius:13px;padding:11px;transition:box-shadow .2s,transform .2s}.hero.hit{box-shadow:0 0 0 2px #ff6078,0 0 22px #f3456366;transform:scale(.98)}.hero.cast{box-shadow:0 0 0 2px #35e6ff,0 0 22px #35e6ff66}.hero.dead{opacity:.35;filter:grayscale(1)}.hero-top{display:flex;align-items:center;justify-content:space-between;gap:6px}.hero-name{font-weight:800;font-size:14px}.role{font-size:10px;color:#9eb7d8}.stats{font-size:11px;color:#b2c6e2;margin-top:7px}.hp{height:9px;background:#38445d;border-radius:10px;overflow:hidden;margin-top:9px}.hp span{display:block;height:100%;background:linear-gradient(90deg,#09bc86,#4affb5);transition:width .35s}.health{font-size:11px;color:#c5d6ed;margin-top:4px}.controls,.log{margin-top:18px;padding:16px;background:#101d34;border:1px solid #2c466c;border-radius:15px}.controls{text-align:center}.buttons{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-top:14px}button{background:#0f89d3;border:0;border-radius:10px;color:white;padding:12px 16px;font-weight:800;cursor:pointer;touch-action:manipulation}button:nth-child(2){background:#324c77}button:nth-child(3){background:#27354d}button:disabled{opacity:.45;cursor:not-allowed}.log ol{margin:0;padding-left:22px;max-height:260px;overflow:auto;font-size:13px;line-height:1.7}.log li{border-bottom:1px solid #263955;padding:4px 0}@media(max-width:600px){.shell{padding:12px 8px 40px}.teams{gap:7px}.hero{padding:8px}.hero-name{font-size:12px}.stats{font-size:10px}.score{grid-template-columns:1fr 65px 1fr}.tag{font-size:10px}.buttons button{flex:1 1 120px}}
 /* Motion effects: existing hero cards, no generated character imagery. */
 .controls{position:relative;overflow:hidden}.battle-effects{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:3}.settings{display:flex;gap:14px;justify-content:center;align-items:center;flex-wrap:wrap;font-size:12px;color:#c5d8ef;margin-top:12px}.settings select{background:#1a3050;color:#fff;border:1px solid #56739b;border-radius:7px;padding:6px}.settings input{vertical-align:middle}.hero{position:relative;isolation:isolate}.hero.attack-melee{animation:lunge .5s ease-in-out}.hero.attack-energy{animation:charge .6s ease-in-out}.hero.hit{animation:impact .45s ease-in-out}.hero.cast{box-shadow:0 0 0 2px #35e6ff,0 0 22px #35e6ff66}.hero.dead{transition:opacity .5s,filter .5s}.damage-number{position:absolute;right:8px;top:2px;font-size:19px;font-weight:900;color:#ff6b7d;text-shadow:0 2px 8px #000;animation:floatDamage .8s ease-out forwards;pointer-events:none}.hero .heal-number{color:#69ffb2}.battle-projectile{position:fixed;z-index:99;pointer-events:none;width:14px;height:14px;border-radius:50%;background:#67e7ff;box-shadow:0 0 14px 6px #1abfff,0 0 36px 12px #1687ff;transform:translate(-50%,-50%);animation:projectileFly var(--duration,.4s) ease-in forwards}.battle-projectile.lightning{background:#fff8a1;box-shadow:0 0 15px 7px #ffdc37,0 0 32px 12px #ff9e19}.battle-projectile.magic{background:#ff83f8;box-shadow:0 0 15px 7px #d63cff,0 0 32px 12px #a320ce}.battle-projectile.heal{background:#70ffab;box-shadow:0 0 15px 7px #28d780,0 0 32px 12px #14925c}@keyframes projectileFly{from{left:var(--from-x);top:var(--from-y);opacity:1;transform:translate(-50%,-50%) scale(.8)}to{left:var(--to-x);top:var(--to-y);opacity:0;transform:translate(-50%,-50%) scale(1.7)}}@keyframes floatDamage{0%{opacity:0;transform:translateY(12px) scale(.7)}20%{opacity:1;transform:translateY(-6px) scale(1.15)}100%{opacity:0;transform:translateY(-40px)}}@keyframes impact{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}45%{transform:translateX(7px)}70%{transform:translateX(-4px)}}@keyframes lunge{0%,100%{transform:translateX(0)}50%{transform:translateX(20px) scale(1.04)}}@keyframes charge{0%,100%{filter:brightness(1)}50%{filter:brightness(1.8)}}@media(prefers-reduced-motion:reduce){.hero,.damage-number,.battle-projectile{animation:none!important}}
@@ -219,8 +220,8 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 .arena-commander-dock #experimental-commander-controls h2{display:none}
 .arena-commander-dock #experimental-commander-controls>p{margin:3px 0;font-size:12px;grid-column:1/-1}
 .arena-commander-dock #experimental-commander-controls>p:first-of-type{grid-column:1;grid-row:1;font-size:11px;white-space:nowrap}
-.arena-commander-dock #experimental-commander-controls [data-energy-meter]{grid-column:1;grid-row:2;width:100%;height:8px!important;margin:0!important;align-self:start}
-.arena-commander-dock #experimental-commander-controls>div:not([data-energy-meter]){grid-column:2/-1;grid-row:1/3;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px!important}
+.arena-commander-dock #experimental-commander-controls [data-energy-meters]{grid-column:1;grid-row:2;width:100%;height:8px!important;margin:0!important;align-self:start}
+.arena-commander-dock #experimental-commander-controls>div:not([data-energy-meters]){grid-column:2/-1;grid-row:1/3;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px!important}
 .arena-commander-dock #experimental-commander-controls [data-command]{min-width:0;min-height:44px!important;padding:8px 6px;border-radius:10px;font-size:12px;font-weight:900;touch-action:manipulation}
 .arena-commander-dock #experimental-commander-controls [data-command="pass"]{display:none}
 .arena-commander-dock #experimental-commander-controls [data-live-cooldown],.arena-commander-dock #experimental-commander-controls [data-status]{font-size:11px;line-height:1.3;overflow-wrap:anywhere}
@@ -350,7 +351,7 @@ body.arena-fit{height:auto;min-height:var(--arena-viewport-height,100vh);min-hei
 .arena-fit .arena-commander-dock #experimental-commander-controls{grid-template-columns:minmax(68px,.7fr) repeat(2,minmax(0,1fr));padding:0!important;column-gap:6px;row-gap:2px}
 .arena-fit .arena-commander-dock #experimental-commander-controls>p{margin:0;font-size:10px;line-height:12px}
 .arena-fit .arena-commander-dock #experimental-commander-controls>p:first-of-type{align-self:end;font-size:10px}
-.arena-fit .arena-commander-dock #experimental-commander-controls [data-energy-meter]{height:6px!important}
+.arena-fit .arena-commander-dock #experimental-commander-controls [data-energy-meters]{height:6px!important}
 .arena-fit .arena-commander-dock #experimental-commander-controls [data-command]{height:44px;min-height:44px!important;padding:4px;font-size:11px;line-height:14px}
 .arena-fit .arena-commander-dock #experimental-commander-controls [data-live-cooldown],.arena-fit .arena-commander-dock #experimental-commander-controls [data-status]{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;max-height:24px;overflow:hidden;font-size:10px;line-height:12px}
 .arena-room.arena-fit .controls{grid-row:5;grid-column:1;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:5px;height:44px;min-height:0;margin:0;padding:0 4px;border:0;border-radius:10px}
@@ -375,17 +376,20 @@ body.arena-fit{height:auto;min-height:var(--arena-viewport-height,100vh);min-hei
  .arena-fit .controls #play{width:86px}
  .arena-fit .arena-commander-dock #experimental-commander-controls{grid-template-columns:repeat(2,minmax(0,1fr))}
  .arena-fit .arena-commander-dock #experimental-commander-controls>p:first-of-type{grid-column:1/-1;grid-row:1}
- .arena-fit .arena-commander-dock #experimental-commander-controls [data-energy-meter]{grid-column:1/-1;grid-row:2}
- .arena-fit .arena-commander-dock #experimental-commander-controls>div:not([data-energy-meter]){grid-column:1/-1;grid-row:3}
+ .arena-fit .arena-commander-dock #experimental-commander-controls [data-energy-meters]{grid-column:1/-1;grid-row:2}
+ .arena-fit .arena-commander-dock #experimental-commander-controls>div:not([data-energy-meters]){grid-column:1/-1;grid-row:3}
  .arena-fit .arena-commander-dock #experimental-commander-controls [data-live-cooldown]{grid-row:4}
  .arena-fit .arena-commander-dock #experimental-commander-controls [data-status]{grid-row:5}
 }
 
 /* Exact server-confirmed impact, shown on the affected portrait after the cast. */
 .commander-hero-impact{position:fixed;z-index:10025;pointer-events:none;display:grid;place-items:center;border:3px solid var(--impact-color);border-radius:14px;box-shadow:0 0 18px var(--impact-color),inset 0 0 16px var(--impact-color);animation:commanderImpact 1.2s ease-out both;color:var(--impact-color)}
-.commander-hero-impact.damage{--impact-color:#ff8c91}.commander-hero-impact.shield{--impact-color:#80dfff}.commander-hero-impact.heal{--impact-color:#85f8ae}.commander-hero-impact.weaken{--impact-color:#ddb0ff}
+.commander-hero-impact.damage{--impact-color:#ff8c91}.commander-hero-impact.shield{--impact-color:#80dfff}.commander-hero-impact.heal{--impact-color:#85f8ae}.commander-hero-impact.weaken,.commander-hero-impact.stun{--impact-color:#ddb0ff}
 .commander-impact-label{display:flex;align-items:center;flex-direction:column;justify-content:center;gap:2px;min-width:58px;max-width:100px;padding:4px 5px;border:1px solid currentColor;border-radius:8px;background:#081322f5;box-shadow:0 2px 8px #000b;text-align:center;font:800 9px/1.1 system-ui,sans-serif;white-space:nowrap}
 .commander-impact-label strong{font-size:clamp(15px,3.5vw,24px);line-height:1.05}.commander-impact-label small{font-size:9px}
+.commander-impact-label strong.stun-next-attack{max-width:90px;font-size:11px;line-height:1.15;white-space:normal}
+.commander-impact-label strong.focus-until-death{max-width:90px;font-size:11px;line-height:1.15;white-space:normal}
+.commander-impact-label strong.hunt-next-attack{max-width:90px;font-size:11px;line-height:1.15;white-space:normal}
 @keyframes commanderImpact{0%{opacity:0;transform:scale(.9)}12%,80%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.04)}}
 @media(prefers-reduced-motion:reduce){.commander-hero-impact{animation:none}}
 
@@ -447,20 +451,6 @@ body.arena-results .shell{height:auto;min-height:100dvh;padding-top:8px}
 #arena-friend-opponent[hidden]{display:none}
 @media(max-width:600px){.arena-social-nav .arena-prep-link{display:none}.arena-room.arena-fit #arena-friend-opponent{max-width:160px;flex:0 1 160px}}
 
-/* Inbox is collapsed by default and opens only on request, away from commander actions. */
-.arena-social-nav{position:relative}
-.arena-invites-inbox{font-size:11px;flex:0 0 auto}
-.arena-invites-inbox[hidden]{display:none}
-.arena-invites-inbox summary{display:flex;align-items:center;min-height:44px;padding:6px 8px;cursor:pointer;border:1px solid #80d9c3;border-radius:9px;background:#153c3b;color:#d9fff6;list-style:none}
-.arena-invites-inbox .room-invites-popover{position:absolute;z-index:20;top:100%;right:0;width:min(420px,calc(100vw - 24px));max-height:32dvh;overflow:auto;padding:12px;background:#10243a;border:1px solid #80d9c3;border-radius:12px;box-shadow:0 8px 24px #0009}
-.arena-invites-inbox button{font-size:11px;min-height:44px;padding:7px;margin:3px}
-.arena-invites-inbox p{line-height:1.4}
-@media(max-width:600px){.arena-social-nav:has(.arena-invites-inbox:not([hidden])) #arena-friend-opponent{max-width:90px;font-size:10px}.arena-social-nav:has(.arena-invites-inbox:not([hidden]))>strong{display:none}}
-.arena-invites-inbox .room-invite-row{padding:8px 0;border-top:1px solid #34516b;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
-.arena-invites-inbox .room-invite-copy{flex:1 1 100%;min-width:0;overflow-wrap:anywhere}
-.arena-invites-inbox .room-invite-copy strong,.arena-invites-inbox .room-invite-copy small{display:block;line-height:1.5}
-.arena-invites-inbox .room-invite-copy small{color:#c2d5e8;margin-top:4px}
-
 /* Preparation prioritizes selecting and placing heroes. Combat selectors above stay unchanged. */
 body:not(.arena-room) .shell{position:relative;padding-top:6px}
 body:not(.arena-room) .arena-room-nav{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 8px;min-height:44px;margin:0 auto 6px;padding:0 52px 0 0;max-width:860px}
@@ -513,6 +503,14 @@ body:not(.arena-room) .formation{margin-top:6px;padding:10px}
 .arena-audio-credits{padding:4px 16px 16px;text-align:center;font-size:12px}
 .arena-audio-credits a{display:inline-flex;align-items:center;min-height:44px;color:#a6d5ff;text-underline-offset:3px}
 
+
+/* Result casualties: mute the portrait and row palette, not numeric opacity. */
+.arena-results .battle-hero-stat-row--defeated{background:#ffffff06}
+.arena-results .battle-hero-stat-row--defeated .summary-hero-portrait{filter:grayscale(1);opacity:.5}
+.arena-results .battle-hero-stat-row.battle-hero-stat-row--defeated strong,.arena-results .battle-hero-stat-row.battle-hero-stat-row--defeated>span{color:#aab8c6}
+.battle-hero-stat-row .battle-stat-status{display:block;width:max-content;max-width:100%;margin-top:3px;padding:1px 5px;border:1px solid currentColor;border-radius:4px;font-size:10px;font-weight:600;line-height:1.35;color:inherit;text-align:left}
+@media(forced-colors:active){.arena-results .battle-hero-stat-row--defeated .summary-hero-portrait{opacity:1}.battle-stat-status{color:CanvasText}}
+
 /* Static inner rarity frame; outer blue/red team and selection borders stay intact.
    Badge lives inside the portrait, never on names, HP, shield or lane controls. */
 [data-rarity="common"]{--hero-rarity:#aab0bb}
@@ -536,3 +534,34 @@ body:not(.arena-room) .formation{margin-top:6px;padding:10px}
 .battle-hero-stat-row .battle-stat-name{min-width:0;overflow-wrap:anywhere;text-align:left;color:inherit}
 .battle-hero-stat-row .hero-rarity-badge{color:var(--hero-rarity)}
 @media(max-width:360px){.summary-hero-portrait{width:26px;height:30px}.battle-stat-identity{gap:4px}}
+
+/* Independent resources: normal casts never drain the one-use ultimate charge. */
+.commander-energy-labels span{display:block}
+[data-energy-meters]{display:grid;gap:3px;margin-bottom:10px}
+[data-energy-meter],[data-ultimate-energy-meter]{height:5px;background:#24314e;border-radius:6px;overflow:hidden}
+[data-energy-fill],[data-ultimate-energy-fill]{height:100%;width:0;transition:width .2s;background:#27c6f8}
+[data-ultimate-energy-fill]{background:#d6a4ff}
+.arena-commander-dock #experimental-commander-controls [data-energy-meters]{height:auto!important;gap:2px}
+.arena-commander-dock #experimental-commander-controls>p:first-of-type{white-space:normal;line-height:12px}
+
+/* Equal independent front/back lanes: no vacant fixed slots, no mid-hit shifts.
+   Every hero spans its lane's share of 60 tracks (LCM of 1,2,3,4,5).
+   Zero row gap avoids multiplying gutters across these presentation tracks. */
+.arena-room .arena-side .team,.arena-side .team{grid-template-rows:repeat(60,minmax(0,1fr));row-gap:0;min-height:calc(var(--arena-row-count,5) * 110px)}
+.arena-room.arena-fit .arena-side .team{grid-template-rows:repeat(60,minmax(0,1fr));row-gap:0;min-height:0}
+.arena-room.arena-fit .arena-side .arena-hero{height:calc(100% - 3px);align-self:center}
+
+/* Server-owned pending stun; no timer or inferred status duration. */
+.arena-stun-status{position:absolute;left:50%;top:2px;transform:translateX(-50%);z-index:5;max-width:94%;padding:2px 4px;border:1px solid #ddb0ff;border-radius:5px;background:#271333ed;color:#f0d9ff;font:800 8px/1.1 system-ui,sans-serif;white-space:nowrap;pointer-events:none}
+
+/* Lethal-hit protection is server-owned; this badge never runs a local timer. */
+.arena-last-stand-status{position:absolute;left:50%;top:16px;transform:translateX(-50%);z-index:5;max-width:94%;padding:2px 4px;border:1px solid #a7d7ff;border-radius:5px;background:#102c49ed;color:#dbf1ff;font:800 8px/1.1 system-ui,sans-serif;white-space:nowrap;pointer-events:none}
+.arena-last-stand-status[data-state="active"]{border-color:#ffe69c;background:#3c310fed;color:#fff0b9}
+
+/* One pending server-owned attack bonus; it can coexist with stun/protection. */
+.arena-hunt-status{position:absolute;left:50%;top:30px;transform:translateX(-50%);z-index:5;max-width:94%;padding:2px 4px;border:1px solid #ffc17c;border-radius:5px;background:#42260fed;color:#ffe4c1;font:800 8px/1.1 system-ui,sans-serif;white-space:nowrap;pointer-events:none}
+
+/* Reserve the commander dock before late control initialization. The initial
+   visible arena therefore has its final field height, not a cover-crop resize. */
+.arena-room.arena-fit .arena-commander-dock{min-height:142px}
+@media(min-width:600px) and (max-height:600px){.arena-room.arena-fit .arena-commander-dock{min-height:180px}}

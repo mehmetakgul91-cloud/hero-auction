@@ -1,3 +1,14 @@
+import {mountFirstSession,describeFirstCommander} from '../public/first-session.js';
+import {createAuctionCommanderDialog,auctionCommanderMarkup} from '../public/auction-commander.js';
+import {createRoomChat} from '../public/room-chat.js';
+import {createPlayerSessionTracker} from '../public/player-session-client.js';
+import {isAuctionEntry,resetAuctionEntryViewport} from '../public/auction-entry.js';
+import {victoryChestReceipt} from '../public/victory-chest.js';
+import {createHeaderWallet} from '../public/header-wallet.js';
+import {createWalletOperations} from '../public/wallet-operations.js';
+import {renderCommanderExchange,commanderExchangeQuote} from '../public/commander-exchange-view.js';
+import {renderCommanderSkills,renderCommanderDevelopment,commanderBranchView,commanderDiamondPolicyCopy} from '../public/commander-profile-view.js';
+import {COMMANDER_CHANGE_COST} from '../public/commander-economy.js';
 import {auctionMatchKey,isStaleAuctionSnapshot,createTailReceipts} from '../public/auction-delivery-state.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -84,8 +95,8 @@ function app({storedLogin=false,profile=null,saved=null,commanderGate=null,state
   if(String(path).startsWith('https:'))return response({results:[]});
   return response({players:0,matches:0,waiting:0});
  };
- const document={addEventListener(){},getElementById:$,createElement:()=>element(),documentElement:{lang:'tr'},querySelector:()=>null};
- const context=createContext({auctionMatchKey,isStaleAuctionSnapshot,createTailReceipts,document,localStorage,sessionStorage:localStorage,location,history:{state:null,replaceState(_,__,url){location.href=new URL(url,location).href}},
+ const document={addEventListener(){},getElementById:$,createElement:()=>element(),documentElement:{lang:'tr',classList:{contains:()=>false}},querySelector:()=>null};
+ const context=createContext({mountFirstSession,describeFirstCommander,createAuctionCommanderDialog,auctionCommanderMarkup,createPlayerSessionTracker:()=>createPlayerSessionTracker({document,location,fetch,window:null,navigator:{},crypto:{randomUUID:()=>{throw Error('Disabled analytics must not create an identifier');}}}),createRoomChat,isAuctionEntry,resetAuctionEntryViewport,victoryChestReceipt,createHeaderWallet,createWalletOperations,createStorefront:()=>({setLogin(){},close(){}}),renderCommanderExchange,commanderExchangeQuote,renderCommanderSkills,renderCommanderDevelopment,commanderBranchView,commanderDiamondPolicyCopy,COMMANDER_CHANGE_COST,auctionMatchKey,isStaleAuctionSnapshot,createTailReceipts,document,localStorage,sessionStorage:localStorage,location,history:{state:null,replaceState(_,__,url){location.href=new URL(url,location).href}},
   window:{location,addEventListener(){},scrollTo(){},matchMedia:()=>({matches:true})},URL,URLSearchParams,console,fetch,crypto:{randomUUID:()=> 'visitor'},
   setTimeout(){},setInterval(){},clearInterval(){},cancelAuctionReveal(){},commanderAbilityStats,COMMANDER_START_ENERGY,createWebInvite,renderWebInvite,createInviteSharer,createRoomInvitesUI:()=>({setLogin(){},setRoom(){},refresh(){},cancelRoomInvites:async()=>{}}),createFriendsUI:()=>({setLogin(){},setRoom(){},open(){},close(){}}),navigator:{},
   EventSource:class{close(){}},collectTailAwards:()=>[],collectOfferedAwards:()=>[],confirm:()=>true});

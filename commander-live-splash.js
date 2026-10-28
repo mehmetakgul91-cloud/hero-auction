@@ -1,3 +1,5 @@
+import {expireCommanderFocus} from './battle-commander-focus.js';
+import {applyHeroDamage} from './battle-hp-damage.js';
 // Experimental server-only multi-target splash action. Atomic snapshot update.
 import {grantLiveCommanderEnergy} from './commander-live-abilities.js';
 import {calculateSplashRawDamage} from './battle-special-formulas.js';
@@ -12,18 +14,16 @@ export function applyServerSplashAction(combat,{side,actorId,primaryTargetId,pri
  if(!splashRaw)throw Error('No splash effect');
  const events=[],killed=[];
  for(const target of next[1-side].filter(u=>u!==primary&&u.hp>0)){
-  const absorbed=Math.min(target.shield||0,splashRaw);
-  target.shield=(target.shield||0)-absorbed;
-  const damage=Math.min(target.hp,splashRaw-absorbed);
-  target.hp-=damage;
+  const {damage,absorbed,guardTriggered,lastStandTriggeredRound,lastStandImmortalUntilRound,arcaneTransfer}=applyHeroDamage(target,splashRaw,{round,allies:next[1-side]});
   actor.damage=(actor.damage||0)+damage;
   if(target.hp===0){actor.kills=(actor.kills||0)+1;killed.push(target.id);}
-  events.push({round,side,actor:actorId,action:'splash',target:target.id,value:damage,absorbed,rawDamage:splashRaw,damageType:'splash'});
+  events.push({round,side,actor:actorId,action:'splash',target:target.id,value:damage,absorbed,rawDamage:splashRaw,damageType:'splash',...(guardTriggered?{guardTriggered:true}:{}),...(lastStandImmortalUntilRound?{lastStandTriggeredRound,lastStandImmortalUntilRound}:{}),...(arcaneTransfer?{arcaneTransfer}:{})});
  }
  combat.teams=next;
  combat.version++;
  for(const event of events){event.version=combat.version;combat.events.push(event);}
  for(const id of killed)grantLiveCommanderEnergy(combat.abilities,1-side,10);
+ expireCommanderFocus(next,round);
  combat.finished=next.some(team=>team.every(u=>u.hp<=0));
  combat.abilities.finished=combat.finished;
  return {version:combat.version,events,teams:structuredClone(next),finished:combat.finished};

@@ -1,4 +1,5 @@
-// Commander progression prototype. Gold spending must be validated and persisted server-side.
+// Commander progression. Currency spending is validated and persisted server-side.
+import {commanderGoldUpgradeCost} from './public/commander-economy.js';
 export const COMMANDER_STATS=Object.freeze(['attack','defense','magic','support']);
 export const COMMANDER_SPECIALTY_MAX_LEVEL=40;
 export const COMMANDER_OTHER_MAX_LEVEL=20;
@@ -24,13 +25,7 @@ export function validateCommanderProfile(profile){
  return profile;
 }
 export function commanderUpgradeCost(currentLevel){
- if(!Number.isInteger(currentLevel)||currentLevel<0||currentLevel>=COMMANDER_SPECIALTY_MAX_LEVEL)throw Error('Geliştirme sınırı');
- return 200*(currentLevel+1);
-}
-// Reserved for a future diamond wallet; diamonds cannot be spent yet.
-export function commanderDiamondUpgradeCost(currentLevel){
- if(!Number.isInteger(currentLevel)||currentLevel<0||currentLevel>=COMMANDER_SPECIALTY_MAX_LEVEL)throw Error('Geliştirme sınırı');
- return 10*(currentLevel+1);
+ return commanderGoldUpgradeCost(currentLevel);
 }
 export function previewCommanderUpgrade(profile,stat,gold){
  validateCommanderProfile(profile);

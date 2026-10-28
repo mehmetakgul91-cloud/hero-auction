@@ -1,3 +1,9 @@
+import {consumeCommanderHunt,expireCommanderHunt} from './commander-hunt-status.js';
+import {applyServerStunSkip} from './commander-live-combat.js';
+import {expireCommanderFocus} from './battle-commander-focus.js';
+import {commanderWeakenRate,consumeCommanderWeaken} from './commander-weaken-status.js';
+import {abilityValue} from './public/hero-ability-rules.js';
+import {applyHeroDamage} from './battle-hp-damage.js';
 // Server-only experimental special attack: shield or drain.
 // Primary hit and special effect commit as one action.
 import {applyAttackThorns} from './commander-parity-thorns.js';
@@ -12,42 +18,44 @@ export function stepParityShieldDrain(combat,{side,actorId,round=combat?.round,c
  if(!actor||(actor.passive&&!((allowThornsPassive&&actor.passive.effect==='thorns')||(allowRoundPassives&&['guard','resist','focus','evasion','momentum','regen','rage'].includes(actor.passive.effect))))||!['shield','drain'].includes(effect)||!Number.isFinite(actor.attack)||!Number.isFinite(actor.defense))throw Error('Unsupported special attack');
  const enemies=teams[1-side],target=selectBattleTarget(enemies,actor,round);
  if(!target)throw Error('No living target');
+ const skipped=applyServerStunSkip(combat,{side,actorId,round});if(skipped)return skipped;
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
- const weakened=Number.isInteger(actor.commanderWeakenUntilRound)&&round<=actor.commanderWeakenUntilRound?Math.max(0,Math.min(1,Number(actor.commanderWeaken)||0)):0;
- const raw=calculateHeroRawDamage({unit:actor,target,skill:actor.active,special:true,critical,guarded,weakened});
- const absorbed=Math.min(target.shield||0,raw);
- target.shield=(target.shield||0)-absorbed;
- const damage=Math.min(target.hp,raw-absorbed);
- target.hp-=damage;actor.damage=(actor.damage||0)+damage;
+ const weakened=commanderWeakenRate(actor,round);
+ const raw=calculateHeroRawDamage({unit:actor,target,skill:actor.active,special:true,critical,guarded,weakened,round});
+ const {damage,absorbed,guardTriggered,lastStandTriggeredRound,lastStandImmortalUntilRound,arcaneTransfer}=applyHeroDamage(target,raw,{round,allies:enemies});
+ actor.damage=(actor.damage||0)+damage;
  const killed=target.hp===0;
  if(killed)actor.kills=(actor.kills||0)+1;
  const events=[];
  if(effect==='drain'){
-  const healed=Math.min(actor.maxHp-actor.hp,Math.floor(damage*.15));
+  const healed=Math.min(actor.maxHp-actor.hp,Math.floor(damage*abilityValue(actor.active,'drainRate')));
   actor.hp+=healed;actor.healing=(actor.healing||0)+healed;
   if(healed)events.push({round,side,actor:actorId,action:'heal',target:actorId,value:healed});
  }else{
-  const amount=Math.round(actor.defense*.4);
+  const amount=Math.round(actor.defense*abilityValue(actor.active,'shieldRate'));
   actor.shield=(actor.shield||0)+amount;
   events.push({round,side,actor:actorId,action:'shield',target:actorId,value:amount});
  }
  if(actor.role==='tank')for(const ally of teams[side].filter(u=>u.hp>0&&u.lane==='front')){
-  const amount=Math.max(1,Math.round(actor.defense*.16));
+  const amount=Math.max(1,Math.round(actor.defense*abilityValue(actor.active,'frontShieldRate')));
   ally.shield=(ally.shield||0)+amount;
   events.push({round,side,actor:actorId,action:'tank-front-shield',target:ally.id,value:amount});
  }
- events.push({round,side,actor:actorId,action:actor.active.name||'special',target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:'special'});
+ events.push({round,side,actor:actorId,action:actor.active.name||'special',target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:'special',...(guardTriggered?{guardTriggered:true}:{}),...(lastStandImmortalUntilRound?{lastStandTriggeredRound,lastStandImmortalUntilRound}:{}),...(arcaneTransfer?{arcaneTransfer}:{})});
  if(actor.role==='tank'){
-  const amount=Math.round(actor.defense*.2);
+  const amount=Math.round(actor.defense*abilityValue(actor.active,'tankShieldRate'));
   actor.shield=(actor.shield||0)+amount;
   events.push({round,side,actor:actorId,action:'tank-self-shield',target:actorId,value:amount});
  }
  const splashDeaths=applyEnergySpecialSplash({actor,enemies,target,raw,round,side,events});
  const thornsShield=applyAttackThorns(actor,{enabled:allowThornsPassive});
  if(thornsShield)events.push({round,side,actor:actorId,action:'thorns-shield',target:actorId,value:thornsShield});
+ consumeCommanderWeaken(actor);
+ if(consumeCommanderHunt(actor))events.find(event=>['normal','special'].includes(event.damageType)).huntAttackConsumed=true;
  combat.teams=teams;combat.version++;
  for(const event of events){event.version=combat.version;combat.events.push(event);}
  for(let i=0;i<Number(killed)+splashDeaths;i++)grantLiveCommanderEnergy(combat.abilities,1-side,10);
+ expireCommanderFocus(teams,round);expireCommanderHunt(teams);
  combat.finished=teams.some(team=>team.every(u=>u.hp<=0));
  combat.abilities.finished=combat.finished;
  return {version:combat.version,events,teams:structuredClone(teams),finished:combat.finished};

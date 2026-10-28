@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile, access } from 'node:fs/promises';
+import { readFile, access, readdir } from 'node:fs/promises';
+import sharp from 'sharp';
 import { apiUrl, linkAction, readConfig } from '../src/policy.js';
 import { adaptSource, buildNative } from '../scripts/build.mjs';
+import { MAX_WEB_BYTES } from '../scripts/package-assets.mjs';
 const local='https://localhost',api='https://api.example.com',pub='https://heroauction.com.tr';
 test('config only accepts fixed HTTPS origins and fails closed for unconfigured preview',()=>{
   assert.equal(readConfig({apiOrigin:'https://example.invalid',publicOrigin:'https://example.invalid'}).configured,false);
@@ -45,5 +47,33 @@ test('complete native assets build with no admin/development distribution',async
   await access(new URL('../www/index.html',import.meta.url));
   await access(new URL('../www/images/lobby-crest.svg',import.meta.url));
   await access(new URL('../www/moderation.js',import.meta.url));
-  for(const file of ['admin.html','admin.js','platform.js','arena-3d.html'])await assert.rejects(access(new URL('../www/'+file,import.meta.url)));
+  for(const file of ['admin.html','admin.js','admin-maintenance.js','admin-wallet-credits.js','platform.js','arena-3d.html','original-heroes.html','commander-training.html','images/original/hero-10.png','images/original/expansion-09.webp'])await assert.rejects(access(new URL('../www/'+file,import.meta.url)));
+  const roster=JSON.parse(await readFile(new URL('../../commander-original-roster.json',import.meta.url),'utf8'));
+  const aliases=JSON.parse(await readFile(new URL('../www/native-image-aliases.json',import.meta.url),'utf8'));
+  assert.equal(roster.characters.length,50);
+  for(const hero of roster.characters){
+    const image=await sharp(await readFile(new URL('../www/'+(aliases[hero.portrait]||hero.portrait.slice(1)),import.meta.url))).metadata();
+    assert.ok(image.width>0&&image.width<=640&&image.height>0&&image.height<=640,hero.id);
+    assert.equal(image.format,'webp',hero.id);
+  }
+  const music='audio/hero-auction-senkron-davul-bas-2dk.mp3';
+  assert.deepEqual(await readFile(new URL('../www/'+music,import.meta.url)),await readFile(new URL('../../public/'+music,import.meta.url)));
+  const report=JSON.parse(await readFile(new URL('../package-report.json',import.meta.url),'utf8'));
+  assert.ok(report.webBytes<MAX_WEB_BYTES,JSON.stringify(report));
+  for(const track of ['determined-pursuit','eternal-sands','atlas-kazakhstan','japanese-fight','monkoto','ragnarok']) {
+    const file='audio/arena/'+track+'.mp3';
+    assert.deepEqual(await readFile(new URL('../www/'+file,import.meta.url)),await readFile(new URL('../../public/'+file,import.meta.url)));
+  }
+  assert.ok(report.omitted.includes('images/original/hero-10.png'));
+  assert.ok(Object.keys(aliases).length>0);
+  for(const file of await readdir(new URL('../../public/images/arena-themes/',import.meta.url))) {
+    assert.deepEqual(await readFile(new URL('../www/images/arena-themes/'+file,import.meta.url)),await readFile(new URL('../../public/images/arena-themes/'+file,import.meta.url)),file+' keeps source scene quality');
+  }
+  for(const branch of ['attack','defense','magic','support'])await access(new URL('../www/images/commander-branch-'+branch+'.svg',import.meta.url));
+  for(const [source,destination] of Object.entries(aliases)) {
+    const original=await sharp(await readFile(new URL('../../public'+source,import.meta.url))).resize({width:640,height:640,fit:'inside',withoutEnlargement:true}).ensureAlpha().raw().toBuffer();
+    const encoded=await sharp(await readFile(new URL('../www/'+destination,import.meta.url))).ensureAlpha().raw().toBuffer();
+    assert.deepEqual(encoded,original,source+' must be pixel-identical after existing resize');
+    await assert.rejects(access(new URL('../www'+source,import.meta.url)));
+  }
 });

@@ -1,3 +1,4 @@
+import {calculateShieldAbsorption} from './battle-shield-absorption.js';
 // Bridge existing deterministic battle logs to the experimental live combat session.
 // Supports direct damage, splash, shield and healing logs. Passive buffs,
 // debuffs and unlogged state changes require dedicated engine integration.
@@ -21,7 +22,7 @@ export function applyBattleLogHeroEvent(combat,event){
   amount=event.rawDamage;
   if(!Number.isSafeInteger(amount)||amount<0||amount>1000000||amount<event.value+absorbed)throw Error('Damage log requires trustworthy raw damage');
   const target=combat.teams[1-event.side]?.find(u=>u.id===event.target&&u.hp>0);
-  if(!target||Math.min(target.shield||0,amount)!==absorbed||Math.min(target.hp,amount-absorbed)!==event.value)throw Error('Battle log diverged from authoritative state');
+  if(!target||calculateShieldAbsorption(target.shield||0,amount)!==absorbed||Math.min(target.hp,amount-absorbed)!==event.value)throw Error('Battle log diverged from authoritative state');
  }
  // Do not grant next-round energy until all event validations have passed.
  if(event.round===combat.round+1)beginServerCombatRound(combat,event.round);

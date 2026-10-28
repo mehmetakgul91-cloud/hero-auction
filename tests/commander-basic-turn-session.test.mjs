@@ -69,13 +69,18 @@ test('opt-in support heals injured ally on third round instead of attacking',()=
  assert.equal(c.teams[0][1].hp,72);
  assert.equal(c.teams[1][0].hp,100);
 });
-test('opt-in self-heal falls back to ordinary attack when at full HP',()=>{
+test('full-HP healer fallback preserves its special multiplier instead of an ordinary attack',()=>{
  const c=make();c.round=3;
- c.teams[0][0].active={effect:'heal'};
+ c.teams[0][0].active={effect:'heal',name:'Prayer',power:1.12};
+ c.teams[0][0].role='support';c.teams[0][0].attack=100;
+ c.teams[1][0].defense=50;c.teams[1][0].hp=c.teams[1][0].maxHp=1000;
  const session=createBasicTurnSession(c,{parity:true,specialHealing:true});
  const {result}=stepBasicTurn(session);
- assert.equal(result.event.action,'attack');
- assert.ok(c.teams[1][0].hp<100);
+ assert.equal(result.event.action,'Prayer');
+ assert.equal(result.event.damageType,'special');
+ // The old ordinary fallback produced 48 (62 critical), not 53 (69 critical).
+ assert.equal(result.event.rawDamage,result.event.critical?69:53);
+ assert.equal(c.teams[1][0].hp,1000-result.event.rawDamage);
 });
 test('unported special effects remain blocked even with healing enabled',()=>{
  const c=make();c.teams[0][0].active={effect:'splash'};
@@ -91,9 +96,11 @@ test('opt-in energy splash applies primary and secondary damage in one scheduled
  assert.equal(result.events.length,2);
  assert.equal(c.version,1);
  assert.equal(peekBasicTurn(s).actorId,'b');
- assert.equal(c.teams[1].filter(u=>u.hp<100).length,1);
- assert.equal(c.teams[1][1].hp,100);
- assert.equal(c.teams[1][1].shield,10-result.events.find(e=>e.action==='splash').rawDamage);
+ const splash=result.events.find(e=>e.action==='splash');
+ const absorbed=Math.min(10,Math.floor(splash.rawDamage*7/10));
+ assert.equal(c.teams[1].filter(u=>u.hp<100).length,2);
+ assert.equal(c.teams[1][1].hp,100-(splash.rawDamage-absorbed));
+ assert.equal(c.teams[1][1].shield,10-absorbed);
 });
 test('energy splash is inactive on ordinary rounds',()=>{
  const c=make();c.teams[0][0].role='energy';

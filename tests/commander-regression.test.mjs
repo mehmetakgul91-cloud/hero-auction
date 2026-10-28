@@ -19,7 +19,7 @@ for(const id of ['attack','defense','magic','support']){
   assert.equal(result.commanders[0].commanderId,id);
   assert.equal(result.log.some(x=>String(x.action).startsWith('commander-'+id+'-')),false);
  });
- test(id+' cannot use ultimate before reaching 100 energy',()=>{
+ test(id+' cannot use ultimate before reaching 85 energy',()=>{
   assert.throws(()=>run(id,[{side:0,round:2,ability:'ultimate'}]),/Insufficient commander energy/);
  });
  test(id+' cannot use ultimate at round one',()=>{
@@ -58,7 +58,7 @@ test('ultimate ability becomes available by the seventh round at level zero',()=
  const result=simulateBattle(durable('alpha'),durable('beta'),{
   seed:'commander-ultimate-long-match',maxRounds:15,
   commanders:[createCommanderProfile('attack'),createCommanderProfile('defense')],
-  commanderActions:[{side:0,round:7,ability:'ultimate'}]
+  commanderActions:[{side:0,round:7,ability:'ultimate',targetIds:['beta0']}]
  });
  assert.ok(result.log.some(x=>x.action==='commander-attack-ultimate'),
   'Expected ultimate in round seven; battle ended at round '+result.rounds);

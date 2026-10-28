@@ -98,12 +98,12 @@ test('changing match releases the previous media, resets fallback and never reas
  const h=fixture();h.player.setTrack(tracks[0]);await h.player.play();const loads=h.audio.loads;
  h.player.setTrack(tracks[0]);assert.equal(h.audio.loads,loads);h.player.setTrack(tracks[1]);assert.equal(h.audio.src,'');await h.player.play();assert.equal(h.audio.src,tracks[1].src);
 });
-test('first TEST manifest contains three distinct uploaded assets, no Latin or unlicensed artist recordings; hashes and credits match',()=>{
+test('complete manifest contains six distinct real assets, no Latin or unlicensed artist recordings; hashes and credits match',()=>{
  const provenance=JSON.parse(readFileSync(new URL('../docs/arena-music-provenance.json',import.meta.url)));
- assert.deepEqual(ARENA_TRACKS.map(t=>t.id).sort(),['atlas-kazakhstan','determined-pursuit','eternal-sands']);
- assert.equal(provenance.tracks.length,3);
+ assert.deepEqual(ARENA_TRACKS.map(t=>t.id).sort(),['atlas-kazakhstan','determined-pursuit','eternal-sands','japanese-fight','monkoto','ragnarok']);
+ assert.equal(provenance.tracks.length,6);
  const credits=readFileSync(new URL('../public/music-credits.html',import.meta.url),'utf8');
- assert.equal((credits.match(/<li>/g)||[]).length,3);
+ assert.equal((credits.match(/<li>/g)||[]).length,6);
  for(const track of ARENA_TRACKS)assert.ok(credits.includes(track.title));
  assert.ok(!ARENA_TRACKS.some(t=>/latin|fupi|hassak|ulytau/i.test(JSON.stringify(t))));
  for(const track of ARENA_TRACKS){
@@ -125,17 +125,17 @@ test('browser integration keeps platform mute, visibility, page teardown, author
  assert.match(crazyGamesSource(source,'.js'),/from '\/crazygames\/arena-music-tracks.js'/);
 });
 
-test('three-track release completes shuffle cycles without repeats and migrates six-track storage',()=>{
- const saved=storage();createArenaPlaylist(tracks,{storage:saved}).select('old-match');
+test('six-track completion migrates three-track storage and completes shuffle cycles without repeats',()=>{
+ const saved=storage();createArenaPlaylist(ARENA_TRACKS.filter(t=>['atlas-kazakhstan','determined-pursuit','eternal-sands'].includes(t.id)),{storage:saved}).select('old-match');
  let playlist=createArenaPlaylist(ARENA_TRACKS,{storage:saved,random:()=>.4}),last=null;
  for(let cycle=0;cycle<10;cycle++){
   const heard=[];
-  for(let i=0;i<3;i++){
+  for(let i=0;i<6;i++){
    const key='release-'+cycle+'-'+i,chosen=playlist.select(key);
    assert.notEqual(chosen.id,last);last=chosen.id;heard.push(chosen.id);
    playlist=createArenaPlaylist(ARENA_TRACKS,{storage:saved,random:()=>.4});
    assert.equal(playlist.select(key).id,chosen.id);
   }
-  assert.equal(new Set(heard).size,3);
+  assert.equal(new Set(heard).size,6);
  }
 });

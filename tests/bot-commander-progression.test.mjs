@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createBotCommanderProfile,chooseBotCommander} from '../bot-strategy.js';
 import {COMMANDER_STATS,createCommanderProfile,previewCommanderUpgrade,commanderUpgradeCost} from '../arena-commanders.js';
-import {commanderAbilityStats,commanderAbilityDescription} from '../public/commander-ability-rules.js';
+import {commanderAbilityStats,commanderAbilityDescription,getCommanderAbilityCost} from '../public/commander-ability-rules.js';
 import {prepareLiveArenaTeams} from '../commander-live-team-preparation.js';
 import {battleRoster} from '../battle-roster.js';
 import {createLiveCommanderAbilities} from '../commander-live-abilities.js';
@@ -17,7 +17,7 @@ for(const [difficulty,level,gain] of [['easy',5,14],['medium',10,17],['hard',15,
    earned=previewCommanderUpgrade(earned,stat,commanderUpgradeCost(n)).profile;
   }
   assert.deepEqual(profile,earned,'exactly reachable through human branch upgrade rules');
-  assert.equal(cost,4*100*level*(level+1));
+  assert.equal(cost,4*({5:1489,10:5194,15:14412}[level]),'approved exponential gold curve; bots still spend no currency');
   assert.equal(commanderAbilityStats(profile).level,level);
   assert.equal(commanderAbilityStats(profile).energyPerRound,gain);
   assert.equal(commanderAbilityStats(profile).bonusPercent,level);
@@ -35,16 +35,29 @@ for(const [difficulty,level,gain] of [['easy',5,14],['medium',10,17],['hard',15,
   assert.deepEqual(combat.abilities.energy,[42,30+gain]);
   for(const ability of ['normal','ultimate']){
    const castAt=p=>{
-    const c=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'cast',energy:[100,100],now:0}),teams:teams(),commanders:[createCommanderProfile('attack'),p]});
-    const out=castLiveCommanderCombat(c,{side:1,ability,requestId:'test-cast-01',matchKey:'cast',now:1000,targetIds:ability==='normal'?['0-0']:['0-0','0-1']});
-    assert.equal(c.abilities.energy[1],ability==='normal'?60:0);assert.equal(c.abilities.cooldownUntil[1],6000);
+    const castTeams=teams();if(id==='support'&&ability==='ultimate')castTeams[1][4].hp=0;
+    const c=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'cast',energy:[100,100],now:0}),teams:castTeams,commanders:[createCommanderProfile('attack'),p]});
+    const out=castLiveCommanderCombat(c,{side:1,ability,requestId:'test-cast-01',matchKey:'cast',now:1000,targetIds:id==='magic'?(ability==='normal'?['0-0']:['1-0']):id==='support'&&ability==='ultimate'?['1-4']:id==='attack'&&ability==='ultimate'?['0-0']:id==='defense'&&ability==='ultimate'?['1-0']:undefined});
+    assert.equal(c.abilities[ability==='ultimate'?'ultimateEnergy':'energy'][1],100-getCommanderAbilityCost(id,ability));assert.equal(c.abilities[ability==='ultimate'?'energy':'ultimateEnergy'][1],100);assert.equal(c.abilities.cooldownUntil[1],ability==='normal'?6000:0);
     return out;
    };
    const base=castAt(createCommanderProfile(id)),upgraded=castAt(profile);
    assert.equal(upgraded.events.at(-1).commanderLevel,level);
    assert.equal(upgraded.events.at(-1).abilityBonusPercent,level);
-   if(id==='magic')assert.equal(upgraded.teams[0][0].commanderWeaken,commanderAbilityStats(profile)[ability+'Rate']);
-   else assert.ok(upgraded.events.at(-1).value>base.events.at(-1).value,'real effect scales, not only displayed profile');
+   if(id==='magic'&&ability==='normal'){assert.equal(upgraded.teams[0][0].commanderStunNextAttack,true);assert.equal(upgraded.teams[0][0].commanderWeaken,undefined);assert.deepEqual(upgraded.events.at(-1).impacts,base.events.at(-1).impacts,'normal stun is one skipped attack at every difficulty');}
+   else if(ability==='ultimate'&&id==='magic'){
+    assert.equal(upgraded.teams[1][0].attack,1000);assert.equal(upgraded.teams[1][0].arcaneSurgeBonusAttack,1000);assert.equal(upgraded.teams[1][0].arcaneSurgeFromRound,1);assert.equal(upgraded.teams[1][0].arcaneSurgeUntilRound,3);
+    assert.equal(upgraded.events.at(-1).value,base.events.at(-1).value,'surge utility duration and snapshot multiplier do not grow with level');
+   }else if(ability==='ultimate'&&id==='support'){
+    assert.equal(upgraded.teams[1][4].hp,2000);assert.equal(upgraded.teams[1][4].canActFromRound,2);assert.equal(upgraded.teams[1][4].shield,0);
+    assert.equal(upgraded.events.at(-1).value,base.events.at(-1).value,'revival is a fixed bounded 40% life, not level-scaled resurrection');
+   }else if(ability==='ultimate'&&id==='attack'){
+    assert.equal(upgraded.teams[0][0].commanderFocusUntilDeath,true);assert.ok(upgraded.teams[0].every(u=>u.hp===2500));
+    assert.equal(upgraded.events.at(-1).value,base.events.at(-1).value,'focus orders do not add level-scaled bonus attacks');
+   }else{
+    assert.ok(upgraded.events.at(-1).value>base.events.at(-1).value,'numeric shield/healing/normal damage scale with level');
+    if(id==='defense'&&ability==='ultimate')assert.equal(upgraded.teams[1].filter(u=>u.lastStandReady).length,1);
+   }
   }
  });
 }

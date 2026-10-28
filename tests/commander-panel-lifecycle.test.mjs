@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
+import {getCommanderAbilityCost} from '../public/commander-ability-rules.js';
+import {commanderTargetMode,requiredMagicTargets} from '../public/commander-magic-target-picker.js';
+import {commanderUltimateName,commanderUltimateDescription} from '../public/commander-ultimate-presentation.js';
 
 const source=readFileSync(new URL('../public/commander-experimental.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'');
 class Node extends EventTarget {
@@ -14,11 +17,11 @@ class DetailEvent extends Event {
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 function harness(){
  const window=new EventTarget(),document=new Node(),panel=new Node(),nodes=new Map();
- for(const selector of ['normal','ultimate','pass'].map(command=>`[data-command="${command}"]`).concat(['[data-energy]','[data-energy-meter]','[data-energy-fill]','[data-status]']))nodes.set(selector,new Node());
+ for(const selector of ['normal','ultimate','pass'].map(command=>`[data-command="${command}"]`).concat(['[data-energy]','[data-energy-meter]','[data-energy-fill]','[data-ultimate-energy]','[data-ultimate-energy-meter]','[data-ultimate-energy-fill]','[data-status]']))nodes.set(selector,new Node());
  panel.querySelector=selector=>nodes.get(selector);
  document.getElementById=()=>panel;
  const requests=[],intervals=new Map();let intervalId=0;
- runInNewContext(source,{window,document,location:{search:'?commanderTest=1&auctionCode=test&auctionToken=test'},URLSearchParams,CustomEvent:DetailEvent,AbortSignal,
+ runInNewContext(source,{getCommanderAbilityCost,commanderTargetMode,requiredMagicTargets,commanderUltimateName,commanderUltimateDescription,window,document,location:{search:'?commanderTest=1&auctionCode=test&auctionToken=test'},URLSearchParams,CustomEvent:DetailEvent,AbortSignal,
   fetch:(url,options)=>new Promise(resolve=>requests.push({url,options,resolve})),
   setInterval:fn=>{intervals.set(++intervalId,fn);return intervalId;},clearInterval:id=>intervals.delete(id)});
  return {window,document,panel,requests,intervals,normal:nodes.get('[data-command="normal"]'),ultimate:nodes.get('[data-command="ultimate"]'),energy:nodes.get('[data-energy]'),

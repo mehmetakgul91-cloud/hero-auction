@@ -2,6 +2,7 @@ import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { apiUrl, linkAction, readConfig } from './policy.js';
+import { mountNativeLayout } from './layout.js';
 const config = readConfig(window.__HERO_NATIVE_CONFIG__);
 let active = true;
 window.HeroNative = Object.freeze({...config, native:Capacitor.isNativePlatform(), get active(){return active;}});
@@ -26,6 +27,7 @@ window.EventSource = class extends OriginalEventSource {
 function notice(message) {
   const status = document.getElementById('native-status');
   if (status) status.textContent = message;
+  const menu=document.getElementById('native-game-menu');if(menu)menu.open=true;
 }
 function startUI() {
   const status = document.createElement('aside'); status.id='native-status'; status.setAttribute('role','status');
@@ -33,6 +35,7 @@ function startUI() {
     ? 'ANDROID TEST · İnternet gerekir · Misafir girişi · Google girişi henüz yok'
     : 'ANDROID ARAYÜZ ÖNİZLEMESİ · Sunucu bağlı değil · Henüz oynanabilir sürüm değil';
   document.body.prepend(status);
+  mountNativeLayout({window,document});
   if (!config.configured) {
     const guest = document.getElementById('guest-login');
     if (guest) {guest.disabled=true;guest.textContent='TEST SUNUCUSU BEKLENİYOR';}
@@ -60,7 +63,7 @@ export function handleBack() {
   const dialog = [...document.querySelectorAll('dialog[open]')].at(-1);
   if (dialog) {const event=new Event('cancel',{cancelable:true});if(dialog.dispatchEvent(event))dialog.close();return;}
   const details = [...document.querySelectorAll('details[open]')].find(visible);
-  if (details) {details.open=false;return;}
+  if (details) {details.open=false;details.querySelector?.('summary')?.focus();return;}
   for (const [panel, close] of [['commander-change-panel','commander-change-close'],['commander-profile','commander-profile-close'],['friends-panel','friends-close'],['home-play-panel','play-lobby-back']]) {
     if (visible(document.getElementById(panel))) {document.getElementById(close)?.click();return;}
   }

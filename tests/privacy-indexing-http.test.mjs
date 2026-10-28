@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {createServer} from 'node:net';
+import {readFile} from 'node:fs/promises';
 
 async function freePort(){
  const server=createServer();
@@ -43,13 +44,49 @@ test('privacy aliases stay accessible but not indexable; homepage remains indexa
   assert.match(home,/<meta name="robots" content="index,follow,max-image-preview:large">/);
   assert.match(home,/<link rel="canonical" href="https:\/\/heroauction\.com\.tr\/">/);
   assert.match(home,/href="\/privacy"/);
+  assert.match(home,/<link rel="icon" type="image\/png" sizes="96x96" href="\/favicon.png">/);
+  const image='https://heroauction.com.tr/images/social/hero-auction-share.jpg';
+  assert.ok(home.includes(`<meta property="og:image" content="${image}">`));
+  assert.ok(home.includes(`<meta name="twitter:image" content="${image}">`));
+  assert.match(home,/<meta name="twitter:card" content="summary_large_image">/);
+  assert.match(home,/<meta property="og:image:width" content="960">/);
+  assert.match(home,/<meta property="og:image:height" content="800">/);
+  const game=JSON.parse(home.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
+  assert.equal(game.image,image);
+  assert.equal(game['@type'],'VideoGame');
+  for(const prefix of ['', '/crazygames']){
+   for(const [path,type,width,height] of [['/favicon.png','image/png',96,96],['/images/original/hero-01.png','image/png',1374,1145]]){
+    const response=await fetch(base+prefix+path);
+    assert.equal(response.status,200,prefix+path);
+    assert.equal(response.headers.get('content-type'),type);
+    assert.doesNotMatch(response.headers.get('x-robots-tag')||'',/noindex|noimageindex/i);
+    const bytes=Buffer.from(await response.arrayBuffer());
+    assert.deepEqual(bytes,await readFile(new URL('../public'+path,import.meta.url)));
+    assert.equal(bytes.subarray(1,4).toString(),'PNG');
+    assert.equal(bytes.readUInt32BE(16),width);
+    assert.equal(bytes.readUInt32BE(20),height);
+   }
+  }
+  for(const prefix of ['', '/crazygames']){
+   for(const path of ['/images/social/hero-auction-share.jpg','/images/screenshots/auction.jpg','/images/screenshots/formation.jpg','/images/screenshots/battle.jpg']){
+    const response=await fetch(base+prefix+path);
+    assert.equal(response.status,200,prefix+path);
+    assert.equal(response.headers.get('content-type'),'image/jpeg');
+    assert.deepEqual(Buffer.from(await response.arrayBuffer()),await readFile(new URL('../public'+path,import.meta.url)));
+   }
+  }
+  const invited=await fetch(base+'/?join=123');
+  assert.equal(invited.status,200);
+  assert.ok((await invited.text()).includes(`<meta property="og:image" content="${image}">`));
   const robotsResponse=await fetch(base+'/robots.txt');
   assert.equal(robotsResponse.status,200);
+  assert.match(robotsResponse.headers.get('content-type'),/^text\/plain/);
   const robots=await robotsResponse.text();
   assert.match(robots,/User-agent: \*\s+Allow: \//);
   assert.doesNotMatch(robots,/^Disallow:\s*\S/im,'Google must crawl privacy to see noindex');
   const sitemapResponse=await fetch(base+'/sitemap.xml');
   assert.equal(sitemapResponse.status,200);
+  assert.match(sitemapResponse.headers.get('content-type'),/^application\/xml/);
   const sitemap=await sitemapResponse.text();
   assert.match(sitemap,/<loc>https:\/\/heroauction\.com\.tr\/<\/loc>/);
   assert.doesNotMatch(sitemap,/privacy/);

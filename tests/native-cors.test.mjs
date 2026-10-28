@@ -50,7 +50,7 @@ test('preflight grants only explicit methods and Content-Type, without credentia
 
 async function startServer(t,allowedOrigins){
  const socket=createServer();await new Promise(resolve=>socket.listen(0,'127.0.0.1',resolve));const port=socket.address().port;await new Promise(resolve=>socket.close(resolve));
- const child=spawn(process.execPath,['server.js'],{cwd:new URL('..',import.meta.url),env:{...process.env,PORT:String(port),DATABASE_URL:'',COMMANDER_TEST_GUEST_MODE:'1',NATIVE_ALLOWED_ORIGINS:allowedOrigins},stdio:['ignore','pipe','pipe']});
+ const child=spawn(process.execPath,['server.js'],{cwd:new URL('..',import.meta.url),env:{PATH:process.env.PATH,PORT:String(port),DATABASE_URL:'',NODE_ENV:'test',COMMANDER_TEST_GUEST_MODE:'1',NATIVE_ALLOWED_ORIGINS:allowedOrigins},stdio:['ignore','pipe','pipe']});
  let logs='';child.stdout.on('data',data=>logs+=data);child.stderr.on('data',data=>logs+=data);
  t.after(async()=>{child.kill('SIGTERM');await new Promise(resolve=>{if(child.exitCode!==null||child.signalCode!==null)return resolve();child.once('exit',resolve);setTimeout(resolve,2000).unref()})});
  const base='http://127.0.0.1:'+port;
@@ -85,4 +85,38 @@ test('HTTP: opt-in headers survive JSON/errors/SSE, auth remains required, and d
  const disabled=await startServer(t,'');
  const disabledInfo=await fetch(disabled+'/api/info',{headers:{Origin:'https://localhost'}});assert.equal(disabledInfo.status,200);assert.equal(disabledInfo.headers.get('Access-Control-Allow-Origin'),null);assert.equal(disabledInfo.headers.get('Vary'),null);await disabledInfo.text();
  const disabledPreflight=await fetch(disabled+'/api/auth/guest',{method:'OPTIONS',headers:{Origin:'https://localhost','Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'content-type'}});assert.equal(disabledPreflight.status,405);assert.equal(disabledPreflight.headers.get('Access-Control-Allow-Origin'),null);await disabledPreflight.text();
+});
+
+test('Android-origin and web players share one authenticated room and live SSE state',{timeout:15000},async t=>{
+ const base=await startServer(t,'https://localhost');
+ const post=async(origin,path,body)=>{
+  const response=await fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json',...(origin?{Origin:origin}:{})},body:JSON.stringify(body)});
+  assert.equal(response.headers.get('Access-Control-Allow-Origin'),origin||null);
+  return {status:response.status,body:await response.json()};
+ };
+ const android=await post('https://localhost','/api/auth/guest',{name:'Android player'});
+ const web=await post(null,'/api/auth/guest',{name:'Web player'});
+ assert.equal(android.status,200);assert.equal(web.status,200);
+ const host=await post('https://localhost','/api/create',{authToken:android.body.authToken});
+ assert.equal(host.status,200);
+ const join=await post(null,'/api/join',{authToken:web.body.authToken,code:host.body.room.code});
+ assert.equal(join.status,200);
+ assert.equal(join.body.room.code,host.body.room.code);
+ assert.equal(join.body.room.players.length,2);
+ const seats=[{origin:'https://localhost',authToken:android.body.authToken,token:host.body.token},{origin:null,authToken:web.body.authToken,token:join.body.token}];
+ const snapshots=[];
+ for(const seat of seats){
+  const controller=new AbortController();t.after(()=>controller.abort());
+  const response=await fetch(base+'/api/events?'+new URLSearchParams({code:host.body.room.code,token:seat.token,authToken:seat.authToken}),{headers:seat.origin?{Origin:seat.origin}:{},signal:controller.signal});
+  assert.equal(response.status,200);assert.equal(response.headers.get('Access-Control-Allow-Origin'),seat.origin);
+  const reader=response.body.getReader();let text='';
+  while(!text.includes('\n\n')){const chunk=await reader.read();assert.equal(chunk.done,false);text+=new TextDecoder().decode(chunk.value);}
+  snapshots.push(JSON.parse(text.split('\n').find(line=>line.startsWith('data: ')).slice(6)));
+  await reader.cancel();controller.abort();
+ }
+ assert.equal(snapshots[0].code,snapshots[1].code);
+ assert.equal(snapshots[0].phase,snapshots[1].phase);
+ assert.deepEqual(snapshots[0].players.map(p=>p.name),snapshots[1].players.map(p=>p.name));
+ const forged=await post('https://localhost','/api/state',{code:host.body.room.code,token:host.body.token,authToken:web.body.authToken});
+ assert.equal(forged.status,403,'CORS must not authorize another player’s seat');
 });

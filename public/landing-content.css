@@ -1,0 +1,23 @@
+/* Public, crawler-readable introduction. Game screens and rules are unchanged. */
+#login-gate .landing-layout{min-height:0;align-items:start;padding:40px 32px;gap:32px}
+#login-gate .landing-story h1{font-size:clamp(32px,4vw,54px);line-height:1.12;letter-spacing:-1.5px;margin:20px 0}
+#login-gate .landing-story h1 span{display:block;font-size:.72em;line-height:1.22;margin-top:12px}
+#login-gate .landing-story>p{max-width:56ch;font-size:15px;line-height:1.7}
+#login-gate .landing-guide-link{display:inline-block;min-height:44px;padding:12px 0;color:#315e75;text-underline-offset:4px;font-weight:700}
+#login-gate .landing-gameplay{margin:0 20px 24px;padding:20px;border:1px solid #c8cfd2;border-radius:17px}
+#login-gate .landing-gameplay .showcase-heading{display:block;margin-bottom:16px}
+#login-gate .landing-gameplay h2,#login-gate .howto-heading h2{font-size:20px;line-height:1.35;margin:0;color:#203047}
+#login-gate .landing-gameplay .showcase-heading p{font-size:13px;line-height:1.6;color:#586676;margin:8px 0 0}
+#login-gate .gameplay-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+#login-gate .gameplay-gallery figure{min-width:0;margin:0;border:1px solid #c8cfd2;border-radius:12px;background:#fff;overflow:hidden}
+#login-gate .gameplay-gallery a{display:block;color:inherit;min-height:44px}
+#login-gate .gameplay-gallery a:focus-visible{outline:3px solid #315e75;outline-offset:-3px}
+#login-gate .gameplay-gallery img{display:block;width:100%;height:auto;aspect-ratio:1180/757;object-fit:contain;background:#e5e8e4}
+#login-gate .gameplay-gallery figcaption{display:grid;gap:6px;padding:14px;color:#203047;font-size:13px;line-height:1.5}
+#login-gate .gameplay-gallery figcaption span{color:#586676}
+#login-gate .landing-howto{margin:0 20px 24px;scroll-margin-top:20px}
+#login-gate .howto-heading{align-items:baseline;flex-wrap:wrap}
+#login-gate .howto-step h3{font-size:15px;line-height:1.4;color:#25365a;margin:0}
+#login-gate .howto-step p{font-size:13px;line-height:1.65}
+@media(max-width:850px){#login-gate .landing-layout{padding:28px 20px}#login-gate .landing-story>p{margin-inline:auto}#login-gate .gameplay-gallery{grid-template-columns:1fr}#login-gate .landing-gameplay{max-width:680px;margin-inline:auto}#login-gate .gameplay-gallery figcaption{padding:14px 16px}}
+@media(max-width:480px){#login-gate .landing-layout{padding:24px 14px}#login-gate .landing-story h1{font-size:36px}#login-gate .landing-gameplay,#login-gate .landing-howto{margin:0 10px 18px;padding:14px}#login-gate .landing-gameplay h2,#login-gate .howto-heading h2{font-size:19px}}

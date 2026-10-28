@@ -192,3 +192,41 @@ for(const side of [0,1])test('hidden commander dock on side '+side+' falls back 
  const h=effectHarness({dockWidth:0});h.emit({action:'commander-defense-normal',side,sequence:1});
  assert.equal(h.cues()[0].parentElement,h.headings[side]);assert.equal(h.commanders[side].children.length,0);
 });
+for(const [commander,kind,targetSide,expected]of [['magic','buff',0,'+1 HIT POWER · 3 ROUNDS'],['defense','guard',0,'SURVIVE AT 1 HP'],['attack','focus',1,'TARGET'],['support','revive',0,'+30 HP']])test(`new ${commander} ultimate ${kind} is a status on the authoritative side`,()=>{
+ const h=effectHarness({english:true});h.emit({action:'commander-'+commander+'-ultimate',side:0,sequence:1,impacts:[{target:'same',kind,value:kind==='revive'?30:1}]});
+ assert.equal(h.targetFx().length,1);assert.equal(h.targetFx()[0].parentElement,h.portraits[targetSide][0]);h.advance(1200);
+ assert.equal(h.impacts().length,1);assert.equal(h.impacts()[0].style.left,targetSide*200+'px');assert.ok(textOf(h.impacts()[0]).includes(expected));assert.doesNotMatch(textOf(h.impacts()[0]),/HP DAMAGE|HEALING/);
+});
+
+for(const english of [false,true])test(`mage normal committed impact labels next attack, not rounds (${english?'EN':'TR'})`,()=>{
+ const h=effectHarness({english});h.emit({action:'commander-magic-normal',side:0,sequence:1,impacts:[{target:'same',kind:'weaken',value:35}]});h.advance(1200);assert.equal(h.impacts().length,1);const text=textOf(h.impacts()[0]);assert.match(text,english?/NEXT ATTACK/:/SONRAKİ SALDIRI/);assert.match(text,/35/);assert.doesNotMatch(text,/3 TUR|3 ROUNDS/);
+});
+
+for(const english of [false,true])test(`Hunt Order committed until-death impact explains duration (${english?'EN':'TR'})`,()=>{
+ const h=effectHarness({english});h.emit({action:'commander-attack-ultimate',side:0,sequence:1,focusUntilDeath:true,impacts:[{target:'same',kind:'focus',value:5,untilDeath:true}]});
+ h.advance(1200);assert.equal(h.impacts().length,1);const description=textOf(h.impacts()[0]);
+ assert.match(description,english?/UNTIL TARGET DIES/:/HEDEF ÖLÜNCEYE KADAR/);
+ assert.equal(h.impacts()[0].querySelectorAll('.focus-until-death').length,1);
+ assert.match(css,/strong\.focus-until-death\{[^}]*max-width:90px[^}]*font-size:11px[^}]*white-space:normal/);
+ assert.doesNotMatch(description,/NEXT ATTACK|SONRAKİ SALDIRI|5.*(?:DAMAGE|HASAR)/);
+});
+
+for(const english of [false,true])test(`mage stun impact uses authoritative enemy side without fabricated percent or damage (${english?'EN':'TR'})`,()=>{
+ const h=effectHarness({english});const event={action:'commander-magic-normal',side:1,sequence:1,impacts:[{target:'same',kind:'stun',value:1,nextAttack:true}]};
+ h.emit(event);h.emit(event);assert.equal(h.targetFx().length,1);assert.equal(h.targetFx()[0].parentElement,h.portraits[0][0]);assert.equal(h.targetFx()[0].getAttribute('data-effect'),'stun');
+ assert.match(textOf(h.cues()[0]),english?/Stun/:/Sersemletme/);h.advance(1200);assert.equal(h.impacts().length,1);
+ const text=textOf(h.impacts()[0]);assert.match(text,english?/NEXT ATTACK SKIPPED/:/SONRAKİ SALDIRI ATLANIR/);assert.doesNotMatch(text,/%|DAMAGE|HASAR|HEALING|ŞİFA|3 TUR|3 ROUNDS/);
+ assert.equal(h.impacts()[0].querySelectorAll('.stun-next-attack').length,1);assert.match(css,/strong\.stun-next-attack\{[^}]*white-space:normal/);
+ h.advance(2400);assert.equal(h.impacts()[0].removed,true);assert.equal(h.timers.size,0);
+});
+
+for(const english of [false,true])for(const side of [0,1])test(`Hunt Order shows selected enemy focus and own next-attack bonus separately (${english?'EN':'TR'}, seat ${side})`,()=>{
+ const h=effectHarness({english}),entry={action:'commander-attack-ultimate',side,sequence:1,focusUntilDeath:true,impacts:[{target:'same',kind:'focus',value:2,untilDeath:true},{target:'same',kind:'hunt-buff',value:20,nextAttack:true},{target:'other',kind:'hunt-buff',value:20,nextAttack:true}]};
+ h.emit(entry);h.emit(entry);assert.equal(h.targetFx().length,3);assert.equal(h.targetFx()[0].parentElement,h.portraits[1-side][0]);assert.equal(h.targetFx()[1].parentElement,h.portraits[side][0]);assert.equal(h.targetFx()[2].parentElement,h.portraits[side][1]);
+ h.advance(1200);assert.equal(h.impacts().length,3);const own=h.impacts().filter(e=>e.style.left===side*200+'px');assert.equal(own.length,2);
+ for(const impact of own){assert.match(textOf(impact),english?/\+20% ATTACK · NEXT ATTACK/:/\+%20 SALDIRI · TEK SALDIRI/);assert.doesNotMatch(textOf(impact),/HP DAMAGE|CAN HASARI|3 ROUNDS|3 TUR/);assert.equal(impact.querySelectorAll('.hunt-next-attack').length,1);}
+ assert.match(css,/strong\.hunt-next-attack\{[^}]*white-space:normal/);h.advance(2400);assert.equal(h.timers.size,0);
+});
+test('Hunt Order cosmetic bonus requires explicit next-attack metadata, not an inferred focus mark',()=>{
+ const h=effectHarness();h.emit({action:'commander-attack-ultimate',side:0,sequence:1,impacts:[{target:'same',kind:'hunt-buff',value:20},{target:'other',kind:'hunt-buff',value:40,nextAttack:true}]});assert.equal(h.targetFx().length,0);h.advance(1200);assert.equal(h.impacts().length,0);
+});

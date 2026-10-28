@@ -37,6 +37,37 @@
       "loop_note": "Creator advertises this source as loopable."
     },
     {
+      "id": "japanese-fight",
+      "title": "Looping Japanese fight track",
+      "author": "Pepsidog",
+      "label": "Japon esintili retro savas",
+      "style": "Japanese-inspired retro battle (creator title); not acoustic taiko or a claim of traditional authenticity.",
+      "page": "https://opengameart.org/content/looping-japanese-fight-track",
+      "license": "CC0 1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "changes": "Converted to 128 kb/s MP3, 44.1 kHz; loudness normalized to target -18 LUFS / -1.5 dBTP for comparison. Full source duration retained; no cuts, repetitions, or composition changes.",
+      "source_sha256": "1ba8e03160351b0a86fca4cb701b892f2e29f0bb2e45e25075f5e24b36476d59",
+      "source_probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s16le",
+            "sample_rate": "44100",
+            "channels": 1
+          }
+        ],
+        "format": {
+          "duration": "63.912925",
+          "size": "5637164"
+        }
+      },
+      "src": "/audio/arena/japanese-fight.mp3",
+      "game_asset_sha256": "d22a026535cf9f9d872d07c8d60f2071893741014b2cb8c18e859392efd51f8f",
+      "game_asset_bytes": 1024168,
+      "loop_note": "Creator advertises this source as loopable."
+    },
+    {
       "id": "eternal-sands",
       "title": "Fantasy Music - The Eternal Sands",
       "author": "HitCtrl",
@@ -66,6 +97,71 @@
       "game_asset_sha256": "7359b1478bf4b3a24c78c2a21f2cedf443873779d357b2df58df03198167c206",
       "game_asset_bytes": 1844624,
       "loop_note": "Creator advertises this source as loopable."
+    },
+    {
+      "id": "monkoto",
+      "title": "Monkoto",
+      "author": "Kevin MacLeod (incompetech.com)",
+      "label": "Afrika esintili marimba ve perküsyon",
+      "style": "Composer-classified African, with marimba, percussion and clarinets, 156 BPM. Regional-inspired composition, not a traditional-authenticity claim.",
+      "page": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100432",
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Converted to 128 kb/s MP3, 44.1 kHz; loudness normalized to target -18 LUFS / -1.5 dBTP for comparison. Full source duration retained; no cuts, repetitions, or composition changes.",
+      "source_sha256": "145b56f6ed2b3d2740cdbcadb249bbb8fa17aeb878525b04a1ddca09b5410757",
+      "source_probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "sample_rate": "44100",
+            "channels": 2
+          },
+          {
+            "codec_name": "mjpeg"
+          }
+        ],
+        "format": {
+          "duration": "76.225325",
+          "size": "3158261"
+        }
+      },
+      "src": "/audio/arena/monkoto.mp3",
+      "game_asset_sha256": "8844a174a1c064cfdb75ad1296019336f3fae19919df1703dc2ff87fc2fd7dc2",
+      "game_asset_bytes": 1221393,
+      "loop_note": "Full composition repeats at its natural ending. No claim of seamless loop; no composition edits."
+    },
+    {
+      "id": "ragnarok",
+      "title": "Ragnarök - Epic Fight Music",
+      "author": "William Hector",
+      "label": "İskandinav/Viking esintili epik savaş",
+      "style": "Creator tags Viking, Norse, fantasy, battle, drums and metal; not historically authentic Norse music.",
+      "page": "https://opengameart.org/content/ragnar%C3%B6k-epic-fight-music",
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Converted to 128 kb/s MP3, 44.1 kHz; loudness normalized to target -18 LUFS / -1.5 dBTP for comparison. Full source duration retained; no cuts, repetitions, or composition changes.",
+      "source_sha256": "54ecfacec19a01ca9a1591fbd66d59ed6b357833ee7701c1635cd3cb5efb6c44",
+      "source_probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "pcm_s24le",
+            "sample_rate": "44100",
+            "channels": 2
+          }
+        ],
+        "format": {
+          "duration": "143.475011",
+          "size": "37963670"
+        }
+      },
+      "src": "/audio/arena/ragnarok.mp3",
+      "game_asset_sha256": "55520d8b7c77be53513e3e2ff92d689bee0dde4aeed7fef337bf64af3fdc13f8",
+      "game_asset_bytes": 2297277,
+      "loop_note": "Full composition repeats at its natural ending. No claim of seamless loop; no composition edits."
     },
     {
       "id": "atlas-kazakhstan",
@@ -100,6 +196,5 @@
       "standalone_redistribution": false,
       "loop_note": "Full composition repeats at its natural ending. No claim of seamless loop; no composition edits."
     }
-  ],
-  "release_note": "First TEST release: three uploaded tracks only. Historical license evidence is retained; Japanese Fight, Monkoto and Ragnarok remain pending a later release."
+  ]
 }

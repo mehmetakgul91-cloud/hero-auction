@@ -1,21 +1,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mountArenaViewport,getArenaLaneLayout} from '../public/arena-viewport.js';
+import {mountArenaViewport,getArenaLaneLayout,refreshArenaViewport} from '../public/arena-viewport.js';
 
-test('normal formations use three rows and every lane arrangement fits without collisions',()=>{
- const team=front=>Array.from({length:5},(_,i)=>({lane:i<front?'front':'back'}));
- assert.deepEqual(getArenaLaneLayout([team(2),team(2)]),{rows:3,teams:[{front:[1,3],back:[1,2,3]},{front:[1,3],back:[1,2,3]}]});
+test('every front/back split has exact equal lane slices centred without integer rounding',()=>{
+ const team=front=>Array.from({length:5},(_,i)=>({id:i,lane:i<front?'front':'back',hp:100}));
  for(let a=0;a<=5;a++)for(let b=0;b<=5;b++){
-  const layout=getArenaLaneLayout([team(a),team(b)]);
+  const teams=[team(a),team(b)],before=structuredClone(teams),layout=getArenaLaneLayout(teams);
   assert.equal(layout.rows,Math.max(a,5-a,b,5-b));
-  for(const [side,front] of [a,b].entries()){
-   for(const [lane,count] of [['front',front],['back',5-front]]){
-    const positions=layout.teams[side][lane];
-    assert.equal(positions.length,count);
-    assert.equal(new Set(positions).size,count);
-    assert.ok(positions.every(row=>row>=1&&row<=layout.rows));
-   }
+  for(const [side,front] of [a,b].entries())for(const [lane,count] of [['front',front],['back',5-front]]){
+   const positions=layout.teams[side][lane];assert.equal(positions.length,count);
+   const centres=positions.map((position,index)=>{
+    const [start,span]=position.split(' / span ').map(Number);
+    assert.equal(start,1+index*60/count);assert.equal(span,60/count);
+    return (start-1+span/2)/60;
+   });
+   if(count){assert.equal(centres[0]+centres.at(-1),1);if(count===1)assert.equal(centres[0],.5);}
+   for(let i=1;i<count;i++)assert.ok(Math.abs(centres[i]-centres[i-1]-1/count)<1e-12);
   }
+  assert.deepEqual(teams,before,'no gameplay/formation mutation');
+  teams[0][0].hp=0;assert.deepEqual(getArenaLaneLayout(teams),layout,'defeat never moves an attack target');
+  teams[0][0].hp=50;assert.deepEqual(getArenaLaneLayout(teams),layout,'revival uses the same stable position');
  }
 });
 
@@ -31,7 +35,7 @@ function fixture({width=390,height=700}={}){
  const document={body,documentElement:root,getElementById:()=>arena};
  const destroy=mountArenaViewport({window,document});
  const flush=()=>{for(const [id,fn]of [...frames]){frames.delete(id);fn();}};
- return {window,viewport,properties,classes,arena,frames,scrolls,destroy,flush,
+ return {window,document,viewport,properties,classes,arena,frames,scrolls,destroy,flush,notify:()=>notify(),
   enter(){classes.add('arena-room');arena.hidden=false;notify();flush();},
   finish(){arena.hidden=true;notify();flush();},
   disconnected:()=>disconnected};
@@ -77,3 +81,11 @@ test('pinch zoom keeps the full layout instead of shrinking the controls',()=>{
  assert.equal(h.properties.get('--arena-viewport-height'),h.window.innerHeight+'px');
  h.destroy();
 });
+
+ test('loaded arena can fit synchronously before first paint and cancels obsolete queued frame',()=>{
+ const h=fixture();h.classes.add('arena-room');h.arena.hidden=false;h.notify();assert.equal(h.frames.size,1);assert.equal(h.classes.has('arena-fit'),false);
+ refreshArenaViewport({document:h.document});assert.equal(h.frames.size,0);assert.equal(h.classes.has('arena-fit'),true);assert.equal(h.properties.get('--arena-viewport-height'),'700px');assert.equal(h.scrolls.length,1);
+ for(let i=0;i<10;i++)refreshArenaViewport({document:h.document});assert.equal(h.scrolls.length,1);
+ h.arena.hidden=true;refreshArenaViewport({document:h.document});assert.equal(h.classes.has('arena-fit'),false);h.destroy();h.arena.hidden=false;refreshArenaViewport({document:h.document});assert.equal(h.classes.has('arena-fit'),false);
+ });
+ test('synchronous fit safely ignores absent/unmounted arenas',()=>{assert.doesNotThrow(()=>refreshArenaViewport({document:{getElementById:()=>null}}));assert.doesNotThrow(()=>refreshArenaViewport({document:{getElementById:()=>({})}}));});

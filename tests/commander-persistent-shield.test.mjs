@@ -19,7 +19,7 @@ test('commander shield persists into later rounds without regeneration',()=>{
  assert.equal(c.teams[0][0].shield,shield);
  stepBasicHeroCombat(c,{side:1,actorId:'1-0'});
  const selected=selectBattleTarget(c.teams[0],c.teams[1][0],c.round);
- const expected=selected.id==='0-0'?Math.max(0,shield-20):shield;
+ const expected=selected.id==='0-0'?Math.max(0,shield-14):shield;
  const after=c.teams[0][0].shield;
  assert.equal(after,expected);
  advanceBasicCombatRound(c);
@@ -34,7 +34,7 @@ test('second commander cast adds shield only when explicitly used',()=>{
  castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'shield_second_02',matchKey:'shield:1',now:7000});
  assert.equal(c.teams[0][0].shield,initial*2);
 });
-test('shield is consumed before HP across subsequent rounds',()=>{
+test('shield absorbs at most 70 percent while HP drops across subsequent rounds',()=>{
  const c=make();
  castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'shield_early_01',matchKey:'shield:1',now:2000});
  const initial=c.teams[0][0].shield;
@@ -42,7 +42,7 @@ test('shield is consumed before HP across subsequent rounds',()=>{
  for(let round=1;round<=3;round++){
   const target=selectBattleTarget(c.teams[0],c.teams[1][0],c.round);
   const state=expected.get(target.id);
-  const absorbed=Math.min(state.shield,20);
+  const absorbed=Math.min(state.shield,14);
   state.shield-=absorbed;
   state.hp-=20-absorbed;
   stepBasicHeroCombat(c,{side:1,actorId:'1-0'});

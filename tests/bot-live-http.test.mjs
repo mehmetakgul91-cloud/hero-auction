@@ -3,8 +3,29 @@ import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {createServer} from 'node:net';
 import {battleOutcome} from '../battle-result.js';
+import {applyHeroDamage,grantLastStand} from '../battle-hp-damage.js';
 
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+
+function assertShieldDamageEvent(event){
+ assert.ok(Number.isSafeInteger(event.absorbed)&&event.absorbed>=0,'absorption is whole-point and nonnegative');
+ assert.ok(event.absorbed<=Math.floor(event.rawDamage*7/10),'bot/live shield cannot absorb more than 70%');
+ // Son Kale already protects a living target at 1 HP for one lethal hit. That
+ // explicit guard is not full shield absorption; ordinary zero damage is invalid.
+ assert.ok(event.value>0||(event.value===0&&event.guardTriggered===true),'positive damage must reach the target unless Son Kale protects 1 HP: '+JSON.stringify(event));
+ assert.ok(event.value+event.absorbed<=event.rawDamage,'HP damage excludes absorbed and overkill damage');
+}
+
+test('live shield event invariant permits the explicit 1 HP Last Stand guard, never ordinary zero damage',()=>{
+ const target={hp:1,maxHp:100,shield:1000};grantLastStand(target,1);
+ const hit=applyHeroDamage(target,100,{round:1}),event={...hit,value:hit.damage};
+ assert.equal(target.hp,1);assert.equal(event.value,0);assert.equal(event.guardTriggered,true);assertShieldDamageEvent(event);
+ assert.throws(()=>assertShieldDamageEvent({...event,guardTriggered:false}),/positive damage/);
+ assert.throws(()=>assertShieldDamageEvent({...event,guardTriggered:'true'}),/positive damage/);
+ assert.throws(()=>assertShieldDamageEvent({...event,value:-1}),/positive damage/);
+ assert.throws(()=>assertShieldDamageEvent({...event,absorbed:71}),/more than 70%/);
+ assertShieldDamageEvent({rawDamage:100,absorbed:70,value:30});
+});
 
 test('bot matches run authoritative live combat, accept human casts, settle without gold, and rotate on rematch',{timeout:60000},async()=>{
  const socket=createServer();await new Promise(resolve=>socket.listen(0,'127.0.0.1',resolve));
@@ -41,7 +62,7 @@ test('bot matches run authoritative live combat, accept human casts, settle with
   let code=created.room.code;player.token=created.token;
   assert.deepEqual(created.room.players.map(p=>[p.credits,p.team.length]),[[20,0],[20,0]]);
   assert.equal(created.room.difficulty,'hard');
-  const expectedSeries=[0,0];let previousCommander;
+  const expectedSeries=[0,0];let previousCommander;let shieldedHits=0;
   for(let match=0;match<4;match++){
    let room=(await post('/api/state',{code,...player})).room;
    for(let i=0;room.phase==='auction'&&i<400;i++){
@@ -87,6 +108,12 @@ test('bot matches run authoritative live combat, accept human casts, settle with
     assert.equal(commander.commanderId,'attack','the deterministic easy scenario uses the attack commander');
     assert.ok(live.events.some(e=>e.actor==='commander:1'&&e.action==='commander-attack-normal'),'the easy bot autonomously casts a normal attack through the live engine');
    }
+   const damageEvents=live.events.filter(e=>Number.isFinite(e.rawDamage)&&e.rawDamage>0);
+   assert.ok(damageEvents.length>0,'bot match must expose authoritative damage events');
+   for(const event of damageEvents){
+    assertShieldDamageEvent(event);
+    if(event.absorbed>0)shieldedHits++;
+   }
    assert.equal(live.winner,battleOutcome(live.teams).winner);
    assert.ok(live.summary.actionCount>0);
    if(live.winner!==null)expectedSeries[live.winner]++;
@@ -109,6 +136,7 @@ test('bot matches run authoritative live combat, accept human casts, settle with
     assert.deepEqual(next.room.players.map(p=>[p.credits,p.team.length]),[[20,0],[20,0]]);
    }
   }
+  assert.ok(shieldedHits>0,'the bot/live shield check must exercise real shield absorption');
   assert.equal((await post('/api/wallet',player)).gold,before.gold,'rematch also remains free');
   assert.equal((await post('/api/commander/get',player)).profile,null,'training fallback does not create a persistent human commander');
   assert.doesNotMatch(logs,/Live arena stopped:|Bot commander action:/,'the bot must not throw or stop the live runner');

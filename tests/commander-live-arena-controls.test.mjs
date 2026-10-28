@@ -9,7 +9,7 @@ class Button {
 }
 function setup(onCast=async()=>{}){
  const normalButton=new Button(),ultimateButton=new Button(),energyLabel=new Button(),statusLabel=new Button();
- let state={energy:100,cooldownMs:0,finished:false};
+ let state={energy:100,ultimateEnergy:100,cooldownMs:0,finished:false};
  const controls=createLiveArenaCommanderControls({normalButton,ultimateButton,energyLabel,statusLabel,readState:()=>state,onCast});
  return {normalButton,ultimateButton,energyLabel,statusLabel,controls,setState:s=>{state=s;controls.refresh()}};
 }
@@ -29,4 +29,10 @@ test('server rejection does not claim acceptance',async()=>{
  await f.normalButton.click();
  // Refresh may overwrite the transient status, but no success is claimed.
  assert.doesNotMatch(f.statusLabel.textContent,/kabul edildi/);
+});
+
+for(const commanderId of ['attack','defense','magic','support'])test(commanderId+' used flag disables ultimate but not normal',async()=>{
+ const sent=[];const f=setup(async c=>sent.push(c));f.setState({commanderId,side:1,energy:100,ultimateUsed:[false,true]});
+ assert.equal(f.ultimateButton.disabled,true);assert.match(f.ultimateButton.textContent,/Kullanıldı/);assert.equal(f.normalButton.disabled,false);
+ await f.ultimateButton.click();await f.normalButton.click();assert.deepEqual(sent,[{ability:'normal'}]);
 });

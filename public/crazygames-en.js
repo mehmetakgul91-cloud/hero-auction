@@ -1,8 +1,45 @@
+import {commanderUltimatePhrases} from './commander-ultimate-presentation.js';
+import {translateAbilityDescription} from './hero-ability-text.js';
 import {uiPhrases, translateAuctionHistory} from './crazygames-ui-phrases.js';
 import {battlePhrases, translateCommanderDescription} from './crazygames-battle-phrases.js';
 // Presentation-only English locale for the CrazyGames entry point.
 // Do not translate stored values, hero IDs, requests, or game rules.
 export const phrases = {
+"Arkadaş ekle / Oyuncu kimliğim":"Add a friend / My player ID",
+"Arkadaşlık istekleri":"Friend requests",
+"Başka sekmede katıldın":"Joined in another tab",
+"Güncel odayı aç":"Open current room",
+"Güncel oda bulunamadı. Ana menüden tekrar bağlan.":"Current room not found. Reconnect from the main menu.",
+"Yeni maç daveti":"New match invitation",
+"Onayla veya reddet.":"Approve or decline.",
+"Kabul edildi · maçın bitmesi bekleniyor":"Accepted · waiting for the match to end",
+"Davet reddedildi":"Invitation declined",
+"Diğer davet":"Next invitation",
+"SANA MAÇ DAVETİ":"MATCH INVITATION",
+"GÖNDERDİĞİN DAVET":"YOUR INVITATION",
+"Maç bitince katılacaksın":"You will join after your match",
+"Onayla: 50 altın giriş ücretini kabul et. Aktif maçın varsa sonucu kesinleşince katılırsın.":"Approve to accept the 50-gold entry fee. If you are playing, join after the result is confirmed.",
+"Onayla":"Approve",
+"Reddet":"Decline",
+"Mevcut oyunun bölünmez. 50 altın yalnız yeni odaya katılınca alınır.":"Your current game will not be interrupted. The 50 gold is charged only when you join the new room.",
+"Oda ücretsiz. Maça giriş kişi başı 50 altın; yalnız katılımda alınır.":"Creating the room is free. Entry costs 50 gold per player, charged only on joining.",
+"Son davetler":"Recent invitations",
+"Gönderildi":"Sent",
+"Kapat":"Close",
+
+"Gelişim ağacı":"Development tree",
+"Bir dal seç, gücünü artır.":"Choose a branch. Grow your power.",
+"✦ Ana dal":"✦ Main branch",
+"Dal seçimi altın harcamaz":"Choosing a branch spends no gold",
+"Henüz açık değil":"Not available yet",
+"Elmas → Altın":"Diamonds → Gold",
+"Elmas satın alma henüz açık değil.":"Diamond purchases are not available yet.",
+"GELİŞİM YOLUN":"YOUR DEVELOPMENT PATH",
+"Bir dal seç. Sonraki seviyenin gerçek etkisini gör.":"Choose a branch. See exactly what the next level changes.",
+"Ana dal 40, yan dallar 20 etkin seviye. Dallar birbirinden bağımsız gelişir.":"Main branch: 40 active levels. Side branches: 20. Each branch develops independently.",
+"NORMAL + ULTİ DOLUMU":"NORMAL + ULTIMATE CHARGE",
+"İki ayrı dolum · her biri en fazla 100":"Two separate pools · each capped at 100",
+"Elmas":"Diamonds",
 "♫ Müzik kredileri":"♫ Music credits",
 "Diziliş başka bir maça ait.":"This formation belongs to another match.",
 "Hazır diziliş değiştirilemez.":"A confirmed formation cannot be changed.",
@@ -248,7 +285,7 @@ export const phrases = {
 'Takımlar otomatik olarak mücadele eder. Kahraman yetenekleri, dayanıklılık ve doğru diziliş sonucu belirler.':'Teams fight automatically. Hero abilities, durability, and positioning determine the outcome.',
 "Gerçek oyunculu maçlarda iki taraftan 50'şer altın alınır; kazanan 120 altın kazanır. Bilgisayara karşı maçlar antrenmandır.":'Online matches cost 50 gold per player; the winner receives 120. Computer matches are free practice.',
 'En güçlü karta bütün kredini harcamak her zaman kazandırmaz. Kalan kredi ve takım uyumu da önemlidir.':'Spending everything on the strongest hero is not always best. Remaining credits and team synergy matter.',
-'İlk girişinde bir komutan seç. Seçim hesabına kaydedilir. Daha sonra 5.000 altın karşılığında komutanını değiştirebilirsin.':'Choose a commander for your account. You can change commanders later for 5,000 gold.',
+'İlk girişinde bir komutan seç. Seçim hesabına kaydedilir. Daha sonra 1000 altın karşılığında komutanını değiştirebilirsin.':'Choose a commander for your account. You can change commanders later for 1000 gold.',
 'Yalnızca ilgili kahraman sınıfı güçlenir. Ana uzmanlık en fazla %20, diğer dallar %10.':'Bonuses apply to the matching hero role. Main specialty: up to 20%; other branches: up to 10%.',
 'Diğer komutanlar yalnızca burada görüntülenir. Gelişim seviyelerin korunur.':'Choose another commander here. Your upgrade levels are preserved.',
 'Oyuncu kimliği ve ilerleme oyun sunucusunda saklanır.':'Player identity and progress are stored on the game server.',
@@ -299,7 +336,6 @@ export const phrases = {
 'ÖN SAF':'FRONT ROW','ARKA SAF':'BACK ROW','ÖN SIRA':'FRONT ROW','ARKA SIRA':'BACK ROW','ÖN ':'FRONT ','ARKA ':'BACK ',
 'TAKIM DİZİLİŞİ':'TEAM FORMATION','YERLEŞTİRİLEN KAHRAMAN':'HEROES PLACED','BAZ TAKIM GÜCÜ':'BASE TEAM POWER',
 'GÜNCEL TAKIM GÜCÜ':'CURRENT TEAM POWER','SAF / ROL / KREDİ / KOMUTAN ETKİSİ':'ROW / ROLE / CREDIT / COMMANDER BONUS',
-'Kahraman bilgileri ve roller':'Hero details and roles','Tek elle takım yerleştirme':'One-hand team placement','Kahraman seç → Konum seç':'Choose a hero → Choose a position','Kahraman seç':'Choose a hero','Konum seç':'Choose a position','Konum':'Position','Öne al':'Move to front','Arkaya al':'Move to back','Yerleşmedi':'Not placed','Yer değiştir':'Swap positions','Yerleştir':'Place','Seçili kahramanı ön safa al':'Move selected hero to front row','Seçili kahramanı arka safa al':'Move selected hero to back row','Ön':'Front','Arka':'Back','Boş':'Empty',
 'Hazırlık için kalan süre':'Preparation time remaining','Yerleştirilecek kahramanlar':'Heroes to place','Nasıl oynanır?':'How to play?',
 'Güç ve komutan bonusu detayları':'Power and commander bonus details','BOŞ KONUM':'EMPTY SLOT','Arka safa':'To back row','Ön safa':'To front row',
 'Bu safta kahraman yok':'No heroes in this row','Dokun veya sürükle':'Select or drag','kahramanını seç':'select hero',
@@ -314,6 +350,10 @@ export const phrases = {
 'Saldırı Komutanı':'Attack Commander','Savunma Komutanı':'Defense Commander','Büyü Komutanı':'Magic Commander','Destek Komutanı':'Support Commander',
 'Saldırı komutanı':'Attack commander','Savunma komutanı':'Defense commander','Büyü komutanı':'Magic commander','Destek komutanı':'Support commander',
 'Geliştirme yok':'No upgrades','Komutan seçilmedi':'No commander selected','Bonus yok':'No bonus','Enerji:':'Energy:',
+'Normal beceri 40 normal enerji harcar; ulti dolumu azalmaz.':'Normal abilities spend 40 normal energy; ultimate charge is unaffected.',
+'Normal beceri enerjisi':'Normal ability energy','Normal enerji':'Normal energy','Ulti dolumu':'Ultimate charge','ulti dolumu':'ultimate charge','Ulti:':'Ultimate:',
+'Normal enerji veya ulti dolumu yeterliyse becerini kullanabilirsin':'Use an ability when its normal energy or ultimate charge is sufficient.',
+'normal + ulti':'normal + ultimate','normal':'normal',
 'Nihai':'Ultimate','Bağlanıyor…':'Connecting…','Canlı savaş başladı · Komutanını yönet':'Live battle started · Command your team',
 'CANLI SAVAŞ SÜRÜYOR':'LIVE BATTLE IN PROGRESS','SAVAŞ TAMAMLANDI':'BATTLE COMPLETE','Savaş tamamlandı':'Battle complete',
 'Savaş sona erdi':'Battle ended','RÖVANŞ İSTEĞİ GÖNDERİLDİ':'REMATCH REQUEST SENT','RÖVANŞ İSTE':'REQUEST REMATCH','RÖVANŞ SERİSİ':'REMATCH SERIES',
@@ -382,6 +422,9 @@ Object.assign(phrases, {
  "Saf / rol / kredi etkisi": "Row / role / credit effect",
  "Komutan önizleme katkısı": "Commander preview contribution",
  "Tahmini güç göstergesi": "Estimated power",
+ "TAHMİNİ GÜÇ": "EST. POWER",
+ "Tahmini güç": "Estimated power",
+ "Rol, saf ve komutan etkilerini özetleyen tahmini güç; gerçek savaş istatistikleri ayrı hesaplanır.": "Estimated power summarizing role, row, and commander effects; actual combat stats are calculated separately.",
  "Gerçek savaş etkisi:": "Actual battle effect:",
  "Saldırı istatistiğine yüzdesel uygulanır": "Applied as a percentage of attack",
  "Maksimum cana uygulanır": "Applied to maximum health",
@@ -410,7 +453,7 @@ Object.assign(phrases, {
 });
 // One longest-match pass: translations must never feed shorter source fragments.
 // Apply complete sentences before numeric templates (including split DOM labels).
-Object.assign(phrases, uiPhrases, battlePhrases);
+Object.assign(phrases, uiPhrases, battlePhrases, commanderUltimatePhrases);
 // Match at word content, not leading whitespace: otherwise a short ' kredi'
 // steals the earlier space from a longer 'kredi kullanıldı' phrase.
 const dictionary=Object.fromEntries(Object.entries(phrases).map(([tr,en])=>[tr.trim(),en.trim()]));
@@ -421,7 +464,7 @@ const phrasePattern=new RegExp(Object.keys(dictionary).sort((a,b)=>b.length-a.le
  return left+escapePattern(tr)+right;
 }).join('|'),'gu');
 export function translate(text){
- text=translateCommanderDescription(String(text));
+ text=translateAbilityDescription(translateCommanderDescription(String(text)));
  const chunks=[];let cursor=0;
  for(const match of String(text).matchAll(phrasePattern)){
   // Reserve complete multi-word instructions before dynamic substitutions.

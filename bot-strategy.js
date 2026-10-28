@@ -1,3 +1,6 @@
+import {chooseCommanderFocusEnemy,hasCommanderFocus} from './battle-commander-focus.js';
+import {hasCommanderStun} from './commander-stun-status.js';
+import {getCommanderAbilityCost} from './public/commander-ability-rules.js';
 // Server-owned decisions, restricted to information a player can observe.
 // Difficulty changes choices, reaction time and the temporary commander profile.
 // Combat bonuses/energy still follow the same progression rules as human profiles.
@@ -70,46 +73,57 @@ export function chooseBotFormation(cards,difficulty,rng=Math.random){
 export const BOT_REACTION_MS=Object.freeze({easy:9000,medium:4500,hard:1500});
 export function chooseBotCast(snapshot,commanderId,difficulty,{now=Date.now(),lastCastAt=0,startedAt=0,side=1}={}){
  const level=difficultyOf(difficulty),ability=snapshot?.abilities?.[side];
- if(!ability||snapshot.finished||now-Math.max(startedAt,lastCastAt)<BOT_REACTION_MS[level]||!ability.canUseNormal)return null;
- const allies=snapshot.teams[side].filter(u=>u.hp>0),enemies=snapshot.teams[1-side].filter(u=>u.hp>0);
+ if(!ability||snapshot.finished||![0,1].includes(side)||!COMMANDERS.some(c=>c.id===commanderId)||now-Math.max(startedAt,lastCastAt)<BOT_REACTION_MS[level])return null;
+ const available=cast=>(cast!=='ultimate'||!snapshot.ultimateUsed?.[side])&&ability[cast==='ultimate'?'canUseUltimate':'canUseNormal']===true&&(!Number.isFinite(ability[cast==='ultimate'?'ultimateEnergy':'energy'])||ability[cast==='ultimate'?'ultimateEnergy':'energy']>=getCommanderAbilityCost(commanderId,cast));
+ const canNormal=available('normal'),canUltimate=level!=='easy'&&available('ultimate');
+ if(!canNormal&&!canUltimate)return null;
+ const ownTeam=snapshot.teams[side],allies=ownTeam.filter(u=>u.hp>0),enemies=snapshot.teams[1-side].filter(u=>u.hp>0);
  if(!allies.length||!enemies.length)return null;
- let cast=level!=='easy'&&ability.canUseUltimate?'ultimate':'normal';
- const missing=allies.reduce((n,u)=>n+u.maxHp-u.hp,0),maxHp=allies.reduce((n,u)=>n+u.maxHp,0);
+ let cast=canUltimate?'ultimate':'normal',friendlyTarget=null;
+ const missing=allies.reduce((n,u)=>n+Math.max(0,u.maxHp-u.hp),0),maxHp=allies.reduce((n,u)=>n+u.maxHp,0);
+ if(cast==='ultimate'&&commanderId==='magic'){
+  // Visible attack and status only. Never refresh a scheduled/active surge;
+  // prefer an AoE caster on an attack tie, then use a stable public ID tie-break.
+  friendlyTarget=[...allies].filter(u=>(u.attack||0)>0&&(!Number.isInteger(u.arcaneSurgeUntilRound)||u.arcaneSurgeUntilRound<snapshot.round))
+   .sort((a,b)=>(b.attack||0)-(a.attack||0)||Number(b.role==='energy')-Number(a.role==='energy')||String(a.id).localeCompare(String(b.id)))[0]??null;
+  if(!friendlyTarget)cast='normal';
+ }else if(cast==='ultimate'&&commanderId==='defense'){
+  friendlyTarget=[...allies].sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp||String(a.id).localeCompare(String(b.id)))[0];
+ }else if(cast==='ultimate'&&commanderId==='support'){
+  if(!snapshot.revivalUsed?.[side])friendlyTarget=[...ownTeam].filter(u=>u.hp===0&&u.maxHp>0)
+   .sort((a,b)=>(b.power||0)-(a.power||0)||(b.maxHp||0)-(a.maxHp||0)||String(a.id).localeCompare(String(b.id)))[0]??null;
+  if(!friendlyTarget)cast='normal';
+ }else if(cast==='ultimate'&&commanderId==='attack'){
+  const activeOrder=hasCommanderFocus(allies,enemies,snapshot.round);
+  if(activeOrder)return null;
+ }
+ if(cast==='normal'&&!canNormal)return null;
+ // Normal healing has no legal effect on a full-health living team, even if
+ // a revival ultimate was unavailable or already used earlier in the battle.
+ if(commanderId==='support'&&cast==='normal'&&missing<=0)return null;
  if(level==='hard'){
-  const urgent=allies.some(u=>u.hp/u.maxHp<.3),late=snapshot.round>=13;
-  if(commanderId==='support'){
+  const urgent=allies.some(u=>u.hp/u.maxHp<.3);
+  if(commanderId==='support'&&cast==='normal'){
    if(missing/maxHp<.15)return null;
-   if(!ability.canUseUltimate&&!urgent&&!late)return null;
   }else if(commanderId==='defense'){
    const shields=allies.reduce((n,u)=>n+(u.shield||0),0);
    if(shields>maxHp*.3&&!urgent)return null;
-   if(!ability.canUseUltimate&&!urgent&&!late)return null;
-  }else if(commanderId==='attack'){
-   // Visible base attack is sufficient for a conservative finishing estimate.
-   const basis=snapshot.teams[side].reduce((n,u)=>n+(u.baseAttack??u.attack??0),0);
-   const normalDamage=Math.floor(basis*.12/enemies.length);
-   const finishing=enemies.some(u=>u.hp+(u.shield||0)<=normalDamage);
-   if(!ability.canUseUltimate&&!finishing&&!urgent&&!late)return null;
-  }else if(commanderId==='magic'){
-   // Do not spend energy refreshing an equally strong debuff with time left.
-   const rate=cast==='ultimate'?.4:.3;
-   const worthwhile=enemies.some(u=>(u.commanderWeaken||0)<rate||(u.commanderWeakenUntilRound||0)<=snapshot.round);
+  }else if(commanderId==='magic'&&cast==='normal'){
+   // Do not spend normal energy reapplying the same one-attack stun.
+   const worthwhile=enemies.some(u=>!hasCommanderStun(u));
    if(!worthwhile)return null;
-   const enemyAttack=enemies.reduce((n,u)=>n+(u.attack||0),0);
-   const strongestAlly=Math.max(...allies.map(u=>u.attack||0));
-   const highThreat=enemies.some(u=>(u.commanderWeaken||0)<.3&&(u.attack||0)>=enemyAttack*.55&&(u.attack||0)>=strongestAlly*2);
-   const openingDebuff=snapshot.round<=3&&lastCastAt===0;
-   if(!ability.canUseUltimate&&!urgent&&!late&&!highThreat&&!openingDebuff)return null;
+
   }
  }
  const result={ability:cast};
- if(commanderId==='magic'){
+ if(cast==='ultimate'&&commanderId==='attack')result.targetIds=[chooseCommanderFocusEnemy(enemies).id];
+ else if(cast==='ultimate'&&friendlyTarget)result.targetIds=[friendlyTarget.id];
+ else if(commanderId==='magic'){
   const ranked=level==='hard'?[...enemies].sort((a,b)=>{
-   const rate=cast==='ultimate'?.4:.3;
-   const value=u=>(u.attack||u.baseAttack||0)*Math.max(0,rate-((u.commanderWeakenUntilRound||0)>snapshot.round?(u.commanderWeaken||0):0))*(u.hp/u.maxHp>.2?1:.6);
+   const value=u=>(u.attack||u.baseAttack||0)*(hasCommanderStun(u)?0:1)*(u.hp/u.maxHp>.2?1:.6);
    return value(b)-value(a)||String(a.id).localeCompare(String(b.id));
   }):enemies;
-  result.targetIds=ranked.slice(0,cast==='ultimate'?2:1).map(u=>u.id);
+  result.targetIds=ranked.slice(0,1).map(u=>u.id);
  }
  return result;
 }

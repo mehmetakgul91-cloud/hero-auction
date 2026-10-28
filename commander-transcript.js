@@ -3,7 +3,7 @@ import {commanderRoundEnergy} from './public/commander-ability-rules.js';
 // The combat engine, not the client, is authoritative for energy and casualties.
 // This is not yet a real-time battle runner or a production endpoint.
 import {simulateBattle} from './battle-engine.js';
-import {createTurnSubmissionState,submitTurnCommand,resolveTurnSubmissions} from './commander-turns.js';
+import {createTurnSubmissionState,submitTurnCommand,resolveTurnSubmissions,validateCommanderTurnTargets} from './commander-turns.js';
 
 export function replayCommanderTranscript(cardsA,cardsB,{commanders,turns,seed='commander-transcript',maxRounds=15,remainingCredits=[0,0]}={}){
  if(!Array.isArray(commanders)||commanders.length!==2||commanders.some(c=>!c?.commanderId))throw Error('Two commander profiles required');
@@ -22,10 +22,13 @@ export function replayCommanderTranscript(cardsA,cardsB,{commanders,turns,seed='
    // Start energy and round regeneration use the same rules as the live arena.
    // Its previous result already includes casualty bonuses from that round.
    const energy=commanderRoundEnergy(previous?.commanderEnergy[side]??0,round,commanders[side]);
-   submitTurnCommand(state,{side,round,command:entry.command,energy,commanderId:commanders[side].commanderId});
+   const ultimateUsed=!!previous?.ultimateUsed?.[side];
+   const ultimateEnergy=ultimateUsed?(previous?.commanderUltimateEnergy?.[side]??0):commanderRoundEnergy(previous?.commanderUltimateEnergy?.[side]??0,round,commanders[side]);
+   submitTurnCommand(state,{side,round,command:entry.command,energy,ultimateEnergy,ultimateUsed,commanderId:commanders[side].commanderId,targetIds:entry.targetIds});
+   validateCommanderTurnTargets(entry.command,{commanderId:commanders[side].commanderId,targetIds:entry.targetIds,teams:previous?.teams,side});
   }
   actions.push(...resolveTurnSubmissions(state));
-  previous=simulateBattle(cardsA,cardsB,{seed,maxRounds:round,remainingCredits,commanders,commanderActions:actions});
+  previous=simulateBattle(cardsA,cardsB,{seed,maxRounds:round,remainingCredits,commanders,commanderActions:actions,partial:round<maxRounds});
  }
  return previous??simulateBattle(cardsA,cardsB,{seed,maxRounds,remainingCredits,commanders,commanderActions:actions});
 }

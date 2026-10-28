@@ -1,0 +1,6 @@
+{
+  "repository": "mehmetakgul91-cloud/hero-auction",
+  "branch": "main",
+  "commit": "7e81c9e65dd73d91ab8124e9cfa0d04ffe19d8c0",
+  "note": "Android development based on 28 October main. Native adapters and opt-in CORS are isolated to this development branch; no production deployment."
+}

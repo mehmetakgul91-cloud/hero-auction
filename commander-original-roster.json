@@ -26,12 +26,15 @@
       "active": {
         "name": "obsidyen-kalkan",
         "effect": "shield",
-        "power": 1.12
+        "power": 1.14,
+        "shieldRate": 0.45,
+        "frontShieldRate": 0.18,
+        "tankShieldRate": 0.2
       },
       "passive": {
         "name": "hasar-azaltma",
         "effect": "guard",
-        "value": 0.06
+        "value": 0.08
       },
       "specialty": "tank",
       "laneModifiers": {
@@ -62,12 +65,15 @@
       "active": {
         "name": "celik-siper",
         "effect": "shield",
-        "power": 1.12
+        "power": 1.1,
+        "shieldRate": 0.4,
+        "frontShieldRate": 0.14,
+        "tankShieldRate": 0.2
       },
       "passive": {
         "name": "takim-koruma",
         "effect": "guard",
-        "value": 0.06
+        "value": 0.04
       },
       "specialty": "tank",
       "laneModifiers": {
@@ -98,7 +104,10 @@
       "active": {
         "name": "yer-sarsintisi",
         "effect": "shield",
-        "power": 1.12
+        "power": 1.12,
+        "shieldRate": 0.42,
+        "frontShieldRate": 0.16,
+        "tankShieldRate": 0.2
       },
       "passive": {
         "name": "alan-kontrol",
@@ -134,7 +143,10 @@
       "active": {
         "name": "donma",
         "effect": "shield",
-        "power": 1.12
+        "power": 1.12,
+        "shieldRate": 0.42,
+        "frontShieldRate": 0.16,
+        "tankShieldRate": 0.2
       },
       "passive": {
         "name": "buz-kalkani",
@@ -170,12 +182,13 @@
       "active": {
         "name": "gorunmezlik",
         "effect": "pierce",
-        "power": 1.12
+        "power": 1.14,
+        "pierceRate": 0.45
       },
       "passive": {
         "name": "kritik-darbe",
         "effect": "evasion",
-        "value": 0.06
+        "value": 0.08
       },
       "specialty": "assassin",
       "laneModifiers": {
@@ -206,12 +219,15 @@
       "active": {
         "name": "kutsal-kalkan",
         "effect": "shield",
-        "power": 1.12
+        "power": 1.14,
+        "shieldRate": 0.45,
+        "frontShieldRate": 0.2,
+        "tankShieldRate": 0.2
       },
       "passive": {
         "name": "takim-koruma",
         "effect": "guard",
-        "value": 0.06
+        "value": 0.08
       },
       "specialty": "tank",
       "laneModifiers": {
@@ -242,12 +258,13 @@
       "active": {
         "name": "yakma",
         "effect": "burst",
-        "power": 1.12
+        "power": 1.1,
+        "delay": true
       },
       "passive": {
         "name": "alev-kilici",
         "effect": "rage",
-        "value": 0.06
+        "value": 0.11
       },
       "specialty": "fighter",
       "laneModifiers": {
@@ -278,7 +295,8 @@
       "active": {
         "name": "uzun-menzil",
         "effect": "sunder",
-        "power": 1.12
+        "power": 1.12,
+        "sunderRate": 0.15
       },
       "passive": {
         "name": "dogal-yavaslatma",
@@ -314,7 +332,8 @@
       "active": {
         "name": "Ruh Çağırma",
         "effect": "splash",
-        "power": 1.12
+        "power": 1.14,
+        "splashRate": 0.27
       },
       "passive": {
         "name": "Ölülerin Gücü",
@@ -350,7 +369,10 @@
       "active": {
         "name": "Taret Siperi",
         "effect": "shield",
-        "power": 1.12
+        "power": 1.12,
+        "shieldRate": 0.42,
+        "frontShieldRate": 0.16,
+        "tankShieldRate": 0.2
       },
       "passive": {
         "name": "Mekanik Zırh",
@@ -386,12 +408,15 @@
       "active": {
         "name": "buz-alan-hasari",
         "effect": "shield",
-        "power": 1.12
+        "power": 1.14,
+        "shieldRate": 0.45,
+        "frontShieldRate": 0.18,
+        "tankShieldRate": 0.2
       },
       "passive": {
         "name": "yavaslatma",
         "effect": "guard",
-        "value": 0.06
+        "value": 0.08
       },
       "specialty": "tank",
       "laneModifiers": {
@@ -422,12 +447,13 @@
       "active": {
         "name": "can-calma",
         "effect": "pierce",
-        "power": 1.12
+        "power": 1.14,
+        "pierceRate": 0.45
       },
       "passive": {
         "name": "kacis",
         "effect": "evasion",
-        "value": 0.06
+        "value": 0.08
       },
       "specialty": "assassin",
       "laneModifiers": {
@@ -458,7 +484,8 @@
       "active": {
         "name": "kritik-ok",
         "effect": "sunder",
-        "power": 1.12
+        "power": 1.12,
+        "sunderRate": 0.15
       },
       "passive": {
         "name": "hareket",
@@ -494,12 +521,13 @@
       "active": {
         "name": "sersemletme",
         "effect": "burst",
-        "power": 1.12
+        "power": 1.12,
+        "delay": true
       },
       "passive": {
         "name": "yildirim",
         "effect": "rage",
-        "value": 0.06
+        "value": 0.12
       },
       "specialty": "fighter",
       "laneModifiers": {
@@ -530,12 +558,15 @@
       "active": {
         "name": "Ejderha Kalkanı",
         "effect": "shield",
-        "power": 1.12
+        "power": 1.14,
+        "supportHybrid": true,
+        "healRate": 0.52,
+        "allyShieldRate": 0.28
       },
       "passive": {
         "name": "Buz Direnci",
         "effect": "resist",
-        "value": 0.06
+        "value": 0.08
       },
       "specialty": "support",
       "laneModifiers": {
@@ -562,7 +593,8 @@
       "active": {
         "name": "Yıldırım Fırtınası",
         "effect": "splash",
-        "power": 1.12
+        "power": 1.12,
+        "splashRate": 0.27
       },
       "passive": {
         "name": "Fırtına Odağı",
@@ -594,17 +626,18 @@
       "active": {
         "name": "Çöl Baskını",
         "effect": "pierce",
-        "power": 1.12
+        "power": 1.1,
+        "pierceRate": 0.35
       },
       "passive": {
         "name": "Sessiz Adım",
         "effect": "evasion",
-        "value": 0.06
+        "value": 0.04
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": 0.04,
-        "back": -0.03
+        "front": -0.03,
+        "back": 0.04
       }
     },
     {
@@ -626,12 +659,13 @@
       "active": {
         "name": "Balta Darbesi",
         "effect": "sunder",
-        "power": 1.12
+        "power": 1.12,
+        "sunderRate": 0.15
       },
       "passive": {
         "name": "Savaş Öfkesi",
         "effect": "rage",
-        "value": 0.06
+        "value": 0.11
       },
       "specialty": "fighter",
       "laneModifiers": {
@@ -658,7 +692,8 @@
       "active": {
         "name": "Kızıl Kesik",
         "effect": "drain",
-        "power": 1.12
+        "power": 1.12,
+        "drainRate": 0.18
       },
       "passive": {
         "name": "Düello Ustalığı",
@@ -690,12 +725,13 @@
       "active": {
         "name": "Yaşam Işığı",
         "effect": "heal",
-        "power": 1.12
+        "power": 1.1,
+        "healRate": 0.52
       },
       "passive": {
         "name": "Işık Direnci",
         "effect": "resist",
-        "value": 0.06
+        "value": 0.04
       },
       "specialty": "support",
       "laneModifiers": {
@@ -722,7 +758,10 @@
       "active": {
         "name": "Kutsal Çan",
         "effect": "shield",
-        "power": 1.12
+        "power": 1.12,
+        "shieldRate": 0.42,
+        "frontShieldRate": 0.16,
+        "tankShieldRate": 0.2
       },
       "passive": {
         "name": "Sabır Zırhı",
@@ -754,7 +793,8 @@
       "active": {
         "name": "Şafak Duası",
         "effect": "heal",
-        "power": 1.12
+        "power": 1.12,
+        "healRate": 0.58
       },
       "passive": {
         "name": "Kutsal Direnç",
@@ -786,7 +826,8 @@
       "active": {
         "name": "Ay Laneti",
         "effect": "weaken",
-        "power": 1.12
+        "power": 1.12,
+        "weakenRate": 0.14
       },
       "passive": {
         "name": "Ay Odağı",
@@ -818,7 +859,10 @@
       "active": {
         "name": "Kara Kalkan",
         "effect": "shield",
-        "power": 1.12
+        "power": 1.12,
+        "shieldRate": 0.42,
+        "frontShieldRate": 0.16,
+        "tankShieldRate": 0.2
       },
       "passive": {
         "name": "Çelik Direnç",
@@ -850,12 +894,13 @@
       "active": {
         "name": "Ruh Şifası",
         "effect": "heal",
-        "power": 1.12
+        "power": 1.14,
+        "healRate": 0.64
       },
       "passive": {
         "name": "Ruh Perdesi",
         "effect": "resist",
-        "value": 0.06
+        "value": 0.08
       },
       "specialty": "support",
       "laneModifiers": {
@@ -882,7 +927,8 @@
       "active": {
         "name": "Kuzgun Baskını",
         "effect": "pierce",
-        "power": 1.12
+        "power": 1.12,
+        "pierceRate": 0.4
       },
       "passive": {
         "name": "Kuzgun Adımı",
@@ -891,8 +937,8 @@
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": 0.05,
-        "back": -0.04
+        "front": -0.04,
+        "back": 0.05
       }
     },
     {
@@ -914,7 +960,8 @@
       "active": {
         "name": "Astral Dalga",
         "effect": "splash",
-        "power": 1.12
+        "power": 1.12,
+        "splashRate": 0.27
       },
       "passive": {
         "name": "Yıldız Odağı",
@@ -946,12 +993,13 @@
       "active": {
         "name": "Sis Mührü",
         "effect": "weaken",
-        "power": 1.12
+        "power": 1.1,
+        "weakenRate": 0.12
       },
       "passive": {
         "name": "Sis Perdesi",
         "effect": "resist",
-        "value": 0.06
+        "value": 0.04
       },
       "specialty": "energy",
       "laneModifiers": {
@@ -978,7 +1026,8 @@
       "active": {
         "name": "Kök Şifası",
         "effect": "heal",
-        "power": 1.12
+        "power": 1.12,
+        "healRate": 0.58
       },
       "passive": {
         "name": "Doğa Direnci",
@@ -1010,12 +1059,13 @@
       "active": {
         "name": "Güneş Darbesi",
         "effect": "pierce",
-        "power": 1.12
+        "power": 1.14,
+        "pierceRate": 0.45
       },
       "passive": {
         "name": "Şafak Azmi",
         "effect": "focus",
-        "value": 0.06
+        "value": 0.08
       },
       "specialty": "fighter",
       "laneModifiers": {
@@ -1042,12 +1092,13 @@
       "active": {
         "name": "Seraf Duası",
         "effect": "heal",
-        "power": 1.12
+        "power": 1.14,
+        "healRate": 0.64
       },
       "passive": {
         "name": "Işık Zırhı",
         "effect": "guard",
-        "value": 0.06
+        "value": 0.08
       },
       "specialty": "support",
       "laneModifiers": {
@@ -1074,7 +1125,8 @@
       "active": {
         "name": "Soğuk Baskın",
         "effect": "weaken",
-        "power": 1.12
+        "power": 1.12,
+        "weakenRate": 0.12
       },
       "passive": {
         "name": "Buz Adımı",
@@ -1106,17 +1158,18 @@
       "active": {
         "name": "Hilal Kesik",
         "effect": "execute",
-        "power": 1.12
+        "power": 1.1,
+        "executeThreshold": 0.12
       },
       "passive": {
         "name": "Gece Adımı",
         "effect": "evasion",
-        "value": 0.06
+        "value": 0.04
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": 0.06,
-        "back": -0.05
+        "front": -0.05,
+        "back": 0.06
       }
     },
     {
@@ -1138,7 +1191,8 @@
       "active": {
         "name": "Zehirli Bıçak",
         "effect": "weaken",
-        "power": 1.12
+        "power": 1.12,
+        "weakenRate": 0.12
       },
       "passive": {
         "name": "Orman Çevikliği",
@@ -1170,7 +1224,8 @@
       "active": {
         "name": "Kristal Işık",
         "effect": "heal",
-        "power": 1.12
+        "power": 1.12,
+        "healRate": 0.58
       },
       "passive": {
         "name": "Kristal Direnç",
@@ -1202,7 +1257,8 @@
       "active": {
         "name": "Çelik Kesik",
         "effect": "sunder",
-        "power": 1.12
+        "power": 1.12,
+        "sunderRate": 0.15
       },
       "passive": {
         "name": "Dövüş Azmi",
@@ -1234,7 +1290,8 @@
       "active": {
         "name": "Fırtına Dalgası",
         "effect": "splash",
-        "power": 1.12
+        "power": 1.12,
+        "splashRate": 0.27
       },
       "passive": {
         "name": "Rüzgâr Adımı",
@@ -1266,7 +1323,8 @@
       "active": {
         "name": "Zafer Ezgisi",
         "effect": "heal",
-        "power": 1.12
+        "power": 1.12,
+        "healRate": 0.58
       },
       "passive": {
         "name": "Ezgili Direnç",
@@ -1298,7 +1356,10 @@
       "active": {
         "name": "Kadim Kabuk",
         "effect": "shield",
-        "power": 1.12
+        "power": 1.12,
+        "shieldRate": 0.42,
+        "frontShieldRate": 0.16,
+        "tankShieldRate": 0.2
       },
       "passive": {
         "name": "Kabuk Zırhı",
@@ -1330,17 +1391,18 @@
       "active": {
         "name": "Hilal Baskını",
         "effect": "pierce",
-        "power": 1.12
+        "power": 1.14,
+        "pierceRate": 0.45
       },
       "passive": {
         "name": "Gölge Çevikliği",
         "effect": "evasion",
-        "value": 0.06
+        "value": 0.08
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": 0.06,
-        "back": -0.03
+        "front": -0.03,
+        "back": 0.06
       }
     },
     {
@@ -1362,12 +1424,13 @@
       "active": {
         "name": "Ezici Yumruk",
         "effect": "sunder",
-        "power": 1.12
+        "power": 1.1,
+        "sunderRate": 0.12
       },
       "passive": {
         "name": "Mücadele Azmi",
         "effect": "rage",
-        "value": 0.06
+        "value": 0.1
       },
       "specialty": "fighter",
       "laneModifiers": {
@@ -1394,12 +1457,13 @@
       "active": {
         "name": "Kış Fırtınası",
         "effect": "splash",
-        "power": 1.12
+        "power": 1.14,
+        "splashRate": 0.3
       },
       "passive": {
         "name": "Buz Direnci",
         "effect": "resist",
-        "value": 0.06
+        "value": 0.08
       },
       "specialty": "energy",
       "laneModifiers": {
@@ -1426,12 +1490,13 @@
       "active": {
         "name": "Yıldırım Çekici",
         "effect": "sunder",
-        "power": 1.12
+        "power": 1.14,
+        "sunderRate": 0.18
       },
       "passive": {
         "name": "Fırtına Zırhı",
         "effect": "guard",
-        "value": 0.06
+        "value": 0.08
       },
       "specialty": "fighter",
       "laneModifiers": {
@@ -1458,7 +1523,8 @@
       "active": {
         "name": "Gölgeli Kesik",
         "effect": "drain",
-        "power": 1.12
+        "power": 1.12,
+        "drainRate": 0.18
       },
       "passive": {
         "name": "Gölge Adımı",
@@ -1467,8 +1533,8 @@
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": 0.04,
-        "back": 0.02
+        "front": 0.02,
+        "back": 0.04
       }
     },
     {
@@ -1490,7 +1556,10 @@
       "active": {
         "name": "Sancak Koruması",
         "effect": "shield",
-        "power": 1.12
+        "power": 1.12,
+        "supportHybrid": true,
+        "healRate": 0.48,
+        "allyShieldRate": 0.2
       },
       "passive": {
         "name": "Sancak Direnci",
@@ -1522,17 +1591,18 @@
       "active": {
         "name": "Kül Baskını",
         "effect": "haste",
-        "power": 1.12
+        "power": 1.1,
+        "hasteAmount": 8
       },
       "passive": {
         "name": "Hızlı Adım",
         "effect": "evasion",
-        "value": 0.06
+        "value": 0.04
       },
       "specialty": "assassin",
       "laneModifiers": {
-        "front": 0.05,
-        "back": -0.04
+        "front": -0.04,
+        "back": 0.05
       }
     },
     {
@@ -1554,7 +1624,8 @@
       "active": {
         "name": "Kan Akışı",
         "effect": "drain",
-        "power": 1.12
+        "power": 1.2,
+        "drainRate": 0.18
       },
       "passive": {
         "name": "Kızıl Odak",
@@ -1586,7 +1657,8 @@
       "active": {
         "name": "Ay Duası",
         "effect": "heal",
-        "power": 1.12
+        "power": 1.12,
+        "healRate": 0.58
       },
       "passive": {
         "name": "Ay Perdesi",
@@ -1618,12 +1690,13 @@
       "active": {
         "name": "Yıldız Yağmuru",
         "effect": "splash",
-        "power": 1.12
+        "power": 1.14,
+        "splashRate": 0.3
       },
       "passive": {
         "name": "Kozmik Odak",
         "effect": "focus",
-        "value": 0.06
+        "value": 0.08
       },
       "specialty": "energy",
       "laneModifiers": {
@@ -1650,7 +1723,8 @@
       "active": {
         "name": "Kristal Dalgası",
         "effect": "splash",
-        "power": 1.12
+        "power": 1.12,
+        "splashRate": 0.27
       },
       "passive": {
         "name": "Kristal Odak",

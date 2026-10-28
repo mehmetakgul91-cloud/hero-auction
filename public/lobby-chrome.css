@@ -61,3 +61,34 @@
 
 /* CrazyGames hides the contact action, so its four visible entries fill the row. */
 html[lang="en"] #home .home-quick-nav{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+
+/* Compact masthead: brand, identity and wallet share one row, even on phones. */
+.shell>.lobby-header{grid-template-columns:auto minmax(0,1fr) auto;gap:8px;padding:8px 10px;border-radius:14px}
+.lobby-header .lobby-brand{grid-column:1;grid-row:1;min-width:44px;min-height:44px;gap:5px;padding:0;border:0;border-radius:6px;background:transparent;box-shadow:none;text-align:left;letter-spacing:normal}
+.lobby-header .lobby-brand:focus-visible{outline:2px solid #95e9ff;outline-offset:3px}
+.lobby-header .lobby-emblem{width:26px;height:32px}
+.lobby-header .lobby-wordmark strong{font-size:18px;letter-spacing:-.4px}
+.lobby-header .lobby-wordmark strong span{font-size:8px;letter-spacing:1.5px;margin-top:3px}
+.lobby-header .account-bar{grid-column:2;grid-row:1;order:2;padding:0;border:0;width:100%;max-width:260px}
+.lobby-header .account-bar #account-status{min-height:44px;gap:6px}
+.lobby-header .account-portrait{width:28px;height:28px;border-radius:7px}
+.lobby-header .account-copy{flex:1;gap:3px}
+.lobby-header .account-copy strong{font-size:12px}
+.lobby-header .account-copy small{font-size:8px}
+.lobby-header .account-chevron{width:14px;height:22px;border:0;background:transparent;font-size:15px}
+.lobby-header .gold-wallet{grid-column:3;grid-row:1;order:3;gap:4px;padding:5px 6px;border-radius:9px;max-width:110px;min-width:0}
+.lobby-header .gold-icon{width:21px;height:21px;flex:none}
+.lobby-header .gold-copy{gap:3px}
+.lobby-header .gold-label{font-size:6px;letter-spacing:1px}
+.lobby-header .gold-number{font-size:13px;white-space:normal;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+@media(max-width:390px){
+ .shell>.lobby-header{gap:6px;padding:6px 8px}
+ .lobby-header .lobby-emblem{width:21px;height:27px}
+ .lobby-header .lobby-wordmark strong{font-size:16px}
+ .lobby-header .lobby-wordmark strong span{font-size:7px;letter-spacing:1px}
+ .lobby-header .account-portrait{display:none}
+ .lobby-header .account-bar #account-status{gap:3px}
+ .lobby-header .account-copy strong{font-size:11px}
+ .lobby-header .gold-wallet{max-width:100px}
+ .lobby-header .gold-icon{width:18px;height:18px}
+}

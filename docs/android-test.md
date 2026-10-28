@@ -1,3 +1,7 @@
+# Current phone candidate — 28 October 2026
+
+Version 0.2.1 synchronizes the existing isolated service with game source 7e81c9e. The service identity gate, no-database mode, independent random session key, and guest-only authentication remain enforced. The source and native client are tested separately. The sections below document earlier candidates and are historical.
+
 # Android test preparation (2026-10-24)
 
 This branch packages the current web game into a **separate Android test app**. It does not deploy the web server, change the live service, publish to Google Play, or include iOS work.

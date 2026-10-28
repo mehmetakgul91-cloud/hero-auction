@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {auctionMatchKey,auctionRevealSnapshot,recordTailAward} from '../auction-reveal-events.js';
 import {rarityForPower} from '../auction-card-pool.js';
+import {startRoomArenaTheme,roomArenaPresentation} from '../arena-theme.js';
 
 const server=readFileSync(new URL('../server.js',import.meta.url),'utf8');
 const card=n=>({name:'Hero '+n,universe:'original',power:[40,60,80,95][n%4]});
@@ -67,10 +68,14 @@ test('publishing increments one revision shared by both seats, reads do not incr
 });
 test('actual rematch reset clears tail metadata and changes match identity before first new publish',async()=>{
  const room={code:'123',phase:'finished',created:45,matchNumber:1,revision:8,tailAwards:[{id:'old'}],players:[0,1].map(()=>({team:Array(5).fill(card(0)),credits:-3})),rematch:[false,true],mode:'friend',universe:'mixed'};
- const oldKey=auctionMatchKey(room);let published;
- const context={b:{},authorize:()=>({r:room,seat:0}),error:message=>{throw Error(message)},chargeEntry:async()=>{},liveArenaLifecycle:{endRoom(){}},liveArenaMatchKeys:new Map(),newCards:()=>Array.from({length:10},(_,n)=>card(n)),log(){},publish:r=>{r.revision++;published=auctionRevealSnapshot(r)},publicRoom:r=>auctionRevealSnapshot(r),Date};
+ const oldKey=auctionMatchKey(room),oldTheme=startRoomArenaTheme(room,{randomIndex:()=>0});let published;
+ const context={auctionAdmissions:new WeakSet(),refreshAuctionCommanders:async()=>{},markRoom(){},startRoomArenaTheme,b:{},authorize:()=>({r:room,seat:0}),error:message=>{throw Error(message)},chargeEntry:async()=>{},liveArenaLifecycle:{endRoom(){}},liveArenaMatchKeys:new Map(),newCards:()=>Array.from({length:10},(_,n)=>card(n)),log(){},publish:r=>{r.revision++;published=auctionRevealSnapshot(r)},publicRoom:r=>auctionRevealSnapshot(r),Date};
  const start=server.lastIndexOf("if(url==='/api/rematch'){")+"if(url==='/api/rematch')".length,end=server.indexOf("if(url==='/api/bot')",start);
  vm.createContext(context);vm.runInContext('async function rematch()'+server.slice(start,end),context);
  await context.rematch();
  assert.equal(room.phase,'auction');assert.equal(room.matchNumber,2);assert.notEqual(published.matchKey,oldKey);assert.equal(published.revision,1);assert.deepEqual(clone(room.tailAwards),[]);assert.equal('tailAwards' in published,false);
+ assert.equal(roomArenaPresentation(room).matchKey,published.matchKey);
+ assert.ok(['savanna','fjord'].includes(roomArenaPresentation(room).theme),'three-theme rematch excludes forest without changing auction allocation');
+ assert.notEqual(roomArenaPresentation(room).theme,oldTheme.theme);
+ assert.notEqual(roomArenaPresentation(room).matchKey,oldTheme.matchKey,'cosmetic identity still resets with the new match');
 });

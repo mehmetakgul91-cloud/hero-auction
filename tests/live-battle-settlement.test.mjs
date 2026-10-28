@@ -46,11 +46,11 @@ test('consecutive rematches retain the series, ignore stale finishes and count d
 
 test('a finishing commander cast settles immediately once, even without either player polling',()=>{
  const r=room(),matchKey='123:1:99';let now=0,tick,settlements=0;
- const teams=[[hero('a',10)],[hero('b',90)]];
+ const teams=[[hero('a',5)],[hero('b',90)]];
  const combat=createLiveCommanderCombat({teams,abilities:createLiveCommanderAbilities({matchKey,energy:[100,100],now:0}),commanders:[{commanderId:'defense'},{commanderId:'attack'}]});
  const arena=createLiveArenaLifecycle({clock:()=>now,scheduler:fn=>{tick=fn;return 1},canceller:()=>{},onFinish:(snapshot,key)=>{settlements++;settleLiveBattle(r,key,snapshot,record)}});
  arena.begin({matchKey,tokens:['a','b'],combat,options:{parity:true}});
- arena.cast({matchKey,token:'b',ability:'ultimate',requestId:'deciding_ultimate',now:1000});
+ arena.cast({matchKey,token:'b',ability:'normal',requestId:'deciding_normal',now:1000});
  assert.deepEqual(r.series,[0,1]);assert.equal(arena.status(matchKey).scheduled,false);
  for(let i=0;i<3;i++){now+=1000;tick();assert.equal(arena.snapshot({matchKey,token:'a',sinceVersion:1}).winner,1)}
  assert.equal(settlements,1);

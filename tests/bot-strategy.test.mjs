@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {chooseBotCommander,chooseBotBid,chooseBotFormation,chooseBotCast,BOT_REACTION_MS} from '../bot-strategy.js';
 import {battleRoster} from '../battle-roster.js';
+import {getCommanderAbilityCost} from '../public/commander-ability-rules.js';
 import {createLiveCommanderAbilities,viewLiveCommanderAbilities} from '../commander-live-abilities.js';
 import {createLiveCommanderCombat,castLiveCommanderCombat,beginServerCombatRound} from '../commander-live-combat.js';
 const unit=(id,props={})=>({id,hp:100,maxHp:100,attack:100,shield:0,...props});
@@ -61,13 +62,13 @@ test('difficulty has measurable reaction timing and respects cooldown, effect lo
  assert.equal(chooseBotCast(state({abilities:[{}, {energy:100,canUseNormal:false,canUseUltimate:false}]}),'magic','hard',options),null);
 });
 
-test('hard saves for ultimate but spends normal to finish a vulnerable enemy',()=>{
- assert.equal(chooseBotCast(state(),'attack','hard',options),null);
+test('hard spends useful normal energy without draining ultimate charge',()=>{
+ assert.deepEqual(chooseBotCast(state(),'attack','hard',options),{ability:'normal'});
  assert.deepEqual(chooseBotCast(state(),'attack','medium',options),{ability:'normal'});
  const s=state();s.teams[0][0].hp=2;
  assert.deepEqual(chooseBotCast(s,'attack','hard',options),{ability:'normal'});
  s.abilities[1].canUseUltimate=true;s.abilities[1].energy=100;
- assert.deepEqual(chooseBotCast(s,'attack','hard',options),{ability:'ultimate'});
+ assert.deepEqual(chooseBotCast(s,'attack','hard',options),{ability:'ultimate',targetIds:['enemy-a']});
  assert.deepEqual(chooseBotCast(s,'attack','easy',options),{ability:'normal'});
 });
 
@@ -77,37 +78,37 @@ test('hard healing waits for damage and emergency beats energy saving; shield av
  s.teams[1][0].hp=20;
  assert.deepEqual(chooseBotCast(s,'support','hard',options),{ability:'normal'});
  s.teams[1][0].hp=100;s.teams[1][0].shield=100;
- s.abilities[1].canUseUltimate=true;
+ s.abilities[1].canUseUltimate=true;s.abilities[1].energy=getCommanderAbilityCost('defense','ultimate');
  assert.equal(chooseBotCast(s,'defense','hard',options),null);
  s.teams[1][0].shield=0;
- assert.deepEqual(chooseBotCast(s,'defense','hard',options),{ability:'ultimate'});
+ assert.deepEqual(chooseBotCast(s,'defense','hard',options),{ability:'ultimate',targetIds:['ally']});
 });
 
-test('hard magic targets strongest unweakened enemy and executes legally in live combat',()=>{
+test('hard magic targets strongest unstunned enemy and executes legally in live combat',()=>{
  const s=state();
  assert.deepEqual(chooseBotCast(s,'magic','hard',options),{ability:'normal',targetIds:['enemy-b']});
- s.teams[0][1].commanderWeaken=.3;s.teams[0][1].commanderWeakenUntilRound=6;
+ s.teams[0][1].commanderStunNextAttack=true;
  const choice=chooseBotCast(s,'magic','hard',options);
  assert.deepEqual(choice,{ability:'normal',targetIds:['enemy-a']});
  const combat=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'test',energy:[60,60],now:0}),teams:s.teams,commanders:[chooseBotCommander(undefined,()=>0),{commanderId:'magic',levels:{attack:0,defense:0,magic:0,support:0}}]});
  castLiveCommanderCombat(combat,{side:1,...choice,requestId:'bot-test-1',matchKey:'test',now:10000});
- assert.equal(combat.teams[0][0].commanderWeaken,.3);
+ assert.equal(combat.teams[0][0].commanderStunNextAttack,true);assert.equal(combat.teams[0][0].commanderWeaken,undefined);
  assert.equal(combat.abilities.energy[1],20);
  assert.equal(combat.abilities.cooldownUntil[1],15000);
 });
 
-test('ultimate magic targets exactly the living targets, without duplicate IDs',()=>{
+test('ultimate magic selects exactly one living friendly hero, never enemy targets',()=>{
  const s=state();s.abilities[1].canUseUltimate=true;s.abilities[1].energy=100;
- assert.deepEqual(chooseBotCast(s,'magic','hard',options),{ability:'ultimate',targetIds:['enemy-b','enemy-a']});
+ assert.deepEqual(chooseBotCast(s,'magic','hard',options),{ability:'ultimate',targetIds:['ally']});
  s.teams[0][0].hp=0;
- assert.deepEqual(chooseBotCast(s,'magic','hard',options),{ability:'ultimate',targetIds:['enemy-b']});
+ assert.deepEqual(chooseBotCast(s,'magic','hard',options),{ability:'ultimate',targetIds:['ally']});
 });
 
 
 test('hard magic uses an opening debuff then really accumulates round energy to an ultimate',()=>{
  const commanders=[chooseBotCommander(undefined,()=>0),{commanderId:'magic',levels:{attack:0,defense:0,magic:0,support:0}}];
  const combat=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'saving',now:0}),teams:state().teams,commanders});
- let lastCastAt=0;const casts=[];
+ let lastCastAt=0;const casts=[],castRounds=[];
  for(let round=2;round<=11;round++){
   beginServerCombatRound(combat,round);
   const now=round*10000;
@@ -115,16 +116,26 @@ test('hard magic uses an opening debuff then really accumulates round energy to 
   const choice=chooseBotCast(snapshot,'magic','hard',{now,lastCastAt});
   if(choice){
    castLiveCommanderCombat(combat,{side:1,...choice,requestId:'saving-'+round,matchKey:'saving',now});
-   casts.push(choice.ability);lastCastAt=now;
+   casts.push(choice.ability);castRounds.push(round);lastCastAt=now;
   }
  }
- assert.deepEqual(casts,['normal','ultimate']);
- assert.equal(combat.abilities.energy[1],0);
+ assert.equal(casts.filter(x=>x==='ultimate').length,1);
+ assert.equal(castRounds[casts.indexOf('ultimate')],7);
+ assert.ok(casts.filter(x=>x==='normal').length>=2);
+ assert.equal(combat.abilities.ultimateEnergy[1],0);
 });
 
-test('hard magic can interrupt saving for an immediate high-threat debuff',()=>{
+test('hard magic uses useful normal debuffs without saving normal energy for ultimate',()=>{
  const s=state({round:6});
- assert.equal(chooseBotCast(s,'magic','hard',{...options,lastCastAt:1000}),null);
+ assert.deepEqual(chooseBotCast(s,'magic','hard',{...options,lastCastAt:1000}),{ability:'normal',targetIds:['enemy-b']});
  s.teams[0][1].attack=250;
  assert.deepEqual(chooseBotCast(s,'magic','hard',{...options,lastCastAt:1000}),{ability:'normal',targetIds:['enemy-b']});
+});
+
+test('hard normal attacks stay useful against shields without starving ultimate charge',()=>{
+ const s=state();s.teams[0][0].shield=10000;s.teams[0][0].hp=2;
+ // 100 base attack / 2 targets * 12% = 6 raw; 4 shield + 2 HP.
+ assert.deepEqual(chooseBotCast(s,'attack','hard',options),{ability:'normal'});
+ s.teams[0][0].hp=3;
+ assert.deepEqual(chooseBotCast(s,'attack','hard',options),{ability:'normal'});
 });

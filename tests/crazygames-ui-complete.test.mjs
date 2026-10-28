@@ -26,7 +26,7 @@ test('auction logs preserve names while translating templates and remain stable'
 test('native leave and commander confirmations use display locale without changing rules',()=>{
  const source=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
  assert.match(source,/confirm\(uiText\('Bu cihazda odadan ayrılmak istiyor musun\?'\)\)/);
- assert.match(source,/Spend 5,000 gold to switch to/);
+ assert.match(source,/Spend \$\{COMMANDER_CHANGE_COST\} gold to switch to/);
  assert.match(source,/const uiText=text=>document.documentElement.lang==='en'\?translate\(text\):text/);
  const web=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
  assert.match(web,/<html lang="tr">/);assert.doesNotMatch(web,/crazygames-en\.js/);

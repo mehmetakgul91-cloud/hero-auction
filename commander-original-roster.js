@@ -1,7 +1,9 @@
+import {validateHeroAbility} from './public/hero-ability-rules.js';
 // Experimental-only original hero catalogue. No Marvel/DC and no production roster mutation.
 import fs from 'node:fs';
 import {fighterFromCard} from './battle-engine.js';
 const source=JSON.parse(fs.readFileSync(new URL('./commander-original-roster.json',import.meta.url),'utf8'));
+for(const hero of source.characters){validateHeroAbility(hero);Object.freeze(hero.active);Object.freeze(hero.passive);Object.freeze(hero.laneModifiers);}
 export const commanderOriginalRoster=Object.freeze(source.characters.map(hero=>Object.freeze({...hero})));
 const byId=new Map(commanderOriginalRoster.map(hero=>[hero.id,hero]));
 export function commanderOriginalBattleCard(card){
