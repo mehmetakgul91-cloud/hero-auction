@@ -12,9 +12,10 @@ export function auctionCommanderView(identity,{english=false}={}){
  const item=classes[id],i=english?1:0;
  return {id,name:item.names[i],portrait:'/images/'+encodeURIComponent(item.portrait),normal:item.normal[i],ultimate:item.ultimate[i]};
 }
-export function auctionCommanderMarkup(identity,seat,{english=false}={}){
+export function auctionCommanderMarkup(identity,seat,{english=false,playerName=null,isMe=false}={}){
  const view=auctionCommanderView(identity,{english});if(!view||![0,1].includes(seat))return '';
- return `<button type="button" class="auction-commander" data-auction-commander="${seat}" aria-haspopup="dialog" aria-label="${escape(view.name)} · ${english?'Commander abilities':'Komutan yetenekleri'}"><img src="${view.portrait}" alt="" width="32" height="36"><span>${escape(view.name)}</span></button>`;
+ const label=playerName===null?view.name:String(playerName),self=isMe?(english?'YOU':'SEN'):'';
+ return `<button type="button" class="auction-commander" data-auction-commander="${seat}" aria-haspopup="dialog" aria-label="${escape(label)}${self?' · '+self:''} · ${escape(view.name)} · ${english?'Commander abilities':'Komutan yetenekleri'}"><img src="${view.portrait}" alt="" width="48" height="58"><span class="auction-commander-copy"><span class="name" translate="no">${escape(label)}${self?` <small class="auction-commander-self">${self}</small>`:''}</span><span class="auction-commander-type">${escape(view.name)} <span aria-hidden="true" class="auction-commander-info">ⓘ</span></span></span></button>`;
 }
 export function auctionCommanderDialogMarkup(identity,{english=false}={}){
  const view=auctionCommanderView(identity,{english});if(!view)return '';

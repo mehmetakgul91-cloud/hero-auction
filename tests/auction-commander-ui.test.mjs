@@ -71,3 +71,18 @@ test('queued native close events cannot clear or steal focus from a reopened pop
  controller.sync({...room,players:[room.players[0],{commander:{commanderId:'support'}}]});assert.equal(afterRematch.open,false);
  closeQueue.shift()();assert.equal(focused.at(-1),'[data-auction-commander="1"]');
 });
+
+test('integrated heading combines escaped player identity and class without levels',()=>{
+ const html=auctionCommanderMarkup({commanderId:'defense',levels:{defense:777}},1,{playerName:'<script> & "Player"',isMe:true});
+ assert.match(html,/auction-commander-copy/);assert.match(html,/class="name" translate="no">&lt;script&gt; &amp; &quot;Player&quot;/);assert.match(html,/auction-commander-self">SEN/);assert.match(html,/auction-commander-type">Savunma/);assert.doesNotMatch(html,/<script>|777|level|seviye/i);
+ const en=auctionCommanderMarkup({commanderId:'magic'},0,{english:true,playerName:'Opponent',isMe:false});
+ assert.match(en,/Opponent/);assert.match(en,/Mage/);assert.doesNotMatch(en,/auction-commander-self/);
+ assert.match(auctionCommanderMarkup({commanderId:'support'},0,{english:true,playerName:'Me',isMe:true}),/auction-commander-self">YOU/);
+});
+test('integrated heading remains full-width accessible and compact without a separate badge shell',()=>{
+ const css=fs.readFileSync(new URL('../public/style.css',import.meta.url),'utf8');
+ assert.match(css,/#game \.auction-commander\{[^}]*width:100%[^}]*min-height:58px[^}]*border:0[^}]*background:transparent/);
+ assert.match(css,/@media\(max-width:520px\)\{#game \.auction-commander\{[^}]*min-height:48px/);
+ const app=fs.readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
+ assert.match(app,/playerName:displayPlayerName\(p,r.mode==='bot'&&seat===1\),isMe:r.me===seat/);
+});

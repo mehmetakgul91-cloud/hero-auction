@@ -2,12 +2,12 @@
 export const guideSteps = {
  tr: [
   ['Kahramanlarını kazan', '20 krediyle 10 kartlık açık artırmada sırayla teklif ver veya pas geç. Her oyuncu 5 kahraman toplar. Kalan kredin takımının gücünü etkiler.', '1 · AÇIK ARTIRMA', '20 kredi → 5 kahraman'],
-  ['Takımını yerleştir', 'Bir kahramana, ardından bir yuvaya dokun; dolu yuvada kartlar yer değiştirir. Ön / arka saf düğmeleriyle konum bonuslarını karşılaştır, sonra Hazırım’a bas. Süreyi takip et.', '2 · DİZİLİŞ', 'Kartı seç → Yuvaya dokun → Hazırım'],
-  ['Komutan becerini zamanla', 'Savaş otomatik ilerler. İki gerçek oyunculu maçta enerji biriktir; düğme hazır olduğunda normal veya nihai beceriyi kullan. Büyücü için hedef seçip onayla. Bilgisayar maçı ücretsiz antrenmandır; altın ve lig puanın değişmez.', '3 · ARENA', 'Enerji biriktir → Hazır beceriyi kullan']
+  ['Takımını yerleştir', 'Beş kahramanın rollerine göre otomatik yerleşir. Ön / arka saf düğmeleriyle yerlerini değiştirebilir ve konum bonuslarını karşılaştırabilirsin. Sonra Hazırım’a bas; süreyi takip et.', '2 · DİZİLİŞ', 'Otomatik diziliş → Ön / arka saf → Hazırım'],
+  ['Komutan becerini zamanla', 'Savaş otomatik ilerler. Çevrim içi veya bilgisayara karşı maçta enerji biriktir; düğme hazır olduğunda normal veya nihai beceriyi kullan. Büyücü için hedef seçip onayla. Bilgisayar maçı ücretsiz antrenmandır; altın ve lig puanın değişmez.', '3 · ARENA', 'Enerji biriktir → Hazır beceriyi kullan']
  ],
  en: [
   ['Win your heroes', 'Take turns bidding or passing on 10 cards with 20 credits. Each player recruits 5 heroes. Your remaining credits affect your team’s power.', '1 · AUCTION', '20 credits → 5 heroes'],
-  ['Set your formation', 'Tap a hero, then a slot; occupied slots swap heroes. Use the front / back buttons to compare positioning bonuses, then tap Ready. Watch the timer.', '2 · FORMATION', 'Select hero → Tap slot → Ready'],
+  ['Set your formation', 'Your five heroes are placed automatically by role. Use the Front / Back buttons to adjust their rows and compare positioning bonuses, then tap Ready. Watch the timer.', '2 · FORMATION', 'Auto formation → Front / Back → Ready'],
   ['Time your commander ability', 'Heroes fight automatically. Build energy and use a normal or ultimate ability when its button is ready, in both online and computer matches. For the Magic Commander, select targets and confirm. Computer matches are free practice: gold and league points do not change.', '3 · ARENA', 'Build energy → Use a ready ability']
  ]
 };
