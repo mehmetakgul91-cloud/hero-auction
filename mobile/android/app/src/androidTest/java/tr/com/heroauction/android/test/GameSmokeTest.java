@@ -175,4 +175,3 @@ public class GameSmokeTest {
         assertEquals("[]",js("window.__smokeErrors"));
     }
 }
-

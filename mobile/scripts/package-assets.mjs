@@ -75,4 +75,3 @@ export async function checkPackageSize(out, images) {
   if (totalBytes > MAX_WEB_BYTES) throw Error(`Android web assets exceed ${MAX_WEB_BYTES} bytes: ${totalBytes}`);
   return {...images, webBytes:totalBytes, maxWebBytes:MAX_WEB_BYTES};
 }
-

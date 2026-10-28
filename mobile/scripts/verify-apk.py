@@ -42,4 +42,3 @@ with zipfile.ZipFile(apk, metadata_encoding="utf-8") as archive:
 size = apk.stat().st_size
 assert size < 45_000_000, f"APK size regression: {size}"
 print(json.dumps({"file": apk.name, "bytes": size, "sha256": hashlib.sha256(apk.read_bytes()).hexdigest(), "heroCount": report["heroCount"], "omittedImages": sum(Path(p).suffix in {".png", ".webp", ".svg"} for p in report["omitted"])}, indent=2))
-

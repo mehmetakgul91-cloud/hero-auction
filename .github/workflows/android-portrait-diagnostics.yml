@@ -1,7 +1,5 @@
 name: Android development verification (no release)
 on:
-  push:
-    branches: [dev/android-main-sync-20261028]
   pull_request:
     paths: ['mobile/**', 'native-cors.js', 'server.js', 'public/**', '.github/workflows/android-portrait-diagnostics.yml']
   workflow_dispatch:
@@ -55,6 +53,12 @@ jobs:
       - name: Compile before booting the emulator
         working-directory: mobile/android
         run: ./gradlew --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest
+      - name: Verify exact diagnostic APK
+        run: |
+          python3 mobile/scripts/verify-apk.py mobile/android/app/build/outputs/apk/debug/app-debug.apk > artifacts/apk-verification.json
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          cp mobile/package-report.json artifacts/package-report.json
+          cp mobile/www/native-build.json artifacts/native-build.json
       - name: Enable emulator acceleration
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -68,13 +72,10 @@ jobs:
           arch: x86_64
           profile: pixel_7
           disable-animations: true
+          # The action defaults to deprecated swiftshader_indirect. Use the
+          # current emulator's supported software backend on headless runners.
+          emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim
           script: adb reverse tcp:3443 tcp:3443 && adb shell wm size ${{ matrix.size }} && adb shell wm density 320 && adb shell settings put system font_scale ${{ matrix.font }} && bash mobile/scripts/device-test.sh
-      - name: Verify exact diagnostic APK
-        run: |
-          python3 mobile/scripts/verify-apk.py mobile/android/app/build/outputs/apk/debug/app-debug.apk > artifacts/apk-verification.json
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify mobile/android/app/build/outputs/apk/debug/app-debug.apk
-          cp mobile/package-report.json artifacts/package-report.json
-          cp mobile/www/native-build.json artifacts/native-build.json
       - name: Stop disposable backend
         if: always()
         run: |

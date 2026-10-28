@@ -9,6 +9,7 @@ veya üretim dağıtımı değildir. Ana web dosyaları değiştirilmeden paketl
 
 - Önceki portre düzeni, yerel kayıpsız PNG→WebP eşlemeleri, geri tuşu ve
   arka plan/dönüş davranışları korunur.
+- Yönetici sayfası, bakiye ekleme ve bakım istemcileri Android paketine alınmaz.
 - Yeni komutan dalı simgeleri, dinamik hava katmanları ve arena sahneleri
   pakete alınır. Tam ekran sahneleri özgün çözünürlük/byte içeriğini korur.
   Portreler önceki 640 px sınırında kalır. Yaklaşık 33,9 MB web varlığı için
@@ -46,6 +47,10 @@ hazırlanmasıyla değiştirilmez.
 
 `Android development verification (no release)` iki portre ekranında Android
 15 WebView kullanır: 640×1136 / yazı ölçeği 1,0 ve 780×1688 / 1,3.
+APK derleme, içerik ve imza kontrolleri emülatör açılmadan tamamlanır.
+Üç cihaz testi önceden derlenen APK'larla doğrudan AndroidJUnitRunner üzerinden
+çalışır; çıkış koduna ek olarak tam test takımının başarı özeti zorunludur.
+Emülatörün desteklenen `software` çizicisi kullanılır.
 Her iş kendi güncel `server.js` sürecini bellekte açar. Veritabanı,
 yönetici kimliği, imza anahtarı veya ekonomi bayrağı devralınmaz.
 Yerel HTTPS sunucusu emülatöre `adb reverse` ile bağlanır. Tek kullanımlık
@@ -54,8 +59,8 @@ cleartext veya bütün sertifikaları kabul eden bir TLS atlatması yoktur.
 
 Akış: native testleri → misafir giriş/komutan → açık artırma → beş kahraman
 dizilişi → canlı bot savaşı → arka plan/dönüş → sonuç. Aynı oda/SSE ve yanlış
-koltuk yetkisi ayrıca gerçek HTTP sunucusuyla test edilir. Sonrasında APK'nın
-varlık hashleri, sürümü, hedefi, boyutu ve imzası doğrulanır.
+koltuk yetkisi ayrıca gerçek HTTP sunucusuyla test edilir. APK'nın varlık hashleri,
+sürümü, hedefi, boyutu ve imzası ayrı bir doğrulama adımından geçer.
 Ekran görüntüleri ve raporlar Actions artifact'ı olur; APK otomatik
 yayımlanmaz. Localhost'a bağlı tanılama APK'sı telefona dağıtılabilir ürün
 paketi değildir. Test servisine bağlanan indirilebilir APK ayrı bir adımdır.

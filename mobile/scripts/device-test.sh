@@ -39,4 +39,3 @@ for stage in auction auction-bids auction-review formation formation-ready arena
   timeout 15s adb pull "/sdcard/Download/hero-portrait-$stage.png" "artifacts/$stage.png" || rm -f "artifacts/$stage.png"
 done
 exit "$result"
-

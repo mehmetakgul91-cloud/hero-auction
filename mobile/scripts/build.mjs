@@ -39,7 +39,7 @@ export async function buildNative() {
   const out=path.join(mobile,'www');
   await rm(out,{recursive:true,force:true});await mkdir(out,{recursive:true});
   for (const item of await readdir(path.join(root,'public'),{withFileTypes:true})) {
-    if (/^(?:images$|original$|original-heroes\.html$|commander-training\.html$|admin(?:\.|$)|arena-3d|arena-model|models$|platform\.js$|crazygames-privacy\.html$|ad-rewards\.js$|ads\.txt$|robots\.txt$|sitemap\.xml$)/.test(item.name)) continue;
+    if (/^(?:images$|original$|original-heroes\.html$|commander-training\.html$|admin|arena-3d|arena-model|models$|platform\.js$|crazygames-privacy\.html$|ad-rewards\.js$|ads\.txt$|robots\.txt$|sitemap\.xml$)/.test(item.name)) continue;
     const src=path.join(root,'public',item.name),dest=path.join(out,item.name);
     if (item.isDirectory()) await cp(src,dest,{recursive:true});
     else if (/\.(html|js)$/.test(item.name)) await writeFile(dest,adaptSource(await readFile(src,'utf8'),item.name));
