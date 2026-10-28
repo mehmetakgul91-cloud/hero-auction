@@ -52,6 +52,13 @@ body{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset
    available without moving the web controls into an Android-only menu. */
 .hero-native .native-auction>#native-status:not([data-notice]){display:none}
 .hero-native .native-auction>#native-status[data-notice]{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:11000}
+/* Preserve the web panels while allowing the fixed-width +/- buttons to yield
+   space to the complete bid amount in a narrow two-column phone auction. */
+@media(max-width:520px){
+ .hero-native #game .auction-action .bid-stepper{gap:4px}
+ .hero-native #game .auction-action .bid-stepper button{flex:0 1 44px;min-width:26px}
+ .hero-native #game .auction-action .big-bid{flex:1 0 min-content}
+}
 .hero-native #native-game-menu[open]::before{content:'';position:fixed;inset:0;background:#030916bd;z-index:1009}
 .hero-native #commander-bonus-detail summary{min-height:44px;display:flex;align-items:center}
 .hero-native .battle-board .lane-switch{min-height:44px;min-width:44px}

@@ -130,6 +130,12 @@ public class GameSmokeTest {
         String comparison=js("(()=>{const selectors=['.arena-stage','.auction-main','.auction-hero','.auction-action','.auction-budget','#player0','#player1','#auction-abilities','#auction-lane-bonuses','.room-tools'];const measure=()=>selectors.map(s=>{const e=document.querySelector(s),r=e.getBoundingClientRect(),c=getComputedStyle(e);return {selector:s,width:r.width,height:r.height,x:r.x,y:r.y,display:c.display,fontSize:c.fontSize,columns:c.gridTemplateColumns,position:c.position,color:c.color,background:c.backgroundColor}});const actual=measure(),link=document.querySelector('link[href*=\"native.css\"]'),status=document.getElementById('native-status'),disabled=link.disabled,hidden=status.hidden;try{status.hidden=true;link.disabled=true;const expected=measure(),errors=[];for(let i=0;i<actual.length;i++){const a=actual[i],b=expected[i];for(const p of ['width','height','x','y'])if(Math.abs(a[p]-b[p])>1)errors.push(a.selector+' '+p+': '+a[p]+' vs web '+b[p]);for(const p of ['display','fontSize','columns','position','color','background'])if(a[p]!==b[p])errors.push(a.selector+' '+p+': '+a[p]+' vs web '+b[p]);}return errors;}finally{link.disabled=disabled;status.hidden=hidden;}})()");
         assertEquals("auction geometry, type and colors must match shared mobile web: "+comparison,"[]",comparison);
         Log.i("HeroSmoke","PASS: auction matches shared mobile web geometry, fonts, colors and visibility");
+        assertTrue("complete bid amount fits between the +/- buttons",is("(()=>{const v=document.getElementById('bidview'),r=v.getBoundingClientRect(),minus=document.getElementById('minusbid').getBoundingClientRect(),plus=document.getElementById('plusbid').getBoundingClientRect();return v.scrollWidth<=v.clientWidth+1&&r.left>=minus.right&&r.right<=plus.left})()"));
+        String originalBid=js("document.getElementById('bidrange').value");
+        tap("#plusbid");
+        until("plus button increases the offer", "document.getElementById('bidrange').value!=="+originalBid,5);
+        tap("#minusbid");
+        until("minus button restores the offer", "document.getElementById('bidrange').value==="+originalBid,5);
     }
     @Test(timeout=360000) public void guestCanPlayThroughAuctionAndArena() throws Exception {
         Intent intent=new Intent(instrumentation.getTargetContext(),MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
