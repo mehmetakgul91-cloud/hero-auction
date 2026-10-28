@@ -1,0 +1,12 @@
+/* One quiet, in-flow disclosure; never a fixed control over the game HUD. */
+.support-menu{box-sizing:border-box;max-width:560px;margin:8px auto 0;text-align:left;font:13px/1.5 system-ui;color:#203047}
+.support-menu>summary{box-sizing:border-box;cursor:pointer;width:fit-content;min-height:44px;margin-inline:auto;padding:12px 14px;color:#28627f;text-underline-offset:3px;border-radius:8px;touch-action:manipulation}
+.support-menu[open]>summary{text-decoration:underline}
+.support-menu-content{padding:10px 14px;border:1px solid #bcc7ca;border-radius:12px;background:#e9ede9;box-shadow:0 5px 18px #2030470a}
+.support-menu-content>a{display:flex;align-items:center;min-height:44px;color:#28627f;overflow-wrap:anywhere;text-underline-offset:3px}
+.support-menu :is(summary,a):focus-visible{outline:3px solid #28627f;outline-offset:3px}
+.support-menu #moderation-panel{max-width:none;margin:8px 0 0;padding:8px 0 0;border:0;border-top:1px solid #bcc7ca;border-radius:0;box-shadow:none;background:transparent}
+.support-menu #moderation-panel>summary{display:list-item;min-height:44px;padding:12px 0;box-sizing:border-box}
+.support-menu #moderation-panel :is(input,textarea,select){min-width:0}
+.arena-support,.site-support{padding:4px 16px 16px}
+@media(max-width:480px){.support-menu-content{padding:8px 10px}.support-menu .moderation-actions>button{flex:1 1 120px}}

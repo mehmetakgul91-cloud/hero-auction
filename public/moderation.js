@@ -1,8 +1,9 @@
 // Native preview safety controls. Auth is checked server-side on every action.
 export function mountModerationUI({document:doc=document,window:win=window}={}){
  if(doc.getElementById('moderation-panel'))return;
+ const host=doc.getElementById('support-moderation');if(!host)return;
  const node=(tag,text)=>{const el=doc.createElement(tag);if(text!==undefined)el.textContent=text;return el};
- const panel=node('details');panel.id='moderation-panel';panel.append(node('summary','Güvenlik · Engelle / Şikâyet et'));
+ const panel=node('details');panel.id='moderation-panel';panel.append(node('summary','Oyuncuyu engelle / bildir'));
  panel.append(node('p','Engelleme yeni iletişimi ve eşleşmeyi durdurur; devam eden maçın sonucu veya ücreti değişmez. Acil tehlikede yerel acil yardım hizmetlerine başvur.'));
  const id=node('input');id.placeholder='HA-… oyuncu kimliği';id.maxLength=19;id.setAttribute('aria-label','Oyuncu kimliği');
  const reason=node('select');reason.setAttribute('aria-label','Şikâyet nedeni');
@@ -18,7 +19,7 @@ export function mountModerationUI({document:doc=document,window:win=window}={}){
  async function run(action){if(busy)return;const operationAuth=syncIdentity();busy=true;for(const b of panel.querySelectorAll('button'))b.disabled=true;status.textContent='İşleniyor…';try{await action();if(auth()===operationAuth)status.textContent='İşlem tamamlandı.';else syncIdentity()}catch(error){if(auth()===operationAuth)status.textContent=error.message;else syncIdentity()}finally{busy=false;for(const b of panel.querySelectorAll('button'))b.disabled=false}}
  button('Engelle',async()=>{await post('block',{playerId:id.value});await refresh()});
  button('Şikâyet gönder',async()=>{if(!win.confirm('Bu şikâyet ve sunucudaki ilgili etkileşim kanıtı yetkili yönetici tarafından incelensin mi?'))return;let context={};try{const session=JSON.parse(win.localStorage.getItem('hero-auction-session')||'null');if(session)context={code:session.code,token:session.token}}catch{}const result=await post('report',{playerId:id.value,reason:reason.value,details:details.value,context});details.value='';await refresh();list.append(node('p','Şikâyet numarası: '+result.id))});
- button('Listemi yenile',refresh);panel.append(id,reason,details,actions,status,list);doc.body.append(panel);
+ button('Listemi yenile',refresh);panel.append(id,reason,details,actions,status,list);host.append(panel);
  win.addEventListener('storage',syncIdentity);win.addEventListener('hero:login-changed',syncIdentity);win.addEventListener('pageshow',syncIdentity);panel.addEventListener('toggle',syncIdentity);
  const identityTimer=win.setInterval(syncIdentity,1000);
  return {syncIdentity,destroy(){win.clearInterval(identityTimer);win.removeEventListener('storage',syncIdentity);win.removeEventListener('hero:login-changed',syncIdentity);win.removeEventListener('pageshow',syncIdentity);panel.remove()}};

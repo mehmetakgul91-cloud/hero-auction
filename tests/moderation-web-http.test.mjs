@@ -5,7 +5,17 @@ test('web moderation end-to-end: report receipts, block protections, admin isola
  const post=async(path,body={},status=200)=>{const r=await fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await r.json();assert.equal(r.status,status,JSON.stringify(data));return data};
  try{
   let ready=false;for(let i=0;i<150;i++){if(child.exitCode!==null)throw Error(logs);try{if((await fetch(base+'/api/info')).ok){ready=true;break}}catch{}await new Promise(r=>setTimeout(r,30))}assert.ok(ready,logs);
-  for(const page of ['/','/battle-preview.html'])assert.match(await(await fetch(base+page)).text(),/src="\/moderation.js"/);
+  for(const page of ['/','/battle-preview.html']){
+   const html=await(await fetch(base+page)).text();assert.match(html,/src="\/moderation.js"/);
+   assert.equal((html.match(/id="support-menu"/g)||[]).length,1);
+   assert.match(html,/<details id="support-menu" class="support-menu">/);
+   assert.match(html,/id="support-moderation"/);
+  }
+  for(const prefix of ['', '/crazygames'])for(const asset of ['/support-menu.js','/support-menu.css','/account-popover.js','/music-credits.html']){
+   const response=await fetch(base+prefix+asset);assert.equal(response.status,200,prefix+asset);
+   const text=await response.text();assert.ok(text.length>100,prefix+asset);
+   if(asset==='/music-credits.html')for(const retained of ['HitCtrl','Kevin MacLeod','William Hector','CC BY 3.0','CC BY 4.0','Changes'])assert.ok(text.includes(retained),retained);
+  }
   for(const page of ['/crazygames/','/crazygames/battle-preview.html'])assert.doesNotMatch(await(await fetch(base+page)).text(),/moderation\.(?:js|css)/);
   await post('/api/moderation/report',{},401);await post('/api/moderation/block',{},401);await post('/api/auth/guest',{name:'fuck'},400);
   const a=await post('/api/auth/guest',{name:'Alice'}),b=await post('/api/auth/guest',{name:'Bob'}),c=await post('/api/auth/guest',{name:'Cecil'});const aa={authToken:a.authToken},bb={authToken:b.authToken},cc={authToken:c.authToken};const aid=(await post('/api/friends',aa)).playerId,bid=(await post('/api/friends',bb)).playerId,cid=(await post('/api/friends',cc)).playerId;
