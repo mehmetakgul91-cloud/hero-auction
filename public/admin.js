@@ -159,3 +159,13 @@ async function loadDailyReport(){
  }catch(e){$('daily-status').textContent='Rapor yüklenemedi: '+e.message;}
 }
 $('daily-range').onchange=loadDailyReport;
+
+$('daily-export').onclick=()=>{
+ const rows=[['Tarih','Oturum','Tekil hesap','CrazyGames','Bildirilen davet']];
+ for(const tr of $('daily-rows').querySelectorAll('tr'))rows.push([...tr.querySelectorAll('td')].map(td=>td.textContent));
+ if(rows.length===1){$('daily-status').textContent='İndirilecek rapor bulunamadı.';return;}
+ const escapeCsv=value=>'"'+String(value).replace(/^[=+@-]/,'\t$&').replace(/"/g,'""')+'"';
+ const csv='\uFEFF'+rows.map(row=>row.map(escapeCsv).join(';')).join('\r\n');
+ const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+ const a=document.createElement('a');a.href=url;a.download='hero-auction-gunluk-oturumlar.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
