@@ -14,7 +14,7 @@ try{
  const cards=['original:09','original:15','original:expansion-01','original:14','original:01'].map(id=>({id,power:80}));
  const fixture={...simulateRosterBattle(cards,cards,{seed:'approved-v2-contact'}),live:true,log:[]};
  for(const width of [390,1440]){
-  const context=await browser.newContext({viewport:{width,height:900}}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const context=await browser.newContext({viewport:{width,height:900}}),page=await context.newPage(),errors=[];page.on('pageerror',e=>{errors.push(e.message);console.error('pageerror',e.message)});
   await page.route('**/*',async r=>{const u=new URL(r.request().url());if(u.origin!=='http://127.0.0.1:3127')return r.abort();if(u.pathname==='/api/battle-preview')return r.fulfill({json:fixture});return r.continue()});
   // Install before modules capture setTimeout/requestAnimationFrame references.
   await page.clock.install({time:new Date('2026-10-29T00:00:00Z')});
@@ -32,7 +32,7 @@ try{
   await page.evaluate(()=>window.dispatchEvent(new Event('heroarena:route-change')));assert.equal(await page.locator('.hero-fx,.arena-floating-damage').count(),0);
   await emit({version:2,damageType:'special'});await page.clock.runFor(839);assert.equal(await page.locator('.arena-floating-damage').count(),0);await page.clock.runFor(1);assert.equal(await page.locator('.arena-floating-damage').count(),1);await page.clock.runFor(120);await sampleCSS(960,120);await page.screenshot({path:shots+'arena-special-contact-'+width+'.png'});await page.evaluate(()=>window.dispatchEvent(new Event('heroarena:route-change')));
   await emit();await page.clock.runFor(100);await page.evaluate(()=>window.dispatchEvent(new Event('heroarena:connection-lost')));await page.clock.runFor(1000);assert.equal(await page.locator('.hero-fx,.arena-floating-damage').count(),0);
-  await page.emulateMedia({reducedMotion:'reduce'});await page.clock.runFor(32);await emit();assert.equal(await page.locator('.hero-fx-flight').count(),0);assert.equal(await page.locator('.arena-floating-damage').count(),1);await page.screenshot({path:shots+'reduced-static-'+width+'.png'});
+  await page.evaluate(()=>{window.__mediaChange=new Promise(resolve=>matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',()=>resolve(true),{once:true}))});await page.emulateMedia({reducedMotion:'reduce'});await page.evaluate(()=>window.__mediaChange);await emit({version:3});assert.equal(await page.locator('.hero-fx-flight').count(),0);assert.equal(await page.locator('.arena-floating-damage').count(),1);await page.screenshot({path:shots+'reduced-static-'+width+'.png'});
   await page.clock.runFor(2500);assert.equal(await page.locator('.hero-fx,.arena-floating-damage').count(),0);
   assert.equal(await page.evaluate(()=>JSON.stringify(window.heroArenaTeams)),stateBefore,'presentation cannot mutate authoritative teams');
   const health=await page.evaluate(async()=>{
@@ -68,7 +68,7 @@ try{
 }catch(error){
  if(browser)for(const [index,page] of browser.contexts().flatMap(c=>c.pages()).entries()){
   await page.screenshot({path:shots+'failure-'+index+'.png',fullPage:true}).catch(()=>{});
-  console.error('Browser diagnostic',await page.evaluate(()=>({hidden:document.hidden,classes:document.body.className,fx:[...document.querySelectorAll('.hero-fx')].map(n=>({class:n.className,delay:n.style.getPropertyValue('--hero-delay')})),labels:[...document.querySelectorAll('.arena-floating-damage')].map(n=>n.textContent)})).catch(()=>null));
+  console.error('Browser diagnostic',await page.evaluate(()=>({hidden:document.hidden,reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,motionChecked:document.getElementById('motion')?.checked,classes:document.body.className,fx:[...document.querySelectorAll('.hero-fx')].map(n=>({class:n.className,delay:n.style.getPropertyValue('--hero-delay')})),labels:[...document.querySelectorAll('.arena-floating-damage')].map(n=>n.textContent)})).catch(()=>null));
  }
  throw error;
 }finally{await browser?.close();server.kill();}
