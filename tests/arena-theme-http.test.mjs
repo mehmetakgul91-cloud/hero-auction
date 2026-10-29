@@ -1,3 +1,4 @@
+import {assertBotStorageUnavailable} from './fixtures/assert-bot-storage-unavailable.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
@@ -7,7 +8,7 @@ import {ARENA_THEME_IDS} from '../public/arena-theme.js';
 import {crazyGamesSource} from '../crazygames-build.js';
 
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-test('real HTTP room, both seats, lane edits, rematch, bot, preview-room and CG retain only server-owned cosmetic metadata',{timeout:30000},async()=>{
+test('real HTTP room, both seats, lane edits, rematch, blocked no-DB bot, preview-room and CG retain only server-owned cosmetic metadata',{timeout:30000},async()=>{
  const socket=createServer();await new Promise(resolve=>socket.listen(0,'127.0.0.1',resolve));
  const port=socket.address().port;await new Promise(resolve=>socket.close(resolve));
  const base='http://127.0.0.1:'+port;
@@ -49,8 +50,7 @@ test('real HTTP room, both seats, lane edits, rematch, bot, preview-room and CG 
    if(match<2){const pending=await post('/api/rematch',{code,...players[0]});assert.deepEqual(pending.room.arenaPresentation,meta);await post('/api/rematch',{code,...players[1],arenaPresentation:forged});}
    previous=meta;
   }
-  const botAuth=await post('/api/auth/guest',{name:'Cosmetic Bot'}),bot=await post('/api/bot',{authToken:botAuth.authToken,difficulty:'easy',arenaPresentation:forged});checkMeta(bot.room.arenaPresentation);
-  for(let n=0;n<3;n++)assert.deepEqual((await post('/api/state',{code:bot.room.code,token:bot.token,authToken:botAuth.authToken})).room.arenaPresentation,bot.room.arenaPresentation);
+  const botAuth=await post('/api/auth/guest',{name:'Cosmetic Bot'});await assertBotStorageUnavailable(request,botAuth.authToken,{arenaPresentation:forged});
   const p0=await post('/api/battle-room',{action:'create',arenaPresentation:forged}),p1=await post('/api/battle-room',{action:'join',code:p0.code});checkMeta(p0.arenaPresentation);assert.deepEqual(p0.arenaPresentation,p1.arenaPresentation);
   for(const p of [p0,p1])await post('/api/battle-room',{action:'ready',code:p.code,token:p.token,positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:['tank','tank','tank','tank','assassin'],arenaPresentation:forged});
   for(const p of [p0,p1]){const view=await get('/api/battle-room',{code:p.code,token:p.token});assert.deepEqual(view.arenaPresentation,p0.arenaPresentation);assert.deepEqual(view.result.arenaPresentation,p0.arenaPresentation);}

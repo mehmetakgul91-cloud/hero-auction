@@ -6,7 +6,7 @@ test('public landing describes current gameplay with real, accessible screenshot
  const html=await read('public/index.html');
  assert.match(html,/<h1>Hero Auction<br>/);
  assert.doesNotMatch(html,/showcase-placeholder|showcase-mini-board|ekran görüntüleri hazırlandığında/);
- for(const text of ['20 kredini','10 kartlık','5 kahraman','otomatik yerleşir','1000 altın','altın ve lig puanı değişmez','İngilizce oyun arayüzünden'])assert.ok(html.includes(text),text);
+ for(const text of ['20 kredini','10 kartlık','5 kahraman','otomatik yerleşir','1000 altın','giriş 50 altın; galibiyette sabit ödül','İngilizce oyun arayüzünden'])assert.ok(html.includes(text),text);
  assert.match(html,/href="#nasil-oynanir"/);
  for(const [name,w,h] of [['auction',1180,757],['formation',1165,1583],['battle',1165,747]]){
   assert.ok(html.includes(`src="/images/screenshots/${name}.jpg" width="${w}" height="${h}" loading="lazy" decoding="async" alt="Hero Auction`));

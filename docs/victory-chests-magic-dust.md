@@ -26,7 +26,7 @@ All new economic switches default OFF:
 
 Rarity is a server-side versioned configuration in `victory-chests.js`: gold weights, dust chance and diamond chance. Chances use basis points and reject malformed values. Initial approved chances are100%/40%/10%; configuration changes require a reviewed version change. `/api/info` exposes the current configured chances; old receipts retain their original version and quantities. No administrative adjustment UI is introduced.
 
-The header always shows gold/dust/diamond; unavailable or disabled values use **—**, not invented0. Enabling a chest switch with missing dependencies/storage blocks paid entry **before charging**, while free bot training remains available. Disabled code preserves old settlement and does not query the new schema.
+The header always shows gold/dust/diamond; unavailable or disabled values use **—**, not invented0. Enabling a chest switch with missing dependencies/storage blocks paid entry **before charging**, while new bot games independently require the durable fixed-bot economy described in `bot-fixed-economy.md`; existing legacy free rooms remain unchanged. Disabled code preserves old settlement and does not query the new schema.
 
 ## Server authority, transactions and recovery
 

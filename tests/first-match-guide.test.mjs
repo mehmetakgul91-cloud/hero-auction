@@ -6,7 +6,8 @@ import {readFileSync} from 'node:fs';
 test('tutorial is short, bilingual and honest about practice and commander abilities',()=>{
  for(const locale of ['tr','en'])assert.equal(guideSteps[locale].length,3);
  assert.match(guideSteps.en[0][1],/20 credits/);assert.match(guideSteps.en[2][1],/both online and computer matches/);
- assert.match(guideSteps.en[2][1],/do not change/);
+ assert.match(guideSteps.en[2][1],/League points do not change/);
+ assert.match(guideSteps.en[2][1],/50 gold/);assert.doesNotMatch(guideSteps.en[2][1],/free practice/);
 });
 test('seen users, pending invites and hidden lobby never auto-open the guide',()=>{
  assert.equal(guideCanAutoOpen({seen:false,homeVisible:true,invited:false}),true);

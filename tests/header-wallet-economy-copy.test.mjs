@@ -1,3 +1,4 @@
+import {botSettlementCopy} from '../public/bot-entry.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -8,7 +9,7 @@ const source=app.slice(app.indexOf('let victoryChestCapability=null;'),app.index
 const configured={enabled:true,available:true,goldOptions:[100,105,110,115,120],goldWeights:[1,1,1,1,1],magicDustOptions:[3,4,5],magicDustChance:40,diamondChance:10};
 function fixture(lang='tr'){
  const nodes=Object.fromEntries(['play-reward-label','play-reward-prefix','play-reward-odds','home-guide-economy','home-guide-prize-value','home-guide-prize-kind','home-guide-reward-detail'].map(id=>[id,{textContent:'',hidden:true}]));
- const context=vm.createContext({victoryChestReceipt,auctionMatchKey:r=>r.matchId,document:{documentElement:{lang}},$:id=>nodes[id]});vm.runInContext(source,context);
+ const context=vm.createContext({botSettlementCopy,victoryChestReceipt,auctionMatchKey:r=>r.matchId,document:{documentElement:{lang}},$:id=>nodes[id]});vm.runInContext(source,context);
  return {context,nodes,lobby:config=>context.renderLobbyEconomy(config),result:(room={},tied=false,iWon=true)=>context.legacyRewardCopy(room,tied,iWon)};
 }
 const receipt={matchId:'123:1:10',receiptId:'victory:123:1:10',configVersion:'approved-v1',rewards:{gold:105,magicDust:4,diamonds:1}};
@@ -35,10 +36,13 @@ test('pending, malformed or wrong-match receipt never claims credit or120',()=>{
   const copy=f.result(room);assert.match(copy.headline,/DOĞRULANIYOR/);assert.doesNotMatch(JSON.stringify(copy),/eklendi|120|999/);
  }
 });
-test('loser cannot present a winner receipt; bots stay zero and draws explicitly refund50',()=>{
+test('loser cannot present a winner receipt; legacy bots stay free and paid bot refunds require receipt',()=>{
  const f=fixture();f.lobby(configured);
  const loser=f.result({matchId:receipt.matchId,victoryChest:receipt},false,false);assert.match(loser.headline,/KAZANANA/);assert.doesNotMatch(loser.detail,/105|eklendi|120/);
- for(const tied of [false,true]){const bot=f.result({mode:'bot',victoryChest:receipt},tied,true);assert.equal(bot.headline,'ANTRENMAN · 0 ALTIN');assert.doesNotMatch(JSON.stringify(bot),/120|İADE|eklendi/);}
+ for(const tied of [false,true]){const bot=f.result({mode:'bot',victoryChest:receipt},tied,true);assert.equal(bot.headline,'ESKİ ÜCRETSİZ MAÇ');assert.doesNotMatch(JSON.stringify(bot),/120|İADE|eklendi/);}
+ const pending=f.result({mode:'bot',entryPaid:true,matchId:receipt.matchId},true,true);assert.match(pending.headline,/DOĞRULANIYOR/);assert.doesNotMatch(pending.detail,/iade edildi/);
+ const refund={matchId:receipt.matchId,receiptId:receipt.matchId,configVersion:'bot-fixed-v1',outcome:'tie',rewards:{gold:50,magicDust:0,diamonds:0}};
+ assert.match(f.result({mode:'bot',entryPaid:true,matchId:receipt.matchId,botSettlement:refund},true,true).detail,/50 altın giriş ücreti iade edildi/);
  assert.match(f.result({},true,true).headline,/50 ALTIN İADESİ/);assert.match(f.result({},true,false).detail,/Her oyuncunun 50 altın/);
 });
 test('existing committed or pending chest stays honest after flags are turnedOFF',()=>{

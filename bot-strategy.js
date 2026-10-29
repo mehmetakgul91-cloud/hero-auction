@@ -13,12 +13,12 @@ const heroFor=card=>battleRoster.find(hero=>hero.id===card.id||hero.name===card.
 const roleFor=card=>heroFor(card)?.role||card.role||'fighter';
 const sample=(rng,count)=>Math.min(count-1,Math.max(0,Math.floor(rng()*count)));
 
-export const BOT_COMMANDER_LEVELS=Object.freeze({easy:5,medium:10,hard:15});
+export const BOT_COMMANDER_LEVELS=Object.freeze({easy:15,medium:25,hard:40});
 export function createBotCommanderProfile(commanderId,difficulty){
  const profile=createCommanderProfile(commanderId);
  const level=BOT_COMMANDER_LEVELS[difficultyOf(difficulty)];
  // Branches are independent gold upgrades, not a shared talent-point budget.
- // Training grants no gold and never persists this profile to a human account.
+ // The bot spends no currency and never persists this profile to a human account.
  for(const stat of COMMANDER_STATS)profile.levels[stat]=Math.min(level,commanderLevelCap(commanderId,stat));
  return profile;
 }
