@@ -980,6 +980,11 @@ body:has(#game[data-phase="auction"]:not([hidden])) .shell{padding-top:8px}
 .auction-tail-sequence .auction-drawing .card-art,.auction-tail-sequence .auction-drawing .auction-draw-back,.auction-tail-sequence .auction-final-draw::after{animation-duration:.95s}
 
 /* Auction calculation view: no duplicate purchased-card panels above/beside it. */
+body:has(#game.auction-results-only:not([hidden])) .shell>.lobby-header,
+#game.auction-results-only .room-tools{display:none}
+/* Keep room actions available below the calculation, including add-opponent. */
+#game.auction-results-only:not([hidden]){display:flex;flex-direction:column}
+#game.auction-results-only .arena-layout{order:-1}
 #game.auction-results-only .player-side{display:none}
 #game.auction-results-only .arena-layout{grid-template-columns:minmax(0,1fr)}
 #game.auction-results-only .arena-stage{grid-column:1;grid-row:1;width:100%;min-width:0}

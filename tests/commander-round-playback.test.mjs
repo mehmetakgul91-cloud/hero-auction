@@ -39,3 +39,40 @@ test('active arena consumes committed round snapshots',()=>{
  assert.match(read('battle-preview.js'),/if\(auctionMode\)void showAuctionRematch\(\)/);
  assert.match(read('battle-preview.html'),/commander-round-playback\.js/);
 });
+
+test('one committed multi-target cast dispatches together and duplicates do not replay it',()=>{
+ const handlers=new Map(),timers=new Map(),received=[];let id=0,tick=0;
+ const document={hidden:false,addEventListener:(name,fn)=>handlers.set(name,fn)};
+ const window={addEventListener:(name,fn)=>handlers.set(name,fn),dispatchEvent:event=>received.push({entry:event.detail.event,tick})};
+ runInNewContext(read('commander-round-playback.js'),{window,document,CustomEvent:class{constructor(type,options){this.type=type;this.detail=options.detail}},setTimeout:fn=>{timers.set(++id,fn);return id;},clearTimeout:id=>timers.delete(id)});
+ const emit=events=>handlers.get('heroarena:commander-round')({detail:{round:3,teams:[[],[]],events}});
+ const cast=[
+  {actor:'mage',target:'one',version:10,damageType:'special'},
+  {actor:'mage',target:'two',version:10,damageType:'splash'},
+  {actor:'mage',target:'three',version:10,damageType:'splash'},
+  {actor:'mage',target:'mage',version:10,action:'shield'},
+ ];
+ emit([...cast,{actor:'next',target:'one',version:11}]);
+ assert.deepEqual(received.map(x=>x.entry),cast);
+ assert.ok(received.every(x=>x.tick===0));assert.equal(timers.size,1);
+ emit(cast);assert.equal(received.length,4);
+ const [timer,fn]=timers.entries().next().value;timers.delete(timer);tick++;fn();
+ assert.equal(received.length,5);assert.equal(received.at(-1).tick,1);
+ assert.equal(received.at(-1).entry.actor,'next');
+});
+
+test('reconnect limits evict complete casts, including oversized malformed cosmetic groups',()=>{
+ const handlers=new Map(),timers=new Map(),received=[];let id=0;
+ const document={hidden:false,addEventListener:(name,fn)=>handlers.set(name,fn)};
+ const window={addEventListener:(name,fn)=>handlers.set(name,fn),dispatchEvent:event=>received.push(event.detail.event)};
+ runInNewContext(read('commander-round-playback.js'),{window,document,CustomEvent:class{constructor(type,options){this.type=type;this.detail=options.detail}},setTimeout:fn=>{timers.set(++id,fn);return id;},clearTimeout:id=>timers.delete(id)});
+ const emit=events=>handlers.get('heroarena:commander-round')({detail:{round:3,teams:[[],[]],events}});
+ const drain=()=>{while(timers.size){const [timer,fn]=timers.entries().next().value;timers.delete(timer);fn();}};
+ emit(Array.from({length:20},(_,cast)=>Array.from({length:5},(_,target)=>({actor:'mage',target:String(target),version:cast+1,damageType:target?'splash':'special'}))).flat());
+ drain();assert.equal(received.length,60);
+ assert.deepEqual([...new Set(received.map(x=>x.version))],Array.from({length:12},(_,i)=>i+9));
+ for(let version=9;version<=20;version++)assert.equal(received.filter(x=>x.version===version).length,5);
+ emit([...Array.from({length:1000},(_,i)=>({actor:'mage',target:String(i),version:21})),{actor:'mage',target:'valid',version:22}]);
+ drain();assert.equal(received.length,61);assert.equal(received.at(-1).target,'valid');
+ assert.equal(timers.size,0);
+});
