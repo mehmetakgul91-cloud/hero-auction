@@ -15,3 +15,14 @@ test('bot CI full tests and both guarded harnesses run without DATABASE_URL usin
  }
  assert.match(source,/POSTGRES_DB: hero_bot_economy_test/);
 });
+
+test('browser CI uses separate empty DB, pinned official Chromium runtime and retained evidence',()=>{
+ assert.match(source,/CREATE DATABASE hero_bot_browser_test/);
+ assert.match(source,/HERO_BOT_BROWSER_TEST_DB: postgresql:\/\/test:test@127\.0\.0\.1:5432\/hero_bot_browser_test/);
+ assert.match(source,/playwright@1\.56\.1/);assert.match(source,/playwright install --with-deps chromium/);
+ assert.match(source,/env -u DATABASE_URL node tools\/test-postgres-bot-browser\.mjs/);
+ assert.match(source,/actions\/upload-artifact@v4/);assert.match(source,/retention-days: 7/);
+ const browser=readFileSync(new URL('../tools/test-postgres-bot-browser.mjs',import.meta.url),'utf8');
+ assert.match(browser,/url\.origin!==origin/);assert.match(browser,/route\.abort\(\)/);assert.match(browser,/serviceWorkers:'block'/);
+ assert.doesNotMatch(browser,/route\.fulfill|ignoreHTTPSErrors|--no-sandbox/i);
+});

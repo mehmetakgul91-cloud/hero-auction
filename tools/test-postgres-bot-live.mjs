@@ -165,3 +165,112 @@ test('paid bot matches run authoritative live combat, accept human casts, settle
   assert.doesNotMatch(logs,/Live arena stopped:|Bot commander action:/,'the bot must not throw or stop the live runner');
  }finally{child.kill('SIGTERM');await new Promise(resolve=>{if(child.exitCode!==null)return resolve();child.once('exit',resolve);setTimeout(resolve,2000).unref()})}
 });
+
+test('real process restart retains paid auction and refunds a persisted interrupted live battle exactly once',{timeout:60000},async()=>{
+ const fixtureDb=new pg.Pool({host:'127.0.0.1',port:5432,database:'hero_bot_live_test',user:'test',password:'test',ssl:false,max:3,connectionTimeoutMillis:5000,idleTimeoutMillis:1000,options:'-c statement_timeout=10000 -c lock_timeout=5000',application_name:'hero-synthetic-bot-restart-proof'});
+ const socket=createServer();await new Promise(resolve=>socket.listen(0,'127.0.0.1',resolve));
+ const port=socket.address().port;await new Promise(resolve=>socket.close(resolve));
+ const base='http://127.0.0.1:'+port;
+ // Fixture-only scheduling: auction decisions are accelerated; live hero ticks
+ // are held so a real unfinished simulation remains available until SIGKILL.
+ // Room flushes still run and their actual PostgreSQL state is checked below.
+ const restartClock='data:text/javascript,'+encodeURIComponent(`
+  import crypto from 'node:crypto';
+  let roomCode=700;
+  crypto.randomInt=(min,max)=>max===undefined?0:(min===100&&max===1000?roomCode++:min);
+  Math.random=()=>0;
+  const interval=globalThis.setInterval;
+  globalThis.setInterval=(fn,ms,...args)=>interval(fn,ms===50?60000:ms===500?17:ms===1000?25:ms,...args);
+ `);
+ const appEnv={PATH:process.env.PATH,PORT:String(port),DATABASE_URL:APPROVED,AUTH_SIGNING_SECRET:'11'.repeat(32),COMMANDER_TEST_GUEST_MODE:'0',HERO_DIAMONDS_ENABLED:'1',HERO_MAGIC_DUST_ENABLED:'1',HERO_VICTORY_CHESTS_ENABLED:'0'};
+ let child=null,logs='';
+ async function start(){
+  child=spawn(process.execPath,['--import','./tests/fixtures/fast-live-clock.mjs','--import',restartClock,'server.js'],{cwd:new URL('..',import.meta.url),env:appEnv,stdio:['ignore','pipe','pipe']});
+  logs+='\n--- restart fixture boot ---\n';child.stdout.on('data',b=>logs+=b);child.stderr.on('data',b=>logs+=b);
+  for(let retry=0;retry<150;retry++){
+   if(child.exitCode!==null||child.signalCode!==null)throw Error('Restart fixture exited: '+logs);
+   try{const response=await fetch(base+'/api/info');if(response.ok&&(await response.json()).botEconomy?.available)return}catch{}
+   await delay(40);
+  }
+  throw Error('Restart fixture failed to start: '+logs);
+ }
+ async function stop(signal){
+  if(!child||child.exitCode!==null||child.signalCode!==null)return;
+  const processToStop=child;
+  await new Promise((resolve,reject)=>{
+   const timeout=setTimeout(()=>{processToStop.kill('SIGKILL');reject(Error('Fixture process did not exit after '+signal))},5000);
+   processToStop.once('exit',(_code,actualSignal)=>{clearTimeout(timeout);if(signal==='SIGKILL'&&actualSignal!=='SIGKILL')reject(Error('Crash fixture did not receive SIGKILL'));else resolve()});
+   processToStop.kill(signal);
+  });
+ }
+ async function post(path,body){const response=await fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const json=await response.json();assert.equal(response.status,200,JSON.stringify(json));return json}
+ async function durableRoom(code){return(await fixtureDb.query('SELECT state FROM hero_auction_rooms WHERE code=$1',[code])).rows[0]?.state}
+ async function proof(matchId){
+  return(await fixtureDb.query(`SELECT e.account_id,e.entry_gold,w.gold,
+    COALESCE(d.diamonds,0) AS diamonds,COALESCE(m.magic_dust,0) AS magic_dust,
+    (SELECT count(*)::int FROM hero_auction_bot_entries x WHERE x.account_id=e.account_id) AS entries,
+    (SELECT count(*)::int FROM hero_auction_bot_settlements x WHERE x.match_id=e.match_id) AS settlements,
+    s.outcome,s.gold_amount,s.magic_dust_amount
+    FROM hero_auction_bot_entries e JOIN hero_auction_wallets w USING(account_id)
+    LEFT JOIN hero_auction_diamond_wallets d USING(account_id)
+    LEFT JOIN hero_auction_magic_dust_wallets m USING(account_id)
+    LEFT JOIN hero_auction_bot_settlements s ON s.match_id=e.match_id
+    WHERE e.match_id=$1`,[matchId])).rows[0];
+ }
+ try{
+  await start();
+  const auth=await post('/api/auth/guest',{name:'Synthetic Restart Proof'}),terms=consent('medium');
+  const created=await post('/api/bot',{authToken:auth.authToken,...terms});
+  const identity={code:created.room.code,token:created.token,authToken:auth.authToken},matchId=created.room.matchId;
+  const admitted=await durableRoom(identity.code);
+  assert.equal(admitted.phase,'auction');assert.equal(admitted.botEntry.matchId,matchId);assert.equal(admitted.battleSync?.result,undefined);
+  const paid=await proof(matchId);assert.equal(paid.gold,450);assert.equal(paid.entries,1);assert.equal(paid.settlements,0);
+  // Actual abrupt process loss before live combat must NOT create a refund.
+  await stop('SIGKILL');await start();
+  let room=(await post('/api/state',identity)).room;
+  assert.equal(room.matchId,matchId);assert.equal(room.phase,'auction');assert.equal(room.botSettlement,null);
+  const replay=await post('/api/bot',{authToken:auth.authToken,...terms});
+  assert.equal(replay.room.matchId,matchId);assert.equal(replay.token,identity.token);
+  assert.deepEqual(await proof(matchId),paid,'auction restart/reconnect and request replay do not charge or refund');
+  for(let retry=0;room.phase==='auction'&&retry<400;retry++){
+   if(room.turn===0)room=(await post('/api/pass',identity)).room;
+   else{await delay(40);room=(await post('/api/state',identity)).room;}
+  }
+  assert.equal(room.phase,'finished');assert.equal(room.botSettlement,null);
+  const teamResponse=await fetch(base+'/api/battle-auction-team?'+new URLSearchParams({code:identity.code,token:identity.token}));assert.equal(teamResponse.status,200);
+  const {teams}=await teamResponse.json();
+  const started=await post('/api/battle-auction-preview',{code:identity.code,token:identity.token,positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:teams[0].map(hero=>hero.role)});
+  assert.equal(started.result.live,true);assert.notEqual(started.result.finished,true);
+  let persisted;
+  for(let retry=0;retry<200;retry++){
+   persisted=await durableRoom(identity.code);
+   if(persisted?.battleSync?.result?.live&&persisted.battleSync.result.finished!==true)break;
+   await delay(25);
+  }
+  assert.equal(persisted.botEntry.matchId,matchId);
+  assert.equal(persisted.battleSync?.result?.live,true,'must prove unfinished live state is durably stored BEFORE killing the app');
+  assert.notEqual(persisted.battleSync.result.finished,true);assert.notEqual(persisted.matchSettled,true);
+  assert.equal((await proof(matchId)).settlements,0,'no outcome existed before actual process loss');
+  await stop('SIGKILL');await start();
+  for(let retry=0;retry<200;retry++){
+   room=(await post('/api/state',identity)).room;
+   if(room.botSettlement&&!room.botSettlementPending)break;
+   await delay(25);
+  }
+  assert.equal(room.matchId,matchId);assert.equal(room.botSettlement?.outcome,'server_failure');
+  assert.deepEqual(room.botSettlement.rewards,{gold:50,magicDust:0,diamonds:0});assert.equal(room.victoryChest,null);assert.deepEqual(room.series,[0,0]);
+  const receipt=room.botSettlement,refunded=await proof(matchId);
+  assert.equal(refunded.gold,500);assert.equal(refunded.entry_gold,50);assert.equal(refunded.entries,1);assert.equal(refunded.settlements,1);
+  assert.equal(refunded.outcome,'server_failure');assert.equal(refunded.gold_amount,50);assert.equal(refunded.magic_dust_amount,0);assert.equal(refunded.diamonds,0);assert.equal(refunded.magic_dust,0);
+  for(let repeat=0;repeat<3;repeat++){
+   assert.deepEqual((await post('/api/state',identity)).room.botSettlement,receipt);
+   assert.equal((await post('/api/wallet',{authToken:auth.authToken})).gold,500);
+  }
+  // A further real restart must recover the SAME terminal receipt, not refund again.
+  await stop('SIGKILL');await start();
+  assert.deepEqual((await post('/api/state',identity)).room.botSettlement,receipt);
+  assert.deepEqual(await proof(matchId),refunded);
+  assert.equal((await post('/api/bot',{authToken:auth.authToken,...terms})).room.matchId,matchId);
+  assert.deepEqual(await proof(matchId),refunded);
+ }finally{try{await stop('SIGTERM')}finally{await fixtureDb.end()}}
+});

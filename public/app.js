@@ -727,6 +727,8 @@ $('create').onclick=async()=>{if(!await validateLogin())return;try{const j=await
 $('join').onclick=async()=>{if(webInvite?.pending)return;if(!await validateLogin())return;try{const j=await post('/api/join',{...gameIdentity(),name:$('name').value,code:$('roomcode').value.trim().toUpperCase()});save(j.token,j.room)}catch(e){notify(e.message)}};
 async function enterBotGame(url,difficulty,currentRoom=null){
  if(botEntryBusy)return;botEntryBusy=true;
+ const entryButtons=['bot','bot-offer-accept','rematch','bot-recovery-rematch'].map($).filter(Boolean);
+ for(const button of entryButtons){button.disabled=true;button.setAttribute('aria-busy','true');}
  const current=session,auth=login?.authToken;let scope;
  try{
   if(!await validateLogin())return;
@@ -738,7 +740,7 @@ async function enterBotGame(url,difficulty,currentRoom=null){
   botEntryConsent.complete(scope);
   if(login?.authToken!==auth||session!==current)return;
   if(j.token)save(j.token,j.room);else show(j.room);
- }catch(e){notify(e.message)}finally{botEntryBusy=false}
+ }catch(e){notify(e.message)}finally{botEntryBusy=false;for(const button of entryButtons){if(button.isConnected){button.disabled=false;button.removeAttribute('aria-busy');}}}
 }
 $('bot').onclick=()=>enterBotGame('/api/bot',$('bot-difficulty').value);
 $('bot-difficulty').onchange=()=>renderBotEconomy();

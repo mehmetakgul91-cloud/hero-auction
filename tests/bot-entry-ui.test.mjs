@@ -62,3 +62,10 @@ test('corrupt or unreadable recovery storage cannot mint a new admission id',asy
  const consent=createBotEntryConsent({fetch:async()=>({ok:true,json:async()=>({botEconomy:capability})}),confirm:()=>true,storage:{getItem(){throw Error('blocked')},setItem(){throw Error('must not write')}},uuid:()=>{throw Error('must not mint')},english:()=>true});
  await assert.rejects(consent.request('a','easy'),/verify the earlier/);
 });
+
+test('visible entry controls disable while the guarded operation is pending and restore on exit',()=>{
+ const app=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
+ assert.match(app,/entryButtons=\['bot','bot-offer-accept','rematch','bot-recovery-rematch'\]/);
+ assert.match(app,/button\.disabled=true;button\.setAttribute\('aria-busy','true'\)/);
+ assert.match(app,/if\(button\.isConnected\)\{button\.disabled=false;button\.removeAttribute\('aria-busy'\)/);
+});

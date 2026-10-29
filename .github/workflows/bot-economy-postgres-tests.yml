@@ -65,7 +65,7 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Full repository test suite without an ambient database URL
         run: env -u DATABASE_URL npm test
-      - name: Create separate empty synthetic live-combat database
+      - name: Create separate empty synthetic live-combat and browser databases
         run: |
           env -u DATABASE_URL node --input-type=module <<'NODE'
           import assert from 'node:assert/strict';
@@ -76,6 +76,7 @@ jobs:
             assert.equal((await client.query('SELECT current_database() AS db')).rows[0].db,'hero_bot_economy_test');
             assert.equal(Number((await client.query("SELECT count(*) AS n FROM pg_tables WHERE schemaname='public'")).rows[0].n),0);
             await client.query('CREATE DATABASE hero_bot_live_test');
+            await client.query('CREATE DATABASE hero_bot_browser_test');
           } finally { await client.end(); }
           NODE
       - name: Real bot ledger transactions, concurrency and uncertain COMMIT recovery
@@ -86,3 +87,21 @@ jobs:
         env:
           HERO_BOT_LIVE_TEST_DB: postgresql://test:test@127.0.0.1:5432/hero_bot_live_test
         run: env -u DATABASE_URL node tools/test-postgres-bot-live.mjs
+
+      - name: Install pinned official Playwright and Chromium in CI only
+        run: |
+          npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          ./node_modules/.bin/playwright install --with-deps chromium
+      - name: Browser payment consent and fixed receipts against separate PostgreSQL fixtures
+        env:
+          HERO_BOT_BROWSER_TEST_DB: postgresql://test:test@127.0.0.1:5432/hero_bot_browser_test
+          HERO_BROWSER_SCREENSHOTS: artifacts/bot-browser
+        run: env -u DATABASE_URL node tools/test-postgres-bot-browser.mjs
+      - name: Preserve synthetic desktop and mobile browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bot-browser-evidence
+          path: artifacts/bot-browser
+          if-no-files-found: ignore
+          retention-days: 7

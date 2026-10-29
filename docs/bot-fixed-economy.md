@@ -1,4 +1,4 @@
-# Fixed bot economy — local implementation, publication blocked pending verification
+# Fixed bot economy — draft PR and isolated verification
 
 ## Approved policy
 
@@ -37,7 +37,7 @@ On restart, normal auctions/formation waiting retain their paid identity and res
 
 A disconnect or intentional departure is not evidence of server failure. Paid abandoned games expire conservatively as server-authorized forfeits (loss, no refund). Refund authority is an internal server call, never a browser-controlled flag. There is no broad “disconnect refund” that could be farmed. Operators must not manually delete unpaid/unsettled receipt rows to unblock accounts.
 
-## Verification status and release gate
+## Initial local verification and release gate
 
 Executed locally:
 
@@ -48,7 +48,7 @@ Executed locally:
 
 `tools/test-postgres-bot-economy.mjs` provides eight real-PostgreSQL integration groups. It refuses to connect unless `HERO_BOT_ECONOMY_TEST_DB` is exactly `postgresql://test:test@127.0.0.1:5432/hero_bot_economy_test`, `DATABASE_URL` is absent, and the target public schema is empty. It creates only synthetic fixture accounts, never drops/resets a database, and never uses production credentials. It covers concurrent admission and settlement, all difficulty/outcome combinations, lost COMMIT responses, receipt lookup/recovery, insufficient funds/overflow, trusted interruption/forfeit, transactional SQL-fault rollback and room collision/rematch behavior.
 
-**Real PostgreSQL execution is currently unverified.** Official Debian PostgreSQL packages were obtained and an isolated data directory initialized by a separate test worker, but startup was blocked by the environment's Unix-socket permissions; an escalation failed before execution. No further server startup or alternate execution route was attempted. The eight PostgreSQL groups, SQL migration execution and live paid-bot HTTP/restart flows therefore remain release blockers. Run them in a permitted disposable local/CI environment, then run the repository's full test suite and authenticated browser/HTTP flows before publication. No push, PR, deployment, live schema change or live-account currency transaction is authorized by this local implementation task.
+**At the initial local checkpoint, real PostgreSQL execution was unverified.** Official Debian PostgreSQL packages were obtained and an isolated data directory initialized by a separate test worker, but startup was blocked by the environment's Unix-socket permissions; an escalation failed before execution. No further server startup or alternate execution route was attempted. The eight PostgreSQL groups, SQL migration execution and live paid-bot HTTP/restart flows were therefore release blockers at that checkpoint. Run them in a permitted disposable local/CI environment, then run the repository's full test suite and authenticated browser/HTTP flows before publication. No push, PR, deployment, live schema change or live-account currency transaction is authorized by this local implementation task.
 
 ### Retained paid live-combat integration workflow (not executed here)
 
@@ -75,3 +75,15 @@ Startup recovery fetches unresolved entries and terminal receipts belonging to r
 YAML structure validation and two workflow safety tests passed locally (plus the eight target-refusal guards). **This workflow has not been published or executed.** A future push/PR still needs user authorization; preparing this file neither authorizes publication nor establishes a passing CI result. Successful real PostgreSQL and paid live-combat jobs remain prerequisites to a release decision.
 
 The existing game coordinator still assumes one authoritative application instance for live rooms; PostgreSQL receipt locks make wallet operations retry-safe but do not turn the in-memory combat engine into a multi-instance distributed simulation. Do not enable overlapping active game servers as part of publication without a separate room-ownership design and tests.
+
+## Published isolated CI evidence
+
+Draft PR [#74](https://github.com/mehmetakgul91-cloud/hero-auction/pull/74), head `72d7278344512139408b0226949bbf45d105ee65`, passed all five triggered workflows. [Bot PostgreSQL run 40925354876](https://github.com/mehmetakgul91-cloud/hero-auction/actions/runs/40925354876) used PostgreSQL17 and repository-target Node26.12.1:
+
+- Full suite: 2,589 passed, none failed/skipped.
+- Eight real PostgreSQL ledger groups passed, including concurrent admission/settlement, fixed outcomes, lost COMMIT acknowledgment, SQL fault rollback, funds/overflow, interruption/forfeit and collision/rematch.
+- Four paid auction/live-combat games passed, including commander casts, shields, rematch, reconnect and exact gold/dust/zero-diamond reconciliation.
+
+These runs use disposable synthetic databases only. They supersede the initial local real-DB blocker, not the local executor's permissions. Subsequent test additions extend proof to actual abrupt application-process restarts and rendered desktop/mobile browser consent; their result must be read from the exact revision's CI rather than inferred from this earlier run.
+
+Social accounting remains separate: **each settlement interrupted between its monetary commit and the social snapshot save can omit one win/loss/draw and corresponding history entry**. It cannot omit/double the durable monetary outcome or match series; bot ranked delta remains zero. This is an explicit legacy counter/history limitation, not full atomicity of all account statistics.
