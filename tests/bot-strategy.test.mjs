@@ -13,7 +13,7 @@ test('commander varies with default medium upgrades and can select each of the f
  const ids=new Set();let previous;
  for(let i=0;i<16;i++){
   const p=chooseBotCommander(previous,()=>i%4/4);
-  assert.notEqual(p.commanderId,previous);assert.deepEqual(p.levels,{attack:10,defense:10,magic:10,support:10});
+  assert.notEqual(p.commanderId,previous);assert.deepEqual(p.levels,{attack:20,defense:20,magic:20,support:20,[p.commanderId]:25});
   previous=p.commanderId;ids.add(previous);
  }
  assert.equal(ids.size,4);

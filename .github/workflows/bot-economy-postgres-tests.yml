@@ -1,0 +1,120 @@
+name: Paid bot economy and live PostgreSQL integration
+on:
+  pull_request:
+    paths:
+      - 'bot-*.js'
+      - 'server.js'
+      - 'arena-commanders.js'
+      - 'battle-*.js'
+      - 'commander-*.js'
+      - 'paid-entry-maintenance.js'
+      - 'public/**'
+      - 'migrations/**'
+      - 'tests/**'
+      - 'test/**'
+      - 'tools/test-postgres-bot-*.mjs'
+      - 'package*.json'
+      - '.github/workflows/bot-economy-postgres-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'bot-*.js'
+      - 'server.js'
+      - 'arena-commanders.js'
+      - 'battle-*.js'
+      - 'commander-*.js'
+      - 'paid-entry-maintenance.js'
+      - 'public/**'
+      - 'migrations/**'
+      - 'tests/**'
+      - 'test/**'
+      - 'tools/test-postgres-bot-*.mjs'
+      - 'package*.json'
+      - '.github/workflows/bot-economy-postgres-tests.yml'
+permissions:
+  contents: read
+jobs:
+  isolated-paid-bot-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        # Disposable official PostgreSQL17 service, never a production target.
+        image: postgres:17
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: hero_bot_economy_test
+        ports:
+          - '127.0.0.1:5432:5432'
+        options: >-
+          --health-cmd "pg_isready -U test -d hero_bot_economy_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          # Reads engines.node (26.12.1), not the older economy job's Node22.
+          node-version-file: package.json
+          cache: npm
+      - name: Install locked dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Full repository test suite without an ambient database URL
+        run: env -u DATABASE_URL npm test
+      - name: Create separate empty synthetic live-combat and browser databases
+        run: |
+          env -u DATABASE_URL node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import pg from 'pg';
+          const client=new pg.Client({host:'127.0.0.1',port:5432,user:'test',password:'test',database:'hero_bot_economy_test',ssl:false,connectionTimeoutMillis:5000});
+          await client.connect();
+          try {
+            assert.equal((await client.query('SELECT current_database() AS db')).rows[0].db,'hero_bot_economy_test');
+            assert.equal(Number((await client.query("SELECT count(*) AS n FROM pg_tables WHERE schemaname='public'")).rows[0].n),0);
+            await client.query('CREATE DATABASE hero_bot_live_test');
+            await client.query('CREATE DATABASE hero_bot_browser_test');
+          } finally { await client.end(); }
+          NODE
+      - name: Real bot ledger transactions, concurrency and uncertain COMMIT recovery
+        env:
+          HERO_BOT_ECONOMY_TEST_DB: postgresql://test:test@127.0.0.1:5432/hero_bot_economy_test
+        run: env -u DATABASE_URL node tools/test-postgres-bot-economy.mjs
+      - name: Full paid bot auction and live-combat workflow
+        env:
+          HERO_BOT_LIVE_TEST_DB: postgresql://test:test@127.0.0.1:5432/hero_bot_live_test
+        run: env -u DATABASE_URL node tools/test-postgres-bot-live.mjs
+
+      # Keep the older pinned Playwright installer on its contemporary LTS.
+      # Node26 stalled after download completion; application tests still use26.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned official Playwright and Chromium in CI only
+        timeout-minutes: 4
+        env:
+          DEBUG: pw:install
+          PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: '60000'
+        run: |
+          npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          ./node_modules/.bin/playwright install --with-deps --only-shell chromium
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+      - name: Browser payment consent and fixed receipts against separate PostgreSQL fixtures
+        timeout-minutes: 8
+        env:
+          HERO_BOT_BROWSER_TEST_DB: postgresql://test:test@127.0.0.1:5432/hero_bot_browser_test
+          HERO_BROWSER_SCREENSHOTS: artifacts/bot-browser
+        run: env -u DATABASE_URL node tools/test-postgres-bot-browser.mjs
+      - name: Preserve synthetic desktop and mobile browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bot-browser-evidence
+          path: artifacts/bot-browser
+          if-no-files-found: ignore
+          retention-days: 7

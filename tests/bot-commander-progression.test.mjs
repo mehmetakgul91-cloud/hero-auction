@@ -1,23 +1,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createBotCommanderProfile,chooseBotCommander} from '../bot-strategy.js';
-import {COMMANDER_STATS,createCommanderProfile,previewCommanderUpgrade,commanderUpgradeCost} from '../arena-commanders.js';
+import {COMMANDER_STATS,createCommanderProfile,previewCommanderUpgrade,commanderUpgradeCost,commanderLevelCap} from '../arena-commanders.js';
 import {commanderAbilityStats,commanderAbilityDescription,getCommanderAbilityCost} from '../public/commander-ability-rules.js';
 import {prepareLiveArenaTeams} from '../commander-live-team-preparation.js';
 import {battleRoster} from '../battle-roster.js';
 import {createLiveCommanderAbilities} from '../commander-live-abilities.js';
 import {createLiveCommanderCombat,castLiveCommanderCombat,beginServerCombatRound} from '../commander-live-combat.js';
 const teams=()=>[0,1].map(side=>Array.from({length:5},(_,i)=>({id:side+'-'+i,hp:2500,maxHp:5000,attack:1000,defense:100,shield:0,speed:50,position:i,lane:i<2?'front':'back'})));
-for(const [difficulty,level,gain] of [['easy',5,14],['medium',10,17],['hard',15,19]])for(const id of COMMANDER_STATS){
+for(const [difficulty,level,gain] of [['easy',15,19],['medium',25,24],['hard',40,32]])for(const id of COMMANDER_STATS){
  test(`${difficulty} ${id}: legal independent branches, UI rules, live energy and all abilities`,()=>{
   const profile=createBotCommanderProfile(id,difficulty);
   let earned=createCommanderProfile(id),cost=0;
-  for(const stat of COMMANDER_STATS)for(let n=0;n<level;n++){
+  for(const stat of COMMANDER_STATS)for(let n=0;n<Math.min(level,commanderLevelCap(id,stat));n++){
    cost+=commanderUpgradeCost(n);
    earned=previewCommanderUpgrade(earned,stat,commanderUpgradeCost(n)).profile;
   }
   assert.deepEqual(profile,earned,'exactly reachable through human branch upgrade rules');
-  assert.equal(cost,4*({5:1489,10:5194,15:14412}[level]),'approved exponential gold curve; bots still spend no currency');
+  assert.equal(cost,({15:4*14412,25:94407+3*37345,40:1468790+3*37345}[level]),'approved gold curve and branch caps; bots have no currency wallet');
+  assert.equal(profile.levels[id],level,'selected branch is the approved difficulty level');
+  for(const stat of COMMANDER_STATS)assert.equal(profile.levels[stat],stat===id?level:Math.min(level,20),'off-branches obey the existing cap');
   assert.equal(commanderAbilityStats(profile).level,level);
   assert.equal(commanderAbilityStats(profile).energyPerRound,gain);
   assert.equal(commanderAbilityStats(profile).bonusPercent,level);
@@ -68,7 +70,7 @@ test('selection applies difficulty to every archetype, excludes previous, and re
    const p=chooseBotCommander(undefined,()=>n/4,difficulty);ids.add(p.commanderId);
    assert.deepEqual(p,createBotCommanderProfile(p.commanderId,difficulty));
    assert.notEqual(chooseBotCommander(p.commanderId,()=>0,difficulty).commanderId,p.commanderId);
-   p.levels.attack=40;assert.notEqual(createBotCommanderProfile(p.commanderId,difficulty).levels.attack,40);
+   p.levels.attack=-1;assert.notEqual(createBotCommanderProfile(p.commanderId,difficulty).levels.attack,-1);
   }
   assert.equal(ids.size,4);
  }

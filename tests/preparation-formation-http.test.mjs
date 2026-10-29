@@ -1,3 +1,4 @@
+import {assertBotStorageUnavailable} from './fixtures/assert-bot-storage-unavailable.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
@@ -51,19 +52,9 @@ test('online and rematch preparation auto-places once, persists lane edits, reje
    if(match===0){await post('/api/rematch',{code,...players[0]});await post('/api/rematch',{code,...players[1]});}
    previousKey=key;
   }
-  // Bot defaults are also just a preparation draft, never an implicit human Ready.
-  const botAuth=await post('/api/auth/guest',{name:'Automatic Bot Formation'}),bot=await post('/api/bot',{authToken:botAuth.authToken,difficulty:'easy'});
-  let room=bot.room;
-  for(let i=0;room.phase==='auction'&&i<300;i++){
-   if(room.turn===0)room=(await post('/api/pass',{code:room.code,token:bot.token,authToken:botAuth.authToken})).room;
-   else{await delay(100);room=(await post('/api/state',{code:room.code,token:bot.token,authToken:botAuth.authToken})).room;}
-  }
-  assert.equal(room.phase,'finished');
-  const view=await get('/api/battle-auction-team',{code:room.code,token:bot.token,authToken:botAuth.authToken});assert.equal(view.preparation.ready,false);
-  const botDraft={code:room.code,token:bot.token,...view.preparation,lanes:Array(5).fill('back')};
-  await post('/api/battle-auction-formation',botDraft);
-  const waiting=await get('/api/battle-auction-preview',{code:room.code,token:bot.token,authToken:botAuth.authToken});assert.deepEqual(waiting.ready,[false,true]);assert.equal(waiting.started,false);
-  const started=await post('/api/battle-auction-preview',botDraft);assert.equal(started.started,true);assert.equal(started.result.live,true);
-  assert.deepEqual(started.result.teams[0].map(hero=>hero.lane),botDraft.lanes);
+  // Paid bot formation HTTP needs a real durable database, never a RAM bypass.
+  const botAuth=await post('/api/auth/guest',{name:'Automatic Bot Formation'});
+  await assertBotStorageUnavailable(request,botAuth.authToken);
+
  }finally{child.kill('SIGTERM');await new Promise(resolve=>{if(child.exitCode!==null)return resolve();child.once('exit',resolve);setTimeout(resolve,2000).unref()})}
 });

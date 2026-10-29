@@ -73,4 +73,4 @@ export function createPaidEntryMaintenance({bootPaused=false,bootId=randomUUID()
  }
  return{initialize,setPaused,runPaused,latchLegacyUncertainty,track,status,assertOpen,isPaused:()=>paused||!loaded||uncertain||controls>0,beginAdmission(){assertOpen();return track('admissions')}};
 }
-export function isUnsettledPaidRoom(room){return room?.mode!=='bot'&&room?.entryPaid===true&&(room.matchSettled!==true||room.battleSettlementPending===true||room.victoryChestPending===true)}
+export function isUnsettledPaidRoom(room){return (room?.mode!=='bot'||!!room?.botEntry)&&room?.entryPaid===true&&(room.matchSettled!==true||room.battleSettlementPending===true||room.victoryChestPending===true)}

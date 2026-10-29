@@ -1,3 +1,4 @@
+import {assertBotStorageUnavailable} from './fixtures/assert-bot-storage-unavailable.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
@@ -20,13 +21,13 @@ test('flagsOFF wallet keeps actualgold and unavailabledust/diamonds, no fabricat
   assert.deepEqual((await post('/api/wallet',token)).body,wallet);assert.equal((await post('/api/wallet',{})).status,401);
  });
 });
-test('chest requested withoutdependencies/schema blocks actualentry beforecharge; bottraining unaffected',async()=>{
+test('chest requested withoutdependencies/schema blocks actualentry beforecharge; paid bot also fails closed without durable storage',async()=>{
  for(const flags of [{HERO_VICTORY_CHESTS_ENABLED:'1'},{HERO_DIAMONDS_ENABLED:'1',HERO_MAGIC_DUST_ENABLED:'1',HERO_VICTORY_CHESTS_ENABLED:'1'}])await withServer(flags,async({post,info})=>{
   const a=(await post('/api/auth/guest',{name:'Chest Missing A'})).body,b=(await post('/api/auth/guest',{name:'Chest Missing B'})).body;
   const created=await post('/api/create',{authToken:a.authToken});assert.equal(created.status,200);
   const join=await post('/api/join',{authToken:b.authToken,code:created.body.room.code});assert.equal(join.status,503);assert.match(join.body.error,/Zafer sandığı/);
   for(const p of [a,b]){const wallet=(await post('/api/wallet',{authToken:p.authToken})).body;assert.equal(wallet.gold,500);assert.equal(wallet.magicDust,null);assert.equal(wallet.diamonds,null);}
-  const bot=await post('/api/bot',{authToken:b.authToken,difficulty:'easy'});assert.equal(bot.status,200);assert.equal(bot.body.room.mode,'bot');assert.equal(bot.body.room.victoryChest,null);assert.equal(bot.body.room.victoryChestPending,false);assert.equal(info.victoryChests.available,false);
+  await assertBotStorageUnavailable(post,b.authToken);assert.equal(info.victoryChests.available,false);assert.equal(info.botEconomy.available,false);
  });
 });
 test('server wires only authoritative settle and ownerprojection; all paid entry paths preflight',()=>{

@@ -41,14 +41,17 @@ test('stale same-boot revision cannot reopen a subsequent pause',async()=>{
 test('whole room batches remain drain blockers across queued paid writes, deletions and overlapping flushes',async()=>{
  const {control}=await fixture();await control.setPaused(true,'fixture-boot',0);
  const source=readFileSync(new URL('../server.js',import.meta.url),'utf8'),body=source.slice(source.indexOf('async function flushRooms(){'),source.indexOf('async function walletSummary('));
- const pending=[];const ctx={cancellationIdentity:room=>room.code,cancellationReservations:new Map(),isCancellationReserved:()=>false,paidEntryMaintenance:control,isUnsettledPaidRoom,console:{error(){}},socialSaveNeedsConfirmation:false,databaseReady:true,dirtyRooms:new Set(['bot','paid','deleted']),roomFlushes:new Map(),rooms:new Map([['bot',{code:'bot',mode:'bot'}],['paid',{code:'paid',mode:'friend',entryPaid:true,matchSettled:true}]]),pendingGold:new Map(),pendingVictoryChests:new Map(),victoryChestFlights:new Set(),database:{query(sql){if(typeof sql==='object')return Promise.resolve({rows:[{}]});return new Promise((resolve,reject)=>pending.push({sql,resolve,reject}))}}};
+ const pending=[];const ctx={auctionAdmissions:new WeakSet(),cancellationIdentity:room=>room.code,cancellationReservations:new Map(),isCancellationReserved:()=>false,paidEntryMaintenance:control,isUnsettledPaidRoom,console:{error(){}},socialSaveNeedsConfirmation:false,databaseReady:true,dirtyRooms:new Set(['bot','paid','deleted']),roomFlushes:new Map(),rooms:new Map([['bot',{code:'bot',mode:'bot'}],['paid',{code:'paid',mode:'friend',entryPaid:true,matchSettled:true}]]),pendingGold:new Map(),pendingVictoryChests:new Map(),victoryChestFlights:new Set(),database:{query(sql){if(typeof sql==='object')return Promise.resolve({rows:[{}]});return new Promise((resolve,reject)=>pending.push({sql,resolve,reject}))}}};
  vm.createContext(ctx);vm.runInContext(body,ctx);
  const first=ctx.flushRooms();assert.equal((await ctx.paidEntryDrainStatus()).roomFlushBatchesInFlight,1);assert.equal((await ctx.paidEntryDrainStatus()).ready,false);
- ctx.dirtyRooms.add('bot');const second=ctx.flushRooms();assert.equal((await ctx.paidEntryDrainStatus()).roomFlushBatchesInFlight,2);
- pending[1].resolve();await second;assert.equal((await ctx.paidEntryDrainStatus()).roomFlushBatchesInFlight,1);assert.equal(ctx.roomFlushes.size,0);assert.equal((await ctx.paidEntryDrainStatus()).ready,false);
- pending[0].resolve();await tick();assert.match(pending[2].sql,/INSERT/);pending[2].resolve();await tick();assert.match(pending[3].sql,/DELETE/);assert.equal((await ctx.paidEntryDrainStatus()).ready,false);pending[3].reject(Error('delete failed'));await first;
+ ctx.dirtyRooms.add('bot');const second=ctx.flushRooms();await second;
+ assert.equal(pending.length,1,'overlapping same-code flush never issues a second SQL write');
+ assert.equal((await ctx.paidEntryDrainStatus()).roomFlushBatchesInFlight,1);
+ assert.equal(ctx.roomFlushes.size,1,'the original write remains tracked');assert.equal(ctx.dirtyRooms.has('bot'),true,'overlap must be requeued');assert.equal((await ctx.paidEntryDrainStatus()).ready,false);
+ pending[0].resolve();await tick();assert.match(pending[1].sql,/INSERT/);pending[1].resolve();await tick();assert.match(pending[2].sql,/DELETE/);assert.equal((await ctx.paidEntryDrainStatus()).ready,false);pending[2].reject(Error('delete failed'));await first;
  const failed=await ctx.paidEntryDrainStatus();assert.equal(failed.roomFlushBatchesInFlight,0);assert.equal(failed.dirtyPaidRooms,1);assert.equal(failed.ready,false);
- const retry=ctx.flushRooms();pending[4].resolve();await retry;assert.equal((await ctx.paidEntryDrainStatus()).ready,true);
+ const retry=ctx.flushRooms();assert.match(pending[3].sql,/INSERT/);pending[3].resolve();await tick();assert.match(pending[4].sql,/DELETE/);pending[4].resolve();await retry;assert.equal((await ctx.paidEntryDrainStatus()).ready,true);
+
 });
 
 test('social work is tracked before the friendship queue and failures stay unconfirmed until a full snapshot succeeds',async()=>{

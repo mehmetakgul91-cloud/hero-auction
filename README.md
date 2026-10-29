@@ -102,15 +102,19 @@ Ayrıntılar: [mağaza ve giriş ödülü tasarımı](docs/store-login-rewards.m
 
 Her maçta aktif havuzdan 10 farklı kahraman rastgele seçilir; efsanevi, nadir veya diğer nadirlikler için sabit adet kotası yoktur. Aynı kahraman aynı açık artırmada tekrar etmez. Son kartların eksik takıma verilmesi, mevcut otomatik ücret/eksi kredi kuralları ve kalan kredi güç bonusu değişmemiştir.
 
-## Bilgisayar antrenmanı
+## Bilgisayar maçları — sabit ödüllü yerel hazırlık
 
-Bot da oyuncuyla aynı canlı savaş motorunu, enerji maliyetlerini ve bekleme sürelerini kullanır. Her yeni maç/rövanşta bir önceki komutandan farklı, geçici bir komutan alır. Komutanın ana uzmanlığı ve dört gelişim dalı kolayda 5, ortada 10, zorda 15 seviyedir; mevcut 40/20 dal sınırları ve normal beceri/enerji kuralları geçerlidir. Kahramanları yalnızca normal açık artırmadan edinir. Oyuncunun kayıtlı komutanı ve gelişimi değişmez. Eski, komutan seçilmemiş hesaplarda yalnızca o antrenman için sıfır seviyeli saldırı komutanı kullanılır.
+Bot da oyuncuyla aynı canlı savaş motorunu, enerji maliyetlerini ve bekleme sürelerini kullanır. Her yeni maç/rövanşta bir önceki komutandan farklı, geçici bir komutan alır. Yeni ücretli maçlarda komutanın seçili dalı kolayda 15, ortada 25, zorda 40 seviyedir; diğer dallar mevcut 20 sınırına tabidir (kolayda tüm dallar 15). Normal beceri/enerji kuralları değişmez. Kahramanları yalnızca normal açık artırmadan edinir. Oyuncunun kayıtlı komutanı ve gelişimi değişmez. Eski, komutan seçilmemiş hesaplarda yalnızca o antrenman için sıfır seviyeli saldırı komutanı kullanılır.
 
 - **Kolay:** düşük teklif bütçesi, basit diziliş ve daha seyrek normal beceriler.
 - **Orta:** kredi rezervi ve kart değeri, role uygun ön saf ve düzenli beceri kullanımı.
 - **Zor:** takım eksiklerine göre alışveriş, dayanıklı ön saf, duruma göre enerji biriktirme, iyileştirme/kalkan zamanlama ve büyücü hedef seçimi.
 
-Geçici komutanın sınıf bonusu kolay/orta/zor için %2,5 / %5 / %7,5, beceri güç artışı %5 / %10 / %15 ve tur enerjisi 14 / 17 / 19 olur. Dallar bağımsız altın geliştirmeleridir; ortak yetenek puanı havuzu yoktur. Bot için altın harcanmaz veya hesap kaydı yazılmaz; ek güç/enerji çarpanı uygulanmaz. Henüz açılmamış kartlar ve rakibin gizli enerjisi karar girdisi değildir. Zor botun kazanması garanti değildir. Antrenman giriş ücreti, altın ödülü ve lig puanı değişimi yoktur.
+Tur enerjisi kolay/orta/zor için 19 / 24 / 32 olur; ek güç veya enerji çarpanı uygulanmaz. Botun geçici komutanı için bir hesap/cüzdan oluşturulmaz. Henüz açılmamış kartlar ve rakibin gizli enerjisi karar girdisi değildir. Zor botun kazanması garanti değildir.
+
+Her yeni bot maçı **50 altın**: kolay galibiyet **100 altın**, orta **125 altın + 2 büyü tozu**, zor **175 altın + 5 büyü tozu**. **Elmas yok.** Ödül yalnız galibiyette otomatik sabit sandık makbuzuyla eklenir; yenilgide ödül/iade yok, beraberlik veya doğrulanmış sunucu hatasında 50 altın iade edilir. Lig puanı değişmez. 60 saniyelik eşleştirme sonunda otomatik ücret alınmaz: bot teklifi ayrıca onaylanır. Eski ücretsiz odalar geriye dönük ücretlendirilmez/ödüllendirilmez.
+
+Migration 009 otomatik çalışmaz. Kalıcı DB yoksa yeni bot girişi kapalıdır; RAM misafir önizlemesi ücretli ekonomi doğrulaması değildir. [Kurtarma, makbuzlar, testler ve yayın engelleri](docs/bot-fixed-economy.md).
 
 ## Arkadaşlar ve çevrimiçi durum
 
@@ -187,7 +191,7 @@ Büyücünün normal becerisi tek rakibin sonraki ilk gerçek saldırısını za
 
 Onaylanan yeni ekonomi: gerçek oyunculu galibiyetin120altını yerine tek sandık;
 %100altın (100/105/110/115/120, eşit), bağımsız%40ihtimalle3–5büyü tozu ve
-%10ihtimalle1elmas. Botlar ödülsüz antrenman, beraberlik kişi başı50altın iadesi.
+%10ihtimalle1elmas. Bu rastgele politika yalnız PvP içindir; yeni bot maçları yukarıdaki sabit ödül tablosunu kullanır. Beraberlik kişi başı50altın iadesi.
 15→16gelişimi5büyü tozu, sonraki hedefler ilk tabandan×1,2yukarı yuvarlama;
 eski seviyelere geriye dönük ücret yok. Üst menü üç gerçek bakiyeyi gösterir;
 kapalı/ulaşılamayan bakiye0değil`—`görünür.
