@@ -60,3 +60,29 @@
 .hero-fx-impact.signature-heal.is-special i,.hero-fx-impact.signature-shield.is-special i{height:14px;width:8px;border-radius:50% 50% 0 50%;background:transparent;border:2px solid currentColor}
 .hero-fx-impact.signature-lightning.is-special i{width:5px;height:23px;border-radius:0;clip-path:polygon(40% 0,100% 0,60% 40%,100% 40%,0 100%,30% 55%,0 55%)}
 .hero-fx-impact.signature-light.is-special i{width:10px;height:10px;background:transparent;border:2px solid currentColor;rotate:45deg}
+/* Readable choreography: deliberate preparation, legible travel, then a held
+   silhouette. No repeated flash or full-board wash; portraits/HP remain visible. */
+.hero-fx{filter:drop-shadow(0 2px 1px #111b2c) drop-shadow(0 0 5px color-mix(in srgb,var(--ink) 45%,transparent))}
+.hero-fx-cast::before{border-width:3px;inset:2%;border-style:double}
+.hero-fx-cast::after{inset:25%;border-width:3px}
+.hero-fx-cast i{left:47%;top:46%;width:5px;height:13px;background:currentColor;transform:rotate(calc(var(--part)*90deg)) translateY(calc(var(--hero-size)*-.43))}
+.hero-fx-cast.is-special::before{border-width:6px;outline:1px solid currentColor;outline-offset:5px}
+.hero-fx-cast.is-special::after{inset:18%;border-width:3px;border-style:dashed}
+.hero-fx-flight{width:60px;height:24px;margin:-12px 0 0 -30px;animation-timing-function:linear}
+.hero-fx-flight::after{width:90px;height:9px;top:8px;opacity:.8}
+.hero-fx-flight.is-special:not(.signature-arrow):not(.signature-hammer)::after{width:120px}
+.hero-fx-flight.signature-arrow::before{top:10px;bottom:auto;height:5px}
+.hero-fx-flight.signature-arrow::after{top:3px;width:22px;height:18px}
+.hero-fx-flight.signature-arrow i:first-child{top:3px;height:18px}
+.hero-fx-impact::before{border-width:4px}
+.hero-fx-impact.signature-magic::before{border-style:double;border-width:6px}
+.hero-fx-impact.signature-magic.is-special::after{inset:12%;border-width:4px;box-shadow:inset 0 0 0 7px #cc9eff22;outline:1px solid currentColor;outline-offset:6px}
+.hero-fx-impact.signature-lightning::after{inset:-8% 22%;background:linear-gradient(90deg,#69cce9,#f4fcff 48%,#69cce9)}
+.hero-fx-impact.signature-hammer::after{inset:13% 17% 21%;background:linear-gradient(135deg,#fff6dc,var(--ink))}
+.hero-fx-impact.signature-blade::before{border-width:8px;border-left-color:transparent;border-bottom-color:transparent}
+.hero-fx-impact.signature-dagger::before,.hero-fx-impact.signature-dagger::after{inset:-4% 44%;border-width:0}
+@keyframes heroCharge{0%{opacity:0;transform:scale(.82)}20%,85%{opacity:1;transform:scale(1)}100%{opacity:.3;transform:scale(1.08)}}
+@keyframes heroTravel{0%{opacity:1;transform:translate(0,0) rotate(var(--hero-angle))}92%{opacity:1}100%{opacity:0;transform:translate(var(--hero-dx),var(--hero-dy)) rotate(var(--hero-angle))}}
+@keyframes heroImpact{0%{opacity:0;scale:.84}12%,68%{opacity:var(--hero-opacity,1);scale:1}100%{opacity:0;scale:1.1}}
+@keyframes heroRing{0%{scale:.78}28%,70%{scale:1}100%{scale:1.12}}
+@media(max-width:600px){.hero-fx-flight{width:48px}.hero-fx-flight::after{width:64px}.hero-fx-flight.is-special:not(.signature-arrow):not(.signature-hammer)::after{width:86px}}

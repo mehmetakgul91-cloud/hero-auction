@@ -53,7 +53,7 @@ test('replay excludes allies already fallen at cast even if stale impact metadat
 });
 test('fresh live snapshot removes stale hunt bonus and completion clears the last pending charge',()=>{
  const state=teams();state[0][0].commanderHuntNextAttack=true;let receive;
- const context={window:{addEventListener:(name,fn)=>receive=fn},timer:null,victoryRevealDone:false,states:state,feedbackVersion:0,render(){},$:()=>({}),liveArenaMode:false};
+ const context={window:{addEventListener:(name,fn)=>receive=fn},timer:null,victoryRevealDone:false,states:state,feedbackVersion:0,heroAttacks:{prune(){}},render(){},$:()=>({}),liveArenaMode:false};
  const start=source.indexOf("window.addEventListener('heroarena:experimental-round-end',e=>{"),end=source.indexOf('\n});',start)+4;
  runInNewContext(source.slice(start,end),context);receive({detail:{teams:teams(),round:2,events:[]}});assert.equal(state[0][0].commanderHuntNextAttack,undefined);
  const fresh=teams();fresh[0][0].commanderHuntNextAttack=true;receive({detail:{teams:fresh,round:2,events:[]}});assert.equal(state[0][0].commanderHuntNextAttack,true);

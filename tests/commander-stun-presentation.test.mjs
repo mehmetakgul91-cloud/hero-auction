@@ -44,7 +44,7 @@ for(const side of [0,1])test(`stun-skip on side ${side} never enters attack/proj
 });
 test('fresh live snapshot without pending stun removes stale local marker; completion also clears it',()=>{
  const state=teams();state[1][0].commanderStunNextAttack=true;let receive;
- const context={window:{addEventListener:(name,fn)=>receive=fn},timer:null,victoryRevealDone:false,states:state,feedbackVersion:0,render(){},$:()=>({}),liveArenaMode:false};
+ const context={window:{addEventListener:(name,fn)=>receive=fn},timer:null,victoryRevealDone:false,states:state,feedbackVersion:0,heroAttacks:{prune(){}},render(){},$:()=>({}),liveArenaMode:false};
  const start=source.indexOf("window.addEventListener('heroarena:experimental-round-end',e=>{");
  const end=source.indexOf('\n});',start)+4;runInNewContext(source.slice(start,end),context);
  receive({detail:{teams:teams(),round:2,events:[]}});assert.equal(state[1][0].commanderStunNextAttack,undefined);

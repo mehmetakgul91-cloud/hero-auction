@@ -102,7 +102,7 @@ function updateAuctionCommandersForAccount(accountId,profile){
 const commanderTurnSessions=new Map();
 const liveCommanderAbilitySessions=new Map();
 const commanderTurnApiEnabled=process.env.EXPERIMENTAL_COMMANDER_TURNS==='1';
-const liveArenaLifecycle=createLiveArenaLifecycle({intervalMs:900,onError:(e,key)=>console.error('Live arena stopped:',key,e.message),onFinish:(snapshot,key)=>{
+const liveArenaLifecycle=createLiveArenaLifecycle({readablePacing:true,intervalMs:900,onError:(e,key)=>console.error('Live arena stopped:',key,e.message),onFinish:(snapshot,key)=>{
  const room=rooms.get(key.split(':')[0]);
  if(settleLiveBattle(room,key,snapshot,settleFinishedMatch))publish(room);
 }});
@@ -127,10 +127,11 @@ function tickBotBattle(room){
  try{
   // The bot sees exactly its authenticated snapshot, including only its own energy.
   const snapshot=liveArenaLifecycle.snapshot({matchKey:key,token,now});
-  const action=chooseBotCast(snapshot,room.botCommander.commanderId,room.difficulty||'medium',{now,lastCastAt:state.lastCastAt,startedAt:state.startedAt,side:1});
+  const combatNow=Number.isFinite(snapshot.combatTime)?snapshot.combatTime:now;
+  const action=chooseBotCast(snapshot,room.botCommander.commanderId,room.difficulty||'medium',{now:combatNow,lastCastAt:state.lastCastAt,startedAt:state.startedAt,side:1});
   if(!action)return;
   liveArenaLifecycle.cast({matchKey:key,token,...action,requestId:'bot-cast-'+(++state.sequence),now});
-  state.lastCastAt=now;
+  state.lastCastAt=combatNow;
  }catch(e){console.error('Bot commander action:',key,e.message)}
 }
 // Standalone preview only: temporary, non-persistent guest credits without a database.

@@ -41,6 +41,7 @@ export const battlePhrases = {
  'Anlık yetenek sistemi hazırlanıyor…':'Preparing live abilities…',
  'Komutan efekti':'Commander effect',
  'Yetenek bekleme süresi:':'Ability cooldown:',
+ 'savaş temposuna göre':'adjusted to battle pace',
  'Normal beceri bekleme süresi:':'Normal ability cooldown:',
  'Normal bekleme:':'Normal cooldown:',
  'Av Emri hedefi':'Hunt Order target',

@@ -138,7 +138,7 @@ test('interim transcript and round snapshot retain focus; terminal transcript cl
 });
 test('shipped live snapshot handler removes omitted focus on death, revival and final snapshot',()=>{
  const source=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8'),listeners=new Map(),states=[[hero('actor')],[hero('chosen')]];
- const context={window:{addEventListener:(name,fn)=>listeners.set(name,fn)},timer:null,states,victoryRevealDone:false,feedbackVersion:0,render(){},$:()=>({}),liveArenaMode:false,appendBattleFeedback(){},showBattleFeedback(){}};
+ const context={window:{addEventListener:(name,fn)=>listeners.set(name,fn)},timer:null,states,victoryRevealDone:false,feedbackVersion:0,heroAttacks:{prune(){}},render(){},$:()=>({}),liveArenaMode:false,appendBattleFeedback(){},showBattleFeedback(){}};
  const start=source.indexOf("window.addEventListener('heroarena:experimental-round-end'"),end=source.indexOf('const arenaArtCache=',start);runInNewContext(source.slice(start,end),context);
  const update=(hp,active=false,finished=false)=>listeners.get('heroarena:experimental-round-end')({detail:{teams:[[hero('actor')],[hero('chosen',{hp,...(active?{commanderFocusUntilDeath:true}:{})})]],round:3,events:[],finished}});
  update(100,true);assert.equal(states[1][0].commanderFocusUntilDeath,true);update(0);assert.equal(states[1][0].commanderFocusUntilDeath,undefined);update(40);assert.equal(states[1][0].commanderFocusUntilDeath,undefined);update(40,true,true);assert.equal(states[1][0].commanderFocusUntilDeath,undefined);

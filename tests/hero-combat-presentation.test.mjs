@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import * as T from 'three';
-import {playHeroAttack} from '../public/hero-attack-effects.js';
+import {heroActionDuration} from '../public/hero-battle-timing.js';
+import {createHeroAttackPlayer,playHeroAttack} from '../public/hero-attack-effects.js';
 import {combatEffectKind,combatEffectActors,createCombatEffects} from '../public/arena-combat-effects.js';
 import {heroCombatPresentation,stationaryArenaAction} from '../public/hero-combat-presentation.js';
 import {Arena3dScene} from '../public/arena-3d-scene.js';
@@ -42,15 +43,15 @@ test('classic arena applies the same range rule to the actual animation calls',(
  const code=source.slice(source.indexOf('function animateMove(e){'),source.indexOf("window.addEventListener('heroarena:experimental-move'"));
  for(const h of [...stationary,{id:'warrior',role:'fighter'}]){
   const animations=[],classes=[];
-  const element=()=>({dataset:{},style:{setProperty(){}},classList:{add(...v){classes.push(...v)},remove(){}},append(){},remove(){},querySelector(){return null},setAttribute(){},getBoundingClientRect(){return {left:0,top:0,width:80,height:100}},animate(frames){animations.push(frames)}});
+  const element=()=>({dataset:{},style:{setProperty(){}},classList:{contains(){return false},add(...v){classes.push(...v)},remove(){}},append(){},remove(){},querySelector(){return null},setAttribute(){},getBoundingClientRect(){return {left:0,top:0,width:80,height:100}},animate(frames){animations.push(frames)}});
   const actor=element(),target=element();actor.dataset={heroId:h.id,role:h.role};target.dataset.heroId='target';target.animate=()=>{};target.getBoundingClientRect=()=>({left:300,top:120,width:80,height:100});
   const document={querySelectorAll:()=>[actor,target],createElement:element,body:{append(){}}};
   const combatEffects=createCombatEffects({document,setTimer(){},clearTimer(){}});
-  const context=vm.createContext({playHeroAttack,combatEffectKind,combatEffectActors,combatEffects,heroCombatPresentation,stationaryArenaAction,motion:()=>true,comicBattleCue(){},duration:()=>600,setTimeout(){},floatingArenaEffect(){},document:{querySelectorAll:()=>[actor,target],createElement:element,body:{append(){}}}});
+  const context=vm.createContext({heroActionDuration,heroAttacks:createHeroAttackPlayer({document,setTimer(){},clearTimer(){}}),playHeroAttack,combatEffectKind,combatEffectActors,combatEffects,heroCombatPresentation,stationaryArenaAction,motion:()=>true,comicBattleCue(){},duration:()=>600,setTimeout(){},floatingArenaEffect(){},document:{querySelectorAll:()=>[actor,target],createElement:element,body:{append(){}}}});
   vm.runInContext(code+';animateMove('+JSON.stringify({actorId:h.id,targetId:'target',action:'attack',value:15})+');',context);
   if(stationary.includes(h)){
    assert.ok(classes.includes('attack-energy'),h.id);
    assert.ok(animations.every(frames=>frames.every(f=>!f.transform)),'ranged actor must never receive a travel transform');
-  }else assert.ok(animations.some(frames=>frames.some(f=>f.transform?.includes('231'))));
+  }else assert.ok(animations.some(frames=>frames.some(f=>f.transform?.includes('66'))));
  }
 });
