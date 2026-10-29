@@ -52,3 +52,15 @@ Shared instant-arrival targets now suppress orphan source/flight/lunge even when
 an earlier dead splash establishes the group clock. Final local suite after this
 fix: **2544 passed / 0 failed**, strict audit **50/50**. Browser CI remains pending;
 merge and production deployment are not authorized.
+
+Isolated browser verification (PR #75): run 40949730101 passed normal600ms and
+special840ms damage creation/visible-first-frame checks, actual canvas rendering,
+390/1440px viewports, route/disconnect cancellation, reduced static cleanup,
+unchanged authoritative teams, and fractional HP warning/healing colors.
+CSS animation time is explicitly sampled for deterministic screenshots; this
+is controlled browser rendering, not an unmodified live-match recording.
+Artifacts: `approved-contact-browser-frames` (12931111487).
+The media-change test awaits the actual event before emitting the next action.
+The browser runner is pinned to Ubuntu24.04 (Playwright1.56.1 does not support
+Ubuntu26.04). Final local runtime suite after visible-first-frame correction:
+**2545 passed / 0 failed**, strict audit **50/50**.

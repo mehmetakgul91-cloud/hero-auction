@@ -19,7 +19,7 @@ try{
   // Install before modules capture setTimeout/requestAnimationFrame references.
   await page.clock.install({time:new Date('2026-10-29T00:00:00Z')});
   await page.goto('http://127.0.0.1:3127/battle-preview.html?room=arena');await page.waitForSelector('#team-a .hero');
-  await page.waitForFunction(()=>[...document.querySelectorAll('#team-a .arena-portrait,#team-b .arena-portrait')].every(p=>p.querySelector('img')?.complete),{},{timeout:30000});
+  await page.waitForFunction(()=>[...document.querySelectorAll('#team-a .arena-portrait,#team-b .arena-portrait')].every(p=>p.querySelector('img.arena-portrait-image')?.naturalWidth>0),{},{timeout:30000});
   await page.clock.pauseAt(new Date('2026-10-29T00:01:00Z'));
   const stateBefore=await page.evaluate(()=>JSON.stringify(window.heroArenaTeams));
   const sampleCSS=(elapsed,labelAge)=>page.evaluate(({elapsed,labelAge})=>{for(const n of document.querySelectorAll('.hero,.hero-fx,.arena-floating-damage'))for(const a of n.getAnimations()){a.pause();a.currentTime=n.classList.contains('arena-floating-damage')?labelAge:elapsed;}},{elapsed,labelAge});
