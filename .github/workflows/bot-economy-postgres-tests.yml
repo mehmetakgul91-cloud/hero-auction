@@ -88,11 +88,24 @@ jobs:
           HERO_BOT_LIVE_TEST_DB: postgresql://test:test@127.0.0.1:5432/hero_bot_live_test
         run: env -u DATABASE_URL node tools/test-postgres-bot-live.mjs
 
+      # Keep the older pinned Playwright installer on its contemporary LTS.
+      # Node26 stalled after download completion; application tests still use26.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Install pinned official Playwright and Chromium in CI only
+        timeout-minutes: 4
+        env:
+          DEBUG: pw:install
+          PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: '60000'
         run: |
           npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
-          ./node_modules/.bin/playwright install --with-deps chromium
+          ./node_modules/.bin/playwright install --with-deps --only-shell chromium
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
       - name: Browser payment consent and fixed receipts against separate PostgreSQL fixtures
+        timeout-minutes: 8
         env:
           HERO_BOT_BROWSER_TEST_DB: postgresql://test:test@127.0.0.1:5432/hero_bot_browser_test
           HERO_BROWSER_SCREENSHOTS: artifacts/bot-browser
