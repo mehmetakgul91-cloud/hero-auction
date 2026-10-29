@@ -15,6 +15,7 @@ import {createArenaTeamRenderer} from '/arena-team-renderer.js';
 import {summarizeBattle} from '/battle-summary-data.js?v=complete-results-20261021';
 import {commanderAbilityStats,commanderAbilityDescription} from '/commander-ability-rules.js?v=commander-attack-fix-20261021';
 import {getArenaLaneLayout,refreshArenaViewport} from '/arena-viewport.js?v=equal-lanes-20261026';
+import {playHeroAttack} from '/hero-attack-effects.js';
 import {combatEffectKind,combatEffectActors,createCombatEffects} from '/arena-combat-effects.js';
 import {stationaryArenaAction} from '/hero-combat-presentation.js';
 import {createArenaThemePresentation} from '/arena-theme.js';
@@ -558,6 +559,8 @@ function animateMove(e){
  const ranged=splash||stationaryArenaAction(hero,e);
  const time=Math.max(320,Math.min(780,duration()*.72));
  if(!splash)comicBattleCue(e);
+ // Capture portrait centers before the cosmetic actor lunge changes bounds.
+ playHeroAttack({document,effects:combatEffects,actor,target,hero,kind,special,splash,time});
  if(target&&!heal&&!shield){
   if(!splash){
    const ar=actor.getBoundingClientRect(),tr=target.getBoundingClientRect();
@@ -566,27 +569,13 @@ function animateMove(e){
    else combatEffects.animate(actor,[{filter:'brightness(1)'},{filter:'brightness(1.35)',offset:.5},{filter:'brightness(1)'}],{duration:time*.8,easing:'ease-out'});
   }
   // Localized impact instead of a full-screen flash: HP and heroes stay readable.
-  combatEffects.accent(target,kind,{splash,ms:splash?400:time});
+  // Target signature lands on arrival; authoritative HP remains immediate.
   combatEffects.mark(target,[splash?'splash-target':'primary-target'],splash?450:850);
  }
  if(!splash){
   combatEffects.mark(actor,[ranged?'attack-energy':'attack-melee',...(special?['special-cast']:[])],700);
-  if(kind==='magic'||kind==='lightning')combatEffects.accent(actor,kind,{cast:true,ms:time});
  }
  const effectTarget=target;
- if(heal||shield)combatEffects.accent(effectTarget,kind,{ms:time});
- if(target&&!heal&&!shield&&!splash){
-  if(kind==='lightning')combatEffects.beam(actor,target,kind,Math.min(500,time));
-  else if(ranged){
-   const ar=actor.getBoundingClientRect(),tr=target.getBoundingClientRect();
-   const orb=document.createElement('span');orb.className='battle-projectile effect-'+(kind==='strike'?'special':kind);
-   orb.setAttribute('aria-hidden','true');
-   if(kind==='arrow')orb.style.rotate=Math.atan2((tr.top+tr.height/2)-(ar.top+ar.height/2),(tr.left+tr.width/2)-(ar.left+ar.width/2))+'rad';
-   orb.style.setProperty('--from-x',ar.left+ar.width/2+'px');orb.style.setProperty('--from-y',ar.top+ar.height/2+'px');
-   orb.style.setProperty('--to-x',tr.left+tr.width/2+'px');orb.style.setProperty('--to-y',tr.top+tr.height/2+'px');
-   const travel=Math.min(600,duration()*.5);orb.style.setProperty('--duration',travel+'ms');combatEffects.node(orb,document.body,travel+120);
-  }
- }
  if(Number(e.value)>0)floatingArenaEffect(effectTarget,'arena-floating-damage'+(heal?' healing':shield?' shielding':e.critical?' critical':'')+(splash?' area-hit':''),(heal||shield?'+':'−')+Math.round(Number(e.value))+(e.critical?'!':''));
 
 }
