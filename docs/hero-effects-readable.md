@@ -13,7 +13,7 @@ short timing. Catch-up playback could start another cast every220ms.
 Default normal:240ms preparation +360ms travel +800ms impact =1400ms.
 Default special:360ms preparation +480ms travel +1060ms impact =1900ms.
 The source/travel remains deliberate and readable. The revised damaging contact
-uses narrow, unfilled SVG strokes: one directional sweep fades before48% of the
+uses narrow, unfilled SVG strokes: one directional sweep fades before68% of the
 impact phase, then small fragments carry the remaining tail. No filled X/rune/bolt
 remains across the face. Distinct strokes retain the roster identities. Melee steps forward without hiding
 the enemy portrait; ranged heroes remain stationary. Splash impacts share the
@@ -84,3 +84,13 @@ acceptance. A separately authorized browser-reachable preview must be inspected
 at normal/special preparation, travel and impact timestamps on mobile and desktop
 before declaring the aesthetic result accepted. The latest authorization covers updating the existing draft PR73 and preview
 for revised motion QA. Production merge/release remains gated by final review.
+
+
+### Natural-size contrast correction
+
+The first contact-only preview removed face occlusion, but actual ~65px normal
+fighter/mage frames were too subtle on golden/busy portraits. The focused follow-up
+keeps the same open geometry and bounds, uses an8/9-unit dark edge,5/6-unit colored
+stroke and2.4/2.8-unit white core, and keeps the moving cut readable through52% of
+its phase before fading by68%. Fragments are2.6/3 units rather than subpixel at
+natural size. This does not restore a filled glyph, card box, or longer battle beat.

@@ -27,14 +27,14 @@ export function appendHeroImpactArt(document,node,signature,special){
  const svg=make('svg');svg.setAttribute('viewBox','0 0 100 100');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');svg.setAttribute('class','hero-contact-art');
  node.style.setProperty('--contact-color',art.color);
  for(const [index,d] of art.strokes.entries()){
-  for(const [layer,width] of [['shade',special?6:5],['edge',special?4:3],['core',1.25]]){
+  for(const [layer,width] of [['shade',special?9:8],['edge',special?6:5],['core',special?2.8:2.4]]){
    const path=make('path');path.setAttribute('d',d);path.setAttribute('fill','none');path.setAttribute('pathLength','1');path.setAttribute('stroke-width',width);path.setAttribute('stroke-linecap','round');path.setAttribute('class','hero-contact-stroke '+layer);path.style.setProperty('--stroke-index',index);path.style.setProperty('--stroke-lag',(index*70)+'ms');svg.append(path);
   }
  }
  for(const fragment of art.fragments){
   const group=make('g');group.setAttribute('class','hero-contact-fragment');
   group.style.setProperty('--fragment-dx',fragment.dx+'px');group.style.setProperty('--fragment-dy',fragment.dy+'px');
-  const path=make('path');path.setAttribute('d',`M${fragment.x} ${fragment.y} l${fragment.length} 0`);path.setAttribute('fill','none');path.setAttribute('stroke-width',special?1.8:1.4);path.setAttribute('stroke-linecap','round');path.setAttribute('transform',`rotate(${fragment.angle} ${fragment.x} ${fragment.y})`);group.append(path);svg.append(group);
+  const path=make('path');path.setAttribute('d',`M${fragment.x} ${fragment.y} l${fragment.length} 0`);path.setAttribute('fill','none');path.setAttribute('stroke-width',special?3:2.6);path.setAttribute('stroke-linecap','round');path.setAttribute('transform',`rotate(${fragment.angle} ${fragment.x} ${fragment.y})`);group.append(path);svg.append(group);
  }
  node.append(svg);return true;
 }

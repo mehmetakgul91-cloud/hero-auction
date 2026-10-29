@@ -93,8 +93,8 @@
 .hero-fx-impact.hero-contact::before,.hero-fx-impact.hero-contact::after{content:none;display:none}
 .hero-contact-art{display:block;width:100%;height:100%;overflow:visible;fill:none;color:var(--contact-color)}
 .hero-contact-stroke{stroke:var(--contact-color);stroke-dasharray:.68 .32;animation:heroContactSweep calc(var(--hero-ms) - var(--stroke-lag)) ease-out calc(var(--hero-delay) + var(--stroke-lag)) both;transform-origin:50% 50%}
-.hero-contact-stroke.shade{stroke:#152235;stroke-opacity:.7}
-.hero-contact-stroke.core{stroke:#fff8ec;stroke-width:1.25}
+.hero-contact-stroke.shade{stroke:#101c2e;stroke-opacity:.92}
+.hero-contact-stroke.core{stroke:#fffdf6}
 .hero-contact-fragment{animation:heroContactScatter var(--hero-ms) cubic-bezier(.14,.65,.35,1) var(--hero-delay) both;stroke:var(--contact-color);transform-box:view-box;transform-origin:50% 50%}
 .hero-fx-impact.hero-contact.signature-dagger .hero-contact-stroke{stroke-dasharray:.55 .45}
 .hero-fx-impact.hero-contact.signature-magic .hero-contact-stroke{stroke-dasharray:.4 .6}
@@ -103,7 +103,7 @@
 @keyframes heroContactEnvelope{0%{opacity:0}5%,55%{opacity:var(--hero-opacity,1)}100%{opacity:0}}
 /* One directional sweep, not a repeated flash. Second special stroke is a
    trailing cut, drawn inside the same contact (never another damage event). */
-@keyframes heroContactSweep{0%{opacity:0;stroke-dashoffset:1;translate:calc(var(--stroke-index)*-3px) 4px}8%{opacity:1}30%{stroke-dashoffset:0;opacity:1;translate:0 0}48%{opacity:0;stroke-dashoffset:-.55;translate:3px -2px}100%{opacity:0;stroke-dashoffset:-1;translate:3px -2px}}
+@keyframes heroContactSweep{0%{opacity:0;stroke-dashoffset:1;translate:calc(var(--stroke-index)*-3px) 4px}8%{opacity:1}32%{stroke-dashoffset:0;opacity:1;translate:0 0}52%{opacity:1;stroke-dashoffset:-.2;translate:2px -1px}68%{opacity:0;stroke-dashoffset:-.65;translate:3px -2px}100%{opacity:0;stroke-dashoffset:-1;translate:3px -2px}}
 @keyframes heroContactScatter{0%,8%{opacity:0;transform:translate(0,0) scale(.55)}17%{opacity:.95}55%{opacity:.6}100%{opacity:0;transform:translate(var(--fragment-dx),var(--fragment-dy)) scale(.65)}}
 /* Remove the large yellow target-card box: contact belongs to the portrait,
    not a rectangular selection sticker around the hero name and health bars. */

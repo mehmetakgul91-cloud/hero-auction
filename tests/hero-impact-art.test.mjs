@@ -57,9 +57,24 @@ test('contact has one short sweep then fading fragments; no persistent glyph, bo
  const css=readFileSync(new URL('../public/hero-attack-effects.css',import.meta.url),'utf8');
  const contact=css.slice(css.indexOf('/* Damaging contact replaces'));
  assert.match(contact,/::after\{content:none;display:none\}/);
- assert.match(contact,/48%\{opacity:0;stroke-dashoffset/);
+ assert.match(contact,/68%\{opacity:0;stroke-dashoffset/);
  assert.match(contact,/heroContactScatter/);assert.match(contact,/--stroke-lag/);
  assert.match(contact,/primary-target\{outline:0;box-shadow:none!important\}/);
  assert.doesNotMatch(contact,/infinite|brightness\(|background:|filter:drop-shadow/);
  assert.equal(heroAttackTiming(850).total,1400);assert.equal(heroAttackTiming(850,{special:true}).total,1900);
+});
+
+test('natural-size geometry has a contrasting core and an explicit visible sweep window',()=>{
+ const {document}=fixture();
+ for(const special of [false,true]){
+  const root=document.createElement('span');appendHeroImpactArt(document,root,'blade',special);
+  const paths=root.children[0].children.filter(n=>n.tag==='path');
+  const shade=paths.find(n=>n.attributes.class.includes('shade')),core=paths.find(n=>n.attributes.class.includes('core'));
+  assert.ok(Number(shade.attributes['stroke-width'])*.6>=4.8);
+  assert.ok(Number(core.attributes['stroke-width'])*.6>=1.44);
+ }
+ const css=readFileSync(new URL('../public/hero-attack-effects.css',import.meta.url),'utf8');
+ assert.match(css,/shade\{stroke:#101c2e;stroke-opacity:.92/);
+ assert.match(css,/52%\{opacity:1;stroke-dashoffset:-.2/);
+ assert.doesNotMatch(css,/hero-contact-stroke.core\{[^}]*stroke-width/); // do not silently override per-signature core width
 });
