@@ -524,7 +524,9 @@ function showHeroSoul(card){
 }
 
 function animateMove(e){
- if(!motion())return;
+ const reducedMotion=typeof window!=='undefined'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ if(!motion()&&!reducedMotion)return;
+ if(reducedMotion&&(document.hidden||document.body.classList.contains('arena-catching-up')||!$('motion').checked))return;
  // A committed skipped attack must never animate a strike or a projectile.
  if(e.action==='stun-skip'){
   const team=document.getElementById(e.side===0?'team-a':'team-b');
@@ -550,10 +552,12 @@ function animateMove(e){
  const time=duration();
  // Hero signatures replace the old center-screen comic banners.
  // Capture portrait centers before the cosmetic actor lunge changes bounds.
- const timing=heroAttacks.play({actor,target,hero,kind,special,splash,time,castKey:e.version??e.actionId??`${e.round}:${e.side}:${e.actorId}`});
+ const onImpact=()=>{if(Number(e.value)>0)floatingArenaEffect(target,'arena-floating-damage'+(heal?' healing':shield?' shielding':e.critical?' critical':'')+(splash?' area-hit':''),(heal||shield?'+':'−')+Math.round(Number(e.value))+(e.critical?'!':''));};
+ const timing=heroAttacks.play({actor,target,hero,kind,special,splash,time,reducedMotion,onImpact:heal||shield?undefined:onImpact,castKey:e.version??e.actionId??`${e.round}:${e.side}:${e.actorId}`});
+ if(heal||shield)onImpact();
  const settled=actor.classList.contains('dead')||target?.classList.contains('dead');
  if(target&&!heal&&!shield){
-  if(!splash&&!settled){
+  if(!splash&&!settled&&!reducedMotion&&timing?.arrival>0){
    const ar=actor.getBoundingClientRect(),tr=target.getBoundingClientRect();
    const dx=(tr.left+tr.width/2)-(ar.left+ar.width/2),dy=(tr.top+tr.height/2)-(ar.top+ar.height/2);
    if(!ranged)combatEffects.animate(actor,[{transform:'translate(0,0) scale(1)'},{transform:'translate(0,0) scale(1.06)',offset:.28},{transform:`translate(${dx*.22}px,${dy*.22}px) scale(1.1)`,offset:.7},{transform:'translate(0,0) scale(1)'}],{duration:timing?.arrival||600,easing:'ease-in-out'});
@@ -563,11 +567,10 @@ function animateMove(e){
   // Target signature lands on arrival; authoritative HP remains immediate.
   combatEffects.mark(target,[splash?'splash-target':'primary-target'],timing?.total||1400);
  }
- if(!splash){
+ if(!splash&&!reducedMotion&&timing?.arrival>0){
   combatEffects.mark(actor,[ranged?'attack-energy':'attack-melee',...(special?['special-cast']:[])],timing?.arrival||600);
  }
- const effectTarget=target;
- if(Number(e.value)>0)floatingArenaEffect(effectTarget,'arena-floating-damage'+(heal?' healing':shield?' shielding':e.critical?' critical':'')+(splash?' area-hit':''),(heal||shield?'+':'−')+Math.round(Number(e.value))+(e.critical?'!':''));
+
 
 }
 window.addEventListener('heroarena:experimental-move',event=>{
@@ -756,7 +759,7 @@ function showVictoryReveal(){
 function revealVictoryNow(){
  if(victoryRevealDone||!finalResult)return;
  victoryRevealDone=true;
- heroAttacks.clear(); // Existing victory deadline wins over any late decorative tail.
+ clearCombatPresentation(); // Existing victory deadline wins over particles and late damage labels.
  pauseArenaClock();
  const overlay=$('arena-victory-reveal');
  if(!overlay){showBattleSummary();return}
@@ -943,7 +946,7 @@ function advanceReplay(){
  let steps=0;
  while(timer!==null&&cursor<events.length&&Date.now()>=replayDueAt&&steps<4){
   const overdue=now-replayDueAt>=interval;
-  if(overdue)document.body.classList.add('arena-catching-up');
+  if(overdue){clearCombatPresentation();document.body.classList.add('arena-catching-up');}
   const actionInterval=heroPlaybackInterval(events[cursor],duration());
   step();
   replayDueAt+=actionInterval;

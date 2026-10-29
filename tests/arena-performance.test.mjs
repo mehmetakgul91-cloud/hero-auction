@@ -52,14 +52,14 @@ test('roster changes and rematches release old cards and cannot attach delayed p
 
 const source=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8');
 test('returning after a long pause yields after four moves and suppresses catch-up effects without losing events',()=>{
- let cursor=0,timer=1,replayDueAt=1,now=200000,finished=0,animated=0;const classes=new Set(),events=Array.from({length:101});
+ let cursor=0,timer=1,replayDueAt=1,now=200000,finished=0,animated=0,cleared=0;const classes=new Set(),events=Array.from({length:101});
  const document={hidden:false,body:{classList:{contains:name=>classes.has(name),add:name=>classes.add(name),remove:name=>classes.delete(name)}}};
  const context={heroPlaybackInterval,document,window:{matchMedia:()=>({matches:false})},$ :()=>({checked:true}),Date:{now:()=>now},duration:()=>100,events,arenaWakeLock:{},arenaFinaleActive:false,
-  step:()=>{cursor++;if(context.motion())animated++;},stop:()=>timer=null,showVictoryReveal:()=>finished++};
+  clearCombatPresentation:()=>cleared++,step:()=>{cursor++;if(context.motion())animated++;},stop:()=>timer=null,showVictoryReveal:()=>finished++};
  for(const [key,get,set] of [['cursor',()=>cursor,v=>cursor=v],['timer',()=>timer,v=>timer=v],['replayDueAt',()=>replayDueAt,v=>replayDueAt=v]])Object.defineProperty(context,key,{get,set});
  const code=source.slice(source.indexOf('const motion='),source.indexOf('const duration='))+source.slice(source.indexOf('function advanceReplay(){'),source.indexOf('function startReplay(){'));
  runInNewContext(code+';this.motion=motion;this.advance=advanceReplay;',context);
- context.advance();assert.equal(cursor,4);assert.equal(animated,0);assert.equal(classes.size,0);
+ context.advance();assert.equal(cursor,4);assert.equal(animated,0);assert.equal(cleared,4);assert.equal(classes.size,0);
  for(let tick=0;tick<30;tick++)context.advance();
  assert.equal(cursor,101);assert.equal(timer,null);assert.equal(finished,1);assert.equal(animated,0);
  assert.equal(context.motion(),true);document.hidden=true;assert.equal(context.motion(),false);
@@ -152,4 +152,22 @@ test('actual renderer preserves inward front lanes and stable equal slices for a
    h.teams[side][0].hp=20;h.update(side);assert.deepEqual(cards.map(card=>[card.style.gridColumn,card.style.gridRow]),layout);
   }
  }
+});
+
+test('hero HP warning on both teams follows fractional HP, healing, death and reused/reset cards',()=>{
+ const h=fixture();h.update(0);h.update(1);
+ const cards=h.parents.map(parent=>parent.children[0]);
+ for(const hp of [0,19,19.9,20,21,19,20,0,100])for(const side of [0,1]){
+  h.teams[side][0].hp=hp;h.update(side);
+  const card=h.parents[side].children[0],bar=card.children[2];
+  assert.equal(card,cards[side]);assert.equal(bar.classes.has('low-health'),hp>0&&hp<20);
+  assert.equal(card.classes.has('dead'),hp===0);
+  assert.equal(bar.attributes['aria-label'],'Can '+hp+' / 100');
+ }
+ h.teams[0][0].hp=19;h.update(0);h.teams[0].reverse();h.update(0);
+ assert.equal(h.parents[0].children[4],cards[0]);assert.equal(cards[0].children[2].classes.has('low-health'),true);
+ h.teams[0][4].maxHp=0;h.update(0);assert.equal(cards[0].children[2].classes.has('low-health'),false);
+ assert.equal(cards[0].children[2].children[0].style.width,'0%');
+ h.renderer.reset();h.teams[0][4].maxHp=100;h.teams[0][4].hp=100;h.update(0);
+ assert.notEqual(h.parents[0].children[4],cards[0]);assert.equal(h.parents[0].children[4].children[2].classes.has('low-health'),false);
 });

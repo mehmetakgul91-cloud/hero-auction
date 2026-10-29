@@ -48,6 +48,13 @@ export function createCombatEffects({document,maxResources=80,setTimer=setTimeou
   let owners=classOwners.get(element);if(!owners){owners=new Map();classOwners.set(element,owners)}
   for(const name of names){const token={};owners.set(name,token);element.classList.add(name);own(()=>{if(owners.get(name)===token){element.classList.remove(name);owners.delete(name)}},ms)}
  }
+ function schedule(callback,ms){
+  let timer,done=false;
+  const release=()=>{if(done)return;done=true;clearTimer(timer);resources.delete(release)};
+  resources.add(release);timer=setTimer(()=>{release();callback()},ms);
+  while(resources.size>maxResources)resources.values().next().value();
+  return release;
+ }
  function clear(){for(const release of [...resources])release();}
  function accent(target,kind,{cast=false,splash=false,ms=650}={}){
   const portrait=target?.querySelector('.arena-portrait')||target;if(!portrait)return;
@@ -64,5 +71,5 @@ export function createCombatEffects({document,maxResources=80,setTimer=setTimeou
   effect.style.left=x+'px';effect.style.top=y+'px';effect.style.width=Math.hypot(dx,dy)+'px';effect.style.rotate=Math.atan2(dy,dx)+'rad';effect.style.setProperty('--fx-duration',ms+'ms');
   node(effect,document.body,ms+60);
  }
- return {node,animate,mark,clear,accent,beam,get size(){return resources.size}};
+ return {node,animate,mark,clear,accent,beam,own,schedule,get size(){return resources.size}};
 }

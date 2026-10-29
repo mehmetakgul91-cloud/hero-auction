@@ -1,0 +1,51 @@
+name: Approved Contact Browser QA
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'public/hero-*'
+      - 'public/arena-combat-effects.js'
+      - 'public/battle-preview.js'
+      - 'public/arena-team-renderer.js'
+      - 'tools/test-approved-contact-browser.mjs'
+      - '.github/workflows/approved-contact-browser.yml'
+permissions:
+  contents: read
+jobs:
+  combined-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm test
+      - run: npm run audit:strict
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies and official headless Chromium
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          ./node_modules/.bin/playwright install --with-deps --only-shell chromium
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+      - name: Test approved contacts and damage synchronization
+        env:
+          HERO_BROWSER_SCREENSHOTS: ${{ runner.temp }}/approved-contact-shots
+        run: node tools/test-approved-contact-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: approved-contact-browser-frames
+          path: ${{ runner.temp }}/approved-contact-shots
+          if-no-files-found: warn

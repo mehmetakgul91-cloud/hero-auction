@@ -90,6 +90,7 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 .arena-hero-label{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(10px,1.4vw,14px);font-weight:900;text-align:center;margin:7px 0}
 .arena-hero .hp{height:7px;margin-top:4px;background:#0a1422;border:1px solid #ffffff21}
 .arena-hero .hp span{background:linear-gradient(90deg,#1ce7a5,#bcffdd)}
+.arena-hero .hp.low-health span{background:linear-gradient(90deg,#e73345,#ff7180)}
 .arena-hero.dead{filter:grayscale(1);opacity:.36}
 .score{border-color:#477ca5;background:linear-gradient(90deg,#0a2a49,#10192d 50%,#40172d);box-shadow:0 0 24px #00ccff13}
 .score>div:first-child{color:var(--arena-cyan)}.score>div:last-child{color:var(--arena-rose)}

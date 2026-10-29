@@ -86,26 +86,10 @@
 @keyframes heroImpact{0%{opacity:0;scale:.84}12%,68%{opacity:var(--hero-opacity,1);scale:1}100%{opacity:0;scale:1.1}}
 @keyframes heroRing{0%{scale:.78}28%,70%{scale:1}100%{scale:1.12}}
 @media(max-width:600px){.hero-fx-flight{width:48px}.hero-fx-flight::after{width:64px}.hero-fx-flight.is-special:not(.signature-arrow):not(.signature-hammer)::after{width:86px}}
-/* Damaging contact replaces the old centered X/rune/bolt stickers. The source
-   and flight remain unchanged. The face stays open: only narrow moving strokes
-   cross it briefly; the rest of the beat belongs to drifting fragments. */
-.hero-fx-impact.hero-contact{animation:heroContactEnvelope var(--hero-ms) linear var(--hero-delay) both;filter:none;overflow:visible}
+/* Approved v2: localized warm core and ballistic sparks; no target glyph. */
+.hero-fx-impact.hero-contact{animation:none;filter:none;overflow:hidden;margin:0;opacity:1}
 .hero-fx-impact.hero-contact::before,.hero-fx-impact.hero-contact::after{content:none;display:none}
-.hero-contact-art{display:block;width:100%;height:100%;overflow:visible;fill:none;color:var(--contact-color)}
-.hero-contact-stroke{stroke:var(--contact-color);stroke-dasharray:.68 .32;animation:heroContactSweep calc(var(--hero-ms) - var(--stroke-lag)) ease-out calc(var(--hero-delay) + var(--stroke-lag)) both;transform-origin:50% 50%}
-.hero-contact-stroke.shade{stroke:#101c2e;stroke-opacity:.92}
-.hero-contact-stroke.core{stroke:#fffdf6}
-.hero-contact-fragment{animation:heroContactScatter var(--hero-ms) cubic-bezier(.14,.65,.35,1) var(--hero-delay) both;stroke:var(--contact-color);transform-box:view-box;transform-origin:50% 50%}
-.hero-fx-impact.hero-contact.signature-dagger .hero-contact-stroke{stroke-dasharray:.55 .45}
-.hero-fx-impact.hero-contact.signature-magic .hero-contact-stroke{stroke-dasharray:.4 .6}
-.hero-fx-impact.hero-contact.signature-hammer .hero-contact-fragment{stroke:#f7d18b}
-.hero-fx-impact.hero-contact.signature-lightning .hero-contact-stroke{stroke-linejoin:bevel}
-@keyframes heroContactEnvelope{0%{opacity:0}5%,55%{opacity:var(--hero-opacity,1)}100%{opacity:0}}
-/* One directional sweep, not a repeated flash. Second special stroke is a
-   trailing cut, drawn inside the same contact (never another damage event). */
-@keyframes heroContactSweep{0%{opacity:0;stroke-dashoffset:1;translate:calc(var(--stroke-index)*-3px) 4px}8%{opacity:1}32%{stroke-dashoffset:0;opacity:1;translate:0 0}52%{opacity:1;stroke-dashoffset:-.2;translate:2px -1px}68%{opacity:0;stroke-dashoffset:-.65;translate:3px -2px}100%{opacity:0;stroke-dashoffset:-1;translate:3px -2px}}
-@keyframes heroContactScatter{0%,8%{opacity:0;transform:translate(0,0) scale(.55)}17%{opacity:.95}55%{opacity:.6}100%{opacity:0;transform:translate(var(--fragment-dx),var(--fragment-dy)) scale(.65)}}
-/* Remove the large yellow target-card box: contact belongs to the portrait,
-   not a rectangular selection sticker around the hero name and health bars. */
+.hero-contact-art{display:block;pointer-events:none}
 .battle-arena .hero.primary-target{outline:0;box-shadow:none!important}
-.battle-arena .hero.primary-target .arena-portrait{box-shadow:0 0 7px #ffd28b44}
+.battle-arena .hero.primary-target .arena-portrait{box-shadow:none}
+@media(prefers-reduced-motion:reduce){.hero-fx-impact.hero-contact{display:block!important;animation:none}}
