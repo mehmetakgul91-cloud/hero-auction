@@ -1,5 +1,14 @@
 // Presentation copy only. Shared Turkish source, account data and game rules stay unchanged.
 export const uiPhrases = {
+'Kolay, orta veya zor bilgisayar maçlarından birini seç. Giriş 50 altındır; kolay/orta/zor galibiyeti 100 altın / 125 altın + 2 büyü tozu / 175 altın + 5 büyü tozu kazandırır. Elmas veya lig puanı yoktur. Arkadaşlarınla oynamak için özel oda oluşturabilir, 3 haneli oda koduyla katılabilir veya rakip arayabilirsin. Çevrim içi maç giriş bedelini katılmadan önce kontrol et.':'Choose easy, medium or hard computer games. Entry costs 50 gold; easy/medium/hard wins award 100 gold / 125 gold + 2 magic dust / 175 gold + 5 magic dust. No diamonds or league points. Create a private room, join with a three-digit code or search for an opponent to play with friends. Check entry fees before joining.',
+
+'Bilgisayar maçına giriş 50 altın; galibiyette sabit ödül, lig puanı değişmez.':'Computer games cost 50 gold; fixed rewards for wins, no league point changes.',
+'Misafir veya Google girişiyle oynayabilirsin. Bilgisayar maçına giriş 50 altın; galibiyette sabit ödül, lig puanı değişmez.':'Play as a guest or with Google. Computer games cost 50 gold; fixed rewards for wins, no league point changes.',
+'Bilgisayara karşı seviyeni seç':'Choose your computer difficulty',
+'50 altın giriş · Galibiyette sabit ödül · Elmas yok':'50 gold entry · Fixed win reward · No diamonds',
+'Bilgisayar maçı: 50 altın giriş · Galibiyette sabit ödül.':'Computer game: 50 gold entry · Fixed win reward.',
+'Kolay · Seviye 15':'Easy · Level 15','Orta · Seviye 25':'Medium · Level 25','Zor · Seviye 40':'Hard · Level 40',
+
 'Kalkan bilgisi bekleniyor':'Waiting for shield information','Rol':'Role','ölçek:':'scale:',
 'Komut reddedildi':'Command rejected',
 

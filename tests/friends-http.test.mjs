@@ -1,3 +1,4 @@
+import {assertBotStorageUnavailable} from './fixtures/assert-bot-storage-unavailable.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
@@ -26,7 +27,7 @@ test('isolated friends HTTP: auth, consent, public match IDs, presence, cancella
   assert.deepEqual(await Promise.all(users.map(async u=>(await post('/api/wallet',u)).gold)),[500,500,500]);
   const room=await post('/api/create',a);assert.equal(room.room.players[0].playerId,aid);const joined=await post('/api/join',{...b,code:room.room.code});assert.equal(joined.room.players[0].playerId,aid);assert.equal(joined.room.players[1].playerId,bid);
   const spectate=await post('/api/spectate',{...c,code:room.room.code});assert.ok(spectate.room.players.every(p=>p.playerId===null));
-  const bot=await post('/api/bot',c);assert.equal(bot.room.players[1].playerId,null);
+  await assertBotStorageUnavailable(async(path,body)=>{const response=await fetch('http://127.0.0.1:'+port+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return{status:response.status,body:await response.json()}},c.authToken);
   await post('/api/friend/remove',{...a,playerId:bid});assert.equal((await post('/api/friends',b)).friends.length,0);
   await post('/api/friend/add',{...a,playerId:cid});await post('/api/friend/remove',{...a,playerId:cid});assert.equal((await post('/api/friends',c)).incoming.length,0);
   await post('/api/friend/add',{...a,playerId:cid});await post('/api/friend/decline',{...c,playerId:aid});assert.equal((await post('/api/friends',a)).outgoing.length,0);
