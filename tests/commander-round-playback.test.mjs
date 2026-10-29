@@ -77,14 +77,14 @@ test('reconnect limits evict complete casts, including oversized malformed cosme
  drain();assert.equal(received.length,6);assert.equal(received.at(-1).target,'valid');
  assert.equal(timers.size,0);
 });
-test('live presentation uses full committed normal/special windows and terminal catch-up never queues stale attacks',()=>{
+test('live presentation uses shorter committed normal/special cadence and terminal catch-up never queues stale attacks',()=>{
  const handlers=new Map(),tasks=new Map(),received=[];let id=0;
  const window={addEventListener:(name,fn)=>handlers.set(name,fn),dispatchEvent:e=>received.push(e.detail.event)};
  runInNewContext(read('commander-round-playback.js'),{heroActionDuration,window,document:{hidden:false},CustomEvent:class{constructor(type,options){this.type=type;this.detail=options.detail}},setTimeout:(fn,ms)=>{tasks.set(++id,{fn,ms});return id},clearTimeout:id=>tasks.delete(id)});
  const emit=(events,finished=false)=>handlers.get('heroarena:commander-round')({detail:{round:3,teams:[[],[]],events,finished}});
- emit([{actor:'a',version:1,damageType:'normal'}]);assert.equal([...tasks.values()][0].ms,1400);
+ emit([{actor:'a',version:1,damageType:'normal'}]);assert.equal([...tasks.values()][0].ms,1100);
  const [key,t]=tasks.entries().next().value;tasks.delete(key);t.fn();
- emit([{actor:'a',version:2,damageType:'special'}]);assert.equal([...tasks.values()][0].ms,1900);
+ emit([{actor:'a',version:2,damageType:'special'}]);assert.equal([...tasks.values()][0].ms,1500);
  emit([{actor:'a',version:3},{actor:'b',version:4}],true);
  assert.deepEqual(received.map(e=>e.version),[1,2,4]);assert.equal(tasks.size,1);
 });

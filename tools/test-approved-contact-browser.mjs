@@ -24,6 +24,9 @@ try{
   const stateBefore=await page.evaluate(()=>JSON.stringify(window.heroArenaTeams));
   const sampleCSS=(elapsed,labelAge)=>page.evaluate(({elapsed,labelAge})=>{for(const n of document.querySelectorAll('.hero,.hero-fx,.arena-floating-damage'))for(const a of n.getAnimations()){a.pause();a.currentTime=n.classList.contains('arena-floating-damage')?labelAge:elapsed;}},{elapsed,labelAge});
   const emit=(extra={})=>page.evaluate(extra=>window.dispatchEvent(new CustomEvent('heroarena:experimental-move',{detail:{event:{side:0,version:1,actor:'original:14',target:'original:01',action:'attack',damageType:'normal',value:164,...extra}}})),extra);
+  // Match pacing must not compress contact or lose the special classification.
+  const cadence=await page.evaluate(async()=>{const t=await import('/hero-battle-timing.js');return [t.heroActionDuration([{damageType:'normal'}]),t.heroActionDuration([{damageType:'special'}])];});
+  assert.deepEqual(cadence,[1100,1500]);
   await emit();assert.equal(await page.locator('.arena-floating-damage').count(),0);
   await page.clock.runFor(599);assert.equal(await page.locator('.arena-floating-damage').count(),0);
   await page.clock.runFor(1);assert.equal(await page.locator('.arena-floating-damage').count(),1);assert.ok(Number(await page.locator('.arena-floating-damage').evaluate(n=>getComputedStyle(n).opacity))>0,'damage must be visibly present at contact, not merely in DOM');
@@ -31,6 +34,17 @@ try{
   assert.equal(await page.locator('.hero-contact canvas').count(),1);
   await page.evaluate(()=>window.dispatchEvent(new Event('heroarena:route-change')));assert.equal(await page.locator('.hero-fx,.arena-floating-damage').count(),0);
   await emit({version:2,damageType:'special'});await page.clock.runFor(839);assert.equal(await page.locator('.arena-floating-damage').count(),0);await page.clock.runFor(1);assert.equal(await page.locator('.arena-floating-damage').count(),1);await page.clock.runFor(120);await sampleCSS(960,120);await page.screenshot({path:shots+'arena-special-contact-'+width+'.png'});await page.evaluate(()=>window.dispatchEvent(new Event('heroarena:route-change')));
+  // Consecutive live commits at the new cadence keep full contact timing;
+  // no delayed queue or duplicate damage callback, even during fading tails.
+  await emit({version:40,value:401});await page.clock.runFor(600);
+  assert.equal(await page.getByText('−401',{exact:true}).count(),1);
+  await page.clock.runFor(500);await emit({version:41,value:402,damageType:'special'});
+  await page.clock.runFor(839);assert.equal(await page.getByText('−402',{exact:true}).count(),0);
+  await page.clock.runFor(1);assert.equal(await page.getByText('−402',{exact:true}).count(),1);
+  await page.clock.runFor(660);await emit({version:42,value:403});
+  await page.clock.runFor(599);assert.equal(await page.getByText('−403',{exact:true}).count(),0);
+  await page.clock.runFor(1);assert.equal(await page.getByText('−403',{exact:true}).count(),1);
+  await page.clock.runFor(3000);assert.equal(await page.locator('.hero-fx,.arena-floating-damage').count(),0);
   await emit();await page.clock.runFor(100);await page.evaluate(()=>window.dispatchEvent(new Event('heroarena:connection-lost')));await page.clock.runFor(1000);assert.equal(await page.locator('.hero-fx,.arena-floating-damage').count(),0);
   await page.evaluate(()=>{window.__mediaChange=new Promise(resolve=>matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',()=>resolve(true),{once:true}))});await page.emulateMedia({reducedMotion:'reduce'});await page.evaluate(()=>window.__mediaChange);await emit({version:3});assert.equal(await page.locator('.hero-fx-flight').count(),0);assert.equal(await page.locator('.arena-floating-damage').count(),1);await page.screenshot({path:shots+'reduced-static-'+width+'.png'});
   await page.clock.runFor(2500);assert.equal(await page.locator('.hero-fx,.arena-floating-damage').count(),0);

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {heroAttackSignature,heroAttackTiming,playHeroAttack,createHeroAttackPlayer} from '../public/hero-attack-effects.js';
+import {heroActionDuration,heroPlaybackInterval} from '../public/hero-battle-timing.js';
 import {combatEffectKind,createCombatEffects} from '../public/arena-combat-effects.js';
 const roster=JSON.parse(readFileSync(new URL('../battle-roster.json',import.meta.url))).characters;
 test('normal attacks have distinct real roster visual signatures without inventing combat classes',()=>{
@@ -156,4 +157,25 @@ test('synchronized damage is visible on its first CSS frame rather than a second
  assert.match(css,/@keyframes arenaContactDamageRise\{0%\{opacity:1/);
  const js=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8');
  assert.match(js,/!heal&&!shield\?' contact-synced'/);
+});
+
+
+test('about 21% shorter cadence preserves every contact and full tail without queued travel',()=>{
+ for(const time of [680,850,977.5]){
+  const h=playerSetup();let elapsed=0;const hits=[];
+  for(let i=0;i<40;i++){
+   const special=i%3===0,events=[{damageType:special?'special':'normal'}];
+   const interval=heroPlaybackInterval(events,time),timing=heroAttackTiming(time,{special});
+   assert.equal(heroActionDuration(events),special?1500:1100);
+   assert.ok(interval>timing.arrival,'next preparation begins after this contact');
+   assert.ok(interval+heroAttackTiming(time).arrival>=timing.total,'next travelling strike lands after previous full tail');
+   assert.ok(h.play({castKey:i,special,time,onImpact:()=>hits.push({cast:i,at:elapsed})}));
+   elapsed+=timing.arrival-1;h.advance(timing.arrival-1);assert.equal(hits.length,i);
+   elapsed++;h.advance(1);assert.equal(hits.length,i+1);
+   elapsed+=interval-timing.arrival;h.advance(interval-timing.arrival);
+   assert.ok(h.player.size<=2,'only bounded fading tail overlap');
+  }
+  h.advance(3000);assert.equal(h.player.size,0);assert.equal(h.timers.size,0);
+  assert.deepEqual(hits.map(h=>h.cast),Array.from({length:40},(_,i)=>i));
+ }
 });

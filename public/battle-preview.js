@@ -17,7 +17,7 @@ import {createArenaTeamRenderer} from '/arena-team-renderer.js';
 import {summarizeBattle} from '/battle-summary-data.js?v=complete-results-20261021';
 import {commanderAbilityStats,commanderAbilityDescription} from '/commander-ability-rules.js?v=commander-attack-fix-20261021';
 import {getArenaLaneLayout,refreshArenaViewport} from '/arena-viewport.js?v=equal-lanes-20261026';
-import {heroActionDuration,heroPlaybackInterval} from '/hero-battle-timing.js';
+import {heroActionDuration,heroPlaybackInterval,HERO_SPECIAL_MS} from '/hero-battle-timing.js';
 import {createHeroAttackPlayer} from '/hero-attack-effects.js';
 import {combatEffectKind,combatEffectActors,createCombatEffects} from '/arena-combat-effects.js';
 import {stationaryArenaAction} from '/hero-combat-presentation.js';
@@ -549,7 +549,7 @@ function animateMove(e){
  const kind=combatEffectKind(e,hero);
  if(!kind)return; // Status changes are not extra strikes (haste, rage, weaken…).
  const {target}=combatEffectActors(document,e,kind);
- const heal=kind==='heal',shield=kind==='shield',special=!splash&&heroActionDuration(e)===1900;
+ const heal=kind==='heal',shield=kind==='shield',special=!splash&&heroActionDuration(e)===HERO_SPECIAL_MS;
  const ranged=splash||stationaryArenaAction(hero,e);
  const time=duration();
  // Hero signatures replace the old center-screen comic banners.
