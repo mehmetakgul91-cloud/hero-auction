@@ -23,3 +23,7 @@ Unit/VM tests verify real roster mappings, normal/special nodes, coordinate trav
 Ordinary managed-browser navigation to the local app at port 3215 returned `ERR_CONNECTION_REFUSED`; no new-build screenshot or motion evaluation was obtained. Previously blocked DevTools and CLI Chromium routes were not retried. Preview deployment is not authorized, so the existing remote preview was not changed. Desktop/mobile visual acceptance remains a release gate.
 
 Final automated result: `npm test` 2,515 passed, 0 failed; `npm run audit:strict` 50/50 portraits, abilities and reviewed powers, no problems; syntax checks and `git diff --check` passed. Local HTTP smoke test served HTML and both new assets with 200 responses. Runtime here is Node 24.22.1 (repository pins 26.12.1); no deployment/runtime claim is implied.
+
+## Preview visual correction
+
+An ordinary guest bot match on preview exposed overlapping legacy hero `KALKAN!` center-screen banners during synchronized multi-target shield actions. Removed the hero comic-banner path: target-local signatures and damage numbers now carry the feedback without obscuring portraits. Commander effects are unchanged. The first match completed and had zero remaining `.hero-fx` nodes at victory. This is sampled desktop evidence, not exhaustive class/mobile motion approval.

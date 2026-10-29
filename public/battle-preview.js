@@ -505,19 +505,6 @@ $('motion').addEventListener('change',()=>{if(!$('motion').checked)combatEffects
 window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',()=>combatEffects.clear());
 const motion=()=> !document.hidden&&!document.body.classList.contains('arena-catching-up')&&$('motion').checked&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const duration=()=>Number($('speed').value);
-function comicBattleCue(e){
- if(!motion()||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
- const action=String(e.action||'');
- const healing=action==='heal'||action==='passive-heal',guard=combatEffectKind(e)==='shield';
- const splash=e.damageType==='splash';
- const special=!splash&&e.damageType==='special';
- const impact=Number(e.value)>0&&!healing&&!guard;
- if(splash||(!special&&!healing&&!guard&&!(impact&&Number(e.value)>=100)))return;
- const cue=document.createElement('div');
- cue.className='battle-comic-banner'+(healing?' heal':guard?' shield':'');
- cue.textContent=healing?'ŞİFA!':guard?'KALKAN!':special?'ÖZEL GÜÇ!':'BAM!';
- cue.setAttribute('aria-hidden','true');combatEffects.node(cue,document.body,750);
-}
 
 const arenaTeamRenderer=createArenaTeamRenderer({document,loadArt:unit=>podiumPortrait(unit),onDefeated:card=>showHeroSoul(card)});
 function floatingArenaEffect(target,className,text,lifetime=1600){
@@ -558,7 +545,7 @@ function animateMove(e){
  const heal=kind==='heal',shield=kind==='shield',special=!splash&&e.damageType==='special';
  const ranged=splash||stationaryArenaAction(hero,e);
  const time=Math.max(320,Math.min(780,duration()*.72));
- if(!splash)comicBattleCue(e);
+ // Hero signatures replace the old center-screen comic banners.
  // Capture portrait centers before the cosmetic actor lunge changes bounds.
  playHeroAttack({document,effects:combatEffects,actor,target,hero,kind,special,splash,time});
  if(target&&!heal&&!shield){
