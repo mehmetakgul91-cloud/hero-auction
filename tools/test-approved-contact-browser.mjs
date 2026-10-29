@@ -30,7 +30,7 @@ try{
   await page.evaluate(()=>window.dispatchEvent(new Event('heroarena:route-change')));assert.equal(await page.locator('.hero-fx,.arena-floating-damage').count(),0);
   await emit({version:2,damageType:'special'});await page.clock.runFor(839);assert.equal(await page.locator('.arena-floating-damage').count(),0);await page.clock.runFor(1);assert.equal(await page.locator('.arena-floating-damage').count(),1);await page.clock.runFor(120);await page.screenshot({path:shots+'arena-special-contact-'+width+'.png'});await page.evaluate(()=>window.dispatchEvent(new Event('heroarena:route-change')));
   await emit();await page.clock.runFor(100);await page.evaluate(()=>window.dispatchEvent(new Event('heroarena:connection-lost')));await page.clock.runFor(1000);assert.equal(await page.locator('.hero-fx,.arena-floating-damage').count(),0);
-  await page.emulateMedia({reducedMotion:'reduce'});await emit();assert.equal(await page.locator('.hero-fx-flight').count(),0);assert.equal(await page.locator('.arena-floating-damage').count(),1);
+  await page.emulateMedia({reducedMotion:'reduce'});await page.clock.runFor(32);await emit();assert.equal(await page.locator('.hero-fx-flight').count(),0);assert.equal(await page.locator('.arena-floating-damage').count(),1);
   await page.clock.runFor(2500);assert.equal(await page.locator('.hero-fx,.arena-floating-damage').count(),0);
   assert.equal(await page.evaluate(()=>JSON.stringify(window.heroArenaTeams)),stateBefore,'presentation cannot mutate authoritative teams');
   const health=await page.evaluate(async()=>{
