@@ -1,3 +1,4 @@
+import {createRevealedTeams,renderDeliveryPortraits} from '/auction-delivery-portraits.js';
 import {createAccountPopover} from '/account-popover.js';
 import {mountFirstSession,describeFirstCommander} from '/first-session.js';
 import {auctionCommanderMarkup,createAuctionCommanderDialog} from '/auction-commander.js';
@@ -603,7 +604,7 @@ function showCancelledRoom(r){
 function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAuctionSnapshot(room,r))return;auctionCommanderDialog.sync(r);storefrontUI.close();roomInvitesUI.setRoom(r,session?.token);friendsUI.setRoom(r);if(r.cancellation?.reason==='admin-entry-refund'){showCancelledRoom(r);return;}if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.matchKey===auctionMatchKey(r)&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const allTailAwards=collectTailAwards(room,r),tailAwards=tailReceipts.pending(r,allTailAwards),reviewPending=tailReceipts.reviewPending(r,allTailAwards);
  if(room?.code!==r.code||(r.phase==='auction'&&room?.phase!=='auction')||(r.phase==='auction'&&r.round<room?.round))cancelAwardFlights();
  const offeredAwards=collectOfferedAwards(room,r),offeredArt=document.querySelector('#stage .card-art');
- const deliveryCounts=r.phase==='finished'?(r.final||[]).map((p,seat)=>p.team.length-tailAwards.filter(a=>a.seat===seat).length-offeredAwards.filter(a=>a.seat===seat).length):[];
+ const delivery=r.phase==='finished'?createRevealedTeams(r.final||[],[...tailAwards,...offeredAwards],allTailAwards):null;
  const offeredSnapshot=offeredArt?{element:offeredArt.cloneNode(true),rect:offeredArt.getBoundingClientRect()}:null;
  cancelAuctionReveal($('stage'));$('game').classList.remove('auction-results-only','auction-delivery-active');
  // A background tab must not consume unseen receipts; visibility resumes them.
@@ -618,18 +619,23 @@ function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAu
   const stage=$('stage');$('game').dataset.phase='auction';$('login-gate').hidden=true;$('home').hidden=true;$('game').hidden=false;$('room-title').textContent=r.code;
   stage.querySelectorAll('button,input').forEach(control=>control.disabled=true);
   if(offeredArt)offeredArt.style.visibility='hidden';
-  const receiveCard=({card,seat})=>{
-   const box=$('player'+displaySeat(seat,r.me));deliveryCounts[seat]++;
-   box.querySelector('.delivery-count').textContent=deliveryCounts[seat]+' / 5';
-   box.querySelector('.delivery-slot').innerHTML=`<span translate="no" class="delivered-card rarity-${esc(card.rarity||'common')}">✓ ${esc(card.name)}</span>`;
+  const artRequests=new Map();
+  const loadDeliveryArt=card=>{
+   const key=JSON.stringify([card.universe,card.name]);
+   if(!artRequests.has(key))artRequests.set(key,fetch('/api/art?universe='+encodeURIComponent(card.universe)+'&name='+encodeURIComponent(card.name)).then(response=>response.ok?response.json():null).then(result=>result?.url).catch(()=>null));
+   return artRequests.get(key);
   };
+  const renderReceiver=seat=>{
+   const box=$('player'+displaySeat(seat,r.me));
+   const count=box.querySelector('.delivery-count');
+   if(count)count.textContent=delivery.teams[seat].length+' / 5';
+   renderDeliveryPortraits(box.querySelector('.delivery-slot'),delivery.teams[seat],{loadArt:loadDeliveryArt,english:document.documentElement.lang==='en'});
+  };
+  const receiveCard=award=>{delivery.receive(award);renderReceiver(award.seat);};
   const showReviewReceipts=()=>{
    tailReceipts.received(r,allTailAwards);
-   for(let seat=0;seat<2;seat++){
-    const box=$('player'+displaySeat(seat,r.me)),count=box.querySelector('.delivery-count'),slot=box.querySelector('.delivery-slot');
-    if(count)count.textContent=r.final[seat].team.length+' / 5';
-    if(slot)slot.textContent=document.documentElement.lang==='en'?'All cards revealed':'Tüm kartlar açıldı';
-   }
+   for(const award of [...offeredAwards,...allTailAwards])delivery.receive(award);
+   for(let seat=0;seat<2;seat++)renderReceiver(seat);
   };
   // The already-open offered card was allocated too; reflect it when its flight arrives.
   const startAfter=previousFlights.then(()=>{
@@ -638,8 +644,9 @@ function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAu
    $('game').classList.add('auction-delivery-active');
    for(let visual=0;visual<2;visual++){
     const seat=visual===0?r.me:1-r.me,p=r.final[seat];
-    $('player'+visual).innerHTML=`<div class="name">${esc(displayPlayerName(p,r.mode==='bot'&&seat===1))}</div><div class="delivery-count">${deliveryCounts[seat]} / 5</div><div class="delivery-slot" role="status">${document.documentElement.lang==='en'?'Receiving cards':'Kartlar geliyor'}</div>`;
+    $('player'+visual).innerHTML=`<div class="name">${esc(displayPlayerName(p,r.mode==='bot'&&seat===1))}</div><div class="delivery-count">${delivery.teams[seat].length} / 5</div><div class="delivery-slot" role="status"></div>`;
    }
+   for(let seat=0;seat<2;seat++)renderReceiver(seat);
    offeredAwards.forEach(receiveCard);
    if(tailReveal.reviewing)showReviewReceipts();
   });
