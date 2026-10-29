@@ -16,8 +16,10 @@ try{
  for(const width of [390,1440]){
   const context=await browser.newContext({viewport:{width,height:900}}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.route('**/*',async r=>{const u=new URL(r.request().url());if(u.origin!=='http://127.0.0.1:3127')return r.abort();if(u.pathname==='/api/battle-preview')return r.fulfill({json:fixture});return r.continue()});
+  // Install before modules capture setTimeout/requestAnimationFrame references.
+  await page.clock.install({time:new Date('2026-10-29T00:00:00Z')});
   await page.goto('http://127.0.0.1:3127/battle-preview.html?room=arena');await page.waitForSelector('#team-a .hero');
-  await page.clock.install();
+  await page.clock.pauseAt(new Date('2026-10-29T00:01:00Z'));
   const stateBefore=await page.evaluate(()=>JSON.stringify(window.heroArenaTeams));
   const emit=(extra={})=>page.evaluate(extra=>window.dispatchEvent(new CustomEvent('heroarena:experimental-move',{detail:{event:{side:0,version:1,actor:'original:14',target:'original:01',action:'attack',damageType:'normal',value:164,...extra}}})),extra);
   await emit();assert.equal(await page.locator('.arena-floating-damage').count(),0);
@@ -61,4 +63,10 @@ try{
   }
  });await page.screenshot({path:shots+'controlled-normal-size.png',fullPage:true});
  console.log('PASS browser: exact600/840ms damage arrival, actual canvas, mobile/desktop, route/disconnect cancellation, reduced static and cleanup; controlled sampled frames.');
+}catch(error){
+ if(browser)for(const [index,page] of browser.contexts().flatMap(c=>c.pages()).entries()){
+  await page.screenshot({path:shots+'failure-'+index+'.png',fullPage:true}).catch(()=>{});
+  console.error('Browser diagnostic',await page.evaluate(()=>({hidden:document.hidden,classes:document.body.className,fx:[...document.querySelectorAll('.hero-fx')].map(n=>({class:n.className,delay:n.style.getPropertyValue('--hero-delay')})),labels:[...document.querySelectorAll('.arena-floating-damage')].map(n=>n.textContent)})).catch(()=>null));
+ }
+ throw error;
 }finally{await browser?.close();server.kill();}
