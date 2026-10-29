@@ -32,7 +32,7 @@ test('arrival coordinates and delayed impact match travel on normal and special 
   assert.equal(impact.style.props['--hero-delay'],result.arrival+'ms');
   assert.equal(result.arrival,result.charge+result.travel);
   assert.equal(impact.className.includes('is-special'),special);
-  assert.equal(cast.style.left,'57px');assert.equal(impact.style.left,'327px');
+  assert.equal(cast.style.left,'57px');assert.equal(impact.style.left,'300px');
   h.effects.clear();assert.equal(h.timers.size,0);assert.ok(h.document.body.children.every(n=>n.removed));
  }
 });
@@ -81,8 +81,8 @@ test('900ms authoritative cadence retains every normal, overlaps only bounded ta
 });
 test('burst eviction is whole-cast, with multi-target specials kept together',()=>{
  const h=playerSetup();
- for(let cast=0;cast<20;cast++)for(let target=0;target<5;target++)h.play({castKey:cast,special:true,splash:target>0});
- assert.equal(h.player.size,4);assert.ok(h.timers.size<=28);
+ for(let cast=0;cast<20;cast++)for(let target=0;target<5;target++)h.play({castKey:cast,special:true,splash:target>0,target:{...h.target}});
+ assert.equal(h.player.size,4);assert.ok(h.timers.size<=48);
  assert.equal(h.document.body.children.filter(n=>!n.removed).length,28);
  h.player.clear();assert.equal(h.timers.size,0);assert.ok(h.document.body.children.every(n=>n.removed));
 });
@@ -103,9 +103,57 @@ test('route/background/reduced-motion cleanup and victory deadline cancel hero-o
  const js=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8');
  assert.match(js,/function clearCombatPresentation\(\)\{combatEffects.clear\(\);heroAttacks.clear\(\);\}/);
  assert.doesNotMatch(js,/Date.now\(\)\+heroAttacks.remaining/);
- assert.match(js,/victoryRevealDone=true;\s*heroAttacks.clear\(\)/);
+ assert.match(js,/victoryRevealDone=true;\s*clearCombatPresentation\(\)/);
  assert.ok(heroAttackTiming(1500,{special:true}).total+80<2400);
  assert.match(js,/if\(document.hidden\)clearCombatPresentation\(\)/);
  assert.match(js,/prefers-reduced-motion: reduce.*clearCombatPresentation/);
  assert.match(js,/render\(\);\s*heroAttacks.prune\(\)/);
+});
+
+test('damage callback and contact share arrival, including special, clamped speeds, and instant impact',()=>{
+ for(const options of [{},{special:true},{time:1},{time:9999},{reducedMotion:true}]){
+  const h=playerSetup();let hits=0;
+  const timing=h.play({...options,onImpact:()=>hits++});
+  if(timing.arrival){h.advance(timing.arrival-1);assert.equal(hits,0);h.advance(1);}
+  assert.equal(hits,1);h.advance(3000);assert.equal(hits,1);h.player.clear();
+ }
+});
+test('shared cast arrival; repeated, canceled, stale and removed targets cannot emit late damage',()=>{
+ const h=playerSetup();let hits=0;
+ h.play({castKey:1,special:true,onImpact:()=>hits++});
+ h.advance(100);
+ const second=h.play({castKey:1,splash:true,target:{...h.target},onImpact:()=>hits++});
+ assert.equal(second.arrival,740);h.advance(740);assert.equal(hits,2);
+ assert.equal(h.play({castKey:1,special:true,onImpact:()=>hits++}),undefined);
+ h.player.clear();h.advance(2000);assert.equal(hits,2);
+ const stale=playerSetup();let late=0;stale.play({onImpact:()=>late++});stale.advance(5000);assert.equal(late,0);
+ const removed=playerSetup();removed.play({onImpact:()=>late++});removed.target.isConnected=false;removed.advance(600);assert.equal(late,0);
+ const canceled=playerSetup();canceled.play({onImpact:()=>late++});canceled.player.clear();canceled.advance(600);assert.equal(late,0);
+});
+test('canvas first frame and damage share one trigger; cancellation owns the latest animation frame',()=>{
+ for(const reducedMotion of [false,true]){
+  const h=playerSetup();let draws=0,callbacks=0,serial=0;const frames=new Map();
+  const context=new Proxy({clearRect(){draws++},createRadialGradient(){return {addColorStop(){}}}},{get:(o,k)=>o[k]??(()=>{})});
+  const create=h.document.createElement;h.document.createElement=()=>({...create(),getContext:()=>context});
+  h.document.defaultView={requestAnimationFrame(fn){frames.set(++serial,fn);return serial},cancelAnimationFrame(id){frames.delete(id)}};
+  const timing=h.play({reducedMotion,onImpact(){callbacks++;assert.equal(draws,1)}});
+  if(timing.arrival)h.advance(timing.arrival);
+  assert.equal(callbacks,1);assert.equal(draws,1);assert.equal(frames.size,reducedMotion?0:1);
+  h.player.clear();assert.equal(frames.size,0);assert.equal(h.timers.size,0);
+ }
+});
+
+test('dead-first splash followed by live primary shares instant contact without orphan flight',()=>{
+ const h=playerSetup(),dead={...h.target,classList:{contains:()=>true}};
+ const first=h.play({castKey:1,splash:true,target:dead});assert.equal(first.arrival,0);
+ const count=h.document.body.children.length;let labels=0;
+ const next=h.play({castKey:1,onImpact:()=>labels++});assert.equal(next.arrival,0);assert.equal(labels,1);
+ assert.equal(h.document.body.children.length,count+1);assert.match(h.document.body.children.at(-1).className,/impact/);
+});
+
+test('synchronized damage is visible on its first CSS frame rather than a second fade-in delay',()=>{
+ const css=readFileSync(new URL('../public/battle-preview.css',import.meta.url),'utf8');
+ assert.match(css,/@keyframes arenaContactDamageRise\{0%\{opacity:1/);
+ const js=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8');
+ assert.match(js,/!heal&&!shield\?' contact-synced'/);
 });

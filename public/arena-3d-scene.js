@@ -1,3 +1,4 @@
+import {heroHealthMeter} from './hero-health-meter.js';
 import * as T from 'three';
 import {createHeroModel,createBoard,homePosition} from './arena-3d-models.js';
 import {primaryAction,snapshotChanges} from './arena-3d-timeline.js';
@@ -57,7 +58,8 @@ export class Arena3dScene{
   }));
   this.teams=teams;this.models.forEach(model=>{
    model.hero=teams[model.side].find(h=>h.id===model.hero.id);model.dead=model.hero.hp<=0;model.label.classList.toggle('dead',model.dead);
-   model.fill.style.transform=`scaleX(${Math.max(0,model.hero.hp/model.hero.maxHp)})`;
+   const health=heroHealthMeter(model.hero);
+   model.fill.style.transform=`scaleX(${health.percent/100})`;model.fill.classList.toggle('low-health',health.low);
    model.bubble.visible=model.hero.shield>0&&!model.dead;
   });
  }

@@ -1,40 +1,40 @@
-// Contact artwork, not an icon laid over the victim. Open, unfilled strokes
-// briefly sweep through the contact point; small fragments carry the visible tail.
-// Coordinates stay in the portrait envelope. No random particles or extra hits.
-export function heroImpactArtwork(signature,special=false){
- const patterns={
-  blade:{color:'#ffd199',strokes:['M18 69 Q35 32 80 25','M25 73 Q51 39 77 37'],origin:[49,45]},
-  dagger:{color:'#e4c9ff',strokes:['M24 68 Q38 40 73 23','M69 67 Q53 51 35 44'],origin:[49,46]},
-  hammer:{color:'#ffd486',strokes:['M19 59 Q32 36 49 44 Q65 33 82 57','M32 62 Q48 51 68 61'],origin:[49,49]},
-  arrow:{color:'#d7f3ac',strokes:['M18 49 L63 49','M53 43 L67 49 L55 56'],origin:[62,49]},
-  magic:{color:'#d9b6ff',strokes:['M20 48 Q23 22 47 28','M61 27 Q84 35 76 58','M72 70 Q50 83 31 66'],origin:[50,48]},
-  lightning:{color:'#b8f1ff',strokes:['M25 22 L43 36 L38 43 L63 65','M41 39 L59 36 L72 48'],origin:[47,43]},
-  light:{color:'#c3f4ff',strokes:['M23 54 Q38 35 52 46 Q66 57 78 39','M31 65 Q50 69 67 56'],origin:[50,49]}
- };
- const pattern=patterns[signature];if(!pattern)return null;
- const angles=[-150,-94,-38,18,74,134];
- const count=special?6:4;
- const fragments=angles.slice(0,count).map((degrees,index)=>{
-  const angle=degrees*Math.PI/180,length=(special?22:16)+(index%2)*5;
-  const [x,y]=pattern.origin;
-  return {x,y,dx:Math.cos(angle)*length,dy:Math.sin(angle)*length,angle:degrees,length:index%2?7:11};
- });
- return {...pattern,strokes:special?pattern.strokes:pattern.strokes.slice(0,signature==='magic'?2:1),fragments};
+import prototypeParticles from './hero-contact-particles.js';
+// Approved isolated GIF v2, seed 84: ballistic warm sparks, not weapon glyphs.
+// All geometry uses the prototype's 190 x 232 portrait coordinate system.
+export const CONTACT_STYLE=Object.freeze({portraitWidth:190,portraitHeight:232,coreRadius:23,drag:3,gravity:42,maxLife:1.12,normalCount:32,specialCount:44,maxCount:68});
+export function heroImpactArtwork(signature,special=false,width=54){
+ if(['heal','shield'].includes(signature))return null;
+ const count=Math.min(68,Math.round((special?44:32)*Math.sqrt(Math.max(1,width)/54)));
+ return {particles:prototypeParticles.filter((_,i)=>Math.floor((i+1)*count/68)>Math.floor(i*count/68))};
 }
-export function appendHeroImpactArt(document,node,signature,special){
- const art=heroImpactArtwork(signature,special);if(!art)return false;
- const make=tag=>document.createElementNS?document.createElementNS('http://www.w3.org/2000/svg',tag):document.createElement(tag);
- const svg=make('svg');svg.setAttribute('viewBox','0 0 100 100');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');svg.setAttribute('class','hero-contact-art');
- node.style.setProperty('--contact-color',art.color);
- for(const [index,d] of art.strokes.entries()){
-  for(const [layer,width] of [['shade',special?9:8],['edge',special?6:5],['core',special?2.8:2.4]]){
-   const path=make('path');path.setAttribute('d',d);path.setAttribute('fill','none');path.setAttribute('pathLength','1');path.setAttribute('stroke-width',width);path.setAttribute('stroke-linecap','round');path.setAttribute('class','hero-contact-stroke '+layer);path.style.setProperty('--stroke-index',index);path.style.setProperty('--stroke-lag',(index*70)+'ms');svg.append(path);
-  }
+// Pure sampled frame, also used by deterministic visual QA and the native port.
+export function contactFrame(art,seconds){
+ return {core:{radius:23+seconds*12,alpha:Math.min(1,seconds/.035)*Math.exp(-seconds/.21)},sparks:art.particles.flatMap(p=>{
+  const age=seconds-p.delay;if(age<0||age>=p.life)return [];
+  const travel=p.speed*(1-Math.exp(-age*3))/3;
+  return [{x:Math.cos(p.angle)*travel,y:Math.sin(p.angle)*travel+42*age*age,angle:p.angle,size:p.size,alpha:Math.min(1,age/.025)*(1-age/p.life)**.7,tail:Math.min(9,3+p.speed*.018)*Math.max(.25,1-age/p.life)}];
+ })};
+}
+export function drawContactFrame(ctx,art,seconds,{width=54,height=54,direction=1,reducedMotion=false}={}){
+ ctx.clearRect(0,0,width,height);ctx.save();
+ const scale=width/190,originX=direction>0?width*.30:width*.70,originY=height*.595;
+ // The reference masks the face and HP strip; retain that protection at any size.
+ ctx.beginPath();ctx.rect(0,height*.345,width,height*.65);ctx.clip();
+ ctx.translate(originX,originY);ctx.scale(scale*direction,scale);
+ if(reducedMotion){ctx.fillStyle='rgba(255,234,186,.55)';ctx.fillRect(-4,-2,8,4);ctx.restore();return;}
+ const frame=contactFrame(art,seconds),core=frame.core;
+ const gradient=ctx.createRadialGradient(0,0,0,0,0,core.radius+12);
+ gradient.addColorStop(0,`rgba(255,234,186,${core.alpha*.96})`);gradient.addColorStop(.6,`rgba(255,234,186,${core.alpha*.55})`);gradient.addColorStop(1,'rgba(255,234,186,0)');
+ ctx.fillStyle=gradient;ctx.fillRect(-core.radius-12,-core.radius-12,(core.radius+12)*2,(core.radius+12)*2);
+ for(const p of frame.sparks){
+  ctx.globalAlpha=p.alpha;ctx.shadowColor='rgb(255,151,57)';ctx.shadowBlur=4*scale;ctx.strokeStyle='rgb(255,226,171)';ctx.lineWidth=Math.max(1,p.size);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(p.x-Math.cos(p.angle)*p.tail,p.y-Math.sin(p.angle)*p.tail);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle='rgb(255,250,229)';ctx.beginPath();ctx.ellipse(p.x,p.y,p.size*.65,p.size*.5,0,0,Math.PI*2);ctx.fill();
  }
- for(const fragment of art.fragments){
-  const group=make('g');group.setAttribute('class','hero-contact-fragment');
-  group.style.setProperty('--fragment-dx',fragment.dx+'px');group.style.setProperty('--fragment-dy',fragment.dy+'px');
-  const path=make('path');path.setAttribute('d',`M${fragment.x} ${fragment.y} l${fragment.length} 0`);path.setAttribute('fill','none');path.setAttribute('stroke-width',special?3:2.6);path.setAttribute('stroke-linecap','round');path.setAttribute('transform',`rotate(${fragment.angle} ${fragment.x} ${fragment.y})`);group.append(path);svg.append(group);
- }
- node.append(svg);return true;
+ ctx.restore();
+}
+export function appendHeroImpactArt(document,node,signature,special,{width=54,height=54}={}){
+ const art=heroImpactArtwork(signature,special,width);if(!art)return null;
+ const canvas=document.createElement('canvas');canvas.className='hero-contact-art';canvas.setAttribute('aria-hidden','true');
+ const dpr=Math.min(2,document.defaultView?.devicePixelRatio||1);canvas.width=Math.ceil(width*dpr);canvas.height=Math.ceil(height*dpr);canvas.style.width=width+'px';canvas.style.height=height+'px';node.append(canvas);
+ const ctx=canvas.getContext?.('2d');ctx?.scale(dpr,dpr);
+ return {draw:(seconds,options)=>{if(ctx)drawContactFrame(ctx,art,seconds,{width,height,...options})},art};
 }

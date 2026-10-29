@@ -1,3 +1,4 @@
+import {heroHealthMeter} from './hero-health-meter.js';
 import {applyHeroRarity} from './hero-rarity.js';
 // Shield is always taken from the server snapshot, never inferred from damage text.
 // Uncapped shields use HP as a visual reference, not as a gameplay maximum.
@@ -51,7 +52,8 @@ export function createArenaTeamRenderer({document,loadArt,onDefeated=()=>{}}){
    const rarityLabel=applyHeroRarity(document,portrait,unit);
    card.title=unit.name+' · '+rarityLabel+' · '+roleNames[unit.role]+(unit.hp<=0?(document.documentElement?.lang==='en'?' · Defeated':' · Yenildi'):'')+' · Can '+unit.hp+'/'+unit.maxHp;
    portrait.setAttribute('aria-label',unit.name+' · '+rarityLabel+' · '+roleNames[unit.role]+(unit.hp<=0?(document.documentElement?.lang==='en'?' · Defeated':' · Yenildi'):''));bar.setAttribute('aria-label','Can '+unit.hp+' / '+unit.maxHp);
-   fill.style.width=(unit.maxHp>0?Math.max(0,Math.min(100,100*unit.hp/unit.maxHp)):0)+'%';
+   const health=heroHealthMeter(unit);
+   fill.style.width=health.percent+'%';bar.classList.toggle('low-health',health.low);
    const shield=arenaShieldMeter(unit);
    shieldFill.style.width=(unit.shieldKnown===false?0:shield.percent)+'%';shieldBar.title=shield.label;
    shieldBar.setAttribute('aria-label',unit.name+' · Kalkan');

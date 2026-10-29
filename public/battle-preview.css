@@ -90,6 +90,7 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 .arena-hero-label{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(10px,1.4vw,14px);font-weight:900;text-align:center;margin:7px 0}
 .arena-hero .hp{height:7px;margin-top:4px;background:#0a1422;border:1px solid #ffffff21}
 .arena-hero .hp span{background:linear-gradient(90deg,#1ce7a5,#bcffdd)}
+.arena-hero .hp.low-health span{background:linear-gradient(90deg,#e73345,#ff7180)}
 .arena-hero.dead{filter:grayscale(1);opacity:.36}
 .score{border-color:#477ca5;background:linear-gradient(90deg,#0a2a49,#10192d 50%,#40172d);box-shadow:0 0 24px #00ccff13}
 .score>div:first-child{color:var(--arena-cyan)}.score>div:last-child{color:var(--arena-rose)}
@@ -274,6 +275,9 @@ body{background:radial-gradient(ellipse at 12% 4%,#153b66 0,transparent 35%),rad
 .arena-floating-damage{position:fixed;z-index:10020;pointer-events:none;font:900 clamp(23px,5vw,38px)/1 system-ui;color:#ffe88e;text-shadow:0 2px 3px #090817,0 0 9px #000;-webkit-text-stroke:1px #281122;animation:arenaDamageRise 1.6s ease-out forwards}
 .arena-floating-damage.critical{color:#ff718a;font-size:clamp(28px,6vw,44px)}
 .arena-floating-damage.healing{color:#78ffc4}.arena-floating-damage.shielding{color:#89eaff}.arena-floating-damage.area-hit{font-size:clamp(18px,4vw,27px);color:#dcc4ff}
+.arena-floating-damage.contact-synced{animation-name:arenaContactDamageRise}
+/* Damage is visible at contact, not delayed again by the old opacity ramp. */
+@keyframes arenaContactDamageRise{0%{opacity:1;transform:translate(-50%,12px) scale(.7)}12%{opacity:1;transform:translate(-50%,-8px) scale(1.12)}40%{opacity:1}100%{opacity:0;transform:translate(-50%,-110px) scale(.92)}}
 @keyframes arenaDamageRise{0%{opacity:0;transform:translate(-50%,12px) scale(.7)}12%{opacity:1;transform:translate(-50%,-8px) scale(1.12)}40%{opacity:1}100%{opacity:0;transform:translate(-50%,-110px) scale(.92)}}
 .arena-rising-soul{position:fixed;z-index:10019;pointer-events:none;width:36px;height:52px;border-radius:50% 50% 35% 35%;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 25%,#fff 0%,#baf5ffbb 35%,#67cfff33 70%,transparent 75%);color:#fff;font-size:24px;filter:drop-shadow(0 0 12px #a2efff);animation:arenaSoulRise 2.2s ease-out forwards}
 .arena-rising-soul::after{content:'';position:absolute;top:75%;width:25px;height:42px;background:linear-gradient(#baf5ff99,transparent);clip-path:polygon(0 0,100% 0,70% 100%,45% 65%,20% 100%)}
