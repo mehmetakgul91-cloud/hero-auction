@@ -150,3 +150,10 @@ test('dead-first splash followed by live primary shares instant contact without 
  const next=h.play({castKey:1,onImpact:()=>labels++});assert.equal(next.arrival,0);assert.equal(labels,1);
  assert.equal(h.document.body.children.length,count+1);assert.match(h.document.body.children.at(-1).className,/impact/);
 });
+
+test('synchronized damage is visible on its first CSS frame rather than a second fade-in delay',()=>{
+ const css=readFileSync(new URL('../public/battle-preview.css',import.meta.url),'utf8');
+ assert.match(css,/@keyframes arenaContactDamageRise\{0%\{opacity:1/);
+ const js=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8');
+ assert.match(js,/!heal&&!shield\?' contact-synced'/);
+});

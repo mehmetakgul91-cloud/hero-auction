@@ -19,18 +19,20 @@ try{
   // Install before modules capture setTimeout/requestAnimationFrame references.
   await page.clock.install({time:new Date('2026-10-29T00:00:00Z')});
   await page.goto('http://127.0.0.1:3127/battle-preview.html?room=arena');await page.waitForSelector('#team-a .hero');
+  await page.waitForFunction(()=>[...document.querySelectorAll('#team-a .arena-portrait,#team-b .arena-portrait')].every(p=>p.querySelector('img')?.complete),{},{timeout:30000});
   await page.clock.pauseAt(new Date('2026-10-29T00:01:00Z'));
   const stateBefore=await page.evaluate(()=>JSON.stringify(window.heroArenaTeams));
+  const sampleCSS=(elapsed,labelAge)=>page.evaluate(({elapsed,labelAge})=>{for(const n of document.querySelectorAll('.hero,.hero-fx,.arena-floating-damage'))for(const a of n.getAnimations()){a.pause();a.currentTime=n.classList.contains('arena-floating-damage')?labelAge:elapsed;}},{elapsed,labelAge});
   const emit=(extra={})=>page.evaluate(extra=>window.dispatchEvent(new CustomEvent('heroarena:experimental-move',{detail:{event:{side:0,version:1,actor:'original:14',target:'original:01',action:'attack',damageType:'normal',value:164,...extra}}})),extra);
   await emit();assert.equal(await page.locator('.arena-floating-damage').count(),0);
   await page.clock.runFor(599);assert.equal(await page.locator('.arena-floating-damage').count(),0);
-  await page.clock.runFor(1);assert.equal(await page.locator('.arena-floating-damage').count(),1);
-  await page.clock.runFor(120);await page.screenshot({path:shots+'arena-contact-'+width+'.png'});
+  await page.clock.runFor(1);assert.equal(await page.locator('.arena-floating-damage').count(),1);assert.ok(Number(await page.locator('.arena-floating-damage').evaluate(n=>getComputedStyle(n).opacity))>0,'damage must be visibly present at contact, not merely in DOM');
+  await page.clock.runFor(120);await sampleCSS(720,120);await page.screenshot({path:shots+'arena-contact-'+width+'.png'});
   assert.equal(await page.locator('.hero-contact canvas').count(),1);
   await page.evaluate(()=>window.dispatchEvent(new Event('heroarena:route-change')));assert.equal(await page.locator('.hero-fx,.arena-floating-damage').count(),0);
-  await emit({version:2,damageType:'special'});await page.clock.runFor(839);assert.equal(await page.locator('.arena-floating-damage').count(),0);await page.clock.runFor(1);assert.equal(await page.locator('.arena-floating-damage').count(),1);await page.clock.runFor(120);await page.screenshot({path:shots+'arena-special-contact-'+width+'.png'});await page.evaluate(()=>window.dispatchEvent(new Event('heroarena:route-change')));
+  await emit({version:2,damageType:'special'});await page.clock.runFor(839);assert.equal(await page.locator('.arena-floating-damage').count(),0);await page.clock.runFor(1);assert.equal(await page.locator('.arena-floating-damage').count(),1);await page.clock.runFor(120);await sampleCSS(960,120);await page.screenshot({path:shots+'arena-special-contact-'+width+'.png'});await page.evaluate(()=>window.dispatchEvent(new Event('heroarena:route-change')));
   await emit();await page.clock.runFor(100);await page.evaluate(()=>window.dispatchEvent(new Event('heroarena:connection-lost')));await page.clock.runFor(1000);assert.equal(await page.locator('.hero-fx,.arena-floating-damage').count(),0);
-  await page.emulateMedia({reducedMotion:'reduce'});await page.clock.runFor(32);await emit();assert.equal(await page.locator('.hero-fx-flight').count(),0);assert.equal(await page.locator('.arena-floating-damage').count(),1);
+  await page.emulateMedia({reducedMotion:'reduce'});await page.clock.runFor(32);await emit();assert.equal(await page.locator('.hero-fx-flight').count(),0);assert.equal(await page.locator('.arena-floating-damage').count(),1);await page.screenshot({path:shots+'reduced-static-'+width+'.png'});
   await page.clock.runFor(2500);assert.equal(await page.locator('.hero-fx,.arena-floating-damage').count(),0);
   assert.equal(await page.evaluate(()=>JSON.stringify(window.heroArenaTeams)),stateBefore,'presentation cannot mutate authoritative teams');
   const health=await page.evaluate(async()=>{

@@ -552,7 +552,7 @@ function animateMove(e){
  const time=duration();
  // Hero signatures replace the old center-screen comic banners.
  // Capture portrait centers before the cosmetic actor lunge changes bounds.
- const onImpact=()=>{if(Number(e.value)>0)floatingArenaEffect(target,'arena-floating-damage'+(heal?' healing':shield?' shielding':e.critical?' critical':'')+(splash?' area-hit':''),(heal||shield?'+':'−')+Math.round(Number(e.value))+(e.critical?'!':''));};
+ const onImpact=()=>{if(Number(e.value)>0)floatingArenaEffect(target,'arena-floating-damage'+(!heal&&!shield?' contact-synced':'')+(heal?' healing':shield?' shielding':e.critical?' critical':'')+(splash?' area-hit':''),(heal||shield?'+':'−')+Math.round(Number(e.value))+(e.critical?'!':''));};
  const timing=heroAttacks.play({actor,target,hero,kind,special,splash,time,reducedMotion,onImpact:heal||shield?undefined:onImpact,castKey:e.version??e.actionId??`${e.round}:${e.side}:${e.actorId}`});
  if(heal||shield)onImpact();
  const settled=actor.classList.contains('dead')||target?.classList.contains('dead');
