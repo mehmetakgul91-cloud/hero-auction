@@ -1,3 +1,4 @@
+import {appendHeroImpactArt} from './hero-impact-art.js';
 import {createCombatEffects} from './arena-combat-effects.js';
 import {heroCombatPresentation} from './hero-combat-presentation.js';
 // Visual identity only. Formation roles and server combat rules are untouched.
@@ -11,16 +12,16 @@ export function heroAttackSignature(hero,kind){
  return 'blade';
 }
 export function heroAttackTiming(time=850,{self=false,special=false,settled=false}={}){
- // Arrival stays below the server's 900ms normal cadence. Only the readable
- // impact tail overlaps the next action; never slow authoritative combat.
+ // Shared 1400/1900ms beats leave a deliberate source/travel phase followed
+ // by contact and a fading tail. Presentation never changes battle calculations.
  const scale=Math.max(.8,Math.min(1.15,(Number(time)||850)/850));
  const charge=self||settled?0:Math.round((special?360:240)*scale);
  const travel=self||settled?0:Math.round((special?480:360)*scale);
  const impact=Math.round((special?1060:800)*scale);
  return {charge,travel,arrival:charge+travel,impact,total:charge+travel+impact};
 }
-// No FIFO: start committed decoration immediately. At steady 900ms cadence
-// there are at most three casts; exceptional bursts evict whole oldest casts.
+// No FIFO: start committed decoration immediately. Old clients and network
+// bursts remain bounded by whole-cast eviction, without delaying server state.
 // A newer death/removal cancels that target's obsolete travel, never HP/logs.
 export function createHeroAttackPlayer({document,clock=()=>Date.now(),setTimer=setTimeout,clearTimer=clearTimeout,maxCasts=4}={}){
  const casts=new Map();let serial=0;
@@ -63,10 +64,14 @@ export function playHeroAttack({document,effects,actor,target,hero,kind,special=
   const node=document.createElement('span');
   node.className=`hero-fx hero-fx-${phase} signature-${signature}${special?' is-special':''}${splash?' is-splash':''}`;
   node.setAttribute('aria-hidden','true');
-  const size=Math.max(56,Math.min(special?112:94,(phase==='cast'?a.width:b.width)*(special?1.4:1.2)));
+  const contact=phase==='impact'&&!['heal','shield'].includes(signature);
+  const size=contact?Math.max(44,Math.min(84,b.width*(special?1.12:1.02))):Math.max(56,Math.min(special?112:94,(phase==='cast'?a.width:b.width)*(special?1.4:1.2)));
+  if(contact)node.className+=' hero-contact';
   for(const [key,value] of Object.entries({'--hero-size':size+'px','--hero-ms':ms+'ms','--hero-delay':delay+'ms','--hero-angle':angle+'rad','--hero-dx':(to.x-from.x)+'px','--hero-dy':(to.y-from.y)+'px'}))node.style.setProperty(key,value);
   node.style.left=point.x+'px';node.style.top=point.y+'px';
-  for(let i=0;i<4;i++){const part=document.createElement('i');part.style.setProperty('--part',i);node.append(part)}
+  if(!contact||!appendHeroImpactArt(document,node,signature,special)){
+   for(let i=0;i<4;i++){const part=document.createElement('i');part.style.setProperty('--part',i);node.append(part)}
+  }
   effects.node(node,document.body,delay+ms+80);return node;
  }
  if(!splash&&!settled&&actor!==target){

@@ -12,9 +12,10 @@ short timing. Catch-up playback could start another cast every220ms.
 
 Default normal:240ms preparation +360ms travel +800ms impact =1400ms.
 Default special:360ms preparation +480ms travel +1060ms impact =1900ms.
-The impact silhouette stays visible through68% of its phase rather than fading
-almost immediately. Larger distinct silhouettes, longer trails, and deliberate
-cast geometry retain the roster identities. Melee steps forward without hiding
+The source/travel remains deliberate and readable. The revised damaging contact
+uses narrow, unfilled SVG strokes: one directional sweep fades before48% of the
+impact phase, then small fragments carry the remaining tail. No filled X/rune/bolt
+remains across the face. Distinct strokes retain the roster identities. Melee steps forward without hiding
 the enemy portrait; ranged heroes remain stationary. Splash impacts share the
 special arrival. Self effects and already-lethal committed hits have no fictional
 travel. HP, defeat, shield and damage labels remain immediate server snapshots.
@@ -60,6 +61,20 @@ and winner match. The test controls critical rolls; production RNG is unchanged.
 These are injected-clock measured fixtures, not stopwatch measurements of live
 network games. Real duration depends on roster, deaths, decisions and latency.
 
+## Target-contact revision after preview feedback
+
+The first preview held a portrait-sized glyph too long; actual screenshots showed
+a large X covering the victim and a thick yellow target-card box. Damaging impacts
+now use attack-specific open strokes (slash, staggered dagger cuts, hammer contact,
+arrow splinters, energy wisps, narrow lightning forks, light rays), with4 normal
+or6 special fragments. Thin dark edges retain contrast on bright portraits. The
+large target-card selection box is removed; HP/name layout is untouched. Healing
+and shielding keep their original restoration/protection appearance.
+
+The local controlled vector geometry study is separate from browser evidence. It
+is not an animation recording. New live browser QA is required after previewing
+the revised head; earlier screenshots only establish the rejected before-state.
+
 ## Remaining acceptance gate
 
 Timed browser/video proof has NOT been obtained. Browser DevTools and CLI Chromium
@@ -67,5 +82,5 @@ were blocked previously; the browser host cannot reach this workspace localhost.
 No denied route was retried. Functional tests and DOM presence are not visual
 acceptance. A separately authorized browser-reachable preview must be inspected
 at normal/special preparation, travel and impact timestamps on mobile and desktop
-before declaring the aesthetic result accepted. No push, PR, preview or production
-deployment is authorized by this local revision.
+before declaring the aesthetic result accepted. The latest authorization covers updating the existing draft PR73 and preview
+for revised motion QA. Production merge/release remains gated by final review.
