@@ -3,6 +3,28 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const app=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
 const css=readFileSync(new URL('../public/style.css',import.meta.url),'utf8');
+test('calculation starts before optional room actions, without deleting global chrome or escape controls',()=>{
+ const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
+ assert.match(css,/body:has\(#game\.auction-results-only:not\(\[hidden\]\)\) \.shell>\.lobby-header,\s*#game\.auction-results-only \.room-tools\{display:none\}/);
+ assert.match(css,/#game\.auction-results-only:not\(\[hidden\]\)\{display:flex;flex-direction:column\}/);
+ assert.match(css,/#game\.auction-results-only \.arena-layout\{order:-1\}/);
+ for(const id of ['friend-opponent','leave','chat-panel','room-invites','join-invite-notice','lobby-home','account-status'])assert.ok(html.includes(`id="${id}"`),id);
+ assert.doesNotMatch(css,/#game\.auction-results-only[^{}]*\.(?:friend-opponent-bar|chat-panel)[^{]*\{display:none/);
+ const reset=app.indexOf("classList.remove('auction-results-only','auction-delivery-active')",app.indexOf('function show(r)'));
+ assert.ok(reset>0&&reset<app.indexOf("if(r.phase==='finished'&&(tailAwards.length",reset));
+ assert.match(app.slice(app.indexOf('function showCancelledRoom'),app.indexOf('function show(r)')),/classList.remove\('auction-results-only'/);
+});
+test('bot and human calculations retain both five-hero teams in either language and seat',()=>{
+ for(const english of [false,true])for(const bot of [false,true])for(const me of [0,1]){
+  const players=[{name:'Player',credits:2},{name:bot?(english?'Computer':'Bilgisayar'):'Opponent',credits:-1}].map((p,seat)=>({...p,team:Array.from({length:5},(_,n)=>({name:`Hero ${seat}-${n}`,power:90}))}));
+  const before=JSON.stringify(players),markup=auctionCalculationMarkup(players,me,{english});
+  assert.equal((markup.match(/class="calculation-hero"/g)||[]).length,10);
+  assert.equal((markup.match(/class="calculation-total"/g)||[]).length,2);
+  assert.ok(markup.includes(english?'Your team':'Senin takımın'));
+  assert.ok(markup.includes(players[me].name));assert.ok(markup.includes('+2%'));assert.ok(markup.includes('-1%'));
+  assert.equal(JSON.stringify(players),before);
+ }
+});
 test('only auction calculation view hides duplicate player cards and uses full-width single column',()=>{
  assert.match(app,/if\(r.phase==='finished'&&r.final\?\.length===2&&r.final.every\(p=>p.team\?\.length===5\)&&session\?\.token\)\{\s*\$\('game'\).classList.add\('auction-results-only'\)/);
  assert.match(css,/#game\.auction-results-only \.player-side\{display:none\}/);
