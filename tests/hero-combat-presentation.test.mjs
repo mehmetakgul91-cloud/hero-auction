@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import * as T from 'three';
+import {combatEffectKind,combatEffectActors,createCombatEffects} from '../public/arena-combat-effects.js';
 import {heroCombatPresentation,stationaryArenaAction} from '../public/hero-combat-presentation.js';
 import {Arena3dScene} from '../public/arena-3d-scene.js';
 import {createHeroModel,homePosition} from '../public/arena-3d-models.js';
@@ -40,9 +41,11 @@ test('classic arena applies the same range rule to the actual animation calls',(
  const code=source.slice(source.indexOf('function animateMove(e){'),source.indexOf("window.addEventListener('heroarena:experimental-move'"));
  for(const h of [...stationary,{id:'warrior',role:'fighter'}]){
   const animations=[],classes=[];
-  const element=()=>({dataset:{},style:{setProperty(){}},classList:{add(...v){classes.push(...v)},remove(){}},append(){},remove(){},getBoundingClientRect(){return {left:0,top:0,width:80,height:100}},animate(frames){animations.push(frames)}});
+  const element=()=>({dataset:{},style:{setProperty(){}},classList:{add(...v){classes.push(...v)},remove(){}},append(){},remove(){},querySelector(){return null},setAttribute(){},getBoundingClientRect(){return {left:0,top:0,width:80,height:100}},animate(frames){animations.push(frames)}});
   const actor=element(),target=element();actor.dataset={heroId:h.id,role:h.role};target.dataset.heroId='target';target.animate=()=>{};target.getBoundingClientRect=()=>({left:300,top:120,width:80,height:100});
-  const context=vm.createContext({heroCombatPresentation,stationaryArenaAction,motion:()=>true,comicBattleCue(){},duration:()=>600,setTimeout(){},floatingArenaEffect(){},document:{querySelectorAll:()=>[actor,target],createElement:element,body:{append(){}}}});
+  const document={querySelectorAll:()=>[actor,target],createElement:element,body:{append(){}}};
+  const combatEffects=createCombatEffects({document,setTimer(){},clearTimer(){}});
+  const context=vm.createContext({combatEffectKind,combatEffectActors,combatEffects,heroCombatPresentation,stationaryArenaAction,motion:()=>true,comicBattleCue(){},duration:()=>600,setTimeout(){},floatingArenaEffect(){},document:{querySelectorAll:()=>[actor,target],createElement:element,body:{append(){}}}});
   vm.runInContext(code+';animateMove('+JSON.stringify({actorId:h.id,targetId:'target',action:'attack',value:15})+');',context);
   if(stationary.includes(h)){
    assert.ok(classes.includes('attack-energy'),h.id);

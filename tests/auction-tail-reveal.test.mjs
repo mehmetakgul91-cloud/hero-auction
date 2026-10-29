@@ -1,3 +1,5 @@
+import {createRevealedTeams,renderDeliveryPortraits} from '../public/auction-delivery-portraits.js';
+import {deliveryBox} from './helpers/delivery-dom.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {auctionMatchKey,isStaleAuctionSnapshot,createTailReceipts} from '../public/auction-delivery-state.js';
@@ -64,7 +66,7 @@ test('actual show transition keeps auction visible through all tails and dedupli
   const previous={code:'123',phase:'auction',card:card(4),players:final.map((p,i)=>({team:p.team.slice(0,i===seat?5-count:4)}))};
   const elements={stage:{replaceChildren(){},querySelectorAll:()=>[],children:[]},game:{dataset:{phase:'auction'},classList:{remove(){},add(){},contains:()=>false}},player0:{},player1:{},phase:{}};
   let mounts=0,options;
-  const context={auctionCommanderDialog:{sync(){}},auctionMatchKey,isStaleAuctionSnapshot,tailReceipts:createTailReceipts(),session:null,roomInvitesUI:{setRoom(){}},storefrontUI:{close(){}},friendsUI:{setRoom(){}},esc:String,displaySeat:(seat,me)=>seat===me?0:1,room:previous,tailReveal:null,awardFlights:new Set(),collectTailAwards,collectOfferedAwards,cancelAwardFlights:()=>{},animateWonAuctionCard:()=>Promise.resolve(),Promise,signedIn:()=>true,cancelAuctionReveal:()=>{},renderChat:()=>{},refreshGold:()=>{},$:id=>elements[id]||(id==='confirm-arena-entry'?null:(elements[id]={})),window:{matchMedia:()=>({matches:false})},document:{documentElement:{lang:'en'},querySelector:()=>null},results:0,mountTailReveal:(root,button,items,opts)=>{
+  const context={createRevealedTeams,renderDeliveryPortraits,auctionCommanderDialog:{sync(){}},auctionMatchKey,isStaleAuctionSnapshot,tailReceipts:createTailReceipts(),session:null,roomInvitesUI:{setRoom(){}},storefrontUI:{close(){}},friendsUI:{setRoom(){}},esc:String,displaySeat:(seat,me)=>seat===me?0:1,room:previous,tailReveal:null,awardFlights:new Set(),collectTailAwards,collectOfferedAwards,cancelAwardFlights:()=>{},animateWonAuctionCard:()=>Promise.resolve(),Promise,signedIn:()=>true,cancelAuctionReveal:()=>{},renderChat:()=>{},refreshGold:()=>{},$:id=>elements[id]||(id==='confirm-arena-entry'?null:(elements[id]={})),window:{matchMedia:()=>({matches:false})},document:{documentElement:{lang:'en'},querySelector:()=>null},results:0,mountTailReveal:(root,button,items,opts)=>{
    mounts++;assert.equal(items.length,count);options=opts;return {active:true,cancel:()=>{}};
   }};
   vm.createContext(context);vm.runInContext(app.match(/const displayPlayerName=[^;]+;/)[0],context);vm.runInContext(app.slice(start,end)+" results++;room=r;$('game').dataset.phase=r.phase;}",context);
@@ -186,10 +188,10 @@ test('actual app arrival inserts each of 1–5 receipts into correct receiver bo
   const final=[0,1].map(seat=>({name:'Player '+seat,team:Array.from({length:5},(_,i)=>card(seat*5+i))}));
   const offered=final[1-receiver].team[4];
   const previous={code:'receipts',me,phase:'auction',card:offered,players:final.map((p,seat)=>({...p,team:p.team.slice(0,seat===receiver?5-count:4)}))};
-  const makeBox=()=>({markup:'',count:{textContent:''},slot:{innerHTML:''},set innerHTML(html){this.markup=html;this.count.textContent=html.match(/class="delivery-count">([^<]+)/)?.[1]||'';this.slot.innerHTML='Receiving cards'},get innerHTML(){return this.markup},querySelector(selector){return selector==='.delivery-count'?this.count:this.slot}});
+  const makeBox=deliveryBox;
   const classes=new Set(),elements={stage:{children:[],querySelectorAll:()=>[]},game:{dataset:{phase:'auction'},classList:{remove:(...xs)=>xs.forEach(x=>classes.delete(x)),add:x=>classes.add(x),contains:x=>classes.has(x)}},phase:{},player0:makeBox(),player1:makeBox()};
   let options,items;
-  const context={auctionCommanderDialog:{sync(){}},auctionMatchKey,isStaleAuctionSnapshot,tailReceipts:createTailReceipts(),session:null,roomInvitesUI:{setRoom(){}},storefrontUI:{close(){}},friendsUI:{setRoom(){}},esc:String,displaySeat:(seat,local)=>seat===local?0:1,room:previous,tailReveal:null,awardFlights:new Set(),collectTailAwards,collectOfferedAwards,cancelAwardFlights(){},animateWonAuctionCard:()=>Promise.resolve(),Promise,signedIn:()=>true,cancelAuctionReveal(){},renderChat(){},refreshGold(){},$:id=>elements[id]||(id==='confirm-arena-entry'?null:(elements[id]={})),window:{matchMedia:()=>({matches:false})},document:{documentElement:{lang:'en'},querySelector:()=>null},results:0,mountTailReveal(root,button,awards,opts){items=awards;options=opts;return {active:true,cancel(){}}}};
+  const context={createRevealedTeams,renderDeliveryPortraits,auctionCommanderDialog:{sync(){}},auctionMatchKey,isStaleAuctionSnapshot,tailReceipts:createTailReceipts(),session:null,roomInvitesUI:{setRoom(){}},storefrontUI:{close(){}},friendsUI:{setRoom(){}},esc:String,displaySeat:(seat,local)=>seat===local?0:1,room:previous,tailReveal:null,awardFlights:new Set(),collectTailAwards,collectOfferedAwards,cancelAwardFlights(){},animateWonAuctionCard:()=>Promise.resolve(),Promise,signedIn:()=>true,cancelAuctionReveal(){},renderChat(){},refreshGold(){},$:id=>elements[id]||(id==='confirm-arena-entry'?null:(elements[id]={})),window:{matchMedia:()=>({matches:false})},document:{documentElement:{lang:'en'},querySelector:()=>null},results:0,mountTailReveal(root,button,awards,opts){items=awards;options=opts;return {active:true,cancel(){}}}};
   vm.createContext(context);vm.runInContext(app.match(/const displayPlayerName=[^;]+;/)[0],context);vm.runInContext(app.slice(start,end)+" results++;room=r;$('game').dataset.phase=r.phase;}",context);
   context.show({code:'receipts',me,phase:'finished',final});
   await options.startAfter;
@@ -197,13 +199,13 @@ test('actual app arrival inserts each of 1–5 receipts into correct receiver bo
   assert.equal(items.length,count);
   const target=elements['player'+(receiver===me?0:1)],other=elements['player'+(receiver===me?1:0)];
   assert.equal(target.count.textContent,(5-count)+' / 5');assert.equal(other.count.textContent,'5 / 5');
-  const otherMarkup=other.slot.innerHTML;
+  const otherPortraits=other.slot.children.map(node=>node.title);
   assert.equal(options.resolveDestination(receiver),target.slot);
   for(let index=0;index<items.length;index++){
    options.onArrive(items[index]);
    assert.equal(target.count.textContent,(6-count+index)+' / 5');
-   assert.ok(target.slot.innerHTML.includes('✓ '+items[index].card.name));
-   assert.equal(other.count.textContent,'5 / 5');assert.equal(other.slot.innerHTML,otherMarkup);
+   assert.equal(target.slot.children.length,6-count+index);assert.equal(target.slot.children.at(-1).title,items[index].card.name);
+   assert.equal(other.count.textContent,'5 / 5');assert.deepEqual(other.slot.children.map(node=>node.title),otherPortraits);
    assert.equal(context.results,0);assert.equal(elements.game.dataset.phase,'auction');
   }
   assert.equal(target.count.textContent,'5 / 5');

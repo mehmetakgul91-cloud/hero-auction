@@ -1,0 +1,38 @@
+/* Web combat accents: bounded, portrait-local and never above damage labels. */
+.combat-fx,.combat-fx *,.combat-beam{pointer-events:none!important}
+.combat-fx{--fx-color:#ffc384;position:absolute;inset:2%;z-index:3;border-radius:inherit;color:var(--fx-color);overflow:hidden;animation:combatEnvelope var(--fx-duration,650ms) ease-out both}
+.combat-fx::before,.combat-fx::after,.combat-fx i{content:'';position:absolute;box-sizing:border-box}
+.combat-fx::before{inset:18%;border:2px solid currentColor;border-radius:50%;animation:combatRing var(--fx-duration,650ms) ease-out both}
+.combat-fx i{left:calc(20% + var(--spark)*28%);top:calc(25% + var(--spark)*18%);width:4px;height:4px;background:currentColor;box-shadow:0 0 5px currentColor;transform:rotate(45deg);animation:combatSpark var(--fx-duration,650ms) ease-out both}
+.combat-fx.fx-magic{--fx-color:#c9a0ff}
+.combat-fx.fx-magic::before{inset:9%;border:2px dashed currentColor;animation:combatRune var(--fx-duration,650ms) ease-out both}
+.combat-fx.fx-magic::after{inset:27%;border:1px solid #f0dfff;transform:rotate(45deg);box-shadow:0 0 12px #9257d666}
+.combat-fx.fx-cast{inset:8% 2% 2%;opacity:.8}
+.combat-fx.fx-cast::before{inset:42% 7% 6%;border-radius:50%;transform:rotateX(38deg)}
+.combat-fx.fx-heal{--fx-color:#83efb4}
+.combat-fx.fx-heal::before{inset:10%;border-color:#81eab099;box-shadow:inset 0 -12px 14px #62d69533;animation:combatHeal var(--fx-duration,650ms) ease-out both}
+.combat-fx.fx-heal::after{width:16px;height:16px;left:calc(50% - 8px);bottom:20%;background:#ffe2a1;clip-path:polygon(35% 0,65% 0,65% 35%,100% 35%,100% 65%,65% 65%,65% 100%,35% 100%,35% 65%,0 65%,0 35%,35% 35%);animation:combatSpark var(--fx-duration,650ms) ease-out both}
+.combat-fx.fx-heal i{color:#ffe2a1;top:70%;border-radius:50%}
+.combat-fx.fx-shield{--fx-color:#85def4}
+.combat-fx.fx-shield::before{inset:10% 15%;border-radius:30% 30% 48% 48%;box-shadow:inset 0 0 10px #75d1ed33}
+.combat-fx.fx-lightning{--fx-color:#b3efff}
+.combat-fx.fx-lightning::after{inset:8% 34%;background:linear-gradient(#fff9cb,#b3efff);clip-path:polygon(56% 0,12% 53%,43% 53%,22% 100%,91% 35%,59% 35%,87% 0)}
+.combat-fx.fx-lightning::before{inset:24%;border:1px solid #a2cfff}
+.combat-fx.fx-strike::before,.combat-fx.fx-arrow::before{inset:18% 46%;border:0;border-radius:40%;background:linear-gradient(transparent,#fff4db,#ffb772,transparent);transform:rotate(38deg);animation:combatSlash var(--fx-duration,650ms) ease-out both}
+.combat-fx.fx-strike::after{inset:30% 48%;background:linear-gradient(transparent,#ffe1b7,transparent);transform:rotate(-35deg)}
+.combat-fx.fx-splash{inset:14%;opacity:.65}
+.combat-beam{position:fixed;z-index:98;height:16px;transform-origin:0 50%;margin-top:-8px;background:linear-gradient(90deg,#a784f800,#f3edff 20%,#bcefff 70%,#a8dfff00);clip-path:polygon(0 45%,16% 30%,25% 62%,38% 16%,49% 57%,62% 20%,73% 65%,85% 31%,100% 45%,100% 55%,85% 55%,73% 95%,62% 49%,49% 85%,38% 45%,25% 88%,16% 57%,0 55%);animation:combatBolt var(--fx-duration,500ms) ease-out both}
+.battle-projectile.effect-magic::after{content:'';position:absolute;inset:-6px;border:1px solid #d4a6ff;border-radius:50%}
+@keyframes combatEnvelope{0%{opacity:0}20%,60%{opacity:.9}100%{opacity:0}}
+@keyframes combatRing{from{transform:scale(.55)}to{transform:scale(1.15)}}
+@keyframes combatRune{from{transform:rotate(-28deg) scale(.8)}to{transform:rotate(30deg) scale(1.05)}}
+@keyframes combatSpark{from{translate:0 8px;opacity:0}25%{opacity:1}to{translate:0 -20px;opacity:0}}
+@keyframes combatHeal{from{transform:translateY(15%) scale(.7)}to{transform:translateY(-12%) scale(1.05)}}
+@keyframes combatSlash{from{translate:-12px -8px;opacity:0}30%{opacity:1}to{translate:12px 8px;opacity:0}}
+@keyframes combatBolt{0%{opacity:0;scale:.85 1}25%,55%{opacity:.85;scale:1 1}100%{opacity:0;scale:1 1}}
+/* Commander semantics remain impact-owned: green waves only restore health. */
+.commander-target-fx.support[data-effect="heal"]::before,.commander-target-fx.support[data-effect="revive"]::before{animation:combatHeal 1.2s ease-out both;border-color:#94edbd;box-shadow:inset 0 -12px 15px #66d9a144}
+.commander-target-fx.magic[data-effect="stun"]::after{inset:12% 37%;border:0;background:#e7caff;clip-path:polygon(60% 0,10% 55%,45% 55%,20% 100%,95% 35%,60% 35%,90% 0);box-shadow:none;transform:none}
+.commander-target-fx.magic[data-effect="buff"]::after{border-color:#ffe2a1}
+@media(max-width:600px){.combat-beam{height:12px;margin-top:-6px}.combat-fx i{box-shadow:none}.battle-projectile.effect-magic{box-shadow:0 0 10px 4px #b179ee}}
+@media(prefers-reduced-motion:reduce){.combat-fx,.combat-beam{display:none!important}.commander-target-fx.support::before{animation:none!important}}

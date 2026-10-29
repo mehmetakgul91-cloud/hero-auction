@@ -1,3 +1,4 @@
+import {combatEffectActors} from '../public/arena-combat-effects.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -44,7 +45,7 @@ test('delay animation is a status cue, never another attack, projectile or impac
  const target={dataset:{heroId:'b'},animate(){throw Error('Delay must not animate a hit')}};
  const doc={documentElement:{lang:'en'},querySelectorAll(){return [target]}};
  const cues=[];
- const animate=Function('motion','document','floatingArenaEffect','comicBattleCue','return ('+body.trim()+')')(()=>true,doc,(...args)=>cues.push(args),()=>{throw Error('No attack comic cue')});
+ const animate=Function('motion','document','floatingArenaEffect','comicBattleCue','combatEffectActors','return ('+body.trim()+')')(()=>true,doc,(...args)=>cues.push(args),()=>{throw Error('No attack comic cue')},combatEffectActors);
  animate({action:'delay',actorId:'a',targetId:'b',dueRound:4,value:0});
  assert.equal(cues.length,1);assert.equal(cues[0][0],target);assert.equal(cues[0][2],'ACTS LAST');
 });

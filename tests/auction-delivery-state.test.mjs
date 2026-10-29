@@ -1,3 +1,5 @@
+import {createRevealedTeams,renderDeliveryPortraits} from '../public/auction-delivery-portraits.js';
+import {deliveryBox} from './helpers/delivery-dom.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -15,10 +17,10 @@ function snapshots(receiver=1,count=2,me=0){
  const done={...meta,revision:21,phase:'finished',round:10,final,players:final,tailAwards};return {before,done};
 }
 function harness(previous,{receipts=createTailReceipts(),reducedMotion=false}={}){
- const makeBox=()=>({count:{textContent:''},slot:{innerHTML:''},set innerHTML(html){this.count.textContent=html.match(/class="delivery-count">([^<]+)/)?.[1]||'';},querySelector(selector){return selector==='.delivery-count'?this.count:this.slot;}});
+ const makeBox=deliveryBox;
  const classes=new Set(),elements={stage:{children:[],querySelectorAll:()=>[]},game:{hidden:true,dataset:{phase:'auction'},classList:{remove:(...xs)=>xs.forEach(x=>classes.delete(x)),add:x=>classes.add(x)}},phase:{},'login-gate':{},home:{},'room-title':{},player0:makeBox(),player1:makeBox()};
  const queues=[];let cancels=0;
- const context={auctionCommanderDialog:{sync(){}},session:null,roomInvitesUI:{setRoom(){}},storefrontUI:{close(){}},friendsUI:{setRoom(){}},esc:String,displaySeat,auctionMatchKey,isStaleAuctionSnapshot,tailReceipts:receipts,room:previous,tailReveal:null,awardFlights:new Set(),collectTailAwards,collectOfferedAwards,cancelAwardFlights(){},animateWonAuctionCard:()=>Promise.resolve(),Promise,signedIn:()=>true,cancelAuctionReveal(){},renderChat(){},refreshGold(){},$:id=>elements[id],window:{matchMedia:()=>({matches:reducedMotion})},document:{documentElement:{lang:'en'},querySelector:()=>null},results:0,mountTailReveal(root,button,items,options){const queue={items,options,active:true,cancel(){this.active=false;cancels++;}};queues.push(queue);return queue;}};
+ const context={createRevealedTeams,renderDeliveryPortraits,auctionCommanderDialog:{sync(){}},session:null,roomInvitesUI:{setRoom(){}},storefrontUI:{close(){}},friendsUI:{setRoom(){}},esc:String,displaySeat,auctionMatchKey,isStaleAuctionSnapshot,tailReceipts:receipts,room:previous,tailReveal:null,awardFlights:new Set(),collectTailAwards,collectOfferedAwards,cancelAwardFlights(){},animateWonAuctionCard:()=>Promise.resolve(),Promise,signedIn:()=>true,cancelAuctionReveal(){},renderChat(){},refreshGold(){},$:id=>elements[id],window:{matchMedia:()=>({matches:reducedMotion})},document:{documentElement:{lang:'en'},querySelector:()=>null},results:0,mountTailReveal(root,button,items,options){const queue={items,options,active:true,cancel(){this.active=false;cancels++;}};queues.push(queue);return queue;}};
  const start=app.indexOf('function show(r)'),end=app.indexOf(" window.HeroPlatform?.gameplay(r.phase==='auction')",start);
  vm.createContext(context);vm.runInContext(app.match(/const displayPlayerName=[^;]+;/)[0],context);vm.runInContext(app.slice(start,end)+" results++;room=r;$('game').dataset.phase=r.phase;}",context);
  return {context,elements,queues,get cancels(){return cancels;}};
@@ -34,7 +36,7 @@ for(const me of [0,1])for(const receiver of [0,1])for(let count=1;count<=4;count
  const queue=h.queues[0];assert.equal(queue.items.length,count);await queue.options.startAfter;
  const target=h.elements['player'+displaySeat(receiver,me)],other=h.elements['player'+displaySeat(1-receiver,me)];
  assert.equal(target.count.textContent,(5-count)+' / 5');assert.equal(other.count.textContent,'5 / 5');
- for(const [index,item] of queue.items.entries()){queue.options.onArrive(item);assert.equal(target.count.textContent,(6-count+index)+' / 5');assert.match(target.slot.innerHTML,new RegExp(item.card.name));assert.equal(h.context.results,0);}
+ for(const [index,item] of queue.items.entries()){queue.options.onArrive(item);assert.equal(target.count.textContent,(6-count+index)+' / 5');assert.equal(target.slot.children.at(-1).title,item.card.name);assert.equal(target.slot.children.length,6-count+index);assert.equal(h.context.results,0);}
  queue.options.onComplete();assert.equal(h.context.results,1);assert.equal(h.queues.length,1);
  h.context.show({...done});assert.equal(h.queues.length,1);
 });
@@ -67,7 +69,7 @@ test('authoritative tail order excludes already-known offered purchases and cann
 });
 test('state recovery applies phase/revision changes without chat and ignores responses after switching session',async()=>{
  const start=app.indexOf('async function syncRoomSnapshot('),end=app.indexOf('\nfunction connect()',start),{before,done}=snapshots();
- let release;const updates=[],session={code:'123',token:'test'};const context={auctionCommanderDialog:{sync(){}},session,login:{authToken:'auth'},room:before,post:()=>new Promise(r=>release=r),show:r=>updates.push(r)};
+ let release;const updates=[],session={code:'123',token:'test'};const context={createRevealedTeams,renderDeliveryPortraits,auctionCommanderDialog:{sync(){}},session,login:{authToken:'auth'},room:before,post:()=>new Promise(r=>release=r),show:r=>updates.push(r)};
  vm.createContext(context);vm.runInContext(app.slice(start,end),context);
  let pending=context.syncRoomSnapshot();release({room:done});await pending;assert.deepEqual(updates,[done]);
  pending=context.syncRoomSnapshot();context.session={code:'456',token:'other'};release({room:done});await pending;assert.equal(updates.length,1);
