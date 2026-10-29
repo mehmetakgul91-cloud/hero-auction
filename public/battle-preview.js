@@ -15,7 +15,8 @@ import {createArenaTeamRenderer} from '/arena-team-renderer.js';
 import {summarizeBattle} from '/battle-summary-data.js?v=complete-results-20261021';
 import {commanderAbilityStats,commanderAbilityDescription} from '/commander-ability-rules.js?v=commander-attack-fix-20261021';
 import {getArenaLaneLayout,refreshArenaViewport} from '/arena-viewport.js?v=equal-lanes-20261026';
-import {playHeroAttack} from '/hero-attack-effects.js';
+import {heroActionDuration,heroPlaybackInterval} from '/hero-battle-timing.js';
+import {createHeroAttackPlayer} from '/hero-attack-effects.js';
 import {combatEffectKind,combatEffectActors,createCombatEffects} from '/arena-combat-effects.js';
 import {stationaryArenaAction} from '/hero-combat-presentation.js';
 import {createArenaThemePresentation} from '/arena-theme.js';
@@ -499,10 +500,12 @@ const roleIcons={tank:'🛡️',fighter:'⚔️',energy:'⚡',assassin:'🗡️'
 $('apply-roles').onclick=lockFormation;
 if(arenaMode){document.body.classList.add('arena-room');document.querySelector('.formation').hidden=true;$('battle-arena').hidden=true;$('play').textContent='▶ SAVAŞI BAŞLAT';mountCommanderDock()}else{renderBoard();if(!auctionMode)startPreparation();else{$('apply-roles').disabled=true;$('prep-clock').textContent='--:--';$('prep-note').textContent='Açık artırma kartları doğrulanıyor…'}}
 const combatEffects=createCombatEffects({document});
-for(const event of ['pagehide','popstate','heroarena:route-change','heroarena:connection-lost','heroarena:ready'])window.addEventListener(event,()=>combatEffects.clear());
-document.addEventListener('visibilitychange',()=>{if(document.hidden)combatEffects.clear()});
-$('motion').addEventListener('change',()=>{if(!$('motion').checked)combatEffects.clear()});
-window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',()=>combatEffects.clear());
+const heroAttacks=createHeroAttackPlayer({document});
+function clearCombatPresentation(){combatEffects.clear();heroAttacks.clear();}
+for(const event of ['pagehide','popstate','heroarena:route-change','heroarena:connection-lost','heroarena:ready'])window.addEventListener(event,()=>clearCombatPresentation());
+document.addEventListener('visibilitychange',()=>{if(document.hidden)clearCombatPresentation()});
+$('motion').addEventListener('change',()=>{if(!$('motion').checked)clearCombatPresentation()});
+window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',()=>clearCombatPresentation());
 const motion=()=> !document.hidden&&!document.body.classList.contains('arena-catching-up')&&$('motion').checked&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const duration=()=>Number($('speed').value);
 
@@ -542,25 +545,26 @@ function animateMove(e){
  const kind=combatEffectKind(e,hero);
  if(!kind)return; // Status changes are not extra strikes (haste, rage, weaken…).
  const {target}=combatEffectActors(document,e,kind);
- const heal=kind==='heal',shield=kind==='shield',special=!splash&&e.damageType==='special';
+ const heal=kind==='heal',shield=kind==='shield',special=!splash&&heroActionDuration(e)===1900;
  const ranged=splash||stationaryArenaAction(hero,e);
- const time=Math.max(320,Math.min(780,duration()*.72));
+ const time=duration();
  // Hero signatures replace the old center-screen comic banners.
  // Capture portrait centers before the cosmetic actor lunge changes bounds.
- playHeroAttack({document,effects:combatEffects,actor,target,hero,kind,special,splash,time});
+ const timing=heroAttacks.play({actor,target,hero,kind,special,splash,time,castKey:e.version??e.actionId??`${e.round}:${e.side}:${e.actorId}`});
+ const settled=actor.classList.contains('dead')||target?.classList.contains('dead');
  if(target&&!heal&&!shield){
-  if(!splash){
+  if(!splash&&!settled){
    const ar=actor.getBoundingClientRect(),tr=target.getBoundingClientRect();
    const dx=(tr.left+tr.width/2)-(ar.left+ar.width/2),dy=(tr.top+tr.height/2)-(ar.top+ar.height/2);
-   if(!ranged)combatEffects.animate(actor,[{transform:'translate(0,0) scale(1)'},{transform:`translate(${dx*.77}px,${dy*.77}px) scale(1.13)`,offset:.45},{transform:'translate(0,0) scale(1)'}],{duration:time,easing:'ease-in-out'});
-   else combatEffects.animate(actor,[{filter:'brightness(1)'},{filter:'brightness(1.35)',offset:.5},{filter:'brightness(1)'}],{duration:time*.8,easing:'ease-out'});
+   if(!ranged)combatEffects.animate(actor,[{transform:'translate(0,0) scale(1)'},{transform:'translate(0,0) scale(1.06)',offset:.28},{transform:`translate(${dx*.22}px,${dy*.22}px) scale(1.1)`,offset:.7},{transform:'translate(0,0) scale(1)'}],{duration:timing?.arrival||600,easing:'ease-in-out'});
+   else combatEffects.animate(actor,[{filter:'brightness(1)'},{filter:'brightness(1.35)',offset:.5},{filter:'brightness(1)'}],{duration:timing?.arrival||600,easing:'ease-out'});
   }
   // Localized impact instead of a full-screen flash: HP and heroes stay readable.
   // Target signature lands on arrival; authoritative HP remains immediate.
-  combatEffects.mark(target,[splash?'splash-target':'primary-target'],splash?450:850);
+  combatEffects.mark(target,[splash?'splash-target':'primary-target'],timing?.total||1400);
  }
  if(!splash){
-  combatEffects.mark(actor,[ranged?'attack-energy':'attack-melee',...(special?['special-cast']:[])],700);
+  combatEffects.mark(actor,[ranged?'attack-energy':'attack-melee',...(special?['special-cast']:[])],timing?.arrival||600);
  }
  const effectTarget=target;
  if(Number(e.value)>0)floatingArenaEffect(effectTarget,'arena-floating-damage'+(heal?' healing':shield?' shielding':e.critical?' critical':'')+(splash?' area-hit':''),(heal||shield?'+':'−')+Math.round(Number(e.value))+(e.critical?'!':''));
@@ -601,7 +605,7 @@ async function build(overrideResult){
  $('battle-arena').hidden=true;
  arenaWeatherReady=false;arenaWeather.clear();arenaSceneLayout.clear();
  document.body.classList.remove('arena-results');document.querySelector('.controls').hidden=false;
- combatEffects.clear();stop();if(victoryPendingTimer!==null){clearTimeout(victoryPendingTimer);victoryPendingTimer=null}resetArenaClock();arenaTeamRenderer.reset();battlePresentationFinished=false;cursor=0;events=[];$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;victoryRevealDone=false;if(victoryRevealTimer!==null){clearTimeout(victoryRevealTimer);victoryRevealTimer=null}if($('arena-victory-reveal'))$('arena-victory-reveal').hidden=true;$('next').disabled=true;$('play').disabled=true;
+ clearCombatPresentation();stop();if(victoryPendingTimer!==null){clearTimeout(victoryPendingTimer);victoryPendingTimer=null}resetArenaClock();arenaTeamRenderer.reset();battlePresentationFinished=false;cursor=0;events=[];$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;victoryRevealDone=false;if(victoryRevealTimer!==null){clearTimeout(victoryRevealTimer);victoryRevealTimer=null}if($('arena-victory-reveal'))$('arena-victory-reveal').hidden=true;$('next').disabled=true;$('play').disabled=true;
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
  try{
   let result=overrideResult;
@@ -661,6 +665,7 @@ window.addEventListener('heroarena:experimental-round-end',e=>{
  const fresh=(e.detail.events||[]).filter(entry=>Number.isSafeInteger(entry.version)&&entry.version>feedbackVersion);
  for(const entry of fresh){appendBattleFeedback(entry);feedbackVersion=Math.max(feedbackVersion,entry.version);}
  render();
+ heroAttacks.prune();
  $('round').textContent=String(e.detail.round||0);$('message').textContent=e.detail.finished?'Canlı savaş tamamlandı':'Canlı savaş · Tur '+e.detail.round;
  if(!e.detail.finished&&fresh.length)showBattleFeedback(fresh[fresh.length-1]);
  if(liveArenaMode&&e.detail.finished){finalResult={...finalResult,winner:[0,1].includes(e.detail.winner)?e.detail.winner:null,rounds:Number(e.detail.round)||0,teams:states,finalHealthTeams:captureFinalHeroHealth(snapshot),summary:e.detail.summary,log:[...(finalResult?.log||[]),...(e.detail.events||[])]};showVictoryReveal();}
@@ -751,6 +756,7 @@ function showVictoryReveal(){
 function revealVictoryNow(){
  if(victoryRevealDone||!finalResult)return;
  victoryRevealDone=true;
+ heroAttacks.clear(); // Existing victory deadline wins over any late decorative tail.
  pauseArenaClock();
  const overlay=$('arena-victory-reveal');
  if(!overlay){showBattleSummary();return}
@@ -931,15 +937,16 @@ function stop(){if(timer!==null){clearInterval(timer);timer=null}replayDueAt=0;p
 function advanceReplay(){
  if(timer===null||!replayDueAt)return;
  if(!document.hidden&&!arenaWakeLock)void requestArenaWakeLock();
- const interval=Math.max(50,duration());
+ const interval=heroPlaybackInterval(events[cursor],duration());
  const now=Date.now();
  // Skip animations for overdue moves; preserve the server-calculated event order/result.
  let steps=0;
  while(timer!==null&&cursor<events.length&&Date.now()>=replayDueAt&&steps<4){
   const overdue=now-replayDueAt>=interval;
   if(overdue)document.body.classList.add('arena-catching-up');
+  const actionInterval=heroPlaybackInterval(events[cursor],duration());
   step();
-  replayDueAt+=interval;
+  replayDueAt+=actionInterval;
   steps++;
  }
  document.body.classList.remove('arena-catching-up');
@@ -948,7 +955,7 @@ function advanceReplay(){
 function startReplay(){
  if(timer!==null)return;
  startArenaClock();
- replayDueAt=Date.now()+Math.max(50,duration());
+ replayDueAt=Date.now()+heroPlaybackInterval(events[cursor],duration());
  timer=setInterval(advanceReplay,Math.min(200,Math.max(50,duration())));
  syncArenaWeather();
  void requestArenaWakeLock();

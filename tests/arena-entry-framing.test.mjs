@@ -27,7 +27,7 @@ function fixture({auctionMode=false,initiallyVisible=false,fetchImpl=null,render
   positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roleAt:()=> 'tank',
   history:{replaceState(...args){calls.push(['history',...args])}},CustomEvent:class{constructor(type,options){this.type=type;this.detail=options?.detail;}},
   setInterval(fn,ms){intervals.set(++intervalId,{fn,ms});return intervalId},clearInterval:id=>intervals.delete(id),clearTimeout:()=>{},
-  combatEffects:{clear:()=>calls.push('clear-combat-effects')},resetVictoryChestPresentation:()=>calls.push('reset-chest'),stop:()=>calls.push('stop'),resetArenaClock:()=>calls.push('reset-clock'),
+  clearCombatPresentation:()=>calls.push('clear-combat-effects'),combatEffects:{clear:()=>calls.push('clear-combat-effects')},resetVictoryChestPresentation:()=>calls.push('reset-chest'),stop:()=>calls.push('stop'),resetArenaClock:()=>calls.push('reset-clock'),
   arenaTeamRenderer:{reset:()=>calls.push('reset-renderer')},arenaWeather:{clear:()=>calls.push('clear-weather')},arenaSceneLayout:{clear:()=>calls.push('clear-layout')},
   arenaTheme:{apply(value,key){calls.push('theme');context.appliedTheme={value,key};}},renderArenaCommanderMatchup:profiles=>{calls.push('matchup');context.profiles=profiles},
   createBattleReplayHealth:()=>({apply:entry=>entry,statusSnapshot:()=>[],finish:()=>calls.push('finish-replay-health')}),

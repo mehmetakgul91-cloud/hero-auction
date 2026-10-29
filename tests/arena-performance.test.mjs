@@ -1,3 +1,4 @@
+import {heroPlaybackInterval} from '../public/hero-battle-timing.js';
 import {getArenaLaneLayout} from '../public/arena-viewport.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -51,9 +52,9 @@ test('roster changes and rematches release old cards and cannot attach delayed p
 
 const source=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8');
 test('returning after a long pause yields after four moves and suppresses catch-up effects without losing events',()=>{
- let cursor=0,timer=1,replayDueAt=1,now=100000,finished=0,animated=0;const classes=new Set(),events=Array.from({length:101});
+ let cursor=0,timer=1,replayDueAt=1,now=200000,finished=0,animated=0;const classes=new Set(),events=Array.from({length:101});
  const document={hidden:false,body:{classList:{contains:name=>classes.has(name),add:name=>classes.add(name),remove:name=>classes.delete(name)}}};
- const context={document,window:{matchMedia:()=>({matches:false})},$ :()=>({checked:true}),Date:{now:()=>now},duration:()=>100,events,arenaWakeLock:{},arenaFinaleActive:false,
+ const context={heroPlaybackInterval,document,window:{matchMedia:()=>({matches:false})},$ :()=>({checked:true}),Date:{now:()=>now},duration:()=>100,events,arenaWakeLock:{},arenaFinaleActive:false,
   step:()=>{cursor++;if(context.motion())animated++;},stop:()=>timer=null,showVictoryReveal:()=>finished++};
  for(const [key,get,set] of [['cursor',()=>cursor,v=>cursor=v],['timer',()=>timer,v=>timer=v],['replayDueAt',()=>replayDueAt,v=>replayDueAt=v]])Object.defineProperty(context,key,{get,set});
  const code=source.slice(source.indexOf('const motion='),source.indexOf('const duration='))+source.slice(source.indexOf('function advanceReplay(){'),source.indexOf('function startReplay(){'));

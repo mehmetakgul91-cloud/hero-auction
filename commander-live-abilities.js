@@ -44,7 +44,7 @@ export function castLiveCommanderAbility(session,{side,ability,now=Date.now(),ma
  const cost=getCommanderAbilityCost(session.commanderIds?.[side]??'defense',ability);
  if(!cost)throw Error('Invalid commander ability');
  if(!Number.isFinite(now))throw Error('Invalid time');
- if(now<(session.effectUntil||0))throw Error('Komutan efekti sürüyor. 1,2 saniyelik efektin bitmesini bekle.');
+ if(now<(session.effectUntil||0))throw Error('Komutan efekti sürüyor. Bekleme süresinin bitmesini bekle.');
  if(ability==='normal'&&now<session.cooldownUntil[side])throw Error('Commander normal cooldown active');
  const pool=ability==='ultimate'?session.ultimateEnergy:session.energy;
  if(pool[side]<cost)throw Error('Insufficient commander energy');

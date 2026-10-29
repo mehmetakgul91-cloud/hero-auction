@@ -60,7 +60,7 @@ test('older repeated class cleanup cannot remove the newer cast and interrupted 
 test('integration registers interruption/motion cleanup and remains web-only',()=>{
  const code=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8');
  for(const event of ['pagehide','popstate','heroarena:route-change','heroarena:connection-lost','heroarena:ready','visibilitychange'])assert.ok(code.includes(event));
- assert.match(code,/combatEffects.clear\(\);stop\(\);if\(victoryPendingTimer/);
+ assert.match(code,/clearCombatPresentation\(\);stop\(\);if\(victoryPendingTimer/);
  assert.match(code,/if\(!motion\(\)\)return/);
  assert.doesNotMatch(readFileSync(new URL('../public/arena-combat-effects.js',import.meta.url),'utf8'),/\.hp\s*=|\.energy\s*=|\.winner\s*=/);
 });

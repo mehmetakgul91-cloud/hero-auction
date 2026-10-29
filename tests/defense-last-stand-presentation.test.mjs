@@ -112,7 +112,7 @@ test('new-rule logs show exact expiry while historical logs keep their one-hit d
 });
 test('new live snapshots remove old armed/active fields and battle completion clears supplied protection',()=>{
  const source=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8'),state=teams();Object.assign(state[0][0],{lastStandReady:true,lastStandPersistent:true,lastStandImmortalRounds:2});let receive;
- const context={window:{addEventListener:(name,fn)=>receive=fn},timer:null,victoryRevealDone:false,states:state,feedbackVersion:0,render(){},$:()=>({}),liveArenaMode:false};
+ const context={window:{addEventListener:(name,fn)=>receive=fn},timer:null,victoryRevealDone:false,states:state,feedbackVersion:0,heroAttacks:{prune(){}},render(){},$:()=>({}),liveArenaMode:false};
  const start=source.indexOf("window.addEventListener('heroarena:experimental-round-end',e=>{"),end=source.indexOf('\n});',start)+4;runInNewContext(source.slice(start,end),context);
  const active=teams();Object.assign(active[0][0],{lastStandTriggeredRound:8,lastStandImmortalUntilRound:10});receive({detail:{teams:active,round:8,events:[]}});assert.equal(state[0][0].lastStandReady,undefined);assert.equal(state[0][0].lastStandImmortalUntilRound,10);
  receive({detail:{teams:teams(),round:11,events:[]}});for(const key of lastStandKeys)assert.equal(state[0][0][key],undefined);

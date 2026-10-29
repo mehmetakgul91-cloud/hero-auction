@@ -1,8 +1,9 @@
+import {createReadableBattleClock} from './readable-battle-clock.js';
 // Experimental lifecycle owner. Not imported by production server.
 // Owns the registry and one server-side runner per match, with explicit cleanup.
 import {createLiveArenaRegistry} from './commander-live-arena-registry.js';
 import {createLiveArenaRunner} from './commander-live-arena-runner.js';
-export function createLiveArenaLifecycle({registry=createLiveArenaRegistry(),intervalMs=900,clock=()=>Date.now(),scheduler=setInterval,canceller=clearInterval,onError=()=>{},onFinish=()=>{}}={}){
+export function createLiveArenaLifecycle({registry=createLiveArenaRegistry(),intervalMs=900,readablePacing=false,clock=()=>Date.now(),scheduler=setInterval,canceller=clearInterval,onError=()=>{},onFinish=()=>{}}={}){
  const active=new Map();
  function complete(matchKey,state){
   const current=active.get(matchKey);
@@ -21,9 +22,10 @@ export function createLiveArenaLifecycle({registry=createLiveArenaRegistry(),int
  return {
   begin({matchKey,tokens,combat,options={}}){
    if(active.has(matchKey))throw Error('Live arena match already active');
-   registry.register({matchKey,tokens,combat,options});
+   const timeline=readablePacing?createReadableBattleClock({now:clock()}):null;
+   registry.register({matchKey,tokens,combat,options,timeline});
    try{
-    const runner=createLiveArenaRunner({registry,matchKey,token:tokens[0],intervalMs,clock,scheduler,canceller,onError:error=>{onError(error,matchKey)},onFinish:state=>complete(matchKey,state)});
+    const runner=createLiveArenaRunner({registry,matchKey,token:tokens[0],intervalMs,readablePacing,timeline,clock,scheduler,canceller,onError:error=>{onError(error,matchKey)},onFinish:state=>complete(matchKey,state)});
     active.set(matchKey,{runner,tokens:[...tokens]});
     runner.start();
     return {matchKey,running:true};
