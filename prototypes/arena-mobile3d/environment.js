@@ -60,7 +60,8 @@ export function createCitadel(arena){
  }
  for(let aisle=0;aisle<=bays;aisle++){
   const a=start+aisle*span;
-  for(let step=0;step<13;step++){const r=6.1+step*.375;block(Math.cos(a)*r,.08+step*.184,-Math.sin(a)*r,.4,.2,.7,0x92a4a2,-a);}
+  // Positive yaw aligns local X with (cos(a), -sin(a)); solid risers meet the foundation.
+  for(let step=0;step<13;step++){const r=6.1+step*.375,top=.18+step*.184;block(Math.cos(a)*r,(top-.45)/2,-Math.sin(a)*r,.4,top+.45,.7,0x92a4a2,a);}
  }
  // Continuous rear parapet with a light coping, broken by the ceremonial gate.
  wedge(10.78,11.05,start,end,2.65,.75,dark);wedge(10.73,11.1,start,end,3.4,.15,pale);
