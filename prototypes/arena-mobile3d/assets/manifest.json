@@ -1,0 +1,120 @@
+{
+  "generatedAt": "2026-10-30",
+  "generator": "Meshy 7.1 Flagship",
+  "sourceSettings": {
+    "geometry": "Ultra 2K",
+    "texture": "4K",
+    "pose": "A-Pose",
+    "remesh": "30K triangle",
+    "rig": "Humanoid / Mixamo",
+    "workspaceLicenseSelection": "Private"
+  },
+  "models": [
+    {
+      "id": "obsidyen",
+      "file": "obsidyen.glb",
+      "bytes": 5357580,
+      "sha256": "43edae5b554a2c14da8d4696825838a3dc8ed6cce668cdc031aea6e2f0f74c81",
+      "triangles": 30929,
+      "skinJoints": 77,
+      "clips": [
+        "Running",
+        "Walking",
+        "Combat_Stance",
+        "Heavy_Hammer_Swing",
+        "Hit_Reaction"
+      ],
+      "sourceSha256": "5506e6b5091298d0f5f1738695d22e67e95ed65c53408733a3e57b7b8f1d7560",
+      "textures": [
+        {
+          "image": 0,
+          "from": [
+            4096,
+            4096
+          ],
+          "to": [
+            512,
+            512
+          ],
+          "bytes": 560528
+        },
+        {
+          "image": 1,
+          "from": [
+            4096,
+            4096
+          ],
+          "to": [
+            1024,
+            1024
+          ],
+          "bytes": 377392
+        },
+        {
+          "image": 2,
+          "from": [
+            4096,
+            4096
+          ],
+          "to": [
+            512,
+            512
+          ],
+          "bytes": 421009
+        }
+      ]
+    },
+    {
+      "id": "morvan",
+      "file": "morvan.glb",
+      "bytes": 5139836,
+      "sha256": "bcca24e35ab23f380122fd9e5407ed26f28ac7a594748bf1a4883a415a8ccab2",
+      "triangles": 31095,
+      "skinJoints": 79,
+      "clips": [
+        "Running",
+        "Walking",
+        "mage_soell_cast"
+      ],
+      "sourceSha256": "3ee605a0a6ab5817f54defc6e761d4fd626cd3f8f44c3e1221c0792839b3388b",
+      "textures": [
+        {
+          "image": 0,
+          "from": [
+            4096,
+            4096
+          ],
+          "to": [
+            512,
+            512
+          ],
+          "bytes": 554921
+        },
+        {
+          "image": 1,
+          "from": [
+            4096,
+            4096
+          ],
+          "to": [
+            1024,
+            1024
+          ],
+          "bytes": 413777
+        },
+        {
+          "image": 2,
+          "from": [
+            4096,
+            4096
+          ],
+          "to": [
+            512,
+            512
+          ],
+          "bytes": 400544
+        }
+      ]
+    }
+  ]
+}
