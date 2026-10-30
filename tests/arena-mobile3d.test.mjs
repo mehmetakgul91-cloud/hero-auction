@@ -45,6 +45,13 @@ test('formation follows authoritative lane and slot even when team array is reor
  const hero=initial[0][0];hero.lane='front';const moved=formationSlots(initial).get('0:'+hero.id);assert.equal(moved.z,1.25);
 });
 
+test('wider visual formation preserves hero scale, combat plans and target contact',()=>{
+ const slots=formationSlots(fixture.initial);for(const team of fixture.initial)for(const hero of team){const side=fixture.initial.indexOf(team),p=slots.get(side+':'+hero.id);assert.ok(Math.abs(p.x)<10.5/2-.6);assert.ok(Math.abs(p.z)<10.1/2-.6);}
+ const row=fixture.initial[0].filter(h=>h.lane==='back').sort((a,b)=>a.position-b.position);
+ assert.ok(Math.abs(slots.get('0:'+row[1].id).x-slots.get('0:'+row[0].id).x-2.46)<1e-9);
+ for(const [i,frame] of fixture.frames.entries()){const plan=planAction(frame,i?fixture.frames[i-1].teams:fixture.initial,i);if(!plan.actorKey||!plan.targetKey)continue;const from=slots.get(plan.actorKey),to=slots.get(plan.targetKey);if(plan.moving){const end=pathPosition(from,to,1);assert.ok(Math.abs(Math.hypot(end.x-to.x,end.z-to.z)-1.05)<1e-8);assert.deepEqual(pathPosition(from,to,0),from);}if(plan.kind==='cast'){assert.equal(sampleAction(plan,.5).projectileProgress,1);assert.equal(plan.duration,1.35);}if(plan.kind==='melee')assert.equal(plan.duration,1.65);}
+});
+
 test('movement contacts the chosen target, returns home and never creates a second combat calculation',()=>{
  for(const [index,frame] of fixture.frames.entries()){
   const plan=planAction(frame,index?fixture.frames[index-1].teams:fixture.initial,index);
@@ -160,8 +167,10 @@ test('repeated scene replays keep pools bounded and teardown releases shared geo
  try{
   globalThis.document={createElement:element};globalThis.window={devicePixelRatio:3};globalThis.ResizeObserver=class {observe(){}disconnect(){disconnected++;}};
   const canvas={getContext:type=>type==='webgl2'?null:context,getBoundingClientRect:()=>({width:390,height:440,left:0,top:0}),addEventListener(){},removeEventListener(){removed++;}};
-  const {MobileArena}=await import('../.artifacts/mobile3d/scene.js');const scene=new MobileArena(canvas,element(),element());scene.kit=await loadCharacterKit(testModelLoad);scene.setTeams(fixture.initial);
+  const {MobileArena}=await import('../.artifacts/mobile3d/scene.js');let picked=null;const scene=new MobileArena(canvas,element(),element(),{onSelect:key=>picked=key});scene.kit=await loadCharacterKit(testModelLoad);scene.setTeams(fixture.initial);
   scene.angle=2;scene.controls.yaw=.4;scene.controls.zoom=1.3;scene.focus([...scene.models.keys()][0]);assert.equal(scene.angle,0);assert.equal(scene.controls.yaw,0);assert.equal(scene.controls.zoom,1);scene.focus(null);assert.equal(scene.angle,2);assert.equal(scene.controls.yaw,.4);assert.equal(scene.controls.zoom,1.3);
+  // Real GLB picking uses the relocated model's world position; hidden focus peers cannot steal a tap.
+  for(const m of [...scene.models.values()].slice(0,2)){assert.deepEqual(m.root.scale.toArray(),[1,1,1]);scene.focus(m.key);scene.render(0,0);scene.scene.updateMatrixWorld(true);picked=null;const center=scene.project(m.base.clone().add(new Vector3(0,1.15,0)));for(const dy of [0,-8,8,-16,16]){scene.click({clientX:center.x,clientY:center.y+dy});if(picked)break;}assert.equal(picked,m.key);scene.focus(null);}
   const resources=scene.resources.size;const geometryCount=scene.kit.resources.size;
   for(let i=0;i<3;i++){scene.reset(fixture.initial);for(const frame of fixture.frames){scene.start(frame);scene.impact(frame);scene.end();}}
   assert.equal(scene.models.size,10);assert.equal(scene.floatPool.length,16);assert.equal(scene.pulses.length,12);assert.equal(scene.resources.size,resources);assert.equal(scene.kit.resources.size,geometryCount);

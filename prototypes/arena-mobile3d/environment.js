@@ -1,11 +1,12 @@
 import * as T from 'three';
+import {ARENA_WIDTH_SCALE,COMBAT_FLOOR} from './arena-layout.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {stoneTexture,bevelBlock,softContactTexture} from './environment-materials.js';
 
 // Authored amphitheatre: broad architectural masses, a calm combat floor and one royal focal gate.
 // Shared instanced masonry; no downloaded art, real-time shadows or post-processing.
 export function createCitadel(arena){
- const keep=value=>arena.keep(value),scene=arena.scene,software=arena.renderer.isSoftwareRenderer;
+ const keep=value=>arena.keep(value),scene=arena.scene,software=arena.renderer.isSoftwareRenderer,environmentStart=scene.children.length;
  const grain=software?null:keep(stoneTexture(64));
  const stone=arena.mat(0xffffff,{roughness:.88,metalness:.03,map:grain});
  const gold=arena.mat(0xc6a66a,{roughness:.43,metalness:.62});
@@ -16,7 +17,7 @@ export function createCitadel(arena){
  const cube=keep(bevelBlock()),items=[];
  const block=(x,y,z,sx,sy,sz,color=0x577781,rotation=0)=>items.push({x,y,z,sx,sy,sz,color,rotation});
  const mesh=(geo,mat,x=0,y=0,z=0)=>arena.mesh(geo,mat,x,y,z);
- arena.landmarks=[];arena.architecture={name:'Crown Amphitheatre',tiers:4,sections:10,materials:'stone / bronze / teal cloth',terraceDepth:1.12,aisleWidth:.7,combatFloor:{width:8.75,depth:10.1},bounds:{x:11.4,z:11.4,y:8}};
+ arena.landmarks=[];arena.architecture={name:'Crown Amphitheatre',tiers:4,sections:10,materials:'stone / bronze / teal cloth',terraceDepth:1.12,aisleWidth:.7,combatFloor:COMBAT_FLOOR,widthScale:ARENA_WIDTH_SCALE,bounds:{x:11.4*ARENA_WIDTH_SCALE,z:11.4,y:8}};
  // Octagonal foundation, exposed lower retaining wall and continuous promenade.
  for(const [r,h,y,color] of [[11.25,.45,-1.55,0x142936],[11,.8,-.95,0x314d59],[11.15,.18,-.48,0x657e83]]){
   const base=mesh(new T.CylinderGeometry(r,r+.18,h,12),arena.mat(color,{roughness:.94,map:grain}),0,y,0);base.rotation.y=Math.PI/12;
@@ -109,5 +110,7 @@ export function createCitadel(arena){
   for(const [material,objects] of groups){if(objects.length<2)continue;const geometries=objects.map(o=>{o.updateMatrix();const g=o.geometry.clone().applyMatrix4(o.matrix);if(g.index){const flat=g.toNonIndexed();g.dispose();return flat;}return g;});const merged=keep(mergeGeometries(geometries));geometries.forEach(g=>g.dispose());objects.forEach(o=>scene.remove(o));scene.add(new T.Mesh(merged,material));}
  }
  if(!software){const shadow=mesh(new T.PlaneGeometry(25,25),keep(new T.MeshBasicMaterial({map:keep(softContactTexture(64)),transparent:true,opacity:.7,depthWrite:false})),0,-1.9,0);shadow.rotation.x=-Math.PI/2;}
+ // Widen only authored architecture and its positions; character rigs are added later and never scaled.
+ for(const object of scene.children.slice(environmentStart)){object.position.x*=ARENA_WIDTH_SCALE;object.scale.x*=ARENA_WIDTH_SCALE;}
 }
 export function updateCitadelView(){ /* Open foreground and a recessed floor avoid camera-dependent disappearing architecture. */ }

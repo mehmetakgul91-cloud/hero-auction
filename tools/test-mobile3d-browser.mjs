@@ -59,7 +59,7 @@ try{
    // Review-only DOM presentation: hide nameplates consistently; do not change gameplay UI/code.
    await page.addStyleTag({content:'#viewport{position:fixed!important;inset:0!important;width:1200px!important;height:900px!important;max-width:none!important;z-index:9999!important;background:#0c1420}#labels,.label-leader,#camera,#camera-reset{display:none!important}#arena{outline:none!important}.corner-caption{font-size:13px!important}'});
    await page.locator('.corner-caption').evaluate(el=>{el.innerHTML='<span>TAÇ AMFİTİYATROSU · MİMARİ YÖN ÖNERİSİ</span><small>AYNI GERÇEK 3D SAHNE · CPU WEBGL RENDER · FİNAL SANAT DEĞİL</small>';});
-   await canvas.focus();await page.keyboard.press('Home');await page.keyboard.press('+');await page.keyboard.press('+');await shot('art-cross');
+   await canvas.focus();await page.keyboard.press('Home');await page.keyboard.press('+');await page.keyboard.press('+');await page.keyboard.press('+');await shot('art-cross');
    for(let i=0;i<6;i++)await page.keyboard.press('ArrowRight');await shot('art-side');
    await page.keyboard.press('Home');for(let i=0;i<4;i++)await page.keyboard.press('+');await shot('art-close');
   }
