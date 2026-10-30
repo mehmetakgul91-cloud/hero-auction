@@ -84,7 +84,7 @@ export async function loadCharacterKit(load=url=>new GLTFLoader().loadAsync(url)
  }
  return {create(role){
   const type=role==='tank'?'tank':'mage',source=sources[type],root=new T.Group(),body=new T.Group(),model=clone(source.scene);root.add(body);body.add(model);
-  const box=new T.Box3().setFromObject(model),height=box.max.y-box.min.y,scale=1.85/height;model.scale.multiplyScalar(scale);model.position.set(-(box.max.x+box.min.x)*scale/2,.18-box.min.y*scale,-(box.max.z+box.min.z)*scale/2);
+  const box=new T.Box3().setFromObject(model),height=box.max.y-box.min.y,scale=1.6/height;model.scale.multiplyScalar(scale);model.position.set(-(box.max.x+box.min.x)*scale/2,.18-box.min.y*scale,-(box.max.z+box.min.z)*scale/2);
   model.traverse(o=>{if(o.isSkinnedMesh)o.frustumCulled=false;});const motion=new CharacterMotion(model,source.animations,type);motion.sample(0);props(model,type);const value={root,body,model,motion,type};instances.push(value);return value;
  },dispose(){for(const m of instances){m.motion.dispose();m.model.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.dispose();});}for(const r of resources)r.dispose();},sources,resources};
 }

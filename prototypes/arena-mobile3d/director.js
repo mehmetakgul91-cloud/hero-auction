@@ -1,3 +1,4 @@
+import {ARENA_WIDTH_SCALE} from './arena-layout.js';
 import {primaryAction} from './shared/arena-3d-timeline.js';
 import {heroCombatPresentation} from './shared/hero-combat-presentation.js';
 
@@ -14,7 +15,7 @@ export function formationSlots(teams){
  teams.forEach((team,side)=>{
   for(const lane of ['front','back']){
    const row=team.filter(h=>h.lane===lane).sort((a,b)=>a.position-b.position||a.id.localeCompare(b.id));
-   row.forEach((hero,i)=>slots.set(side+':'+hero.id,{x:(i-(row.length-1)/2)*Math.min(2.05,6.2/Math.max(1,row.length-1)),y:.12,z:(side?-1:1)*(lane==='front'?1.25:3.45)}));
+   row.forEach((hero,i)=>slots.set(side+':'+hero.id,{x:ARENA_WIDTH_SCALE*(side?1:-1)*(lane==='front'?1.25+(i%2)*.38:3.45-(i%2)*.32),y:.12,z:ARENA_WIDTH_SCALE*(i-(row.length-1)/2)*Math.min(2.05,6.2/Math.max(1,row.length-1))}));
   }
  });return slots;
 }

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {execFileSync} from 'node:child_process';
-import {Box3,Vector3,Scene,OrthographicCamera} from 'three';
+import {Box3,Raycaster,Vector3,Scene,OrthographicCamera} from 'three';
 import {battleOutcome} from '../battle-result.js';
 import {generateMobileReplay,compactReplay,IDS} from '../tools/generate-mobile3d-replay.mjs';
 import {heroCombatPresentation} from '../public/hero-combat-presentation.js';
@@ -42,7 +42,14 @@ test('director crosses every animation phase once and preserves server snapshots
 test('formation follows authoritative lane and slot even when team array is reordered',()=>{
  const initial=structuredClone(fixture.initial),expected=formationSlots(initial);
  for(const team of initial)team.reverse();assert.deepEqual(formationSlots(initial),expected);
- const hero=initial[0][0];hero.lane='front';const moved=formationSlots(initial).get('0:'+hero.id);assert.equal(moved.z,1.25);
+ const hero=initial[0][0];hero.lane='front';const moved=formationSlots(initial).get('0:'+hero.id);assert.equal(moved.x,-1.5);
+});
+
+test('wider visual formation preserves hero scale, combat plans and target contact',()=>{
+ const slots=formationSlots(fixture.initial);for(const team of fixture.initial)for(const hero of team){const side=fixture.initial.indexOf(team),p=slots.get(side+':'+hero.id);assert.ok(Math.abs(p.x)<10.5/2-.6);assert.ok(Math.abs(p.z)<10.1/2-.6);assert.ok(((Math.abs(p.x)+.46)/6.3)**2+((Math.abs(p.z)+.46)/5.05)**2<1,'whole hero contact footprint stays on oval stone');}
+ const row=fixture.initial[0].filter(h=>h.lane==='back').sort((a,b)=>a.position-b.position);
+ assert.ok(Math.abs(slots.get('0:'+row[1].id).z-slots.get('0:'+row[0].id).z-2.46)<1e-9);
+ for(const [i,frame] of fixture.frames.entries()){const plan=planAction(frame,i?fixture.frames[i-1].teams:fixture.initial,i);if(!plan.actorKey||!plan.targetKey)continue;const from=slots.get(plan.actorKey),to=slots.get(plan.targetKey);if(plan.moving){const end=pathPosition(from,to,1);assert.ok(Math.abs(Math.hypot(end.x-to.x,end.z-to.z)-1.05)<1e-8);assert.deepEqual(pathPosition(from,to,0),from);}if(plan.kind==='cast'){assert.equal(sampleAction(plan,.5).projectileProgress,1);assert.equal(plan.duration,1.35);}if(plan.kind==='melee')assert.equal(plan.duration,1.65);}
 });
 
 test('movement contacts the chosen target, returns home and never creates a second combat calculation',()=>{
@@ -160,10 +167,21 @@ test('repeated scene replays keep pools bounded and teardown releases shared geo
  try{
   globalThis.document={createElement:element};globalThis.window={devicePixelRatio:3};globalThis.ResizeObserver=class {observe(){}disconnect(){disconnected++;}};
   const canvas={getContext:type=>type==='webgl2'?null:context,getBoundingClientRect:()=>({width:390,height:440,left:0,top:0}),addEventListener(){},removeEventListener(){removed++;}};
-  const {MobileArena}=await import('../.artifacts/mobile3d/scene.js');const scene=new MobileArena(canvas,element(),element());scene.kit=await loadCharacterKit(testModelLoad);scene.setTeams(fixture.initial);
+  const {MobileArena}=await import('../.artifacts/mobile3d/scene.js');let picked=null;const scene=new MobileArena(canvas,element(),element(),{onSelect:key=>picked=key});scene.kit=await loadCharacterKit(testModelLoad);scene.setTeams(fixture.initial);let architectureTriangles=0;for(const o of scene.environmentObjects)o.traverse(n=>{if(n.isMesh)architectureTriangles+=(n.geometry.index?.count||n.geometry.attributes.position.count)/3;});assert.ok(architectureTriangles+310286+15564*2+8933*4+4726<400000,'complete architecture and all shared asset instances stay below 400k triangles');
+  // Each architectural foot has a connected terrace below it, including side-camera silhouettes.
+  scene.scene.updateMatrixWorld(true);const support=scene.scene.getObjectByName('connected-terrace');assert.ok(support);for(const side of [-1,1])for(const [x,z] of [[1.6,-5.95],[4.92,-7.55],[3.6,-8],[6.96,-6.5],[8.76,-4.5],[9.66,-4.05],[9.66,-2.45]]){const ray=new Raycaster(new Vector3(side*x,1,z),new Vector3(0,-1,0));assert.ok(ray.intersectObject(support).length,'architecture footprint has grounded rear/side terrace');}
+  // Default is battle-focused: floor spans most of the viewport, lineup remains inside it.
+  scene.resetCamera();const corners=[[-6.3,-5.05],[-6.3,5.05],[6.3,-5.05],[6.3,5.05]].map(([x,z])=>scene.project(new Vector3(x,0,z)));const coverage=(Math.max(...corners.map(p=>p.x))-Math.min(...corners.map(p=>p.x)))/scene.width;assert.ok(coverage>.75&&coverage<1,'combat floor dominates width without cropping');for(const m of scene.models.values()){const p=scene.project(m.base.clone().add(new Vector3(0,1.2,0)));assert.ok(p.x>0&&p.x<scene.width&&p.y>0&&p.y<scene.height,'full lineup stays inside combat framing');}
+  canvas.getBoundingClientRect=()=>({width:1680,height:945,left:0,top:0});scene.resize();const crystal=scene.project(scene.landmarks[0].position),left=scene.project(new Vector3(-6.3,.13,0)),right=scene.project(new Vector3(6.3,.13,0));assert.ok(crystal.y>10&&crystal.y<945*.3,'rear crystal remains visible in approved wide composition');assert.ok((right.x-left.x)/1680>.57,'oval stage retains majority width while rear architecture is fully framed');const crest=scene.project(new Vector3(0,3.65,-5.6));assert.ok(crest.y>12,'full architectural crest has safe top margin');canvas.getBoundingClientRect=()=>({width:390,height:440,left:0,top:0});scene.resize();
   scene.angle=2;scene.controls.yaw=.4;scene.controls.zoom=1.3;scene.focus([...scene.models.keys()][0]);assert.equal(scene.angle,0);assert.equal(scene.controls.yaw,0);assert.equal(scene.controls.zoom,1);scene.focus(null);assert.equal(scene.angle,2);assert.equal(scene.controls.yaw,.4);assert.equal(scene.controls.zoom,1.3);
+  // Real GLB picking uses the relocated model's world position; hidden focus peers cannot steal a tap.
+  for(const m of [...scene.models.values()].slice(0,2)){assert.deepEqual(m.root.scale.toArray(),[1,1,1]);scene.focus(m.key);scene.render(0,0);scene.scene.updateMatrixWorld(true);picked=null;const center=scene.project(m.base.clone().add(new Vector3(0,1.15,0)));for(const dy of [0,-8,8,-16,16]){scene.click({clientX:center.x,clientY:center.y+dy});if(picked)break;}assert.equal(picked,m.key);scene.focus(null);}
   const resources=scene.resources.size;const geometryCount=scene.kit.resources.size;
   for(let i=0;i<3;i++){scene.reset(fixture.initial);for(const frame of fixture.frames){scene.start(frame);scene.impact(frame);scene.end();}}
+  // Inspectors expose copies only; final death and impact effects fully settle in one bounded render.
+  const diagnostics=scene.inspectCombat(),first=[...scene.models.values()][0];diagnostics.units[0].hp=-999;diagnostics.units[0].position[0]=999;assert.notEqual(first.hero.hp,-999);assert.notEqual(first.root.position.x,999);
+  scene.render(1.2,1);assert.ok([...scene.models.values()].filter(m=>m.dead).every(m=>!m.body.visible));assert.equal(scene.inspectCombat().effects.floats,0);assert.equal(scene.inspectCombat().effects.pulses,0);
+  scene.reset(fixture.initial);assert.ok(scene.inspectCombat().units.every(m=>m.hp>0&&!m.dead&&m.visible));
   assert.equal(scene.models.size,10);assert.equal(scene.floatPool.length,16);assert.equal(scene.pulses.length,12);assert.equal(scene.resources.size,resources);assert.equal(scene.kit.resources.size,geometryCount);
   let disposed=0;for(const geometry of scene.kit.resources)geometry.addEventListener('dispose',()=>disposed++);scene.dispose();assert.equal(disposed,geometryCount);assert.equal(disconnected,1);assert.equal(removed,7);assert.equal(scene.models.size,0);
  }finally{for(const [key,value] of Object.entries(originals)){if(value)Object.defineProperty(globalThis,key,value);else delete globalThis[key];}}
@@ -171,4 +189,19 @@ test('repeated scene replays keep pools bounded and teardown releases shared geo
 
 test('model loading errors identify the missing asset instead of silently substituting a placeholder',async()=>{
  await assert.rejects(()=>loadCharacterKit(async()=>{throw Error('404');}),/obsidyen.glb yüklenemedi/);
+});
+
+test('shipping Meshy guardian is a genuine static textured GLB within combined scene budget',async()=>{
+ const {loadArenaAssets}=await import('../.artifacts/mobile3d/arena-assets.js');const bytes=fs.readFileSync(new URL('../prototypes/arena-mobile3d/assets/arena-guardian.glb',import.meta.url)),n=bytes.readUInt32LE(12),doc=JSON.parse(bytes.subarray(20,20+n));assert.equal(bytes.readUInt32LE(8),bytes.length);assert.equal(doc.skins?.length||0,0);assert.equal(doc.animations?.length||0,0);assert.equal(doc.materials.length,1);assert.equal(doc.images.length,3);assert.ok(doc.images.every(i=>i.bufferView!==undefined));assert.ok(doc.asset.extras.mobile3d.textures.every(t=>Math.max(...t.to)<=1024));assert.ok(bytes.length<1800000);
+ doc.buffers[0].uri='data:application/octet-stream;base64,'+bytes.subarray(28+n).toString('base64');doc.materials=doc.materials.map(()=>({}));delete doc.images;delete doc.textures;globalThis.ProgressEvent??=class{};const kit=await loadArenaAssets(()=>new GLTFLoader().parseAsync(JSON.stringify(doc),''));assert.equal(kit.diagnostics.triangles,15564);assert.equal(kit.diagnostics.meshes,1);assert.ok(310286+40000+kit.diagnostics.triangles*2<400000,'ten real heroes + conservative environment budget + two guardians');const a=kit.create(),b=kit.create();assert.notEqual(a,b);const bounds=new Box3().setFromObject(a);assert.ok(bounds.getSize(new Vector3()).y<=2.50001);kit.dispose();
+});
+
+
+test('shipping Meshy facade remains a single shared static asset within the full arena budget',async()=>{
+ const {loadTribuneFacade,attachTribuneFacades}=await import('../.artifacts/mobile3d/arena-assets.js');const bytes=fs.readFileSync(new URL('../prototypes/arena-mobile3d/assets/arena-tribune-facade.glb',import.meta.url)),n=bytes.readUInt32LE(12),doc=JSON.parse(bytes.subarray(20,20+n));assert.equal(bytes.readUInt32LE(8),bytes.length);assert.equal(doc.skins?.length||0,0);assert.equal(doc.animations?.length||0,0);assert.equal(doc.materials.length,1);assert.equal(doc.images.length,3);assert.ok(doc.asset.extras.mobile3d.textures.every(t=>Math.max(...t.to)<=512));assert.ok(bytes.length<800000);
+ doc.buffers[0].uri='data:application/octet-stream;base64,'+bytes.subarray(28+n).toString('base64');doc.materials=doc.materials.map(()=>({}));delete doc.images;delete doc.textures;globalThis.ProgressEvent??=class{};const kit=await loadTribuneFacade(()=>new GLTFLoader().parseAsync(JSON.stringify(doc),''));assert.equal(kit.diagnostics.triangles,8933);assert.ok(310286+12000+15564*2+8933*4<400000);const T=await import('three'),arena={scene:new T.Scene(),environmentObjects:[]};attachTribuneFacades(arena,kit);assert.equal(kit.instances.length,4);for(const root of kit.instances){const box=new Box3().setFromObject(root);assert.ok(box.max.y<1.60);const center=box.getCenter(new Vector3());assert.ok(Math.abs(center.x)>5.25||Math.abs(center.z)>5.05,'facades stay outside the combat floor');}kit.dispose();assert.equal(arena.scene.children.length,0);
+});
+
+test('carved ivory arch ships real open static geometry within mobile bounds',async()=>{
+ const {loadCrystalArch,attachCrystalArch}=await import('../.artifacts/mobile3d/arena-assets.js');const bytes=fs.readFileSync(new URL('../prototypes/arena-mobile3d/assets/arena-crystal-arch.glb',import.meta.url)),n=bytes.readUInt32LE(12),doc=JSON.parse(bytes.subarray(20,20+n));assert.ok(bytes.length<800000);assert.equal(doc.skins?.length||0,0);assert.equal(doc.animations?.length||0,0);assert.equal(doc.materials.length,1);assert.equal(doc.images.length,3);assert.ok(doc.asset.extras.mobile3d.textures.every(t=>Math.max(...t.to)<=1024));doc.buffers[0].uri='data:application/octet-stream;base64,'+bytes.subarray(28+n).toString('base64');doc.materials=doc.materials.map(()=>({}));delete doc.images;delete doc.textures;globalThis.ProgressEvent??=class{};const kit=await loadCrystalArch(()=>new GLTFLoader().parseAsync(JSON.stringify(doc),''));assert.equal(kit.diagnostics.triangles,4726);const T=await import('three'),arena={scene:new T.Scene(),environmentObjects:[],renderer:{isSoftwareRenderer:false}};attachCrystalArch(arena,kit);const box=new Box3().setFromObject(kit.instances[0]);assert.ok(box.max.y<=3.62001);assert.ok(box.getSize(new Vector3()).x<=3.40001);assert.ok(box.min.z< -5.7);kit.dispose();assert.equal(arena.scene.children.length,0);
 });

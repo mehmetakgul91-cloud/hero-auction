@@ -1,0 +1,25 @@
+{
+  "generator": "Meshy T2.5",
+  "generatedAt": "2026-10-30",
+  "purpose": "Complete ivory / turquoise / bronze shallow tribune architecture; four shared instances replacing earlier decorative facade",
+  "sourceSettings": {
+    "topology": "Smart topology, 10k target",
+    "texture": "2K",
+    "visibility": "private"
+  },
+  "creditsSpent": 15,
+  "originalSha256": "2199927f79f13692edc296185a9e6189a2e0a100ebaa07698bfffc7746f71b14",
+  "originalBytes": 7002116,
+  "gameFile": "arena-tribune-facade.glb",
+  "gameSha256": "0f5a279c7b4f58d62008f2f0117096933570ad598f4892a8a0d3bcd51fc4d44c",
+  "gameBytes": 710252,
+  "triangles": 8933,
+  "meshes": 1,
+  "materials": 1,
+  "textures": {
+    "basecolor": 512,
+    "normal": 256,
+    "metallicRoughness": 256
+  },
+  "optimization": "Embedded textures repacked only; original mesh topology preserved. Original retained outside repository."
+}

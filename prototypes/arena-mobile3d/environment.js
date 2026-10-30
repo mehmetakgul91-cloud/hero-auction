@@ -1,96 +1,105 @@
 import * as T from 'three';
-import {stoneTexture,bevelBlock,softContactTexture} from './environment-materials.js';
+import {COMBAT_FLOOR} from './arena-layout.js';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {stoneTexture,softContactTexture,mineralFloorTexture,mineralFloorNormalTexture} from './environment-materials.js';
 
-// Shared geometry and instanced stonework keep the arena affordable on mobile.
+// Whole-scene ivory sanctuary: one oval stage, shallow seating and an open crystal arch.
+// Authoritative combat never imports this presentation module.
 export function createCitadel(arena){
- const {scene}=arena,keep=value=>arena.keep(value);
- const stone=arena.mat(0xffffff,{roughness:.87,metalness:.08,map:arena.renderer.isSoftwareRenderer?null:keep(stoneTexture())}),gold=arena.mat(0xd2a34c,{roughness:.4,metalness:.7});
- const foliage=arena.mat(0xffffff,{roughness:1,metalness:0});
- const cube=keep(bevelBlock()),rock=keep(new T.IcosahedronGeometry(1,0));
- const column=keep(new T.CylinderGeometry(.19,.23,1,8));
- const stonework=[],rocks=[],trim=[],leaves=[];arena.landmarks=[];
- const part=(list,x,y,z,sx,sy,sz,color=0x6f777b,rotation=0)=>list.push({x,y,z,sx,sy,sz,color,rotation});
- function batch(geometry,material,items){
-  const matrix=new T.Matrix4(),q=new T.Quaternion(),scale=new T.Vector3(),position=new T.Vector3(),up=new T.Vector3(0,1,0);
-  const mesh=new T.InstancedMesh(geometry,material,items.length);
-  items.forEach((p,i)=>{matrix.compose(position.set(p.x,p.y,p.z),q.setFromAxisAngle(up,p.rotation),scale.set(p.sx,p.sy,p.sz));
-   if(arena.renderer.isSoftwareRenderer){const mat=keep(material.clone());mat.color.multiply(new T.Color(p.color));const individual=new T.Mesh(geometry,mat);individual.applyMatrix4(matrix);individual.userData.softwareLayer=p.y>=0?-1:-2;scene.add(individual);}
-   else{mesh.setMatrixAt(i,matrix);mesh.setColorAt(i,new T.Color(p.color));}
-  });if(!arena.renderer.isSoftwareRenderer){mesh.receiveShadow=true;scene.add(mesh);}
+ const keep=x=>arena.keep(x),scene=arena.scene,software=arena.renderer.isSoftwareRenderer;
+ const grain=software?null:keep(stoneTexture(128));
+ const ivory=arena.mat(0xf4e6ca,{roughness:.78,metalness:0,map:grain});
+ const pale=arena.mat(0xfff5de,{roughness:.7,metalness:0,map:grain});
+ const bronze=arena.mat(0xc49b57,{roughness:.45,metalness:.55});
+ const teal=arena.mat(0x397b88,{roughness:.68,metalness:.05,map:grain});
+ const blue=arena.mat(0x577a8d,{roughness:.8,map:grain});
+ const crystal=arena.mat(0x42d8d2,{roughness:.16,metalness:.25,emissive:0x087a83,emissiveIntensity:.28});
+ const mesh=(g,m,x=0,y=0,z=0)=>arena.mesh(g,m,x,y,z);
+ const oval=(rx,rz,y,h,material)=>{const m=mesh(new T.CylinderGeometry(1,1,h,96),material,0,y,0);m.scale.set(rx,1,rz);return m;};
+ const ring=(rx,rz,width,y,material)=>{const g=new T.RingGeometry(1-width/rx,1,64),m=mesh(g,material,0,y,0);m.rotation.x=-Math.PI/2;m.scale.set(rx,rz,1);return m;};
+ const block=(x,y,z,w,h,d,material=ivory)=>mesh(new T.BoxGeometry(w,h,d),material,x,y,z);
+ const column=(x,z,height=1.5)=>{const g=mesh(new T.CylinderGeometry(.135,.18,height,10),ivory,x,height/2-.05,z);block(x,-.03,z,.46,.18,.46,pale);block(x,height-.02,z,.48,.12,.48,pale);block(x,height+.055,z,.37,.025,.37,bronze);return g;};
+ arena.architecture={name:'Ivory Sky Sanctuary',tiers:3,sections:4,materials:'ivory limestone / brushed bronze / turquoise stone',floorStyle:'continuous-oval-ivory',floorCells:1,terraceDepth:.6,aisleWidth:.85,combatFloor:COMBAT_FLOOR,bounds:{x:11.3,z:9.5,y:6.5}};
+ arena.landmarks=[];
+ // One load-bearing rear terrace connects all seating modules; no floating asset islands.
+ // One connected annular terrace grounds every peripheral foot; no isolated floating islands.
+ const terrace=new T.Shape();for(let i=0;i<=96;i++){const a=i/96*Math.PI*2,front=Math.max(0,-Math.sin(a)),rx=9.3-front*2.1,rz=8.7-front*1.9,x=Math.cos(a)*rx,z=Math.sin(a)*rz;i?terrace.lineTo(x,z):terrace.moveTo(x,z);}terrace.closePath();const inner=new T.Path();inner.absellipse(0,0,6.1,5.65,0,Math.PI*2,true);terrace.holes.push(inner);const foundation=mesh(new T.ExtrudeGeometry(terrace,{depth:3.8,bevelEnabled:true,bevelSize:.05,bevelThickness:.025,bevelSegments:1,steps:1,curveSegments:32}),ivory,0,-3.9,0);foundation.rotation.x=-Math.PI/2;foundation.name='connected-terrace';
+ // A visibly thick oval platform, not a rectangular chess board.
+ oval(6.55,6.05,-.55,.7,ivory);oval(6.48,5.98,-.17,.12,pale);
+ oval(6.28,5.78,-.07,.12,blue);
+ const floorMap=software?null:keep(mineralFloorTexture());
+ arena.floorMaterial=arena.mat(0xfff3da,{roughness:.88,metalness:0,map:floorMap,normalMap:floorMap?keep(mineralFloorNormalTexture(floorMap)):null,normalScale:new T.Vector2(.10,.10)});
+ const surface=mesh(new T.CircleGeometry(1,128),arena.floorMaterial,0,.13,0);surface.rotation.x=-Math.PI/2;surface.scale.set(5.25,5.05,1);surface.receiveShadow=true;
+ // Shared normalized UVs map a single authored stone albedo; no repeated square cells.
+ ring(5.3,5.1,.045,.145,bronze);ring(5.48,5.25,.025,.145,bronze);ring(6.2,5.72,.045,.01,bronze);ring(6.45,5.95,.04,.02,bronze);
+ // Broad curved bronze filigree follows the perimeter rather than partitioning the arena.
+ for(let i=0;i<12;i++){
+  const a=i*Math.PI/6,points=[];for(let j=0;j<=24;j++){const t=j/24,theta=a+(t-.5)*.32,r=5.55+.34*Math.sin(t*Math.PI);points.push(new T.Vector3(Math.sin(theta)*r,.155,Math.cos(theta)*r*.94));}
+  mesh(new T.TubeGeometry(new T.CatmullRomCurve3(points),16,.018,4,false),bronze);
  }
- // Three readable structural layers, not a thin floating board.
- part(stonework,0,-1.16,0,10.25,.42,11.35,0x101e30);
- part(stonework,0,-.84,0,9.7,.28,10.9,0x25445b);
- part(stonework,0,-.62,0,9.25,.18,10.45,0x101b2d);
- part(stonework,0,-.34,0,8.7,.65,10,0x1d354c);
- for(const x of [-4.55,4.55])for(const z of [-4.6,-2.3,0,2.3,4.6]){
-  part(stonework,x,-.46,z,.55,1.1,.66,0x355c70);
-  part(trim,x,-.08,z,.6,.055,.72,0x9c8660);
- }
- for(const z of [-5.05,5.05])for(const x of [-3.8,3.8])part(stonework,x,-.48,z,.8,1.12,.6,0x355c70);
- // Large entrance monuments sit beyond the playable floor on both ends.
- for(const side of [-1,1]){
-  const z=side*5.72,group=new T.Group();group.name='citadel-gate-'+side;scene.add(group);
-  const material=arena.mat(0x446b79,{roughness:.82,map:stone.map,transparent:true});
-  const accent=arena.mat(0xd0a455,{metalness:.6,roughness:.5,transparent:true});
-  const add=(geo,mat,x,y,zz,sx=1,sy=1,sz=1)=>{const mesh=new T.Mesh(geo,mat);mesh.position.set(x,y,zz);mesh.scale.set(sx,sy,sz);group.add(mesh);return mesh;};
-  for(const x of [-1.65,1.65]){
-   add(cube,material,x,-.12,z,1.05,.55,1.05);
-   add(cube,material,x,1.15,z,.62,2.25,.7);
-   add(cube,accent,x,2.32,z,.9,.13,.94);
-   add(cube,material,x,2.57,z,.74,.35,.8);
-   add(cube,accent,x,.5,z,.67,.08,.76);
-  }
-  // Actual arch volume with a central opening; visible from either direction.
-  const shape=new T.Shape(),outer=1.99,inner=1.38;
-  shape.absarc(0,0,outer,0,Math.PI,false);shape.lineTo(-inner,0);shape.absarc(0,0,inner,Math.PI,0,true);shape.closePath();
-  const arch=keep(new T.ExtrudeGeometry(shape,{depth:.45,bevelEnabled:true,bevelSize:.035,bevelThickness:.035,bevelSegments:1,steps:1,curveSegments:12}));
-  add(arch,material,0,2.15,z-.225);
-  add(cube,accent,0,3.98,z,.32,.4,.6);
-  arena.landmarks.push({group,materials:[material,accent],side});
- }
- if(!arena.renderer.isSoftwareRenderer){const contact=keep(softContactTexture(64));
- const baseShadow=arena.mesh(new T.PlaneGeometry(16,17),keep(new T.MeshBasicMaterial({map:contact,transparent:true,opacity:.65,depthWrite:false})),0,-1.4,0);baseShadow.rotation.x=-Math.PI/2;}
+ // One broad shallow-relief spear motif instead of overlapping wire circles.
+ const spear=new T.Shape();spear.moveTo(0,-.95);spear.quadraticCurveTo(.14,-.30,.44,0);spear.quadraticCurveTo(.14,.3,0,.95);spear.quadraticCurveTo(-.14,.30,-.44,0);spear.quadraticCurveTo(-.14,-.3,0,-.95);spear.closePath();
+ const emblem=mesh(new T.ExtrudeGeometry(spear,{depth:.006,bevelEnabled:false,curveSegments:10}),bronze,0,.144,0);emblem.rotation.x=-Math.PI/2;
+ const inset=mesh(new T.ShapeGeometry(spear),pale,0,.153,0);inset.rotation.x=-Math.PI/2;inset.scale.set(.74,.83,1);
+ // Substantial layered masonry balustrade: base, recessed facing and chamfer-like stepped coping.
+ const frontBand=(rx,rz,width,y,height,material)=>{const sh=new T.Shape();for(let i=0;i<=24;i++){const a=(-.49+i/24*.98)*Math.PI,x=Math.sin(a)*rx,z=-Math.cos(a)*rz;if(i===0)sh.moveTo(x,z);else sh.lineTo(x,z);}for(let i=24;i>=0;i--){const a=(-.49+i/24*.98)*Math.PI;sh.lineTo(Math.sin(a)*(rx-width),-Math.cos(a)*(rz-width));}sh.closePath();const m=mesh(new T.ExtrudeGeometry(sh,{depth:height,bevelEnabled:false,curveSegments:1}),material,0,y,0);m.rotation.x=-Math.PI/2;return m;};
+ frontBand(6.61,6.13,.38,-.19,.22,ivory);frontBand(6.56,6.08,.28,.03,.43,ivory);frontBand(6.63,6.15,.39,.46,.08,pale);frontBand(6.59,6.11,.33,.54,.055,pale);frontBand(6.60,6.12,.34,.032,.022,bronze);
+ // Recessed turquoise panels sit on the exterior masonry face, framed by stone piers.
 
- part(stonework,0,-.72,0,8.25,.24,9.55,0x253641);
- for(let r=0;r<8;r++)for(let c=0;c<6;c++){
-  const shades=r<4?[0x315a73,0x39677d,0x30586c,0x426e82]:[0x3d6d65,0x49796c,0x366158,0x4a7565],shade=shades[(c*7+r*3)%4];
-  part(stonework,(c-2.5)*1.36,.035,(r-3.5)*1.16,1.32,.12,1.12,shade);
+ for(let i=0;i<15;i++){
+  const a=(-.48+i/14*.96)*Math.PI,x=Math.sin(a)*6.42,z=Math.cos(a)*5.94;
+  if(Math.abs(x)>4.2&&z>3.6)continue;
+  const post=block(x,.22,z,.16,.68,.2,pale);post.rotation.y=a;
+  if(i<14){const b=(-.48+(i+.5)/14*.96)*Math.PI,xx=Math.sin(b)*6.57,zz=Math.cos(b)*6.09;const panel=block(xx,.24,zz,1.16,.26,.035,teal);panel.rotation.y=b;const cap=block(xx,.46,zz,1.3,.07,.24,pale);cap.rotation.y=b;}
  }
- for(const x of [-4.25,4.25]){part(trim,x,.12,0,.065,.03,9.65,0xffffff);for(let z=-4;z<=4;z+=.8)part(stonework,x,.18,z,.3,.32,.75,0x29485a);}
- for(const z of [-4.85,4.85]){part(trim,0,.12,z,8.5,.03,.065,0xffffff);for(let x=-3.6;x<=3.6;x+=.8)part(stonework,x,.18,z,.75,.32,.3,0x29485a);}
- for(let i=0;i<24;i++){
-  const angle=i/24*Math.PI*2,x=Math.cos(angle)*4.1,z=Math.sin(angle)*4.7;
-  part(rocks,x,-.85-(i%3)*.2,z,.7+(i%2)*.25,1.1+(i%3)*.18,.8,0x1d3546,angle);
-  if(i%3!==1){part(leaves,x,.32,z,.32,.22,.4,[0x236b50,0x184f3b,0x4b9465][i%3]);part(leaves,x-.2,.2,z+.25,.28,.18,.3,0x184f3b);}
+ // Real sculpture support plinths: originals remain untouched; shared models attach later.
+ for(const x of [-4.75,4.75]){block(x,.05,4.15,1.65,.55,1.5,ivory);block(x,.37,4.15,1.8,.13,1.65,pale);block(x,.445,4.15,1.68,.025,1.53,bronze);}
+ // Slender pointed arch: separate structural ribs, inset mouldings and carved leaf tracery.
+ // Open negative space matters more than a solid band; all curves are real shallow relief.
+ block(0,-.31,-5.78,3.85,.72,1.24,ivory);block(0,.085,-5.78,3.95,.075,1.3,pale);
+ const archStart=scene.children.length,archZ=-5.95;
+ const tube=(points,radius,material,segments=28,sides=5)=>mesh(new T.TubeGeometry(new T.CatmullRomCurve3(points.map(p=>new T.Vector3(...p))),Math.max(8,Math.round(segments*.58)),radius,Math.min(4,sides),false),material);
+ // Elongated jewel has a central crown, bevel rings and unequal facets; not a toy octahedron.
+ const crystalGeometry=()=>{const rings=[[0,.0],[.62,.25],[1.13,.36],[1.27,.25],[2.0,0]],positions=[],indices=[],sides=6;for(const [y,r] of rings)for(let i=0;i<sides;i++){const a=i*Math.PI/3;positions.push(Math.cos(a)*r,y,Math.sin(a)*r);}for(let j=0;j<rings.length-1;j++)for(let i=0;i<sides;i++){const a=j*sides+i,b=j*sides+(i+1)%sides,c=a+sides,d=b+sides;indices.push(a,c,b,b,c,d);}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setIndex(indices);g.computeVertexNormals();return g.toNonIndexed();};
+ const gem=mesh(crystalGeometry(),crystal,0,1.72,archZ+.2);gem.material.flatShading=true;arena.landmarks.push(gem);
+ const gemFrame=[[0,1.7,archZ+.2],[-.34,2.84,archZ+.2],[0,3.72,archZ+.2],[.34,2.84,archZ+.2],[0,1.7,archZ+.2]];tube(gemFrame,.019,bronze,20,4);
+ // Stepped octagonal basin, reflective pool and narrow fountain stem ground the focal crystal.
+ mesh(new T.CylinderGeometry(.95,1.05,.17,8),ivory,0,.12,archZ+.25);mesh(new T.CylinderGeometry(.86,.7,.19,24),pale,0,.3,archZ+.25);
+ ring(.86,.86,.065,.405,bronze).position.z=archZ+.25;mesh(new T.CircleGeometry(.77,40),crystal,0,.41,archZ+.25).rotation.x=-Math.PI/2;
+ mesh(new T.CylinderGeometry(.06,.09,.86,8),crystal,0,.87,archZ+.25);
+ // Tall banners are physically bowed cloth with pointed tails and a stitched bronze border.
+ const fabric=arena.mat(0x287c8c,{roughness:.94,metalness:0,side:T.DoubleSide});
+ for(const side of [-1,1]){const x=side*4.1,z=-7.55;column(x,z,5.05);const sh=new T.Shape();sh.moveTo(-.5,0);sh.lineTo(.5,0);sh.lineTo(.5,-2.65);sh.lineTo(0,-3.05);sh.lineTo(-.5,-2.65);sh.closePath();const cloth=mesh(new T.ShapeGeometry(sh),fabric,x,4.9,z+.24);block(x,4.95,z+.24,1.2,.07,.08,bronze);tube([[x-.44,4.85,z+.27],[x-.44,2.32,z+.27],[x,1.92,z+.27],[x+.44,2.32,z+.27],[x+.44,4.85,z+.27]],.015,bronze,24,4);}
+ // Compress monument vertically to a 3.6m total crest; floor remains the compositional focus.
+ for(const o of scene.children.slice(archStart)){o.position.y*=.63;o.scale.y*=.63;}
+ // Sagging silk canopies over the SIDE seating, not over combat; hem and ribs follow fabric.
+ const canopy=(cx,cz)=>{const nx=14,nz=10,pos=[],uv=[],ids=[],point=(u,v)=>new T.Vector3(cx+(u-.5)*3.0,1.7+.15*Math.pow(Math.abs(u-.5)*2,1.5)+.1*Math.pow(Math.abs(v-.5)*2,2)-.08*Math.sin(u*Math.PI)*Math.sin(v*Math.PI),cz+(v-.5)*1.6);for(let j=0;j<=nz;j++)for(let i=0;i<=nx;i++){const p=point(i/nx,j/nz);pos.push(p.x,p.y,p.z);uv.push(i/nx,j/nz);}for(let j=0;j<nz;j++)for(let i=0;i<nx;i++){const a=j*(nx+1)+i,b=a+1,c=a+nx+1,d=c+1;ids.push(a,c,b,b,c,d);}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(ids);g.computeVertexNormals();mesh(g,fabric);for(const v of [0,1]){const edge=[];for(let j=0;j<=18;j++){const p=point(j/18,v);edge.push([p.x,p.y+.018,p.z]);}tube(edge,.027,bronze,22,5);}for(const u of [0,1]){const edge=[];for(let j=0;j<=18;j++){const p=point(u,j/18);edge.push([p.x,p.y+.018,p.z]);}tube(edge,.027,bronze,22,5);}for(const u of [0,1])for(const v of [0,1]){const p=point(u,v);column(p.x,p.z,p.y-.06);mesh(new T.SphereGeometry(.10,6,3),bronze,p.x,p.y+.12,p.z);}for(const v of [.2,.8]){const path=[];for(let j=0;j<=14;j++){const p=point(j/14,v);path.push([p.x,p.y+.015,p.z]);}tube(path,.011,pale,18,4);}
+  const glyph=[[0,-.32],[.055,-.08],[.25,-.19],[.14,.01],[.2,.16],[.045,.09],[0,.32],[-.045,.09],[-.2,.16],[-.14,.01],[-.25,-.19],[-.055,-.08]],positions=[],indices=[];for(const [u,v] of [[0,0],...glyph]){const p=point(.5+u,.5+v);positions.push(p.x,p.y+.025,p.z);}for(let i=1;i<=glyph.length;i++)indices.push(0,i===glyph.length?1:i+1,i);const emblem=new T.BufferGeometry();emblem.setAttribute('position',new T.Float32BufferAttribute(positions,3));emblem.setAttribute('uv',new T.Float32BufferAttribute(new Float32Array(positions.length/3*2),2));emblem.setIndex(indices);emblem.computeVertexNormals();mesh(emblem,bronze);
+ };
+ canopy(-6.55,-3.25);canopy(6.55,-3.25);
+ // Organic foliage uses smooth clustered leaves, trailing stems and small flower heads.
+ const leaf=arena.mat(0x3e643c,{roughness:1}),lightLeaf=arena.mat(0x72834c,{roughness:1}),deepLeaf=arena.mat(0x294c36,{roughness:1}),flower=arena.mat(0xf3e6c8,{roughness:.9}),pinkFlower=arena.mat(0xbda1b7,{roughness:.9}),bark=arena.mat(0x6c6046,{roughness:1});
+ const leafGeo=(()=>{const p=[],ids=[];for(let i=0;i<=4;i++){const t=i/4,w=Math.sin(Math.PI*t);p.push(-w,.22*Math.sin(t*Math.PI),t*2-1,w,.22*Math.sin(t*Math.PI),t*2-1);if(i<4){const a=i*2;ids.push(a,a+2,a+1,a+1,a+2,a+3);}}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(p,3));g.setAttribute('uv',new T.Float32BufferAttribute(new Float32Array(p.length/3*2),2));g.setIndex(ids);g.computeVertexNormals();return keep(g);})();
+ const blossomGeo=keep(new T.SphereGeometry(1,6,4));for(const m of [leaf,lightLeaf,deepLeaf])m.side=T.DoubleSide;
+ const foliage=(x,y,z,sx,sy,sz,material=leaf)=>{const blossom=[flower,pinkFlower,bronze].includes(material),m=mesh(blossom?blossomGeo:leafGeo,material,x,y,z);m.scale.set(sx,sy,sz);if(!blossom){m.rotation.y=(x*17.3+y*31.7+z*11.9)%6.28;m.rotation.z=Math.sin(x*23+z*17)*.65;}return m;};
+ for(const side of [-1,1])for(const [z,x0] of [[-6.3,5.4],[-3.5,7.0],[1.7,6.55],[3.8,5.4]]){
+  const x=side*x0;column(x,z,1.05);mesh(new T.CylinderGeometry(.43,.29,.27,16),ivory,x,1.19,z);ring(.43,.43,.025,1.33,bronze).position.set(x,1.33,z);
+  for(let j=0;j<16;j++){const a=j*2.399,r=.14+(j%3)*.10;foliage(x+Math.cos(a)*r,1.39+(j%3)*.07,z+Math.sin(a)*r,.105,.075,.09,j%3?leaf:lightLeaf);}
+  for(let vine=0;vine<2;vine++){const a=vine*2.399+.5,vx=x+Math.cos(a)*.34,vz=z+Math.sin(a)*.34,points=[];for(let j=0;j<=6;j++){const t=j/6;points.push([vx+Math.sin(t*5+vine)*.09,1.32-t*.95,vz+Math.cos(t*4+vine)*.08]);if(j<6)foliage(points[j][0]+(j%2?.09:-.09),points[j][1],points[j][2],.065,.035,.045,j%2?lightLeaf:leaf);}tube(points,.012,deepLeaf,10,3);}
+  for(let j=0;j<3;j++){const a=j*2.3;foliage(x+Math.cos(a)*.25,1.56,z+Math.sin(a)*.25,.10,.055,.10,j%2?flower:pinkFlower);foliage(x+Math.cos(a)*.25,1.60,z+Math.sin(a)*.25,.035,.025,.035,bronze);}
  }
- for(const side of [0,1]){
-  const z=(side?-1:1)*4.45,color=side?0x3acbaf:0x4a9bdc;
-  for(const x of [-3.75,3.75]){
-   part(stonework,x,.36,z,.78,.54,.78,0x2b4b5f);part(stonework,x,.74,z,.57,.24,.57,0x476c7b);
-   part(trim,x,.9,z,.65,.08,.65,0xffffff);part(stonework,x,1.25,z,.46,.62,.46,0x31576c);
-   part(trim,x,1.6,z,.6,.1,.6,0xffffff);
-   arena.mesh(new T.CylinderGeometry(.37,.2,.18,8),gold,x,1.75,z);
-   const flame=arena.mesh(new T.IcosahedronGeometry(.2,1),keep(new T.MeshBasicMaterial({color:0xffc566})),x,2.02,z);flame.scale.y=1.6;
-   arena.mesh(new T.OctahedronGeometry(.13),keep(new T.MeshBasicMaterial({color})),x,1.17,z+.24*(side?-1:1));
-  }
-  const mat=arena.mat(side?0x0a765c:0x164cb0,{metalness:.05,roughness:.9,side:T.DoubleSide});
-  const banner=new T.Shape();banner.moveTo(-.36,.7);banner.lineTo(.36,.7);banner.lineTo(.36,-.55);banner.lineTo(0,-.78);banner.lineTo(-.36,-.55);banner.closePath();
-  const cloth=arena.mesh(new T.ShapeGeometry(banner),mat,side?-2.45:2.45,2.2,z);cloth.rotation.y=side?Math.PI:0;
-  part(trim,side?-2.45:2.45,2.92,z,.88,.055,.055,0xffffff);
-  arena.mesh(column,gold,(side?-2.45:2.45)-.46,1.65,z).scale.y=2.7;
-  const sigil=arena.mesh(new T.RingGeometry(.13,.16,6),gold,side?-2.45:2.45,2.25,z+(side?-.025:.025));sigil.rotation.z=Math.PI/6;
-  for(let step=0;step<6;step++)part(stonework,0,-.12-step*.19,(side?-1:1)*(5.05+step*.32),2.5,.23,.39,0x3c6070);
- }
- const circle=arena.mesh(new T.RingGeometry(.66,.69,48),gold,0,.11,0);circle.rotation.x=-Math.PI/2;
- for(const angle of [0,Math.PI/4,Math.PI/2,Math.PI*3/4]){const bar=arena.mesh(new T.BoxGeometry(.035,.015,1.85),gold,0,.12,0);bar.rotation.y=angle;}
- for(const x of [-2.72,0,2.72])part(trim,x,.106,0,.022,.008,9.2,0x737a70);
- batch(cube,stone,stonework);batch(rock,stone,rocks);batch(cube,gold,trim);batch(rock,foliage,leaves);
+ // Slender cypresses have irregular tiered profiles, not broad faceted bonsai crowns.
+ const cypressMaterial=arena.mat(0x58764d,{roughness:1,vertexColors:true});
+ const cypress=(x,z,h)=>{const rings=10,sides=7,pos=[],ids=[],colors=[];for(let j=0;j<=rings;j++){const t=j/rings,r=Math.sin(Math.PI*Math.pow(t,.7))*.24*(.96+.04*Math.sin(j*2.6));for(let i=0;i<sides;i++){const a=i/sides*Math.PI*2,w=1+.11*Math.sin(i*2.3+j);pos.push(x+Math.cos(a)*r*w,.15+t*h,z+Math.sin(a)*r*w);const tone=.72+.25*(.5+.5*Math.sin(i*4.7+j*3.1));colors.push(tone,tone,tone);}}for(let j=0;j<rings;j++)for(let i=0;i<sides;i++){const a=j*sides+i,b=j*sides+(i+1)%sides,c=a+sides,d=b+sides;ids.push(a,c,b,b,c,d);}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setIndex(ids);g.setAttribute('uv',new T.Float32BufferAttribute(new Float32Array(pos.length/3*2),2));g.setAttribute('color',new T.Float32BufferAttribute(colors,3));g.computeVertexNormals();mesh(g,cypressMaterial);mesh(new T.CylinderGeometry(.045,.08,.6,7),bark,x,.25,z);};
+ for(const side of [-1,1])for(const [x,z,h] of [[3.0,-8.0,2.1],[5.8,-6.5,2.4],[7.3,-4.5,2.0]])cypress(side*x,z,h);
+ // Distant generated matte is only scenery. The battlefield, buildings and heroes remain geometry.
+ // A surrounding curved wall provides continuous coverage during camera orbit, not a flat screenshot.
+ arena.panoramaMaterial=keep(new T.MeshBasicMaterial({color:0xffffff,side:T.BackSide,fog:false,toneMapped:false,transparent:true,opacity:.68,depthWrite:false}));
+ arena.panorama=mesh(new T.CylinderGeometry(28,28,22,72,1,true),arena.panoramaMaterial,0,-19.5,0);
+ arena.panorama.rotation.y=Math.PI;arena.panorama.visible=!software;
+ // Merge static architecture by material; no per-frame procedural allocation.
+ if(!software){const groups=new Map();for(const o of [...scene.children])if(o.isMesh&&o!==surface&&o!==arena.panorama&&!arena.landmarks.includes(o)){if(!groups.has(o.material))groups.set(o.material,[]);groups.get(o.material).push(o);}for(const [material,objects] of groups){if(objects.length<2)continue;const geometries=objects.map(o=>{o.updateMatrix();const g=o.geometry.clone().applyMatrix4(o.matrix);if(g.index){const flat=g.toNonIndexed();g.dispose();return flat;}return g;});const g=keep(mergeGeometries(geometries));geometries.forEach(g=>g.dispose());objects.forEach(o=>scene.remove(o));const merged=new T.Mesh(g,material);merged.receiveShadow=true;scene.add(merged);}}
+ // The approved oval is 20% broader horizontally; this never scales hero meshes.
+ for(const object of scene.children){if(!object.isMesh||object===arena.panorama)continue;object.position.x*=1.2;object.scale.x*=1.2;}
 }
-
-export function updateCitadelView(arena){
- for(const landmark of arena.landmarks||[]){
-  const faded=arena.camera.position.z*landmark.side>0&&arena.camera.position.y<12&&!arena.focusKey;
-  for(const material of landmark.materials){material.opacity=faded?.3:1;material.depthWrite=!faded;}
- }
-}
+export function updateCitadelView(){ /* Low foreground and open architecture stay stable while orbiting. */ }
