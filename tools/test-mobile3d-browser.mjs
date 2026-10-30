@@ -54,11 +54,14 @@ try{
   }
   // Three genuine views of the SAME loaded amphitheatre, not generated concept art.
   if(reducedMotion==='no-preference'){
-   await page.setViewportSize({width:1440,height:1100});
-   await page.addStyleTag({content:'.viewport{width:1200px!important;height:900px!important;max-width:none!important}.arena-panel{width:1200px!important}.labels{opacity:.7}'});
-   await page.locator('#camera-reset').click();await shot('art-cross');
-   await canvas.focus();for(let i=0;i<6;i++)await page.keyboard.press('ArrowRight');await shot('art-side');
-   await page.keyboard.press('Home');await page.keyboard.press('+');await page.keyboard.press('+');await shot('art-close');
+   await page.setViewportSize({width:1200,height:900});
+   await page.locator('#quality').selectOption('balanced');
+   // Review-only DOM presentation: hide nameplates consistently; do not change gameplay UI/code.
+   await page.addStyleTag({content:'#viewport{position:fixed!important;inset:0!important;width:1200px!important;height:900px!important;max-width:none!important;z-index:9999!important;background:#0c1420}#labels,.label-leader,#camera,#camera-reset{display:none!important}#arena{outline:none!important}.corner-caption{font-size:13px!important}'});
+   await page.locator('.corner-caption').evaluate(el=>{el.innerHTML='<span>TAÇ AMFİTİYATROSU · MİMARİ YÖN ÖNERİSİ</span><small>AYNI GERÇEK 3D SAHNE · CPU WEBGL RENDER · FİNAL SANAT DEĞİL</small>';});
+   await canvas.focus();await page.keyboard.press('Home');await page.keyboard.press('+');await shot('art-cross');
+   for(let i=0;i<6;i++)await page.keyboard.press('ArrowRight');await shot('art-side');
+   await page.keyboard.press('Home');for(let i=0;i<3;i++)await page.keyboard.press('+');await shot('art-close');
   }
   assert.deepEqual(errors,[]);
   const renderer=await canvas.evaluate(c=>{const gl=c.getContext('webgl2');if(!gl)return {mode:'software fallback'};const debug=gl.getExtension('WEBGL_debug_renderer_info');return {mode:'WebGL2',renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};});
