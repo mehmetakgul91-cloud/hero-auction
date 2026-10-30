@@ -15,7 +15,7 @@ export async function loadArenaAssets(load=url=>new GLTFLoader().loadAsync(url))
  source.scene.traverse(o=>{if(!o.isMesh)return;if(o.isSkinnedMesh)throw Error('Arena muhafızı statik olmalı.');resources.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material]){resources.add(m);for(const v of Object.values(m))if(v?.isTexture)resources.add(v);}});
  const bounds=new T.Box3().setFromObject(source.scene),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3());
  if(size.toArray().some(n=>!Number.isFinite(n)||n<=0))throw Error('Arena muhafızı ölçüleri geçersiz.');
- const scale=Math.min(1.8/size.y,1.35/size.x,1.35/size.z);
+ const scale=Math.min(2.5/size.y,1.8/size.x,1.8/size.z);
  const diagnostics=inspectArenaAsset(source);if(diagnostics.triangles>30000){resources.forEach(r=>r.dispose());throw Error('Arena muhafızı mobil üçgen bütçesini aşıyor.');}
  return {source,resources,instances,diagnostics,create(){const root=new T.Group(),offset=new T.Group(),model=source.scene.clone(true);root.name='meshy-arena-guardian';root.userData.arenaAsset=GUARDIAN_FILE;offset.add(model);offset.position.set(-center.x,-bounds.min.y,-center.z);root.add(offset);root.scale.setScalar(scale);instances.push(root);return root;},dispose(){instances.forEach(root=>root.removeFromParent());resources.forEach(r=>r.dispose());}};
 }

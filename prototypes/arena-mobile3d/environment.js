@@ -1,7 +1,7 @@
 import * as T from 'three';
 import {ARENA_WIDTH_SCALE,COMBAT_FLOOR} from './arena-layout.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-import {stoneTexture,bevelBlock,softContactTexture,mineralFloorTexture,continuousFloorGeometry} from './environment-materials.js';
+import {stoneTexture,bevelBlock,softContactTexture,mineralFloorTexture,continuousFloorGeometry,mineralFloorNormalTexture} from './environment-materials.js';
 
 // Authored amphitheatre: broad architectural masses, a calm combat floor and one royal focal gate.
 // Shared instanced masonry; no downloaded art, real-time shadows or post-processing.
@@ -26,7 +26,7 @@ export function createCitadel(arena){
  // A single continuous, softly rounded mineral slab replaces all 48 square cells and the compass emblem.
  const slab=keep(continuousFloorGeometry()),floorMap=software?null:keep(mineralFloorTexture());
  const rim=mesh(slab,dark,0,-.17,0);rim.rotation.x=-Math.PI/2;rim.scale.set(1.025,1.025,1.7);
- const floor=mesh(slab,arena.mat(0x9ba69a,{roughness:.92,metalness:0,map:floorMap}),0,-.02,0);floor.rotation.x=-Math.PI/2;
+ const floor=mesh(slab,arena.mat(0x8e9b9a,{roughness:.9,metalness:0,map:floorMap,normalMap:floorMap?keep(mineralFloorNormalTexture(floorMap)):null,normalScale:new T.Vector2(.28,.28)}),0,-.02,0);floor.rotation.x=-Math.PI/2;
  // Four rising terraces in ten wedge-shaped seating bays, separated by radial stair aisles.
  // Angles open toward the foreground; architecture frames rather than covers the battle.
  const start=-.10*Math.PI,end=1.10*Math.PI,bays=10,span=(end-start)/bays;
@@ -85,7 +85,7 @@ export function createCitadel(arena){
   const sigil=mesh(new T.RingGeometry(.25,.32,4),gold,x,4.15,-8.62);sigil.rotation.z=Math.PI/4;
  }
  // Foreground ceremonial stair and two restrained guardians. No high front wall blocks combat.
- for(let i=0;i<7;i++)block(0,-.02-i*.2,5.08+i*.48,4.3,.24,.56,0x655744);
+ for(let i=0;i<7;i++)block(0,-.02-i*.2,5.08+i*.48,4.3,.24,.56,0x444f55);
  // A single instanced draw for masonry; full resource lifecycle retained.
  const transforms=new T.Matrix4(),q=new T.Quaternion(),position=new T.Vector3(),scale=new T.Vector3(),up=new T.Vector3(0,1,0),batch=new T.InstancedMesh(cube,stone,items.length);
  items.forEach((p,i)=>{transforms.compose(position.set(p.x,p.y,p.z),q.setFromAxisAngle(up,p.rotation),scale.set(p.sx,p.sy,p.sz));if(software){const material=keep(stone.clone());material.color.setHex(p.color);const m=new T.Mesh(cube,material);m.applyMatrix4(transforms);m.userData.softwareLayer=p.y>=0?-1:-2;scene.add(m);}else{batch.setMatrixAt(i,transforms);batch.setColorAt(i,new T.Color(p.color));}});
