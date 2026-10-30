@@ -60,7 +60,7 @@ export class MobileArena {
   const size=bufferSize(width,height,window.devicePixelRatio||1,this.quality);this.renderer.setSize(size.width,size.height,false);this.buffer=size;
   if(this.focusKey){const m=this.models.get(this.focusKey),center=m.base.clone().add(new T.Vector3(0,1.15,0)),a=m.rotation+(this.angle===2?Math.PI:this.angle===1?-1.2:.55);const o=cameraOffset({x:Math.sin(a)*5,y:1.4,z:Math.cos(a)*5},this.controls);this.camera.position.copy(center).add(new T.Vector3(o.x,o.y,o.z));this.camera.lookAt(center);this.camera.updateMatrixWorld();const half=1.65*this.controls.zoom,aspect=width/height;this.camera.left=-half*aspect;this.camera.right=half*aspect;this.camera.top=half;this.camera.bottom=-half;this.camera.updateProjectionMatrix();return;}
   const o=cameraOffset({x:this.angle===1?0:this.angle===2?10:8,y:this.angle===1?19:13,z:this.angle===2?8:15},this.controls);this.camera.position.set(o.x,o.y,o.z);this.camera.lookAt(0,.35,0);this.camera.updateMatrixWorld();
-  let mx=0,my=0;for(const x of [-10.2,10.2])for(const z of [-10,8.5])for(const y of [-1.9,7.5]){const p=new T.Vector3(x,y,z).applyMatrix4(this.camera.matrixWorldInverse);mx=Math.max(mx,Math.abs(p.x));my=Math.max(my,Math.abs(p.y));}
+  let mx=0,my=0;for(const x of [-11.5,11.5])for(const z of [-11.5,8.5])for(const y of [-1.9,7.5]){const p=new T.Vector3(x,y,z).applyMatrix4(this.camera.matrixWorldInverse);mx=Math.max(mx,Math.abs(p.x));my=Math.max(my,Math.abs(p.y));}
   const aspect=width/height,half=Math.max(my,mx/aspect)*1.035*this.controls.zoom;this.camera.left=-half*aspect;this.camera.right=half*aspect;this.camera.top=half;this.camera.bottom=-half;this.camera.updateProjectionMatrix();
  }
  cameraNext(){this.angle=(this.angle+1)%3;this.controls.reset();}

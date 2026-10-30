@@ -16,9 +16,9 @@ export function createCitadel(arena){
  const cube=keep(bevelBlock()),items=[];
  const block=(x,y,z,sx,sy,sz,color=0x577781,rotation=0)=>items.push({x,y,z,sx,sy,sz,color,rotation});
  const mesh=(geo,mat,x=0,y=0,z=0)=>arena.mesh(geo,mat,x,y,z);
- arena.landmarks=[];arena.architecture={name:'Crown Amphitheatre',tiers:4,sections:10,materials:'stone / bronze / teal cloth',bounds:{x:10,z:10,y:8}};
+ arena.landmarks=[];arena.architecture={name:'Crown Amphitheatre',tiers:4,sections:10,materials:'stone / bronze / teal cloth',terraceDepth:1.12,aisleWidth:.7,combatFloor:{width:8.75,depth:10.1},bounds:{x:11.4,z:11.4,y:8}};
  // Octagonal foundation, exposed lower retaining wall and continuous promenade.
- for(const [r,h,y,color] of [[10,.45,-1.55,0x142936],[9.75,.8,-.95,0x314d59],[9.9,.18,-.48,0x657e83]]){
+ for(const [r,h,y,color] of [[11.25,.45,-1.55,0x142936],[11,.8,-.95,0x314d59],[11.15,.18,-.48,0x657e83]]){
   const base=mesh(new T.CylinderGeometry(r,r+.18,h,12),arena.mat(color,{roughness:.94,map:grain}),0,y,0);base.rotation.y=Math.PI/12;
  }
  block(0,-.16,0,8.75,.5,10.1,0x263d49);
@@ -45,28 +45,28 @@ export function createCitadel(arena){
   const m=mesh(g,material,0,y,0);m.rotation.x=-Math.PI/2;return m;
  }
  for(let bay=0;bay<bays;bay++){
-  const a=start+bay*span+.022,b=start+(bay+1)*span-.022;
+  const a=start+bay*span+.06,b=start+(bay+1)*span-.06;
   for(let tier=0;tier<4;tier++){
-   const r=6.05+tier*.78,y=.08+tier*.55;
-   wedge(r,r+.75,a,b,y,.5,tier%2?pale:seat);
-   wedge(r+.62,r+.75,a,b,y+.5,.32,dark);
-   wedge(r+.62,r+.76,a,b,y+.82,.045,gold);
+   const r=6.05+tier*1.16,y=.08+tier*.55;
+   wedge(r,r+1.12,a,b,y,.5,tier%2?pale:seat);
+   wedge(r+.96,r+1.12,a,b,y+.5,.32,dark);
+   wedge(r+.96,r+1.13,a,b,y+.82,.045,gold);
   }
   // Deep rear arcade supports and capitals establish architectural scale.
-  const aMid=(a+b)/2,x=Math.cos(aMid)*9.25,z=-Math.sin(aMid)*9.25;
+  const aMid=(a+b)/2,x=Math.cos(aMid)*10.78,z=-Math.sin(aMid)*10.78;
   block(x,1.4,z,.58,3.6,.65,0x3a5b69,-aMid);
   block(x,3.3,z,.9,.23,.86,0x94a6a4,-aMid);
   block(x,3.48,z,.72,.12,.72,0xbda16b,-aMid);
  }
  for(let aisle=0;aisle<=bays;aisle++){
   const a=start+aisle*span;
-  for(let step=0;step<12;step++){const r=6.1+step*.255;block(Math.cos(a)*r,.08+step*.184,-Math.sin(a)*r,.27,.2,.38,0x92a4a2,-a);}
+  for(let step=0;step<13;step++){const r=6.1+step*.375;block(Math.cos(a)*r,.08+step*.184,-Math.sin(a)*r,.4,.2,.7,0x92a4a2,-a);}
  }
  // Continuous rear parapet with a light coping, broken by the ceremonial gate.
- wedge(9.25,9.6,start,end,2.65,.75,dark);wedge(9.2,9.65,start,end,3.4,.15,pale);
+ wedge(10.78,11.05,start,end,2.65,.75,dark);wedge(10.73,11.1,start,end,3.4,.15,pale);
  // The royal gate: stepped towers, recessed dark portal, heavy jambs and a sculpted crown.
  // A solid opening is authored with two piers and an extruded arch (not a painted rectangle).
- const gateZ=-8.35;
+ const gateZ=-9.8;
  for(const x of [-2.1,2.1]){
   block(x,1.95,gateZ,1.4,4.8,1.6,0x365867);
   block(x,4.48,gateZ,1.7,.3,1.9,0x91a5a5);
@@ -86,11 +86,11 @@ export function createCitadel(arena){
  for(let i=-4;i<=4;i++)block(i*.25,1.65,gateZ-.5,.045,3.25,.06,0xa38a59);
  for(const y of [.5,1.4,2.3])block(0,y,gateZ-.45,2.5,.045,.07,0xa38a59);
  // Long hanging standards create broad, readable color masses.
- for(const x of [-4.1,4.1]){
-  block(x,2.7,-7.5,.2,5.6,.2,0xbba16a);block(x,5.35,-7.5,1.65,.1,.1,0xbba16a);
+ for(const x of [-4.7,4.7]){
+  block(x,2.7,-8.7,.2,5.6,.2,0xbba16a);block(x,5.35,-8.7,1.65,.1,.1,0xbba16a);
   const s=new T.Shape();s.moveTo(-.65,0);s.lineTo(.65,0);s.lineTo(.65,-2.5);s.lineTo(0,-3);s.lineTo(-.65,-2.5);s.closePath();
-  mesh(new T.ShapeGeometry(s),cloth,x,5.25,-7.46);
-  const sigil=mesh(new T.RingGeometry(.25,.32,4),gold,x,4.15,-7.42);sigil.rotation.z=Math.PI/4;
+  mesh(new T.ShapeGeometry(s),cloth,x,5.25,-8.66);
+  const sigil=mesh(new T.RingGeometry(.25,.32,4),gold,x,4.15,-8.62);sigil.rotation.z=Math.PI/4;
  }
  // Foreground ceremonial stair and two restrained guardians. No high front wall blocks combat.
  for(let i=0;i<7;i++)block(0,-.02-i*.2,5.08+i*.48,4.3,.24,.56,0x718c91);
