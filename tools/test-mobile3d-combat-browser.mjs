@@ -20,7 +20,10 @@ export async function verifyCombatReplay({browser,url,root,out}){
   const snapshot=()=>page.evaluate(async()=>{const m=await import('/main.js');return m.inspectCombat();});
   const click=id=>page.locator('#'+id).evaluate(el=>el.click());
   const step=ms=>page.evaluate(ms=>window.__combatRafStep(ms),ms);
-  const shot=name=>page.screenshot({path:path.join(out,'combat-'+name+'.png'),animations:'allow'});
+  // Playwright screenshot waits on RAF; this context deliberately owns RAF timestamps.
+  // CDP captures the already rendered real WebGL surface without advancing the replay.
+  const capture=await context.newCDPSession(page);
+  const shot=async name=>{const {data}=await capture.send('Page.captureScreenshot',{format:'png',fromSurface:true});await fs.writeFile(path.join(out,'combat-'+name+'.png'),Buffer.from(data,'base64'));};
   const hp=s=>s.units.map(u=>[u.key,u.hp,u.shield]);
   const expected=teams=>teams.flatMap((team,side)=>team.map(h=>[side+':'+h.id,h.hp,h.shield||0]));
   const distance=(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2]);
