@@ -9,22 +9,23 @@ export function createCitadel(arena){
  const keep=value=>arena.keep(value),scene=arena.scene,software=arena.renderer.isSoftwareRenderer,environmentStart=scene.children.length;
  const grain=software?null:keep(stoneTexture(64));
  const stone=arena.mat(0xffffff,{roughness:.88,metalness:.03,map:grain});
- const gold=arena.mat(0xc6a66a,{roughness:.43,metalness:.62});
- const dark=arena.mat(0x172e40,{roughness:.9,metalness:.05,map:grain});
- const seat=arena.mat(0x68878b,{roughness:.9,map:grain});
- const pale=arena.mat(0x78969b,{roughness:.84,metalness:.04,map:grain});
- const cloth=arena.mat(0x156578,{roughness:1,metalness:0,side:T.DoubleSide});
+ const gold=arena.mat(0xa96b35,{roughness:.43,metalness:.62});
+ const dark=arena.mat(0x141b24,{roughness:.9,metalness:.05,map:grain});
+ const seat=arena.mat(0x303641,{roughness:.9,map:grain});
+ const pale=arena.mat(0x3e444b,{roughness:.84,metalness:.04,map:grain});
+ const cloth=arena.mat(0x9b203c,{roughness:1,metalness:0,side:T.DoubleSide});
+ const alternateCloth=arena.mat(0x087b78,{roughness:1,metalness:0,side:T.DoubleSide});
  const cube=keep(bevelBlock()),items=[];
  const block=(x,y,z,sx,sy,sz,color=0x577781,rotation=0)=>items.push({x,y,z,sx,sy,sz,color,rotation});
  const mesh=(geo,mat,x=0,y=0,z=0)=>arena.mesh(geo,mat,x,y,z);
  arena.landmarks=[];arena.architecture={name:'Crown Amphitheatre',tiers:4,sections:10,materials:'stone / bronze / teal cloth',terraceDepth:1.12,aisleWidth:.7,combatFloor:COMBAT_FLOOR,widthScale:ARENA_WIDTH_SCALE,bounds:{x:11.4*ARENA_WIDTH_SCALE,z:11.4,y:8}};
  // Octagonal foundation, exposed lower retaining wall and continuous promenade.
- for(const [r,h,y,color] of [[11.25,.45,-1.55,0x142936],[11,.8,-.95,0x314d59],[11.15,.18,-.48,0x657e83]]){
+ for(const [r,h,y,color] of [[11.25,.45,-1.55,0x10141d],[11,.8,-.95,0x1e2530],[11.15,.18,-.48,0x30353c]]){
   const base=mesh(new T.CylinderGeometry(r,r+.18,h,12),arena.mat(color,{roughness:.94,map:grain}),0,y,0);base.rotation.y=Math.PI/12;
  }
- block(0,-.16,0,8.75,.5,10.1,0x263d49);
+ block(0,-.16,0,8.75,.5,10.1,0x141c26);
  // Large limestone slabs and fine bronze seams: the floor reads as one authored surface, not a checkerboard.
- for(let r=0;r<8;r++)for(let c=0;c<6;c++)block((c-2.5)*1.36,.105,(r-3.5)*1.16,1.345,.12,1.145,[0x6d8586,0x71898a,0x748b89,0x687f82][(r*3+c)%4]);
+ for(let r=0;r<8;r++)for(let c=0;c<6;c++)block((c-2.5)*1.36,.105,(r-3.5)*1.16,1.345,.12,1.145,[0xa47a52,0xb1875b,0x9b7251,0xad8056][(r*3+c)%4]);
  const flat=(geometry,material,y=.175)=>{const o=mesh(geometry,material,0,y,0);o.rotation.x=-Math.PI/2;return o;};
  for(const r of [1.38,1.5,3.42,3.5])flat(new T.RingGeometry(r,r+.035,80),gold);
  // Eight substantial compass petals, alternating slate and bronze inlay.
@@ -33,8 +34,8 @@ export function createCitadel(arena){
   const petal=flat(new T.ShapeGeometry(shape),i%2?dark:gold,.181);petal.rotation.z=a;
  }
  flat(new T.CircleGeometry(.44,8),dark,.184);flat(new T.RingGeometry(.35,.4,8),gold,.186);
- for(const x of [-4.14,4.14]){block(x,.2,0,.18,.14,9.65,0x294752);block(x,.28,0,.04,.025,9.65,0xbda16b);}
- for(const z of [-4.7,4.7]){block(0,.2,z,8.4,.14,.18,0x294752);block(0,.28,z,8.4,.025,.04,0xbda16b);}
+ for(const x of [-4.14,4.14]){block(x,.2,0,.18,.14,9.65,0x18212b);block(x,.28,0,.04,.025,9.65,0xad713b);}
+ for(const z of [-4.7,4.7]){block(0,.2,z,8.4,.14,.18,0x18212b);block(0,.28,z,8.4,.025,.04,0xad713b);}
  // Rhythmic corner medallions, not scattered decorations.
  for(const x of [-3.45,3.45])for(const z of [-3.92,3.92]){const o=flat(new T.RingGeometry(.25,.33,4),gold,.185);o.position.x=x;o.position.z=z;o.rotation.z=Math.PI/4;}
  // Four rising terraces in ten wedge-shaped seating bays, separated by radial stair aisles.
@@ -55,14 +56,14 @@ export function createCitadel(arena){
   }
   // Deep rear arcade supports and capitals establish architectural scale.
   const aMid=(a+b)/2,x=Math.cos(aMid)*10.78,z=-Math.sin(aMid)*10.78;
-  block(x,1.4,z,.58,3.6,.65,0x3a5b69,-aMid);
-  block(x,3.3,z,.9,.23,.86,0x94a6a4,-aMid);
-  block(x,3.48,z,.72,.12,.72,0xbda16b,-aMid);
+  block(x,1.4,z,.58,3.6,.65,0x252d38,-aMid);
+  block(x,3.3,z,.9,.23,.86,0x46505c,-aMid);
+  block(x,3.48,z,.72,.12,.72,0xad713b,-aMid);
  }
  for(let aisle=0;aisle<=bays;aisle++){
   const a=start+aisle*span;
   // Positive yaw aligns local X with (cos(a), -sin(a)); solid risers meet the foundation.
-  for(let step=0;step<13;step++){const r=6.1+step*.375,top=.18+step*.184;block(Math.cos(a)*r,(top-.45)/2,-Math.sin(a)*r,.4,top+.45,.7,0x92a4a2,a);}
+  for(let step=0;step<13;step++){const r=6.1+step*.375,top=.18+step*.184;block(Math.cos(a)*r,(top-.45)/2,-Math.sin(a)*r,.4,top+.45,.7,0x44494e,a);}
  }
  // Continuous rear parapet with a light coping, broken by the ceremonial gate.
  wedge(10.78,11.05,start,end,2.65,.75,dark);wedge(10.73,11.1,start,end,3.4,.15,pale);
@@ -70,34 +71,34 @@ export function createCitadel(arena){
  // A solid opening is authored with two piers and an extruded arch (not a painted rectangle).
  const gateZ=-9.8;
  for(const x of [-2.1,2.1]){
-  block(x,1.95,gateZ,1.4,4.8,1.6,0x365867);
-  block(x,4.48,gateZ,1.7,.3,1.9,0x91a5a5);
-  block(x,5.03,gateZ,1.05,.8,1.2,0x294554);
-  block(x,5.52,gateZ,1.35,.17,1.5,0xc3aa72);
+  block(x,1.95,gateZ,1.4,4.8,1.6,0x27323f);
+  block(x,4.48,gateZ,1.7,.3,1.9,0x46505a);
+  block(x,5.03,gateZ,1.05,.8,1.2,0x1c2732);
+  block(x,5.52,gateZ,1.35,.17,1.5,0xae753d);
   const roof=mesh(new T.ConeGeometry(.88,1.35,4),dark,x,6.25,gateZ);roof.rotation.y=Math.PI/4;
   mesh(new T.OctahedronGeometry(.22),gold,x,7.08,gateZ);
-  for(const zz of [gateZ-.82,gateZ+.82])block(x,2.2,zz,.4,2.5,.09,0x183746);
+  for(const zz of [gateZ-.82,gateZ+.82])block(x,2.2,zz,.4,2.5,.09,0x141b26);
  }
  const archShape=new T.Shape();archShape.absarc(0,0,2,0,Math.PI,false);archShape.lineTo(-1.28,0);archShape.absarc(0,0,1.28,Math.PI,0,true);archShape.closePath();
  mesh(new T.ExtrudeGeometry(archShape,{depth:1.2,bevelEnabled:true,bevelSize:.08,bevelThickness:.08,bevelSegments:1,steps:1,curveSegments:16}),pale,0,3.1,gateZ-.6);
- for(const x of [-1.64,1.64])block(x,1.5,gateZ,.72,3.2,1.2,0x78969b);
- block(0,5.02,gateZ,1.1,.45,1.55,0xbda16b);
+ for(const x of [-1.64,1.64])block(x,1.5,gateZ,.72,3.2,1.2,0x3e444b);
+ block(0,5.02,gateZ,1.1,.45,1.55,0xad713b);
  const crest=mesh(new T.OctahedronGeometry(.56),gold,0,5.68,gateZ);crest.scale.set(.8,1.35,.4);
  // Recessed doorway stays visibly dark, with a bronze portcullis behind the arch.
- block(0,1.65,gateZ-.62,2.5,3.3,.12,0x10222f);
- for(let i=-4;i<=4;i++)block(i*.25,1.65,gateZ-.5,.045,3.25,.06,0xa38a59);
- for(const y of [.5,1.4,2.3])block(0,y,gateZ-.45,2.5,.045,.07,0xa38a59);
+ block(0,1.65,gateZ-.62,2.5,3.3,.12,0x090f17);
+ for(let i=-4;i<=4;i++)block(i*.25,1.65,gateZ-.5,.045,3.25,.06,0x976330);
+ for(const y of [.5,1.4,2.3])block(0,y,gateZ-.45,2.5,.045,.07,0x976330);
  // Long hanging standards create broad, readable color masses.
  for(const x of [-4.7,4.7]){
-  block(x,2.7,-8.7,.2,5.6,.2,0xbba16a);block(x,5.35,-8.7,1.65,.1,.1,0xbba16a);
+  block(x,2.7,-8.7,.2,5.6,.2,0xa7763c);block(x,5.35,-8.7,1.65,.1,.1,0xa7763c);
   const s=new T.Shape();s.moveTo(-.65,0);s.lineTo(.65,0);s.lineTo(.65,-2.5);s.lineTo(0,-3);s.lineTo(-.65,-2.5);s.closePath();
-  mesh(new T.ShapeGeometry(s),cloth,x,5.25,-8.66);
+  mesh(new T.ShapeGeometry(s),x<0?cloth:alternateCloth,x,5.25,-8.66);
   const sigil=mesh(new T.RingGeometry(.25,.32,4),gold,x,4.15,-8.62);sigil.rotation.z=Math.PI/4;
  }
  // Foreground ceremonial stair and two restrained guardians. No high front wall blocks combat.
- for(let i=0;i<7;i++)block(0,-.02-i*.2,5.08+i*.48,4.3,.24,.56,0x718c91);
+ for(let i=0;i<7;i++)block(0,-.02-i*.2,5.08+i*.48,4.3,.24,.56,0x655744);
  for(const x of [-3.6,3.6]){
-  block(x,.2,5.45,1.2,.55,1.2,0x314f60);block(x,.72,5.45,.86,.5,.86,0x7b959a);
+  block(x,.2,5.45,1.2,.55,1.2,0x1d2835);block(x,.72,5.45,.86,.5,.86,0x414b55);
   mesh(new T.CylinderGeometry(.55,.35,.28,8),gold,x,1.15,5.45);
   const crystal=mesh(new T.OctahedronGeometry(.3),arena.mat(0x73cbd4,{emissive:0x1d747e,emissiveIntensity:.3,roughness:.3}),x,1.68,5.45);crystal.scale.y=1.65;
  }

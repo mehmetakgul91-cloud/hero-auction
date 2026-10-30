@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {ARENA_WIDTH_SCALE} from './arena-layout.js';
+import {COMBAT_FLOOR} from './arena-layout.js';
 import {ArenaCameraControls,cameraOffset,layoutLabels} from './camera-controls.js';
 import {PreviewSoftwareRenderer} from './software.js';
 import {loadCharacterKit,inspectCharacterTextures} from './characters.js';
@@ -14,10 +14,10 @@ export class MobileArena {
  constructor(canvas,labels,floats,{onSelect=()=>{},reduced=false}={}){
   this.canvas=canvas;this.labels=labels;this.floats=floats;this.reduced=reduced;this.quality='mobile';this.angle=0;this.time=0;this.models=new Map();this.resources=new Set();this.projected=new T.Vector3();
   const context=canvas.getContext('webgl2',{alpha:false,antialias:false,powerPreference:'low-power'});
-  this.renderer=context?new T.WebGLRenderer({canvas,context,alpha:false,antialias:false}):new PreviewSoftwareRenderer(canvas);this.renderer.setPixelRatio(1);this.renderer.setClearColor(0x0c1420);this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=.9;this.renderer.outputColorSpace=T.SRGBColorSpace;
+  this.renderer=context?new T.WebGLRenderer({canvas,context,alpha:false,antialias:false}):new PreviewSoftwareRenderer(canvas);this.renderer.setPixelRatio(1);this.renderer.setClearColor(0x0c1420);this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=.82;this.renderer.outputColorSpace=T.SRGBColorSpace;
   this.scene=new T.Scene();this.scene.fog=new T.Fog(0x0c1420,22,65);this.camera=new T.OrthographicCamera(-7,7,7,-7,.1,90);
-  this.scene.add(new T.HemisphereLight(0xb9d8f0,0x11192b,1.05));const sun=new T.DirectionalLight(0xffd5a0,1.8);sun.position.set(-5,12,7);this.scene.add(sun);this.sun=sun;const fill=new T.DirectionalLight(0x548fde,.65);fill.position.set(5,3,-6);this.scene.add(fill);
-  if(!this.renderer.isSoftwareRenderer){const generator=new T.PMREMGenerator(this.renderer),room=new RoomEnvironment();const environment=this.keep(generator.fromScene(room,.04,.1,100,{size:128}));this.scene.environment=environment.texture;this.scene.environmentIntensity=.6;room.dispose();generator.dispose();}
+  this.scene.add(new T.HemisphereLight(0xe4e2d6,0x10131b,.55));const sun=new T.DirectionalLight(0xffead1,2);sun.position.set(-5,12,7);this.scene.add(sun);this.sun=sun;const fill=new T.DirectionalLight(0x91abd2,.25);fill.position.set(5,3,-6);this.scene.add(fill);
+  if(!this.renderer.isSoftwareRenderer){const generator=new T.PMREMGenerator(this.renderer),room=new RoomEnvironment();const environment=this.keep(generator.fromScene(room,.04,.1,100,{size:128}));this.scene.environment=environment.texture;this.scene.environmentIntensity=.35;room.dispose();generator.dispose();}
   const before=this.scene.children.length;createCitadel(this);this.environmentObjects=this.scene.children.slice(before);this.plinth=this.mesh(new T.CylinderGeometry(.72,.8,.18,40),this.mat(0x273546),0,.06,0);this.plinth.visible=false;this.contactTexture=this.keep(softContactTexture());this.buildEffects();this.raycaster=new T.Raycaster();this.pointer=new T.Vector2();
   this.click=e=>{const rect=canvas.getBoundingClientRect();this.pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);this.raycaster.setFromCamera(this.pointer,this.camera);const hit=this.raycaster.intersectObjects([...this.models.values()].filter(m=>m.root.visible&&m.body.visible&&!m.dead).map(m=>m.body),true)[0];if(hit)onSelect(hit.object.userData.key);};this.controls=new ArenaCameraControls(canvas,{select:this.click,change:()=>{this.resize();this.render(0,this.lastProgress||0);}});
   this.observer=new ResizeObserver(()=>{this.resize();this.render(0,this.lastProgress||0);});this.observer.observe(canvas);this.resize();
@@ -60,8 +60,9 @@ export class MobileArena {
  resize(){const {width,height}=this.canvas.getBoundingClientRect();if(!width||!height)return;this.width=width;this.height=height;
   const size=bufferSize(width,height,window.devicePixelRatio||1,this.quality);this.renderer.setSize(size.width,size.height,false);this.buffer=size;
   if(this.focusKey){const m=this.models.get(this.focusKey),center=m.base.clone().add(new T.Vector3(0,1.15,0)),a=m.rotation+(this.angle===2?Math.PI:this.angle===1?-1.2:.55);const o=cameraOffset({x:Math.sin(a)*5,y:1.4,z:Math.cos(a)*5},this.controls);this.camera.position.copy(center).add(new T.Vector3(o.x,o.y,o.z));this.camera.lookAt(center);this.camera.updateMatrixWorld();const half=1.65*this.controls.zoom,aspect=width/height;this.camera.left=-half*aspect;this.camera.right=half*aspect;this.camera.top=half;this.camera.bottom=-half;this.camera.updateProjectionMatrix();return;}
-  const o=cameraOffset({x:this.angle===1?0:this.angle===2?10:8,y:this.angle===1?19:13,z:this.angle===2?8:15},this.controls);this.camera.position.set(o.x,o.y,o.z);this.camera.lookAt(0,.35,0);this.camera.updateMatrixWorld();
-  let mx=0,my=0;for(const x of [-11.5*ARENA_WIDTH_SCALE,11.5*ARENA_WIDTH_SCALE])for(const z of [-11.5,8.5])for(const y of [-1.9,7.5]){const p=new T.Vector3(x,y,z).applyMatrix4(this.camera.matrixWorldInverse);mx=Math.max(mx,Math.abs(p.x));my=Math.max(my,Math.abs(p.y));}
+  const o=cameraOffset({x:this.angle===1?16:this.angle===2?-8:4,y:this.angle===1?18:20,z:this.angle===1?5:this.angle===2?-14:16},this.controls);this.camera.position.set(o.x,o.y,o.z);this.camera.lookAt(0,.65,0);this.camera.updateMatrixWorld();
+  // Frame combat bounds and full standing heroes, NOT the amphitheatre/gate. Surroundings may crop.
+  let mx=0,my=0;for(const x of [-COMBAT_FLOOR.width/2-.25,COMBAT_FLOOR.width/2+.25])for(const z of [-COMBAT_FLOOR.depth/2-.15,COMBAT_FLOOR.depth/2+.15])for(const y of [0,2.65]){const p=new T.Vector3(x,y,z).applyMatrix4(this.camera.matrixWorldInverse);mx=Math.max(mx,Math.abs(p.x));my=Math.max(my,Math.abs(p.y));}
   const aspect=width/height,half=Math.max(my,mx/aspect)*1.035*this.controls.zoom;this.camera.left=-half*aspect;this.camera.right=half*aspect;this.camera.top=half;this.camera.bottom=-half;this.camera.updateProjectionMatrix();
  }
  cameraNext(){this.angle=(this.angle+1)%3;this.controls.reset();}
