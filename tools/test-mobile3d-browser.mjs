@@ -40,6 +40,16 @@ try{
   await page.locator('#play').click();await page.waitForTimeout(1500);await page.locator('#play').click();await shot('battle');await page.locator('#reset').click();
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no horizontal overflow');
   await page.setViewportSize({width:844,height:390});await page.locator('#camera-reset').click();await shot('landscape');
+  for(const width of [390,320]){
+   await page.setViewportSize({width,height:844});await page.locator('#camera-reset').click();await canvas.focus();
+   for(let i=0;i<8;i++)await page.keyboard.press('ArrowDown');
+   await shot('labels-'+width+'-low');
+   const labels=await page.locator('.unit-label:visible').evaluateAll(nodes=>nodes.map(el=>{const r=el.getBoundingClientRect(),p=el.parentElement.getBoundingClientRect();return {x:r.x-p.x,y:r.y-p.y,w:r.width,h:r.height,pw:p.width,ph:p.height,identity:el.getAttribute('aria-label'),selected:el.classList.contains('selected'),compact:el.classList.contains('compact')};}));
+   assert.equal(labels.length,10,'all hero identity/HP controls remain available');
+   for(const a of labels){assert(a.identity.includes('Can '),'accessible identity includes HP');assert(a.x>=-1&&a.y>=-1&&a.x+a.w<=a.pw+1&&a.y+a.h<=a.ph+1,'label in arena');if(a.selected)assert(!a.compact,'selected hero name remains visible');for(const b of labels)if(a!==b)assert(a.x+a.w<=b.x+.5||b.x+b.w<=a.x+.5||a.y+a.h<=b.y+.5||b.y+b.h<=a.y+.5,'visible labels must not overlap');}
+   await page.locator('.unit-label:visible').last().click();await page.locator('#camera-reset').click();await shot('labels-'+width+'-selected');
+   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'small portrait has no overflow');
+  }
   assert.deepEqual(errors,[]);
   const renderer=await canvas.evaluate(c=>{const gl=c.getContext('webgl2');if(!gl)return {mode:'software fallback'};const debug=gl.getExtension('WEBGL_debug_renderer_info');return {mode:'WebGL2',renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};});
   results.push({reducedMotion,renderer,checks:'drag/select separation, wheel, pinch, cancel recovery, keyboard, reset, 3 presets, hero UI, closeup, replay, resize, overflow',scope:'Headless CI only; SwiftShader is CPU software WebGL, not physical GPU or Android performance proof.'});

@@ -3,3 +3,5 @@
 .motion-track{display:flex;gap:3px;padding:0 20px 10px}.motion-track span{flex:1;text-align:center;padding:7px 2px;border-bottom:2px solid #273547;color:#6f8499;font-size:9px;letter-spacing:.4px}.motion-track span.active{color:#e9cb8f;border-color:#d7bd88;background:#d7bd880a}@media(max-width:760px){.motion-track{padding:0 10px 8px}.motion-track span{font-size:8px}}
 
 .camera-reset{position:absolute;top:12px;right:12px;min-height:44px;padding:0 12px;background:#101d2cdd;font-size:11px}.unit-label{max-width:120px;overflow:hidden;text-overflow:ellipsis}#arena:focus-visible{outline:2px solid var(--cyan);outline-offset:-3px}
+
+.unit-label{font-size:7px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.unit-label.compact{padding:3px;min-width:0}.unit-label.compact span{display:none}.unit-label.compact i{margin-top:1px;height:4px}.unit-label:focus-visible{outline:2px solid var(--cyan);z-index:4}

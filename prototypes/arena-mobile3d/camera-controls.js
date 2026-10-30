@@ -31,3 +31,23 @@ export function cameraOffset(offset,controls){
 export function labelPosition(x,y,width,height,labelWidth=90,labelHeight=24){
  const half=Math.min(width/2,labelWidth/2+4);return {x:clamp(x,half,Math.max(half,width-half)),y:clamp(y,labelHeight+4,Math.max(labelHeight+4,height-4))};
 }
+
+// Stable screen-space packing. Priority identities keep their names; secondary
+// units may compact to an accessible HP chip rather than overlap another label.
+export function layoutLabels(items,width,height){
+ const placed=[],result=new Map(),gap=3;
+ const overlaps=r=>placed.some(p=>r.x<p.x+p.w+gap&&r.x+r.w+gap>p.x&&r.y<p.y+p.h+gap&&r.y+r.h+gap>p.y);
+ const ordered=[...items].sort((a,b)=>(b.priority||0)-(a.priority||0)||String(a.key).localeCompare(String(b.key)));
+ for(const item of ordered){let found;for(const compact of [false,true]){
+   const w=compact?28:Math.min(90,width-8),h=compact?12:25;
+   const offsets=[0,-28,28,-56,56,-84,84];
+   for(const dy of offsets){for(const dx of [0,-32,32,-64,64]){const r={key:item.key,x:clamp(item.x-w/2+dx,4,width-w-4),y:clamp(item.y-h+dy,58,Math.max(58,height-h-48)),w,h,compact};if(!overlaps(r)){found=r;break;}}if(found)break;}
+   if(found)break;
+  }
+  // Ten units fit easily; deterministic compact grid is a last-resort for tightly
+  // coincident projections. Identity/HP and keyboard selection remain available.
+  if(!found)for(let y=58;y<height-60&&!found;y+=16)for(let x=4;x<width-32;x+=32){const r={key:item.key,x,y,w:28,h:12,compact:true};if(!overlaps(r)){found=r;break;}}
+  if(found){placed.push(found);result.set(item.key,found);}
+ }
+ return result;
+}

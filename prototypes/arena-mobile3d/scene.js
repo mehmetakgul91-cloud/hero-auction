@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {ArenaCameraControls,cameraOffset,labelPosition} from './camera-controls.js';
+import {ArenaCameraControls,cameraOffset,layoutLabels} from './camera-controls.js';
 import {PreviewSoftwareRenderer} from './software.js';
 import {loadCharacterKit} from './characters.js';
 import {home,primaryAction,snapshotChanges} from './replay.js';
@@ -39,7 +39,7 @@ export class MobileArena {
    const ring=new T.Mesh(this.keep(new T.RingGeometry(.48,.51,24)),this.keep(new T.MeshBasicMaterial({color:side?0xe88866:0x59b9f2,transparent:true,opacity:.8,depthWrite:false})));ring.rotation.x=-Math.PI/2;ring.position.y=.155;m.root.add(ring);
    const el=document.createElement('button');el.className='unit-label '+(side?'red':'blue');el.type='button';el.setAttribute('aria-label',hero.name+' · '+(hero.lane==='front'?'Ön saf':'Arka saf'));const name=document.createElement('span');name.textContent=hero.name;const track=document.createElement('i'),bar=document.createElement('b');track.append(bar);el.append(name,track);el.onclick=()=>this.onLabelSelect?.(key);this.labels.append(el);m.label=el;m.bar=bar;
   }
-  m.hero=hero;m.dead=hero.hp<=0;m.bar.style.transform='scaleX('+Math.max(0,hero.hp/hero.maxHp)+')';m.label.classList.toggle('dead',m.dead);
+  m.hero=hero;m.dead=hero.hp<=0;m.label.setAttribute('aria-label',hero.name+' · Can '+hero.hp+' / '+hero.maxHp);m.bar.style.transform='scaleX('+Math.max(0,hero.hp/hero.maxHp)+')';m.label.classList.toggle('dead',m.dead);
  }));}
  reset(teams){this.active=null;this.projectile.visible=false;this.pulses.forEach(e=>{e.age=99;e.mesh.visible=false;});this.floatPool.forEach(e=>{e.age=99;e.el.hidden=true;});this.models.forEach(m=>{m.deathAt=null;m.hitAt=null;m.body.visible=true;});this.setTeams(teams);this.render(0,0);}
  start(frame,plan=planAction(frame,this.teams)){
@@ -55,7 +55,7 @@ export class MobileArena {
   if(c.hp<0)m.hitAt=this.time;if(c.died)m.deathAt=this.time;
  }this.setTeams(frame.teams);}
  focus(key){this.focusKey=key;this.environmentObjects.forEach(o=>o.visible=!key);this.plinth.visible=!!key;if(key){this.plinth.position.copy(this.models.get(key).base);this.plinth.position.y=.06;}this.resize();this.render(0,this.lastProgress||0);}
- select(key){if(this.focusKey)this.focus(key);this.models.forEach(m=>m.label.classList.toggle('selected',m.key===key));}
+ select(key){this.selectedKey=key;if(this.focusKey)this.focus(key);this.models.forEach(m=>m.label.classList.toggle('selected',m.key===key));this.render(0,this.lastProgress||0);}
  resize(){const {width,height}=this.canvas.getBoundingClientRect();if(!width||!height)return;this.width=width;this.height=height;
   const size=bufferSize(width,height,window.devicePixelRatio||1,this.quality);this.renderer.setSize(size.width,size.height,false);this.buffer=size;
   if(this.focusKey){const m=this.models.get(this.focusKey),center=m.base.clone().add(new T.Vector3(0,1.15,0)),a=m.rotation+(this.angle===2?Math.PI:this.angle===1?-1.2:.55);const o=cameraOffset({x:Math.sin(a)*5,y:1.4,z:Math.cos(a)*5},this.controls);this.camera.position.copy(center).add(new T.Vector3(o.x,o.y,o.z));this.camera.lookAt(center);this.camera.updateMatrixWorld();const half=1.65*this.controls.zoom,aspect=width/height;this.camera.left=-half*aspect;this.camera.right=half*aspect;this.camera.top=half;this.camera.bottom=-half;this.camera.updateProjectionMatrix();return;}
@@ -70,7 +70,7 @@ export class MobileArena {
  render(dt,p=0){
   // The near monument fades at low viewing angles instead of hiding combat.
   updateCitadelView(this);
-  this.time+=dt;this.lastProgress=p;const active=this.active;this.projectile.visible=false;
+  this.time+=dt;this.lastProgress=p;const active=this.active,labelItems=[];this.projectile.visible=false;
   for(const m of this.models.values()){
    m.root.position.copy(m.base);m.root.rotation.y=m.rotation;m.body.position.set(0,0,0);m.body.rotation.set(0,0,0);let motionPose=null;
    m.root.visible=!this.focusKey||this.focusKey===m.key;m.label.hidden=!!this.focusKey;
@@ -89,8 +89,11 @@ export class MobileArena {
     const hit=this.time-(m.hitAt??-10);if(hit<.3&&!this.reduced)m.body.rotation.x=-Math.sin(hit/.3*Math.PI)*.15;
    }
    m.motion.sample(this.time,{progress:p,pose:motionPose,hitAge:this.time-(m.hitAt??-10),reduced:this.reduced});
-   const anchor=m.root.position.clone().add(new T.Vector3(0,2.15,0)),raw=this.project(anchor),pos=labelPosition(raw.x,raw.y,this.width,this.height,m.label.offsetWidth||90,m.label.offsetHeight||24);m.label.hidden=!!this.focusKey||raw.x<0||raw.x>this.width||raw.y<0||raw.y>this.height;m.label.style.transform=`translate(${pos.x}px,${pos.y}px) translate(-50%,-100%)`;
+   const raw=this.project(m.root.position.clone().add(new T.Vector3(0,2.15,0)));
+   m.label.hidden=!!this.focusKey||raw.x<0||raw.x>this.width||raw.y<0||raw.y>this.height;
+   if(!m.label.hidden)labelItems.push({key:m.key,x:raw.x,y:raw.y,priority:m.key===this.selectedKey?4:active?.target===m?3:active?.actor===m?2:m.dead?0:1});
   }
+  for(const [key,pos] of layoutLabels(labelItems,this.width,this.height)){const m=this.models.get(key);m.label.classList.toggle('compact',pos.compact);m.label.style.width=pos.w+'px';m.label.style.height=pos.h+'px';m.label.style.transform=`translate(${pos.x}px,${pos.y}px)`;m.label.title=m.hero.name+' · '+m.hero.hp+'/'+m.hero.maxHp;}
   for(const e of this.pulses){if(e.age>=e.life){e.mesh.visible=false;continue;}e.age+=dt;const t=e.age/e.life;e.mesh.scale.setScalar(1+t*3);e.mesh.material.opacity=Math.max(0,1-t)*.75;}
   for(const e of this.floatPool){if(e.age>=e.life){e.el.hidden=true;continue;}e.age+=dt;const t=e.age/e.life,pos=this.project(e.position.clone().add(new T.Vector3(0,this.reduced?0:t*.8,0)));e.el.style.transform=`translate(${pos.x}px,${pos.y}px) translate(-50%,-100%)`;e.el.style.opacity=String(Math.max(0,1-t));}
   this.renderer.render(this.scene,this.camera);
