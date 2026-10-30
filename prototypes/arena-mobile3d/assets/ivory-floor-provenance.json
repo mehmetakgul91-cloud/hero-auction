@@ -1,0 +1,28 @@
+{
+  "generator": "Built-in image_gen.imagegen",
+  "generatedAt": "2026-10-30",
+  "assetType": "Albedo raster material",
+  "referenceInspected": "arena-concept-library-20261030/Hero-Auction-Arena-Art-Direction-Concept.png",
+  "prompt": "Square orthographic directly overhead albedo of luminous warm ivory limestone flagstone surface. Broad irregular organic slabs, approximately 25\u201335 over a 10-meter square, thin warm-gray natural joins, restrained creamy mineral variation and surface wear. Similar light values, no alternating colors. Uniform diffuse illumination, no shadows, perspective, horizon, border, medallion, metal, characters, vegetation, UI, text, grid or checkerboard. Continuous flat ivory stone sheet for mapping once onto an oval mesh.",
+  "original": {
+    "filename": "ivory-floor-albedo-original.png",
+    "dimensions": [
+      1254,
+      1254
+    ]
+  },
+  "mobile": {
+    "filename": "ivory-floor-albedo.jpg",
+    "dimensions": [
+      1024,
+      1024
+    ],
+    "bytes": 190178,
+    "jpegQuality": 84,
+    "colorSpace": "sRGB",
+    "sha256": "e7fc39dcf169da6a1a02ef186b55aa42e91a036175b33486625319a823c9a11b"
+  },
+  "packing": "Original retained. LANCZOS resized to 1024 square, JPEG quality84 optimized progressive; no artistic pixel editing.",
+  "usage": "Map once over oval floor, clamp-to-edge. Not a seamless repeating tile. No normal or roughness map supplied.",
+  "validation": "Actual original and packed pixels inspected: broad organic slabs, no regular grid/checkerboard, no emblem, no perspective or cast shadows."
+}

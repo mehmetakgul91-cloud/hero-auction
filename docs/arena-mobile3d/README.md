@@ -1,3 +1,18 @@
+# Güncel PR79 sanat yönü adayı — 30 Ekim 2026
+
+Onaylı bütün-sahne konsepti: fildişi taş, bronz ve turkuaz; tek geniş oval savaş alanı, alçak kavisli tribünler, açık kristal kemer ve gün ışığı. Bu aday eski siyah yüksek tribün kabuğunu kaldırır. Konsept resmi oyun ekranı diye kullanılmaz: gerçek geometriye ayrı taş albedo kaplanır, gerçek Meshy tribün modülü dört kez paylaşılır.
+
+- Oval görsel zemin **12.6 × 10.1**; on mevcut kahramanın görsel safları soldan sağa döndürülür. Model boyları, hedef/hasar/menzil kuralları ve darbe zamanlaması değişmez.
+- Ana Meshy T2.5 tribünü **8933 üçgen**, mobil türev **710252 bayt**, üç gömülü doku. Kaynak 7002116 bayt korunur. Önceki küçük gri korkuluğun yerine bütün mimari bölüm kullanılır.
+- Fildişi albedo **1024²**, 190178 bayt JPEG; tek oval UV, clamp, kare/dama ızgarası yok. Built-in imagegen ile yalnız yüzey albedosu üretildi; kaynak ve prompt provenance kaydında.
+- İki guardian ve dört tribün örneği geometri/malzeme/dokuları paylaşır. Ana çevre yaklaşık 10.4k üçgen, toplam sahne 400k üçgen ve paket 15MB ham/9MB gzip bütçesinde tutulur. Kesin ölçüm `build-info.json` içindedir.
+- Gölgeler düşük maliyetli yumuşak temas/yönlü zemin izleridir; konseptteki tam sinematik gölge ve yansıma sistemi değildir. Uzak dağlar basit atmosferik siluet, izleyiciler/animasyonlu kalabalık bu adayda yok. Eski iki karakter modeli rol temsilidir.
+- Kalite kapısı yalnız test değildir: aynı açılı gerçek CI WebGL görüntüsü onaylı referansla karşılaştırılmalıdır. CI SwiftShader fiziksel Android/GPU doğrulaması değildir. Site veya canlı oyun otomatik güncellenmez.
+
+Aşağıdaki ilk PR77 notları tarihsel kayıttır; model/boyut/test sayıları o ilk sürüme aittir.
+
+---
+
 # Hero Auction — dokulu ve iskeletli 3D arena, aşama 1
 
 30 Ekim 2026. Motor temeli: `main@7714fe314ab4e923a9a5dea00d7242217d2b7fa0`.
