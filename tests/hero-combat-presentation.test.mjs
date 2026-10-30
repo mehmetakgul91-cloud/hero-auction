@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import * as T from 'three';
-import {heroActionDuration} from '../public/hero-battle-timing.js';
+import {heroActionDuration,HERO_SPECIAL_MS} from '../public/hero-battle-timing.js';
 import {createHeroAttackPlayer,playHeroAttack} from '../public/hero-attack-effects.js';
 import {combatEffectKind,combatEffectActors,createCombatEffects} from '../public/arena-combat-effects.js';
 import {heroCombatPresentation,stationaryArenaAction} from '../public/hero-combat-presentation.js';
@@ -41,14 +41,15 @@ test('healing stays in place even for a normally melee hero',()=>{
 test('classic arena applies the same range rule to the actual animation calls',()=>{
  const source=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8');
  const code=source.slice(source.indexOf('function animateMove(e){'),source.indexOf("window.addEventListener('heroarena:experimental-move'"));
- for(const h of [...stationary,{id:'warrior',role:'fighter'}]){
+ for(const h of [...stationary,{id:'warrior',role:'fighter'}])for(const damageType of ['normal','special']){
   const animations=[],classes=[];
   const element=()=>({dataset:{},style:{setProperty(){}},classList:{contains(){return false},add(...v){classes.push(...v)},remove(){}},append(){},remove(){},querySelector(){return null},setAttribute(){},getBoundingClientRect(){return {left:0,top:0,width:80,height:100}},animate(frames){animations.push(frames)}});
   const actor=element(),target=element();actor.dataset={heroId:h.id,role:h.role};target.dataset.heroId='target';target.animate=()=>{};target.getBoundingClientRect=()=>({left:300,top:120,width:80,height:100});
   const document={querySelectorAll:()=>[actor,target],createElement:element,body:{append(){}}};
   const combatEffects=createCombatEffects({document,setTimer(){},clearTimer(){}});
-  const context=vm.createContext({heroActionDuration,heroAttacks:createHeroAttackPlayer({document,setTimer(){},clearTimer(){}}),playHeroAttack,combatEffectKind,combatEffectActors,combatEffects,heroCombatPresentation,stationaryArenaAction,motion:()=>true,comicBattleCue(){},duration:()=>600,setTimeout(){},floatingArenaEffect(){},document:{querySelectorAll:()=>[actor,target],createElement:element,body:{append(){}}}});
-  vm.runInContext(code+';animateMove('+JSON.stringify({actorId:h.id,targetId:'target',action:'attack',value:15})+');',context);
+  const context=vm.createContext({heroActionDuration,HERO_SPECIAL_MS,heroAttacks:createHeroAttackPlayer({document,setTimer(){},clearTimer(){}}),playHeroAttack,combatEffectKind,combatEffectActors,combatEffects,heroCombatPresentation,stationaryArenaAction,motion:()=>true,comicBattleCue(){},duration:()=>600,setTimeout(){},floatingArenaEffect(){},document:{querySelectorAll:()=>[actor,target],createElement:element,body:{append(){}}}});
+  vm.runInContext(code+';animateMove('+JSON.stringify({actorId:h.id,targetId:'target',action:'attack',damageType,value:15})+');',context);
+  assert.equal(classes.includes('special-cast'),damageType==='special','special visuals must not depend on the old 1900ms cadence');
   if(stationary.includes(h)){
    assert.ok(classes.includes('attack-energy'),h.id);
    assert.ok(animations.every(frames=>frames.every(f=>!f.transform)),'ranged actor must never receive a travel transform');

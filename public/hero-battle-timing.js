@@ -1,6 +1,9 @@
-// Shared presentation pace only; no combat stats, damage or targeting logic.
-export const HERO_NORMAL_MS=1400;
-export const HERO_SPECIAL_MS=1900;
+// Shared presentation cadence: about 21% shorter than the previous 1400/1900ms.
+// Both intervals align with the existing 50ms server scheduler.
+// Keep full source/travel/contact visuals; only their fading tail may overlap
+// the next preparation. No combat stats, damage or targeting logic changes.
+export const HERO_NORMAL_MS=1100;
+export const HERO_SPECIAL_MS=1500;
 export const HERO_BASELINE_MS=900;
 export function heroActionDuration(events=[]){
  const entries=Array.isArray(events)?events:[events];

@@ -12,8 +12,9 @@ export function heroAttackSignature(hero,kind){
  return 'blade';
 }
 export function heroAttackTiming(time=850,{self=false,special=false,settled=false}={}){
- // Shared 1400/1900ms beats leave a deliberate source/travel phase followed
- // by contact and a fading tail. Presentation never changes battle calculations.
+ // Full 1400/1900ms visuals retain their deliberate source/travel/contact.
+ // The 1100/1500ms cadence overlaps only fading tails with next preparation.
+ // Presentation never changes battle calculations.
  const scale=Math.max(.8,Math.min(1.15,(Number(time)||850)/850));
  const charge=self||settled?0:Math.round((special?360:240)*scale);
  const travel=self||settled?0:Math.round((special?480:360)*scale);
