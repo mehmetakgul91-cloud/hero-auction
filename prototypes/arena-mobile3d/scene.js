@@ -1,7 +1,7 @@
 import * as T from 'three';
 import {ArenaCameraControls,cameraOffset,layoutLabels} from './camera-controls.js';
 import {PreviewSoftwareRenderer} from './software.js';
-import {loadCharacterKit} from './characters.js';
+import {loadCharacterKit,inspectCharacterTextures} from './characters.js';
 import {home,primaryAction,snapshotChanges} from './replay.js';
 import {formationSlots,planAction,sampleAction,pathPosition} from './director.js';
 import {bufferSize} from './metrics.js';
@@ -13,15 +13,15 @@ export class MobileArena {
  constructor(canvas,labels,floats,{onSelect=()=>{},reduced=false}={}){
   this.canvas=canvas;this.labels=labels;this.floats=floats;this.reduced=reduced;this.quality='mobile';this.angle=0;this.time=0;this.models=new Map();this.resources=new Set();this.projected=new T.Vector3();
   const context=canvas.getContext('webgl2',{alpha:false,antialias:false,powerPreference:'low-power'});
-  this.renderer=context?new T.WebGLRenderer({canvas,context,alpha:false,antialias:false}):new PreviewSoftwareRenderer(canvas);this.renderer.setPixelRatio(1);this.renderer.setClearColor(0x0c1420);this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1;
+  this.renderer=context?new T.WebGLRenderer({canvas,context,alpha:false,antialias:false}):new PreviewSoftwareRenderer(canvas);this.renderer.setPixelRatio(1);this.renderer.setClearColor(0x0c1420);this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=.9;this.renderer.outputColorSpace=T.SRGBColorSpace;
   this.scene=new T.Scene();this.scene.fog=new T.Fog(0x0c1420,22,65);this.camera=new T.OrthographicCamera(-7,7,7,-7,.1,90);
-  this.scene.add(new T.HemisphereLight(0xc5e5ff,0x222138,1.4));const sun=new T.DirectionalLight(0xffe0b0,2.2);sun.position.set(-5,12,7);this.scene.add(sun);this.sun=sun;const fill=new T.DirectionalLight(0x7c8aff,.8);fill.position.set(5,3,-6);this.scene.add(fill);
-  if(!this.renderer.isSoftwareRenderer){const generator=new T.PMREMGenerator(this.renderer),room=new RoomEnvironment();const environment=this.keep(generator.fromScene(room,.04,.1,100,{size:128}));this.scene.environment=environment.texture;this.scene.environmentIntensity=.7;room.dispose();generator.dispose();}
+  this.scene.add(new T.HemisphereLight(0xb9d8f0,0x11192b,1.05));const sun=new T.DirectionalLight(0xffd5a0,1.8);sun.position.set(-5,12,7);this.scene.add(sun);this.sun=sun;const fill=new T.DirectionalLight(0x548fde,.65);fill.position.set(5,3,-6);this.scene.add(fill);
+  if(!this.renderer.isSoftwareRenderer){const generator=new T.PMREMGenerator(this.renderer),room=new RoomEnvironment();const environment=this.keep(generator.fromScene(room,.04,.1,100,{size:128}));this.scene.environment=environment.texture;this.scene.environmentIntensity=.6;room.dispose();generator.dispose();}
   const before=this.scene.children.length;createCitadel(this);this.environmentObjects=this.scene.children.slice(before);this.plinth=this.mesh(new T.CylinderGeometry(.72,.8,.18,40),this.mat(0x273546),0,.06,0);this.plinth.visible=false;this.contactTexture=this.keep(softContactTexture());this.buildEffects();this.raycaster=new T.Raycaster();this.pointer=new T.Vector2();
   this.click=e=>{const rect=canvas.getBoundingClientRect();this.pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);this.raycaster.setFromCamera(this.pointer,this.camera);const hit=this.raycaster.intersectObjects([...this.models.values()].map(m=>m.body),true)[0];if(hit)onSelect(hit.object.userData.key);};this.controls=new ArenaCameraControls(canvas,{select:this.click,change:()=>{this.resize();this.render(0,this.lastProgress||0);}});
   this.observer=new ResizeObserver(()=>{this.resize();this.render(0,this.lastProgress||0);});this.observer.observe(canvas);this.resize();
  }
- async load(){this.kit=await loadCharacterKit();}
+ async load(){this.kit=await loadCharacterKit();this.modelDiagnostics=inspectCharacterTextures(this.kit.sources);if(this.modelDiagnostics.some(m=>!m.meshes||m.textured!==m.meshes))throw Error('3D model dokuları çözülemedi. Boş model gösterilmiyor; yeniden yüklemeyi dene.');}
  keep(obj){this.resources.add(obj);return obj;}
  mat(color,extra={}){return this.keep(new T.MeshStandardMaterial({color,roughness:.8,metalness:.25,...extra}));}
  mesh(geo,mat,x=0,y=0,z=0){const mesh=new T.Mesh(this.keep(geo),mat);mesh.position.set(x,y,z);this.scene.add(mesh);return mesh;}

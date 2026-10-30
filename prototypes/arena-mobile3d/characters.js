@@ -5,6 +5,7 @@ import {clone} from 'three/addons/utils/SkeletonUtils.js';
 const clamp=v=>Math.max(0,Math.min(1,v));
 const smooth=v=>{v=clamp(v);return v*v*(3-2*v);};
 export const CHARACTER_FILES={tank:'obsidyen.glb',mage:'morvan.glb'};
+export function inspectCharacterTextures(sources){return Object.entries(sources).map(([type,source])=>{let meshes=0,textured=0;source.scene.traverse(o=>{if(o.isSkinnedMesh){meshes++;const materials=Array.isArray(o.material)?o.material:[o.material];if(materials.every(m=>m.map?.image?.width>0&&m.map?.image?.height>0&&m.map.colorSpace===T.SRGBColorSpace))textured++;}});return {type,file:CHARACTER_FILES[type],meshes,textured};});}
 // In-place animation: the authoritative action director owns arena translation.
 export function inPlaceClip(clip,origin){
  const copy=clip.clone();
@@ -57,7 +58,7 @@ export class CharacterMotion{
 }
 
 export async function loadCharacterKit(load=url=>new GLTFLoader().loadAsync(url)){
- const entries=await Promise.all(Object.entries(CHARACTER_FILES).map(async([type,file])=>[type,await load('./assets/'+file)]));
+ const entries=await Promise.all(Object.entries(CHARACTER_FILES).map(async([type,file])=>[type,await load('./assets/'+file).catch(()=>{throw Error(file+' yüklenemedi. Bağlantını kontrol edip yeniden yükle.');})]));
  const sources=Object.fromEntries(entries),resources=new Set(),instances=[];
  for(const source of Object.values(sources))source.scene.traverse(o=>{if(o.isMesh){resources.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material]){resources.add(m);m.roughness=Math.max(.45,m.roughness);m.metalness=Math.min(.7,m.metalness);for(const v of Object.values(m))if(v?.isTexture)resources.add(v);}}});
  const keep=o=>(resources.add(o),o);

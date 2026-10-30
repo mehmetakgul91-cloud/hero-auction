@@ -7,3 +7,5 @@
 .unit-label{font-size:7px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.unit-label.compact{padding:3px;min-width:0}.unit-label.compact span{display:none}.unit-label.compact i{margin-top:1px;height:4px}.unit-label:focus-visible{outline:2px solid var(--cyan);z-index:4}
 
 .label-leader{position:absolute;left:0;top:0;height:1px;transform-origin:0 50%;background:var(--cyan);opacity:.45;pointer-events:none}.label-leader.red{background:var(--red)}.unit-label{z-index:1}
+
+.model-status{margin:0 0 14px;padding:10px 14px;border:1px solid #356477;border-radius:8px;background:#102b37;color:#b7dfdf;font-size:11px;line-height:1.5}#model-identity{color:var(--gold);font-size:11px}

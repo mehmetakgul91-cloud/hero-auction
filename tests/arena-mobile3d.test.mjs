@@ -167,3 +167,7 @@ test('repeated scene replays keep pools bounded and teardown releases shared geo
   let disposed=0;for(const geometry of scene.kit.resources)geometry.addEventListener('dispose',()=>disposed++);scene.dispose();assert.equal(disposed,geometryCount);assert.equal(disconnected,1);assert.equal(removed,7);assert.equal(scene.models.size,0);
  }finally{for(const [key,value] of Object.entries(originals)){if(value)Object.defineProperty(globalThis,key,value);else delete globalThis[key];}}
 });
+
+test('model loading errors identify the missing asset instead of silently substituting a placeholder',async()=>{
+ await assert.rejects(()=>loadCharacterKit(async()=>{throw Error('404');}),/obsidyen.glb yüklenemedi/);
+});
