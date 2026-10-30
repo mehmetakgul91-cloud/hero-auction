@@ -4,6 +4,7 @@ import {createServer} from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {chromium} from 'playwright';
+import {verifyCombatReplay} from './test-mobile3d-combat-browser.mjs';
 const root=path.resolve('.artifacts/mobile3d'),out=path.resolve('.artifacts/mobile3d-browser');
 await fs.mkdir(out,{recursive:true});
 const mime={'.html':'text/html','.js':'text/javascript','.json':'application/json','.glb':'model/gltf-binary','.css':'text/css','.jpg':'image/jpeg','.png':'image/png'};
@@ -79,6 +80,7 @@ try{
   results.push({reducedMotion,renderer,checks:'drag/select separation, wheel, pinch, cancel recovery, keyboard, reset, 3 presets, hero UI, closeup, replay, resize, overflow',scope:'Headless CI only; SwiftShader is CPU software WebGL, not physical GPU or Android performance proof.'});
   await context.close();
  }
+ results.push(await verifyCombatReplay({browser,url:`http://127.0.0.1:${server.address().port}/`,root,out}));
  // Failure must remain visible and retryable, never a silent mannequin.
  const failure=await browser.newPage({viewport:{width:390,height:844}});
  await failure.route('**/assets/obsidyen.glb',route=>route.fulfill({status:404,body:'fixture missing'}));

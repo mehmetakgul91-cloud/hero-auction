@@ -178,6 +178,10 @@ test('repeated scene replays keep pools bounded and teardown releases shared geo
   for(const m of [...scene.models.values()].slice(0,2)){assert.deepEqual(m.root.scale.toArray(),[1,1,1]);scene.focus(m.key);scene.render(0,0);scene.scene.updateMatrixWorld(true);picked=null;const center=scene.project(m.base.clone().add(new Vector3(0,1.15,0)));for(const dy of [0,-8,8,-16,16]){scene.click({clientX:center.x,clientY:center.y+dy});if(picked)break;}assert.equal(picked,m.key);scene.focus(null);}
   const resources=scene.resources.size;const geometryCount=scene.kit.resources.size;
   for(let i=0;i<3;i++){scene.reset(fixture.initial);for(const frame of fixture.frames){scene.start(frame);scene.impact(frame);scene.end();}}
+  // Inspectors expose copies only; final death and impact effects fully settle in one bounded render.
+  const diagnostics=scene.inspectCombat(),first=[...scene.models.values()][0];diagnostics.units[0].hp=-999;diagnostics.units[0].position[0]=999;assert.notEqual(first.hero.hp,-999);assert.notEqual(first.root.position.x,999);
+  scene.render(1.2,1);assert.ok([...scene.models.values()].filter(m=>m.dead).every(m=>!m.body.visible));assert.equal(scene.inspectCombat().effects.floats,0);assert.equal(scene.inspectCombat().effects.pulses,0);
+  scene.reset(fixture.initial);assert.ok(scene.inspectCombat().units.every(m=>m.hp>0&&!m.dead&&m.visible));
   assert.equal(scene.models.size,10);assert.equal(scene.floatPool.length,16);assert.equal(scene.pulses.length,12);assert.equal(scene.resources.size,resources);assert.equal(scene.kit.resources.size,geometryCount);
   let disposed=0;for(const geometry of scene.kit.resources)geometry.addEventListener('dispose',()=>disposed++);scene.dispose();assert.equal(disposed,geometryCount);assert.equal(disconnected,1);assert.equal(removed,7);assert.equal(scene.models.size,0);
  }finally{for(const [key,value] of Object.entries(originals)){if(value)Object.defineProperty(globalThis,key,value);else delete globalThis[key];}}

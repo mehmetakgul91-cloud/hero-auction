@@ -1,7 +1,7 @@
 import {Replay,primaryAction} from './replay.js';
 import {FrameMetrics,assess} from './metrics.js';
 const $=id=>document.getElementById(id),reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-let scene,clock,data,manifest,selected,speed=1,raf=0,last=0,uiAt=0,run=null,report=null,contextLost=false,live=new FrameMetrics(),longTaskObserver;
+let scene,clock,data,manifest,selected,speed=1,raf=0,last=0,uiAt=0,run=null,report=null,settling=0,contextLost=false,live=new FrameMetrics(),longTaskObserver;
 const number=(value,digits=0)=>Number.isFinite(value)?value.toLocaleString('tr-TR',{maximumFractionDigits:digits}):'—';
 function displayMetrics(metrics){if(scene?.renderer.isSoftwareRenderer){for(const id of ['fps','p95','draws','tris'])$(id).textContent='—';return;}$('fps').textContent=number(metrics.fps,1);$('p95').textContent=number(metrics.p95Ms,1);$('draws').textContent=number(metrics.drawCallsMax);$('tris').textContent=number(metrics.trianglesMax);}
 function select(key){const model=scene.models.get(key);if(!model)return;selected=key;scene.select(key);inspector();}
@@ -14,7 +14,7 @@ function describe(frame){const e=primaryAction(frame);if(!e){$('action').textCon
  const actor=scene.models.get(e.side+':'+e.actor)?.hero.name||'Kahraman',target=frame.teams.flat().find(h=>h.id===e.target)?.name;
  $('action').textContent=actor+(target?' → '+target:'')+(e.action==='stun-skip'?' · Saldırı atlandı':e.value?' · '+e.value+' etki':'');}
 function motionPhase(name){document.querySelectorAll("[data-motion]").forEach(el=>el.classList.toggle("active",el.dataset.motion===name));}
-function reset(start=false){motionPhase(null);clock.reset();scene.reset(data.initial);hud(data.initial);$('result').hidden=true;$('action').textContent='Takımlar hazır. Tanklar önde, menzilli kahramanlar arkada.';live.reset();$('progress').style.width='0%';$('elapsed').textContent='0 / '+data.frames.length;if(start)clock.play();buttons();last=0;}
+function reset(start=false){settling=0;motionPhase(null);clock.reset();scene.reset(data.initial);hud(data.initial);$('result').hidden=true;$('action').textContent='Takımlar hazır. Tanklar önde, menzilli kahramanlar arkada.';live.reset();$('progress').style.width='0%';$('elapsed').textContent='0 / '+data.frames.length;if(start)clock.play();buttons();last=0;}
 function stopLoop(){cancelAnimationFrame(raf);raf=0;last=0;}
 function startLoop(){if(!raf&&!contextLost&&!document.hidden)raf=requestAnimationFrame(tick);}
 function recordReport(valid,reason=''){
@@ -24,7 +24,7 @@ function recordReport(valid,reason=''){
 }
 function tick(now){raf=0;if(scene.renderer.isSoftwareRenderer&&last&&now-last<32){startLoop();return;}const ms=last?now-last:0;last=now;
  if(clock.finished&&run)reset(true);
- clock.advance(ms/1000*speed);scene.render(clock.playing||run?ms/1000*speed:0,clock.progress);
+ const animate=clock.playing||run||settling>0,wasFinished=clock.finished;clock.advance(ms/1000*speed);scene.render(animate?ms/1000*speed:0,clock.progress);settling=Math.max(0,settling-(wasFinished?ms/1000:0));
  if(live.samples.length>300)live.reset();if(ms>0&&!scene.renderer.isSoftwareRenderer)live.add(ms,scene.renderer.info);
  if(run){const age=now-run.started;
   if(age>=3000){if(run.sampleStart===null){run.sampleStart=now;run.geometriesStart=scene.renderer.info.memory.geometries;run.texturesStart=scene.renderer.info.memory.textures;}else run.metrics.add(ms,scene.renderer.info);}
@@ -32,14 +32,14 @@ function tick(now){raf=0;if(scene.renderer.isSoftwareRenderer&&last&&now-last<32
   if(run.sampleStart!==null&&now-run.sampleStart>=30000){recordReport(true);return;}
  }
  if(now-uiAt>450){uiAt=now;displayMetrics(run&&run.sampleStart!==null?run.metrics.result():live.result());$('elapsed').textContent=clock.cursor+' / '+data.frames.length;$('progress').style.width=(100*clock.cursor/data.frames.length)+'%';}
- if(clock.playing||run)startLoop();else {last=0;buttons();}
+ if(clock.playing||run||settling>0)startLoop();else {last=0;buttons();}
 }
 function invalidate(reason){scene?.controls.clear();if(run)recordReport(false,reason);clock?.pause();buttons();stopLoop();}
 function showError(error){$('model-status').textContent='Model yüklemesi tamamlanamadı; yer tutucu gösterilmiyor.';$('loading').hidden=false;$('loading').replaceChildren();const title=document.createElement('strong');title.textContent='3D önizleme açılamadı';const description=document.createElement('p');description.textContent=error.message||'Yükleme başarısız oldu.';const retry=document.createElement('a');retry.href='./';retry.textContent='Yeniden yükle';$('loading').append(title,description,retry);for(const id of ['play','benchmark','camera','quality','reset','speed','tank','mage'])$(id).disabled=true;$('renderer-badge').textContent='GRAFİK YOK';}
 async function boot(){const loadStarted=performance.now();try{
  const [module,replayResponse,manifestResponse]=await Promise.all([import('./scene.js'),fetch('./replay.json'),fetch('./build-info.json')]);if(!replayResponse.ok||!manifestResponse.ok)throw Error('Savaş kaydı yüklenemedi.');data=await replayResponse.json();manifest=await manifestResponse.json();
  scene=new module.MobileArena($('arena'),$('labels'),$('floats'),{onSelect:select,reduced});await scene.load();scene.loadMs=performance.now()-loadStarted;scene.onLabelSelect=select;scene.setTeams(data.initial);selected='0:'+data.initial[0][0].id;
- clock=new Replay(data,{start(frame,index,plan){scene.start(frame,plan);describe(frame);$('round').textContent=String(frame.round).padStart(2,'0');},phase(name,frame,index,plan){motionPhase(["skip","round"].includes(plan.kind)?null:name);},impact(frame){scene.impact(frame);hud(frame.teams,frame.round);},end(){scene.end();motionPhase(null);},finish(){if(!run){$('progress').style.width='100%';$('elapsed').textContent=data.frames.length+' / '+data.frames.length;$('result').hidden=false;$('winner').textContent=data.winner===null?'Denge bozulmadı':data.winner===0?'Mavi takım kazandı':'Kızıl takım kazandı';buttons();}}});
+ clock=new Replay(data,{start(frame,index,plan){scene.start(frame,plan);describe(frame);$('round').textContent=String(frame.round).padStart(2,'0');},phase(name,frame,index,plan){motionPhase(["skip","round"].includes(plan.kind)?null:name);},impact(frame){scene.impact(frame);hud(frame.teams,frame.round);},end(){scene.end();motionPhase(null);},finish(){settling=1.1;if(!run){$('progress').style.width='100%';$('elapsed').textContent=data.frames.length+' / '+data.frames.length;$('result').hidden=false;$('winner').textContent=data.winner===null?'Denge bozulmadı':data.winner===0?'Mavi takım kazandı':'Kızıl takım kazandı';buttons();}}});
  select(selected);hud(data.initial);scene.render(0,0);$('loading').hidden=true;$('model-status').textContent=scene.renderer.isSoftwareRenderer?'Obsidyen + Morvan + Meshy muhafız ve fildişi tribün yüklendi · Basitleştirilmiş yazılım görünümü (WebGL 2 kapalı; PBR ışık/malzeme görünümü yok).':'Obsidyen + Morvan + Meshy muhafız + fildişi tribün · 5 dokulu 3D varlık + uzak manzara dokusu hazır';$('arena').dataset.models=JSON.stringify(scene.modelDiagnostics);$('arena').dataset.arenaAssets=JSON.stringify(scene.arenaAssetDiagnostics);$('arena').dataset.facade=JSON.stringify(scene.facadeDiagnostics);$('arena').dataset.arch=JSON.stringify(scene.archDiagnostics);$('arena').dataset.panorama=JSON.stringify(scene.panoramaDiagnostics);$('arena').dataset.floor=JSON.stringify(scene.floorDiagnostics);$('arena').dataset.shadows=JSON.stringify({enabled:!!scene.renderer.shadowMap?.enabled,technique:'bounded low-poly occluders',size:scene.sun.shadow.mapSize.x});$('play').disabled=false;$('benchmark').disabled=!!scene.renderer.isSoftwareRenderer;if(scene.renderer.isSoftwareRenderer){$('renderer-badge').textContent='YAZILIM';$('test-status').textContent='WebGL 2 bu tarayıcıda kapalı. Görsel önizleme açık; GPU performans testi kullanılamıyor.';}$('arena').dataset.ready='true';$('size-note').textContent='Bağımsız paket · '+number(manifest.totals.gzipBytes/1024,0)+' KB gzip';$('elapsed').textContent='0 / '+data.frames.length;
  $('closeup').onclick=()=>{clock.pause();stopLoop();scene.focus(scene.focusKey?null:selected);$('closeup').setAttribute('aria-pressed',String(!!scene.focusKey));$('closeup').textContent=scene.focusKey?'Arenaya dön ↙':'Modeli yakından incele ↗';buttons();};
  $('play').onclick=()=>{if(scene.focusKey){scene.focus(null);$('closeup').setAttribute('aria-pressed','false');$('closeup').textContent='Modeli yakından incele ↗';}if(clock.finished)reset(true);else if(clock.playing){clock.pause();stopLoop();}else clock.play();buttons();if(clock.playing)startLoop();};
@@ -54,4 +54,6 @@ async function boot(){const loadStarted=performance.now();try{
  window.addEventListener('resize',()=>{scene.controls.clear();if(run)invalidate('Ekran boyutu veya yönü değişti.');});
  $('arena').addEventListener('webglcontextlost',event=>{event.preventDefault();contextLost=true;invalidate('WebGL bağlamı kayboldu.');showError(Error('Grafik bağlantısı kesildi. Önizlemeyi yeniden yükle.'));});
  }catch(error){console.error(error);scene?.dispose();showError(error);}}
+// Read-only, bounded diagnostics for the isolated replay QA. No clock/scene handles escape.
+export function inspectCombat(){if(!clock||!scene)return null;return {cursor:clock.cursor,progress:clock.progress,playing:clock.playing,finished:clock.finished,started:clock.started,settling,frameCount:data.frames.length,winner:data.winner,plan:clock.plan?{kind:clock.plan.kind,actorKey:clock.plan.actorKey,targetKey:clock.plan.targetKey,duration:clock.plan.duration}:null,...scene.inspectCombat()};}
 void boot();
