@@ -29,7 +29,7 @@ export function attachArenaGuardians(arena,kit){
  for(const side of [-1,1]){const root=kit.create();root.position.set(side*4.8,.08,5.25);root.rotation.y=-side*.22;arena.scene.add(root);arena.environmentObjects.push(root);}
 }
 
-export const TRIBUNE_FACADE_PLACEMENTS=[.2,.44,.56,.8].map(f=>{const a=f*Math.PI;return {x:Math.cos(a)*6.35*1.2,y:.08,z:-Math.sin(a)*6.35,yaw:a-Math.PI/2};});
+export const TRIBUNE_FACADE_PLACEMENTS=[.2,.44,.56,.8].map(f=>{const a=f*Math.PI;return {x:Math.cos(a)*5.8*1.2,y:.08,z:-Math.sin(a)*5.8,yaw:a-Math.PI/2};});
 export function attachTribuneFacades(arena,kit){
  for(const p of TRIBUNE_FACADE_PLACEMENTS){const root=kit.create();root.position.set(p.x,p.y,p.z);root.rotation.y=p.yaw;arena.scene.add(root);arena.environmentObjects.push(root);}
 }
