@@ -12,7 +12,9 @@ import struct
 from PIL import Image
 
 
-def pack(source, destination):
+def pack(source, destination, base_limit=1024, linear_limit=512):
+    if any(n < 64 or n > 2048 or n & (n-1) for n in (base_limit, linear_limit)):
+        raise ValueError('Texture limits must be powers of two from 64 to 2048')
     source, destination = Path(source), Path(destination)
     if source.resolve() == destination.resolve():
         raise ValueError('Source and output must differ')
@@ -42,7 +44,7 @@ def pack(source, destination):
         image_bytes = binary[view.get('byteOffset', 0):view.get('byteOffset', 0)+view['byteLength']]
         with Image.open(io.BytesIO(image_bytes)) as img:
             original = img.size
-            limit = 1024 if index in base_images else 512
+            limit = base_limit if index in base_images else linear_limit
             img.thumbnail((limit, limit), Image.Resampling.LANCZOS)
             has_alpha = 'A' in img.getbands() and img.getextrema()[-1][0] < 255
             fmt = 'JPEG' if index in base_images and not has_alpha else 'PNG'
@@ -77,4 +79,5 @@ def pack(source, destination):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('source'); parser.add_argument('destination')
-    args = parser.parse_args(); pack(args.source,args.destination)
+    parser.add_argument('--base-size',type=int,default=1024); parser.add_argument('--linear-size',type=int,default=512)
+    args = parser.parse_args(); pack(args.source,args.destination,args.base_size,args.linear_size)

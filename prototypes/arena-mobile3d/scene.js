@@ -3,7 +3,7 @@ import {COMBAT_FLOOR} from './arena-layout.js';
 import {ArenaCameraControls,cameraOffset,layoutLabels} from './camera-controls.js';
 import {PreviewSoftwareRenderer} from './software.js';
 import {loadCharacterKit,inspectCharacterTextures} from './characters.js';
-import {loadArenaAssets,inspectArenaAsset,attachArenaGuardians} from './arena-assets.js';
+import {loadArenaAssets,inspectArenaAsset,attachArenaGuardians,loadTribuneFacade,attachTribuneFacades} from './arena-assets.js';
 import {home,primaryAction,snapshotChanges} from './replay.js';
 import {formationSlots,planAction,sampleAction,pathPosition} from './director.js';
 import {bufferSize} from './metrics.js';
@@ -23,7 +23,7 @@ export class MobileArena {
   this.click=e=>{const rect=canvas.getBoundingClientRect();this.pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);this.raycaster.setFromCamera(this.pointer,this.camera);const hit=this.raycaster.intersectObjects([...this.models.values()].filter(m=>m.root.visible&&m.body.visible&&!m.dead).map(m=>m.body),true)[0];if(hit)onSelect(hit.object.userData.key);};this.controls=new ArenaCameraControls(canvas,{select:this.click,change:()=>{this.resize();this.render(0,this.lastProgress||0);}});
   this.observer=new ResizeObserver(()=>{this.resize();this.render(0,this.lastProgress||0);});this.observer.observe(canvas);this.resize();
  }
- async load(){this.kit=await loadCharacterKit();this.modelDiagnostics=inspectCharacterTextures(this.kit.sources);if(this.modelDiagnostics.some(m=>!m.meshes||m.textured!==m.meshes))throw Error('3D model dokuları çözülemedi. Boş model gösterilmiyor; yeniden yüklemeyi dene.');this.arenaAssets=await loadArenaAssets();this.arenaAssetDiagnostics=inspectArenaAsset(this.arenaAssets.source);if(!this.arenaAssetDiagnostics.meshes||this.arenaAssetDiagnostics.textured!==this.arenaAssetDiagnostics.meshes)throw Error('Meshy arena muhafızı dokuları çözülemedi; yeniden yükle.');attachArenaGuardians(this,this.arenaAssets);}
+ async load(){this.kit=await loadCharacterKit();this.modelDiagnostics=inspectCharacterTextures(this.kit.sources);if(this.modelDiagnostics.some(m=>!m.meshes||m.textured!==m.meshes))throw Error('3D model dokuları çözülemedi. Boş model gösterilmiyor; yeniden yüklemeyi dene.');this.arenaAssets=await loadArenaAssets();this.arenaAssetDiagnostics=inspectArenaAsset(this.arenaAssets.source);if(!this.arenaAssetDiagnostics.meshes||this.arenaAssetDiagnostics.textured!==this.arenaAssetDiagnostics.meshes)throw Error('Meshy arena muhafızı dokuları çözülemedi; yeniden yükle.');attachArenaGuardians(this,this.arenaAssets);this.tribuneFacade=await loadTribuneFacade();this.facadeDiagnostics=this.tribuneFacade.diagnostics;if(!this.facadeDiagnostics.meshes||this.facadeDiagnostics.textured!==this.facadeDiagnostics.meshes)throw Error('Meshy tribün cephesi dokuları çözülemedi; yeniden yükle.');attachTribuneFacades(this,this.tribuneFacade);}
  keep(obj){this.resources.add(obj);return obj;}
  mat(color,extra={}){return this.keep(new T.MeshStandardMaterial({color,roughness:.8,metalness:.25,...extra}));}
  mesh(geo,mat,x=0,y=0,z=0){const mesh=new T.Mesh(this.keep(geo),mat);mesh.position.set(x,y,z);this.scene.add(mesh);return mesh;}
@@ -101,5 +101,5 @@ export class MobileArena {
   for(const e of this.floatPool){if(e.age>=e.life){e.el.hidden=true;continue;}e.age+=dt;const t=e.age/e.life,pos=this.project(e.position.clone().add(new T.Vector3(0,this.reduced?0:t*.8,0)));e.el.style.transform=`translate(${pos.x}px,${pos.y}px) translate(-50%,-100%)`;e.el.style.opacity=String(Math.max(0,1-t));}
   this.renderer.render(this.scene,this.camera);
  }
- dispose(){this.observer.disconnect();this.controls.dispose();this.kit?.dispose();this.arenaAssets?.dispose();this.resources.forEach(r=>r.dispose());this.renderer.dispose();this.labels.replaceChildren();this.floats.replaceChildren();this.models.clear();}
+ dispose(){this.observer.disconnect();this.controls.dispose();this.kit?.dispose();this.arenaAssets?.dispose();this.tribuneFacade?.dispose();this.resources.forEach(r=>r.dispose());this.renderer.dispose();this.labels.replaceChildren();this.floats.replaceChildren();this.models.clear();}
 }

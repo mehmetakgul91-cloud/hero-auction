@@ -1,0 +1,25 @@
+{
+  "generator": "Meshy T2.5",
+  "generatedAt": "2026-10-30",
+  "purpose": "Original curved tribune facade; four shared static instances",
+  "sourceSettings": {
+    "topology": "Smart topology, 5k target",
+    "texture": "2K",
+    "visibility": "private"
+  },
+  "creditsSpent": 15,
+  "originalSha256": "d06644868fb14c11283664a6e96a29ea48120e8463e894b8abbd7b42d9eabd02",
+  "originalBytes": 8666744,
+  "gameFile": "arena-tribune-facade.glb",
+  "gameSha256": "83c63e524defade6cdbfbccf8f56ee909239c18d5cf384e128ec6e001c99c6e6",
+  "gameBytes": 482160,
+  "triangles": 4310,
+  "meshes": 1,
+  "materials": 1,
+  "textures": {
+    "basecolor": 512,
+    "normal": 256,
+    "metallicRoughness": 256
+  },
+  "optimization": "Embedded textures repacked only; original mesh topology preserved. Original retained outside repository."
+}

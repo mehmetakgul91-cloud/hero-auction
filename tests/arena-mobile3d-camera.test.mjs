@@ -29,3 +29,11 @@ test('arena prop instances share geometry, normalize bounds and dispose without 
  const kit=await loadArenaAssets(async()=>source);assert.equal(inspectArenaAsset(source).textured,1);const arena={scene:new T.Scene(),environmentObjects:[]};attachArenaGuardians(arena,kit);assert.equal(arena.environmentObjects.length,2);assert.equal(kit.instances.length,2);for(const root of kit.instances){const box=new T.Box3().setFromObject(root);assert.ok(Math.abs(box.min.y-.08)<1e-7);assert.ok(box.getSize(new T.Vector3()).y<=2.50001);assert.equal(root.children[0].children[0].children[0].geometry,geometry);}let disposed=0;for(const r of kit.resources)r.addEventListener('dispose',()=>disposed++);kit.dispose();assert.equal(disposed,kit.resources.size);assert.equal(arena.scene.children.length,0);
  await assert.rejects(()=>loadArenaAssets(async()=>{throw Error('404');}),/arena-guardian.glb yüklenemedi/);
 });
+
+
+test('invalid static arena assets release owned resources before rejecting',async()=>{
+ const T=await import('three'),{loadTribuneFacade}=await import('../prototypes/arena-mobile3d/arena-assets.js');
+ const scene=new T.Group(),geometry=new T.BoxGeometry(0,0,0),material=new T.MeshStandardMaterial();scene.add(new T.Mesh(geometry,material));let disposed=0;geometry.addEventListener('dispose',()=>disposed++);material.addEventListener('dispose',()=>disposed++);
+ await assert.rejects(()=>loadTribuneFacade(async()=>({scene})),/arena-tribune-facade.glb ölçüleri geçersiz/);assert.equal(disposed,2);
+ await assert.rejects(()=>loadTribuneFacade(async()=>{throw Error('404');}),/arena-tribune-facade.glb yüklenemedi/);
+});
