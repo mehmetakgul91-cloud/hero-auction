@@ -40,8 +40,8 @@ export function layoutLabels(items,width,height){
  const ordered=[...items].sort((a,b)=>(b.priority||0)-(a.priority||0)||String(a.key).localeCompare(String(b.key)));
  for(const item of ordered){let found;for(const compact of [false,true]){
    const w=compact?28:Math.min(90,width-8),h=compact?12:25;
-   const offsets=[0,-28,28,-56,56,-84,84];
-   for(const dy of offsets){for(const dx of [0,-32,32,-64,64]){const r={key:item.key,x:clamp(item.x-w/2+dx,4,width-w-4),y:clamp(item.y-h+dy,58,Math.max(58,height-h-48)),w,h,compact};if(!overlaps(r)){found=r;break;}}if(found)break;}
+   const offsets=compact?[0,-16,16,-32,32,-48,48]:[0,-28,28];
+   for(const dy of offsets){for(const dx of (compact?[0,-16,16,-32,32]:[0,-32,32])){const r={key:item.key,x:clamp(item.x-w/2+dx,4,width-w-4),y:clamp(item.y-h+dy,58,Math.max(58,height-h-48)),w,h,compact};if(!overlaps(r)){found=r;break;}}if(found)break;}
    if(found)break;
   }
   // Ten units fit easily; deterministic compact grid is a last-resort for tightly

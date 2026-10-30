@@ -37,7 +37,7 @@ export class MobileArena {
    m.root.traverse(obj=>obj.userData.key=key);this.scene.add(m.root);this.models.set(key,m);
    const disk=new T.Mesh(this.keep(this.renderer.isSoftwareRenderer?new T.CircleGeometry(.46,24):new T.PlaneGeometry(1.35,1.35)),this.keep(new T.MeshBasicMaterial({map:this.renderer.isSoftwareRenderer?null:this.contactTexture,color:0x05090d,transparent:true,opacity:.55,depthWrite:false})));disk.rotation.x=-Math.PI/2;disk.position.y=.15;m.root.add(disk);
    const ring=new T.Mesh(this.keep(new T.RingGeometry(.48,.51,24)),this.keep(new T.MeshBasicMaterial({color:side?0xe88866:0x59b9f2,transparent:true,opacity:.8,depthWrite:false})));ring.rotation.x=-Math.PI/2;ring.position.y=.155;m.root.add(ring);
-   const el=document.createElement('button');el.className='unit-label '+(side?'red':'blue');el.type='button';el.setAttribute('aria-label',hero.name+' · '+(hero.lane==='front'?'Ön saf':'Arka saf'));const name=document.createElement('span');name.textContent=hero.name;const track=document.createElement('i'),bar=document.createElement('b');track.append(bar);el.append(name,track);el.onclick=()=>this.onLabelSelect?.(key);this.labels.append(el);m.label=el;m.bar=bar;
+   const el=document.createElement('button');el.className='unit-label '+(side?'red':'blue');el.type='button';el.setAttribute('aria-label',hero.name+' · '+(hero.lane==='front'?'Ön saf':'Arka saf'));const name=document.createElement('span');name.textContent=hero.name;const track=document.createElement('i'),bar=document.createElement('b');track.append(bar);el.append(name,track);el.onclick=()=>this.onLabelSelect?.(key);const leader=document.createElement('div');leader.className='label-leader '+(side?'red':'blue');leader.setAttribute('aria-hidden','true');this.labels.append(leader,el);m.leader=leader;m.label=el;m.bar=bar;
   }
   m.hero=hero;m.dead=hero.hp<=0;m.label.setAttribute('aria-label',hero.name+' · Can '+hero.hp+' / '+hero.maxHp);m.bar.style.transform='scaleX('+Math.max(0,hero.hp/hero.maxHp)+')';m.label.classList.toggle('dead',m.dead);
  }));}
@@ -90,10 +90,10 @@ export class MobileArena {
    }
    m.motion.sample(this.time,{progress:p,pose:motionPose,hitAge:this.time-(m.hitAt??-10),reduced:this.reduced});
    const raw=this.project(m.root.position.clone().add(new T.Vector3(0,2.15,0)));
-   m.label.hidden=!!this.focusKey||raw.x<0||raw.x>this.width||raw.y<0||raw.y>this.height;
+   m.labelAnchor=raw;m.label.hidden=!!this.focusKey||raw.x<0||raw.x>this.width||raw.y<0||raw.y>this.height;m.leader.hidden=m.label.hidden;
    if(!m.label.hidden)labelItems.push({key:m.key,x:raw.x,y:raw.y,priority:m.key===this.selectedKey?4:active?.target===m?3:active?.actor===m?2:m.dead?0:1});
   }
-  for(const [key,pos] of layoutLabels(labelItems,this.width,this.height)){const m=this.models.get(key);m.label.classList.toggle('compact',pos.compact);m.label.style.width=pos.w+'px';m.label.style.height=pos.h+'px';m.label.style.transform=`translate(${pos.x}px,${pos.y}px)`;m.label.title=m.hero.name+' · '+m.hero.hp+'/'+m.hero.maxHp;}
+  for(const [key,pos] of layoutLabels(labelItems,this.width,this.height)){const m=this.models.get(key);m.label.classList.toggle('compact',pos.compact);m.label.style.width=pos.w+'px';m.label.style.height=pos.h+'px';m.label.style.transform=`translate(${pos.x}px,${pos.y}px)`;m.label.title=m.hero.name+' · '+m.hero.hp+'/'+m.hero.maxHp;const a=m.labelAnchor,x=Math.max(pos.x,Math.min(pos.x+pos.w,a.x)),y=Math.max(pos.y,Math.min(pos.y+pos.h,a.y)),dx=x-a.x,dy=y-a.y;m.leader.style.width=Math.hypot(dx,dy)+'px';m.leader.style.transform=`translate(${a.x}px,${a.y}px) rotate(${Math.atan2(dy,dx)}rad)`;}
   for(const e of this.pulses){if(e.age>=e.life){e.mesh.visible=false;continue;}e.age+=dt;const t=e.age/e.life;e.mesh.scale.setScalar(1+t*3);e.mesh.material.opacity=Math.max(0,1-t)*.75;}
   for(const e of this.floatPool){if(e.age>=e.life){e.el.hidden=true;continue;}e.age+=dt;const t=e.age/e.life,pos=this.project(e.position.clone().add(new T.Vector3(0,this.reduced?0:t*.8,0)));e.el.style.transform=`translate(${pos.x}px,${pos.y}px) translate(-50%,-100%)`;e.el.style.opacity=String(Math.max(0,1-t));}
   this.renderer.render(this.scene,this.camera);

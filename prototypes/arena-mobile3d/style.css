@@ -5,3 +5,5 @@
 .camera-reset{position:absolute;top:12px;right:12px;min-height:44px;padding:0 12px;background:#101d2cdd;font-size:11px}.unit-label{max-width:120px;overflow:hidden;text-overflow:ellipsis}#arena:focus-visible{outline:2px solid var(--cyan);outline-offset:-3px}
 
 .unit-label{font-size:7px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.unit-label.compact{padding:3px;min-width:0}.unit-label.compact span{display:none}.unit-label.compact i{margin-top:1px;height:4px}.unit-label:focus-visible{outline:2px solid var(--cyan);z-index:4}
+
+.label-leader{position:absolute;left:0;top:0;height:1px;transform-origin:0 50%;background:var(--cyan);opacity:.45;pointer-events:none}.label-leader.red{background:var(--red)}.unit-label{z-index:1}
