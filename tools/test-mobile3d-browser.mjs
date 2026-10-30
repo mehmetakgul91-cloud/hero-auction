@@ -16,15 +16,17 @@ try{
   const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,hasTouch:true,reducedMotion});
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`http://127.0.0.1:${server.address().port}/`);await page.waitForSelector('#arena[data-ready="true"]',{timeout:60000});
-  const canvas=page.locator('#arena'),box=await canvas.boundingBox(),name=await page.locator('#hero-name').textContent();
+  const canvas=page.locator('#arena');await canvas.scrollIntoViewIfNeeded();const box=await canvas.boundingBox(),name=await page.locator('#hero-name').textContent();
   const shot=async tag=>canvas.screenshot({path:path.join(out,`${reducedMotion}-${tag}.png`)});
   const initial=await shot('cross');
-  await page.mouse.move(box.x+box.width*.5,box.y+box.height*.5);await page.mouse.down();await page.mouse.move(box.x+box.width*.8,box.y+box.height*.6,{steps:12});await page.mouse.up();
+  // Labels are intentional selection controls above the canvas; start orbit on uncovered arena.
+  const origin=await canvas.evaluate(c=>{const b=c.getBoundingClientRect();for(const v of [.8,.2,.65])for(const u of [.15,.5,.85]){const x=b.x+b.width*u,y=b.y+b.height*v;if(document.elementFromPoint(x,y)===c)return {x,y};}throw Error('No exposed arena input area');});
+  await page.mouse.move(origin.x,origin.y);await page.mouse.down();await page.mouse.move(origin.x+70,origin.y-40,{steps:12});await page.mouse.up();
   assert(!(await shot('orbit')).equals(initial),'drag must change camera');assert.equal(await page.locator('#hero-name').textContent(),name,'drag must not select');
   await page.locator('#camera-reset').click();assert((await shot('reset')).equals(initial),'reset restores framing');
-  await page.mouse.move(box.x+box.width*.5,box.y+box.height*.5);await page.mouse.wheel(0,-180);await page.waitForTimeout(150);assert(!(await shot('zoom')).equals(initial),'wheel zoom');
+  await page.mouse.move(origin.x,origin.y);await page.mouse.wheel(0,-180);await page.waitForTimeout(150);assert(!(await shot('zoom')).equals(initial),'wheel zoom');
   await page.locator('#camera-reset').click();
-  const session=await context.newCDPSession(page),x=box.x+box.width*.5,y=box.y+box.height*.5;
+  const session=await context.newCDPSession(page),x=box.x+box.width*.5,y=box.y+box.height*.83;
   await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:x-25,y,id:1},{x:x+25,y,id:2}]});
   await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x-65,y,id:1},{x:x+65,y,id:2}]});
   await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
