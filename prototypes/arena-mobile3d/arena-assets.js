@@ -5,6 +5,9 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 // Character rigs and authoritative combat state are never touched here.
 export const GUARDIAN_FILE='arena-guardian.glb';
 export const FACADE_FILE='arena-tribune-facade.glb';
+export const ARCH_FILE='arena-crystal-arch.glb';
+export function loadCrystalArch(load=defaultLoad){return loadStaticAsset(load,{file:ARCH_FILE,width:3.4,height:3.5,depth:.8,maxTriangles:6000,instances:1,name:'meshy-carved-ivory-arch'});}
+export function attachCrystalArch(arena,kit){const root=kit.create();root.position.set(0,.12,-5.95);arena.scene.add(root);arena.environmentObjects.push(root);root.traverse(o=>{if(o.isMesh)o.castShadow=!arena.renderer?.isSoftwareRenderer;});}
 export function inspectArenaAsset(source,file=GUARDIAN_FILE,instances=2){
  let meshes=0,textured=0,triangles=0;const materials=new Set();
  source.scene.traverse(o=>{if(!o.isMesh)return;meshes++;triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;const list=Array.isArray(o.material)?o.material:[o.material];list.forEach(m=>materials.add(m));if(list.every(m=>m.map?.image?.width>0&&m.map?.image?.height>0&&m.map.colorSpace===T.SRGBColorSpace))textured++;});
