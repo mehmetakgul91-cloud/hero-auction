@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {execFileSync} from 'node:child_process';
-import {Box3,Vector3,Scene,OrthographicCamera} from 'three';
+import {Box3,Raycaster,Vector3,Scene,OrthographicCamera} from 'three';
 import {battleOutcome} from '../battle-result.js';
 import {generateMobileReplay,compactReplay,IDS} from '../tools/generate-mobile3d-replay.mjs';
 import {heroCombatPresentation} from '../public/hero-combat-presentation.js';
@@ -167,7 +167,9 @@ test('repeated scene replays keep pools bounded and teardown releases shared geo
  try{
   globalThis.document={createElement:element};globalThis.window={devicePixelRatio:3};globalThis.ResizeObserver=class {observe(){}disconnect(){disconnected++;}};
   const canvas={getContext:type=>type==='webgl2'?null:context,getBoundingClientRect:()=>({width:390,height:440,left:0,top:0}),addEventListener(){},removeEventListener(){removed++;}};
-  const {MobileArena}=await import('../.artifacts/mobile3d/scene.js');let picked=null;const scene=new MobileArena(canvas,element(),element(),{onSelect:key=>picked=key});scene.kit=await loadCharacterKit(testModelLoad);scene.setTeams(fixture.initial);let architectureTriangles=0;for(const o of scene.environmentObjects)o.traverse(n=>{if(n.isMesh)architectureTriangles+=(n.geometry.index?.count||n.geometry.attributes.position.count)/3;});assert.ok(architectureTriangles+310286+15564*2+8933*4+6000<400000,'complete architecture and all shared asset instances stay below 400k triangles');
+  const {MobileArena}=await import('../.artifacts/mobile3d/scene.js');let picked=null;const scene=new MobileArena(canvas,element(),element(),{onSelect:key=>picked=key});scene.kit=await loadCharacterKit(testModelLoad);scene.setTeams(fixture.initial);let architectureTriangles=0;for(const o of scene.environmentObjects)o.traverse(n=>{if(n.isMesh)architectureTriangles+=(n.geometry.index?.count||n.geometry.attributes.position.count)/3;});assert.ok(architectureTriangles+310286+15564*2+8933*4+4726<400000,'complete architecture and all shared asset instances stay below 400k triangles');
+  // Each architectural foot has a connected terrace below it, including side-camera silhouettes.
+  scene.scene.updateMatrixWorld(true);const support=scene.scene.getObjectByName('connected-terrace');assert.ok(support);for(const side of [-1,1])for(const [x,z] of [[1.6,-5.95],[4.92,-7.55],[3.6,-8],[6.96,-6.5],[8.76,-4.5],[9.66,-4.05],[9.66,-2.45]]){const ray=new Raycaster(new Vector3(side*x,1,z),new Vector3(0,-1,0));assert.ok(ray.intersectObject(support).length,'architecture footprint has grounded rear/side terrace');}
   // Default is battle-focused: floor spans most of the viewport, lineup remains inside it.
   scene.resetCamera();const corners=[[-6.3,-5.05],[-6.3,5.05],[6.3,-5.05],[6.3,5.05]].map(([x,z])=>scene.project(new Vector3(x,0,z)));const coverage=(Math.max(...corners.map(p=>p.x))-Math.min(...corners.map(p=>p.x)))/scene.width;assert.ok(coverage>.75&&coverage<1,'combat floor dominates width without cropping');for(const m of scene.models.values()){const p=scene.project(m.base.clone().add(new Vector3(0,1.2,0)));assert.ok(p.x>0&&p.x<scene.width&&p.y>0&&p.y<scene.height,'full lineup stays inside combat framing');}
   canvas.getBoundingClientRect=()=>({width:1680,height:945,left:0,top:0});scene.resize();const crystal=scene.project(scene.landmarks[0].position),left=scene.project(new Vector3(-6.3,.13,0)),right=scene.project(new Vector3(6.3,.13,0));assert.ok(crystal.y>10&&crystal.y<945*.3,'rear crystal remains visible in approved wide composition');assert.ok((right.x-left.x)/1680>.57,'oval stage retains majority width while rear architecture is fully framed');const crest=scene.project(new Vector3(0,3.65,-5.6));assert.ok(crest.y>12,'full architectural crest has safe top margin');canvas.getBoundingClientRect=()=>({width:390,height:440,left:0,top:0});scene.resize();
