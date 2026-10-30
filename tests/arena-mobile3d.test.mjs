@@ -164,6 +164,6 @@ test('repeated scene replays keep pools bounded and teardown releases shared geo
   const resources=scene.resources.size;const geometryCount=scene.kit.resources.size;
   for(let i=0;i<3;i++){scene.reset(fixture.initial);for(const frame of fixture.frames){scene.start(frame);scene.impact(frame);scene.end();}}
   assert.equal(scene.models.size,10);assert.equal(scene.floatPool.length,16);assert.equal(scene.pulses.length,12);assert.equal(scene.resources.size,resources);assert.equal(scene.kit.resources.size,geometryCount);
-  let disposed=0;for(const geometry of scene.kit.resources)geometry.addEventListener('dispose',()=>disposed++);scene.dispose();assert.equal(disposed,geometryCount);assert.equal(disconnected,1);assert.equal(removed,1);assert.equal(scene.models.size,0);
+  let disposed=0;for(const geometry of scene.kit.resources)geometry.addEventListener('dispose',()=>disposed++);scene.dispose();assert.equal(disposed,geometryCount);assert.equal(disconnected,1);assert.equal(removed,7);assert.equal(scene.models.size,0);
  }finally{for(const [key,value] of Object.entries(originals)){if(value)Object.defineProperty(globalThis,key,value);else delete globalThis[key];}}
 });

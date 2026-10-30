@@ -2,23 +2,47 @@ name: Mobile 3D prototype
 on:
   push:
     branches: ['feature/arena-3d-prototype-*']
-    paths: ['prototypes/arena-mobile3d/**', 'tools/*mobile3d*', 'tools/*android-package*', 'tests/arena-mobile3d.test.mjs', '.github/workflows/arena-mobile3d.yml', 'package*.json']
+    paths: ['prototypes/arena-mobile3d/**', 'tools/*mobile3d*', 'tools/*android-package*', 'tests/arena-mobile3d*.test.mjs', '.github/workflows/arena-mobile3d.yml', 'package*.json']
   pull_request:
-    paths: ['prototypes/arena-mobile3d/**', 'tools/*mobile3d*', 'tools/*android-package*', 'tests/arena-mobile3d.test.mjs', '.github/workflows/arena-mobile3d.yml', 'package*.json']
+    paths: ['prototypes/arena-mobile3d/**', 'tools/*mobile3d*', 'tools/*android-package*', 'tests/arena-mobile3d*.test.mjs', '.github/workflows/arena-mobile3d.yml', 'package*.json']
 permissions:
   contents: read
 jobs:
   prototype:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: 'package.json'
       - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm test
+      - run: npm run audit:strict
       - run: npm run test:arena-mobile3d
       - run: python3 tools/test-android-package-size.py
       - uses: actions/upload-artifact@v4
         with:
           name: mobile3d-preview-and-size-report
           path: .artifacts/mobile3d
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run build:arena-mobile3d
+      - name: Install isolated browser QA dependency
+        run: |
+          npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          ./node_modules/.bin/playwright install --with-deps --only-shell chromium
+      - run: node tools/test-mobile3d-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile3d-camera-citadel-browser-qa
+          path: .artifacts/mobile3d-browser
+          if-no-files-found: warn

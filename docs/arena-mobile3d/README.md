@@ -82,3 +82,17 @@ Geometri/doku başlangıç/son/tepe adetleri, P50/P95/P99, uzun görevler ve yü
 GPU yolunda ortak doku/geometri, ayrı iskeletler, instanced çevre, 128 boyutlu prosedürel PBR ortamı, 12 darbe/16 yazı havuzu ve DPR sınırı kullanılır. Gölge haritası veya post-processing yoktur. WebGL yoksa gerçek iskeletli geometri yazılımla çizilir, `YAZILIM` rozeti görünür ve GPU benchmark kapatılır. Bu görünüm GPU görsel kalitesini veya Android akıcılığını temsil etmez.
 
 ![Dokulu prototip — yazılım görünümü, GPU kalite referansı değildir](preview-20261030.jpg)
+
+## Local camera follow-up (not published)
+
+Camera controls add mouse/touch drag orbit, two-finger pinch, mouse wheel and a dedicated reset. The existing three presets and close model view remain; preset changes clear manual orbit/zoom. Arrow keys rotate, +/- zoom and Home/0 reset the manual offset (the visible reset also returns to preset one). Elevation and orthographic zoom are bounded. Gestures are attached only to the canvas, not buttons or labels; the surrounding page remains scrollable outside the canvas. Ctrl-wheel browser zoom is not intercepted.
+
+A tap selects, while a drag exceeding 7 CSS pixels, cancellation, lost capture or multi-touch never selects. Camera controls are disabled during benchmarks and cancelled on background/page interruptions. There is no automatic orbit, cinematic motion or inertia, including reduced-motion mode. Existing reduced-motion character behavior is preserved. Off-canvas labels are hidden; visible labels are edge-clamped. Full overlap/geometry-occlusion layout is deferred.
+
+This patch changes presentation only, not combat, targeting, model assets, authority, wallet logic or live routing. Local Node checks are not physical-device/GPU validation. Browser gesture/camera art QA must run through the permitted isolated CI or an authorized GPU-enabled preview; no local browser/socket attempt is made where that route was previously denied.
+
+### Citadel environment follow-up
+
+The local follow-up deepens the platform into three stepped structural layers with perimeter buttresses, bevelled stone blocks and two opposing arched entrance monuments. Broad forms and an unobstructed central floor are favored over additional small decorations. A deterministic 64px stone grain and shared 32px soft character contacts provide grounding on the GPU path; no external art or paid generation is used. Nearby entrance masonry fades at low camera angles and disables depth writing while faded. Framing includes the monuments and lower platform from all preset angles. Both existing mobile/balanced DPR limits remain unchanged; there are no new post-processing or shadow-map passes.
+
+Software-only inspection uses the existing triangle renderer offline without a browser or socket: front/cross, side and rear environmental silhouettes were reviewed. It does not demonstrate PBR texture quality, translucent GPU ordering, actual touch interaction, physical FPS or the complete fighting scene. The fallback deliberately omits the new data textures and uses the existing simple contact disks; geometry layering is corrected for floor-over-foundation ordering. Full GPU visuals and environmental occlusion with ten animated heroes must be checked in isolated browser CI and on an authorized physical device before release. Existing signed/native packages and live routing remain untouched.

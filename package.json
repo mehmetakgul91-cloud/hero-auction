@@ -13,7 +13,7 @@
     "test:admin": "node --test tests/admin-*.test.mjs tests/player-*.test.mjs tests/native-cors.test.mjs",
     "test:admin-browser": "node tools/test-admin-browser.mjs",
     "build:arena-mobile3d": "node tools/build-arena-mobile3d.mjs",
-    "test:arena-mobile3d": "node --test tests/arena-mobile3d.test.mjs"
+    "test:arena-mobile3d": "node --test tests/arena-mobile3d.test.mjs tests/arena-mobile3d-camera.test.mjs"
   },
   "engines": {
     "node": "26.12.1"
