@@ -12,7 +12,7 @@ export function inspectArenaAsset(source,file=GUARDIAN_FILE,instances=2){
 }
 const defaultLoad=url=>new GLTFLoader().loadAsync(url);
 export function loadArenaAssets(load=defaultLoad){return loadStaticAsset(load,{file:GUARDIAN_FILE,width:1.8,height:2.5,depth:1.8,maxTriangles:30000,instances:2,name:'meshy-arena-guardian'});}
-export function loadTribuneFacade(load=defaultLoad){return loadStaticAsset(load,{file:FACADE_FILE,width:5.4,height:1.65,depth:2.7,maxTriangles:11000,instances:4,name:'meshy-ivory-tribune'});}
+export function loadTribuneFacade(load=defaultLoad){return loadStaticAsset(load,{file:FACADE_FILE,width:4.7,height:1.35,depth:2.35,maxTriangles:11000,instances:4,name:'meshy-ivory-tribune'});}
 async function loadStaticAsset(load,config){
  const source=await load('./assets/'+config.file).catch(()=>{throw Error(config.file+' yüklenemedi. Meshy arena varlığı yerine yer tutucu gösterilmiyor; yeniden yükle.');});
  const resources=new Set(),instances=[];let skinned=false;source.scene.updateMatrixWorld(true);
@@ -22,6 +22,7 @@ async function loadStaticAsset(load,config){
  const bounds=new T.Box3().setFromObject(source.scene),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3());
  if(size.toArray().some(n=>!Number.isFinite(n)||n<=0))fail('ölçüleri geçersiz.');
  const scale=Math.min(config.height/size.y,config.width/size.x,config.depth/size.z);
+ if(config.file===GUARDIAN_FILE)source.scene.traverse(o=>{if(o.isMesh)for(const material of Array.isArray(o.material)?o.material:[o.material]){material.color.setRGB(1.42,1.29,1.06);material.roughness=.76;material.metalness=.12;}});
  const diagnostics=inspectArenaAsset(source,config.file,config.instances);if(diagnostics.triangles>config.maxTriangles)fail('mobil üçgen bütçesini aşıyor.');
  return {source,resources,instances,diagnostics,create(){const root=new T.Group(),offset=new T.Group(),model=source.scene.clone(true);root.name=config.name;root.userData.arenaAsset=config.file;offset.add(model);offset.position.set(-center.x,-bounds.min.y,-center.z);root.add(offset);root.scale.setScalar(scale);instances.push(root);return root;},dispose(){instances.forEach(root=>root.removeFromParent());resources.forEach(r=>r.dispose());}};
 }
@@ -29,7 +30,7 @@ export function attachArenaGuardians(arena,kit){
  for(const side of [-1,1]){const root=kit.create();root.position.set(side*5.7,.46,4.15);root.rotation.y=-side*.22;arena.scene.add(root);arena.environmentObjects.push(root);attachShadowProxy(arena,root);}
 }
 
-export const TRIBUNE_FACADE_PLACEMENTS=[.12,.37,.63,.88].map(f=>{const a=f*Math.PI;return {x:Math.cos(a)*7.3*1.2,y:-.08,z:-Math.sin(a)*7.3,yaw:a-Math.PI/2};});
+export const TRIBUNE_FACADE_PLACEMENTS=[.04,.23,.77,.96].map(f=>{const a=f*Math.PI;return {x:Math.cos(a)*7.3*1.2,y:-.08,z:-Math.sin(a)*7.3,yaw:a-Math.PI/2};});
 export function attachTribuneFacades(arena,kit){
  for(const p of TRIBUNE_FACADE_PLACEMENTS){const root=kit.create();root.position.set(p.x,p.y,p.z);root.rotation.y=p.yaw;arena.scene.add(root);arena.environmentObjects.push(root);attachShadowProxy(arena,root);}
 }

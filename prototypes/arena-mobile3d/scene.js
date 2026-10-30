@@ -62,10 +62,15 @@ export class MobileArena {
  resize(){const {width,height}=this.canvas.getBoundingClientRect();if(!width||!height)return;this.width=width;this.height=height;
   const size=bufferSize(width,height,window.devicePixelRatio||1,this.quality);this.renderer.setSize(size.width,size.height,false);this.buffer=size;
   if(this.focusKey){const m=this.models.get(this.focusKey),center=m.base.clone().add(new T.Vector3(0,1.15,0)),a=m.rotation+(this.angle===2?Math.PI:this.angle===1?-1.2:.55);const o=cameraOffset({x:Math.sin(a)*5,y:1.4,z:Math.cos(a)*5},this.controls);this.camera.position.copy(center).add(new T.Vector3(o.x,o.y,o.z));this.camera.lookAt(center);this.camera.updateMatrixWorld();const half=1.65*this.controls.zoom,aspect=width/height;this.camera.left=-half*aspect;this.camera.right=half*aspect;this.camera.top=half;this.camera.bottom=-half;this.camera.updateProjectionMatrix();this.captureCameraState();return;}
-  const o=cameraOffset({x:this.angle===1?16:this.angle===2?-8:0,y:this.angle===1?13:14,z:this.angle===1?5:this.angle===2?-18:20},this.controls);this.camera.position.set(o.x,o.y,o.z);this.camera.lookAt(0,1,0);this.camera.updateMatrixWorld();
-  // Frame combat bounds and full standing heroes, NOT the amphitheatre/gate. Surroundings may crop.
-  let mx=0,my=0;for(const x of [-COMBAT_FLOOR.width/2-.25,COMBAT_FLOOR.width/2+.25])for(const z of [-COMBAT_FLOOR.depth/2-.15,COMBAT_FLOOR.depth/2+.15])for(const y of [0,2.65]){const p=new T.Vector3(x,y,z).applyMatrix4(this.camera.matrixWorldInverse);mx=Math.max(mx,Math.abs(p.x));my=Math.max(my,Math.abs(p.y));}
-  const aspect=width/height,half=Math.max(my,mx/aspect)*1.035*this.controls.zoom;this.camera.left=-half*aspect;this.camera.right=half*aspect;this.camera.top=half;this.camera.bottom=-half;this.camera.updateProjectionMatrix();this.captureCameraState();
+  const o=cameraOffset({x:this.angle===1?16:this.angle===2?-8:0,y:this.angle===1?15:18,z:this.angle===1?5:this.angle===2?-18:22},this.controls);this.camera.position.set(o.x,o.y,o.z);this.camera.lookAt(0,.8,-.6);this.camera.updateMatrixWorld();
+  // Wide review frames include the whole rear crest, not only the combat rectangle.
+  // Portrait stays battle-focused; camera gestures can inspect the surrounding architecture.
+  const aspect=width/height,points=[];
+  for(const x of [-COMBAT_FLOOR.width/2-.25,COMBAT_FLOOR.width/2+.25])for(const z of [-COMBAT_FLOOR.depth/2-.15,COMBAT_FLOOR.depth/2+.15])points.push(new T.Vector3(x,.13,z));
+  for(const x of [-4.4,4.4])for(const z of [-2.6,2.6])points.push(new T.Vector3(x,2.4,z));
+  if(aspect>1.25){points.push(new T.Vector3(0,3.65,-5.6),new T.Vector3(0,-.5,6.05));}
+  let mx=0,my=0;for(const point of points){const p=point.applyMatrix4(this.camera.matrixWorldInverse);mx=Math.max(mx,Math.abs(p.x));my=Math.max(my,Math.abs(p.y));}
+  const half=Math.max(my,mx/aspect)*1.045*this.controls.zoom;this.camera.left=-half*aspect;this.camera.right=half*aspect;this.camera.top=half;this.camera.bottom=-half;this.camera.updateProjectionMatrix();this.captureCameraState();
  }
  captureCameraState(){if(this.canvas.dataset)this.canvas.dataset.cameraState=JSON.stringify([...this.camera.matrixWorld.elements,...this.camera.projectionMatrix.elements]);}
  cameraNext(){this.angle=(this.angle+1)%3;this.controls.reset();}
