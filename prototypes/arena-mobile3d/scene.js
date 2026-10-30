@@ -54,7 +54,7 @@ export class MobileArena {
   const pulse=this.pulses.find(e=>e.age>=e.life);if(pulse){pulse.age=0;pulse.mesh.position.copy(m.root.position);pulse.mesh.position.y=.19;pulse.mesh.material.color.setHex(color);pulse.mesh.visible=true;}
   if(c.hp<0)m.hitAt=this.time;if(c.died)m.deathAt=this.time;
  }this.setTeams(frame.teams);}
- focus(key){this.focusKey=key;this.environmentObjects.forEach(o=>o.visible=!key);this.plinth.visible=!!key;if(key){this.plinth.position.copy(this.models.get(key).base);this.plinth.position.y=.06;}this.resize();this.render(0,this.lastProgress||0);}
+ focus(key){if(key&&!this.focusKey){this.focusSavedView={angle:this.angle,yaw:this.controls.yaw,pitch:this.controls.pitch,zoom:this.controls.zoom};this.angle=0;this.controls.clear();this.controls.yaw=0;this.controls.pitch=0;this.controls.zoom=1;}else if(!key&&this.focusKey&&this.focusSavedView){this.angle=this.focusSavedView.angle;Object.assign(this.controls,{yaw:this.focusSavedView.yaw,pitch:this.focusSavedView.pitch,zoom:this.focusSavedView.zoom});this.focusSavedView=null;}this.focusKey=key;this.environmentObjects.forEach(o=>o.visible=!key);this.plinth.visible=!!key;if(key){this.plinth.position.copy(this.models.get(key).base);this.plinth.position.y=.06;}this.resize();this.render(0,this.lastProgress||0);}
  select(key){this.selectedKey=key;if(this.focusKey)this.focus(key);this.models.forEach(m=>m.label.classList.toggle('selected',m.key===key));this.render(0,this.lastProgress||0);}
  resize(){const {width,height}=this.canvas.getBoundingClientRect();if(!width||!height)return;this.width=width;this.height=height;
   const size=bufferSize(width,height,window.devicePixelRatio||1,this.quality);this.renderer.setSize(size.width,size.height,false);this.buffer=size;
