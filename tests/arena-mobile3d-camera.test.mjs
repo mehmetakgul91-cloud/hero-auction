@@ -37,3 +37,8 @@ test('invalid static arena assets release owned resources before rejecting',asyn
  await assert.rejects(()=>loadTribuneFacade(async()=>({scene})),/arena-tribune-facade.glb ölçüleri geçersiz/);assert.equal(disposed,2);
  await assert.rejects(()=>loadTribuneFacade(async()=>{throw Error('404');}),/arena-tribune-facade.glb yüklenemedi/);
 });
+
+
+test('static arena shadow proxies use shared low-cost material and remain hidden from color pass',async()=>{
+ const T=await import('three'),{loadArenaAssets,attachArenaGuardians}=await import('../prototypes/arena-mobile3d/arena-assets.js');const source={scene:new T.Group()};source.scene.add(new T.Mesh(new T.BoxGeometry(1,2,1),new T.MeshStandardMaterial()));const kit=await loadArenaAssets(async()=>source),resources=new Set(),arena={scene:new T.Scene(),environmentObjects:[],renderer:{isSoftwareRenderer:false},keep:r=>{resources.add(r);return r;}};attachArenaGuardians(arena,kit);const proxies=arena.environmentObjects.filter(o=>o.castShadow);assert.equal(proxies.length,2);assert.equal(proxies[0].material,proxies[1].material);for(const p of proxies){assert.equal(p.material.colorWrite,false);assert.equal(p.material.depthWrite,false);assert.equal(p.geometry.index.count/3,12);}kit.dispose();resources.forEach(r=>r.dispose());
+});

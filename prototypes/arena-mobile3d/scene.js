@@ -15,10 +15,10 @@ export class MobileArena {
  constructor(canvas,labels,floats,{onSelect=()=>{},reduced=false}={}){
   this.canvas=canvas;this.labels=labels;this.floats=floats;this.reduced=reduced;this.quality='mobile';this.angle=0;this.time=0;this.models=new Map();this.resources=new Set();this.projected=new T.Vector3();
   const context=canvas.getContext('webgl2',{alpha:false,antialias:false,powerPreference:'low-power'});
-  this.renderer=context?new T.WebGLRenderer({canvas,context,alpha:false,antialias:false}):new PreviewSoftwareRenderer(canvas);this.renderer.setPixelRatio(1);this.renderer.setClearColor(0xd6e5ea);this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.02;this.renderer.outputColorSpace=T.SRGBColorSpace;
+  this.renderer=context?new T.WebGLRenderer({canvas,context,alpha:false,antialias:false}):new PreviewSoftwareRenderer(canvas);this.renderer.setPixelRatio(1);this.renderer.setClearColor(0xd6e5ea);this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=.95;this.renderer.outputColorSpace=T.SRGBColorSpace;
   this.scene=new T.Scene();this.scene.fog=new T.Fog(0xd6e5ea,28,80);this.camera=new T.OrthographicCamera(-7,7,7,-7,.1,90);
-  this.scene.add(new T.HemisphereLight(0xe6f3ff,0x9c977f,.85));const sun=new T.DirectionalLight(0xffefd6,2.65);sun.position.set(-5,12,7);this.scene.add(sun);this.sun=sun;const fill=new T.DirectionalLight(0x91abd2,.25);fill.position.set(5,3,-6);this.scene.add(fill);
-  if(!this.renderer.isSoftwareRenderer){const generator=new T.PMREMGenerator(this.renderer),room=new RoomEnvironment();const environment=this.keep(generator.fromScene(room,.04,.1,100,{size:128}));this.scene.environment=environment.texture;this.scene.environmentIntensity=.5;room.dispose();generator.dispose();}
+  this.scene.add(new T.HemisphereLight(0xe6f3ff,0x9c977f,.45));const sun=new T.DirectionalLight(0xffefd6,2.65);sun.position.set(-5,12,7);this.scene.add(sun);this.sun=sun;if(!this.renderer.isSoftwareRenderer){this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFShadowMap;sun.castShadow=true;sun.shadow.mapSize.set(512,512);Object.assign(sun.shadow.camera,{left:-12,right:12,top:11,bottom:-11,near:.5,far:40});sun.shadow.bias=-.0004;sun.shadow.normalBias=.025;}const fill=new T.DirectionalLight(0x91abd2,.25);fill.position.set(5,3,-6);this.scene.add(fill);
+  if(!this.renderer.isSoftwareRenderer){const generator=new T.PMREMGenerator(this.renderer),room=new RoomEnvironment();const environment=this.keep(generator.fromScene(room,.04,.1,100,{size:128}));this.scene.environment=environment.texture;this.scene.environmentIntensity=.25;room.dispose();generator.dispose();}
   const before=this.scene.children.length;createCitadel(this);this.environmentObjects=this.scene.children.slice(before);this.plinth=this.mesh(new T.CylinderGeometry(.72,.8,.18,40),this.mat(0x273546),0,.06,0);this.plinth.visible=false;this.contactTexture=this.keep(softContactTexture());this.buildEffects();this.raycaster=new T.Raycaster();this.pointer=new T.Vector2();
   this.click=e=>{const rect=canvas.getBoundingClientRect();this.pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);this.raycaster.setFromCamera(this.pointer,this.camera);const hit=this.raycaster.intersectObjects([...this.models.values()].filter(m=>m.root.visible&&m.body.visible&&!m.dead).map(m=>m.body),true)[0];if(hit)onSelect(hit.object.userData.key);};this.controls=new ArenaCameraControls(canvas,{select:this.click,change:()=>{this.resize();this.render(0,this.lastProgress||0);}});
   this.observer=new ResizeObserver(()=>{this.resize();this.render(0,this.lastProgress||0);});this.observer.observe(canvas);this.resize();
@@ -35,7 +35,7 @@ export class MobileArena {
  }
  setTeams(teams){this.teams=teams;const slots=formationSlots(teams);teams.forEach((team,side)=>team.forEach((hero,index)=>{
   const key=side+':'+hero.id;let m=this.models.get(key);
-  if(!m){m=this.kit.create(hero.role);m.side=side;m.key=key;const slot=slots.get(key)||home(side,index);m.base=new T.Vector3(slot.x,slot.y,slot.z);m.root.position.copy(m.base);m.root.rotation.y=side?-Math.PI/2:Math.PI/2;m.rotation=m.root.rotation.y;
+  if(!m){m=this.kit.create(hero.role);m.side=side;m.key=key;const slot=slots.get(key)||home(side,index);m.base=new T.Vector3(slot.x,slot.y,slot.z);m.root.position.copy(m.base);m.root.rotation.y=side?-Math.PI/2:Math.PI/2;m.rotation=m.root.rotation.y;if(!this.renderer.isSoftwareRenderer){m.shadowProxy=new T.Mesh(this.keep(new T.CapsuleGeometry(.32,1.1,3,6)),this.keep(new T.MeshBasicMaterial({colorWrite:false,depthWrite:false})));m.shadowProxy.position.y=.85;m.shadowProxy.castShadow=true;m.root.add(m.shadowProxy);}
    m.root.traverse(obj=>obj.userData.key=key);this.scene.add(m.root);this.models.set(key,m);
    const disk=new T.Mesh(this.keep(this.renderer.isSoftwareRenderer?new T.CircleGeometry(.46,24):new T.PlaneGeometry(1.35,1.35)),this.keep(new T.MeshBasicMaterial({map:this.renderer.isSoftwareRenderer?null:this.contactTexture,color:0x05090d,transparent:true,opacity:.55,depthWrite:false})));disk.rotation.x=-Math.PI/2;disk.position.y=.15;m.root.add(disk);
    const sunlightShadow=new T.Mesh(this.keep(new T.PlaneGeometry(2.4,1.2)),this.keep(new T.MeshBasicMaterial({map:this.renderer.isSoftwareRenderer?null:this.contactTexture,color:0x595346,transparent:true,opacity:.22,depthWrite:false})));sunlightShadow.rotation.set(-Math.PI/2,0,.55);sunlightShadow.position.set(m.base.x+.55,.142,m.base.z-.35);this.scene.add(sunlightShadow);m.sunlightShadow=sunlightShadow;
@@ -69,7 +69,7 @@ export class MobileArena {
  }
  cameraNext(){this.angle=(this.angle+1)%3;this.controls.reset();}
  resetCamera(){this.angle=0;this.controls.reset();}
- setQuality(value){this.quality=value;this.resize();this.render(0,this.lastProgress||0);}
+ setQuality(value){this.quality=value;if(this.sun.castShadow){const n=value==='balanced'?1024:512;if(this.sun.shadow.mapSize.x!==n){this.sun.shadow.map?.dispose();this.sun.shadow.map=null;this.sun.shadow.mapSize.set(n,n);}}this.resize();this.render(0,this.lastProgress||0);}
  project(position){this.projected.copy(position).project(this.camera);return {x:(this.projected.x*.5+.5)*this.width,y:(-.5*this.projected.y+.5)*this.height};}
  render(dt,p=0){
   // The near monument fades at low viewing angles instead of hiding combat.
@@ -92,7 +92,7 @@ export class MobileArena {
 
     const hit=this.time-(m.hitAt??-10);if(hit<.3&&!this.reduced)m.body.rotation.x=-Math.sin(hit/.3*Math.PI)*.15;
    }
-   m.sunlightShadow.visible=m.root.visible&&m.body.visible;m.sunlightShadow.position.set(m.root.position.x+.55,.142,m.root.position.z-.35);
+   if(m.shadowProxy)m.shadowProxy.visible=m.body.visible;m.sunlightShadow.visible=m.root.visible&&m.body.visible;m.sunlightShadow.position.set(m.root.position.x+.55,.142,m.root.position.z-.35);
    m.motion.sample(this.time,{progress:p,pose:motionPose,hitAge:this.time-(m.hitAt??-10),reduced:this.reduced});
    const raw=this.project(m.root.position.clone().add(new T.Vector3(0,2.15,0)));
    m.labelAnchor=raw;m.label.hidden=!!this.focusKey||raw.x<0||raw.x>this.width||raw.y<0||raw.y>this.height;m.leader.hidden=m.label.hidden;
@@ -103,5 +103,5 @@ export class MobileArena {
   for(const e of this.floatPool){if(e.age>=e.life){e.el.hidden=true;continue;}e.age+=dt;const t=e.age/e.life,pos=this.project(e.position.clone().add(new T.Vector3(0,this.reduced?0:t*.8,0)));e.el.style.transform=`translate(${pos.x}px,${pos.y}px) translate(-50%,-100%)`;e.el.style.opacity=String(Math.max(0,1-t));}
   this.renderer.render(this.scene,this.camera);
  }
- dispose(){this.observer.disconnect();this.controls.dispose();this.kit?.dispose();this.arenaAssets?.dispose();this.tribuneFacade?.dispose();this.resources.forEach(r=>r.dispose());this.renderer.dispose();this.labels.replaceChildren();this.floats.replaceChildren();this.models.clear();}
+ dispose(){this.observer.disconnect();this.controls.dispose();this.kit?.dispose();this.arenaAssets?.dispose();this.tribuneFacade?.dispose();this.resources.forEach(r=>r.dispose());this.sun.shadow?.dispose();this.renderer.dispose();this.labels.replaceChildren();this.floats.replaceChildren();this.models.clear();}
 }

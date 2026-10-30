@@ -26,10 +26,16 @@ async function loadStaticAsset(load,config){
  return {source,resources,instances,diagnostics,create(){const root=new T.Group(),offset=new T.Group(),model=source.scene.clone(true);root.name=config.name;root.userData.arenaAsset=config.file;offset.add(model);offset.position.set(-center.x,-bounds.min.y,-center.z);root.add(offset);root.scale.setScalar(scale);instances.push(root);return root;},dispose(){instances.forEach(root=>root.removeFromParent());resources.forEach(r=>r.dispose());}};
 }
 export function attachArenaGuardians(arena,kit){
- for(const side of [-1,1]){const root=kit.create();root.position.set(side*5.7,.46,4.15);root.rotation.y=-side*.22;arena.scene.add(root);arena.environmentObjects.push(root);}
+ for(const side of [-1,1]){const root=kit.create();root.position.set(side*5.7,.46,4.15);root.rotation.y=-side*.22;arena.scene.add(root);arena.environmentObjects.push(root);attachShadowProxy(arena,root);}
 }
 
 export const TRIBUNE_FACADE_PLACEMENTS=[.12,.37,.63,.88].map(f=>{const a=f*Math.PI;return {x:Math.cos(a)*7.3*1.2,y:-.08,z:-Math.sin(a)*7.3,yaw:a-Math.PI/2};});
 export function attachTribuneFacades(arena,kit){
- for(const p of TRIBUNE_FACADE_PLACEMENTS){const root=kit.create();root.position.set(p.x,p.y,p.z);root.rotation.y=p.yaw;arena.scene.add(root);arena.environmentObjects.push(root);}
+ for(const p of TRIBUNE_FACADE_PLACEMENTS){const root=kit.create();root.position.set(p.x,p.y,p.z);root.rotation.y=p.yaw;arena.scene.add(root);arena.environmentObjects.push(root);attachShadowProxy(arena,root);}
+}
+
+// Low-poly occluders keep the mobile shadow pass bounded; detailed GLBs are not drawn twice.
+function attachShadowProxy(arena,root){
+ if(!arena.renderer||arena.renderer.isSoftwareRenderer)return;root.updateMatrixWorld(true);const box=new T.Box3().setFromObject(root),size=box.getSize(new T.Vector3()),center=box.getCenter(new T.Vector3());
+ const material=arena.shadowProxyMaterial ||= arena.keep(new T.MeshBasicMaterial({colorWrite:false,depthWrite:false}));const proxy=new T.Mesh(arena.keep(new T.BoxGeometry(size.x*.88,size.y*.92,size.z*.82)),material);proxy.position.copy(center);proxy.castShadow=true;arena.scene.add(proxy);arena.environmentObjects.push(proxy);
 }
