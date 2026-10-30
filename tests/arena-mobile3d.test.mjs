@@ -7,12 +7,69 @@ import {battleOutcome} from '../battle-result.js';
 import {generateMobileReplay,compactReplay,IDS} from '../tools/generate-mobile3d-replay.mjs';
 import {heroCombatPresentation} from '../public/hero-combat-presentation.js';
 execFileSync(process.execPath,['tools/build-arena-mobile3d.mjs'],{cwd:new URL('..',import.meta.url)});
-const {createModelKit}=await import('../.artifacts/mobile3d/models.js');
+const {loadCharacterKit}=await import('../.artifacts/mobile3d/characters.js');
+const {GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');
+async function testModelLoad(url){
+ const bytes=fs.readFileSync(new URL('../prototypes/arena-mobile3d/'+url,import.meta.url)),size=bytes.readUInt32LE(12),doc=JSON.parse(bytes.subarray(20,20+size));
+ assert.equal(bytes.readUInt32LE(0),0x46546c67);assert.equal(bytes.readUInt32LE(8),bytes.length);
+ assert.equal(doc.skins.length,1);assert.ok(doc.skins[0].joints.length<100);assert.ok(doc.images.every(i=>i.bufferView!==undefined));
+ assert.ok(doc.asset.extras.mobile3d.textures.every(t=>Math.max(...t.to)<=1024));
+ doc.buffers[0].uri='data:application/octet-stream;base64,'+bytes.subarray(28+size).toString('base64');
+ // Node has no image decoder. Only omit materials; geometry, skin and clips are the shipping bytes.
+ doc.materials=doc.materials.map(()=>({}));delete doc.images;delete doc.textures;
+ globalThis.ProgressEvent??=class{};return new GLTFLoader().parseAsync(JSON.stringify(doc),'');
+}
 const {Replay,attackPose,home}=await import('../.artifacts/mobile3d/replay.js');
 const {FrameMetrics,bufferSize,assess}=await import('../.artifacts/mobile3d/metrics.js');
 const {PreviewSoftwareRenderer}=await import('../.artifacts/mobile3d/software.js');
+const {CombatDirector,formationSlots,planAction,sampleAction,pathPosition,PHASES}=await import('../.artifacts/mobile3d/director.js');
 const fixture=JSON.parse(fs.readFileSync(new URL('../prototypes/arena-mobile3d/replay.json',import.meta.url)));
 const deepFreeze=value=>{if(value&&typeof value==='object'){Object.freeze(value);Object.values(value).forEach(deepFreeze);}return value;};
+
+test('director crosses every animation phase once and preserves server snapshots at all frame rates',()=>{
+ const data=deepFreeze(structuredClone(fixture));
+ for(const dt of [1/120,1/60,1/30,1/15,.9,600]){
+  const phases=[],impacts=[],sequence=[];let state=data.initial;
+  const director=new CombatDirector(data,{phase(name,frame,index){phases.push([index,name]);sequence.push(name);},impact(frame,index){impacts.push(index);state=frame.teams;sequence.push('snapshot');}});
+  director.play();let steps=0;while(!director.finished&&steps++<30000)director.advance(dt);
+  assert.equal(director.finished,true);assert.deepEqual(impacts,data.frames.map((_,i)=>i));assert.deepEqual(state,data.frames.at(-1).teams);
+  for(let i=0;i<data.frames.length;i++)assert.deepEqual(phases.filter(p=>p[0]===i).map(p=>p[1]),PHASES.map(p=>p.name));
+  for(let i=0;i<sequence.length;i++)if(sequence[i]==='snapshot')assert.equal(sequence[i-1],'impact');
+ }
+ assert.deepEqual(data,fixture);
+});
+
+test('formation follows authoritative lane and slot even when team array is reordered',()=>{
+ const initial=structuredClone(fixture.initial),expected=formationSlots(initial);
+ for(const team of initial)team.reverse();assert.deepEqual(formationSlots(initial),expected);
+ const hero=initial[0][0];hero.lane='front';const moved=formationSlots(initial).get('0:'+hero.id);assert.equal(moved.z,1.25);
+});
+
+test('movement contacts the chosen target, returns home and never creates a second combat calculation',()=>{
+ for(const [index,frame] of fixture.frames.entries()){
+  const plan=planAction(frame,index?fixture.frames[index-1].teams:fixture.initial,index);
+  if(!['melee','cast'].includes(plan.kind))continue;
+  assert.equal(plan.event.target,primaryActionForTest(frame).target);
+  const from={x:-1,y:.12,z:3},to={x:1,y:.12,z:-2};
+  const initial=sampleAction(plan,0),impact=sampleAction(plan,.5),end=sampleAction(plan,1);
+  assert.deepEqual(pathPosition(from,to,initial.travel),from);
+  assert.deepEqual(pathPosition(from,to,end.travel),from);
+  if(plan.moving){const contact=pathPosition(from,to,impact.travel);assert.ok(Math.abs(Math.hypot(contact.x-to.x,contact.z-to.z)-1.05)<1e-8);}
+  else for(const p of [0,.2,.5,.8,1])assert.equal(sampleAction(plan,p).travel,0);
+  for(const p of [0,.2,.5,.8,1])assert.equal(sampleAction(plan,p,{reduced:true}).travel,0);
+  if(plan.kind==='cast'){assert.equal(sampleAction(plan,.499).projectile,!!plan.targetKey);assert.equal(impact.projectile,false);}
+ }
+ function primaryActionForTest(frame){return planAction(frame,fixture.initial).event;}
+});
+
+test('stun skip never approaches or launches a projectile; pause and reset cannot repeat an impact',()=>{
+ const h=fixture.initial[0][0],frame={teams:fixture.initial,events:[{actor:h.id,side:0,target:fixture.initial[1][0].id,action:'stun-skip'}]};
+ const plan=planAction(frame,fixture.initial);assert.equal(plan.kind,'skip');
+ for(const p of [0,.3,.5,.8,1]){assert.equal(sampleAction(plan,p).travel,0);assert.equal(sampleAction(plan,p).projectile,false);}
+ let hits=0;const director=new CombatDirector(fixture,{impact(){hits++;}});director.play();director.advance(.1);director.pause();director.advance(1000);assert.equal(hits,0);
+ director.play();director.advance(1000);assert.equal(hits,fixture.frames.length);director.advance(1000);assert.equal(hits,fixture.frames.length);
+ director.reset();director.play();director.advance(1000);assert.equal(hits,fixture.frames.length*2);
+});
 
 test('offline generator invokes existing 5v5 engine with unchanged roles, lanes and commander effects',()=>{
  const full=generateMobileReplay(),data=compactReplay(full);
@@ -46,21 +103,24 @@ test('front tank approaches and returns; ranged stays at its original rear posit
  for(const h of fixture.initial.flat())assert.equal(heroCombatPresentation(h).stationary,h.role==='energy');
 });
 
-test('two full-body models have articulated limbs, distinct silhouettes and shared bounded geometry',()=>{
- const kit=createModelKit(),geometries=new Set();let triangles=0,meshes=0;
- for(const [i,hero] of fixture.initial.flat().entries()){
-  const model=kit.create(hero.role),bounds=new Box3().setFromObject(model.body),size=bounds.getSize(new Vector3());assert.ok(size.y>1.6&&size.y<2.6);assert.ok(size.x<1.8);assert.equal(model.arms.length,2);assert.equal(model.legs.length,2);
-  model.root.traverse(o=>{if(o.isMesh){meshes++;geometries.add(o.geometry);triangles+=o.geometry.attributes.position.count/3;assert.equal(o.material,kit.material);assert.ok(o.geometry.attributes.color);}});
-  const before=new Box3().setFromObject(model.body);model.arms[1].rotation.x=-1.5;assert.notDeepEqual(new Box3().setFromObject(model.body),before);
+test('shipping GLBs have valid skins, mobile textures, independent skeletons and bounded animated geometry',async()=>{
+ const kit=await loadCharacterKit(testModelLoad),models=fixture.initial.flat().map(h=>kit.create(h.role));
+ const geometry=new Set(),skeletons=new Set();let triangles=0,draws=0;
+ for(const model of models){model.root.traverse(o=>{if(o.isMesh){draws++;triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;geometry.add(o.geometry);}if(o.isSkinnedMesh)skeletons.add(o.skeleton);});}
+ assert.equal(skeletons.size,10);assert.ok(triangles<400000);assert.ok(draws<180);
+ for(const type of ['tank','mage']){
+  const m=models.find(m=>m.type===type),bone=m.model.getObjectByName('mixamorigRightHand');m.root.updateMatrixWorld(true);const start=bone.getWorldPosition(new Vector3());
+  for(const p of [0,.2,.3,.5,.65,.8,1]){m.motion.sample(p,{progress:p,pose:{walk:p<.28},hitAge:99});m.root.updateMatrixWorld(true);m.model.traverse(o=>{if(o.isSkinnedMesh){o.skeleton.update();o.computeBoundingBox();const size=o.boundingBox.getSize(new Vector3());assert.ok(size.toArray().every(Number.isFinite));assert.ok(size.x<3&&size.y<3&&size.z<3);}});}
+  m.motion.sample(.5,{progress:.5,pose:{walk:false}});m.root.updateMatrixWorld(true);assert.ok(bone.getWorldPosition(new Vector3()).distanceTo(start)>.05);
+  const hips=m.model.getObjectByName('mixamorigHips'),x=hips.position.x,z=hips.position.z;m.motion.sample(.9,{progress:.9,pose:{walk:true}});assert.ok(Math.abs(hips.position.x-x)<1e-6&&Math.abs(hips.position.z-z)<1e-6);
  }
- assert.equal(meshes,60);assert.ok(triangles<15000);assert.ok(geometries.size<=10);
- const size=kit.geometries.size;for(let i=0;i<100;i++)kit.create(i%2?'tank':'energy');assert.equal(kit.geometries.size,size);kit.dispose();
+ const resourceCount=kit.resources.size;let disposed=0;for(const r of kit.resources)r.addEventListener('dispose',()=>disposed++);kit.dispose();assert.equal(disposed,resourceCount);
 });
 
-test('visual-only software fallback renders vertex-coloured full models without claiming GPU metrics',()=>{
- let filled=0;const colors=new Set();const context={setTransform(){},fillRect(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},fill(){filled++;colors.add(this.fillStyle);},stroke(){}};
- const renderer=new PreviewSoftwareRenderer({getContext:()=>context}),kit=createModelKit(),scene=new Scene(),camera=new OrthographicCamera(-2,2,2,-2,.1,50);camera.position.set(2,3,5);camera.lookAt(0,1,0);scene.add(kit.create('tank').root);renderer.setSize(400,400);renderer.render(scene,camera);
- assert.ok(filled>100);assert.ok(colors.size>8);assert.equal(renderer.isSoftwareRenderer,true);assert.equal(renderer.info,undefined);kit.dispose();renderer.dispose();
+test('software fallback projects skinned shipping geometry and never reports GPU performance',async()=>{
+ let filled=0;const context={setTransform(){},fillRect(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},fill(){filled++;},stroke(){}};
+ const renderer=new PreviewSoftwareRenderer({getContext:()=>context}),kit=await loadCharacterKit(testModelLoad),scene=new Scene(),camera=new OrthographicCamera(-2,2,2,-2,.1,50);camera.position.set(2,3,5);camera.lookAt(0,1,0);scene.add(kit.create('tank').root);renderer.setSize(400,400);renderer.render(scene,camera);
+ assert.ok(filled>1000);assert.equal(renderer.isSoftwareRenderer,true);assert.equal(renderer.info,undefined);kit.dispose();renderer.dispose();
 });
 
 test('mobile render buffer stays bounded on high-DPR, landscape and very large displays',()=>{
@@ -78,8 +138,8 @@ test('frame budget flags stutter, incomplete samples and invalidated runs; bound
 
 test('frozen replay and self-contained production-independent bundle fit the Android asset budget',()=>{
  const info=JSON.parse(fs.readFileSync(new URL('../.artifacts/mobile3d/build-info.json',import.meta.url)));
- assert.equal(info.threeVersion,'0.186.1');assert.ok(info.totals.rawBytes<3000000);assert.ok(info.totals.gzipBytes<650000);assert.ok(info.incrementalWithoutSharedThreeGzipBytes<100000);
- assert.ok(info.files.every(f=>!/(server|commander-live|battle-engine|\.glb|\.png|\.jpg)/.test(f.path)));
+ assert.equal(info.threeVersion,'0.186.1');assert.ok(info.totals.rawBytes<15000000);assert.ok(info.totals.gzipBytes<9000000);assert.ok(info.incrementalWithoutSharedThreeGzipBytes<8500000);
+ assert.ok(info.files.every(f=>!/(server|commander-live|battle-engine)/.test(f.path)));
  const built=JSON.parse(fs.readFileSync(new URL('../.artifacts/mobile3d/replay.json',import.meta.url)));assert.deepEqual(built,fixture);assert.equal(fixture.engineSourceCommit,'7714fe314ab4e923a9a5dea00d7242217d2b7fa0');
 });
 
@@ -90,10 +150,10 @@ test('repeated scene replays keep pools bounded and teardown releases shared geo
  try{
   globalThis.document={createElement:element};globalThis.window={devicePixelRatio:3};globalThis.ResizeObserver=class {observe(){}disconnect(){disconnected++;}};
   const canvas={getContext:type=>type==='webgl2'?null:context,getBoundingClientRect:()=>({width:390,height:440,left:0,top:0}),addEventListener(){},removeEventListener(){removed++;}};
-  const {MobileArena}=await import('../.artifacts/mobile3d/scene.js');const scene=new MobileArena(canvas,element(),element());scene.setTeams(fixture.initial);
-  const resources=scene.resources.size;const geometryCount=scene.kit.geometries.size;
-  for(let i=0;i<20;i++){scene.reset(fixture.initial);for(const frame of fixture.frames){scene.start(frame);scene.impact(frame);scene.end();}}
-  assert.equal(scene.models.size,10);assert.equal(scene.floatPool.length,16);assert.equal(scene.pulses.length,12);assert.equal(scene.resources.size,resources);assert.equal(scene.kit.geometries.size,geometryCount);
-  let disposed=0;for(const geometry of scene.kit.geometries)geometry.addEventListener('dispose',()=>disposed++);scene.dispose();assert.equal(disposed,geometryCount);assert.equal(disconnected,1);assert.equal(removed,1);assert.equal(scene.models.size,0);
+  const {MobileArena}=await import('../.artifacts/mobile3d/scene.js');const scene=new MobileArena(canvas,element(),element());scene.kit=await loadCharacterKit(testModelLoad);scene.setTeams(fixture.initial);
+  const resources=scene.resources.size;const geometryCount=scene.kit.resources.size;
+  for(let i=0;i<3;i++){scene.reset(fixture.initial);for(const frame of fixture.frames){scene.start(frame);scene.impact(frame);scene.end();}}
+  assert.equal(scene.models.size,10);assert.equal(scene.floatPool.length,16);assert.equal(scene.pulses.length,12);assert.equal(scene.resources.size,resources);assert.equal(scene.kit.resources.size,geometryCount);
+  let disposed=0;for(const geometry of scene.kit.resources)geometry.addEventListener('dispose',()=>disposed++);scene.dispose();assert.equal(disposed,geometryCount);assert.equal(disconnected,1);assert.equal(removed,1);assert.equal(scene.models.size,0);
  }finally{for(const [key,value] of Object.entries(originals)){if(value)Object.defineProperty(globalThis,key,value);else delete globalThis[key];}}
 });

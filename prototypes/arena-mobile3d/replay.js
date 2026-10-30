@@ -1,10 +1,8 @@
 // Reuse the production prototype's time-based snapshot clock, with an empty-safe wrapper.
-import {ArenaReplayClock,primaryAction,snapshotChanges} from './shared/arena-3d-timeline.js';
+import {primaryAction,snapshotChanges} from './shared/arena-3d-timeline.js';
+import {CombatDirector} from './director.js';
 export {primaryAction,snapshotChanges};
-export class Replay extends ArenaReplayClock{
- constructor(data,callbacks={}){super(data.frames,callbacks);this.data=data;}
- get progress(){return this.frames.length?super.progress:1;}
-}
+export class Replay extends CombatDirector{}
 export function home(side,index){return {x:index<2?(index===0?-1.15:1.15):(index-3)*2.05,y:.12,z:(side?-1:1)*(index<2?1.25:3.45)};}
 export function attackPose(progress,stationary,reduced=false){
  const p=Math.min(1,Math.max(0,progress)),ease=t=>t*t*(3-2*t);

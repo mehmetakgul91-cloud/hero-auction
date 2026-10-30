@@ -13,5 +13,5 @@ export class FrameMetrics{
 }
 export function assess(result,{valid=true,complete=true}={}){
  if(!valid||!complete||result.overflow||result.sampleSeconds<29.5)return 'incomplete';
- return result.fps>=45&&result.p95Ms<=33.34&&result.over33msPercent<=5&&result.drawCallsMax<=180&&result.trianglesMax<=35000?'pass':'review';
+ return result.fps>=45&&result.p95Ms<=33.34&&result.over33msPercent<=5&&result.drawCallsMax<=180&&result.trianglesMax<=400000?'pass':'review';
 }

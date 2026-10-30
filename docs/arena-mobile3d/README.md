@@ -1,20 +1,35 @@
-# Hero Auction — Android öncelikli 3D arena prototipi
+# Hero Auction — dokulu ve iskeletli 3D arena, aşama 1
 
-30 Ekim 2026. Başlangıç: `main@7714fe314ab4e923a9a5dea00d7242217d2b7fa0`.
-Geliştirme dalı: `feature/arena-3d-prototype-20261030`.
+30 Ekim 2026. Motor temeli: `main@7714fe314ab4e923a9a5dea00d7242217d2b7fa0`.
+Dal: `feature/arena-3d-prototype-20261030`. Taslak PR: #77. Canlı oyuna bağlanmaz.
 
-İki eklemli, tam gövdeli model (tank ve menzilli büyücü), mevcut motorun beş kişilik takım sözleşmesini koruyan 5'e5 bir kayıtta kullanılır. Her tarafta iki tank ön safta, üç büyücü arka saftadır. Modeller prototip görselleridir; farklı kahraman kimlikleri aynı rol modelini paylaşır. Tank hedefe yaklaşır, vurur ve geri döner; büyücü yerinde asa hareketi ve mermi kullanır. Hasar/şifa/kalkan etiketleri, can çubukları, ölüm, kamera, duraklatma, hız ve tekrar oynatma bulunur.
+Onaylanan görsel yön doğrultusunda Obsidyen ve Morvan için yeni Meshy 7.1 modelleri üretildi. İlk geometrik maketlerin yerine dokulu, iskeletli GLB karakterler ve gerçek yürüyüş/saldırı klipleri kullanılıyor. Çekiç, kalkan, asa, taş arena, bitkiler, bayraklar ve platform kodla oluşturuluyor. Yakın inceleme düğmesi ve üç kamera açısı tam gövdeyi önden/yandan/arkadan incelemeye yarar.
 
-## İzolasyon ve hesaplama doğruluğu
+Bu sürüm Magic Chess seviyesinde tamamlanmış bir görsel ürün değildir. İki karakterlik ilk uygulama aşamasıdır. GPU üzerinde sanat kontrolü, giysi/eldeki silah bağlantılarının temizlenmesi, daha ayrıntılı çevre ve gerçek Android ölçümleri açık kalır. Elli kahraman tamamlanmış değildir. 5'e5 test kaydındaki on kimlik, rol temsili olarak bu iki modeli paylaşır.
 
-- Kaynaklar `prototypes/arena-mobile3d/` altında; `public/`, sunucu, savaş motoru, rol sınıflandırması, komutan kuralları ve mevcut oyun yönlendirmesi değiştirilmedi.
-- `tools/generate-mobile3d-replay.mjs` mevcut hazırlık, canlı savaş ve komutan modüllerini çevrimdışı çağırır. Hesap/oda/ödeme oluşturmaz. Destek ve savunma komutanlarının normal yetenekleri mevcut doğrulama ve bekleme süresi kurallarıyla uygulanır.
-- `replay.json`, motorun gerçekten ürettiği 66 karelik sabit kayıttır. Kritik vuruş rastgeleliği değiştirilmez; cihazların aynı işi ölçebilmesi için derlemeler aynı kaydı kopyalar. Yeni kayıt istenirse `generateMobileReplay()` ve `compactReplay()` dışa aktarımları kullanılır; `engineSourceCommit` güncellenmelidir.
-- Tarayıcı motoru çalıştırmaz; can, kalkan, olay ve sonuç anlık görüntülerini okur. Mevcut `ArenaReplayClock` ve `heroCombatPresentation` dosyaları salt okunur kopyalanır. Darbe zamanı, ilgili kare süresinin %50 noktasıdır.
-- `npm run build:arena-mobile3d` sadece `.artifacts/mobile3d/` üretir. Bu dizin git dışında kalır. Herhangi bir canlı dağıtım komutu çalıştırmaz.
-- Three.js sürümü **0.186.1** olarak korunur; yeni npm bağımlılığı eklenmez. Tüm tarayıcı varlıkları aynı kaynaktan yüklenir; CDN, analitik, hesap bağlantısı veya API çağrısı yoktur.
+## Savaş ve animasyon ayrımı
 
-## Çalıştırma ve otomatik kontroller
+- `public/`, savaş hesaplamaları, kahraman rolleri, komutan kuralları ve canlı yönlendirme değişmedi. Three.js **0.186.1** korunuyor; yeni npm bağımlılığı yok.
+- `director.js` yaklaşma → hazırlık → vuruş → toparlanma → dönüş aşamalarını yönetir. Saldırganı ve hedefi motorun olayından alır; hedef arama, hasar hesaplama veya yeni komutan mantığı içermez.
+- Tank kayıttaki hedefe yürür ve safına döner; menzilli karakter yerinde büyü yollar. Hasar/şifa/kalkan ve ölüm, motorun %50 temas sınırındaki anlık görüntüsünden uygulanır. Atlanan saldırı hareket veya mermi üretmez.
+- `replay.json`, mevcut motor ve komutan modüllerinin ürettiği 66 karelik sabit 5'e5 kayıttır. Sonuç, farklı kare hızlarında aynıdır. Tarayıcı yeni savaş sonucu üretmez.
+- `CharacterMotion`, GLB kliplerini Three.js AnimationMixer ile örnekler; yatay root motion kaldırılır, animasyonlar harmanlanır. Bekleme pozu koda aittir. Tankın darbe tepkisi klipten, Morvan'ın tepkisi ve iki modelin ölüm eğilmesi görsel dönüşümlerden gelir. Pelerin zincirinin bind yönü korunur; kumaş fiziği değildir.
+- İleri savaş motoruna geçiş için bu sunum katmanı hazır bir ayrım sağlar. Eşzamanlı bağımsız saldırı, yol bulma ve yeni menzil/denge kuralları bu çalışmada uygulanmadı.
+
+## Model ve boyut bilgisi
+
+| Model | GLB üçgeni | İskelet eklemi | Mobil GLB |
+| --- | ---: | ---: | ---: |
+| Obsidyen | 30.929 | 77 | 5.357.580 bayt |
+| Morvan | 31.095 | 79 | 5.139.836 bayt |
+
+Meshy çıktıları Ultra 2K geometri, 4K doku ve A-pose ile üretildi, 30K üçgen hedefine yeniden ağ oluşturuldu ve Humanoid/Mixamo iskeletine bağlandı. Kaynaklar, hash'ler, klipler ve doku boyutları `assets/manifest.json` içinde bulunur. Dışa aktarılan tank ana dosyası 62.744.616, Morvan 63.859.180 bayttı; yüksek çözünürlüklü sürümler Meshy çalışma alanında durur.
+
+`tools/pack-mobile3d-model.py` Pillow kullanarak gömülü temel renk dokusunu 1024, normal/metallic-roughness dokularını 512 boyutuna indirir. UV, geometri, iskelet ve klip verisini korur; kaynak dosyayı değiştirmez. Mobil GLB'ler depoda hazırdır, olağan derleme Pillow gerektirmez.
+
+Paket yaklaşık **13,01 MB açılmış / 6,46 MB gzip toplamıdır**. Kesin baytlar ve her dosyanın hash'i derlemedeki `build-info.json` içindedir. Bu, eski dokusuz prototipin yaklaşık 0,45 MB gzip toplamından büyüktür. GLB'ler yalnızca bu ayrı önizleme tarafından yüklenir. Gerçek APK/AAB büyümesi ölçülmedi; gzip toplamı APK farkı veya kurulum boyutu değildir. 50 karakteri aynı anda paketleme/yükleme politikası henüz kurulmadı.
+
+## Çalıştırma ve kontroller
 
 ```sh
 npm ci --ignore-scripts --no-audit --no-fund
@@ -23,75 +38,47 @@ python3 tools/test-android-package-size.py
 npm run build:arena-mobile3d
 ```
 
-Yerel dosyayı `file://` ile açmak yerine statik HTTP sunucusu kullanın. Build çıktısı başka bir dizine de verilebilir:
+Build çıktısı `.artifacts/mobile3d/` altındadır; statik HTTP sunucusuyla açılmalıdır. Alternatif hedef: `node tools/build-arena-mobile3d.mjs /absolute/output/directory`. Derleme canlı dağıtım yapmaz. CI ilgili PR/dal değişikliklerinde testleri çalıştırıp önizleme paketini Actions artifact olarak saklar.
+
+Doğrulama sonuçları:
+
+- Mevcut tam test paketi: **2624/2624 geçti**, hata veya atlama yok; Node 24.22.1, yaklaşık 26,3 sn. Proje/CI hedefi olan Node 26.12.1 değiştirilmedi.
+- Yeni sürümün son özel koşusu: **14/14 geçti**. 15/30/60/120 FPS, büyük kare aralığı, duraklat/reset, saf sırası, komutan etkileri ve aynı nihai HP/kalkan/sonuç doğrulanıyor.
+- Gerçek GLB geometri/UV/iskelet/klip verisi Node'da ayrıştırılıp animasyonla deforme ediliyor. Bağımsız iskeletler, sabit yatay kök, sonlu animasyon sınırları, üçgen bütçesi, kaynak havuzları ve disposal kontrol ediliyor. Node testi görüntü kod çözücüsü içermez; doku kalitesi testi değildir.
+- APK/AAB karşılaştırma aracının sentetik arşiv testleri: **2/2 geçti**.
+- Bulut tarayıcısında yazılım görünümü, yakın model seçimi, kamera ve oynatma kontrol edildi. Bu tarayıcı WebGL 2 sağlamıyor; GPU render yolu ve fiziksel Android sonuçları henüz doğrulanmadı.
+
+## Android WebView test protokolü
+
+Repo içinde Android projesi/SDK veya bağlı cihaz yok; APK üretilmedi. Mevcut uygulamanın ayrı debug derlemesi kullanılmalı; üretim uygulamasına debug/HTTP izinleri eklenmemeli.
+
+1. Aynı cihazda mevcut 2D arena temel ölçümünü alın. Cihaz, Android/System WebView sürümü, pil/şarj durumu ve çözünürlüğü kaydedin.
+2. Statik çıktıyı debug WebView'in geliştirme origin/asset yöntemiyle yükleyin. İlk açılışı temiz cache ile ve tekrar açılışı sıcak cache ile deneyin. Modellerin yüklenmesini bekleyin; rapor `readyMs` değerini içerir ve cache durumunu garanti etmez.
+3. `WEBGL 2` modunda Mobil ve Dengeli profillerinin her biri için üçer 30 saniyelik test yapıp JSON indirin. 3 saniye ısınma vardır. Yakın model görünümü benchmark başında kapatılır; tüm takım ölçülür.
+4. En az iki düşük/orta sınıf Android cihazda dikey/yatay testleri yapın; 5 dakika oynatma sonrası tekrar edin. Masaüstü veya mobil boyutlu iframe fiziksel WebView'in yerine geçmez.
+5. Duraklat/devam, hız, kamera, yakın inceleme, 20 tekrar, ana ekrana git/dön ve kilitle/aç deneyin. Arka plana geçiş, ekran yönü, profil veya context loss sırasında benchmark geçersiz sayılmalıdır.
+6. DevTools ile JS heap, uzun görevler, GPU izi ve bellek eğilimini inceleyin. Geometri/doku adetleri tam GPU belleği ölçümü değildir. Pelerin, eller ve silah temasını GPU görüntüsünde özellikle kontrol edin.
+7. Aynı imza, ABI, build ve minify ayarlarıyla temel/aday APK veya AAB'yi üretip karşılaştırın. Aşağıdaki 8 MiB sınırı bu iki modelli deneme için başlangıç önerisidir:
 
 ```sh
-node tools/build-arena-mobile3d.mjs /absolute/output/directory
+python3 tools/compare-android-package.py baseline.apk candidate.apk --max-growth-bytes 8388608 > apk-delta.json
 ```
 
-`arena-mobile3d.yml` ilgili dal/PR değişikliklerinde kontrolleri çalıştırır, statik önizlemeyi ve `build-info.json` dosyasını Actions artifact olarak saklar. Canlı sunucuya dağıtmaz.
+Araç arşiv ve açılmış entry boyutlarını, asset büyümesini ve dosya farklarını raporlar. AAB boyutu Play'in cihaza indirdiği split APK boyutu değildir; kurulu depolama ayrıca ölçülmelidir.
 
-10 prototip testi: motor sözleşmesi/komutan etkileri; 15/30/60/120 FPS'de aynı sonuca varma; duraklatma ve büyük kare aralıkları; ön/arka saf ve hareket farkı; tam gövde ve ortak geometriler; yazılım görsel alternatifi; DPR/piksel sınırları; akıcılık ölçüm eşikleri; boyut sınırı; 20 tekrar oynatmada sabit kaynak havuzları ve dispose/observer temizliği.
-
-## Android WebView ölçüm protokolü
-
-Bu repoda Android projesi/SDK veya bağlı fiziksel cihaz bulunmadığından APK derlenmedi; fiziksel WebView sonucu ileri sürülmüyor. Mevcut Android sürümünün ayrı bir **debug** derlemesinde aşağıdaki ölçümleri uygulayın. Üretim APK'sına debug erişimi veya HTTP izni eklemeyin.
-
-1. Aynı cihazda mevcut 2D arena için temel ölçüm alın; cihaz modeli, Android sürümü, System WebView sürümü, ekran çözünürlüğü, pil/şarj durumu ve profil kaydedilsin.
-2. Statik çıktıyı debug uygulamasındaki WebView'e kendi geliştirme asset/origin yöntemiyle yükleyin. Three.js import map ve modül desteğini kontrol edin. Harici Google/ChatGPT girişini bu teste bağlamayın.
-3. `WEBGL 2` rozeti görünüyorsa Mobil profilinde 30 saniyelik testi çalıştırın. 3 saniyelik ısınma ardından 30 saniye ölçülür. Üç tekrarın JSON raporlarını saklayın; aynı işlemi Dengeli profilinde tekrarlayın.
-4. Düşük/orta sınıf en az iki fiziksel Android cihazında dikey ve yatay ekranları deneyin. 5 dakika ısınma sonrası testleri tekrar edin. 390×844 CSS görünümü veya masaüstü Chrome sonucu fiziksel cihazın yerine geçmez.
-5. Duraklat/devam, hız, reset, 20 tekrar; ana ekrana git/dön ve kilitle/aç kontrolleri yapın. Arka planda oynatma ve animasyon durur, geri gelince kullanıcı devam eder. Sayfa yön değişimi/sekme kaybı sırasında süren benchmark geçersiz sayılır.
-6. Debug WebView'de Chrome DevTools ile JS heap, uzun görevler, GPU/renderer izleri ve bellek eğilimini inceleyin. Uygulama raporundaki geometri/texture sayısı tam GPU bellek ölçümü değildir. WebGL context loss durumunda test geçersizleşmeli ve yeniden yükleme mesajı görünmelidir.
-7. Aynı imza, ABI, build tipi ve minify ayarlarıyla temel ve aday APK/AAB üretin. Gerçek dosyaları karşılaştırın:
-
-```sh
-python3 tools/compare-android-package.py baseline.apk candidate.apk --max-growth-bytes 1048576 > apk-delta.json
-```
-
-Sınır ekip için başlangıç önerisidir; CLI belirtilen sınır aşılırsa hata kodu döndürür. Araç gerçek arşiv boyutu, açılmış entry boyutu, assets sıkıştırılmış/açılmış boyutu ve eklenen/silinen dosyaları raporlar. AAB dosyasının büyümesi Play'in cihaza indirdiği split APK boyutu değildir; kurulu depolama ayrıca ölçülür.
-
-### Ölçüm içeriği ve hedefler
-
-| Alan | Başlangıç hedefi / anlamı |
+| Ölçüm | Prototip kabul hedefi |
 | --- | --- |
-| FPS | En az 45; rAF aralığı üzerinden, sunulan karelere yaklaşık gösterge |
-| P95 | En fazla 33,34 ms; medyan ve P99 da raporlanır |
-| 33,34 ms üzeri kareler | En fazla %5 |
-| Çizim çağrısı | En fazla 180 / kare |
-| Üçgen | En fazla 35.000 / kare |
-| Kaynaklar | Geometri/texture başlangıç, bitiş ve en yüksek değerleri |
-| Uzun görevler | PerformanceObserver desteği varsa sayı ve süre |
-| Mobil profil | DPR ≤1, en fazla 900.000 framebuffer pikseli |
-| Dengeli profil | DPR ≤1,5, en fazla 1.600.000 framebuffer pikseli |
+| FPS | ≥45 |
+| P95 kare aralığı | ≤33,34 ms |
+| 33,34 ms üzeri kareler | ≤%5 |
+| Çizim çağrısı | ≤180/kare |
+| Üçgen | ≤400.000/kare; eski 35.000 sınırı dokulu modellerle yenilendi |
+| Mobil | DPR ≤1; ≤900.000 framebuffer pikseli |
+| Dengeli | DPR ≤1,5; ≤1.600.000 framebuffer pikseli |
+| Dağıtım bütçesi | ≤15 MB açılmış; ≤9 MB dosya başına gzip toplamı |
 
-Bunlar prototip hedefleridir, doğrulanmış cihaz performansı değildir. GPU süresi, sıcaklık, enerji tüketimi ve tam bellek kullanımı uygulama panelinden ölçülmez. JSON cihaz/browser bilgilerini yalnızca kullanıcı indirdiğinde dosyaya yazar; sunucuya göndermez.
+Geometri/doku başlangıç/son/tepe adetleri, P50/P95/P99, uzun görevler ve yüklenme süresi de raporlanır. Bunlar hedeflerdir, cihazda sağlandığı iddia edilmez. GPU süresi, sıcaklık ve enerji panelden ölçülmez. Rapor sunucuya gönderilmez.
 
-WebGL 2 yoksa aynı 3D geometri yazılımla yansıtılır, `YAZILIM` rozeti gösterilir ve GPU benchmark düğmesi kapatılır. Bu modun akıcılığı Android GPU sonucu olarak kullanılamaz.
+GPU yolunda ortak doku/geometri, ayrı iskeletler, instanced çevre, 128 boyutlu prosedürel PBR ortamı, 12 darbe/16 yazı havuzu ve DPR sınırı kullanılır. Gölge haritası veya post-processing yoktur. WebGL yoksa gerçek iskeletli geometri yazılımla çizilir, `YAZILIM` rozeti görünür ve GPU benchmark kapatılır. Bu görünüm GPU görsel kalitesini veya Android akıcılığını temsil etmez.
 
-## Doğrulanmış sonuçlar
-
-- Node **v24.22.1** ortamında mevcut tam test paketi: **2619/2619 geçti**, hata/atlama yok (24,9 sn). Bu çalışmadan sonra yalnızca ek kaynak temizliği testi eklendi; son prototip koşusu **10/10 geçti**. Repodaki Node hedefi **26.12.1** değiştirilmedi; CI bu hedefle çalışacak.
-- APK/AAB ölçüm aracının iki sentetik ZIP testi: **2/2 geçti**. Gerçek APK farkı henüz ölçülmedi.
-- Tarayıcı görsel kontrolü: savaş sonuca kadar oynadı; duraklat/reset, menzilli model seçimi ve mobil dokunma kontrolleri çalıştı. 390×844 iframe içinde yatay taşma yok (`clientWidth=scrollWidth=375`; tarayıcı scrollbar payı); ana düğmelerin yüksekliği 44 px.
-- Bulut tarayıcısı WebGL 2 vermedi. Yazılım görünümü kontrol edildi; gerçek WebGL render yolu, GPU FPS/P95, context-loss geri dönüşü ve fiziksel Android doğrulaması açık kalır.
-- 10 kahraman toplam **60 model mesh'i**, **5768 model üçgeni** ve **10 ortak model geometrisi** kullanıyor. Bu sayılar tahta ve efektleri içermez; gerçek kare toplamı cihaz raporundan alınır.
-- 12 darbe efekti ve 16 kayan etiketlik sabit havuz; gölge haritası, post-processing veya doku indirmesi yok.
-
-| Paket ölçümü | Sonuç |
-| --- | ---: |
-| Tüm statik varlıklar, açılmış | 2.315.818 bayt (2,21 MiB) |
-| Dosya başına gzip-9 toplamı | 453.583 bayt (443 KiB) |
-| Vendor dosyaları hariç gzip toplamı | 26.195 bayt (25,6 KiB) |
-| Ek GLB/doku/model indirmesi | 0 bayt |
-| Gerçek APK/AAB artışı | Ölçülmedi |
-
-Boyutlar `build-info.json` hariçtir; HTTP aktarımı, ZIP/APK sıkıştırması ve kurulum boyutuyla aynı değildir. Vendor toplamı Three.js module/core, BufferGeometryUtils ve lisansı içerir. Bunları mevcut uygulamayla gerçekten paylaşmadan 25,6 KiB'ı APK artışı olarak kullanmayın.
-
-## Kaynaklar
-
-- [Three.js responsive render boyutları](https://threejs.org/manual/pages/responsive.html)
-- [Three.js GPU kaynaklarını temizleme](https://threejs.org/manual/pages/cleanup.html)
-- [Android WebView'i Chrome DevTools ile inceleme](https://developer.android.com/develop/ui/views/layout/webapps/debug-chrome-devtools)
-
-![Yazılım görünümünde prototip ekranı](preview-20261030.jpg)
+![Dokulu prototip — yazılım görünümü, GPU kalite referansı değildir](preview-20261030.jpg)
