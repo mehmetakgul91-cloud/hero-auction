@@ -52,6 +52,14 @@ try{
    await page.locator('.unit-label:visible').last().click();await page.locator('#camera-reset').click();await shot('labels-'+width+'-selected');
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'small portrait has no overflow');
   }
+  // Three genuine views of the SAME loaded amphitheatre, not generated concept art.
+  if(reducedMotion==='no-preference'){
+   await page.setViewportSize({width:1440,height:1100});
+   await page.addStyleTag({content:'.viewport{width:1200px!important;height:900px!important;max-width:none!important}.arena-panel{width:1200px!important}.labels{opacity:.7}'});
+   await page.locator('#camera-reset').click();await shot('art-cross');
+   await canvas.focus();for(let i=0;i<6;i++)await page.keyboard.press('ArrowRight');await shot('art-side');
+   await page.keyboard.press('Home');await page.keyboard.press('+');await page.keyboard.press('+');await shot('art-close');
+  }
   assert.deepEqual(errors,[]);
   const renderer=await canvas.evaluate(c=>{const gl=c.getContext('webgl2');if(!gl)return {mode:'software fallback'};const debug=gl.getExtension('WEBGL_debug_renderer_info');return {mode:'WebGL2',renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};});
   results.push({reducedMotion,renderer,checks:'drag/select separation, wheel, pinch, cancel recovery, keyboard, reset, 3 presets, hero UI, closeup, replay, resize, overflow',scope:'Headless CI only; SwiftShader is CPU software WebGL, not physical GPU or Android performance proof.'});
