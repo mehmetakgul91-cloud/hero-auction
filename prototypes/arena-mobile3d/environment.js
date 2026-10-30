@@ -1,7 +1,7 @@
 import * as T from 'three';
 import {ARENA_WIDTH_SCALE,COMBAT_FLOOR} from './arena-layout.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-import {stoneTexture,bevelBlock,softContactTexture} from './environment-materials.js';
+import {stoneTexture,bevelBlock,softContactTexture,mineralFloorTexture,continuousFloorGeometry} from './environment-materials.js';
 
 // Authored amphitheatre: broad architectural masses, a calm combat floor and one royal focal gate.
 // Shared instanced masonry; no downloaded art, real-time shadows or post-processing.
@@ -18,26 +18,15 @@ export function createCitadel(arena){
  const cube=keep(bevelBlock()),items=[];
  const block=(x,y,z,sx,sy,sz,color=0x577781,rotation=0)=>items.push({x,y,z,sx,sy,sz,color,rotation});
  const mesh=(geo,mat,x=0,y=0,z=0)=>arena.mesh(geo,mat,x,y,z);
- arena.landmarks=[];arena.architecture={name:'Crown Amphitheatre',tiers:4,sections:10,materials:'stone / bronze / teal cloth',terraceDepth:1.12,aisleWidth:.7,combatFloor:COMBAT_FLOOR,widthScale:ARENA_WIDTH_SCALE,bounds:{x:11.4*ARENA_WIDTH_SCALE,z:11.4,y:8}};
+ arena.landmarks=[];arena.architecture={name:'Crown Amphitheatre',tiers:4,sections:10,materials:'stone / bronze / teal cloth',floorStyle:'continuous-mineral-stone',floorCells:1,terraceDepth:1.12,aisleWidth:.7,combatFloor:COMBAT_FLOOR,widthScale:ARENA_WIDTH_SCALE,bounds:{x:11.4*ARENA_WIDTH_SCALE,z:11.4,y:8}};
  // Octagonal foundation, exposed lower retaining wall and continuous promenade.
  for(const [r,h,y,color] of [[11.25,.45,-1.55,0x10141d],[11,.8,-.95,0x1e2530],[11.15,.18,-.48,0x30353c]]){
   const base=mesh(new T.CylinderGeometry(r,r+.18,h,12),arena.mat(color,{roughness:.94,map:grain}),0,y,0);base.rotation.y=Math.PI/12;
  }
- block(0,-.16,0,8.75,.5,10.1,0x141c26);
- // Large limestone slabs and fine bronze seams: the floor reads as one authored surface, not a checkerboard.
- for(let r=0;r<8;r++)for(let c=0;c<6;c++)block((c-2.5)*1.36,.105,(r-3.5)*1.16,1.345,.12,1.145,[0xa47a52,0xb1875b,0x9b7251,0xad8056][(r*3+c)%4]);
- const flat=(geometry,material,y=.175)=>{const o=mesh(geometry,material,0,y,0);o.rotation.x=-Math.PI/2;return o;};
- for(const r of [1.38,1.5,3.42,3.5])flat(new T.RingGeometry(r,r+.035,80),gold);
- // Eight substantial compass petals, alternating slate and bronze inlay.
- for(let i=0;i<8;i++){
-  const a=i*Math.PI/4,shape=new T.Shape();shape.moveTo(0,.34);shape.lineTo(.25,1.35);shape.lineTo(0,2.95);shape.lineTo(-.25,1.35);shape.closePath();
-  const petal=flat(new T.ShapeGeometry(shape),i%2?dark:gold,.181);petal.rotation.z=a;
- }
- flat(new T.CircleGeometry(.44,8),dark,.184);flat(new T.RingGeometry(.35,.4,8),gold,.186);
- for(const x of [-4.14,4.14]){block(x,.2,0,.18,.14,9.65,0x18212b);block(x,.28,0,.04,.025,9.65,0xad713b);}
- for(const z of [-4.7,4.7]){block(0,.2,z,8.4,.14,.18,0x18212b);block(0,.28,z,8.4,.025,.04,0xad713b);}
- // Rhythmic corner medallions, not scattered decorations.
- for(const x of [-3.45,3.45])for(const z of [-3.92,3.92]){const o=flat(new T.RingGeometry(.25,.33,4),gold,.185);o.position.x=x;o.position.z=z;o.rotation.z=Math.PI/4;}
+ // A single continuous, softly rounded mineral slab replaces all 48 square cells and the compass emblem.
+ const slab=keep(continuousFloorGeometry()),floorMap=software?null:keep(mineralFloorTexture());
+ const rim=mesh(slab,dark,0,-.17,0);rim.rotation.x=-Math.PI/2;rim.scale.set(1.025,1.025,1.7);
+ const floor=mesh(slab,arena.mat(0x9ba69a,{roughness:.92,metalness:0,map:floorMap}),0,-.02,0);floor.rotation.x=-Math.PI/2;
  // Four rising terraces in ten wedge-shaped seating bays, separated by radial stair aisles.
  // Angles open toward the foreground; architecture frames rather than covers the battle.
  const start=-.10*Math.PI,end=1.10*Math.PI,bays=10,span=(end-start)/bays;
@@ -97,11 +86,6 @@ export function createCitadel(arena){
  }
  // Foreground ceremonial stair and two restrained guardians. No high front wall blocks combat.
  for(let i=0;i<7;i++)block(0,-.02-i*.2,5.08+i*.48,4.3,.24,.56,0x655744);
- for(const x of [-3.6,3.6]){
-  block(x,.2,5.45,1.2,.55,1.2,0x1d2835);block(x,.72,5.45,.86,.5,.86,0x414b55);
-  mesh(new T.CylinderGeometry(.55,.35,.28,8),gold,x,1.15,5.45);
-  const crystal=mesh(new T.OctahedronGeometry(.3),arena.mat(0x73cbd4,{emissive:0x1d747e,emissiveIntensity:.3,roughness:.3}),x,1.68,5.45);crystal.scale.y=1.65;
- }
  // A single instanced draw for masonry; full resource lifecycle retained.
  const transforms=new T.Matrix4(),q=new T.Quaternion(),position=new T.Vector3(),scale=new T.Vector3(),up=new T.Vector3(0,1,0),batch=new T.InstancedMesh(cube,stone,items.length);
  items.forEach((p,i)=>{transforms.compose(position.set(p.x,p.y,p.z),q.setFromAxisAngle(up,p.rotation),scale.set(p.sx,p.sy,p.sz));if(software){const material=keep(stone.clone());material.color.setHex(p.color);const m=new T.Mesh(cube,material);m.applyMatrix4(transforms);m.userData.softwareLayer=p.y>=0?-1:-2;scene.add(m);}else{batch.setMatrixAt(i,transforms);batch.setColorAt(i,new T.Color(p.color));}});

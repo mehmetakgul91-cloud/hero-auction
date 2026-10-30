@@ -17,6 +17,7 @@ try{
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`http://127.0.0.1:${server.address().port}/`);await page.waitForSelector('#arena[data-ready="true"]',{timeout:60000});
   const diagnostics=await page.locator('#arena').getAttribute('data-models');const models=JSON.parse(diagnostics);assert.equal(models.length,2);assert(models.every(m=>m.meshes>0&&m.meshes===m.textured),'both actual skinned GLBs have decoded sRGB albedo');
+  const arenaAsset=JSON.parse(await page.locator('#arena').getAttribute('data-arena-assets'));assert.equal(arenaAsset.file,'arena-guardian.glb');assert.equal(arenaAsset.instances,2);assert(arenaAsset.meshes>0&&arenaAsset.meshes===arenaAsset.textured&&arenaAsset.triangles<=30000,'actual Meshy prop has decoded textures and bounded triangles');
   const canvas=page.locator('#arena');await canvas.scrollIntoViewIfNeeded();const box=await canvas.boundingBox(),name=await page.locator('#hero-name').textContent();
   const shot=async tag=>{await page.mouse.move(0,0);return canvas.screenshot({path:path.join(out,`${reducedMotion}-${tag}.png`)});};
   const initial=await shot('cross');
@@ -62,6 +63,10 @@ try{
    await canvas.focus();await page.keyboard.press('Home');await shot('art-cross');
    for(let i=0;i<6;i++)await page.keyboard.press('ArrowRight');await shot('art-side');
    await page.keyboard.press('Home');await page.keyboard.press('+');await shot('art-close');
+   // Separate real-GLB inspection, same material pipeline: front / side / back, not a concept image.
+   await page.evaluate(async()=>{const T=await import('/vendor/three.module.js'),{loadArenaAssets}=await import('/arena-assets.js'),{RoomEnvironment}=await import('/vendor/addons/environments/RoomEnvironment.js');const canvas=document.createElement('canvas');canvas.id='guardian-qa';Object.assign(canvas.style,{position:'fixed',left:'0',top:'0',zIndex:'10001'});document.body.append(canvas);const renderer=new T.WebGLRenderer({canvas,antialias:true});renderer.setSize(700,700);renderer.setClearColor(0x121925);renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=.82;renderer.outputColorSpace=T.SRGBColorSpace;const world=new T.Scene();world.add(new T.HemisphereLight(0xe4e2d6,0x10131b,.55));const sun=new T.DirectionalLight(0xffead1,2);sun.position.set(-5,12,7);world.add(sun);const generator=new T.PMREMGenerator(renderer),room=new RoomEnvironment(),env=generator.fromScene(room,.04,.1,100,{size:128});world.environment=env.texture;world.environmentIntensity=.35;generator.dispose();room.dispose();const kit=await loadArenaAssets(),root=kit.create();world.add(root);const camera=new T.OrthographicCamera(-1.2,1.2,1.2,-1.2,.1,30);camera.position.set(0,1.35,4);camera.lookAt(0,.86,0);window.__guardianQA={renderer,world,camera,root,kit,env};renderer.render(world,camera);});
+   for(const [tag,yaw] of [['front',0],['side',Math.PI/2],['back',Math.PI]]){await page.evaluate(y=>{const q=window.__guardianQA;q.root.rotation.y=y;q.renderer.render(q.world,q.camera);},yaw);await page.locator('#guardian-qa').screenshot({path:path.join(out,'meshy-guardian-'+tag+'.png')});}
+   await page.evaluate(()=>{const q=window.__guardianQA;q.kit.dispose();q.env.dispose();q.renderer.dispose();document.querySelector('#guardian-qa').remove();delete window.__guardianQA;});
   }
   assert.deepEqual(errors,[]);
   const renderer=await canvas.evaluate(c=>{const gl=c.getContext('webgl2');if(!gl)return {mode:'software fallback'};const debug=gl.getExtension('WEBGL_debug_renderer_info');return {mode:'WebGL2',renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};});

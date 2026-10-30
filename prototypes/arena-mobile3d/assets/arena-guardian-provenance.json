@@ -1,0 +1,25 @@
+{
+  "generator": "Meshy T2.5",
+  "generatedAt": "2026-10-30",
+  "purpose": "Original arena guardian statue and plinth; two instances of one static asset",
+  "sourceSettings": {
+    "topology": "Smart topology, 15k target",
+    "texture": "2K",
+    "visibility": "private"
+  },
+  "creditsSpent": 15,
+  "originalSha256": "c61a65e06546d2594c4a2196bc20d51a4e894128054a5b67341283fe0b3a6c84",
+  "originalBytes": 8818656,
+  "gameFile": "arena-guardian.glb",
+  "gameSha256": "189778f489b8b9ca925dbb3401d510c175b6bfe1da0bd133d36e71f168218c4c",
+  "gameBytes": 1507020,
+  "triangles": 15564,
+  "meshes": 1,
+  "materials": 1,
+  "textures": {
+    "basecolor": 1024,
+    "normal": 512,
+    "metallicRoughness": 512
+  },
+  "optimization": "Embedded textures repacked only; original mesh topology preserved. Original retained outside repository."
+}
