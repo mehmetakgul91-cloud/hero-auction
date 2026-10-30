@@ -17,7 +17,7 @@ try{
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`http://127.0.0.1:${server.address().port}/`);await page.waitForSelector('#arena[data-ready="true"]',{timeout:60000});
   const canvas=page.locator('#arena');await canvas.scrollIntoViewIfNeeded();const box=await canvas.boundingBox(),name=await page.locator('#hero-name').textContent();
-  const shot=async tag=>canvas.screenshot({path:path.join(out,`${reducedMotion}-${tag}.png`)});
+  const shot=async tag=>{await page.mouse.move(0,0);return canvas.screenshot({path:path.join(out,`${reducedMotion}-${tag}.png`)});};
   const initial=await shot('cross');
   // Labels are intentional selection controls above the canvas; start orbit on uncovered arena.
   const origin=await canvas.evaluate(c=>{const b=c.getBoundingClientRect();for(const v of [.8,.2,.65])for(const u of [.15,.5,.85]){const x=b.x+b.width*u,y=b.y+b.height*v;if(document.elementFromPoint(x,y)===c)return {x,y};}throw Error('No exposed arena input area');});
