@@ -42,8 +42,8 @@ Build çıktısı `.artifacts/mobile3d/` altındadır; statik HTTP sunucusuyla a
 
 Doğrulama sonuçları:
 
-- Mevcut tam test paketi: **2624/2624 geçti**, hata veya atlama yok; Node 24.22.1, yaklaşık 26,3 sn. Proje/CI hedefi olan Node 26.12.1 değiştirilmedi.
-- Yeni sürümün son özel koşusu: **14/14 geçti**. 15/30/60/120 FPS, büyük kare aralığı, duraklat/reset, saf sırası, komutan etkileri ve aynı nihai HP/kalkan/sonuç doğrulanıyor.
+- Mevcut tam test paketi: **2625/2625 geçti**, hata veya atlama yok; Node 24.22.1, yaklaşık 26,0 sn. Proje/CI hedefi olan Node 26.12.1 değiştirilmedi.
+- Yeni sürümün son özel koşusu: **15/15 geçti**. 15/30/60/120 FPS, büyük kare aralığı, duraklat/reset, saf sırası, komutan etkileri, kritik vuruş uçlarında geçerli şifa çağrısı ve aynı nihai HP/kalkan/sonuç doğrulanıyor.
 - Gerçek GLB geometri/UV/iskelet/klip verisi Node'da ayrıştırılıp animasyonla deforme ediliyor. Bağımsız iskeletler, sabit yatay kök, sonlu animasyon sınırları, üçgen bütçesi, kaynak havuzları ve disposal kontrol ediliyor. Node testi görüntü kod çözücüsü içermez; doku kalitesi testi değildir.
 - APK/AAB karşılaştırma aracının sentetik arşiv testleri: **2/2 geçti**.
 - Bulut tarayıcısında yazılım görünümü, yakın model seçimi, kamera ve oynatma kontrol edildi. Bu tarayıcı WebGL 2 sağlamıyor; GPU render yolu ve fiziksel Android sonuçları henüz doğrulanmadı.

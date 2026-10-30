@@ -81,6 +81,16 @@ test('offline generator invokes existing 5v5 engine with unchanged roles, lanes 
  assert.ok(data.frames.some(f=>f.events.some(e=>e.action.startsWith('commander-support'))));
 });
 
+test('offline generator waits for a wounded living ally across critical-hit extremes',()=>{
+ const original=Math.random;
+ try{for(const value of [0,.25,.5,.75,.999999]){
+  Math.random=()=>value;const data=generateMobileReplay();
+  assert.ok(data.frames.length);assert.equal(data.winner,battleOutcome(data.frames.at(-1).teams).winner);
+  const heals=data.frames.flatMap(f=>f.events).filter(e=>e.action==='commander-support-normal');
+  assert.equal(heals.length,1);assert.ok(heals.every(e=>e.value>0));
+ }}finally{Math.random=original;}
+});
+
 test('fixed replay reaches exact final HP, shields and winner at 15/30/60/120 FPS without mutating combat input',()=>{
  const input=deepFreeze(structuredClone(fixture));
  for(const fps of [15,30,60,120]){const hits=[];let state=input.initial;const replay=new Replay(input,{impact(frame,index){hits.push(index);state=frame.teams;}});replay.play();let steps=0;while(!replay.finished&&steps++<24000)replay.advance(1/fps);
