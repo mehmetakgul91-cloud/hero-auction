@@ -40,7 +40,7 @@ test('healing stays in place even for a normally melee hero',()=>{
 
 test('classic arena applies the same range rule to the actual animation calls',()=>{
  const source=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8');
- const code=source.slice(source.indexOf('function animateMove(e){'),source.indexOf("window.addEventListener('heroarena:experimental-move'"));
+ const code=source.slice(source.indexOf('function animateMove(e'),source.indexOf("window.addEventListener('heroarena:experimental-move'"));
  for(const h of [...stationary,{id:'warrior',role:'fighter'}])for(const damageType of ['normal','special']){
   const animations=[],classes=[];
   const element=()=>({dataset:{},style:{setProperty(){}},classList:{contains(){return false},add(...v){classes.push(...v)},remove(){}},append(){},remove(){},querySelector(){return null},setAttribute(){},getBoundingClientRect(){return {left:0,top:0,width:80,height:100}},animate(frames){animations.push(frames)}});

@@ -41,7 +41,7 @@ test('preparation preview number is explicitly approximate and has estimated-pow
 });
 test('delay animation is a status cue, never another attack, projectile or impact',()=>{
  const source=fs.readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8');
- const body=source.slice(source.indexOf('function animateMove(e){'),source.indexOf("window.addEventListener('heroarena:experimental-move'"));
+ const body=source.slice(source.indexOf('function animateMove(e'),source.indexOf("window.addEventListener('heroarena:experimental-move'"));
  const target={dataset:{heroId:'b'},animate(){throw Error('Delay must not animate a hit')}};
  const doc={documentElement:{lang:'en'},querySelectorAll(){return [target]}};
  const cues=[];
