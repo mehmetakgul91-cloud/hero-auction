@@ -33,6 +33,17 @@ const exchangeInput=f=>elements(f.nodes['store-exchange-controls']).find(e=>e.ta
 test('opening only reads authenticated status and displays approved seven days, never grants',async()=>{
  const f=await opened();assert.deepEqual(f.calls.map(c=>c.path),['/api/store/status']);assert.equal(f.calls[0].body.authToken,user().authToken);assert.equal(f.nodes['store-reward-days'].children.length,7);assert.match(f.nodes['store-reward-days'].children[6].textContent,/5 elmas/);assert.doesNotMatch(f.nodes['store-reward-days'].children[6].textContent,/10 elmas/);assert.equal(f.nodes['store-claim'].disabled,false);assert.equal(f.nodes['store-purchase'].disabled,true);assert.equal(f.nodes['store-ad'].disabled,true);
 });
+test('visible store keeps claim disabled until delayed authenticated status finishes',async()=>{
+ let resolve;const f=fixture({fetcher:()=>new Promise(r=>resolve=r)});
+ f.ui.setLogin(user());f.ui.open();
+ assert.equal(f.nodes['store-panel'].hidden,false);
+ assert.equal(f.nodes['store-claim'].disabled,true);
+ f.nodes['store-claim'].onclick();assert.equal(f.calls.length,1);
+ resolve(ok(status));await tick();
+ assert.equal(f.nodes['store-claim'].disabled,false);
+ assert.equal(f.calls.length,1,'opening and readiness must not claim automatically');
+ f.ui.destroy();
+});
 test('disabled infrastructure never displays a fabricated zero or enables a provider button',async()=>{
  const f=await opened({fetcher:()=>ok({...status,gold:null,diamonds:null,diamondsEnabled:false,purchase:{available:true},rewardedAds:{enabled:true},exchange:{available:false},loginRewards:{...status.loginRewards,enabled:false,available:false}})});
  assert.equal(f.nodes['store-gold'].textContent,'—');assert.equal(f.nodes['store-diamonds'].textContent,'—');assert.equal(f.nodes['store-claim'].disabled,true);assert.equal(f.nodes['store-purchase'].disabled,true);assert.equal(f.nodes['store-ad'].disabled,true);assert.equal(exchangeButton(f),undefined);assert.match(f.nodes['store-reward-status'].textContent,/henüz etkin değil/);

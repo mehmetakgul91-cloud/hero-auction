@@ -39,7 +39,11 @@ try{
   await modal.getByRole('button',{name:'ÖDÜLÜ AL',exact:true}).click();await modal.waitFor({state:'hidden'});assert.equal(claims,1);await page.reload({waitUntil:'networkidle'});assert.ok(reads>=2);assert.equal(await modal.isVisible(),false);assert.equal(claims,1);
   await page.screenshot({path:path.join(artifacts,`login-reward-${width}-claimed.png`),fullPage:false});
   day='2026-11-03';claimed=false;await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await modal.waitFor({state:'visible'});await page.keyboard.press('Escape');await modal.waitFor({state:'hidden'});await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await page.waitForTimeout(100);assert.equal(await modal.isVisible(),false);assert.equal(claims,1);
-  await page.locator('#home-store-tab').click();await page.locator('#store-panel').waitFor({state:'visible'});assert.equal(await page.locator('#store-claim').isEnabled(),true);
+  await page.locator('#home-store-tab').click();await page.locator('#store-panel').waitFor({state:'visible'});
+  // Panel visibility precedes the asynchronous authenticated status response.
+  // Wait for the rendered ready state, not just the synchronous open() step.
+  await page.waitForFunction(()=>document.getElementById('store-claim')?.disabled===false,null,{timeout:5000});
+  assert.equal(await page.locator('#store-claim').isEnabled(),true);assert.equal(claims,1);
   assert.deepEqual(errors,[],'Actual app startup/runtime errors');report.push({width,passed:true,claims,reads,geometry,scope:'Synthetic UI only, actual app loaded; not real authentication/SQL/device proof'});await context.close();
  }
  console.log('PASS login reward actual-app UI at320/390/1440: seven tiles, explicit claim, claimed reload suppressed, new day, dismissal, store recovery; synthetic APIs only.');
