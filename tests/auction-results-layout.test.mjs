@@ -83,3 +83,25 @@ test('known hero uses its local portrait and compact rarity frame; unknown names
  assert.equal((markup.match(/<img /g)||[]).length,1);
  assert.match(css,/@media\(max-width:780px\)\{\.auction-calculation-teams\{grid-template-columns:minmax\(0,1fr\)/);
 });
+
+test('calculation team backgrounds follow the viewer in both seats and languages',()=>{
+ const players=[{name:'Seat zero',credits:2,team:[{name:'Obsidyen Muhafız',power:90}]},{name:'Seat one',credits:-1,team:[{name:'Eloren',power:76}]}];
+ for(const me of [0,1])for(const english of [false,true]){
+  const html=auctionCalculationMarkup(players,me,{english});
+  const sections=[...html.matchAll(/<section class="calculation-team" data-team="(own|opponent)">([\s\S]*?)<\/section>/g)];
+  assert.equal(sections.length,2);
+  assert.equal(sections[0][1],'own');assert.ok(sections[0][2].includes(players[me].name));
+  assert.equal(sections[1][1],'opponent');assert.ok(sections[1][2].includes(players[1-me].name));
+  assert.ok(sections[0][2].includes(english?'Your team':'Senin takımın'));
+ }
+ const theme=readFileSync(new URL('../public/theme.css',import.meta.url),'utf8');
+ assert.match(theme,/data-team="own".*--calculation-row:#e2eef9/);
+ assert.match(theme,/data-team="opponent".*--calculation-row:#f7e6e1/);
+ assert.match(theme,/\.calculation-hero\{background:var\(--calculation-row\)\}/);
+ assert.doesNotMatch(theme,/calculation-portrait/,'rarity portrait colors are not overridden');
+});
+
+test('team surface text colors remain AA readable',()=>{
+ const luminance=hex=>hex.match(/../g).map(c=>parseInt(c,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
+ for(const ink of ['203047','485666'])for(const surface of ['e2eef9','cfdfef','bfd5e9','f7e6e1','efd3ca','e7c2b7'])assert.ok((luminance(surface)+.05)/(luminance(ink)+.05)>=4.5,`${ink} on ${surface}`);
+});
