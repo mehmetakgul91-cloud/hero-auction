@@ -13,7 +13,7 @@ class Element{
 }
 const ids=['store-panel','home-store-tab','store-gold','store-diamonds','store-diamond-status','store-message','store-refresh','store-purchase','store-ad','store-purchase-note','store-ad-note','store-reward-days','store-claim','store-reward-status','store-exchange','store-exchange-availability','store-exchange-controls','store-close'];
 const rewards=[100,150,200,250,300,400,0].map((gold,index)=>({day:index+1,gold,diamonds:index===6?5:0}));
-const status={gold:1000,diamonds:10,diamondsEnabled:true,purchase:{available:false},rewardedAds:{enabled:false},exchange:{enabled:true,available:true,rate:500,pricingVersion:'diamonds-to-gold-500-v1'},loginRewards:{enabled:true,available:true,eligible:true,serverDay:'2026-10-25',timezone:'Europe/Istanbul',claimedToday:false,completedDay:0,nextDay:1,rewards,receipt:null}};
+const status={gold:1000,diamonds:10,diamondsEnabled:true,purchase:{available:false},rewardedAds:{enabled:false},exchange:{enabled:true,available:true,rate:500,pricingVersion:'diamonds-to-gold-500-v1'},loginRewards:{enabled:true,available:true,eligible:true,serverDay:'2026-10-25',timezone:'Europe/Istanbul',resetHour:2,claimedToday:false,completedDay:0,nextDay:1,rewards,receipt:null}};
 const user=(sub='member-1')=>({type:'google',authToken:'signed-'+sub,user:{sub,provider:'google'}});
 const ok=value=>({ok:true,json:async()=>structuredClone(value)}),fail=(status,message)=>({ok:false,status,json:async()=>({error:message})});
 const elements=node=>[node,...node.children.flatMap(elements)];
@@ -33,6 +33,17 @@ const exchangeInput=f=>elements(f.nodes['store-exchange-controls']).find(e=>e.ta
 test('opening only reads authenticated status and displays approved seven days, never grants',async()=>{
  const f=await opened();assert.deepEqual(f.calls.map(c=>c.path),['/api/store/status']);assert.equal(f.calls[0].body.authToken,user().authToken);assert.equal(f.nodes['store-reward-days'].children.length,7);assert.match(f.nodes['store-reward-days'].children[6].textContent,/5 elmas/);assert.doesNotMatch(f.nodes['store-reward-days'].children[6].textContent,/10 elmas/);assert.equal(f.nodes['store-claim'].disabled,false);assert.equal(f.nodes['store-purchase'].disabled,true);assert.equal(f.nodes['store-ad'].disabled,true);
 });
+test('visible store keeps claim disabled until delayed authenticated status finishes',async()=>{
+ let resolve;const f=fixture({fetcher:()=>new Promise(r=>resolve=r)});
+ f.ui.setLogin(user());f.ui.open();
+ assert.equal(f.nodes['store-panel'].hidden,false);
+ assert.equal(f.nodes['store-claim'].disabled,true);
+ f.nodes['store-claim'].onclick();assert.equal(f.calls.length,1);
+ resolve(ok(status));await tick();
+ assert.equal(f.nodes['store-claim'].disabled,false);
+ assert.equal(f.calls.length,1,'opening and readiness must not claim automatically');
+ f.ui.destroy();
+});
 test('disabled infrastructure never displays a fabricated zero or enables a provider button',async()=>{
  const f=await opened({fetcher:()=>ok({...status,gold:null,diamonds:null,diamondsEnabled:false,purchase:{available:true},rewardedAds:{enabled:true},exchange:{available:false},loginRewards:{...status.loginRewards,enabled:false,available:false}})});
  assert.equal(f.nodes['store-gold'].textContent,'—');assert.equal(f.nodes['store-diamonds'].textContent,'—');assert.equal(f.nodes['store-claim'].disabled,true);assert.equal(f.nodes['store-purchase'].disabled,true);assert.equal(f.nodes['store-ad'].disabled,true);assert.equal(exchangeButton(f),undefined);assert.match(f.nodes['store-reward-status'].textContent,/henüz etkin değil/);
@@ -45,7 +56,7 @@ test('explicit claim sends only server date and auth, locks double click and app
  const button=f.nodes['store-claim'];button.onclick();button.onclick();assert.equal(f.calls.length,2);assert.deepEqual(f.calls[1].body,{rewardDate:'2026-10-25',authToken:user().authToken});assert.equal(button.disabled,true);
  resolve(ok({gold:1100,diamonds:10,receipt:{day:1,gold:100,diamonds:0,rewardDate:'2026-10-25'},loginRewards:{...status.loginRewards,claimedToday:true,available:false,completedDay:1}}));await tick();assert.equal(f.balances.at(-1).gold,1100);assert.match(f.nodes['store-message'].textContent,/100 altın ödülü doğrulandı/);assert.equal(button.disabled,true);assert.equal(JSON.parse([...f.memory.values()][0]).claim,undefined);
 });
-test('lost claim survives reload and retries the same date after Istanbul midnight',async()=>{
+test('lost claim survives reload and retries the same date after the Istanbul 02:00 boundary',async()=>{
  const memory=new Map();const first=await opened({memory,fetcher:path=>path.endsWith('/claim')?Promise.reject(Error('Lost response')):ok(status)});first.nodes['store-claim'].onclick();await tick();first.ui.destroy();
  const next=await opened({memory,fetcher:path=>path.endsWith('/claim')?ok({gold:1100,diamonds:10,receipt:{day:1,gold:100,diamonds:0,rewardDate:'2026-10-25'},replayed:true,loginRewards:{...status.loginRewards,serverDay:'2026-10-26',nextDay:2}}):ok({...status,loginRewards:{...status.loginRewards,serverDay:'2026-10-26',nextDay:2}})});
  assert.match(next.nodes['store-claim'].textContent,/KONTROL/);next.nodes['store-claim'].onclick();await tick();assert.equal(next.calls[1].body.rewardDate,'2026-10-25');assert.equal(next.calls.filter(c=>c.path.endsWith('/claim')).length,1);assert.equal(JSON.parse([...memory.values()][0]).claim,undefined);
@@ -153,4 +164,9 @@ test('failed journal read with a working writer still blocks all new operation k
  const memory=new Map();let writes=0;const ops=createWalletOperations({storage:()=>({getItem(){throw Error('Read temporarily unavailable')},setItem(){writes++}})});
  const f=await opened({memory,walletOperations:ops});f.nodes['store-claim'].onclick();await tick();exchangeButton(f).onclick();await tick();assert.equal(f.calls.length,1);assert.equal(writes,0);assert.equal(ops.read(user()).valid,false);
  const commander=commanderFixture(ops,()=>{throw Error('Must not send')});await commander.run(1);assert.equal(commander.calls.length,0);assert.equal(writes,0);
+});
+
+test('enabled daily rewards explain the Istanbul 02:00 boundary without a client-side grant',async()=>{
+ const f=await opened();assert.match(f.nodes['store-reward-status'].textContent,/Türkiye saatiyle 02.00/);assert.ok(f.calls.every(call=>call.path==='/api/store/status'));
+ f.doc.documentElement.lang='en';await f.ui.refresh();assert.match(f.nodes['store-reward-status'].textContent,/02:00 Istanbul time/);
 });

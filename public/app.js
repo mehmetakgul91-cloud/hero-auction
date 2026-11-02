@@ -10,6 +10,7 @@ import {victoryChestReceipt} from '/victory-chest.js';
 import {createHeaderWallet} from '/header-wallet.js';
 import {createWalletOperations} from '/wallet-operations.js';
 import {createStorefront} from '/storefront.js';
+import {createLoginRewardOverlay} from '/login-reward-overlay.js';
 import {renderCommanderExchange,commanderExchangeQuote} from '/commander-exchange-view.js';
 import {renderCommanderSkills,renderCommanderDevelopment,commanderBranchView,commanderDiamondPolicyCopy} from '/commander-profile-view.js';
 import {COMMANDER_CHANGE_COST} from '/commander-economy.js';
@@ -82,6 +83,8 @@ const headerWallet=createHeaderWallet({document});
 const walletOperations=createWalletOperations({storage:()=>window.sessionStorage});
 const storefrontUI=createStorefront({walletOperations,canOpen:()=>!room&&!commanderProfileOpen,onOpen:()=>{friendsUI.close();const panel=$('home-play-panel');if(panel)panel.hidden=true;$('home-play-tab')?.setAttribute('aria-expanded','false');$('home-play-tab')?.classList.remove('selected');},onBalance:result=>{headerWallet.update(result,login?.authToken);if(Number.isSafeInteger(result.gold))showGold(result.gold);if(Number.isSafeInteger(result.diamonds))commanderDiamonds=result.diamonds;}});
 
+const dailyRewardOverlay=createLoginRewardOverlay({walletOperations,canShow:()=>!room&&!session&&!roomEntryPending&&!restorePending&&!commanderProfileOpen&&!$('home').hidden&&!webInvite?.pending,onBalance:result=>{headerWallet.update(result,login?.authToken);if(Number.isSafeInteger(result.gold))showGold(result.gold);if(Number.isSafeInteger(result.diamonds))commanderDiamonds=result.diamonds;},onNotice:message=>notify(message)});
+
 // A store request may finish after the player has opened the commander screen.
 // Refresh only that same open account; never reset navigation or apply old data
 // over a commander mutation/new profile that completed during the read.
@@ -115,6 +118,7 @@ function commanderVisibility(){
  $('home').hidden=!logged||!!room||!commanderLoaded||needSelection||commanderProfileOpen;
  $('commander-open-profile').hidden=!commanderProfile;
  webInvite?.sync();
+ dailyRewardOverlay.sync();
 }
 function renderCommanderOnboarding(){
  const root=$('commander-onboarding-options');root.replaceChildren();
@@ -315,7 +319,7 @@ function renderLobbyEconomy(capability){
  const english=document.documentElement.lang==='en',label=$('play-reward-label'),prefix=$('play-reward-prefix'),odds=$('play-reward-odds');
  if(!label||!odds)return;
  if(prefix)prefix.textContent=english?'Winner':'Kazanan';
- const guide=$('home-guide-economy'),guideCopy=reward=>{if(guide)guide.textContent=english?`Live match: 50 gold each · ${reward}. Computer games cost 50 gold; fixed rewards for wins.`:`Oyunculu maç: kişi başı 50 altın · ${reward}. Bilgisayar maçı 50 altın; galibiyette sabit ödül.`;};
+ const guide=$('home-guide-economy'),guideCopy=reward=>{if(guide)guide.textContent=english?`Live match: 50 gold each · ${reward}. Computer games are free; fixed rewards for wins.`:`Oyunculu maç: kişi başı 50 altın · ${reward}. Bilgisayar maçına giriş ücretsiz; galibiyette sabit ödül.`;};
  const prize=$('home-guide-prize-value'),kind=$('home-guide-prize-kind'),detail=$('home-guide-reward-detail');
  const prizeCopy=(value,type,text)=>{if(prize)prize.textContent=value;if(kind)kind.textContent=type;if(detail)detail.textContent=text;};
  prizeCopy('—',english?'REWARD':'ÖDÜL',english?'Reward information unavailable.':'Ödül bilgisi alınamadı.');
@@ -375,7 +379,7 @@ function renderLobbyIdentity(){
  if($('account-avatar').getAttribute('src')!==portrait)$('account-avatar').src=portrait;
  if(chosen&&$('nav-commander-portrait').getAttribute('src')!==portrait)$('nav-commander-portrait').src=portrait;
 }
-function applyLogin(){auctionCommanderDialog.sync(signedIn()?room:null);roomChat.update();const walletChanged=headerWallet.setLogin(login);if(walletChanged&&signedIn())void refreshGold();storefrontUI.setLogin(login);if(room)storefrontUI.close();window.dispatchEvent?.(new Event('hero:login-changed'));roomInvitesUI.setLogin(login);roomInvitesUI.setRoom(room,session?.token);friendsUI.setLogin(login);friendsUI.setRoom(room);if(!room){cancelAwardFlights();tailReveal?.cancel();tailReveal=null;cancelAuctionReveal($('stage'));}const active=signedIn();if(!room)window.HeroPlatform?.gameplay(false);if(!room)window.HeroPlatform?.setRoom(null);const wallet=$('gold-wallet');if(wallet)wallet.hidden=!active;$('login-gate').hidden=active;$('home').hidden=!active||!!room;$('game').hidden=!active||!room;$('account-status').hidden=!active;$('google-logout').hidden=true;$('account-status').setAttribute('aria-expanded','false');if(active){$('name').value=login.user?.name||'Oyuncu';$('name').readOnly=login.type==='google'||login.type==='crazygames';}renderLobbyIdentity();commanderVisibility();}
+function applyLogin(){auctionCommanderDialog.sync(signedIn()?room:null);roomChat.update();const walletChanged=headerWallet.setLogin(login);if(walletChanged&&signedIn())void refreshGold();storefrontUI.setLogin(login);dailyRewardOverlay.setLogin(login);if(room)storefrontUI.close();window.dispatchEvent?.(new Event('hero:login-changed'));roomInvitesUI.setLogin(login);roomInvitesUI.setRoom(room,session?.token);friendsUI.setLogin(login);friendsUI.setRoom(room);if(!room){cancelAwardFlights();tailReveal?.cancel();tailReveal=null;cancelAuctionReveal($('stage'));}const active=signedIn();if(!room)window.HeroPlatform?.gameplay(false);if(!room)window.HeroPlatform?.setRoom(null);const wallet=$('gold-wallet');if(wallet)wallet.hidden=!active;$('login-gate').hidden=active;$('home').hidden=!active||!!room;$('game').hidden=!active||!room;$('account-status').hidden=!active;$('google-logout').hidden=true;$('account-status').setAttribute('aria-expanded','false');if(active){$('name').value=login.user?.name||'Oyuncu';$('name').readOnly=login.type==='google'||login.type==='crazygames';}renderLobbyIdentity();commanderVisibility();}
 async function enterGuest(){try{const name=$('guest-name').value.trim()||'Oyuncu';const result=await post('/api/auth/guest',{name});login={type:'guest',user:result.user,authToken:result.authToken};localStorage.setItem('hero-auction-login',JSON.stringify(login));showGold(result.gold);applyLogin();void loadCommander();restoreGame()}catch(e){notify(e.message)}}
 $('guest-login').onclick=()=>window.HeroPlatform?startPlatform():enterGuest();
 createAccountPopover({document,window,canOpen:()=>!window.HeroPlatform&&signedIn()});
@@ -400,7 +404,7 @@ let restorePending=null;
 function restoreGame(){
  if(webInvite?.pending){webInvite.sync();return signedIn()?validateLogin().then(()=>webInvite.sync()):Promise.resolve();}
  if(restorePending)return restorePending;
- restorePending=restoreSavedGame().finally(()=>{restorePending=null});return restorePending;
+ restorePending=restoreSavedGame().finally(()=>{restorePending=null;dailyRewardOverlay.sync();});return restorePending;
 }
 async function readSavedRoom(){
  let stored;try{stored=JSON.parse(localStorage.getItem('hero-auction-session')||'null')}catch{return null}
@@ -610,7 +614,7 @@ function showCancelledRoom(r){
  $('log').replaceChildren(...(r.history||[]).slice().reverse().map(value=>{const event=document.createElement('div');event.className='event';event.textContent=value;return event}));
  renderChat(r);if(firstNotice)void refreshGold();
 }
-function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAuctionSnapshot(room,r))return;auctionCommanderDialog.sync(r);storefrontUI.close();roomInvitesUI.setRoom(r,session?.token);friendsUI.setRoom(r);if(r.cancellation?.reason==='admin-entry-refund'){showCancelledRoom(r);return;}if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.matchKey===auctionMatchKey(r)&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const allTailAwards=collectTailAwards(room,r),tailAwards=tailReceipts.pending(r,allTailAwards),reviewPending=tailReceipts.reviewPending(r,allTailAwards);
+function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAuctionSnapshot(room,r))return;dailyRewardOverlay.defer();auctionCommanderDialog.sync(r);storefrontUI.close();roomInvitesUI.setRoom(r,session?.token);friendsUI.setRoom(r);if(r.cancellation?.reason==='admin-entry-refund'){showCancelledRoom(r);return;}if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.matchKey===auctionMatchKey(r)&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const allTailAwards=collectTailAwards(room,r),tailAwards=tailReceipts.pending(r,allTailAwards),reviewPending=tailReceipts.reviewPending(r,allTailAwards);
  if(room?.code!==r.code||(r.phase==='auction'&&room?.phase!=='auction')||(r.phase==='auction'&&r.round<room?.round))cancelAwardFlights();
  const offeredAwards=collectOfferedAwards(room,r),offeredArt=document.querySelector('#stage .card-art');
  const delivery=r.phase==='finished'?createRevealedTeams(r.final||[],[...tailAwards,...offeredAwards],allTailAwards):null;
@@ -698,7 +702,7 @@ $('log').innerHTML=[...r.history].reverse().map(x=>`<div class="event">${esc(x)}
 const stage=$('stage');
 if(r.phase==='bot_offer'){
  const english=document.documentElement.lang==='en';
- stage.innerHTML=`<h2>${english?'NO OPPONENT FOUND':'RAKİP BULUNAMADI'}</h2><p>${english?'No gold has been charged. Choose a computer game or cancel.':'Altın alınmadı. Bilgisayar maçı seçebilir veya iptal edebilirsin.'}</p><select id="bot-offer-difficulty" aria-label="${english?'Computer difficulty':'Bilgisayar zorluğu'}"><option value="easy">${english?'Easy · Level 15 · 100 gold':'Kolay · Seviye 15 · 100 altın'}</option><option value="medium" selected>${english?'Medium · Level 25 · 125 gold + 2 dust':'Orta · Seviye 25 · 125 altın + 2 toz'}</option><option value="hard">${english?'Hard · Level 40 · 175 gold + 5 dust':'Zor · Seviye 40 · 175 altın + 5 toz'}</option></select><p>${english?'Entry: 50 gold. Rewards only for a win; no diamonds.':'Giriş: 50 altın. Ödül yalnız galibiyette; elmas yok.'}</p><div class="controls"><button class="primary" id="bot-offer-accept">${english?'REVIEW AND CONFIRM':'İNCELE VE ONAYLA'}</button><button id="bot-offer-cancel">${english?'CANCEL':'İPTAL'}</button></div>`;
+ stage.innerHTML=`<h2>${english?'NO OPPONENT FOUND':'RAKİP BULUNAMADI'}</h2><p>${english?'No gold has been charged. Choose a computer game or cancel.':'Altın alınmadı. Bilgisayar maçı seçebilir veya iptal edebilirsin.'}</p><select id="bot-offer-difficulty" aria-label="${english?'Computer difficulty':'Bilgisayar zorluğu'}"><option value="easy">${english?'Easy · Level 15 · 100 gold':'Kolay · Seviye 15 · 100 altın'}</option><option value="medium" selected>${english?'Medium · Level 25 · 125 gold + 2 dust':'Orta · Seviye 25 · 125 altın + 2 toz'}</option><option value="hard">${english?'Hard · Level 40 · 175 gold + 5 dust':'Zor · Seviye 40 · 175 altın + 5 toz'}</option></select><p>${english?'Entry is free. Rewards only for a win; no diamonds.':'Giriş ücretsiz. Ödül yalnız galibiyette; elmas yok.'}</p><div class="controls"><button class="primary" id="bot-offer-accept">${english?'REVIEW AND CONFIRM':'İNCELE VE ONAYLA'}</button><button id="bot-offer-cancel">${english?'CANCEL':'İPTAL'}</button></div>`;
  $('bot-offer-accept').onclick=()=>enterBotGame('/api/bot-accept',$('bot-offer-difficulty').value,r);
  $('bot-offer-cancel').onclick=()=>$('leave').click();return;
 }
@@ -733,7 +737,7 @@ async function enterBotGame(url,difficulty,currentRoom=null){
  const current=session,auth=login?.authToken;let scope;
  try{
   if(!await validateLogin())return;
-  if(!login?.user?.sub)throw Error('Hesap kimliği doğrulanamadı. Yeni giriş ücreti gönderilmedi.');
+  if(!login?.user?.sub)throw Error('Hesap kimliği doğrulanamadı. Yeni giriş isteği gönderilmedi.');
   scope=login.user.sub+':'+(currentRoom?currentRoom.matchId||auctionMatchKey(currentRoom):'direct');
   const consent=await botEntryConsent.request(scope,difficulty);if(!consent)return;
   if(login?.authToken!==auth||session!==current)return;
@@ -747,7 +751,7 @@ $('bot').onclick=()=>enterBotGame('/api/bot',$('bot-difficulty').value);
 $('bot-difficulty').onchange=()=>renderBotEconomy();
 function renderBotEconomy(){
  const english=document.documentElement.lang==='en',terms=botTerms(botEconomyCapability,$('bot-difficulty').value),label=$('bot-economy');
- if(label)label.textContent=terms?(english?`Level ${terms.level} · Entry: 50 gold · Win: ${terms.gold} gold${terms.magicDust?' + '+terms.magicDust+' magic dust':''} · No diamonds`:`Seviye ${terms.level} · Giriş: 50 altın · Galibiyet: ${terms.gold} altın${terms.magicDust?' + '+terms.magicDust+' büyü tozu':''} · Elmas yok`):(english?'50 gold per game · fixed win reward · unavailable until durable wallets are ready.':'Maç başına 50 altın · galibiyette sabit ödül · kalıcı cüzdan hazır olana kadar kullanılamaz.');
+ if(label)label.textContent=terms?(english?`Level ${terms.level} · Free entry · Win: ${terms.gold} gold${terms.magicDust?' + '+terms.magicDust+' magic dust':''} · No diamonds`:`Seviye ${terms.level} · Ücretsiz giriş · Galibiyet: ${terms.gold} altın${terms.magicDust?' + '+terms.magicDust+' büyü tozu':''} · Elmas yok`):(english?'Free entry · fixed win reward · unavailable until durable reward storage is ready.':'Ücretsiz giriş · galibiyette sabit ödül · kalıcı ödül altyapısı hazır olana kadar kullanılamaz.');
 }
 
 $('match').onclick=async()=>{if(!await validateLogin())return;try{const j=await post('/api/match',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};

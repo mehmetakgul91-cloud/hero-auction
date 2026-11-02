@@ -1,0 +1,12 @@
+.login-reward-dialog{box-sizing:border-box;width:min(94vw,720px);max-width:720px;max-height:calc(100dvh - 32px);margin:auto;padding:0;border:1px solid #a9b9c9;border-radius:22px;background:#f5f7f8;color:#203449;box-shadow:0 22px 90px #08172d70;overflow:auto;overscroll-behavior:contain}
+.login-reward-dialog::backdrop{background:#081525b8;backdrop-filter:blur(3px)}
+.login-reward-content{padding:clamp(18px,4vw,32px)}
+.login-reward-dialog h2{margin:0 0 10px;font-size:clamp(20px,4vw,28px);line-height:1.2;text-align:center;color:#18334b}
+.login-reward-dialog p{font-size:14px;line-height:1.5;color:#405368;text-align:center}
+.login-reward-days{list-style:none;margin:22px 0;padding:0;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.login-reward-day{position:relative;min-width:0;display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 4px;border:1px solid #b5c1cd;border-radius:12px;background:#e4e9ed;text-align:center}
+.login-reward-day>span{font-size:11px;font-weight:800;white-space:nowrap}.login-reward-day strong{font-size:23px;line-height:1.1;color:#203449}.login-reward-day small{font-size:11px;color:#405368}
+.login-reward-day.current{background:#d3eafa;border:2px solid #17669a;box-shadow:0 0 0 3px #17669a20}.login-reward-day.current strong{color:#0c527f}.login-reward-day.completed{background:#dfebe4}.login-reward-check{position:absolute;right:4px;top:2px;color:#195b3d}.login-reward-day.diamond-day{background:#e8e0f4}.login-reward-day.diamond-day.current{border-color:#684394}.login-reward-day.diamond-day strong{color:#56337e}
+.login-reward-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}.login-reward-actions button{min-height:46px;min-width:130px;font-weight:800}.login-reward-actions .primary{background:#185c88;color:#fff;border:1px solid #185c88}.login-reward-actions .outline{background:#fff;color:#203449;border:1px solid #8d9ba9}.login-reward-actions button:focus-visible{outline:3px solid #c7770b;outline-offset:3px}.login-reward-actions button:disabled{opacity:.65;cursor:wait}
+@media(max-width:540px){.login-reward-days{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.login-reward-day:last-child{grid-column:span 2}.login-reward-content{padding:18px 14px}.login-reward-day{padding:12px 4px;gap:6px}.login-reward-dialog{max-height:calc(100dvh - 20px)}}
+@media(max-width:340px){.login-reward-dialog{width:96vw}.login-reward-content{padding:16px 10px}.login-reward-actions{gap:8px}.login-reward-actions button{min-width:115px}}

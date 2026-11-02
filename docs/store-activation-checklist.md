@@ -232,7 +232,7 @@ starting the production HTTP server or contacting Google.
    profile row in another transaction to establish actual blocking/release; hold
    gold separately to verify cross-operation serialization.
 5. **Calendar/cycle:** PostgreSQL-convert fixed timestamptz values just before/
-   at UTC21:00 to Istanbul dates, including month/year/leap-day boundaries. Use
+   at UTC23:00 (Istanbul 02:00) to reward dates, including month/year/leap-day boundaries. Use
    synthetic prior-date receipts/streaks relative to the DB's actual today to
    test day7=5/no gold, day7→1, missing-date reset and regression rejection.
    A controlled test-only clock-query adapter may drive 14 days and lock-wait
@@ -282,7 +282,7 @@ cycle/gap, old receipt and lost-COMMIT recovery, trigger-induced transaction rol
 actual lock blocking, combined upgrade/exchange/claim locks, welcome/new-vs-old
 eligibility, unavailable providers, dates, flags, and overflow. The harness logs
 specific limitations: no physical cluster restart, production privileges/backups,
-provider integration, or naturally elapsed midnight passage is established.
+provider integration, or naturally elapsed 02:00 passage is established.
 
 Local JS syntax, YAML parsing, and six refusal-path checks passed (missing opt-in,
 remote host, wrong database, wrong role, nonempty DATABASE_URL, query override). A real PostgreSQL pass may be stated

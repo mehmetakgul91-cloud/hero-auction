@@ -4,24 +4,24 @@ import {readFileSync} from 'node:fs';
 import {createCommanderProfile} from '../arena-commanders.js';
 import {createDiamondPolicy,upgradeCommanderWithDiamonds} from '../paid-diamonds.js';
 import {createDiamondExchangePolicy,exchangeDiamondsForGold} from '../paid-diamond-exchange.js';
-import {createLoginRewardPolicy,isGoogleRewardMember,loginRewardView,readLoginRewardStatus,claimLoginReward} from '../login-rewards.js';
+import {LOGIN_REWARD_DAY_SQL,LOGIN_REWARD_RESET_HOUR,createLoginRewardPolicy,isGoogleRewardMember,loginRewardView,readLoginRewardStatus,claimLoginReward} from '../login-rewards.js';
 
 const flags={HERO_DIAMONDS_ENABLED:'1',HERO_LOGIN_REWARDS_ENABLED:'1'};
 const policy=createLoginRewardPolicy(flags);
 const identity={sub:'isolated-google-member',provider:'google'};
 const rewards=[{day:1,gold:100,diamonds:0},{day:2,gold:150,diamonds:0},{day:3,gold:200,diamonds:0},{day:4,gold:250,diamonds:0},{day:5,gold:300,diamonds:0},{day:6,gold:400,diamonds:0},{day:7,gold:0,diamonds:5}];
 const copy=value=>structuredClone(value);
-const istanbulDay=now=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Istanbul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(now));
+const istanbulDay=now=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Istanbul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(Date.parse(now)-2*3600000));
 
 // This is an isolated in-memory SQL/row-lock/transaction fault model, NOT a real
 // PostgreSQL test. It runs the production service functions with independent
 // transaction buffers and per-row locks. It never accesses a production database.
-function fixture({gold=500,diamonds=0,profile=true,now='2026-10-25T20:59:59.999Z',lostCommit=false,missingTable=null,failAt=null}={}){
+function fixture({gold=500,diamonds=0,profile=true,now='2026-10-25T22:59:59.999Z',lostCommit=false,missingTable=null,failAt=null}={}){
  const state={gold,diamonds,profile,commander:{...createCommanderProfile('attack'),levels:{attack:20,defense:0,magic:0,support:0}},streak:null,receipts:new Map(),upgrades:new Map(),exchanges:new Map(),diamondLedger:[]};
  const queries=[];const locks=new Map();let clock=now,loseCommit=lostCommit,released=0;
  const database={async query(sql,args=[]){
   queries.push({sql,args:copy(args)});
-  assert.equal(args[0],identity.sub);assert.match(sql,/clock_timestamp\(\).*Europe\/Istanbul/s);
+  assert.equal(args[0],identity.sub);assert.match(sql,/clock_timestamp\(\).*Europe\/Istanbul/s);assert.ok(sql.includes(LOGIN_REWARD_DAY_SQL));
   assert.match(sql,/LEFT JOIN hero_auction_login_reward_streaks/);
   if(missingTable&&sql.includes(missingTable))throw Object.assign(Error('Missing relation'),{code:'42P01'});
   const streak=state.streak,receipt=[...state.receipts.values()].sort((a,b)=>b.reward_date.localeCompare(a.reward_date))[0]||null;
@@ -41,9 +41,9 @@ function fixture({gold=500,diamonds=0,profile=true,now='2026-10-25T20:59:59.999Z
    assert.ok(active,'service operations belong to a transaction');
    if(missingTable&&sql.includes(missingTable))throw Object.assign(Error('Missing relation'),{code:'42P01'});
    if(failAt&&sql.startsWith(failAt))throw Error('Injected storage failure');
-   if(sql.startsWith('SELECT (clock_timestamp()')){
+   if(sql===`SELECT ${LOGIN_REWARD_DAY_SQL} AS server_day`){
     assert.ok(held.has('profile'),'fresh server clock is read after per-member profile serialization');
-    assert.match(sql,/Europe\/Istanbul/);
+    assert.ok(sql.includes(LOGIN_REWARD_DAY_SQL));
     return rows({server_day:istanbulDay(clock),today:istanbulDay(clock),server_now:clock,now:clock});
    }
    assert.equal(args[0],identity.sub,'all reads/writes are scoped to trusted authenticated subject');
@@ -97,7 +97,7 @@ test('campaign requires both explicit flags; a week never starts while day7 diam
 });
 test('reward schedule is six increasing gold awards and exactly five diamonds on day7',()=>{
  const view=loginRewardView({policy,identity,serverDay:'2026-10-25',state:null,receipt:null});
- assert.deepEqual(view.rewards,rewards);assert.equal(view.timezone,'Europe/Istanbul');assert.equal(view.nextDay,1);assert.equal(view.completedDay,0);assert.equal(view.claimedToday,false);
+ assert.deepEqual(view.rewards,rewards);assert.equal(view.timezone,'Europe/Istanbul');assert.equal(view.resetHour,2);assert.equal(LOGIN_REWARD_RESET_HOUR,2);assert.equal(view.nextDay,1);assert.equal(view.completedDay,0);assert.equal(view.claimedToday,false);
 });
 test('eligibility accepts only normalized trusted Google identity, not email or forged prefixes',()=>{
  assert.equal(isGoogleRewardMember(identity),true);
@@ -141,20 +141,20 @@ test('fourteen consecutive days repeat the six-gold-plus-five-diamond campaign w
  assert.equal(f.state.gold,3300);assert.equal(f.state.diamonds,10);assert.equal(f.state.receipts.size,14);assert.equal(f.state.streak.day_index,7);
  f.setNow(dayClock(14));const next=await f.run();assert.equal(next.receipt.day,1);assert.equal(next.gold,3400);assert.equal(next.diamonds,10);
 });
-test('missing even one Istanbul calendar day resets to day1; no retroactive catchup',async()=>{
+test('missing even one Istanbul reward day resets to day1; no retroactive catchup',async()=>{
  for(const gap of [2,3,30,370]){
   const f=fixture();await claimDays(f,6);f.setNow(dayClock(5+gap));
   const status=await f.status();assert.equal(status.nextDay,1);assert.equal(status.completedDay,0);
   const result=await f.run();assert.equal(result.receipt.day,1);assert.equal(result.receipt.gold,100);assert.equal(result.receipt.diamonds,0);assert.equal(f.state.receipts.size,7);
  }
 });
-test('Istanbul midnight is UTC21:00: consecutive days may be only one millisecond apart',async()=>{
- const f=fixture({now:'2026-10-25T20:59:59.999Z'});const before=await f.run();assert.equal(before.receipt.rewardDate,'2026-10-25');
- f.setNow('2026-10-25T21:00:00.000Z');const after=await f.run();assert.equal(after.receipt.rewardDate,'2026-10-26');assert.equal(after.receipt.day,2);assert.equal(after.gold,750);
+test('Istanbul 02:00 is UTC23:00: consecutive days may be only one millisecond apart',async()=>{
+ const f=fixture({now:'2026-10-25T22:59:59.999Z'});const before=await f.run();assert.equal(before.receipt.rewardDate,'2026-10-25');
+ f.setNow('2026-10-25T23:00:00.000Z');const after=await f.run();assert.equal(after.receipt.rewardDate,'2026-10-26');assert.equal(after.receipt.day,2);assert.equal(after.gold,750);
  f.setNow('2026-10-26T00:00:00.000Z');const utcMidnight=await f.run();assert.equal(utcMidnight.replayed,true);assert.equal(utcMidnight.gold,750);assert.equal(f.state.receipts.size,2);
 });
 test('actual timezone conversion remains correct across month/year boundary and leap-day gap',async()=>{
- for(const [before,after] of [['2026-12-31T20:59:59.999Z','2026-12-31T21:00:00.000Z'],['2028-02-28T20:59:59.999Z','2028-02-28T21:00:00.000Z'],['2028-02-29T20:59:59.999Z','2028-02-29T21:00:00.000Z']]){
+ for(const [before,after] of [['2026-12-31T22:59:59.999Z','2026-12-31T23:00:00.000Z'],['2028-02-28T22:59:59.999Z','2028-02-28T23:00:00.000Z'],['2028-02-29T22:59:59.999Z','2028-02-29T23:00:00.000Z']]){
   const f=fixture({now:before});await f.run();f.setNow(after);assert.equal((await f.run()).receipt.day,2);
  }
 });
@@ -170,14 +170,14 @@ test('invalid dates, client-future dates and unclaimed past dates cannot create 
  }
  for(const date of ['2026-10-24','2026-10-26','2099-01-01']){const f=fixture(),before=snapshot(f);await assert.rejects(f.run({rewardDate:date}),error=>error.status===409);assert.deepEqual(f.state,before)}
 });
-test('old receipt recovery after midnight does not accidentally claim the new day',async()=>{
- const f=fixture();await f.run();f.setNow('2026-10-25T21:00:00Z');const replay=await f.run({rewardDate:'2026-10-25'});
+test('old receipt recovery after the 02:00 boundary does not accidentally claim the new day',async()=>{
+ const f=fixture();await f.run();f.setNow('2026-10-25T23:00:00Z');const replay=await f.run({rewardDate:'2026-10-25'});
  assert.equal(replay.replayed,true);assert.equal(replay.gold,600);assert.equal(replay.receipt.rewardDate,'2026-10-25');assert.equal(replay.loginRewards.claimedToday,false);assert.equal(replay.loginRewards.nextDay,2);assert.equal(f.state.receipts.size,1);
  assert.equal((await f.run()).receipt.day,2);assert.equal(f.state.receipts.size,2);
 });
-test('fresh DB clock is sampled after a profile-lock wait crossing Istanbul midnight',async()=>{
+test('fresh DB clock is sampled after a profile-lock wait crossing Istanbul 02:00',async()=>{
  const f=fixture();const holder=await f.database.connect();await holder.query('BEGIN');await holder.query('SELECT account_id FROM hero_auction_user_profiles WHERE account_id=$1 FOR UPDATE',[identity.sub]);
- const pending=f.run({rewardDate:'2026-10-25'});f.setNow('2026-10-25T21:00:00Z');await holder.query('COMMIT');holder.release();
+ const pending=f.run({rewardDate:'2026-10-25'});f.setNow('2026-10-25T23:00:00Z');await holder.query('COMMIT');holder.release();
  await assert.rejects(pending,error=>error.status===409);assert.equal(f.state.gold,500);assert.equal(f.state.receipts.size,0);
  const result=await f.run();assert.equal(result.receipt.rewardDate,'2026-10-26');assert.equal(result.receipt.day,1);
 });
@@ -203,7 +203,7 @@ for(const step of ['INSERT INTO hero_auction_diamond_wallets','UPDATE hero_aucti
 });
 test('unknown COMMIT, process restart and account/date retry recover without double credit',async()=>{
  const f=fixture({lostCommit:true});await assert.rejects(f.run(),/Lost COMMIT/);assert.equal(f.state.gold,600);assert.equal(f.state.receipts.size,1);
- const restarted=fixture({now:'2026-10-25T21:00:00Z'});Object.assign(restarted.state,snapshot(f));
+ const restarted=fixture({now:'2026-10-25T23:00:00Z'});Object.assign(restarted.state,snapshot(f));
  const result=await restarted.run({rewardDate:'2026-10-25'});assert.equal(result.replayed,true);assert.equal(result.gold,600);assert.equal(restarted.state.receipts.size,1);
  await claimDays(restarted,6);restarted.setNow(dayClock(6));restarted.setLostCommit(true);await assert.rejects(restarted.run(),/Lost COMMIT/);assert.equal(restarted.state.diamonds,5);
  const replay=await restarted.run();assert.equal(replay.replayed,true);assert.equal(replay.receipt.day,7);assert.equal(replay.diamonds,5);assert.equal(restarted.state.receipts.size,7);
@@ -267,4 +267,23 @@ test('public receipt/status expose neither account ID nor historical wallet snap
  assert.deepEqual(Object.keys(result.receipt).sort(),['day','diamonds','gold','rewardDate']);
  const status=await f.status();assert.deepEqual(status.receipt,result.receipt);
  assert.doesNotMatch(JSON.stringify(status),/isolated-google-member|account_id|gold_before|gold_after|diamonds_before|diamonds_after|email/);
+});
+
+
+test('local midnight and 01:59 do not reset a reward day; only 02:00 does',async()=>{
+ const f=fixture({now:'2026-11-01T20:59:59.999Z'});const initial=await f.run();
+ assert.equal(initial.receipt.rewardDate,'2026-11-01');
+ for(const now of ['2026-11-01T21:00:00Z','2026-11-01T22:00:00Z','2026-11-01T22:59:59.999Z']){
+  f.setNow(now);assert.equal((await f.status()).claimedToday,true);assert.equal((await f.run()).replayed,true);
+  assert.equal(f.state.gold,600);assert.equal(f.state.receipts.size,1);
+ }
+ f.setNow('2026-11-01T23:00:00Z');assert.equal((await f.status()).claimedToday,false);
+ const after=await f.run();assert.equal(after.receipt.rewardDate,'2026-11-02');assert.equal(after.receipt.day,2);assert.equal(f.state.gold,750);
+});
+test('status and locked claim use the same immutable database-owned 02:00 expression',async()=>{
+ assert.equal(LOGIN_REWARD_DAY_SQL,"((clock_timestamp() AT TIME ZONE 'Europe/Istanbul') - INTERVAL '2 hours')::date::text");
+ const f=fixture();await f.status();await f.run();
+ assert.equal(f.queries.filter(q=>q.sql.includes(LOGIN_REWARD_DAY_SQL)).length,2);
+ const profile=f.queries.findIndex(q=>q.sql.includes('hero_auction_user_profiles')&&q.sql.includes('FOR UPDATE'));
+ const clock=f.queries.findIndex(q=>q.sql===`SELECT ${LOGIN_REWARD_DAY_SQL} AS server_day`);assert.ok(clock>profile);
 });

@@ -11,7 +11,7 @@ import {createCommanderProfile,commanderUpgradeCost} from '../arena-commanders.j
 import {createDiamondPolicy,upgradeCommanderWithDiamonds} from '../paid-diamonds.js';
 import {createMagicDustPolicy} from '../magic-dust.js';
 import {createDiamondExchangePolicy,exchangeDiamondsForGold} from '../paid-diamond-exchange.js';
-import {createLoginRewardPolicy,claimLoginReward} from '../login-rewards.js';
+import {LOGIN_REWARD_DAY_SQL,createLoginRewardPolicy,claimLoginReward} from '../login-rewards.js';
 import {createVictoryChestPolicy,persistVictoryChestIntent,creditVictoryChest,victoryMatchId,readVictoryChestRecovery} from '../victory-chests.js';
 import {cancellationIdentity,cancellationCandidate,cancelPaidMatches} from '../paid-match-cancellation.js';
 
@@ -372,7 +372,7 @@ try{
   assert.deepEqual(await cancellationProof(batch),before);await cancellationMaintenance();
  });
 
- today=(await sql("SELECT (clock_timestamp() AT TIME ZONE 'Europe/Istanbul')::date::text AS day")).rows[0].day;
+ today=(await sql(`SELECT ${LOGIN_REWARD_DAY_SQL} AS day`)).rows[0].day;
  await check('12 concurrent intent deliveries roll once, persist before credit and reject a changed winner',async()=>{
   const sub='pgchest-parallel';await member(sub);const r=room(sub),randomInt=rng();const before=await snapshot(sub);
   const intents=await Promise.all(Array.from({length:12},()=>intent(r,{randomInt})));assert.equal(randomInt.calls(),4);assert.ok(intents.every(x=>x.match_id===victoryMatchId(r)&&x.gold_amount===120&&x.magic_dust_amount===5&&x.diamond_amount===1));
@@ -439,7 +439,7 @@ try{
    assert.equal(after.gold,14052);assert.equal(after.diamonds,8);assert.equal(after.magicDust,12);assert.equal(after.profile.levels.attack,21);assert.equal(after.chests,1);assert.equal(after.daily,1);assert.equal(after.exchanges,1);assert.equal(after.upgrades,1);
   }
  });
- const endingDay=(await sql("SELECT (clock_timestamp() AT TIME ZONE 'Europe/Istanbul')::date::text AS day")).rows[0].day;assert.equal(endingDay,today,'Crossed actual Istanbul midnight: rerun only in a fresh disposable DB');
+ const endingDay=(await sql(`SELECT ${LOGIN_REWARD_DAY_SQL} AS day`)).rows[0].day;assert.equal(endingDay,today,'Crossed actual Istanbul 02:00 boundary: rerun only in a fresh disposable DB');
  console.log(`PASS ${passed} real PostgreSQL victory/dust integration groups; PostgreSQL ${target.version}; synthetic accounts only.`);
  console.log('Not production preflight, cluster-restart proof or activation. No purchases/providers, production flags or production data touched.');
 }catch(error){console.error('FAIL disposable victory integration:',error.stack||error.message);process.exitCode=1}

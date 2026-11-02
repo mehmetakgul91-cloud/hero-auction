@@ -39,7 +39,8 @@ export function createStorefront({document:doc=globalThis.document,window:win=gl
   list.hidden=!state?.rewards?.length;
   const claim=$('store-claim');
   const reason=!data?copy('Bilgiler yükleniyor…','Loading…'):!state?.enabled?copy('Giriş ödülleri henüz etkin değil.','Login rewards are not active yet.'):!state.eligible?copy('Yalnızca doğrulanmış Google üyelerine açık.','Available only to verified Google members.'):state.claimedToday?copy('Bugünkü ödül alındı. Yarın devam et.','Today’s reward is claimed. Continue tomorrow.'):state.available?copy(`${state.nextDay}. gün ödülün hazır.`, `Your day ${state.nextDay} reward is ready.`):copy('Ödüller geçici olarak kullanılamıyor.','Rewards are temporarily unavailable.');
-  $('store-reward-status').textContent=p.claim?copy('Önceki ödülün sonucu doğrulanmalı. Aynı günü kontrol et.','Verify the previous reward result. Check the same day.'):reason;
+  const boundary=state?.enabled&&state?.resetHour===2?copy(' Yeni gün Türkiye saatiyle 02.00’de başlar.',' A new reward day starts at 02:00 Istanbul time.'):'';
+  $('store-reward-status').textContent=(p.claim?copy('Önceki ödülün sonucu doğrulanmalı. Aynı günü kontrol et.','Verify the previous reward result. Check the same day.'):reason)+boundary;
   claim.textContent=busy()?copy('İŞLENİYOR…','PROCESSING…'):p.claim?copy('ÖDÜLÜ KONTROL ET','CHECK REWARD'):state?.claimedToday?copy('BUGÜN ALINDI','CLAIMED TODAY'):state?.available&&state.eligible?copy('BUGÜNKÜ ÖDÜLÜ AL','CLAIM TODAY’S REWARD'):copy('HENÜZ AÇIK DEĞİL','NOT AVAILABLE YET');
   claim.disabled=busy()||loading||!keyFor(login)||(!p.claim&&(!state?.available||!state.eligible||state.claimedToday));
   claim.onclick=()=>{if(version===generation&&!claim.disabled)void claimReward()};
@@ -71,7 +72,7 @@ export function createStorefront({document:doc=globalThis.document,window:win=gl
    // An explicit validation/conflict rejection is terminal. Auth loss, unknown
    // response and 5xx retain the same accepted operation across reauthentication.
    // An unknown response keeps the same
-   // operation. Recovery may cross midnight but must never choose a new day.
+   // operation. Recovery may cross the 02:00 reward boundary but must never choose a new day.
    if(error.status===400||error.status===409)updatePending(key,kind,null);
    if(current(version,auth))message=error.message;
   }finally{walletOperations.finish(key);ownedOperation=null;if(current(version,auth))render();else if(key===keyFor(login)&&!panel?.hidden&&!suspended)void refresh()}

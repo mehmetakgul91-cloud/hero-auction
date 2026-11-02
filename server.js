@@ -1,4 +1,4 @@
-import {BOT_ECONOMY,admitBotMatch,settleBotMatch,recoverBotMatches,findBotAdmission} from './bot-economy.js';
+import {BOT_ECONOMY,verifyBotEconomySchema,admitBotMatch,settleBotMatch,recoverBotMatches,findBotAdmission} from './bot-economy.js';
 import {createNativeCors} from './native-cors.js';
 import {preflightPlayerLocations} from './player-location.js';
 import {createManagedLocationResolver} from './player-geoip-database.js';
@@ -327,6 +327,7 @@ async function initializeBotEconomy(){
   await database.query('SELECT match_id FROM hero_auction_bot_entries LIMIT 0');
   await database.query('SELECT match_id FROM hero_auction_bot_settlements LIMIT 0');
   await database.query('SELECT magic_dust FROM hero_auction_magic_dust_wallets LIMIT 0');
+  await verifyBotEconomySchema(database);
   const recovery=await recoverBotMatches(database);
   for(const item of recovery){
    const saved=item.room,current=rooms.get(saved.code),same=current&&victoryMatchId(current)===item.match_id;
@@ -402,7 +403,7 @@ async function reconcileBotAdmissions(){
 async function startPaidBot(body,source=null,kind='direct'){
  if(!botEconomyReady||!databaseReady||!magicDustPolicy.enabled||previewGuestMode)error('Kalıcı bot ekonomisi şu anda kullanılamıyor.',503);
  const accountId=readLogin(body.authToken).sub,uncertainKey=accountId+':'+String(body.requestId).toLowerCase();
- if(body.botTermsVersion!==BOT_ECONOMY.version)error('Bot giriş ücretini ve ödüllerini yeniden onayla.',409);
+ if(body.botTermsVersion!==BOT_ECONOMY.version)error('Bot maçı bilgilerini yenileyip tekrar dene.',409);
  if(!Object.hasOwn(BOT_ECONOMY.difficulties,body.difficulty))error('Geçersiz bot zorluğu.',400);
  const replay=await findBotAdmission({database,accountId,requestId:body.requestId});
  if(replay){

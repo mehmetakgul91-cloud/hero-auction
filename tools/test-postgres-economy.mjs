@@ -8,7 +8,7 @@ import {createCommanderProfile} from '../arena-commanders.js';
 import {createDiamondPolicy,upgradeCommanderWithDiamonds} from '../paid-diamonds.js';
 import {createDiamondExchangePolicy,exchangeDiamondsForGold} from '../paid-diamond-exchange.js';
 import {createDiamondSignupPolicy,registerDiamondMember} from '../diamond-signup-bonus.js';
-import {createLoginRewardPolicy,claimLoginReward,readLoginRewardStatus} from '../login-rewards.js';
+import {LOGIN_REWARD_DAY_SQL,createLoginRewardPolicy,claimLoginReward,readLoginRewardStatus} from '../login-rewards.js';
 
 const APPROVED_TEST_TARGET='postgresql://test:test@127.0.0.1:5432/hero_economy_test';
 if(process.env.HERO_ECONOMY_TEST_DB!==APPROVED_TEST_TARGET||process.env.DATABASE_URL){
@@ -87,10 +87,10 @@ try{
   assert.equal((await sql("SELECT has_sequence_privilege(pg_get_serial_sequence('hero_auction_diamond_ledger','id'),'USAGE') AS permitted")).rows[0].permitted,true);
   for(const row of first){const count=(await sql('SELECT count(*)::int AS n FROM '+row.relname)).rows[0].n;assert.equal(count,0)}
  });
- today=(await sql("SELECT (clock_timestamp() AT TIME ZONE 'Europe/Istanbul')::date::text AS day")).rows[0].day;
- await check('real SQL Istanbul UTC21 boundary and leap/year dates',async()=>{
-  const values=[['2026-10-25T20:59:59.999Z','2026-10-25'],['2026-10-25T21:00:00.000Z','2026-10-26'],['2026-12-31T21:00:00Z','2027-01-01'],['2028-02-28T21:00:00Z','2028-02-29'],['2028-02-29T21:00:00Z','2028-03-01']];
-  for(const [time,expected] of values)assert.equal((await sql("SELECT ($1::timestamptz AT TIME ZONE 'Europe/Istanbul')::date::text AS day",[time])).rows[0].day,expected);
+ today=(await sql(`SELECT ${LOGIN_REWARD_DAY_SQL} AS day`)).rows[0].day;
+ await check('production SQL Istanbul 02:00 boundary and leap/year dates',async()=>{
+  const values=[['2026-10-25T20:59:59.999Z','2026-10-25'],['2026-10-25T21:00:00.000Z','2026-10-25'],['2026-10-25T22:59:59.999Z','2026-10-25'],['2026-10-25T23:00:00.000Z','2026-10-26'],['2026-10-26T00:00:00Z','2026-10-26'],['2026-12-31T22:59:59.999Z','2026-12-31'],['2026-12-31T23:00:00Z','2027-01-01'],['2028-02-28T23:00:00Z','2028-02-29'],['2028-02-29T23:00:00Z','2028-03-01']];
+  for(const [time,expected] of values)assert.equal((await sql(`SELECT ${LOGIN_REWARD_DAY_SQL.replace('clock_timestamp()','$1::timestamptz')} AS day`,[time])).rows[0].day,expected);
  });
  await check('12 concurrent same-day sessions grant exactly once and isolate accounts',async()=>{
   await member('pgtest-parallel');await member('pgtest-other');const results=await Promise.all(Array.from({length:12},()=>claim('pgtest-parallel')));assert.equal(results.filter(r=>!r.replayed).length,1);
@@ -127,7 +127,7 @@ try{
  });
  await check('real profile lock blocks claim; DB clock is queried only after lock returns',async()=>{
   await member('pgtest-lock');const holder=await pool.connect();let profileSentResolve;const profileSent=new Promise(resolve=>profileSentResolve=resolve);let observedClock=false,settled=false;
-  const traced={async connect(){const client=await pool.connect();return{async query(query,args){if(query.startsWith('SELECT account_id FROM hero_auction_user_profiles'))profileSentResolve();if(query.startsWith('SELECT (clock_timestamp()'))observedClock=true;return client.query(query,args)},release:()=>client.release()}}};
+  const traced={async connect(){const client=await pool.connect();return{async query(query,args){if(query.startsWith('SELECT account_id FROM hero_auction_user_profiles'))profileSentResolve();if(query===`SELECT ${LOGIN_REWARD_DAY_SQL} AS server_day`)observedClock=true;return client.query(query,args)},release:()=>client.release()}}};
   let pending;
   try{await holder.query('BEGIN');await holder.query('SELECT account_id FROM hero_auction_user_profiles WHERE account_id=$1 FOR UPDATE',['pgtest-lock']);pending=claim('pgtest-lock',{database:traced}).finally(()=>settled=true);await profileSent;await new Promise(resolve=>setTimeout(resolve,40));assert.equal(settled,false);assert.equal(observedClock,false);await holder.query('COMMIT');assert.equal((await pending).gold,600);assert.equal(observedClock,true)}
   finally{await holder.query('ROLLBACK');holder.release();if(pending)await pending.catch(()=>{})}
@@ -150,9 +150,9 @@ try{
   assert.equal((await readLoginRewardStatus({database:pool,identity:identity('pgtest-clock-regression'),policy:rewardPolicy})).reason,'clock_regression');
   await member('pgtest-orphan');await sql('INSERT INTO hero_auction_login_reward_receipts(account_id,reward_date,day_index,gold_amount,diamond_amount,gold_before,gold_after,diamonds_before,diamonds_after) VALUES($1,$2,1,100,0,400,500,0,0)',['pgtest-orphan',dayAt(-1)]);const orphan=await snapshot('pgtest-orphan');await assert.rejects(claim('pgtest-orphan'),e=>e.status===503);assert.deepEqual(await snapshot('pgtest-orphan'),orphan);
  });
- const endingDay=(await sql("SELECT (clock_timestamp() AT TIME ZONE 'Europe/Istanbul')::date::text AS day")).rows[0].day;
- assert.equal(endingDay,today,'Test crossed actual Istanbul midnight; retry the disposable job with fresh fixtures, never reinterpret the dates');
+ const endingDay=(await sql(`SELECT ${LOGIN_REWARD_DAY_SQL} AS day`)).rows[0].day;
+ assert.equal(endingDay,today,'Test crossed actual Istanbul 02:00 boundary; retry the disposable job with fresh fixtures, never reinterpret the dates');
  console.log(`PASS ${passed} real PostgreSQL integration groups; official PostgreSQL ${target.version}; synthetic accounts only.`);
- console.log('Not tested here: production schema/permissions/backups, physical cluster restart, provider integration, or real-time midnight passage. No activation performed.');
+ console.log('Not tested here: production schema/permissions/backups, physical cluster restart, provider integration, or real-time 02:00 passage. No activation performed.');
 }catch(error){console.error('FAIL disposable PostgreSQL integration:',error.stack||error.message);process.exitCode=1}
 finally{await pool.end()}
