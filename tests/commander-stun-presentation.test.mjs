@@ -38,7 +38,7 @@ test('replay death, revival and completion remove pending stun without leaking f
 for(const side of [0,1])test(`stun-skip on side ${side} never enters attack/projectile animation even with duplicate hero IDs`,()=>{
  const cards=teams().map(team=>({dataset:{heroId:team[0].id}})),effects=[];
  const context={motion:()=>true,document:{documentElement:{lang:'en'},getElementById:id=>({querySelectorAll:()=>[cards[id==='team-a'?0:1]]})},floatingArenaEffect:(...args)=>effects.push(args)};
- const code=source.slice(source.indexOf('function animateMove(e){'),source.indexOf("window.addEventListener('heroarena:experimental-move'"));
+ const code=source.slice(source.indexOf('function animateMove(e'),source.indexOf("window.addEventListener('heroarena:experimental-move'"));
  runInNewContext(code+';animateMove({side:'+side+',action:"stun-skip",actorId:"same",targetId:"same",value:0});',context);
  assert.equal(effects.length,1);assert.equal(effects[0][0],cards[side]);assert.equal(effects[0][2],'ATTACK SKIPPED');
 });

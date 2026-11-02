@@ -17,7 +17,9 @@ function playNext(){
  timer=setTimeout(()=>{timer=null;playNext();},heroActionDuration(cast));
 }
 window.addEventListener('heroarena:commander-round',event=>{
- const {round,events,teams,finished}=event.detail||{};
+ const {round,events,teams,finished,presentation}=event.detail||{};
+ // The visible arena coordinates this snapshot and its cast at actual contact.
+ if(presentation?.managed)return;
  if(stopped||!Number.isInteger(round)||round<1||!Array.isArray(events)||!Array.isArray(teams)||teams.length!==2)return;
  const fresh=events.filter(entry=>Number.isSafeInteger(entry?.version)&&entry.version>lastVersion);
  for(const entry of fresh)lastVersion=Math.max(lastVersion,entry.version);

@@ -57,8 +57,9 @@ function initializeCommanderControls(){
   const used=ultimateUsed(),charge=used?0:Math.max(0,Math.min(100,Number(own.ultimateEnergy)||0));
   ultimateEnergy.textContent=used?'Kullanıldı':charge+' / 100';ultimateMeter.setAttribute('aria-valuenow',String(charge));ultimateMeter.setAttribute('aria-valuetext',used?'Kullanıldı':charge+' / 100');ultimateFill.style.width=charge+'%';renderControls();
   if(battleChanged&&Array.isArray(data.teams)){
-   window.dispatchEvent(new CustomEvent('heroarena:experimental-round-end',{detail:{round:data.round,teams:data.teams,finished:data.finished,winner:data.winner,summary:data.summary,version:data.version,events:data.events||[]}}));
-   window.dispatchEvent(new CustomEvent('heroarena:commander-round',{detail:{round:data.round,events:data.events||[],teams:data.teams,finished:data.finished}}));
+   const presentation={}; // Shared only between visual listeners; controller state stays immediate.
+   window.dispatchEvent(new CustomEvent('heroarena:experimental-round-end',{detail:{round:data.round,teams:data.teams,finished:data.finished,winner:data.winner,summary:data.summary,version:data.version,events:data.events||[],presentation}}));
+   window.dispatchEvent(new CustomEvent('heroarena:commander-round',{detail:{round:data.round,events:data.events||[],teams:data.teams,finished:data.finished,presentation}}));
    // Preserve target selection while applying changed health snapshots.
   }
   refreshSelection();

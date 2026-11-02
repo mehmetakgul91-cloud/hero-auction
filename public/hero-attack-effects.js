@@ -34,6 +34,12 @@ export function createHeroAttackPlayer({document,clock=()=>Date.now(),setTimer=s
    if(live.length)casts.set(key,live);else casts.delete(key);
   }
  }
+ function acceptContact(key){
+  // Called only after this cast's actual contact commits its display snapshot.
+  for(const r of casts.get(key)||[]){
+   r.deadActor=!!r.actor.classList?.contains('dead');r.deadTarget=!!r.target.classList?.contains('dead');
+  }
+ }
  function play(options){
   prune();
   const {actor,target}=options;if(!actor||!target)return;
@@ -46,13 +52,13 @@ export function createHeroAttackPlayer({document,clock=()=>Date.now(),setTimer=s
   const settled=!!(actor.classList?.contains('dead')||target.classList?.contains('dead'));
   const effects=createCombatEffects({document,maxResources:6,setTimer,clearTimer});
   const first=records[0];
-  const valid=()=>actor.isConnected!==false&&target.isConnected!==false&&!!actor.classList?.contains('dead')===settledActor&&!!target.classList?.contains('dead')===settledTarget;
-  const settledActor=!!actor.classList?.contains('dead'),settledTarget=!!target.classList?.contains('dead');
+  const record={kind:options.kind,actor,target,effects,deadActor:!!actor.classList?.contains('dead'),deadTarget:!!target.classList?.contains('dead')};
+  const valid=()=>actor.isConnected!==false&&target.isConnected!==false&&!!actor.classList?.contains('dead')===record.deadActor&&!!target.classList?.contains('dead')===record.deadTarget;
   const timing=playHeroAttack({...options,document,effects,settled,clock,valid,arrivalAtOverride:first?.arrivalAt});
-  if(timing)records.push({kind:options.kind,arrivalAt:timing.impactAt,actor,target,effects,deadActor:!!actor.classList?.contains('dead'),deadTarget:!!target.classList?.contains('dead'),until:clock()+timing.total+80});
+  if(timing)records.push(Object.assign(record,{arrivalAt:timing.impactAt,until:clock()+timing.total+80}));
   return timing;
  }
- return {play,prune,clear,get remaining(){prune();return Math.max(0,...[...casts.values()].flat().map(r=>r.until-clock()));},get size(){prune();return casts.size;}};
+ return {play,prune,clear,acceptContact,get remaining(){prune();return Math.max(0,...[...casts.values()].flat().map(r=>r.until-clock()));},get size(){prune();return casts.size;}};
 }
 // All nodes use the shared bounded owner; cancellation removes delayed CSS too.
 // Fixed, portrait-sized transparent overlays escape portrait/board clipping but

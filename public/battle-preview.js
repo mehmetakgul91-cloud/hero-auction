@@ -19,6 +19,7 @@ import {commanderAbilityStats,commanderAbilityDescription} from '/commander-abil
 import {getArenaLaneLayout,refreshArenaViewport} from '/arena-viewport.js?v=equal-lanes-20261026';
 import {heroActionDuration,heroPlaybackInterval,HERO_SPECIAL_MS} from '/hero-battle-timing.js';
 import {createHeroAttackPlayer} from '/hero-attack-effects.js';
+import {createArenaContactHealth} from '/arena-contact-health.js';
 import {combatEffectKind,combatEffectActors,createCombatEffects} from '/arena-combat-effects.js';
 import {stationaryArenaAction} from '/hero-combat-presentation.js';
 import {createArenaThemePresentation} from '/arena-theme.js';
@@ -525,7 +526,7 @@ function showHeroSoul(card){
  floatingArenaEffect(card,'arena-rising-soul','✦',2200);
 }
 
-function animateMove(e){
+function animateMove(e,onContact){
  const reducedMotion=typeof window!=='undefined'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  if(!motion()&&!reducedMotion)return;
  if(reducedMotion&&(document.hidden||document.body.classList.contains('arena-catching-up')||!$('motion').checked))return;
@@ -554,7 +555,7 @@ function animateMove(e){
  const time=duration();
  // Hero signatures replace the old center-screen comic banners.
  // Capture portrait centers before the cosmetic actor lunge changes bounds.
- const onImpact=()=>{if(Number(e.value)>0)floatingArenaEffect(target,'arena-floating-damage'+(!heal&&!shield?' contact-synced':'')+(heal?' healing':shield?' shielding':e.critical?' critical':'')+(splash?' area-hit':''),(heal||shield?'+':'−')+Math.round(Number(e.value))+(e.critical?'!':''));};
+ const onImpact=()=>{if(Number(e.value)>0)floatingArenaEffect(target,'arena-floating-damage'+(!heal&&!shield?' contact-synced':'')+(heal?' healing':shield?' shielding':e.critical?' critical':'')+(splash?' area-hit':''),(heal||shield?'+':'−')+Math.round(Number(e.value))+(e.critical?'!':''));onContact?.();};
  const timing=heroAttacks.play({actor,target,hero,kind,special,splash,time,reducedMotion,onImpact:heal||shield?undefined:onImpact,castKey:e.version??e.actionId??`${e.round}:${e.side}:${e.actorId}`});
  if(heal||shield)onImpact();
  const settled=actor.classList.contains('dead')||target?.classList.contains('dead');
@@ -566,14 +567,13 @@ function animateMove(e){
    else combatEffects.animate(actor,[{filter:'brightness(1)'},{filter:'brightness(1.35)',offset:.5},{filter:'brightness(1)'}],{duration:timing?.arrival||600,easing:'ease-out'});
   }
   // Localized impact instead of a full-screen flash: HP and heroes stay readable.
-  // Target signature lands on arrival; authoritative HP remains immediate.
+  // The live board commits its server snapshot at this contact, not at cast start.
   combatEffects.mark(target,[splash?'splash-target':'primary-target'],timing?.total||1400);
  }
  if(!splash&&!reducedMotion&&timing?.arrival>0){
   combatEffects.mark(actor,[ranged?'attack-energy':'attack-melee',...(special?['special-cast']:[])],timing?.arrival||600);
  }
-
-
+ return timing;
 }
 window.addEventListener('heroarena:experimental-move',event=>{
  const move=event.detail?.event;
@@ -656,10 +656,38 @@ function appendBattleFeedback(event){
  $('events').prepend(li);
  while($('events').children.length>120)$('events').lastElementChild.remove();
 }
+// Share a whole cast's contact: every splash target gets its impact before a
+// lethal snapshot changes DOM death classes. This does not reconstruct any HP.
+function animateLiveCast(entries,onContact){
+ const primary=entries.find(e=>e.damageType!=='splash'&&(e.action==='attack'||['normal','special'].includes(e.damageType)))||entries[0];
+ const ordered=[primary,...entries.filter(e=>e!==primary)];
+ let outstanding=ordered.length,arrival=0;
+ for(const entry of ordered){
+  let contacted=false;
+  const contact=()=>{if(contacted)return;contacted=true;if(--outstanding===0)onContact();};
+  const timing=animateMove({...entry,actorId:entry.actor,targetId:entry.target},contact);
+  arrival=Math.max(arrival,timing?.arrival||0);
+  if(!timing)contact();
+ }
+ return {arrival};
+}
+const liveContactHealth=createArenaContactHealth({
+ render:(frame,castKey)=>window.dispatchEvent(new CustomEvent('heroarena:experimental-round-end',{detail:{...frame,presentation:{commit:true,castKey}}})),
+ play:animateLiveCast,clearEffects:clearCombatPresentation,canAnimate:motion
+});
+for(const event of ['heroarena:ready','heroarena:route-change','popstate'])window.addEventListener(event,()=>liveContactHealth.reset());
+window.addEventListener('pagehide',()=>{liveContactHealth.settle();liveContactHealth.reset()});
+window.addEventListener('heroarena:connection-lost',()=>liveContactHealth.settle());
+document.addEventListener('visibilitychange',()=>{if(document.hidden)liveContactHealth.settle()});
+$('motion').addEventListener('change',()=>{if(!$('motion').checked)liveContactHealth.settle()});
+window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',()=>liveContactHealth.settle());
 let feedbackVersion=0;
 window.addEventListener('heroarena:ready',()=>{feedbackVersion=0;});
 // Experimental round-end HP is server-owned. Do not interfere with manual replay.
 window.addEventListener('heroarena:experimental-round-end',e=>{
+ if(e.detail?.presentation&&!e.detail.presentation.commit){
+  e.detail.presentation.managed=true;liveContactHealth.receive(e.detail);return;
+ }
  if(timer!==null||!Array.isArray(e.detail?.teams)||states.length!==2)return;
  if(victoryRevealDone)return;
  const snapshot=e.detail.teams;
@@ -670,6 +698,7 @@ window.addEventListener('heroarena:experimental-round-end',e=>{
  const fresh=(e.detail.events||[]).filter(entry=>Number.isSafeInteger(entry.version)&&entry.version>feedbackVersion);
  for(const entry of fresh){appendBattleFeedback(entry);feedbackVersion=Math.max(feedbackVersion,entry.version);}
  render();
+ if(e.detail?.presentation?.castKey!==undefined)heroAttacks.acceptContact(e.detail.presentation.castKey);
  heroAttacks.prune();
  $('round').textContent=String(e.detail.round||0);$('message').textContent=e.detail.finished?'Canlı savaş tamamlandı':'Canlı savaş · Tur '+e.detail.round;
  if(!e.detail.finished&&fresh.length)showBattleFeedback(fresh[fresh.length-1]);
