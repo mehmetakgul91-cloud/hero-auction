@@ -19,7 +19,7 @@ const {buildDefaultFormation}=await import('../public/preparation-formation.js')
 const pool=new pg.Pool({host:'127.0.0.1',port:5432,database:'hero_bot_browser_test',user:'test',password:'test',ssl:false,max:5,connectionTimeoutMillis:5000,options:'-c statement_timeout=10000 -c lock_timeout=5000',application_name:'hero-disposable-bot-browser'});
 const artifacts=path.resolve(process.env.HERO_BROWSER_SCREENSHOTS||'artifacts/bot-browser');
 await mkdir(artifacts,{recursive:true});
-const failures=[],dialogs=[],network=[],direct=[];let child,browser,origin,logs='',lastPage;
+const failures=[],dialogs=[],network=[],direct=[],expectedDialogs=new WeakSet();let child,browser,origin,logs='',lastPage;
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function stop(){
  if(!child)return;const current=child;child=null;if(current.exitCode!==null||current.signalCode!==null)return;
@@ -43,18 +43,49 @@ async function pageFor(auth,width=1440,session=null){
   localStorage.setItem('hero-auction-first-match-guide','seen');
   if(session)localStorage.setItem('hero-auction-session',JSON.stringify(session));
  },{auth,session});
- const page=await context.newPage();lastPage=page;page.setDefaultTimeout(15000);page.on('pageerror',e=>failures.push(e.message));return{context,page};
+ const page=await context.newPage();lastPage=page;page.setDefaultTimeout(15000);page.on('pageerror',e=>failures.push(e.message));page.on('dialog',dialog=>{dialogs.push({type:dialog.type(),copy:dialog.message()});if(!expectedDialogs.has(page)){failures.push('Unexpected browser dialog: '+dialog.message());void dialog.dismiss();}});return{context,page};
 }
 async function lobby(page){await page.goto(origin+'/');await page.locator('#home-play-tab').click();await page.locator('#bot').waitFor({state:'visible'});}
-async function confirmAction(page,selector,auth,{accept=false,difficulty='medium'}={}){
- const before=await wallet(auth.user.sub),count=await entries(auth.user.sub),waiting=page.waitForEvent('dialog');
- const clicked=page.locator(selector).click();const dialog=await waiting;
- const copy=dialog.message(),rule=BOT_ECONOMY.difficulties[difficulty];dialogs.push({selector,difficulty,copy});
- assert.match(copy,/Giriş ücretsiz/);assert.doesNotMatch(copy,/50 altın/);assert.ok(copy.includes(String(rule.level)));assert.ok(copy.includes(rule.gold+' altın'));assert.match(copy,/Elmas yok/);
- if(rule.magicDust)assert.ok(copy.includes(rule.magicDust+' büyü tozu'));
- assert.deepEqual(await wallet(auth.user.sub),before,'dialog appears before durable admission');assert.equal(await entries(auth.user.sub),count);
- if(accept)await dialog.accept();else await dialog.dismiss();await clicked;
- return{before,count};
+async function startFreeGame(page,selector){
+ const before=dialogs.length;
+ await page.locator(selector).click();
+ assert.equal(dialogs.length,before,'free bot start must not show a browser confirmation');
+}
+async function inspectInlineInfo(page,auth,difficulty,width){
+ const before=await wallet(auth.user.sub),count=await entries(auth.user.sub),beforeDialogs=dialogs.length;
+ let mutations=0;const onRequest=request=>{if(request.method()==='POST'&&['/api/bot','/api/bot-accept','/api/rematch'].includes(new URL(request.url()).pathname))mutations++;};
+ page.on('request',onRequest);
+ try{
+  const info=page.locator('#bot-info'),trigger=page.locator('#bot-info-trigger'),content=page.locator('#bot-info-content');
+  assert.equal(await info.evaluate(el=>el.open),false);
+  await trigger.click();await page.waitForFunction(()=>document.getElementById('bot-info').open);
+  for(const selection of ['easy','medium','hard',difficulty]){
+   await page.selectOption('#bot-difficulty',selection);
+   // Selecting outside the disclosure may close it, so reopen explicitly.
+   if(!await info.evaluate(el=>el.open))await trigger.click();
+   const rule=BOT_ECONOMY.difficulties[selection];
+   await page.waitForFunction(({gold,level})=>{const text=document.getElementById('bot-info-content').textContent;return text.includes(gold+' altın')&&text.includes(String(level));},{gold:rule.gold,level:rule.level});
+   const copy=await content.innerText();
+   assert.match(copy,/Giriş ücretsiz/);assert.doesNotMatch(copy,/50 altın|başlatılsın mı/);assert.match(copy,/Elmas yok/);assert.match(copy,/Lig puanı değişmez/);
+   if(rule.magicDust)assert.ok(copy.includes(rule.magicDust+' büyü tozu'));
+  }
+  await trigger.focus();await page.keyboard.press('Escape');
+  await page.waitForFunction(()=>!document.getElementById('bot-info').open);
+  assert.equal(await trigger.evaluate(el=>document.activeElement===el),true,'Escape restores focus to the info trigger');
+  await trigger.click();await page.waitForFunction(()=>document.getElementById('bot-info').open);
+  await page.locator('#name').click();await page.waitForFunction(()=>!document.getElementById('bot-info').open);
+  await trigger.click();await page.waitForFunction(()=>document.getElementById('bot-info').open);
+  const geometry=await page.evaluate(()=>{const card=document.querySelector('.play-compact-bot').getBoundingClientRect(),button=document.getElementById('bot-info-trigger').getBoundingClientRect(),body=document.getElementById('bot-info-content').getBoundingClientRect();return{card:{left:card.left,right:card.right,bottom:card.bottom},button:{left:button.left,right:button.right,bottom:button.bottom},body:{left:body.left,right:body.right},scrollWidth:document.documentElement.scrollWidth,viewport:innerWidth};});
+  assert.ok(geometry.button.left>=geometry.card.left-1&&geometry.button.right<=geometry.card.right+1,'info trigger fits its card');
+  assert.ok(geometry.body.left>=geometry.card.left-1&&geometry.body.right<=geometry.card.right+1,'info text fits its card');
+  assert.ok(geometry.scrollWidth<=geometry.viewport+1,'info does not cause horizontal page overflow');
+  await capture(page,'bot-inline-info-'+width);
+  await trigger.click();await page.waitForFunction(()=>!document.getElementById('bot-info').open);
+  assert.equal(dialogs.length,beforeDialogs,'info uses no browser dialog');
+  assert.equal(mutations,0,'info interactions must never start a game');
+  assert.deepEqual(await wallet(auth.user.sub),before);assert.equal(await entries(auth.user.sub),count);
+  return{before,count};
+ }finally{page.off('request',onRequest);}
 }
 async function capture(page,name){await page.screenshot({path:path.join(artifacts,name+'.png'),fullPage:true});}
 try{
@@ -65,29 +96,29 @@ try{
  await pool.query(await readFile(new URL('../migrations/010-bot-free-entry.sql',import.meta.url),'utf8'));
  await start();browser=await chromium.launch({headless:true});
  for(const [index,difficulty] of ['easy','medium','hard'].entries()){
-  const auth=await identity('Browser '+difficulty),{context,page}=await pageFor(auth,index===1?390:1440);await lobby(page);
+  const width=[320,390,1440][index],auth=await identity('Browser '+difficulty),{context,page}=await pageFor(auth,width);await lobby(page);
   await page.selectOption('#bot-difficulty',difficulty);const copy=await page.locator('#bot-economy').innerText(),rule=BOT_ECONOMY.difficulties[difficulty];
   assert.match(copy,/Ücretsiz giriş/);assert.doesNotMatch(copy,/50 altın/);assert.ok(copy.includes(rule.gold+' altın'));assert.ok(copy.includes('Seviye '+rule.level));assert.match(copy,/Elmas yok/);
   await capture(page,'before-free-entry-'+difficulty+(index===1?'-mobile':'-desktop'));
-  const cancelled=await confirmAction(page,'#bot',auth,{difficulty});assert.equal(await entries(auth.user.sub),0);assert.deepEqual(await wallet(auth.user.sub),cancelled.before);assert.equal(await page.locator('#bot').isDisabled(),false);
+  const inspected=await inspectInlineInfo(page,auth,difficulty,width);assert.equal(await entries(auth.user.sub),0);assert.equal(await page.locator('#bot').isDisabled(),false);
   let release,held=0;const gate=new Promise(resolve=>release=resolve);
   await page.route('**/api/bot',async route=>{held++;await gate;await route.continue();});
   const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/bot');
-  await confirmAction(page,'#bot',auth,{accept:true,difficulty});
+  await startFreeGame(page,'#bot');
   await page.waitForFunction(()=>document.getElementById('bot').disabled===true);
   await page.evaluate(()=>{document.getElementById('bot').click();document.getElementById('bot').click()});for(let i=0;i<100&&held===0;i++)await delay(20);assert.equal(held,1,'pending entry cannot submit duplicate requests');
   assert.equal(await entries(auth.user.sub),0);release();const admitted=await response;assert.equal(admitted.status(),200);const result=await admitted.json();
-  await page.waitForSelector('#game:not([hidden])');assert.equal(await entries(auth.user.sub),1);assert.equal((await wallet(auth.user.sub)).gold,cancelled.before.gold);
-  direct.push({auth,room:result.room,token:result.token,difficulty,width:index===1?390:1440,before:cancelled.before});await context.close();
+  await page.waitForSelector('#game:not([hidden])');assert.equal(await entries(auth.user.sub),1);assert.equal((await wallet(auth.user.sub)).gold,inspected.before.gold);
+  direct.push({auth,room:result.room,token:result.token,difficulty,width,before:inspected.before});await context.close();
  }
  const poor=await identity('Browser zero balance');await pool.query('UPDATE hero_auction_wallets SET gold=0 WHERE account_id=$1',[poor.user.sub]);
- {const {context,page}=await pageFor(poor,390);await lobby(page);const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/bot');await confirmAction(page,'#bot',poor,{accept:true});assert.equal((await response).status(),200);await page.waitForSelector('#game:not([hidden])');assert.equal(await entries(poor.user.sub),1);assert.equal((await wallet(poor.user.sub)).gold,0);await capture(page,'zero-balance-free-mobile');await context.close();}
+ {const {context,page}=await pageFor(poor,390);await lobby(page);const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/bot');await startFreeGame(page,'#bot');assert.equal((await response).status(),200);await page.waitForSelector('#game:not([hidden])');assert.equal(await entries(poor.user.sub),1);assert.equal((await wallet(poor.user.sub)).gold,0);await capture(page,'zero-balance-free-mobile');await context.close();}
  // Exercise the actual sixty-second server fallback, not a mocked timer/response.
  const fallback=await identity('Browser fallback');await pool.query('UPDATE hero_auction_wallets SET gold=0 WHERE account_id=$1',[fallback.user.sub]);
  {const {context,page}=await pageFor(fallback,390);await lobby(page);const before=await wallet(fallback.user.sub);await page.click('#match');await page.locator('#bot-offer-accept').waitFor({state:'visible',timeout:75000});assert.equal(await entries(fallback.user.sub),0);assert.deepEqual(await wallet(fallback.user.sub),before);await capture(page,'fallback-offer-mobile');
-  await confirmAction(page,'#bot-offer-accept',fallback);assert.deepEqual(await wallet(fallback.user.sub),before);
-  const leaving=page.waitForEvent('dialog'),click=page.click('#bot-offer-cancel');await(await leaving).accept();await click;await page.locator('#home-play-tab').waitFor({state:'visible'});assert.equal(await entries(fallback.user.sub),0);
-  await page.click('#home-play-tab');await page.click('#match');await page.locator('#bot-offer-accept').waitFor({state:'visible',timeout:75000});const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/bot-accept');await confirmAction(page,'#bot-offer-accept',fallback,{accept:true});assert.equal((await response).status(),200);assert.equal(await entries(fallback.user.sub),1);assert.equal((await wallet(fallback.user.sub)).gold,before.gold);await context.close();}
+  assert.deepEqual(await wallet(fallback.user.sub),before);
+  expectedDialogs.add(page);const leaving=page.waitForEvent('dialog'),click=page.click('#bot-offer-cancel');await(await leaving).accept();await click;expectedDialogs.delete(page);await page.locator('#home-play-tab').waitFor({state:'visible'});assert.equal(await entries(fallback.user.sub),0);
+  await page.click('#home-play-tab');await page.click('#match');await page.locator('#bot-offer-accept').waitFor({state:'visible',timeout:75000});const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/bot-accept');await startFreeGame(page,'#bot-offer-accept');assert.equal((await response).status(),200);assert.equal(await entries(fallback.user.sub),1);assert.equal((await wallet(fallback.user.sub)).gold,before.gold);await context.close();}
  // Trusted disposable-DB terminal fixtures. No browser/public winner endpoint.
  // Combat has independent real-engine HTTP coverage; truncate only this fixture's
  // replay transcript to its last real event so UI verification does not replay
@@ -116,9 +147,9 @@ try{
   const balance=await wallet(item.auth.user.sub);assert.equal(balance.gold,item.before.gold+rule.gold);assert.equal(Number(balance.magic_dust),rule.magicDust);assert.equal(Number(balance.diamonds||0),Number(item.before.diamonds||0));
   await pool.query('UPDATE hero_auction_wallets SET gold=0 WHERE account_id=$1',[item.auth.user.sub]);
   const beforeRematch=await wallet(item.auth.user.sub);assert.equal(beforeRematch.gold,0);
-  await confirmAction(page,'.arena-rematch-button',item.auth,{difficulty:item.difficulty});assert.deepEqual(await wallet(item.auth.user.sub),beforeRematch);assert.equal(await page.locator('.arena-rematch-button').isDisabled(),false);
-  const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/rematch');await confirmAction(page,'.arena-rematch-button',item.auth,{accept:true,difficulty:item.difficulty});assert.equal((await response).status(),200);assert.equal(await entries(item.auth.user.sub),2);assert.equal((await wallet(item.auth.user.sub)).gold,0);await context.close();
+  assert.equal(await page.locator('.arena-rematch-button').isDisabled(),false);
+  const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/rematch');await startFreeGame(page,'.arena-rematch-button');assert.equal((await response).status(),200);assert.equal(await entries(item.auth.user.sub),2);assert.equal((await wallet(item.auth.user.sub)).gold,0);await context.close();
  }
- assert.deepEqual(failures,[]);console.log('PASS: real PostgreSQL browser integration: all difficulty free-entry terms, cancel, pending duplicate lock, zero-balance direct/fallback/rematch, real 60-second fallback, committed fixed win receipts/no diamonds, and per-game rematch confirmation. Desktop/mobile screenshots saved.');
+ assert.deepEqual(failures,[]);console.log('PASS: real PostgreSQL browser integration: all difficulty inline free-entry terms, info toggle/Escape/outside close without mutations, pending duplicate lock, confirmation-free zero-balance direct/fallback/rematch, real 60-second fallback, and committed fixed win receipts/no diamonds. 320/390/1440 screenshots saved.');
 }catch(error){if(lastPage&&!lastPage.isClosed())await capture(lastPage,'failure').catch(()=>{});throw error;}
 finally{await writeFile(path.join(artifacts,'dialogs.json'),JSON.stringify(dialogs,null,2));await writeFile(path.join(artifacts,'browser-errors.json'),JSON.stringify(failures,null,2));await writeFile(path.join(artifacts,'network-policy.json'),JSON.stringify(network,null,2));await writeFile(path.join(artifacts,'server.log'),logs);if(browser)await browser.close();await stop();await pool.end();}

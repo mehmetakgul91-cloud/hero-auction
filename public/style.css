@@ -1087,3 +1087,11 @@ body:has(#game.auction-results-only:not([hidden])) .shell>.lobby-header,
 .auction-commander-dialog p{font-size:14px;line-height:1.6;margin:0}
 .auction-commander-dialog form{display:flex;justify-content:flex-end;margin-top:20px}
 .auction-commander-dialog button{min-height:44px;padding:8px 20px;cursor:pointer}
+
+/* Non-blocking bot rules stay inside the play card, reachable by touch/keyboard. */
+#home-play-panel .bot-info{grid-column:1/-1;min-width:0;align-self:end;margin-top:2px;color:#503c6a}
+#home-play-panel .bot-info summary{display:flex;align-items:center;justify-content:center;gap:5px;min-width:44px;min-height:44px;width:max-content;max-width:100%;margin-left:auto;padding:0 8px;box-sizing:border-box;border:1px solid #aca1bc;border-radius:10px;cursor:pointer;list-style:none;font-size:12px;font-weight:700;background:#f0eeef}
+#home-play-panel .bot-info summary::-webkit-details-marker{display:none}
+#home-play-panel .bot-info summary>span:first-child{font-size:20px;line-height:1}
+#home-play-panel .bot-info summary:focus-visible{outline:3px solid #72508f;outline-offset:2px}
+#home-play-panel #bot-info-content{margin-top:8px;padding:10px;border:1px solid #aca1bc;border-radius:10px;background:#f8f5fa;color:#40334f;font-size:12px;line-height:1.5;white-space:pre-line;overflow-wrap:anywhere}

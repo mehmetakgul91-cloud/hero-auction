@@ -1,3 +1,4 @@
+import {createBotInfo} from '/bot-info.js';
 import {createBotEntryConsent,botTerms,botSettlementCopy} from '/bot-entry.js';
 import {createRevealedTeams,renderDeliveryPortraits} from '/auction-delivery-portraits.js';
 import {createAccountPopover} from '/account-popover.js';
@@ -311,6 +312,7 @@ $('commander-open-profile').onclick=()=>{storefrontUI.close();commanderProfileOp
 $('commander-profile-close').onclick=()=>{commanderProfileOpen=false;commanderVisibility()};
 const botEntryConsent=createBotEntryConsent();
 let botEconomyCapability=null;
+const botInfo=createBotInfo({document});
 let botEntryBusy=false;
 let walletGold=0;
 let victoryChestCapability=null;
@@ -731,7 +733,7 @@ async function act(url,extra){const current=session,auth=login?.authToken;try{co
 $('create').onclick=async()=>{if(!await validateLogin())return;try{const j=await post('/api/create',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
 $('join').onclick=async()=>{if(webInvite?.pending)return;if(!await validateLogin())return;try{const j=await post('/api/join',{...gameIdentity(),name:$('name').value,code:$('roomcode').value.trim().toUpperCase()});save(j.token,j.room)}catch(e){notify(e.message)}};
 async function enterBotGame(url,difficulty,currentRoom=null){
- if(botEntryBusy)return;botEntryBusy=true;
+ if(botEntryBusy)return;botInfo.close();botEntryBusy=true;
  const entryButtons=['bot','bot-offer-accept','rematch','bot-recovery-rematch'].map($).filter(Boolean);
  for(const button of entryButtons){button.disabled=true;button.setAttribute('aria-busy','true');}
  const current=session,auth=login?.authToken;let scope;
@@ -751,6 +753,7 @@ $('bot').onclick=()=>enterBotGame('/api/bot',$('bot-difficulty').value);
 $('bot-difficulty').onchange=()=>renderBotEconomy();
 function renderBotEconomy(){
  const english=document.documentElement.lang==='en',terms=botTerms(botEconomyCapability,$('bot-difficulty').value),label=$('bot-economy');
+ botInfo.update(botEconomyCapability,$('bot-difficulty').value);
  if(label)label.textContent=terms?(english?`Level ${terms.level} · Free entry · Win: ${terms.gold} gold${terms.magicDust?' + '+terms.magicDust+' magic dust':''} · No diamonds`:`Seviye ${terms.level} · Ücretsiz giriş · Galibiyet: ${terms.gold} altın${terms.magicDust?' + '+terms.magicDust+' büyü tozu':''} · Elmas yok`):(english?'Free entry · fixed win reward · unavailable until durable reward storage is ready.':'Ücretsiz giriş · galibiyette sabit ödül · kalıcı ödül altyapısı hazır olana kadar kullanılamaz.');
 }
 
@@ -823,7 +826,7 @@ window.addEventListener('hero:platform-auth',()=>{
 });
 // End CrazyGames session bridge.
 
-(async()=>{try{const r=await fetch('/api/info');const j=await r.json();playerSessionTracker.setEnabled(r.ok&&j.playerAnalytics?.enabled===true);renderLobbyEconomy(j.victoryChests);botEconomyCapability=j.botEconomy;renderBotEconomy();$('catalogue').textContent=`Şu anda ${j.catalogueCount} özgün kahraman hazır`;}catch{renderLobbyEconomy(null)}if(window.HeroPlatform)await startPlatform();else await restoreGame();loadPokeMap();refreshOnline()})();
+(async()=>{try{const r=await fetch('/api/info');const j=await r.json();playerSessionTracker.setEnabled(r.ok&&j.playerAnalytics?.enabled===true);renderLobbyEconomy(j.victoryChests);botEconomyCapability=j.botEconomy;renderBotEconomy();$('catalogue').textContent=`Şu anda ${j.catalogueCount} özgün kahraman hazır`;}catch{renderLobbyEconomy(null);renderBotEconomy()}if(window.HeroPlatform)await startPlatform();else await restoreGame();loadPokeMap();refreshOnline()})();
 
 async function loadHeroInfo(card){
  const key=card.universe+':'+card.name;

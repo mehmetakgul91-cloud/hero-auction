@@ -1,4 +1,4 @@
-// UI consent only. The server owns prices, admission and all wallet mutations.
+// Free-entry request guard only. The server owns prices, admission and all wallet mutations.
 export const BOT_TERMS_VERSION='bot-free-v2';
 const approved={easy:{level:15,gold:100,magicDust:0},medium:{level:25,gold:125,magicDust:2},hard:{level:40,gold:175,magicDust:5}};
 export function botTerms(capability,difficulty){
@@ -8,10 +8,10 @@ export function botTerms(capability,difficulty){
 }
 export function botTermsCopy(terms,english=false){
  const label=english?{easy:'Easy',medium:'Medium',hard:'Hard'}:{easy:'Kolay',medium:'Orta',hard:'Zor'};
- return english?`${label[terms.difficulty]} · Commander level ${terms.level}\nEntry is free; no gold is required or deducted.\nWin: ${terms.gold} gold${terms.magicDust?' + '+terms.magicDust+' magic dust':''}, automatically credited in a fixed chest. No diamonds.\nLoss, draw or server failure: no reward and no entry fee to refund. League points do not change.\nStart a free computer game?`:
- `${label[terms.difficulty]} · Komutan seviyesi ${terms.level}\nGiriş ücretsiz; altın gerekmez ve altın kesilmez.\nGalibiyet: ${terms.gold} altın${terms.magicDust?' + '+terms.magicDust+' büyü tozu':''}, sabit sandıkla otomatik eklenir. Elmas yok.\nYenilgi, beraberlik veya sunucu hatası: ödül yok ve iade edilecek giriş ücreti yok. Lig puanı değişmez.\nÜcretsiz bilgisayar maçı başlatılsın mı?`;
+ return english?`${label[terms.difficulty]} · Commander level ${terms.level}\nEntry is free; no gold is required or deducted.\nWin: ${terms.gold} gold${terms.magicDust?' + '+terms.magicDust+' magic dust':''}, automatically credited in a fixed chest. No diamonds.\nLoss, draw or server failure: no reward and no entry fee to refund. League points do not change.`:
+ `${label[terms.difficulty]} · Komutan seviyesi ${terms.level}\nGiriş ücretsiz; altın gerekmez ve altın kesilmez.\nGalibiyet: ${terms.gold} altın${terms.magicDust?' + '+terms.magicDust+' büyü tozu':''}, sabit sandıkla otomatik eklenir. Elmas yok.\nYenilgi, beraberlik veya sunucu hatası: ödül yok ve iade edilecek giriş ücreti yok. Lig puanı değişmez.`;
 }
-export function createBotEntryConsent({fetch=globalThis.fetch,confirm=globalThis.confirm,storage=globalThis.sessionStorage,uuid=()=>globalThis.crypto.randomUUID(),english=()=>globalThis.document?.documentElement.lang==='en'}={}){
+export function createBotEntryConsent({fetch=globalThis.fetch,storage=globalThis.sessionStorage,uuid=()=>globalThis.crypto.randomUUID(),english=()=>globalThis.document?.documentElement.lang==='en'}={}){
  let busy=false;
  const prefix='hero-auction-bot-entry';
  const key=scope=>prefix+':'+scope;
@@ -22,8 +22,8 @@ export function createBotEntryConsent({fetch=globalThis.fetch,confirm=globalThis
     const response=await fetch('/api/info',{cache:'no-store'}),info=await response.json();
     const terms=botTerms(info.botEconomy,difficulty);
     if(!response.ok||info.botEconomy?.available!==true||!terms)throw Error(english()?'Computer matches are unavailable; durable reward storage is required.':'Bilgisayar maçları kullanılamıyor; kalıcı ödül altyapısı gerekli.');
-    if(!confirm(botTermsCopy(terms,english())))return null;
-    // Persist only a request identifier, never approval. Every retry asks again.
+    // Only verified zero-cost v2 terms reach here. Unknown/paid terms fail closed.
+    // Persist a request identifier so retries cannot duplicate admission.
     let prior;try{prior=JSON.parse(storage.getItem(key(scope))||'null')}catch{throw Error(english()?'Cannot verify the earlier entry request. No new entry request was sent.':'Önceki giriş isteği doğrulanamadı. Yeni giriş isteği gönderilmedi.')}
     if(prior&&(!approved[prior.difficulty]||typeof prior.requestId!=='string'||!prior.requestId))throw Error(english()?'Entry recovery record is invalid. No new entry request was sent.':'Giriş kurtarma kaydı geçersiz. Yeni giriş isteği gönderilmedi.');
     if(prior&&prior.difficulty!==difficulty)throw Error(english()?'Retry the earlier entry difficulty first: '+prior.difficulty:'Önce önceki giriş isteğini aynı zorlukta yeniden dene: '+prior.difficulty);
