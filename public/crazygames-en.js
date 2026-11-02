@@ -5,6 +5,9 @@ import {battlePhrases, translateCommanderDescription} from './crazygames-battle-
 // Presentation-only English locale for the CrazyGames entry point.
 // Do not translate stored values, hero IDs, requests, or game rules.
 export const phrases = {
+"ARKADAŞ LİSTESİNDEN DAVET":"INVITE FROM FRIENDS",
+"Arkadaş listesinden davet":"Invite from friends",
+"← ODAYA DÖN":"← BACK TO ROOM",
 "Arkadaş ekle / Oyuncu kimliğim":"Add a friend / My player ID",
 "Arkadaşlık istekleri":"Friend requests",
 "Başka sekmede katıldın":"Joined in another tab",
