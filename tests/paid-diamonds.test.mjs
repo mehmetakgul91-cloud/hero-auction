@@ -157,7 +157,7 @@ test('diamond preflight failure rejects before selection/change mutation; unauth
  const source=readFileSync(new URL('../server.js',import.meta.url),'utf8');
  const wrapper=source.slice(source.indexOf('async function api(url,b,requestContext)'),source.indexOf('async function apiAction(url,b,requestContext)'));
  let mutations=0,reads=0;
- const context=vm.createContext({requireModerationForInteraction:()=>{},moderationReady:true,diamondPolicy:enabled,magicDustPolicy:{enabled:false},database:{},databaseReady:true,
+ const context=vm.createContext({rooms:new Map(),roomRequestFlights:new Map(),requireModerationForInteraction:()=>{},moderationReady:true,diamondPolicy:enabled,magicDustPolicy:{enabled:false},database:{},databaseReady:true,
   readLogin:token=>token?{sub:'isolated-account'}:null,readDiamondBalance:async()=>{reads++;throw Object.assign(Error('schema unavailable'),{status:503})},
   apiAction:async()=>{mutations++;return{}},error:(message,status)=>{throw Object.assign(Error(message),{status})}});
  vm.runInContext(wrapper,context);

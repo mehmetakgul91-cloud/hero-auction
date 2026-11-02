@@ -1,7 +1,9 @@
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
-import {BOT_ECONOMY,admitBotMatch,settleBotMatch,findBotAdmission,recoverBotMatches} from '../bot-economy.js';
+import {BOT_ECONOMY,cancelIdleBotMatch,verifyBotIdleCancellationSchema,admitBotMatch,settleBotMatch,findBotAdmission,recoverBotMatches} from '../bot-economy.js';
 const room=(difficulty='medium')=>({code:'123',created:1000,matchNumber:1,mode:'bot',phase:'auction',difficulty,players:[{accountId:'fixture-human',token:'fixture-human-token'},{token:'fixture-bot-token'}],series:[0,0]});
 // Deterministic transaction model, NOT PostgreSQL concurrency/isolation proof.
 function fixture({gold=500,dust=0,loseCommit=0,failAt=''}={}){
@@ -101,3 +103,66 @@ test('schema readiness is read-only and fails closed without all validated const
  let query;assert.equal(await verifyBotEconomySchema({query:async sql=>(query=sql,{rows:[{ready:3}]})}),true);
  assert.match(query,/convalidated AND contype='c'/);assert.doesNotMatch(query,/UPDATE|INSERT|DELETE|ALTER/);
 });
+
+
+// These use the deterministic transaction model above, not real PG isolation.
+async function idleFixture(options={}){
+ const f=fixture(options),r=(await f.admit()).room;
+ r.playerActivity={match:`${r.code}:${r.created}:${r.matchNumber||1}`,at:1000};
+ f.state.rooms.set(r.code,structuredClone(r));
+ f.idleRoom=r;f.cancel=(extra={})=>cancelIdleBotMatch({database:f.database,room:r,now:121000,validateLive:()=>true,...extra});return f;
+}
+test('idle cancellation is exactly once, no refund, reward, series, or wallet update',async()=>{
+ const f=await idleFixture(),before=structuredClone(f.state.wallets),results=await Promise.all(Array.from({length:10},()=>f.cancel()));
+ assert.equal(results.filter(x=>!x.replayed).length,1);assert.deepEqual(f.state.wallets,before);assert.equal(f.state.settlements.size,1);
+ const saved=results[0].room;assert.equal(saved.phase,'cancelled');assert.equal(saved.matchSettled,true);assert.deepEqual(saved.series,[0,0]);assert.deepEqual(saved.botSettlementReceipt.rewards,{gold:0,magicDust:0,diamonds:0});assert.equal(saved.botSettlementReceipt.outcome,'idle_cancelled');assert.equal(saved.idleClosed.refundGold,0);assert.equal(f.queries.some(q=>q.startsWith('UPDATE hero_auction_wallets')||q.startsWith('UPDATE hero_auction_magic_dust_wallets')),false);
+ const next=(await f.admit({...room(),code:'456'},randomUUID())).room;assert.equal(next.code,'456');
+});
+test('legacy paid bot idle cancellation keeps its original debit without a loss',async()=>{
+ const f=await idleFixture(),r=f.idleRoom,e=f.state.entries.get(r.botEntry.matchId);e.config_version='bot-fixed-v1';e.entry_gold=50;e.gold_before=500;e.gold_after=450;e.room_state.botEconomyVersion='bot-fixed-v1';e.room_state.botEntry.version='bot-fixed-v1';e.room_state.botEntry.entryGold=50;
+ r.botEconomyVersion='bot-fixed-v1';r.botEntry.version='bot-fixed-v1';r.botEntry.entryGold=50;f.state.rooms.set(r.code,structuredClone(r));f.state.wallets.get('fixture-human').gold=450;
+ const result=await f.cancel();assert.equal(result.receipt.rewards.gold,0);assert.equal(f.state.wallets.get('fixture-human').gold,450);assert.deepEqual(result.room.series,[0,0]);
+});
+test('idle cancellation exact boundary and arena exclusion',async()=>{
+ const f=await idleFixture();await assert.rejects(f.cancel({now:120999}),/uygun değil/);assert.equal(f.state.settlements.size,0);
+ for(const extra of [{battleSync:{result:{live:true}}},{battleSync:{result:{live:false}}},{battleCompleted:[true,false]},{matchSettled:true},{goldAward:{}},{goldRefunds:[{}]},{botSettlementPending:true},{victoryChestPending:true},{victoryChestReceipt:{}}]){
+  const r={...f.idleRoom,...extra};f.state.rooms.set(r.code,structuredClone(r));await assert.rejects(f.cancel({room:r}),/uygun değil/);assert.equal(f.state.settlements.size,0);
+ }
+ f.state.rooms.set(f.idleRoom.code,structuredClone(f.idleRoom));assert.equal((await f.cancel()).receipt.outcome,'idle_cancelled');
+});
+test('durable activity, match identity, missing room or live reservation race fails closed',async()=>{
+ for(const mutate of [r=>r.playerActivity.at++,r=>r.created++,r=>r.matchNumber++,r=>r.battleSync={result:{live:true}}]){
+  const f=await idleFixture();mutate(f.state.rooms.get(f.idleRoom.code));await assert.rejects(f.cancel(),/Kalıcı oda değişti/);assert.equal(f.state.settlements.size,0);
+ }
+ const f=await idleFixture();f.state.rooms.clear();await assert.rejects(f.cancel(),/Kalıcı oda değişti/);
+ for(const validateLive of [undefined,()=>false,()=>{throw Error('reservation lost')},async()=>true]){const g=await idleFixture();await assert.rejects(g.cancel({validateLive}));assert.equal(g.state.settlements.size,0);}
+ const g=await idleFixture();let calls=0;await assert.rejects(g.cancel({validateLive:()=>{if(++calls===2)throw Error('reservation lost')}}),/reservation lost/);assert.equal(g.state.settlements.size,0);
+});
+test('idle and normal settlement race produce only one immutable outcome',async()=>{
+ for(const firstIdle of [true,false]){
+  const f=await idleFixture();const operations=firstIdle?[()=>f.cancel(),()=>f.finish(0)]:[()=>f.finish(0),()=>f.cancel()];const results=await Promise.allSettled(operations.map(fn=>fn()));assert.equal(results.filter(x=>x.status==='fulfilled').length,1);assert.equal(f.state.settlements.size,1);const outcome=[...f.state.settlements.values()][0].outcome;assert.equal(f.state.wallets.get('fixture-human').gold,outcome==='idle_cancelled'?500:625);
+ }
+});
+test('lost idle COMMIT response reconciles receipt; rollback never strands entry',async()=>{
+ const f=await idleFixture({loseCommit:2});await assert.rejects(f.cancel(),e=>e.uncertain===true);const result=await f.cancel();assert.equal(result.replayed,true);assert.equal(f.state.settlements.size,1);assert.deepEqual(f.state.wallets.get('fixture-human'),{gold:500,dust:0});
+ for(const failAt of ['INSERT INTO hero_auction_bot_settlements','UPDATE hero_auction_rooms']){const g=await idleFixture({failAt});await assert.rejects(g.cancel(),/Injected/);assert.equal(g.state.settlements.size,0);assert.equal(g.state.rooms.get(g.idleRoom.code).phase,'auction');}
+});
+test('idle replay refuses corrupted receipts and restart recovers the terminal outcome',async()=>{
+ const f=await idleFixture();await f.cancel();const recovered=await recoverBotMatches(f.database);assert.equal(recovered[0].settled,true);assert.equal(recovered[0].room.phase,'cancelled');assert.equal((await findBotAdmission({database:f.database,accountId:'fixture-human',requestId:f.id})).room.botSettlementReceipt.outcome,'idle_cancelled');
+ f.state.settlements.get(f.idleRoom.botEntry.matchId).gold_amount=50;await assert.rejects(f.cancel(),/makbuzu/);
+});
+test('idle cancellation schema verifier is read-only and fails closed',async()=>{
+ for(const ready of [0,1,2]){const queries=[],database={async query(sql){queries.push(sql);return{rows:[{ready}]}}};if(ready===2)assert.equal(await verifyBotIdleCancellationSchema(database),true);else await assert.rejects(verifyBotIdleCancellationSchema(database),/şeması/);assert.ok(queries.every(s=>s.startsWith('SELECT')));}
+});
+
+test('original main99f6b50 recovery does not replay idle cancellation as a loss',async()=>{
+ const source=readFileSync(new URL('./fixtures/initialize-bot-economy-99f6b50.txt',import.meta.url),'utf8');
+ for(const retained of ['terminal','stale','absent']){
+  const f=await idleFixture(),closed=(await f.cancel()).room,rooms=new Map();
+  if(retained!=='absent')rooms.set(closed.code,retained==='terminal'?structuredClone(closed):structuredClone(f.idleRoom));
+  let marked=0,queued=0,recorded=0;
+  const context=vm.createContext({databaseReady:true,database:{query:async()=>({rows:[]})},verifyBotEconomySchema:async()=>true,recoverBotMatches:async()=>[{match_id:closed.botEntry.matchId,room:closed,settled:true}],rooms,victoryMatchId:r=>`${r.code}:${r.matchNumber||1}:${r.created}`,activeSeats:new Map(),seatRoom:()=>null,structuredClone,markRoom:()=>marked++,queueBotSettlement:()=>queued++,recordBotResult:()=>recorded++,flushBotSettlements:async()=>{},console});
+  await vm.runInContext(source+';initializeBotEconomy()',context);assert.equal(queued,0);assert.equal(recorded,0);assert.equal(marked,retained==='absent'?0:1);assert.equal(rooms.size,retained==='absent'?0:1);if(rooms.size){assert.equal(rooms.get(closed.code).matchSettled,true);assert.equal(rooms.get(closed.code).botSettlementReceipt.outcome,'idle_cancelled');}
+ }
+});
+test('bot admission atomically persists the auction-start and human-activity markers',async()=>{const f=fixture(),r=(await f.admit()).room;assert.equal(r.auctionStarted,true);assert.equal(r.playerActivity.match,`${r.code}:${r.created}:1`);assert.ok(Number.isSafeInteger(r.playerActivity.at));assert.deepEqual(f.state.entries.get(r.botEntry.matchId).room_state.playerActivity,r.playerActivity);assert.deepEqual(f.state.rooms.get(r.code).playerActivity,r.playerActivity);});

@@ -1,0 +1,64 @@
+name: Room inactivity and reconnect PostgreSQL safety
+on:
+  pull_request:
+    paths:
+      - 'room-*.js'
+      - 'bot-economy.js'
+      - 'server.js'
+      - 'public/**'
+      - 'migrations/**'
+      - 'tests/**'
+      - 'tools/test-postgres-*-idle.mjs'
+      - '.github/workflows/room-idle-postgres-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'room-*.js'
+      - 'bot-economy.js'
+      - 'server.js'
+      - 'migrations/**'
+      - 'tools/test-postgres-*-idle.mjs'
+      - '.github/workflows/room-idle-postgres-tests.yml'
+permissions:
+  contents: read
+jobs:
+  isolated-room-idle:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: hero_room_idle_test
+        ports:
+          - '127.0.0.1:5432:5432'
+          - '127.0.0.1:55432:5432'
+        options: >-
+          --health-cmd "pg_isready -U test -d hero_room_idle_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Unit and HTTP regression suite
+        run: env -u DATABASE_URL npm test
+      - name: Create separate empty synthetic bot database
+        run: |
+          env -u DATABASE_URL node --input-type=module <<'NODE'
+          import pg from 'pg';
+          const c=new pg.Client({host:'127.0.0.1',port:5432,user:'test',password:'test',database:'hero_room_idle_test',ssl:false});
+          await c.connect();try{await c.query('CREATE DATABASE hero_bot_idle_test');}finally{await c.end();}
+          NODE
+      - name: Atomic room closure and disconnect intent PostgreSQL checks
+        run: env -u DATABASE_URL HERO_ROOM_IDLE_TEST_DB=postgresql://test:test@127.0.0.1:55432/hero_room_idle_test node tools/test-postgres-room-idle.mjs
+      - name: Bot cancellation migration, concurrency and recovery PostgreSQL checks
+        run: env -u DATABASE_URL HERO_BOT_IDLE_TEST_DB=postgresql://test:test@127.0.0.1:5432/hero_bot_idle_test node tools/test-postgres-bot-idle.mjs

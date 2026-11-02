@@ -1,3 +1,4 @@
+import {createRoomPresence} from '../room-presence.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -45,6 +46,6 @@ test('reservation has no serializable room flag',()=>{const r=room();auctionAdmi
 test('actual publicRoom projection sanitizes saved identity on reconnect',()=>{
  const source=fs.readFileSync(new URL('../server.js',import.meta.url),'utf8');const statement=source.slice(source.indexOf('const publicRoom='),source.indexOf('function publish('));
  const r={...room(),phase:'auction',round:0,cards:[{name:'Card',universe:'mixed',power:1}],history:[]};r.players[0].commander={commanderId:'attack',levels:{attack:40},progression:{secret:true}};r.players[1].commander={commanderId:'invalid',levels:{magic:40}};
- const context={publicAuctionCommander,auctionRevealSnapshot:()=>({}),roomArenaPresentation:()=>({}),victoryChestView:()=>({}),moderationReady:false,friends:{playerId:()=>null},rarityForPower:()=> 'common',catalogue:new Map(),r};
+ const context={roomPresence:createRoomPresence(),liveArenaMatchKeys:new Map(),publicAuctionCommander,auctionRevealSnapshot:()=>({}),roomArenaPresentation:()=>({}),victoryChestView:()=>({}),moderationReady:false,friends:{playerId:()=>null},rarityForPower:()=> 'common',catalogue:new Map(),r};
  vm.createContext(context);vm.runInContext(statement+'result=publicRoom(r,0);',context);assert.equal(JSON.stringify(context.result.players[0].commander),JSON.stringify({commanderId:'attack'}));assert.equal(context.result.players[1].commander,null);assert.doesNotMatch(JSON.stringify(context.result),/level|progression|secret/);
 });

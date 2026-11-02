@@ -1,0 +1,27 @@
+// Frozen original server.js initializer at commit 99f6b50; rollback compatibility fixture.
+async function initializeBotEconomy(){
+ if(!databaseReady)return;
+ try{
+  await database.query('SELECT match_id FROM hero_auction_bot_entries LIMIT 0');
+  await database.query('SELECT match_id FROM hero_auction_bot_settlements LIMIT 0');
+  await database.query('SELECT magic_dust FROM hero_auction_magic_dust_wallets LIMIT 0');
+  await verifyBotEconomySchema(database);
+  const recovery=await recoverBotMatches(database);
+  for(const item of recovery){
+   const saved=item.room,current=rooms.get(saved.code),same=current&&victoryMatchId(current)===item.match_id;
+   // Terminal receipts repair a retained matching room only. They must not
+   // resurrect expired rooms or replay bounded social-statistics history.
+   if(item.settled&&!same)continue;
+   if(current&&!same&&(current.created>saved.created||current.created===saved.created&&(current.matchNumber||1)>(saved.matchNumber||1)))continue;
+   const room=item.settled&&current?.matchSettled?Object.assign(current,{botSettlementReceipt:saved.botSettlementReceipt,...(saved.victoryChestReceipt?{victoryChestReceipt:saved.victoryChestReceipt,victoryChestWinner:0}:{})}):item.settled||!same||current.botEntry?.matchId!==item.match_id?structuredClone(saved):current;
+   rooms.set(room.code,room);
+   const accountId=room.players[0].accountId,pointer=activeSeats.get(accountId),active=pointer&&seatRoom(pointer);
+   if(!active||active.created<room.created||active.code===room.code&&(active.matchNumber||1)<=(room.matchNumber||1))activeSeats.set(accountId,{code:room.code,created:room.created,matchNumber:room.matchNumber||1,seat:0});
+   if(item.settled){markRoom(room);continue;}
+   if(room.botSettlementPending)queueBotSettlement(room,room.botSettlementWinner,room.botServerFailure||false,room.botForfeit===true);
+   else if(room.battleSync?.result?.live&&!room.battleSync.result.finished)queueBotSettlement(room,null,'server_restart');
+   else if(room.battleSync?.result?.finished)queueBotSettlement(room,room.battleSync.result.winner);
+  }
+  botEconomyReady=true;await flushBotSettlements();
+ }catch(e){botEconomyReady=false;console.error('Bot economy unavailable:',e.message);}
+}

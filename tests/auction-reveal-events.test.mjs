@@ -1,3 +1,4 @@
+import {initializeRoomActivity} from '../room-inactivity.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -61,7 +62,7 @@ test('manifest is final-only, contains no unused deck or credentials, supports n
 });
 test('publishing increments one revision shared by both seats, reads do not increment',()=>{
  const sent=[[],[]],room={code:'123',created:45,phase:'finished',tailAwards:[]};
- const context={markRoom(){},listeners:new Map([['123',new Set(sent.map((rows,seat)=>({seat,res:{write:line=>rows.push(JSON.parse(line.slice(6)))}})))]]),publicRoom:(r,seat)=>({...auctionRevealSnapshot(r),me:seat})};
+ const context={roomPresenceSignatures:new WeakMap(),roomPresenceSignature:()=>'',markRoom(){},listeners:new Map([['123',new Set(sent.map((rows,seat)=>({seat,res:{write:line=>rows.push(JSON.parse(line.slice(6)))}})))]]),publicRoom:(r,seat)=>({...auctionRevealSnapshot(r),me:seat})};
  vm.createContext(context);vm.runInContext(server.slice(server.indexOf('function publish(r)'),server.indexOf('function log(r')),context);
  for(let n=1;n<=3;n++){context.publish(room);assert.equal(room.revision,n);for(let seat=0;seat<2;seat++)assert.equal(sent[seat].at(-1).revision,n);}
  assert.equal(auctionRevealSnapshot(room).revision,3);assert.equal(auctionRevealSnapshot(room).revision,3);
@@ -69,7 +70,7 @@ test('publishing increments one revision shared by both seats, reads do not incr
 test('actual rematch reset clears tail metadata and changes match identity before first new publish',async()=>{
  const room={code:'123',phase:'finished',created:45,matchNumber:1,revision:8,tailAwards:[{id:'old'}],players:[0,1].map(()=>({team:Array(5).fill(card(0)),credits:-3})),rematch:[false,true],mode:'friend',universe:'mixed'};
  const oldKey=auctionMatchKey(room),oldTheme=startRoomArenaTheme(room,{randomIndex:()=>0});let published;
- const context={auctionAdmissions:new WeakSet(),refreshAuctionCommanders:async()=>{},markRoom(){},startRoomArenaTheme,b:{},authorize:()=>({r:room,seat:0}),error:message=>{throw Error(message)},chargeEntry:async()=>{},liveArenaLifecycle:{endRoom(){}},liveArenaMatchKeys:new Map(),newCards:()=>Array.from({length:10},(_,n)=>card(n)),log(){},publish:r=>{r.revision++;published=auctionRevealSnapshot(r)},publicRoom:r=>auctionRevealSnapshot(r),Date};
+ const context={initializeRoomActivity,auctionAdmissions:new WeakSet(),refreshAuctionCommanders:async()=>{},markRoom(){},startRoomArenaTheme,b:{},authorize:()=>({r:room,seat:0}),error:message=>{throw Error(message)},chargeEntry:async()=>{},liveArenaLifecycle:{endRoom(){}},liveArenaMatchKeys:new Map(),newCards:()=>Array.from({length:10},(_,n)=>card(n)),log(){},publish:r=>{r.revision++;published=auctionRevealSnapshot(r)},publicRoom:r=>auctionRevealSnapshot(r),Date};
  const start=server.lastIndexOf("if(url==='/api/rematch'){")+"if(url==='/api/rematch')".length,end=server.indexOf("if(url==='/api/bot')",start);
  vm.createContext(context);vm.runInContext('async function rematch()'+server.slice(start,end),context);
  await context.rematch();
