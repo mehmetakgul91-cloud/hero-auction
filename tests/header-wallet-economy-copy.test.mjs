@@ -66,3 +66,17 @@ test('tutorial prize badge and detail follow server policy instead of advertisin
   f.lobby({enabled:false});assert.equal(f.nodes['home-guide-prize-value'].textContent,'120');
  }
 });
+
+test('free durable bot results never fall through to PvP refund or legacy practice copy',()=>{
+ for(const lang of ['tr','en']){
+  const f=fixture(lang),matchId='123:2:10';
+  for(const outcome of ['loss','tie','server_failure']){
+   const botSettlement={matchId,receiptId:matchId,configVersion:'bot-free-v2',outcome,rewards:{gold:0,magicDust:0,diamonds:0}};
+   const copy=f.result({mode:'bot',entryPaid:true,matchId,botSettlement},outcome==='tie',false);
+   assert.match(copy.detail,lang==='tr'?/Giriş ücretsizdi/:/Entry was free/);
+   assert.doesNotMatch(JSON.stringify(copy),/50|LEGACY|ESKİ|İADE|REFUND/);
+  }
+  const victoryChest={matchId,receiptId:matchId,configVersion:'bot-free-v2',rewards:{gold:175,magicDust:5,diamonds:0}};
+  assert.match(f.result({mode:'bot',entryPaid:true,matchId,victoryChest}).detail,/175/);
+ }
+});

@@ -13,6 +13,7 @@ on:
       - 'tests/**'
       - 'test/**'
       - 'tools/test-postgres-bot-*.mjs'
+      - 'tools/test-login-reward-browser.mjs'
       - 'package*.json'
       - '.github/workflows/bot-economy-postgres-tests.yml'
   push:
@@ -29,6 +30,7 @@ on:
       - 'tests/**'
       - 'test/**'
       - 'tools/test-postgres-bot-*.mjs'
+      - 'tools/test-login-reward-browser.mjs'
       - 'package*.json'
       - '.github/workflows/bot-economy-postgres-tests.yml'
 permissions:
@@ -110,6 +112,11 @@ jobs:
           HERO_BOT_BROWSER_TEST_DB: postgresql://test:test@127.0.0.1:5432/hero_bot_browser_test
           HERO_BROWSER_SCREENSHOTS: artifacts/bot-browser
         run: env -u DATABASE_URL node tools/test-postgres-bot-browser.mjs
+      - name: Daily reward overlay actual-app UI with synthetic service responses
+        timeout-minutes: 3
+        env:
+          HERO_BROWSER_SCREENSHOTS: artifacts/bot-browser
+        run: env -u DATABASE_URL node tools/test-login-reward-browser.mjs
       - name: Preserve synthetic desktop and mobile browser evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -12,12 +12,13 @@ import {applyHeroDamage,grantLastStand} from '../battle-hp-damage.js';
 const APPROVED='postgresql://test:test@127.0.0.1:5432/hero_bot_live_test';
 if(process.env.HERO_BOT_LIVE_TEST_DB!==APPROVED||process.env.DATABASE_URL){console.error('REFUSED: exact disposable loopback HERO_BOT_LIVE_TEST_DB required; remove DATABASE_URL. No connection attempted.');process.exit(1)}
 const {default:pg}=await import('pg');
-const pool=new pg.Pool({host:'127.0.0.1',port:5432,database:'hero_bot_live_test',user:'test',password:'test',ssl:false,max:10,connectionTimeoutMillis:5000,idleTimeoutMillis:1000,options:'-c statement_timeout=10000 -c lock_timeout=5000',application_name:'hero-disposable-paid-bot-live'});
+const pool=new pg.Pool({host:'127.0.0.1',port:5432,database:'hero_bot_live_test',user:'test',password:'test',ssl:false,max:10,connectionTimeoutMillis:5000,idleTimeoutMillis:1000,options:'-c statement_timeout=10000 -c lock_timeout=5000',application_name:'hero-disposable-free-bot-live'});
 try{
  assert.equal((await pool.query('SELECT current_database() AS db')).rows[0].db,'hero_bot_live_test');
  assert.equal(Number((await pool.query("SELECT count(*) AS n FROM pg_tables WHERE schemaname='public'")).rows[0].n),0,'Use a fresh empty disposable database; never reset an existing DB.');
  await pool.query('CREATE TABLE hero_auction_wallets(account_id TEXT PRIMARY KEY,gold INTEGER NOT NULL DEFAULT 500 CHECK(gold>=0)); CREATE TABLE hero_auction_magic_dust_wallets(account_id TEXT PRIMARY KEY REFERENCES hero_auction_wallets(account_id),magic_dust INTEGER NOT NULL DEFAULT 0 CHECK(magic_dust>=0)); CREATE TABLE hero_auction_diamond_wallets(account_id TEXT PRIMARY KEY REFERENCES hero_auction_wallets(account_id),diamonds INTEGER NOT NULL DEFAULT 0 CHECK(diamonds>=0)); CREATE TABLE hero_auction_rooms(code VARCHAR(3) PRIMARY KEY,state JSONB NOT NULL,updated_at TIMESTAMPTZ DEFAULT NOW());');
  await pool.query(await readFile(new URL('../migrations/009-bot-fixed-economy.sql',import.meta.url),'utf8'));
+ await pool.query(await readFile(new URL('../migrations/010-bot-free-entry.sql',import.meta.url),'utf8'));
 }finally{await pool.end()}
 const consent=difficulty=>({difficulty,botTermsVersion:BOT_ECONOMY.version,requestId:randomUUID()});
 
@@ -43,7 +44,7 @@ test('live shield event invariant permits the explicit 1 HP Last Stand guard, ne
  assertShieldDamageEvent({rawDamage:100,absorbed:70,value:30});
 });
 
-test('paid bot matches run authoritative live combat, accept human casts, settle fixed rewards, and rotate on rematch',{timeout:120000},async()=>{
+test('free bot matches run authoritative live combat, accept human casts, settle fixed rewards, and rotate on rematch',{timeout:120000},async()=>{
  const socket=createServer();await new Promise(resolve=>socket.listen(0,'127.0.0.1',resolve));
  const port=socket.address().port;await new Promise(resolve=>socket.close(resolve));
  const base='http://127.0.0.1:'+port;
@@ -75,8 +76,8 @@ test('paid bot matches run authoritative live combat, accept human casts, settle
   await post('/api/commander/select',{...player,commanderId:'defense'});
   const before=await post('/api/wallet',player);
   const created=await post('/api/bot',{...player,...consent('hard')});
-  let expectedGold=before.gold-50,expectedDust=before.magicDust;const expectedDiamonds=before.diamonds;
-  assert.equal((await post('/api/wallet',player)).gold,expectedGold,'entry debits exactly 50');
+  let expectedGold=before.gold,expectedDust=before.magicDust;const expectedDiamonds=before.diamonds;
+  assert.equal((await post('/api/wallet',player)).gold,expectedGold,'free entry does not debit gold');
   let code=created.room.code;player.token=created.token;
   assert.deepEqual(created.room.players.map(p=>[p.credits,p.team.length]),[[20,0],[20,0]]);
   assert.equal(created.room.difficulty,'hard');
@@ -101,7 +102,7 @@ test('paid bot matches run authoritative live combat, accept human casts, settle
    assert.deepEqual(commander.levels,Object.fromEntries(['attack','defense','magic','support'].map(stat=>[stat,stat===commander.commanderId?level:Math.min(level,20)])),'selected branch follows difficulty; off-branches retain cap20');
    if(match<3)assert.deepEqual(started.result.commanders[0],{commanderId:'defense',levels:{attack:0,defense:0,magic:0,support:0}},'human progression is unchanged');
    if(previousCommander)assert.notEqual(commander.commanderId,previousCommander,'rematches and new bot rooms select a different commander');
-   if(match===3)assert.deepEqual(started.result.commanders[0],{commanderId:'attack',levels:{attack:0,defense:0,magic:0,support:0}},'a durable guest without a saved commander can play a paid bot game');
+   if(match===3)assert.deepEqual(started.result.commanders[0],{commanderId:'attack',levels:{attack:0,defense:0,magic:0,support:0}},'a durable guest without a saved commander can play a free bot game');
    previousCommander=commander.commanderId;
    assert.equal((await request('/api/battle-auction-complete',{code,token:player.token})).status,409,'cannot acknowledge an unfinished live battle');
    assert.notEqual((await request('/api/rematch',{code,...player})).status,200,'cannot skip live combat with rematch');
@@ -137,7 +138,7 @@ test('paid bot matches run authoritative live combat, accept human casts, settle
    if(live.winner!==null)expectedSeries[live.winner]++;
    for(let retry=0;retry<200;retry++){room=(await post('/api/state',{code,...player})).room;if(room.botSettlement&&!room.botSettlementPending)break;await delay(25)}
    assert.ok(room.botSettlement&&!room.botSettlementPending,'durable bot settlement must complete');
-   const reward=live.winner===0?BOT_ECONOMY.difficulties[room.difficulty]:{gold:live.winner===null?50:0,magicDust:0};
+   const reward=live.winner===0?BOT_ECONOMY.difficulties[room.difficulty]:{gold:0,magicDust:0};
    expectedGold+=reward.gold;expectedDust+=reward.magicDust;
    assert.deepEqual(room.botSettlement.rewards,{gold:reward.gold,magicDust:reward.magicDust,diamonds:0});
    for(let repeat=0;repeat<2;repeat++)assert.deepEqual((await post('/api/battle-auction-complete',{code,token:player.token})).series,expectedSeries,'completion is idempotent');
@@ -145,7 +146,7 @@ test('paid bot matches run authoritative live combat, accept human casts, settle
    assert.deepEqual(room.series,expectedSeries);assert.deepEqual(room.rankChange,[0,0]);
    const balance=await post('/api/wallet',player);assert.equal(balance.gold,expectedGold);assert.equal(balance.magicDust,expectedDust);assert.equal(balance.diamonds,expectedDiamonds,'bot cannot award diamonds');
    if(match===0){
-    const next=(await post('/api/rematch',{code,...player,...consent(room.difficulty),expectedMatchId:room.matchId})).room;expectedGold-=50;
+    const next=(await post('/api/rematch',{code,...player,...consent(room.difficulty),expectedMatchId:room.matchId})).room;
     assert.equal(next.phase,'auction');assert.deepEqual(next.series,expectedSeries);
     assert.deepEqual(next.players.map(p=>[p.credits,p.team.length]),[[20,0],[20,0]]);
     const expired=await fetch(base+'/api/experimental/commander-live?'+new URLSearchParams({code,token:player.token}));assert.equal(expired.status,409,'old live session is inaccessible after rematch');
@@ -154,7 +155,7 @@ test('paid bot matches run authoritative live combat, accept human casts, settle
      const fresh=await post('/api/auth/guest',{name:'No Commander Bot Test'});
      player={authToken:fresh.authToken};previousCommander=null;const freshWallet=await post('/api/wallet',player);expectedGold=freshWallet.gold;expectedDust=freshWallet.magicDust;assert.equal(freshWallet.diamonds,expectedDiamonds);
     }
-    const next=await post('/api/bot',{...player,...consent(match===2?'easy':'medium')});expectedGold-=50;
+    const next=await post('/api/bot',{...player,...consent(match===2?'easy':'medium')});
     code=next.room.code;player.token=next.token;expectedSeries[0]=0;expectedSeries[1]=0;
     assert.deepEqual(next.room.players.map(p=>[p.credits,p.team.length]),[[20,0],[20,0]]);
    }
@@ -166,7 +167,7 @@ test('paid bot matches run authoritative live combat, accept human casts, settle
  }finally{child.kill('SIGTERM');await new Promise(resolve=>{if(child.exitCode!==null)return resolve();child.once('exit',resolve);setTimeout(resolve,2000).unref()})}
 });
 
-test('real process restart retains paid auction and refunds a persisted interrupted live battle exactly once',{timeout:60000},async()=>{
+test('real process restart retains free auction and settles interrupted live battle without phantom refund',{timeout:60000},async()=>{
  const fixtureDb=new pg.Pool({host:'127.0.0.1',port:5432,database:'hero_bot_live_test',user:'test',password:'test',ssl:false,max:3,connectionTimeoutMillis:5000,idleTimeoutMillis:1000,options:'-c statement_timeout=10000 -c lock_timeout=5000',application_name:'hero-synthetic-bot-restart-proof'});
  const socket=createServer();await new Promise(resolve=>socket.listen(0,'127.0.0.1',resolve));
  const port=socket.address().port;await new Promise(resolve=>socket.close(resolve));
@@ -224,7 +225,7 @@ test('real process restart retains paid auction and refunds a persisted interrup
   const identity={code:created.room.code,token:created.token,authToken:auth.authToken},matchId=created.room.matchId;
   const admitted=await durableRoom(identity.code);
   assert.equal(admitted.phase,'auction');assert.equal(admitted.botEntry.matchId,matchId);assert.equal(admitted.battleSync?.result,undefined);
-  const paid=await proof(matchId);assert.equal(paid.gold,450);assert.equal(paid.entries,1);assert.equal(paid.settlements,0);
+  const paid=await proof(matchId);assert.equal(paid.gold,500);assert.equal(paid.entry_gold,0);assert.equal(paid.entries,1);assert.equal(paid.settlements,0);
   // Actual abrupt process loss before live combat must NOT create a refund.
   await stop('SIGKILL');await start();
   let room=(await post('/api/state',identity)).room;
@@ -258,10 +259,10 @@ test('real process restart retains paid auction and refunds a persisted interrup
    await delay(25);
   }
   assert.equal(room.matchId,matchId);assert.equal(room.botSettlement?.outcome,'server_failure');
-  assert.deepEqual(room.botSettlement.rewards,{gold:50,magicDust:0,diamonds:0});assert.equal(room.victoryChest,null);assert.deepEqual(room.series,[0,0]);
+  assert.deepEqual(room.botSettlement.rewards,{gold:0,magicDust:0,diamonds:0});assert.equal(room.victoryChest,null);assert.deepEqual(room.series,[0,0]);
   const receipt=room.botSettlement,refunded=await proof(matchId);
-  assert.equal(refunded.gold,500);assert.equal(refunded.entry_gold,50);assert.equal(refunded.entries,1);assert.equal(refunded.settlements,1);
-  assert.equal(refunded.outcome,'server_failure');assert.equal(refunded.gold_amount,50);assert.equal(refunded.magic_dust_amount,0);assert.equal(refunded.diamonds,0);assert.equal(refunded.magic_dust,0);
+  assert.equal(refunded.gold,500);assert.equal(refunded.entry_gold,0);assert.equal(refunded.entries,1);assert.equal(refunded.settlements,1);
+  assert.equal(refunded.outcome,'server_failure');assert.equal(refunded.gold_amount,0);assert.equal(refunded.magic_dust_amount,0);assert.equal(refunded.diamonds,0);assert.equal(refunded.magic_dust,0);
   for(let repeat=0;repeat<3;repeat++){
    assert.deepEqual((await post('/api/state',identity)).room.botSettlement,receipt);
    assert.equal((await post('/api/wallet',{authToken:auth.authToken})).gold,500);

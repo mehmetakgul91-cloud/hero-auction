@@ -9,7 +9,7 @@ export function victoryChestReceipt(value,matchId){
  if(typeof value.receiptId!=='string'||!value.receiptId||value.receiptId.length>240||typeof value.configVersion!=='string'||!value.configVersion||value.configVersion.length>100)return null;
  const rewards=value.rewards;
  if(!rewards)return null;
- const bot=value.configVersion==='bot-fixed-v1';
+ const bot=['bot-fixed-v1','bot-free-v2'].includes(value.configVersion);
  if(bot){if(rewards.diamonds!==0||![[100,0],[125,2],[175,5]].some(([gold,dust])=>rewards.gold===gold&&rewards.magicDust===dust))return null;}
  else if(!GOLD_VALUES.has(rewards.gold)||!DUST_VALUES.has(rewards.magicDust)||![0,1].includes(rewards.diamonds))return null;
  return Object.freeze({matchId,receiptId:value.receiptId,configVersion:value.configVersion,rewards:Object.freeze({gold:rewards.gold,magicDust:rewards.magicDust,diamonds:rewards.diamonds})});

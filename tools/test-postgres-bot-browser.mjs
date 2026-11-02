@@ -1,5 +1,5 @@
 // CI-only browser integration. No local browser launch, production credentials,
-// mocked payment responses, public fixture endpoint, or authentication bypass.
+// mocked admission responses, public fixture endpoint, or authentication bypass.
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {createServer} from 'node:net';
@@ -50,9 +50,9 @@ async function confirmAction(page,selector,auth,{accept=false,difficulty='medium
  const before=await wallet(auth.user.sub),count=await entries(auth.user.sub),waiting=page.waitForEvent('dialog');
  const clicked=page.locator(selector).click();const dialog=await waiting;
  const copy=dialog.message(),rule=BOT_ECONOMY.difficulties[difficulty];dialogs.push({selector,difficulty,copy});
- assert.match(copy,/50 altın/);assert.ok(copy.includes(String(rule.level)));assert.ok(copy.includes(rule.gold+' altın'));assert.match(copy,/Elmas yok/);
+ assert.match(copy,/Giriş ücretsiz/);assert.doesNotMatch(copy,/50 altın/);assert.ok(copy.includes(String(rule.level)));assert.ok(copy.includes(rule.gold+' altın'));assert.match(copy,/Elmas yok/);
  if(rule.magicDust)assert.ok(copy.includes(rule.magicDust+' büyü tozu'));
- assert.deepEqual(await wallet(auth.user.sub),before,'dialog appears before any debit');assert.equal(await entries(auth.user.sub),count);
+ assert.deepEqual(await wallet(auth.user.sub),before,'dialog appears before durable admission');assert.equal(await entries(auth.user.sub),count);
  if(accept)await dialog.accept();else await dialog.dismiss();await clicked;
  return{before,count};
 }
@@ -62,12 +62,13 @@ try{
  assert.equal(Number((await pool.query("SELECT count(*) AS n FROM pg_tables WHERE schemaname='public'")).rows[0].n),0,'fresh empty database only; never reset an existing DB');
  await pool.query('CREATE TABLE hero_auction_wallets(account_id TEXT PRIMARY KEY,gold INTEGER NOT NULL DEFAULT 500 CHECK(gold>=0)); CREATE TABLE hero_auction_magic_dust_wallets(account_id TEXT PRIMARY KEY REFERENCES hero_auction_wallets(account_id),magic_dust INTEGER NOT NULL DEFAULT 0 CHECK(magic_dust>=0)); CREATE TABLE hero_auction_diamond_wallets(account_id TEXT PRIMARY KEY REFERENCES hero_auction_wallets(account_id),diamonds INTEGER NOT NULL DEFAULT 0 CHECK(diamonds>=0)); CREATE TABLE hero_auction_rooms(code VARCHAR(3) PRIMARY KEY,state JSONB NOT NULL,updated_at TIMESTAMPTZ DEFAULT NOW());');
  await pool.query(await readFile(new URL('../migrations/009-bot-fixed-economy.sql',import.meta.url),'utf8'));
+ await pool.query(await readFile(new URL('../migrations/010-bot-free-entry.sql',import.meta.url),'utf8'));
  await start();browser=await chromium.launch({headless:true});
  for(const [index,difficulty] of ['easy','medium','hard'].entries()){
   const auth=await identity('Browser '+difficulty),{context,page}=await pageFor(auth,index===1?390:1440);await lobby(page);
   await page.selectOption('#bot-difficulty',difficulty);const copy=await page.locator('#bot-economy').innerText(),rule=BOT_ECONOMY.difficulties[difficulty];
-  assert.match(copy,/Giriş: 50 altın/);assert.ok(copy.includes(rule.gold+' altın'));assert.ok(copy.includes('Seviye '+rule.level));assert.match(copy,/Elmas yok/);
-  await capture(page,'before-charge-'+difficulty+(index===1?'-mobile':'-desktop'));
+  assert.match(copy,/Ücretsiz giriş/);assert.doesNotMatch(copy,/50 altın/);assert.ok(copy.includes(rule.gold+' altın'));assert.ok(copy.includes('Seviye '+rule.level));assert.match(copy,/Elmas yok/);
+  await capture(page,'before-free-entry-'+difficulty+(index===1?'-mobile':'-desktop'));
   const cancelled=await confirmAction(page,'#bot',auth,{difficulty});assert.equal(await entries(auth.user.sub),0);assert.deepEqual(await wallet(auth.user.sub),cancelled.before);assert.equal(await page.locator('#bot').isDisabled(),false);
   let release,held=0;const gate=new Promise(resolve=>release=resolve);
   await page.route('**/api/bot',async route=>{held++;await gate;await route.continue();});
@@ -76,17 +77,17 @@ try{
   await page.waitForFunction(()=>document.getElementById('bot').disabled===true);
   await page.evaluate(()=>{document.getElementById('bot').click();document.getElementById('bot').click()});for(let i=0;i<100&&held===0;i++)await delay(20);assert.equal(held,1,'pending entry cannot submit duplicate requests');
   assert.equal(await entries(auth.user.sub),0);release();const admitted=await response;assert.equal(admitted.status(),200);const result=await admitted.json();
-  await page.waitForSelector('#game:not([hidden])');assert.equal(await entries(auth.user.sub),1);assert.equal((await wallet(auth.user.sub)).gold,cancelled.before.gold-50);
+  await page.waitForSelector('#game:not([hidden])');assert.equal(await entries(auth.user.sub),1);assert.equal((await wallet(auth.user.sub)).gold,cancelled.before.gold);
   direct.push({auth,room:result.room,token:result.token,difficulty,width:index===1?390:1440,before:cancelled.before});await context.close();
  }
- const poor=await identity('Browser insufficient');await pool.query('UPDATE hero_auction_wallets SET gold=49 WHERE account_id=$1',[poor.user.sub]);
- {const {context,page}=await pageFor(poor,390);await lobby(page);const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/bot');await confirmAction(page,'#bot',poor,{accept:true});assert.equal((await response).status(),400);await page.waitForFunction(()=>document.getElementById('bot').disabled===false);assert.match(await page.locator('#toast').innerText(),/50 altın/);assert.equal(await entries(poor.user.sub),0);assert.equal((await wallet(poor.user.sub)).gold,49);await capture(page,'insufficient-mobile');await context.close();}
+ const poor=await identity('Browser zero balance');await pool.query('UPDATE hero_auction_wallets SET gold=0 WHERE account_id=$1',[poor.user.sub]);
+ {const {context,page}=await pageFor(poor,390);await lobby(page);const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/bot');await confirmAction(page,'#bot',poor,{accept:true});assert.equal((await response).status(),200);await page.waitForSelector('#game:not([hidden])');assert.equal(await entries(poor.user.sub),1);assert.equal((await wallet(poor.user.sub)).gold,0);await capture(page,'zero-balance-free-mobile');await context.close();}
  // Exercise the actual sixty-second server fallback, not a mocked timer/response.
- const fallback=await identity('Browser fallback');
+ const fallback=await identity('Browser zero-balance fallback');await pool.query('UPDATE hero_auction_wallets SET gold=0 WHERE account_id=$1',[fallback.user.sub]);
  {const {context,page}=await pageFor(fallback,390);await lobby(page);const before=await wallet(fallback.user.sub);await page.click('#match');await page.locator('#bot-offer-accept').waitFor({state:'visible',timeout:75000});assert.equal(await entries(fallback.user.sub),0);assert.deepEqual(await wallet(fallback.user.sub),before);await capture(page,'fallback-offer-mobile');
   await confirmAction(page,'#bot-offer-accept',fallback);assert.deepEqual(await wallet(fallback.user.sub),before);
   const leaving=page.waitForEvent('dialog'),click=page.click('#bot-offer-cancel');await(await leaving).accept();await click;await page.locator('#home-play-tab').waitFor({state:'visible'});assert.equal(await entries(fallback.user.sub),0);
-  await page.click('#home-play-tab');await page.click('#match');await page.locator('#bot-offer-accept').waitFor({state:'visible',timeout:75000});const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/bot-accept');await confirmAction(page,'#bot-offer-accept',fallback,{accept:true});assert.equal((await response).status(),200);assert.equal(await entries(fallback.user.sub),1);assert.equal((await wallet(fallback.user.sub)).gold,before.gold-50);await context.close();}
+  await page.click('#home-play-tab');await page.click('#match');await page.locator('#bot-offer-accept').waitFor({state:'visible',timeout:75000});const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/bot-accept');await confirmAction(page,'#bot-offer-accept',fallback,{accept:true});assert.equal((await response).status(),200);assert.equal(await entries(fallback.user.sub),1);assert.equal((await wallet(fallback.user.sub)).gold,before.gold);await context.close();}
  // Trusted disposable-DB terminal fixtures. No browser/public winner endpoint.
  // Combat has independent real-engine HTTP coverage; truncate only this fixture's
  // replay transcript to its last real event so UI verification does not replay
@@ -112,10 +113,12 @@ try{
   assert.equal(await chest.locator('[data-currency="gold"] .victory-chest-amount').innerText(),'+'+rule.gold);assert.equal(await chest.locator('[data-currency="diamonds"]').count(),0);
   if(rule.magicDust)assert.equal(await chest.locator('[data-currency="magicDust"] .victory-chest-amount').innerText(),'+'+rule.magicDust);else assert.equal(await chest.locator('[data-currency="magicDust"]').count(),0);
   await capture(page,'fixed-win-'+item.difficulty+(item.width===390?'-mobile':'-desktop'));
-  const balance=await wallet(item.auth.user.sub);assert.equal(balance.gold,item.before.gold-50+rule.gold);assert.equal(Number(balance.magic_dust),rule.magicDust);assert.equal(Number(balance.diamonds||0),Number(item.before.diamonds||0));
-  await confirmAction(page,'.arena-rematch-button',item.auth,{difficulty:item.difficulty});assert.deepEqual(await wallet(item.auth.user.sub),balance);assert.equal(await page.locator('.arena-rematch-button').isDisabled(),false);
-  const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/rematch');await confirmAction(page,'.arena-rematch-button',item.auth,{accept:true,difficulty:item.difficulty});assert.equal((await response).status(),200);assert.equal(await entries(item.auth.user.sub),2);assert.equal((await wallet(item.auth.user.sub)).gold,balance.gold-50);await context.close();
+  const balance=await wallet(item.auth.user.sub);assert.equal(balance.gold,item.before.gold+rule.gold);assert.equal(Number(balance.magic_dust),rule.magicDust);assert.equal(Number(balance.diamonds||0),Number(item.before.diamonds||0));
+  await pool.query('UPDATE hero_auction_wallets SET gold=0 WHERE account_id=$1',[item.auth.user.sub]);
+  const beforeRematch=await wallet(item.auth.user.sub);assert.equal(beforeRematch.gold,0);
+  await confirmAction(page,'.arena-rematch-button',item.auth,{difficulty:item.difficulty});assert.deepEqual(await wallet(item.auth.user.sub),beforeRematch);assert.equal(await page.locator('.arena-rematch-button').isDisabled(),false);
+  const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/rematch');await confirmAction(page,'.arena-rematch-button',item.auth,{accept:true,difficulty:item.difficulty});assert.equal((await response).status(),200);assert.equal(await entries(item.auth.user.sub),2);assert.equal((await wallet(item.auth.user.sub)).gold,0);await context.close();
  }
- assert.deepEqual(failures,[]);console.log('PASS: real PostgreSQL browser integration: all difficulty terms before payment, cancel, pending duplicate lock, insufficient balance, real 60-second fallback, committed fixed win receipts/no diamonds, and per-game rematch confirmation. Desktop/mobile screenshots saved.');
+ assert.deepEqual(failures,[]);console.log('PASS: real PostgreSQL browser integration: all difficulty free-entry terms, cancel, pending duplicate lock, zero-balance direct/fallback/rematch, real 60-second fallback, committed fixed win receipts/no diamonds, and per-game rematch confirmation. Desktop/mobile screenshots saved.');
 }catch(error){if(lastPage&&!lastPage.isClosed())await capture(lastPage,'failure').catch(()=>{});throw error;}
 finally{await writeFile(path.join(artifacts,'dialogs.json'),JSON.stringify(dialogs,null,2));await writeFile(path.join(artifacts,'browser-errors.json'),JSON.stringify(failures,null,2));await writeFile(path.join(artifacts,'network-policy.json'),JSON.stringify(network,null,2));await writeFile(path.join(artifacts,'server.log'),logs);if(browser)await browser.close();await stop();await pool.end();}

@@ -2,6 +2,10 @@
 // browser provider claim: identity must come from the server's signed session.
 const MAX_CURRENCY=2147483647;
 export const LOGIN_REWARD_TIMEZONE='Europe/Istanbul';
+export const LOGIN_REWARD_RESET_HOUR=2;
+// Convert the database wall clock to Istanbul local time before shifting the
+// reward-day boundary. A reward date covers local 02:00 through next-day 01:59.
+export const LOGIN_REWARD_DAY_SQL="((clock_timestamp() AT TIME ZONE 'Europe/Istanbul') - INTERVAL '2 hours')::date::text";
 export const LOGIN_REWARDS=Object.freeze([100,150,200,250,300,400,0].map((gold,index)=>Object.freeze({day:index+1,gold,diamonds:index===6?5:0})));
 export function createLoginRewardPolicy(env={}){
  return Object.freeze({enabled:env.HERO_DIAMONDS_ENABLED==='1'&&env.HERO_LOGIN_REWARDS_ENABLED==='1'});
@@ -27,7 +31,7 @@ function validateState(state,receipt){
 }
 export function loginRewardView({policy,identity,serverDay=null,state=null,receipt=null,ready=true}){
  const eligible=isGoogleRewardMember(identity),enabled=policy.enabled;
- const base={enabled,available:false,eligible,reason:!enabled?'disabled':!eligible?'google_required':!ready?'storage_unavailable':null,timezone:LOGIN_REWARD_TIMEZONE,serverDay:null,claimedToday:false,nextDay:1,completedDay:0,rewards:LOGIN_REWARDS,receipt:null};
+ const base={enabled,available:false,eligible,reason:!enabled?'disabled':!eligible?'google_required':!ready?'storage_unavailable':null,timezone:LOGIN_REWARD_TIMEZONE,resetHour:LOGIN_REWARD_RESET_HOUR,serverDay:null,claimedToday:false,nextDay:1,completedDay:0,rewards:LOGIN_REWARDS,receipt:null};
  if(base.reason)return base;
  dayNumber(serverDay);validateState(state,receipt);
  const gap=state?dayNumber(serverDay)-dayNumber(state.last_reward_date):null;
@@ -36,7 +40,7 @@ export function loginRewardView({policy,identity,serverDay=null,state=null,recei
  const nextDay=state&&(gap===0||gap===1)?state.day_index%7+1:1;
  return{...base,available:!claimedToday,reason:claimedToday?'already_claimed':null,serverDay,claimedToday,nextDay,completedDay:state&&(gap===0||gap===1)?state.day_index:0,receipt:claimedToday?receipt:null};
 }
-const STATUS_SQL=`SELECT (clock_timestamp() AT TIME ZONE 'Europe/Istanbul')::date::text AS server_day,
+const STATUS_SQL=`SELECT ${LOGIN_REWARD_DAY_SQL} AS server_day,
  s.provider,s.last_reward_date::text,s.day_index,
  r.reward_date::text,r.day_index AS receipt_day,r.gold_amount,r.diamond_amount
  FROM (SELECT $1::text AS account_id) a
@@ -72,8 +76,8 @@ export async function claimLoginReward({database,identity,policy,request}){
   const member=await client.query('SELECT account_id FROM hero_auction_user_profiles WHERE account_id=$1 FOR UPDATE',[accountId]);
   if(member.rows.length!==1)throw failure('Üye profili doğrulanamadı.');
   // Sample the DB wall clock AFTER waiting for the account lock. NOW() would be
-  // the transaction start and could still be yesterday across a midnight wait.
-  const clock=await client.query("SELECT (clock_timestamp() AT TIME ZONE 'Europe/Istanbul')::date::text AS server_day");
+  // the transaction start and could still be yesterday across a 02:00 reward-day boundary wait.
+  const clock=await client.query(`SELECT ${LOGIN_REWARD_DAY_SQL} AS server_day`);
   const serverDay=clock.rows[0]?.server_day;dayNumber(serverDay);
   const stored=await client.query('SELECT provider,last_reward_date::text,day_index FROM hero_auction_login_reward_streaks WHERE account_id=$1',[accountId]);
   const state=stored.rows[0]||null;
@@ -117,7 +121,7 @@ export async function claimLoginReward({database,identity,policy,request}){
   await client.query('ROLLBACK').catch(()=>{});
   if(e.code==='42P01')throw failure('Giriş ödülü altyapısı henüz etkin değil.');
   // Commit outcome may be unknown. Recover only this same account/date receipt;
-  // never automatically retry a different day after midnight.
+  // never automatically retry a different reward day after 02:00.
   throw e;
  }finally{client.release();}
 }

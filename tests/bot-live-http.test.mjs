@@ -36,16 +36,16 @@ test('noDB bot entries fail closed; 60-second matching offers require consent an
  const post=async(path,body)=>{const response=await fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return{status:response.status,body:await response.json()}};
  try{
   let ready=false;for(let i=0;i<100;i++){if(child.exitCode!==null)throw Error(logs);try{if((await fetch(base+'/api/info')).ok){ready=true;break}}catch{}await delay(40)}assert.ok(ready,logs);
-  const info=await(await fetch(base+'/api/info')).json();assert.equal(info.botEconomy.available,false);assert.equal(info.botEconomy.entryGold,50);
+  const info=await(await fetch(base+'/api/info')).json();assert.equal(info.botEconomy.available,false);assert.equal(info.botEconomy.entryGold,0);
   const auth=await post('/api/auth/guest',{name:'Bot Storage Test'});assert.equal(auth.status,200);assert.match(auth.body.user.sub,/^guest:/);const identity={authToken:auth.body.authToken};const before=(await post('/api/wallet',identity)).body;assert.equal((await post('/api/auth/check',identity)).body.user.sub,auth.body.user.sub,'guest retry journal retains stable account scope after reconnect');
   for(const difficulty of ['easy','medium','hard'])for(let retry=0;retry<2;retry++){
-   const denied=await post('/api/bot',{...identity,difficulty,botTermsVersion:'bot-fixed-v1',requestId:'12345678-1234-4234-8234-123456789abc'});assert.equal(denied.status,503);assert.equal(denied.body.room,undefined);assert.equal(denied.body.token,undefined);
+   const denied=await post('/api/bot',{...identity,difficulty,botTermsVersion:'bot-free-v2',requestId:'12345678-1234-4234-8234-123456789abc'});assert.equal(denied.status,503);assert.equal(denied.body.room,undefined);assert.equal(denied.body.token,undefined);
   }
   assert.deepEqual((await post('/api/wallet',identity)).body,before);
   const matching=await post('/api/match',identity);assert.equal(matching.status,200);const seat={...identity,code:matching.body.room.code,token:matching.body.token};let room=matching.body.room;assert.equal(room.phase,'matching');
   for(let i=0;room.phase==='matching'&&i<100;i++){await delay(40);room=(await post('/api/state',seat)).body.room;}
   assert.equal(room.phase,'bot_offer');assert.equal(room.players[1],null);assert.equal(room.entryPaid,false);assert.deepEqual((await post('/api/wallet',identity)).body,before);
-  const accept=await post('/api/bot-accept',{...seat,difficulty:'easy',botTermsVersion:'bot-fixed-v1',expectedMatchId:room.matchId,requestId:'12345678-1234-4234-8234-123456789abc'});assert.equal(accept.status,503);
+  const accept=await post('/api/bot-accept',{...seat,difficulty:'easy',botTermsVersion:'bot-free-v2',expectedMatchId:room.matchId,requestId:'12345678-1234-4234-8234-123456789abc'});assert.equal(accept.status,503);
   assert.equal((await post('/api/room/detach',seat)).status,200);assert.equal((await post('/api/state',seat)).body.room.phase,'cancelled');await delay(600);assert.equal((await post('/api/state',seat)).body.room.phase,'cancelled');assert.deepEqual((await post('/api/wallet',identity)).body,before);
  }finally{child.kill('SIGTERM');await new Promise(resolve=>{if(child.exitCode!==null)return resolve();child.once('exit',resolve);setTimeout(resolve,2000).unref()})}
 });

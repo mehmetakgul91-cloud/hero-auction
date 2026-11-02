@@ -28,7 +28,9 @@ An eligible new Google member may receive both the welcome gift (if separately
 enabled and genuinely new) and campaign day-1 gold. Existing Google members are
 eligible for this campaign; they are still ineligible for the welcome gift.
 
-Days are calendar dates in **Europe/Istanbul**, not elapsed 24-hour periods.
+As of the November 2, 2026 implementation, reward days run from **02:00 to
+01:59:59.999 Europe/Istanbul**, not midnight and not elapsed 24-hour periods.
+The date key names the date on which that 02:00 interval starts.
 After claimed day 7, claiming on the immediately following date awards day 1.
 At least one skipped date resets the next claim to day 1. Repeat indefinitely.
 One claim per account/date across tabs, sessions, processes and restarts.
@@ -36,7 +38,15 @@ A previously claimed date returns its receipt, not another reward.
 
 ### Login versus claim
 
-This version uses a deliberate **Ödülü al** action in the store. A current
+The November 2, 2026 UI also opens a seven-day reward dialog over the current
+safe lobby screen on eligible login. The player presses **Ödülü al**; no currency
+is granted by opening it. A server-confirmed claimed day suppresses this dialog
+on refresh, re-login and other devices. Active rooms/restoration defer it until
+the lobby; a visible session rechecks server status every minute for day rollover.
+Dismissal is local to that session/day, while the store remains an alternate claim
+entry. Both entries share the same account-scoped pending-operation journal.
+
+The store also retains its deliberate **Ödülü al** action. A current
 verified Google session is sufficient: daily logout/login is not required.
 Opening the store, checking a session, refreshing the page, or a GET request does
 not advance the streak. The UI must say that the reward is **claimed**, rather
@@ -101,8 +111,9 @@ proof of today's date.
 2. Begin; lock the existing member profile row (`FOR UPDATE`). No missing profile
    is synthesized by a claim.
 3. Read `clock_timestamp()` from PostgreSQL **after** that lock, converted with
-   `AT TIME ZONE 'Europe/Istanbul'`. `NOW()` is intentionally not used because a
-   transaction that waited at midnight retains its transaction-start timestamp.
+   `AT TIME ZONE 'Europe/Istanbul'`, then subtract two local hours before casting
+   to date. `NOW()` is intentionally not used because a
+   transaction that waited across 02:00 retains its transaction-start timestamp.
 4. Read the requested receipt and latest durable receipt/streak. Check schedule,
    provider, date and day-index consistency. Orphan or stale state fails closed.
    A clock earlier than the recorded date grants nothing and reports unavailable.
@@ -153,7 +164,7 @@ no generic positive-diamond mint API and no client-selectable reward amount.
 
 Run the normal aggregate functional suite:
 `node --test *.test.js tests/*.test.* test/*.test.js`, then `npm run audit:strict`.
-Focused reward tests cover Istanbul midnight, gaps/cycles, exact seventh reward,
+Focused reward tests cover the Istanbul 02:00 boundary, gaps/cycles, exact seventh reward,
 duplicate/replayed claims, uncertain commit, stage failures, authenticated
 provenance, missing schema, overflow and cross-operation wallet serialization.
 The offline preview uses the actual store controller and isolated sample data,
