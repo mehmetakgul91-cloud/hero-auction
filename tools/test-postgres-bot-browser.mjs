@@ -83,7 +83,7 @@ try{
  const poor=await identity('Browser zero balance');await pool.query('UPDATE hero_auction_wallets SET gold=0 WHERE account_id=$1',[poor.user.sub]);
  {const {context,page}=await pageFor(poor,390);await lobby(page);const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/bot');await confirmAction(page,'#bot',poor,{accept:true});assert.equal((await response).status(),200);await page.waitForSelector('#game:not([hidden])');assert.equal(await entries(poor.user.sub),1);assert.equal((await wallet(poor.user.sub)).gold,0);await capture(page,'zero-balance-free-mobile');await context.close();}
  // Exercise the actual sixty-second server fallback, not a mocked timer/response.
- const fallback=await identity('Browser zero-balance fallback');await pool.query('UPDATE hero_auction_wallets SET gold=0 WHERE account_id=$1',[fallback.user.sub]);
+ const fallback=await identity('Browser fallback');await pool.query('UPDATE hero_auction_wallets SET gold=0 WHERE account_id=$1',[fallback.user.sub]);
  {const {context,page}=await pageFor(fallback,390);await lobby(page);const before=await wallet(fallback.user.sub);await page.click('#match');await page.locator('#bot-offer-accept').waitFor({state:'visible',timeout:75000});assert.equal(await entries(fallback.user.sub),0);assert.deepEqual(await wallet(fallback.user.sub),before);await capture(page,'fallback-offer-mobile');
   await confirmAction(page,'#bot-offer-accept',fallback);assert.deepEqual(await wallet(fallback.user.sub),before);
   const leaving=page.waitForEvent('dialog'),click=page.click('#bot-offer-cancel');await(await leaving).accept();await click;await page.locator('#home-play-tab').waitFor({state:'visible'});assert.equal(await entries(fallback.user.sub),0);
