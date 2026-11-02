@@ -541,6 +541,15 @@ body:before{opacity:.24;background-image:linear-gradient(#6c7e8910 1px,transpare
 #game .auction-tail-progress{color:#735626}
 #game .delivery-count{color:#24637a}
 #game .delivery-slot{border-color:#9baeb9;color:#3f5368;background:#e5ebe8}
+/* Awarded auction cards use the same viewer-relative colors as calculation. */
+#game .player-side.me,#game .auction-tail-holder[data-team="own"],#game .auction-tail-review-card[data-team="own"]{--auction-team-bg:#e2eef9;--auction-team-panel:#cfdfef;--auction-team-border:#8daac4}
+#game .player-side:not(.me),#game .auction-tail-holder[data-team="opponent"],#game .auction-tail-review-card[data-team="opponent"]{--auction-team-bg:#f7e6e1;--auction-team-panel:#efd3ca;--auction-team-border:#c69b8e}
+#game .player-side{background:var(--auction-team-panel);border-color:var(--auction-team-border)}
+#game .player-side .side-hero,#game .player-side .delivery-slot{background:var(--auction-team-bg);border-color:var(--auction-team-border)}
+#game .auction-tail-holder[data-team],#game .auction-tail-review-card[data-team]{background:var(--auction-team-bg);border-color:var(--auction-team-border);border-radius:12px}
+#game .player-side .credit small,#game .player-side small,#game .player-side .side-team-title,#game .player-side .side-hero-role,#game .auction-tail-review-card[data-team] small{color:#485666}
+.auction-card-glide[data-team="own"] .auction-flight-label{background:#cfdfef;color:#203047}
+.auction-card-glide[data-team="opponent"] .auction-flight-label{background:#efd3ca;color:#203047}
 /* Calculation teams follow the viewer, never the server seat or hero rarity. */
 #game .calculation-team[data-team="own"]{--calculation-row:#e2eef9;--calculation-heading:#cfdfef;--calculation-total:#bfd5e9;--calculation-border:#8daac4;--calculation-accent:#295d88}
 #game .calculation-team[data-team="opponent"]{--calculation-row:#f7e6e1;--calculation-heading:#efd3ca;--calculation-total:#e7c2b7;--calculation-border:#c69b8e;--calculation-accent:#893f32}

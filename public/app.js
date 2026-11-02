@@ -582,7 +582,7 @@ function animateWonAuctionCard(award,me,sourceSnapshot){
  const key=award.code+':'+award.round+':'+award.seat+':'+award.card.universe+':'+award.card.name;
  if(seenAwardFlights.has(key)||!sourceSnapshot)return Promise.resolve();
  seenAwardFlights.add(key);
- const flight=flyAwardCard(sourceSnapshot,awardDestination(award.seat,me),{duration:1400,reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,label:award.seat===me?(document.documentElement.lang==='en'?'Your team':'Senin takımın'):(document.documentElement.lang==='en'?'Opponent team':'Rakip takım')});
+ const flight=flyAwardCard(sourceSnapshot,awardDestination(award.seat,me),{duration:1400,team:award.seat===me?'own':'opponent',reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,label:award.seat===me?(document.documentElement.lang==='en'?'Your team':'Senin takımın'):(document.documentElement.lang==='en'?'Opponent team':'Rakip takım')});
  awardFlights.add(flight);return flight.finished.finally(()=>awardFlights.delete(flight));
 }
 function showCancelledRoom(r){
@@ -653,6 +653,7 @@ function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAu
    $('game').classList.add('auction-delivery-active');
    for(let visual=0;visual<2;visual++){
     const seat=visual===0?r.me:1-r.me,p=r.final[seat];
+    $('player'+visual).className='player player-side'+(seat===r.me?' me':'');
     $('player'+visual).innerHTML=`<div class="name">${esc(displayPlayerName(p,r.mode==='bot'&&seat===1))}</div><div class="delivery-count">${delivery.teams[seat].length} / 5</div><div class="delivery-slot" role="status"></div>`;
    }
    for(let seat=0;seat<2;seat++)renderReceiver(seat);
