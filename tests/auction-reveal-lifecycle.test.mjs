@@ -10,7 +10,7 @@ function dom(){
  const doc={activeElement:null,defaultView:{innerWidth:390,innerHeight:844},documentElement:{clientWidth:390,clientHeight:844}};
  doc.createElement=tag=>{
   const classes=new Set();
-  return {ownerDocument:doc,tag,get className(){return [...classes].join(" ");},set className(value){classes.clear();value.split(/\s+/).filter(Boolean).forEach(x=>classes.add(x));},children:[],style:{setProperty(){}},classList:{add:(...xs)=>xs.forEach(x=>classes.add(x)),remove:(...xs)=>xs.forEach(x=>classes.delete(x)),contains:x=>classes.has(x)},setAttribute(){},removeAttribute(){},focus(){doc.activeElement=this;},querySelectorAll:()=>[],getBoundingClientRect:()=>({left:80,top:150,width:220,height:300}),get isConnected(){return this===doc.body||!!this.parentNode?.isConnected;},remove(){if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(x=>x!==this);this.parentNode=null;},append(...nodes){nodes.forEach(node=>{this.children.push(node);node.parentNode=this;});},prepend(...nodes){nodes.forEach(node=>{this.children.unshift(node);node.parentNode=this;});},replaceChildren(...nodes){this.children.forEach(node=>node.parentNode=null);this.children=[];this.append(...nodes);},cloneNode(){return doc.createElement(tag);},animate(frames,options){let resolve;const animation={duration:options.duration,finished:new Promise(r=>resolve=r),resolve(){this.resolved=true;resolve();},cancelled:0,cancel(){this.cancelled++;resolve();}};animations.push(animation);return animation;}};
+  return {ownerDocument:doc,tag,get className(){return [...classes].join(" ");},set className(value){classes.clear();value.split(/\s+/).filter(Boolean).forEach(x=>classes.add(x));},children:[],attributes:{},style:{setProperty(){}},classList:{add:(...xs)=>xs.forEach(x=>classes.add(x)),remove:(...xs)=>xs.forEach(x=>classes.delete(x)),contains:x=>classes.has(x)},setAttribute(name,value){this.attributes[name]=value;},removeAttribute(name){delete this.attributes[name];},focus(){doc.activeElement=this;},querySelectorAll:()=>[],getBoundingClientRect:()=>({left:80,top:150,width:220,height:300}),get isConnected(){return this===doc.body||!!this.parentNode?.isConnected;},remove(){if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(x=>x!==this);this.parentNode=null;},append(...nodes){nodes.forEach(node=>{this.children.push(node);node.parentNode=this;});},prepend(...nodes){nodes.forEach(node=>{this.children.unshift(node);node.parentNode=this;});},replaceChildren(...nodes){this.children.forEach(node=>node.parentNode=null);this.children=[];this.append(...nodes);},cloneNode(){return doc.createElement(tag);},animate(frames,options){let resolve;const animation={duration:options.duration,finished:new Promise(r=>resolve=r),resolve(){this.resolved=true;resolve();},cancelled:0,cancel(){this.cancelled++;resolve();}};animations.push(animation);return animation;}};
  };
  doc.body=doc.createElement('body');const root=doc.createElement('div'),destination=doc.createElement('div');doc.body.append(root,destination);return {doc,root,destination,animations};
 }
@@ -110,4 +110,36 @@ test('review confirmation rejects rapid double-clicks and repeated held-key acti
  t.mock.timers.tick(499);proceed.onclick({detail:1});assert.deepEqual(ends,[]);t.mock.timers.tick(1);assert.equal(proceed.disabled,false);
  proceed.onclick({detail:2});assert.deepEqual(ends,[]);let prevented=0;proceed.onkeydown({key:'Enter',repeat:true,preventDefault(){prevented++;}});proceed.onkeydown({key:' ',repeat:true,preventDefault(){prevented++;}});assert.equal(prevented,2);
  proceed.onclick({detail:1});assert.deepEqual(ends,[true]);
+});
+
+for(const me of [0,1])for(const english of [false,true])for(const reducedMotion of [false,true])test(`tail card colors follow local seat ${me}, language ${english}, reduced motion ${reducedMotion}`,async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});const {root,destination,animations}=dom();
+ const items=[{seat:0,card:{name:'First',rarity:'legendary'}},{seat:1,card:{name:'Second',rarity:'rare'}}];
+ const before=JSON.stringify(items),queue=mountTailReveal(root,null,items,{me,english,reducedMotion,resolveDestination:()=>destination});
+ const holder=root.children[0].children[1];
+ for(let i=0;i<items.length;i++){
+  assert.equal(holder.attributes['data-team'],items[i].seat===me?'own':'opponent');
+  assert.ok(holder.children[0].children[1].className.includes('rarity-frame-'+items[i].card.rarity));
+  t.mock.timers.tick(reducedMotion?700:1800);await flush();
+  if(!reducedMotion){animations.find(a=>a.duration===1400&&!a.cancelled&&!a.resolved).resolve();await flush();}
+  t.mock.timers.tick(reducedMotion?200:550);await flush();
+ }
+ assert.equal(queue.reviewing,true);assert.equal(holder.attributes['data-team'],undefined,'mixed review is not tinted by last owner');
+ assert.deepEqual(holder.children[0].children.map(row=>row.attributes['data-team']),items.map(item=>item.seat===me?'own':'opponent'));
+ assert.equal(JSON.stringify(items),before);queue.cancel();
+});
+for(const team of ['own','opponent',null,'invalid'])test(`flight badge only accepts explicit owner ${team}`,t=>{
+ t.mock.timers.enable({apis:['setTimeout']});const {doc,root,destination}=dom();
+ const handle=flyAwardCard({element:root,rect:root.getBoundingClientRect()},destination,{doc,team,label:'Team'});
+ const ghost=doc.body.children.at(-1);
+ assert.equal(ghost.attributes['data-team'],['own','opponent'].includes(team)?team:undefined);handle.cancel();
+});
+test('auction team skins are scoped away from neutral bidding art and preserve perspective on cold final snapshots',()=>{
+ const css=readFileSync(new URL('../public/theme.css',import.meta.url),'utf8'),app=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
+ const skin=css.split('/* Awarded auction cards')[1].split('/* Calculation teams')[0];
+ assert.match(skin,/player-side\.me.*--auction-team-bg:#e2eef9/);
+ assert.match(skin,/player-side:not\(\.me\).*--auction-team-bg:#f7e6e1/);
+ assert.doesNotMatch(skin,/\.card-art|rarity-frame|auction-draw-back|auction-deck-back/);
+ assert.match(app,/team:award.seat===me\?'own':'opponent'/);
+ assert.match(app,/const seat=visual===0\?r.me:1-r.me,p=r.final\[seat\];\s*\$\('player'\+visual\).className='player player-side'\+\(seat===r.me\?' me':''\)/);
 });

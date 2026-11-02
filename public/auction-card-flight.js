@@ -7,7 +7,7 @@ export function awardFlightGeometry(from,to,{width,height}){
  const x=to.left+to.width/2,y=to.top+to.height/2;
  return {left,top,width:w,height:h,dx:x-(left+w/2),dy:y-(top+h/2),scale:Math.max(0,Math.min(1,Math.max(0,to.width-8)/w,Math.max(0,to.height-8)/h))};
 }
-export function flyAwardCard(sourceSnapshot,destination,{duration=1400,reducedMotion=false,label='',doc=sourceSnapshot?.element?.ownerDocument}={}){
+export function flyAwardCard(sourceSnapshot,destination,{duration=1400,reducedMotion=false,label='',team=null,doc=sourceSnapshot?.element?.ownerDocument}={}){
  let resolve,animation=null,pulse=null,ghost=null,settled=false,watchdog=null;
  const finished=new Promise(done=>resolve=done);
  const settle=(arrived=false)=>{if(settled)return;settled=true;if(watchdog!==null)clearTimeout(watchdog);
@@ -27,6 +27,7 @@ export function flyAwardCard(sourceSnapshot,destination,{duration=1400,reducedMo
  if(!from.width||!from.height||!to.width||!to.height){settle();return handle;}
  const geometry=awardFlightGeometry(from,to,{width:view?.innerWidth||doc.documentElement.clientWidth,height:view?.innerHeight||doc.documentElement.clientHeight});
  ghost=source.cloneNode(true);ghost.removeAttribute('id');ghost.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+ ghost.removeAttribute('data-team');if(team==='own'||team==='opponent')ghost.setAttribute('data-team',team);
  ghost.setAttribute('aria-hidden','true');ghost.setAttribute('translate','no');ghost.classList.add('auction-card-glide');
  Object.assign(ghost.style,{position:'fixed',left:geometry.left+'px',top:geometry.top+'px',width:geometry.width+'px',height:geometry.height+'px',margin:'0',pointerEvents:'none',zIndex:'9999',animation:'none',transformOrigin:'center',opacity:'1',visibility:'visible'});
  if(label){const badge=doc.createElement('span');badge.className='auction-flight-label';badge.textContent=label;ghost.append(badge)}

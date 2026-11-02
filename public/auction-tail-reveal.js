@@ -52,11 +52,11 @@ export function mountTailReveal(root,button,items,{english=false,me=0,reducedMot
  const showReview=()=>{
   if(!open||reviewing)return;
   if(!reviewItems.length){cleanup(true);return;}
-  reviewing=true;settleDraw();panel.classList.add('auction-tail-review');holder.hidden=false;
+  reviewing=true;settleDraw();holder.removeAttribute('data-team');panel.classList.add('auction-tail-review');holder.hidden=false;
   heading.textContent=english?'All remaining cards revealed':'Kalan kartların tümü açıldı';
   const list=doc.createElement('div');list.className='auction-tail-review-list';
   for(const {card,seat} of reviewItems){
-   const row=doc.createElement('article');row.className='auction-tail-review-card';
+   const row=doc.createElement('article');row.className='auction-tail-review-card';row.setAttribute('data-team',seat===me?'own':'opponent');
    const portrait=doc.createElement('div');portrait.className='auction-tail-review-portrait rarity-frame rarity-frame-'+(['common','advanced','rare','legendary'].includes(card.rarity)?card.rarity:'common');
    const text=doc.createElement('div'),owner=doc.createElement('small'),name=doc.createElement('strong'),stats=doc.createElement('span');
    owner.textContent=seat===me?(english?'Your team':'Senin takımın'):(english?'Opponent team':'Rakip takım');name.textContent=card.name;stats.textContent=values(card);text.append(owner,name,stats);row.append(portrait,text);list.append(row);loadImage(card,portrait);
@@ -73,13 +73,13 @@ export function mountTailReveal(root,button,items,{english=false,me=0,reducedMot
   if(!activeArt?.isConnected)return null;
   settleDraw();
   const snapshot={element:activeArt,rect:activeArt.getBoundingClientRect()};
-  const flight=flyAwardCard(snapshot,resolveDestination?.(seat),{duration:1400,doc,label:seat===me?(english?'Your team':'Senin takımın'):(english?'Opponent team':'Rakip takım')});
+  const flight=flyAwardCard(snapshot,resolveDestination?.(seat),{duration:1400,doc,team:seat===me?'own':'opponent',label:seat===me?(english?'Your team':'Senin takımın'):(english?'Opponent team':'Rakip takım')});
   // The detached visual travels; do not leave a duplicate face in the center.
   activeArt.style.visibility='hidden';activeScene?.classList.remove('auction-final-draw');
   return flight;
  },show:({card,seat},index,total)=>{
   if(drawTimer!==null)clearTimeout(drawTimer);
-  holder.hidden=false;heading.textContent=(seat===me?(english?'Your team':'Senin takımın'):(english?'Opponent team':'Rakip takım'))+' · '+(index+1)+' / '+total;
+  holder.hidden=false;holder.setAttribute('data-team',seat===me?'own':'opponent');heading.textContent=(seat===me?(english?'Your team':'Senin takımın'):(english?'Opponent team':'Rakip takım'))+' · '+(index+1)+' / '+total;
   const scene=doc.createElement('div');scene.className='auction-deck-scene auction-drawing auction-final-draw rarity-frame-'+(['common','advanced','rare','legendary'].includes(card.rarity)?card.rarity:'common');
   const backs=doc.createElement('div');backs.className='auction-deck-backs';backs.setAttribute('aria-hidden','true');
   for(let n=0;n<Math.min(3,total-index-1);n++){const back=doc.createElement('span');back.className='auction-deck-back';back.style.setProperty('--deck-layer',String(n+1));back.textContent='✦';backs.append(back)}
