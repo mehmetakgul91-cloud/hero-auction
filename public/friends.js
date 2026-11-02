@@ -4,6 +4,10 @@ export function createFriendsUI({document:doc=globalThis.document,window:win=glo
  const $=id=>doc.getElementById(id),t=translate;
  const panel=$('friends-panel'),nav=$('home-friends-tab'),opponent=opponentRoot||$('friend-opponent');
  const sessionId=win.crypto.randomUUID();
+ const dialog=$('waiting-friends-dialog'),roomOpen=$('waiting-friends-open'),homeParent=panel?.parentNode,homeNext=panel?.nextSibling;
+ let roomView=false,returnFocus=null;
+ const canOpenRoom=()=>!!login?.authToken&&!!room&&canHostInvite();
+ function updateRoomEntry(){if(roomOpen){roomOpen.hidden=!canOpenRoom();roomOpen.setAttribute('aria-expanded',String(roomView));}}
  let login=null,data=null,room=null,generation=0,pending=false,mutating=false,opponentBusy=false,timer=null,requestSerial=0,suspended=false;
  let inviteTarget=null,inviteBusy=false,inviteRevision=0,invitationState={incoming:[],outgoing:[]},requestDisclosure=null;
  const sentInvite=id=>[...invitationState.outgoing].reverse().find(i=>i.to?.playerId===id&&['pending','queued'].includes(i.status));
@@ -19,7 +23,7 @@ export function createFriendsUI({document:doc=globalThis.document,window:win=glo
   if(next?.authToken===login?.authToken)return;
   heartbeat(false);generation++;pending=false;mutating=false;opponentBusy=false;inviteBusy=false;login=next;data=null;invitationState={incoming:[],outgoing:[]};win.clearInterval(timer);timer=null;
   close();message('');if($('friend-add'))$('friend-add').disabled=false;if($('friends-lists'))$('friends-lists').replaceChildren();if($('friend-own-id'))$('friend-own-id').value='';if($('friend-id'))$('friend-id').value='';
-  renderOpponent();renderBadge();if($('friend-copy'))$('friend-copy').disabled=true;
+  renderOpponent();renderBadge();updateRoomEntry();if($('friend-copy'))$('friend-copy').disabled=true;
   if(login?.authToken){heartbeat();void refresh();timer=win.setInterval(()=>{if(!suspended){heartbeat();void refresh()}},20000)}
  }
  function renderBadge(){const badge=$('friends-online-count');if(badge)badge.textContent=data?`${data.friends.filter(p=>p.online).length} ${t('çevrimiçi')}`:t('Arkadaşların');}
@@ -36,7 +40,7 @@ export function createFriendsUI({document:doc=globalThis.document,window:win=glo
  const canHostInvite=()=>!room||(room.mode==='friend'&&room.phase==='waiting'&&room.me===0&&!room.players?.[1]);
  const onlineFriend=id=>data?.friends.find(person=>person.playerId===id&&person.online);
  const roomContext=value=>JSON.stringify(value?[value.code,value.mode,value.phase,value.me,!!value.players?.[1]]:null);
- function setRoom(value){const changed=roomContext(room)!==roomContext(value);room=value;renderOpponent();if(changed){if(inviteTarget||inviteBusy)message('');inviteTarget=null;inviteRevision++;if(panel&&!panel.hidden)renderLists()}}
+ function setRoom(value){const changed=roomContext(room)!==roomContext(value);room=value;renderOpponent();if(roomView&&changed)close();updateRoomEntry();if(changed){if(inviteTarget||inviteBusy)message('');inviteTarget=null;inviteRevision++;if(panel&&!panel.hidden)renderLists()}}
  function actionButton(label,action,id){const version=generation;const button=node('button',t(label),'outline');button.type='button';button.disabled=mutating||inviteBusy;button.onclick=()=>{if(version===generation&&!panel?.hidden)void mutate(action,id)};return button}
  function beginInvite(id,version){
   if(version!==generation||mutating||inviteBusy||!login?.authToken||!onInvite||panel?.hidden)return;
@@ -96,7 +100,7 @@ export function createFriendsUI({document:doc=globalThis.document,window:win=glo
  async function refresh(force=false){
   if(!login?.authToken||(pending&&!force))return;
   const version=generation,serial=++requestSerial;pending=true;
-  try{const result=await request('/api/friends');if(version!==generation||serial!==requestSerial)return;data=result;renderBadge();renderOpponent();
+  try{const result=await request('/api/friends');if(version!==generation||serial!==requestSerial)return;data=result;if(panel&&!panel.hidden&&$('friends-message')?.textContent===t('Yükleniyor…'))message('');renderBadge();renderOpponent();
    if(inviteTarget&&!onlineFriend(inviteTarget)){inviteTarget=null;inviteRevision++;if(panel&&!panel.hidden)message('Bu arkadaş artık çevrimiçi değil veya arkadaş listende yok.');}
    if($('friend-own-id'))$('friend-own-id').value=data.playerId;if($('friend-copy'))$('friend-copy').disabled=!data.playerId;
    if($('friends-guest-note'))$('friends-guest-note').hidden=!data.guest;
@@ -111,14 +115,33 @@ export function createFriendsUI({document:doc=globalThis.document,window:win=glo
   try{await request('/api/friend/'+action,{playerId:id});if(version!==generation)return;if(action==='add')$('friend-id').value='';message(action==='add'?'Arkadaşlık isteği gönderildi.':'Arkadaş listesi güncellendi.');}
   catch(e){if(version===generation)message(e.message)}finally{if(version===generation){mutating=false;if(add)add.disabled=false;await refresh(true);renderLists()}}
  }
- function open(){if(!panel||!login?.authToken)return;onOpen();panel.hidden=false;nav?.setAttribute('aria-expanded','true');nav?.classList.add('selected');
+ function open(){if(!panel||!login?.authToken)return;message(data?'':'Yükleniyor…');onOpen();panel.hidden=false;nav?.setAttribute('aria-expanded','true');nav?.classList.add('selected');
   if($('friends-guest-note'))$('friends-guest-note').hidden=login.type!=='guest';renderLists();void refresh();panel.scrollIntoView?.({behavior:'smooth',block:'start'});}
- function close(){inviteTarget=null;inviteRevision++;message('');if($('friends-tools'))$('friends-tools').open=false;if(requestDisclosure)requestDisclosure.open=false;if(panel)panel.hidden=true;nav?.setAttribute('aria-expanded','false');nav?.classList.remove('selected')}
- if(nav)nav.onclick=open;
- if($('friends-close'))$('friends-close').onclick=()=>{close();nav?.focus()};
+ function openForRoom(opener=roomOpen){
+  if(!canOpenRoom()||!panel||!dialog||roomView)return false;
+  returnFocus=opener;roomView=true;dialog.append(panel);
+  if($('friends-close'))$('friends-close').textContent=t('← ODAYA DÖN');
+  if($('friends-title'))$('friends-title').textContent=t('Arkadaş listesinden davet');
+  try{dialog.showModal();}catch{close();return false;}
+  open();updateRoomEntry();$('friends-close')?.focus();return true;
+ }
+ function close(){
+  inviteTarget=null;inviteRevision++;message('');if($('friends-tools'))$('friends-tools').open=false;if(requestDisclosure)requestDisclosure.open=false;if(panel)panel.hidden=true;
+  const wasRoom=roomView,focusTarget=returnFocus;roomView=false;returnFocus=null;
+  if(wasRoom){if(dialog?.open)dialog.close();if(homeParent)homeParent.insertBefore(panel,homeNext?.parentNode===homeParent?homeNext:null);}
+  if($('friends-close'))$('friends-close').textContent=t('← ANA MENÜ');
+  if($('friends-title'))$('friends-title').textContent=t('Arkadaşlar');
+  nav?.setAttribute('aria-expanded','false');nav?.classList.remove('selected');updateRoomEntry();
+  if(wasRoom){const target=focusTarget?.isConnected&&!focusTarget.hidden?focusTarget:roomOpen?.isConnected&&!roomOpen.hidden?roomOpen:null;target?.focus();}
+ }
+ if(nav)nav.onclick=()=>open();
+ if(roomOpen)roomOpen.onclick=()=>openForRoom(roomOpen);
+ if(dialog){dialog.addEventListener('cancel',event=>{event.preventDefault();close()});dialog.addEventListener('close',()=>{if(roomView&&!dialog.open)close()});dialog.addEventListener('click',event=>{if(event.target===dialog)close()});}
+ if($('friends-close'))$('friends-close').onclick=()=>{const wasRoom=roomView;close();if(!wasRoom)nav?.focus()};
+ if($('friends-refresh'))$('friends-refresh').onclick=()=>{message('Yükleniyor…');void refresh(true)};
  if($('friend-add-form'))$('friend-add-form').onsubmit=e=>{e.preventDefault();void mutate('add',$('friend-id').value.trim())};
  if($('friend-copy'))$('friend-copy').onclick=async()=>{const field=$('friend-own-id');if(!field.value)return;try{await win.navigator.clipboard.writeText(field.value);message('Oyuncu kimliği kopyalandı.')}catch{field.focus();field.select();message('Kimliğini seçip kopyalayabilirsin.')}};
  const hide=()=>{suspended=true;heartbeat(false)},show=()=>{suspended=false;heartbeat();void refresh()};
  win.addEventListener('pagehide',hide);win.addEventListener('pageshow',show);
- return {setLogin,setRoom,setInvitations,open,close,refresh,destroy(){heartbeat(false);generation++;win.clearInterval(timer);win.removeEventListener('pagehide',hide);win.removeEventListener('pageshow',show)}};
+ return {setLogin,setRoom,setInvitations,open,openForRoom,close,refresh,destroy(){close();heartbeat(false);generation++;win.clearInterval(timer);win.removeEventListener('pagehide',hide);win.removeEventListener('pageshow',show)}};
 }

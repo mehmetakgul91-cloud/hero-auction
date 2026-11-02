@@ -173,3 +173,66 @@ test('friend rows show only active pending/queued match invitation status, never
  }
  for(const [status,label] of [['pending','Yanıt bekleniyor'],['queued','Kabul edildi']]){f.ui.setInvitations({incoming:[],outgoing:[{id:'active',to:offline,status}]});assert.match(panelText(f),new RegExp(label));assert.match(panelText(f),/Çevrimdışı/)}
 });
+
+// Real DOM-like portal behavior, without creating accounts or sending external invitations.
+function portalFixture(){
+ const f=fixture({onInvite:async()=>true});
+ // Build a fresh controller after installing dialog nodes and a stable home mount.
+ f.ui.destroy();
+ const home=new Element(),next=new Element(),panel=f.nodes['friends-panel'];
+ home.children=[panel,next];panel.parentNode=home;panel.nextSibling=next;next.parentNode=home;
+ home.insertBefore=(el,before)=>{el.parentNode?.children.splice(el.parentNode.children.indexOf(el),1);const i=home.children.indexOf(before);home.children.splice(i<0?home.children.length:i,0,el);el.parentNode=home};
+ const dialog=new Element('dialog'),events={};dialog.open=false;
+ dialog.addEventListener=(name,fn)=>events[name]=fn;
+ dialog.append=el=>{el.parentNode?.children.splice(el.parentNode.children.indexOf(el),1);dialog.children.push(el);el.parentNode=dialog};
+ dialog.showModal=()=>{dialog.open=true};dialog.close=()=>{dialog.open=false;events.close?.()};
+ Object.assign(f.nodes,{'waiting-friends-dialog':dialog,'waiting-friends-open':new Element('button'),'friends-title':new Element('h2'),'friends-refresh':new Element('button')});
+ f.nodes['waiting-friends-open'].isConnected=true;
+ const win={crypto:{randomUUID:()=> 'tab-id'},fetch:async(path,options)=>{f.calls.push([path,JSON.parse(options.body)]);return{ok:true,json:async()=>path==='/api/friends'?snapshot:{ok:true}}},setInterval:()=>1,clearInterval(){},addEventListener(){},removeEventListener(){}};
+ f.ui=createFriendsUI({document:f.doc,window:win,onInvite:async()=>true});
+ return {...f,home,next,dialog,dialogEvents:events};
+}
+const waitingRoom={code:'821',mode:'friend',phase:'waiting',me:0,players:[{},null]};
+test('waiting host opens existing friends panel above room and returns it on close, with no room API',async()=>{
+ const f=portalFixture();f.ui.setLogin({authToken:'owner',type:'google'});f.ui.setRoom(waitingRoom);await tick();
+ assert.equal(f.nodes['waiting-friends-open'].hidden,false);
+ assert.equal(f.ui.openForRoom(),true);assert.equal(f.dialog.open,true);assert.equal(f.nodes['friends-panel'].parentNode,f.dialog);
+ assert.equal(f.nodes['friends-close'].textContent,'← ODAYA DÖN');assert.equal(f.nodes['friends-title'].textContent,'Arkadaş listesinden davet');
+ assert.equal(f.ui.openForRoom(),false);
+ f.nodes['friends-close'].onclick();assert.equal(f.dialog.open,false);assert.equal(f.nodes['friends-panel'].parentNode,f.home);
+ assert.deepEqual(f.home.children,[f.nodes['friends-panel'],f.next]);assert.equal(f.nodes['waiting-friends-open'].focused,true);
+ assert.equal(f.calls.some(([path])=>['/api/create','/api/room/detach','/api/friend/invite'].includes(path)),false);
+});
+test('room picker closes for Escape, backdrop, native close, logout, and full/changed rooms',async()=>{
+ const exits=[f=>f.dialogEvents.cancel({preventDefault(){}}),f=>f.dialogEvents.click({target:f.dialog}),f=>f.dialog.close(),f=>f.ui.setLogin(null),f=>f.ui.setRoom({...waitingRoom,players:[{},{}]}),f=>f.ui.setRoom({...waitingRoom,phase:'auction'}),f=>f.ui.setRoom({...waitingRoom,code:'822'})];
+ for(const exit of exits){const f=portalFixture();f.ui.setLogin({authToken:'owner'});f.ui.setRoom(waitingRoom);await tick();f.ui.openForRoom();exit(f);assert.equal(f.dialog.open,false);assert.equal(f.nodes['friends-panel'].parentNode,f.home);assert.equal(f.nodes['friends-panel'].hidden,true);f.ui.destroy()}
+});
+test('only authenticated empty private host can open picker; snapshots do not close unchanged room',async()=>{
+ const f=portalFixture();f.ui.setRoom(waitingRoom);assert.equal(f.ui.openForRoom(),false);f.ui.setLogin({authToken:'owner',type:'guest'});
+ for(const room of [null,{...waitingRoom,mode:'bot'},{...waitingRoom,phase:'matching'},{...waitingRoom,me:1},{...waitingRoom,players:[{},{}]}]){f.ui.setRoom(room);assert.equal(f.nodes['waiting-friends-open'].hidden,true);assert.equal(f.ui.openForRoom(),false)}
+ f.ui.setRoom(waitingRoom);f.ui.openForRoom();f.ui.setRoom({...waitingRoom});assert.equal(f.dialog.open,true);
+ f.dialogEvents.click({target:f.nodes['friends-panel']});assert.equal(f.dialog.open,true);f.ui.destroy();assert.equal(f.dialog.open,false);
+});
+test('picker refresh remains authenticated and supports retry without changing room',async()=>{
+ const f=portalFixture();f.ui.setLogin({authToken:'owner'});f.ui.setRoom(waitingRoom);await tick();f.ui.openForRoom();f.nodes['friends-refresh'].onclick();await tick();
+ assert.equal(f.dialog.open,true);assert.equal(f.nodes['friends-message'].textContent,'');assert.ok(f.calls.filter(([p])=>p==='/api/friends').every(([,b])=>b.authToken==='owner'));
+});
+
+test('replaced stage opener restores focus to persistent waiting-room header',async()=>{
+ const f=portalFixture();f.ui.setLogin({authToken:'owner'});f.ui.setRoom(waitingRoom);await tick();
+ const oldStage=new Element('button');oldStage.isConnected=true;f.ui.openForRoom(oldStage);oldStage.isConnected=false;
+ f.ui.setRoom({...waitingRoom});f.ui.close();assert.equal(f.nodes['waiting-friends-open'].focused,true);
+});
+test('in-flight invite close/reopen keeps lock and discards stale response messages',async()=>{
+ for(const rejectSend of [false,true]){
+  let resolve,reject;const sent=[];const f=await inviteFixture({onInvite:id=>{sent.push(id);return new Promise((r,j)=>{resolve=r;reject=j})}});
+  f.ui.setRoom(waitingRoom);findButton(f,'DAVET ET').onclick();findButton(f,'BU ODAYA DAVET ET').onclick();
+  f.ui.close();f.ui.open();await tick();assert.equal(findButton(f,'DAVET ET').disabled,true);
+  if(rejectSend)reject(Error('stale send failure'));else resolve(true);await tick();
+  assert.equal(f.nodes['friends-message'].textContent,'');assert.equal(findButton(f,'DAVET ET').disabled,false);assert.deepEqual(sent,['HA-ONLINE']);
+ }
+});
+test('delayed native close event cannot dismiss a newly reopened picker',async()=>{
+ const f=portalFixture();f.ui.setLogin({authToken:'owner'});f.ui.setRoom(waitingRoom);await tick();
+ f.ui.openForRoom();f.ui.close();f.ui.openForRoom();f.dialogEvents.close();assert.equal(f.dialog.open,true);f.ui.close();
+});

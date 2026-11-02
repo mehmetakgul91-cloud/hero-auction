@@ -14,6 +14,7 @@ on:
       - 'test/**'
       - 'tools/test-postgres-bot-*.mjs'
       - 'tools/test-login-reward-browser.mjs'
+      - 'tools/test-waiting-friends-browser.mjs'
       - 'package*.json'
       - '.github/workflows/bot-economy-postgres-tests.yml'
   push:
@@ -31,6 +32,7 @@ on:
       - 'test/**'
       - 'tools/test-postgres-bot-*.mjs'
       - 'tools/test-login-reward-browser.mjs'
+      - 'tools/test-waiting-friends-browser.mjs'
       - 'package*.json'
       - '.github/workflows/bot-economy-postgres-tests.yml'
 permissions:
@@ -117,6 +119,11 @@ jobs:
         env:
           HERO_BROWSER_SCREENSHOTS: artifacts/bot-browser
         run: env -u DATABASE_URL node tools/test-login-reward-browser.mjs
+      - name: Waiting room friends picker synthetic UI
+        timeout-minutes: 3
+        env:
+          HERO_BROWSER_SCREENSHOTS: artifacts/bot-browser
+        run: env -u DATABASE_URL node tools/test-waiting-friends-browser.mjs
       - name: Preserve synthetic desktop and mobile browser evidence
         if: always()
         uses: actions/upload-artifact@v4

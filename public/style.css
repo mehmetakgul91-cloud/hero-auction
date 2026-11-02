@@ -349,6 +349,18 @@ header{gap:14px;flex-wrap:wrap}
 .bid-stepper button{cursor:pointer}
 
 
+/* Waiting room reuses the existing authenticated friends panel without navigation. */
+.waiting-friends-dialog{width:min(680px,calc(100vw - 24px));max-height:calc(100dvh - 32px);padding:0;border:1px solid #aab8bd;border-radius:20px;background:#f5f4ef;color:#203047;overflow:auto;overscroll-behavior:contain}
+.waiting-friends-dialog::backdrop{background:#101b31a8}
+.waiting-friends-dialog #friends-panel{margin:0;border:0;box-shadow:none;padding:18px;min-width:0}
+.waiting-friends-dialog .friends-heading{flex-wrap:wrap;gap:10px}
+.waiting-friends-dialog .friends-heading h2{font-size:clamp(18px,5vw,26px)}
+.waiting-friends-dialog button{min-height:44px;white-space:normal}
+#game .room-tools #waiting-friends-open{white-space:normal;min-height:44px}
+#waiting-friends-stage{min-height:44px;white-space:normal}
+@media(max-width:420px){.waiting-friends-dialog #friends-panel{padding:12px}.waiting-friends-dialog .friend-roster-row{grid-template-columns:36px minmax(0,1fr)}.waiting-friends-dialog .friend-roster-row .friend-actions{grid-column:1/-1;justify-content:flex-end}.waiting-friends-dialog .friend-invite-confirm{grid-column:1/-1}}
+
+
 /* Cinematic Hero Arena — home-only visual layer; gameplay elements and IDs remain intact. */
 #home.cinema-home{position:relative;isolation:isolate;padding:16px 0 30px;overflow:hidden;border-radius:30px;background:radial-gradient(ellipse at 76% 12%,rgba(66,117,207,.24),transparent 38%),radial-gradient(ellipse at 15% 29%,rgba(209,44,85,.19),transparent 40%),linear-gradient(155deg,#070b17,#10192e 45%,#090d1a);border:1px solid rgba(111,147,221,.24);box-shadow:0 30px 90px #0008}
 #home .cinema-sky{position:absolute;inset:0 0 auto;height:540px;overflow:hidden;pointer-events:none;z-index:-1;background:repeating-linear-gradient(112deg,transparent 0 69px,rgba(255,255,255,.025) 70px 71px,transparent 72px 140px)}
