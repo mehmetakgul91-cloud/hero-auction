@@ -541,6 +541,16 @@ body:before{opacity:.24;background-image:linear-gradient(#6c7e8910 1px,transpare
 #game .auction-tail-progress{color:#735626}
 #game .delivery-count{color:#24637a}
 #game .delivery-slot{border-color:#9baeb9;color:#3f5368;background:#e5ebe8}
+/* Calculation teams follow the viewer, never the server seat or hero rarity. */
+#game .calculation-team[data-team="own"]{--calculation-row:#e2eef9;--calculation-heading:#cfdfef;--calculation-total:#bfd5e9;--calculation-border:#8daac4;--calculation-accent:#295d88}
+#game .calculation-team[data-team="opponent"]{--calculation-row:#f7e6e1;--calculation-heading:#efd3ca;--calculation-total:#e7c2b7;--calculation-border:#c69b8e;--calculation-accent:#893f32}
+#game .calculation-team[data-team]{--theme-muted:#485666;background:var(--calculation-row);border-color:var(--calculation-border);border-top:4px solid var(--calculation-accent)}
+#game .calculation-team[data-team] .calculation-team-heading{background:var(--calculation-heading);border-color:var(--calculation-border)}
+#game .calculation-team[data-team] .auction-calculation small{color:var(--theme-muted)}
+#game .calculation-team[data-team] .calculation-hero{background:var(--calculation-row)}
+#game .calculation-team[data-team] .auction-calculation th,#game .calculation-team[data-team] .auction-calculation td{border-color:var(--calculation-border)}
+#game .calculation-team[data-team] .calculation-total{background:var(--calculation-total);color:var(--theme-ink)}
+
 #game .auction-calculation th,#game .auction-calculation td{border-color:#c8cfd2}
 #game .auction-calculation small{color:#586676}
 #game .auction-calculation .calculation-total{background:#dbe7e2;color:#245e58}
