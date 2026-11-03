@@ -47,7 +47,7 @@ test('cancellation guard is ahead of tail capture, preparation and results; no g
 });
 test('idle closure after auction never claims a refund or offers arena entry',()=>{
  const f=fixture(),room=cancelledRoom({cancellation:null,idleClosed:{at:123,auctionStarted:true,refundGold:0},phase:'closed'});f.ctx.show(room);
- assert.match(f.nodes.stage.textContent,/120 saniye.*Açık artırma başladığı için giriş ücreti iade edilmez/);
+ assert.match(f.nodes.stage.textContent,/100 saniye.*Açık artırma başladığı için giriş ücreti iade edilmez/);
  assert.match(f.nodes.stage.textContent,/Kazanan veya lig sonucu oluşturulmadı/);assert.equal(f.counts.normalPath,0);
 });
 test('unpaid preauction closure distinguishes no charge from refund',()=>{

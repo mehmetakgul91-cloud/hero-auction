@@ -1,6 +1,6 @@
 // Non-bot room terminal closure. No match result, rank, reward, or invented debit.
 import {cancellationDigest, cancellationMatchId} from './paid-match-cancellation.js';
-import {roomIdleDue} from './room-inactivity.js';
+import {roomIdleDue,ROOM_IDLE_MS} from './room-inactivity.js';
 const fail=(message,status=409)=>Object.assign(Error(message),{status});
 export const idleCancellationReceiptKey=room=>'room-idle:'+cancellationDigest(cancellationMatchId(room));
 
@@ -65,11 +65,12 @@ export function disconnectForfeitIntent(room,decision,now){
  if(room.mode==='bot'||room.auctionStarted!==true||!['auction','finished'].includes(room.phase)||room.matchSettled||room.idleClosed||room.cancelled||room.disconnectForfeit||room.forfeitIntent||room.battleSync?.result||room.battleCompleted?.some(Boolean)||room.goldAward||room.goldRefunds?.length||room.victoryChestPending||room.victoryChestReceipt||room.botEntry||room.inviteJoining||room.inviteUncertain||room.joinPending||room.rematchPending)throw fail('Bağlantı süresi nedeniyle sonuçlandırma uygun değil.');
  if(room.players?.length!==2||room.players.some(player=>typeof player?.accountId!=='string'||!player.accountId)||room.players[0].accountId===room.players[1].accountId)throw fail('İki gerçek oyuncu doğrulanamadı.');
  const {winner,absentSeat,absentSince,deadline,presentSince,presenceEpoch}=decision||{};
- if(![0,1].includes(winner)||absentSeat!==1-winner||![absentSince,deadline,presentSince,now].every(Number.isSafeInteger)||absentSince<0||presentSince<0||deadline!==Math.max(absentSince,presentSince)+120000||now<deadline||typeof presenceEpoch!=='string'||!presenceEpoch||presenceEpoch.length>200)throw fail('Kesintisiz oyuncu varlığı veya dönüş süresi doğrulanamadı.');
+ if(![0,1].includes(winner)||absentSeat!==1-winner||![absentSince,deadline,presentSince,now].every(Number.isSafeInteger)||absentSince<0||presentSince<0||deadline!==Math.max(absentSince,presentSince)+ROOM_IDLE_MS||now<deadline||typeof presenceEpoch!=='string'||!presenceEpoch||presenceEpoch.length>200)throw fail('Kesintisiz oyuncu varlığı veya dönüş süresi doğrulanamadı.');
  // A returning survivor must remain present for a fresh full window; never
  // grant an immediate win based on an absence that predates their return.
  const saved=structuredClone(room),receipt={version:1,kind:'room-disconnect-forfeit',matchId,receiptKey:idleCancellationReceiptKey(room),at:now,winner,absentSeat,absentSince,deadline,presentSince,presenceEpoch};
  saved.phase='finished';saved.turn=null;saved.deadline=null;
+ delete saved.pendingDisconnectForfeit;
  saved.disconnectForfeit={...receipt};
  // Preserve pending settlement until the ordinary reward/record path completes.
  saved.battleSettlementPending=true;saved.matchSettled=false;
@@ -87,7 +88,7 @@ export async function persistRoomDisconnectForfeit({database,room,decision,now=D
   const prior=(await client.query('SELECT state FROM hero_auction_social WHERE id=$1',[receiptKey])).rows[0]?.state;
   if(prior){
    receiptObserved=true;
-   if(prior.version!==1||prior.kind!=='room-disconnect-forfeit-receipt'||prior.receipt?.kind!=='room-disconnect-forfeit'||prior.receipt?.matchId!==matchId||prior.receipt?.receiptKey!==receiptKey||prior.room?.disconnectForfeit?.matchId!==matchId||cancellationMatchId(prior.room)!==matchId||prior.room.phase!=='finished'||prior.room.matchSettled!==false||prior.room.battleSettlementPending!==true||cancellationDigest(prior.room)!==prior.roomDigest||cancellationDigest(prior.room.disconnectForfeit)!==cancellationDigest(prior.receipt)||decision&&prior.receipt.winner!==decision.winner)throw fail('Bağlantı sonucu makbuzu doğrulanamadı.',503);
+   if(prior.version!==1||prior.kind!=='room-disconnect-forfeit-receipt'||prior.receipt?.kind!=='room-disconnect-forfeit'||prior.receipt?.matchId!==matchId||prior.receipt?.receiptKey!==receiptKey||prior.room?.disconnectForfeit?.matchId!==matchId||cancellationMatchId(prior.room)!==matchId||prior.room.phase!=='finished'||prior.room.matchSettled!==false||prior.room.battleSettlementPending!==true||prior.room.pendingDisconnectForfeit!==undefined||cancellationDigest(prior.room)!==prior.roomDigest||cancellationDigest(prior.room.disconnectForfeit)!==cancellationDigest(prior.receipt)||decision&&prior.receipt.winner!==decision.winner)throw fail('Bağlantı sonucu makbuzu doğrulanamadı.',503);
    commitIssued=true;await client.query('COMMIT');return{room:structuredClone(prior.room),receipt:prior.receipt,replayed:true};
   }
   disconnectForfeitIntent(room,decision,now);validateLive();

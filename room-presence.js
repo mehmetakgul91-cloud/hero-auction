@@ -54,7 +54,7 @@ export function createRoomPresence({now = Date.now, fallbackLeaseMs = 45_000} = 
       // A dead SSE connection is evidence as of now, not an ancient poll.
       if (!entry.connections.size) {
         // An authenticated closed transport is stronger evidence than an older
-        // poll. Do not add the fallback lease to the120-second return window.
+        // poll. Do not add the fallback lease to the 100-second return window.
         // A different polling-only tab can establish presence on its next poll.
         entry.leaseUntil = 0;entry.online = false;entry.presentSince = null;entry.absentSince = state.lastAt;
       } else refresh(entry, state.lastAt);

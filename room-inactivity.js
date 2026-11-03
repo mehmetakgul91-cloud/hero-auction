@@ -1,6 +1,6 @@
 // Room-only inactivity policy. Economy settlement is deliberately delegated to
 // the caller: timeout is not a draw, a victory, or permission to delete a debit.
-export const ROOM_IDLE_MS = 120_000;
+export const ROOM_IDLE_MS = 100_000;
 const phases = new Set(['waiting', 'matching', 'bot_offer', 'auction', 'finished']);
 const actions = new Set(['create', 'join', 'match', 'bot', 'bot-accept', 'rematch', 'bid', 'pass', 'chat', 'formation', 'ready', 'invite']);
 const validTime = value => Number.isSafeInteger(value) && value >= 0;

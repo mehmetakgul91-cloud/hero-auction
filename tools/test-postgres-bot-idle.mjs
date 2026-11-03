@@ -20,7 +20,7 @@ async function fixture({legacy=false}={}){
  }else room=(await admitBotMatch({database:pool,accountId:r.players[0].accountId,requestId:randomUUID(),room:r})).room;
  room.playerActivity={match:`${room.code}:${room.created}:1`,at:1000};await pool.query('UPDATE hero_auction_rooms SET state=$2::jsonb WHERE code=$1',[room.code,JSON.stringify(room)]);return room;
 }
-const cancel=(room,extra={})=>cancelIdleBotMatch({database:pool,room,now:121000,validateLive:()=>true,...extra});
+const cancel=(room,extra={})=>cancelIdleBotMatch({database:pool,room,now:101000,validateLive:()=>true,...extra});
 const gold=async r=>(await pool.query('SELECT gold FROM hero_auction_wallets WHERE account_id=$1',[r.players[0].accountId])).rows[0].gold;
 function lostCommit(){let armed=true;return{async connect(){const c=await pool.connect();return{async query(...args){const result=await c.query(...args);if(args[0]==='COMMIT'&&armed){armed=false;throw Error('Lost COMMIT response')}return result},release:()=>c.release()}}}}
 try{

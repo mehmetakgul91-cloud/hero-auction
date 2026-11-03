@@ -110,7 +110,7 @@ async function idleFixture(options={}){
  const f=fixture(options),r=(await f.admit()).room;
  r.playerActivity={match:`${r.code}:${r.created}:${r.matchNumber||1}`,at:1000};
  f.state.rooms.set(r.code,structuredClone(r));
- f.idleRoom=r;f.cancel=(extra={})=>cancelIdleBotMatch({database:f.database,room:r,now:121000,validateLive:()=>true,...extra});return f;
+ f.idleRoom=r;f.cancel=(extra={})=>cancelIdleBotMatch({database:f.database,room:r,now:101000,validateLive:()=>true,...extra});return f;
 }
 test('idle cancellation is exactly once, no refund, reward, series, or wallet update',async()=>{
  const f=await idleFixture(),before=structuredClone(f.state.wallets),results=await Promise.all(Array.from({length:10},()=>f.cancel()));
@@ -124,7 +124,7 @@ test('legacy paid bot idle cancellation keeps its original debit without a loss'
  const result=await f.cancel();assert.equal(result.receipt.rewards.gold,0);assert.equal(f.state.wallets.get('fixture-human').gold,450);assert.deepEqual(result.room.series,[0,0]);
 });
 test('idle cancellation exact boundary and arena exclusion',async()=>{
- const f=await idleFixture();await assert.rejects(f.cancel({now:120999}),/uygun değil/);assert.equal(f.state.settlements.size,0);
+ const f=await idleFixture();await assert.rejects(f.cancel({now:100999}),/uygun değil/);assert.equal(f.state.settlements.size,0);
  for(const extra of [{battleSync:{result:{live:true}}},{battleSync:{result:{live:false}}},{battleCompleted:[true,false]},{matchSettled:true},{goldAward:{}},{goldRefunds:[{}]},{botSettlementPending:true},{victoryChestPending:true},{victoryChestReceipt:{}}]){
   const r={...f.idleRoom,...extra};f.state.rooms.set(r.code,structuredClone(r));await assert.rejects(f.cancel({room:r}),/uygun değil/);assert.equal(f.state.settlements.size,0);
  }

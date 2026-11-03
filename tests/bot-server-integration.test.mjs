@@ -7,17 +7,19 @@ import {readFileSync} from 'node:fs';
 import {BOT_ECONOMY,botMatchId} from '../bot-economy.js';
 const source=readFileSync(new URL('../server.js',import.meta.url),'utf8');
 const helpers=source.slice(source.indexOf('// Bot money is never'),source.indexOf('async function walletSummary('));
+const allocationStart=source.indexOf('function availableRoomCode(){');
+const allocationHelper=source.slice(allocationStart,source.indexOf('\n}',allocationStart)+2);
 const request={authToken:'synthetic-auth',difficulty:'medium',botTermsVersion:BOT_ECONOMY.version,requestId:'12345678-1234-4234-8234-123456789abc'};
 const offer=()=>({code:'123',created:1000,matchNumber:1,phase:'bot_offer',mode:'random',players:[{accountId:'synthetic-human',token:'seat-token',name:'Fixture',team:[],credits:20},null],cards:[],series:[0,0]});
 function fixture({lost=false,gold=500,ready=true}={}){
  let saved=null,admissions=0,settlements=0,sequence=0;
  const ctx={BOT_ECONOMY,verifyBotEconomySchema:async()=>true,structuredClone,console:{error(){}},databaseReady:true,previewGuestMode:false,magicDustPolicy:{enabled:true},database:{query:async()=>({rows:[]})},rooms:new Map(),activeSeats:new Map(),waiting:new Map(),roomFlushes:new Map(),auctionAdmissions:new WeakSet(),liveArenaMatchKeys:new Map(),dirtyRooms:new Set(),paidEntryMaintenance:{isPaused:()=>false},
   readLogin:()=>({sub:'synthetic-human'}),seatRoom:p=>ctx.rooms.get(p.code),saveSocial:async()=>{},victoryMatchId:botMatchId,error:(message,status)=>{throw Object.assign(Error(message),{status})},
-  publicRoom:r=>structuredClone(r),publish:r=>ctx.dirtyRooms.add(r.code),markRoom:r=>ctx.dirtyRooms.add(r.code),recordMatch(){},chosenName:()=> 'Fixture',code:()=>String(200+sequence++),token:()=>`token-${sequence++}`,newCards:()=>[],assignBotCommander:r=>{r.botCommander={commanderId:'attack',levels:{attack:25,defense:20,magic:20,support:20}}},startRoomArenaTheme(){},refreshAuctionIdentity:async()=>{},refreshAuctionCommanders:async()=>{},previewCommanderProfiles:new Map(),liveArenaLifecycle:{endRoom(){}},
+  publicRoom:r=>structuredClone(r),publish:r=>ctx.dirtyRooms.add(r.code),markRoom:r=>ctx.dirtyRooms.add(r.code),recordMatch(){},chosenName:()=> 'Fixture',crypto:{randomInt:()=>200+sequence++},token:()=>`token-${sequence++}`,newCards:()=>[],assignBotCommander:r=>{r.botCommander={commanderId:'attack',levels:{attack:25,defense:20,magic:20,support:20}}},startRoomArenaTheme(){},refreshAuctionIdentity:async()=>{},refreshAuctionCommanders:async()=>{},previewCommanderProfiles:new Map(),liveArenaLifecycle:{endRoom(){}},
   findBotAdmission:async()=>saved?{room:structuredClone(saved),replayed:true}:null,
   admitBotMatch:async({room})=>{admissions++;saved={...structuredClone(room),entryPaid:true,botEconomyVersion:BOT_ECONOMY.version,botEntry:{matchId:botMatchId(room),requestId:request.requestId,entryGold:0}};if(lost){lost=false;throw Object.assign(Error('lost COMMIT'),{status:503,uncertain:true})}return{room:structuredClone(saved),replayed:false}},
   settleBotMatch:async({room,winner})=>{settlements++;return{room:{...structuredClone(room),matchSettled:true,botSettlementPending:false,botSettlementReceipt:{outcome:winner===0?'win':'loss'}}}},recoverBotMatches:async()=>[]};
- vm.createContext(ctx);vm.runInContext(helpers,ctx);vm.runInContext(`botEconomyReady=${ready}`,ctx);
+ vm.createContext(ctx);vm.runInContext(allocationHelper+'\n'+helpers,ctx);vm.runInContext(`botEconomyReady=${ready}`,ctx);
  return{ctx,stats:()=>({gold,debits:0,admissions,settlements}),saved:()=>structuredClone(saved),seed:r=>{saved=structuredClone(r)}};
 }
 test('actual bot helper refuses missing consent, invalid difficulty and unavailable storage before admission',async()=>{
