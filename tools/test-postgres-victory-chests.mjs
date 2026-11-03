@@ -5,6 +5,7 @@ import {readFile} from 'node:fs/promises';
 import {createHash,createHmac} from 'node:crypto';
 import {spawn} from 'node:child_process';
 import {createServer} from 'node:net';
+import {initializeRoomActivity} from '../room-inactivity.js';
 import {battleRoster} from '../battle-roster.js';
 import pg from 'pg';
 import {createCommanderProfile,commanderUpgradeCost} from '../arena-commanders.js';
@@ -250,8 +251,29 @@ try{
   }finally{await app?.stop()}
  });
 
+ await check('actual server recovers frozen disconnect proof into one normal winner chest across restart',async()=>{
+  const owner='pgchest-forfeit-owner',loser='pgchest-forfeit-loser';await member(owner,{gold:450,diamonds:7,magicDust:9,level:15});await member(loser,{gold:450,diamonds:7,magicDust:9,level:15});
+  const at=Date.now(),cards=battleRoster.slice(0,10).map(hero=>({id:hero.id,name:hero.name,universe:hero.universe,role:hero.role,power:hero.proposedPower,cost:2}));
+  const pending={code:'988',created:at-180000,lastActivity:at,matchNumber:1,universe:'mixed',phase:'finished',mode:'friend',entryPaid:true,auctionStarted:true,cards,round:10,turn:null,deadline:null,topBid:0,topSeat:null,history:[],chat:[],series:[0,0],rematch:[false,false],matchSettled:false,battleSettlementPending:true,battleCompleted:[false,false],players:[{accountId:owner,name:'Forfeit winner',token:'forfeit-owner-token',credits:10,team:cards.slice(0,5)},{accountId:loser,name:'Forfeit loser',token:'forfeit-loser-token',credits:10,team:cards.slice(5,10)}]};
+  initializeRoomActivity(pending,at-130000);
+  pending.pendingDisconnectForfeit={version:1,matchId:victoryMatchId(pending),at,decision:{winner:0,absentSeat:1,absentSince:at-100000,presentSince:at-130000,deadline:at,presenceEpoch:'synthetic-prior-boot'}};
+  await sql('INSERT INTO hero_auction_rooms(code,state) VALUES($1,$2::jsonb)',[pending.code,JSON.stringify(pending)]);
+  const ownerAuth={code:pending.code,token:pending.players[0].token,authToken:fixtureAuth(owner,'Forfeit winner')},loserAuth={code:pending.code,token:pending.players[1].token,authToken:fixtureAuth(loser,'Forfeit loser')},admin={authToken:fixtureAuth('pgchest-forfeit-operator','Synthetic operator','fixture-admin@example.invalid')};
+  const ownerBefore=await snapshot(owner),loserBefore=await snapshot(loser);let creditedOwner,receipt,app;
+  try{
+   app=await startFixtureServer();await waitCancellationWrites(app,admin);
+   const winner=(await app.post('/api/state',ownerAuth)).room,other=(await app.post('/api/state',loserAuth)).room;
+   receipt=winner.victoryChest;assert.ok(receipt);assert.equal(receipt.matchId,victoryMatchId(pending));assert.deepEqual(winner.series,[1,0]);assert.equal(other.victoryChest,null);
+   creditedOwner=await snapshot(owner);assert.equal(creditedOwner.gold,ownerBefore.gold+receipt.rewards.gold);assert.equal(creditedOwner.diamonds,ownerBefore.diamonds+receipt.rewards.diamonds);assert.equal(creditedOwner.magicDust,ownerBefore.magicDust+receipt.rewards.magicDust);assert.equal(creditedOwner.intents,1);assert.equal(creditedOwner.chests,1);assert.equal(creditedOwner.awards,1);assert.deepEqual(await snapshot(loser),loserBefore);
+   await waitCancellationWrites(app,admin);const stored=(await sql('SELECT state FROM hero_auction_rooms WHERE code=$1',[pending.code])).rows[0].state;
+   assert.equal(stored.pendingDisconnectForfeit,undefined);assert.equal(stored.disconnectForfeit.winner,0);assert.equal(stored.matchSettled,true);assert.equal(stored.battleSync?.result,undefined);assert.deepEqual(stored.battleCompleted,[false,false]);assert.equal(stored.goldRefunds,undefined);
+  }finally{await app?.stop()}
+  app=null;
+  try{app=await startFixtureServer();await waitCancellationWrites(app,admin);const again=(await app.post('/api/state',ownerAuth)).room;assert.deepEqual(again.victoryChest,receipt);assert.deepEqual(again.series,[1,0]);assert.deepEqual(await snapshot(owner),creditedOwner);assert.deepEqual(await snapshot(loser),loserBefore);}finally{await app?.stop()}
+ });
+
  await check('actual admin cancellation HTTP binds boot/revision/digest, reserves combat across awaits and replays after restart without credit or room rewind',async()=>{
-  await cancellationMaintenance();const batch=await cancellationBatch('http'),before=await cancellationProof(batch),admin={authToken:fixtureAuth('pgcancel-operator','Synthetic cancellation operator','fixture-admin@example.invalid')};
+  await cancellationMaintenance();const batch=await cancellationBatch('http',room=>{room.auctionStarted=true;initializeRoomActivity(room);}),before=await cancellationProof(batch),admin={authToken:fixtureAuth('pgcancel-operator','Synthetic cancellation operator','fixture-admin@example.invalid')};
   const previewPath='/api/admin/economy/cancellations/preview',executePath='/api/admin/economy/cancellations/execute';
   let app,selection,boot,committed;
   try{
@@ -285,6 +307,7 @@ try{
   // A newer synthetic identity now reuses one room code. Replaying the old
   // durable receipt must not reinstall its cancelled snapshot over this room.
   const newer={...committed.rooms[0].state,created:committed.rooms[0].state.created+1000,matchNumber:2,entryPaid:false,cancelled:null,goldRefunds:null};
+  initializeRoomActivity(newer); // New synthetic match needs its own durable activity identity before baseline.
   await sql('UPDATE hero_auction_rooms SET state=$2::jsonb WHERE code=$1',[newer.code,JSON.stringify(newer)]);
   committed=await cancellationProof(batch);
   app=null;

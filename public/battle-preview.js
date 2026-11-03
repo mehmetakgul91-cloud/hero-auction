@@ -1,3 +1,5 @@
+import {watchRecoveredRoom} from '/room-recovery-watch.js';
+import {roomReturnStatus} from '/room-return-status.js';
 import {createBotEntryConsent,botSettlementCopy} from '/bot-entry.js';
 const botEntryConsent=createBotEntryConsent();
 import {createVictoryChestPresentation} from '/victory-chest.js';
@@ -260,6 +262,26 @@ const multiplayerCode=query.get('code');
 const multiplayerToken=query.get('token');
 let battlePoll=null;
 let leavingBattle=false;
+// The formation page remains an authenticated participant while waiting; reads
+// never extend the server's meaningful-action inactivity clock.
+let recoveryRoom=null,recoveryReceivedAt=0,stopRecoveryWatch=()=>{};
+if(auctionMode){
+ const readAuth=()=>{try{return JSON.parse(localStorage.getItem('hero-auction-login')||'null')}catch{return null}};
+ stopRecoveryWatch=watchRecoveredRoom({code:auctionCode,token:auctionToken,readAuth,onRoom:r=>{
+  if(leavingBattle)return;recoveryRoom=r;recoveryReceivedAt=Date.now();
+  if(r.idleClosed||r.forfeit){
+   // Preserve the authenticated seat so the home renderer shows this terminal
+   // result. Never detach, re-admit, or charge again during recovery.
+   leavingBattle=true;stopRecoveryWatch();try{localStorage.setItem('hero-auction-session',JSON.stringify({code:r.code,token:auctionToken}))}catch{}
+   const home=window.HeroPlatform?'/crazygames/':'/';window.HeroPlatform?.beforeNavigate(home);location.replace(home);
+  }
+ }});
+ const note=document.createElement('p');note.id='room-return-status';note.setAttribute('role','status');note.hidden=true;
+ (document.querySelector('.arena-room-nav')||document.body).append(note);
+ const statusTimer=setInterval(()=>{const text=roomReturnStatus(recoveryRoom,{now:Date.now(),receivedAt:recoveryReceivedAt,english:document.documentElement.lang==='en'});note.textContent=text;note.hidden=!text||leavingBattle;},250);
+ window.addEventListener('pagehide',()=>{stopRecoveryWatch();clearInterval(statusTimer)},{once:true});
+}
+
 async function leaveBattleAndGoHome(event){
  event?.preventDefault();
  if(leavingBattle)return;

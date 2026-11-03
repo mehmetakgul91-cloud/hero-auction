@@ -1,10 +1,12 @@
+import {initializeRoomActivity,recordRoomAction} from '../room-inactivity.js';
 import {requireModerationForInteraction} from '../moderation-availability.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 const source=fs.readFileSync(new URL('../server.js',import.meta.url),'utf8');
-const functions=source.slice(source.indexOf('function sameSeat('),source.indexOf('function seatRoom('))+source.slice(source.indexOf('function applyInvitationReceipt('),source.indexOf('async function invitationApi('));
+const openGuard=source.slice(source.indexOf('function requireRoomOpen('),source.indexOf('function initializeIdleRoom('));
+const functions=openGuard+source.slice(source.indexOf('function sameSeat('),source.indexOf('function seatRoom('))+source.slice(source.indexOf('function applyInvitationReceipt('),source.indexOf('async function invitationApi('));
 function fixture({gold=[500,500],lostCommit=false,receiptReadFails=false,paused=false}={}){
  const room={code:'123',created:1,matchNumber:1,mode:'friend',phase:'waiting',players:[{accountId:'host',name:'Host',token:'hosttoken',team:[]},null],history:[]};
  const invite={id:'invite-1',from:'host',to:'guest',code:'123',created:1,status:'queued'};
@@ -22,7 +24,7 @@ function fixture({gold=[500,500],lostCommit=false,receiptReadFails=false,paused=
   throw Error('unexpected query '+sql);
  }};
  const maintenance={isPaused:()=>paused,beginAdmission:()=>()=>{}};
- const ctx={paidEntryMaintenance:maintenance,requireVictoryChestStorage(){},requireVictoryChestProgression(){},structuredClone,Map,Date,JSON,console,roomFlushes:new Map(),rooms:new Map([['123',room]]),activeSeats:new Map(),token:()=> 'guest-room-token',log:(r,text)=>r.history.push(text),publish:()=>{},previewGuestMode:false,databaseReady:true,ratings:new Map(),matchRecords:new Map(),friends:{snapshot:()=>({})},roomInvites:{snapshot:()=>[['invite-1',invite]]},error:(message,status=400)=>{throw Object.assign(Error(message),{status})},database:{connect:async()=>client,query:async()=>{if(receiptReadFails)throw Error('database unavailable');return{rows:durable.receipt?[{state:durable.receipt}]:[]}}}};
+ const ctx={initializeRoomActivity,recordRoomAction,idleRoomJobs:new Map(),paidEntryMaintenance:maintenance,requireVictoryChestStorage(){},requireVictoryChestProgression(){},structuredClone,Map,Date,JSON,console,roomFlushes:new Map(),rooms:new Map([['123',room]]),activeSeats:new Map(),token:()=> 'guest-room-token',log:(r,text)=>r.history.push(text),publish:()=>{},previewGuestMode:false,databaseReady:true,ratings:new Map(),matchRecords:new Map(),friends:{snapshot:()=>({})},roomInvites:{snapshot:()=>[['invite-1',invite]]},error:(message,status=400)=>{throw Object.assign(Error(message),{status})},database:{connect:async()=>client,query:async()=>{if(receiptReadFails)throw Error('database unavailable');return{rows:durable.receipt?[{state:durable.receipt}]:[]}}}};
  vm.createContext(ctx);vm.runInContext(functions,ctx);
  return{ctx,room,invite,durable,statements,setPaused:value=>paused=value,join:()=>ctx.commitInvitationJoin(invite,room,{sub:'guest',name:'Guest'})};
 }
@@ -46,8 +48,8 @@ test('unconfirmed commit reserves room and surfaces uncertainty instead of charg
 
 test('uncertain invitation blocks either actor entry and detach before mutation',async()=>{
  const wrapper=source.slice(source.indexOf('async function api(url,b,requestContext)'),source.indexOf('async function apiAction(url,b,requestContext)'));
- const ctx={paidEntryMaintenance:{beginAdmission:()=>()=>{}},requireModerationForInteraction,moderationReady:true,rooms:new Map([['123',{inviteUncertain:true}]]),roomInvites:{items:new Map([['i',{from:'host',to:'guest',code:'123',status:'queued'}]])},readLogin:value=>({sub:value,name:value}),friends:{register:async()=>{},afterMutations:fn=>fn()},error:(message,status)=>{throw Object.assign(Error(message),{status})},apiAction:()=>{throw Error('must not mutate')},authorize:()=>{throw Error('must not detach')}};
- vm.createContext(ctx);vm.runInContext(wrapper,ctx);
+ const ctx={roomRequestFlights:new Map(),idleRoomJobs:new Map(),paidEntryMaintenance:{beginAdmission:()=>()=>{}},requireModerationForInteraction,moderationReady:true,rooms:new Map([['123',{inviteUncertain:true}]]),roomInvites:{items:new Map([['i',{from:'host',to:'guest',code:'123',status:'queued'}]])},readLogin:value=>({sub:value,name:value}),friends:{register:async()=>{},afterMutations:fn=>fn()},error:(message,status)=>{throw Object.assign(Error(message),{status})},apiAction:()=>{throw Error('must not mutate')},authorize:()=>{throw Error('must not detach')}};
+ vm.createContext(ctx);vm.runInContext(openGuard+wrapper,ctx);
  for(const actor of ['host','guest'])for(const path of ['/api/create','/api/join','/api/match','/api/bot','/api/rematch','/api/room/detach'])await assert.rejects(ctx.api(path,{authToken:actor}),e=>e.status===503);
 });
 test('receipt recovery does not replace a newer active-seat pointer',async()=>{
@@ -64,3 +66,8 @@ test('paused invitation stays queued without charging, while committed receipt r
  const f=fixture({paused:true});assert.equal(await f.join(),false);assert.equal(f.invite.status,'queued');assert.equal(f.room.players[1],null);assert.deepEqual([...f.durable.gold.values()],[500,500]);assert.equal(f.statements.length,0);
  f.setPaused(false);assert.equal(await f.join(),true);f.setPaused(true);f.invite.status='queued';f.room.phase='waiting';f.room.players[1]=null;assert.equal(await f.join(),true);assert.deepEqual([...f.durable.gold.values()],[450,450]);assert.equal(f.invite.status,'joined');assert.equal(f.room.players[1].accountId,'guest');
 });
+
+test('idle-closed or reserved invitation room refuses admission before any debit',async()=>{
+ for(const state of ['closed','reserved']){const f=fixture();if(state==='closed')f.room.idleClosed={at:121000};else f.ctx.idleRoomJobs.set(f.room.code,{});await assert.rejects(f.join(),e=>e.status===(state==='closed'?410:503));assert.equal(f.statements.length,0);assert.deepEqual([...f.durable.gold.values()],[500,500]);assert.equal(f.invite.status,'queued');}
+});
+test('invitation admission persists auction start and valid guest activity atomically',async()=>{const f=fixture();await f.join();assert.equal(f.durable.room.auctionStarted,true);assert.equal(f.durable.room.playerActivity.match,'123:1:1');assert.ok(Number.isSafeInteger(f.durable.room.playerActivity.at));assert.equal(f.durable.room.playerActivity.at,f.room.playerActivity.at);});

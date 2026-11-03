@@ -45,3 +45,15 @@ test('cancellation guard is ahead of tail capture, preparation and results; no g
  const show=source.slice(source.indexOf('function show(r)'),source.indexOf('// Recover game progress'));const guard=show.indexOf("r.cancellation?.reason==='admin-entry-refund'");assert.ok(guard>0);assert.ok(guard<show.indexOf('tailReveal?.active'));assert.ok(guard<show.indexOf('collectTailAwards'));assert.ok(guard<show.indexOf('const winnerIndex'));
  const render=source.slice(source.indexOf('function showCancelledRoom(r)'),source.indexOf('function show(r)'));assert.doesNotMatch(render,/fetch\(|post\(|rankChange\s*=|series\s*=|history\s*=|gold\s*\+=/);
 });
+test('idle closure after auction never claims a refund or offers arena entry',()=>{
+ const f=fixture(),room=cancelledRoom({cancellation:null,idleClosed:{at:123,auctionStarted:true,refundGold:0},phase:'closed'});f.ctx.show(room);
+ assert.match(f.nodes.stage.textContent,/100 saniye.*Açık artırma başladığı için giriş ücreti iade edilmez/);
+ assert.match(f.nodes.stage.textContent,/Kazanan veya lig sonucu oluşturulmadı/);assert.equal(f.counts.normalPath,0);
+});
+test('unpaid preauction closure distinguishes no charge from refund',()=>{
+ const f=fixture();f.ctx.show(cancelledRoom({cancellation:null,idleClosed:{auctionStarted:false,refundGold:0},phase:'closed'}));
+ assert.match(f.nodes.stage.textContent,/Giriş ücreti alınmamıştı/);assert.doesNotMatch(f.nodes.stage.textContent,/50 altın.*iade edildi/);
+});
+test('forfeit result bypasses partial roster scoring and never offers arena',()=>{
+ for(const winner of [0,1]){const f=fixture();f.ctx.show(cancelledRoom({cancellation:null,forfeit:{winner,reason:'disconnect',deadline:123},me:0}));assert.match(f.nodes.stage.textContent,winner===0?/Hükmen kazandın/:/Hükmen kaybettin/);assert.equal(f.counts.normalPath,0);assert.doesNotMatch(f.nodes.stage.textContent,/Kazanan veya lig sonucu oluşturulmadı|iade edildi|ONAYLA VE ARENAYA/);}
+});

@@ -1,3 +1,5 @@
+import {roomIdleDue,isArenaRoom,initializeRoomActivity} from './room-inactivity.js';
+import {cancellationDigest} from './paid-match-cancellation.js';
 // Server-owned fixed bot economy. Never call with browser-supplied room/results.
 export const BOT_ECONOMY_VERSION='bot-free-v2';
 export const BOT_ECONOMY=Object.freeze({version:BOT_ECONOMY_VERSION,entryGold:0,difficulties:Object.freeze({easy:Object.freeze({level:15,gold:100,magicDust:0}),medium:Object.freeze({level:25,gold:125,magicDust:2}),hard:Object.freeze({level:40,gold:175,magicDust:5})})});
@@ -43,7 +45,8 @@ export async function admitBotMatch({database,accountId,requestId,room}){
   await client.query('INSERT INTO hero_auction_wallets(account_id,gold) VALUES($1,500) ON CONFLICT DO NOTHING',[accountId]);
   const before=balance(Number((await client.query('SELECT gold FROM hero_auction_wallets WHERE account_id=$1 FOR UPDATE',[accountId])).rows[0]?.gold));
   const entryReceipt={matchId,requestId,version:BOT_ECONOMY_VERSION,difficulty:room.difficulty,entryGold:0};
-  const saved={...structuredClone(room),entryPaid:true,botEconomyVersion:BOT_ECONOMY_VERSION,botEntry:entryReceipt};
+  const saved={...structuredClone(room),entryPaid:true,auctionStarted:true,botEconomyVersion:BOT_ECONOMY_VERSION,botEntry:entryReceipt};
+  initializeRoomActivity(saved);
   await client.query('INSERT INTO hero_auction_bot_entries(match_id,account_id,request_id,difficulty,config_version,entry_gold,gold_before,gold_after,room_state) VALUES($1,$2,$3,$4,$5,0,$6,$7,$8::jsonb)',[matchId,accountId,requestId,room.difficulty,BOT_ECONOMY_VERSION,before,before,JSON.stringify(saved)]);
   const roomWrite=await client.query(`INSERT INTO hero_auction_rooms(code,state) VALUES($1,$2::jsonb)
    ON CONFLICT(code) DO UPDATE SET state=EXCLUDED.state,updated_at=NOW()
@@ -115,5 +118,42 @@ export async function verifyBotEconomySchema(database){
  ((conrelid='hero_auction_bot_entries'::regclass AND conname IN ('hero_bot_entry_version_price','hero_bot_entry_balance'))
  OR (conrelid='hero_auction_bot_settlements'::regclass AND conname='hero_bot_settlement_version_rewards'))`);
  if(rows[0]?.ready!==3)throw fail('Ücretsiz bot giriş şeması henüz hazır değil.',503);
+ return true;
+}
+
+// Separate terminal outcome: inactivity is neither a loss nor a server failure.
+// Bot entries are admitted atomically with an auction, so no entry refund is due.
+// Caller must reserve the live room and flush this exact snapshot before calling.
+export async function cancelIdleBotMatch({database,room,now=Date.now(),validateLive}){
+ if(typeof validateLive!=='function')throw fail('Canlı oda rezervasyonu gerekli.');
+ room=structuredClone(room);
+ const checkLive=()=>{const value=validateLive();if(value?.then||value===false)throw fail('Canlı oda rezervasyonu doğrulanamadı.');};
+ const accountId=room?.players?.[0]?.accountId;validateRoom(room,accountId);
+ const matchId=botMatchId(room);
+ if(room.botEntry?.matchId!==matchId||entryForVersion(room.botEconomyVersion)===null||room.entryPaid!==true)throw fail('Bot giriş kaydı doğrulanamadı.');
+ return transaction(database,async client=>{
+  await client.query("SELECT pg_advisory_xact_lock(hashtext('bot-match'),hashtext($1))",[matchId]);
+  const entry=(await client.query('SELECT * FROM hero_auction_bot_entries WHERE match_id=$1',[matchId])).rows[0];
+  if(!entry||entry.account_id!==accountId||entry.difficulty!==room.difficulty||entry.config_version!==room.botEconomyVersion||Number(entry.entry_gold)!==entryForVersion(entry.config_version)||room.botEntry.version!==entry.config_version||room.botEntry.entryGold!==Number(entry.entry_gold)||entry.room_state.phase!=='auction')throw fail('Kalıcı bot giriş kaydı eşleşmiyor.');
+  const prior=(await client.query('SELECT * FROM hero_auction_bot_settlements WHERE match_id=$1',[matchId])).rows[0];
+  if(prior){if(prior.outcome!=='idle_cancelled')throw fail('Bot maçının sonucu zaten kesinleşti.');if(prior.account_id!==accountId||prior.config_version!==entry.config_version||prior.gold_amount!==0||prior.magic_dust_amount!==0||prior.room_state?.idleClosed?.refundGold!==0||prior.room_state?.botSettlementReceipt?.outcome!=='idle_cancelled'||botMatchId(prior.room_state)!==matchId)throw fail('Kalıcı kapatma makbuzu eşleşmiyor.');return{room:structuredClone(prior.room_state),receipt:receipt(prior),replayed:true}}
+  const durable=(await client.query('SELECT state FROM hero_auction_rooms WHERE code=$1 FOR UPDATE',[room.code])).rows[0]?.state;
+  if(!durable||cancellationDigest(durable)!==cancellationDigest(room))throw fail('Kalıcı oda değişti; hareketsizlik kapatması uygulanmadı.');
+  if(!['auction','finished'].includes(room.phase)||!roomIdleDue(room,{now})||isArenaRoom(room)||room.matchSettled||room.goldAward||room.goldRefunds?.length||room.victoryChestReceipt||room.botSettlementReceipt)throw fail('Bot maçı hareketsizlik kapatmasına uygun değil.');
+  checkLive();
+  const before=balance(Number((await client.query('SELECT gold FROM hero_auction_wallets WHERE account_id=$1 FOR UPDATE',[accountId])).rows[0]?.gold));
+  const dustRows=(await client.query('SELECT magic_dust FROM hero_auction_magic_dust_wallets WHERE account_id=$1 FOR UPDATE',[accountId])).rows;
+  const dustBefore=dustRows.length?balance(Number(dustRows[0].magic_dust)):0;
+  const publicReceipt=receipt({match_id:matchId,config_version:entry.config_version,outcome:'idle_cancelled',gold_amount:0,magic_dust_amount:0});
+  const saved={...structuredClone(room),phase:'cancelled',deadline:null,turn:null,botSettlementReceipt:publicReceipt,botSettlementPending:false,battleSettlementPending:false,botForfeit:false,matchSettled:true,idleClosed:{at:now,reason:'inactivity',refundGold:0}};
+  checkLive();
+  await client.query('INSERT INTO hero_auction_bot_settlements(match_id,account_id,config_version,outcome,gold_amount,magic_dust_amount,gold_before,gold_after,magic_dust_before,magic_dust_after,room_state) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb)',[matchId,accountId,entry.config_version,'idle_cancelled',0,0,before,before,dustBefore,dustBefore,JSON.stringify(saved)]);
+  await client.query("UPDATE hero_auction_rooms SET state=$2::jsonb,updated_at=NOW() WHERE code=$1 AND state->>'created'=$3 AND COALESCE(state->>'matchNumber','1')=$4",[saved.code,JSON.stringify(saved),String(saved.created),String(saved.matchNumber||1)]);
+  return{room:saved,receipt:publicReceipt,replayed:false};
+ });
+}
+export async function verifyBotIdleCancellationSchema(database){
+ const {rows}=await database.query(`SELECT count(*)::integer AS ready FROM pg_constraint WHERE convalidated AND contype='c' AND conrelid='hero_auction_bot_settlements'::regclass AND conname IN ('hero_bot_settlement_idle_outcome','hero_bot_settlement_idle_rewards')`);
+ if(rows[0]?.ready!==2)throw fail('Hareketsiz bot odası kapatma şeması henüz hazır değil.',503);
  return true;
 }

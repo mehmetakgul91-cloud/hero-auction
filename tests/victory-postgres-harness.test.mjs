@@ -21,8 +21,8 @@ test('harness hardcodes loopback fixtures, checks empty PG18 and never drops/res
  assert.match(source,/005-victory-chests-magic-dust\.sql/);assert.match(source,/createVictoryChestPolicy\(flags\)/);
 });
 
-test('22 integration groups include real bounded server restart and explicit synthetic-only environment',()=>{
- const source=readFileSync(script,'utf8');assert.equal((source.match(/await check\(/g)||[]).length,22);
+test('23 integration groups include real bounded server restart and explicit synthetic-only environment',()=>{
+ const source=readFileSync(script,'utf8');assert.equal((source.match(/await check\(/g)||[]).length,23);
  assert.match(source,/actual server restart recovers pre-intent pending match once/);assert.match(source,/DATABASE_URL:APPROVED,AUTH_SIGNING_SECRET:FIXTURE_SIGNING_SECRET/);
  assert.match(source,/child\.kill\('SIGTERM'\)/);assert.match(source,/child\.kill\('SIGKILL'\)/);assert.match(source,/Date\.now\(\)\+20000/);
  assert.match(source,/assert\.deepEqual\(again\.victoryChest,receipt\)/);assert.match(source,/app\.post\('\/api\/rematch',loserAuth\)/);

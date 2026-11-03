@@ -1,3 +1,5 @@
+import {roomResumePath} from '/room-resume.js';
+import {roomReturnStatus} from '/room-return-status.js';
 import {createBotInfo} from '/bot-info.js';
 import {createBotEntryConsent,botTerms,botSettlementCopy} from '/bot-entry.js';
 import {createRevealedTeams,renderDeliveryPortraits} from '/auction-delivery-portraits.js';
@@ -425,9 +427,10 @@ async function restoreSavedGame(){
  const auth=login?.authToken,initialSession=session,initialRoom=room;
  if(!signedIn()||!await validateLogin()||webInvite?.pending||login?.authToken!==auth)return;
  try{
-  const previous=await readSavedRoom();
+  const current=await post('/api/room/current',{});
+  const previous=current?.room?current:await readSavedRoom();
   if(webInvite?.pending||login?.authToken!==auth||session!==initialSession||room!==initialRoom)return;
-  if(previous)save(previous.token,previous.room);
+  if(previous){save(previous.token,previous.room);const resumePath=roomResumePath(previous);if(resumePath){window.HeroPlatform?.beforeNavigate(resumePath);location.replace(resumePath);}}
  }catch(e){
   if(login?.authToken!==auth)return;
   if(/giriş yap|Oturumun sona erdi|401/.test(e.message))clearExpiredLogin();
@@ -564,7 +567,7 @@ async function syncRoomSnapshot({force=false}={}){
  const result=await post('/api/state',current);
  if(session!==current||login?.authToken!==auth)return;
  const next=result.room;
- if(force||next?.revision!==room?.revision||next?.matchKey!==room?.matchKey||next?.phase!==room?.phase||next?.round!==room?.round||next?.chat?.length!==room?.chat?.length)show(next);
+ if(force||next?.revision!==room?.revision||next?.matchKey!==room?.matchKey||next?.phase!==room?.phase||next?.round!==room?.round||next?.chat?.length!==room?.chat?.length||JSON.stringify(next?.presence)!==JSON.stringify(room?.presence))show(next);
 }
 // Guard reconnects against stale room and account sessions.
 function connect(){stream?.close();if(!session)return;
@@ -592,18 +595,18 @@ function animateWonAuctionCard(award,me,sourceSnapshot){
  awardFlights.add(flight);return flight.finished.finally(()=>awardFlights.delete(flight));
 }
 function showCancelledRoom(r){
- const firstNotice=room?.code!==r.code||room?.matchKey!==r.matchKey||!room?.cancellation;
+ const firstNotice=room?.code!==r.code||room?.matchKey!==r.matchKey||(!room?.cancellation&&!room?.idleClosed&&!room?.forfeit);
  tailReveal?.cancel();tailReveal=null;cancelAwardFlights();cancelAuctionReveal($('stage'));
  room=r;lastCardKey=null;window.HeroPlatform?.setRoom(r);window.HeroPlatform?.gameplay(false);
  const english=document.documentElement.lang==='en';
  $('game').classList.remove('auction-results-only','auction-delivery-active');$('game').dataset.phase='finished';
  $('login-gate').hidden=true;$('home').hidden=true;$('game').hidden=false;
- $('room-title').textContent=r.code;$('phase').textContent=english?'MATCH CANCELLED':'MAÇ İPTAL EDİLDİ';
+ $('room-title').textContent=r.code;$('phase').textContent=r.forfeit?(english?'MATCH ENDED BY FORFEIT':'MAÇ HÜKMEN TAMAMLANDI'):(english?'MATCH CANCELLED':'MAÇ İPTAL EDİLDİ');
  const section=document.createElement('section');section.className='auction-summary match-cancelled';
- const title=document.createElement('h2');title.textContent=english?'Match cancelled':'Maç iptal edildi';
+ const title=document.createElement('h2');title.textContent=r.forfeit?(r.forfeit.winner===r.me?(english?'You won by forfeit':'Hükmen kazandın'):(english?'You lost by forfeit':'Hükmen kaybettin')):(english?'Match cancelled':'Maç iptal edildi');
  const message=document.createElement('p');message.setAttribute('role','status');
- message.textContent=r.cancellation.refundGoldPerSeat===50?(english?'Your 50 gold entry fee has been refunded.':'50 altın giriş ücreti iade edildi.'):(english?'The entry refund record is being verified.':'Giriş ücreti iade kaydı doğrulanıyor.');
- const detail=document.createElement('p');detail.textContent=english?'No winner or league result was recorded. Your match history is preserved.':'Kazanan veya lig sonucu oluşturulmadı. Maç geçmişin korundu.';
+ message.textContent=r.forfeit?(english?'The opponent return period ended.':'Rakibin geri dönüş süresi doldu.'):r.idleClosed?(r.idleClosed.refundGold>0?(english?`${r.idleClosed.refundGold} gold entry fee refunded.`:`${r.idleClosed.refundGold} altın giriş ücreti iade edildi.`):r.idleClosed.auctionStarted!==false?(english?'The room closed after 100 seconds of inactivity. The auction had started, so no entry refund applies.':'Oda 100 saniye hareketsizlik nedeniyle kapandı. Açık artırma başladığı için giriş ücreti iade edilmez.'):(english?'The room closed after 100 seconds of inactivity. No entry fee was charged.':'Oda 100 saniye hareketsizlik nedeniyle kapandı. Giriş ücreti alınmamıştı.')):r.cancellation.refundGoldPerSeat===50?(english?'Your 50 gold entry fee has been refunded.':'50 altın giriş ücreti iade edildi.'):(english?'The entry refund record is being verified.':'Giriş ücreti iade kaydı doğrulanıyor.');
+ const detail=document.createElement('p');detail.textContent=r.forfeit?(english?'The result and normal match reward are being recorded by the server.':'Sonuç ve normal maç ödülü sunucu tarafından kaydedilir.'):(english?'No winner or league result was recorded. Your match history is preserved.':'Kazanan veya lig sonucu oluşturulmadı. Maç geçmişin korundu.');
  const back=document.createElement('button');back.type='button';back.className='primary';back.textContent=english?'RETURN TO MAIN MENU':'ANA MENÜYE DÖN';back.onclick=()=>$('leave').click();
  section.append(title,message,detail,back);$('stage').replaceChildren(section);
  for(let visual=0;visual<2;visual++){
@@ -616,7 +619,7 @@ function showCancelledRoom(r){
  $('log').replaceChildren(...(r.history||[]).slice().reverse().map(value=>{const event=document.createElement('div');event.className='event';event.textContent=value;return event}));
  renderChat(r);if(firstNotice)void refreshGold();
 }
-function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAuctionSnapshot(room,r))return;dailyRewardOverlay.defer();auctionCommanderDialog.sync(r);storefrontUI.close();roomInvitesUI.setRoom(r,session?.token);friendsUI.setRoom(r);if(r.cancellation?.reason==='admin-entry-refund'){showCancelledRoom(r);return;}if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.matchKey===auctionMatchKey(r)&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const allTailAwards=collectTailAwards(room,r),tailAwards=tailReceipts.pending(r,allTailAwards),reviewPending=tailReceipts.reviewPending(r,allTailAwards);
+function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAuctionSnapshot(room,r))return;dailyRewardOverlay.defer();auctionCommanderDialog.sync(r);storefrontUI.close();roomInvitesUI.setRoom(r,session?.token);friendsUI.setRoom(r);if(r.cancellation?.reason==='admin-entry-refund'||r.idleClosed||r.forfeit){showCancelledRoom(r);return;}if(tailReveal?.active&&r.phase==='finished'&&room?.code===r.code&&tailReveal.matchKey===auctionMatchKey(r)&&tailReveal.signature===JSON.stringify(r.final)){room=r;renderChat(r);return;}tailReveal?.cancel();tailReveal=null;const allTailAwards=collectTailAwards(room,r),tailAwards=tailReceipts.pending(r,allTailAwards),reviewPending=tailReceipts.reviewPending(r,allTailAwards);
  if(room?.code!==r.code||(r.phase==='auction'&&room?.phase!=='auction')||(r.phase==='auction'&&r.round<room?.round))cancelAwardFlights();
  const offeredAwards=collectOfferedAwards(room,r),offeredArt=document.querySelector('#stage .card-art');
  const delivery=r.phase==='finished'?createRevealedTeams(r.final||[],[...tailAwards,...offeredAwards],allTailAwards):null;
@@ -893,3 +896,15 @@ window.addEventListener('hero:platform-settings',()=>{if(room)renderChat(room);i
 window.addEventListener('pagehide',()=>{cancelAwardFlights();tailReveal?.cancel();tailReveal=null;cancelAuctionReveal($('stage'));});
 
 window.addEventListener('pageshow',event=>{if(event.persisted)void refreshGold();if(event.persisted&&session){if(room)show(room);void syncRoomSnapshot({force:true}).catch(()=>{});}});
+
+// Separate from bid timer and arena: only server presence can start this notice.
+let returnStatusRoom=null,returnStatusReceivedAt=0;
+setInterval(()=>{
+ if(room!==returnStatusRoom){returnStatusRoom=room;returnStatusReceivedAt=Date.now();}
+ const game=$('game');if(!game)return;
+ const text=roomReturnStatus(room,{receivedAt:returnStatusReceivedAt,english:document.documentElement.lang==='en'});
+ let notice=$('room-return-status');
+ if(!text){notice?.remove();return;}
+ if(!notice){notice=document.createElement('p');notice.id='room-return-status';notice.className='status';notice.setAttribute('role','status');game.prepend(notice);}
+ notice.textContent=text;
+},250);
