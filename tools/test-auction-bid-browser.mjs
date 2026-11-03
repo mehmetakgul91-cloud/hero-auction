@@ -7,7 +7,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {crazyGamesSource} from '../crazygames-build.js';
 const {chromium}=await import(process.env.HERO_BROWSER_TEST_RUNTIME||'playwright');
-const root=fileURLToPath(new URL('../public/',import.meta.url));
+const root=path.resolve(fileURLToPath(new URL('../public/',import.meta.url)));
 const bridge=`\nwindow.__auctionTest={show,connect,sync:syncRoomSnapshot,
  setContext(){login={authToken:'synthetic-account',type:'guest',user:{sub:'synthetic-user',name:'Player'}};session={token:'synthetic-seat',code:'123'};},
  switchSeat(){session={...session,token:'synthetic-other-seat'};},
@@ -61,7 +61,7 @@ try{
    else if(url.pathname==='/api/room/current')data={room:null};
    await route.fulfill({contentType:'application/json',body:JSON.stringify(data)});
   });
-  await page.goto(origin);await page.waitForFunction(()=>!!window.__auctionTest);await page.waitForTimeout(150);
+  await page.goto(origin);await page.waitForFunction(()=>!!window.__auctionTest);await page.waitForLoadState('networkidle');
   await page.evaluate(({room,english})=>{document.documentElement.lang=english?'en':'tr';window.__auctionTest.setContext();window.__auctionTest.show(room);window.__auctionTest.connect();},{room:snapshot,english});
   const setAmount=async amount=>page.locator('#bidrange').evaluate((el,value)=>{el.value=String(value);el.dispatchEvent(new Event('input',{bubbles:true}));},amount);
   const show=async room=>{snapshot=room;await page.evaluate(r=>window.__auctionTest.show(r),room);};
