@@ -38,7 +38,7 @@ try{
  for(const [width,english] of [[1440,false],[390,false],[320,false],[390,true]]){
   const context=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce',serviceWorkers:'block'});
   const page=await context.newPage(),errors=[],bids=[];let snapshot=fixture(),stateReads=0;
-  page.on('pageerror',error=>errors.push(error.message));
+  page.on('pageerror',error=>{errors.push(error.message);console.error('Browser page error:',error.message);});
   await page.addInitScript(()=>{
    window.EventSource=class{constructor(){window.__testStream=this;}close(){} emit(room){this.onmessage?.({data:JSON.stringify(room)});}};
    window.google={accounts:{id:{initialize(){},renderButton(){}}}};
@@ -80,7 +80,8 @@ try{
   await page.keyboard.press('ArrowRight');assert.equal(await amount(),'7');
   snapshot={...snapshot,revision:2,history:['Synthetic update'],chat:[{id:1,seat:1,name:'Computer',message:'Hello',at:Date.now()}],presence:{serverNow:Date.now(),seats:[]}};
   await page.evaluate(r=>window.__testStream.emit(r),snapshot);assert.equal(await amount(),'7');
-  assert.match(await page.locator('#log').innerText(),/Synthetic update/);
+  assert.deepEqual(await page.evaluate(()=>window.__auctionTest.read().history),['Synthetic update']);
+  assert.match(await page.locator('#log').textContent(),/Synthetic update/);
 
   // Native range dragging survives a snapshot arriving while the pointer is down.
   const box=await page.locator('#bidrange').boundingBox();
