@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const app=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
-const portraitManifest=JSON.parse(readFileSync(new URL('../image-asset-manifest.json',import.meta.url),'utf8'));
 const css=readFileSync(new URL('../public/style.css',import.meta.url),'utf8');
 test('calculation starts before optional room actions, without deleting global chrome or escape controls',()=>{
  const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
@@ -76,7 +75,7 @@ test('per-hero calculation preserves authoritative base power and the existing t
 test('known hero uses its local portrait and compact rarity frame; unknown names stay escaped',()=>{
  const players=[{name:'Self',credits:8,team:[{name:'Obsidyen Muhafız',universe:'original',power:90}]},{name:'Opponent',credits:0,team:[{name:'<img src=x onerror=alert(1)>',power:70,portrait:'javascript:alert(1)',rarity:'" onload="x'}]}];
  const markup=auctionCalculationMarkup(players,0);
- assert.ok(markup.includes('src="'+portraitManifest.assets.find(a=>a.source==='/images/original/hero-01.png').url+'"'));
+ assert.ok(markup.includes('src="/images/original/hero-01.png"'));
  assert.ok(markup.includes('data-rarity="legendary"'));
  assert.ok(markup.includes('title="Efsanevi"'));
  assert.ok(markup.includes('&lt;img src=x onerror=alert(1)&gt;'));

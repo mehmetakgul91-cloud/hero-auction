@@ -54,7 +54,7 @@ test('result portrait sources match all 50 active local assets; unknown heroes n
  const {heroPortraitSource}=await import('../public/hero-rarity.js');
  for(const hero of battleRoster){
   assert.equal(heroPortraitSource(hero),hero.portrait);
-  assert.match(heroPortraitSource(hero),/^\/images\/(?:[a-zA-Z0-9/_-]+\.(?:png|webp|jpg)|optimized\/hero-0[1-9]\.[a-f0-9]{16}\.webp)$/);
+  assert.match(heroPortraitSource(hero),/^\/images\/[a-zA-Z0-9/_-]+\.(?:png|webp|jpg)$/);
   assert.ok(readFileSync(new URL('../public'+heroPortraitSource(hero),import.meta.url)).length>0);
  }
  assert.equal(heroPortraitSource({id:'not-a-hero',portrait:'https://example.test/tracker'}),null);

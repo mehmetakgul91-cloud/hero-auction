@@ -608,7 +608,7 @@ window.addEventListener('heroarena:experimental-move',event=>{
  animateMove({...move,actorId:move.actor,targetId:move.target});
 });
 
-const commanderPortraits={attack:'/images/optimized/commander-attack.bad033e5f738a797.webp',defense:'/images/optimized/commander-defense.d1127052dd9f841b.webp',magic:'/images/optimized/commander-magic.86e58333914984ea.webp',support:'/images/optimized/commander-support.d6ec4a88632b972d.webp'};
+const commanderPortraits={attack:'/images/Ate%C5%9Fler%20%C4%B0%C3%A7inde%20Sava%C5%9F%C3%A7%C4%B1%20Komutan.png',defense:'/images/Alt%C4%B1n%20Aslan%C4%B1n%20Kale%20Muhaf%C4%B1z%C4%B1.png',magic:'/images/Kozmik%20R%C3%BCnlerin%20B%C3%BCy%C3%BCc%C3%BC%20Komutan%C4%B1.png',support:'/images/Z%C3%BCmr%C3%BCt%20I%C5%9F%C4%B1%C4%9F%C4%B1n%20%C5%9Eifac%C4%B1%20Krali%C3%A7esi.png'};
 const commanderDisplay={attack:['⚔️','Saldırı'],defense:['🛡️','Savunma'],magic:['🔮','Büyücü'],support:['💚','Destek']};
 function renderArenaCommanderMatchup(profiles){
  const panel=$('arena-commander-matchup');if(!panel)return;

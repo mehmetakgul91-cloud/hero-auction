@@ -4,47 +4,47 @@ const roster = {
  "original:01": [
   "Obsidyen Muhafız",
   "legendary",
-  "/images/optimized/hero-01.b665ec740080815b.webp"
+  "/images/original/hero-01.png"
  ],
  "original:02": [
   "Demir Sur",
   "advanced",
-  "/images/optimized/hero-02.cca2ad1bd9ab5154.webp"
+  "/images/original/hero-02.png"
  ],
  "original:03": [
   "Kaya Titanı",
   "rare",
-  "/images/optimized/hero-03.d3b4bd5f526fbdb5.webp"
+  "/images/original/hero-03.png"
  ],
  "original:04": [
   "Buz Kalesi",
   "rare",
-  "/images/optimized/hero-04.288c0d6fe145b04e.webp"
+  "/images/original/hero-04.png"
  ],
  "original:05": [
   "Gölge Suikastçı",
   "legendary",
-  "/images/optimized/hero-05.4c20a67737b9604b.webp"
+  "/images/original/hero-05.png"
  ],
  "original:06": [
   "Altın Muhafız",
   "legendary",
-  "/images/optimized/hero-06.1c096faca531a26b.webp"
+  "/images/original/hero-06.png"
  ],
  "original:07": [
   "Alev Zırhı",
   "rare",
-  "/images/optimized/hero-07.b3e0656bfdaee5d6.webp"
+  "/images/original/hero-07.png"
  ],
  "original:08": [
   "Kadim Koruyucu",
   "rare",
-  "/images/optimized/hero-08.56fc32ad7b9822c6.webp"
+  "/images/original/hero-08.png"
  ],
  "original:09": [
   "Morvan",
   "legendary",
-  "/images/optimized/hero-09.ba33aa1ebaf1431f.webp"
+  "/images/original/hero-09.png"
  ],
  "original:10": [
   "Brunn",
