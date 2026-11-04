@@ -141,3 +141,40 @@
 .hero-fx-restore.class-healer i{display:none}
 @keyframes heroRestoreWelcome{0%,70%{opacity:.65;scale:1}100%{opacity:0;scale:1.04}}
 @media(max-width:600px){.hero-fx-flight.class-fighter.signature-blade::before{width:52px}.hero-fx-flight.class-mage::after,.hero-fx-flight.class-healer::after{width:60px}.hero-fx-flight.class-tank.signature-hammer::before{width:29px;height:25px}.hero-fx-flight.class-tank.signature-hammer.is-special::before{width:33px;height:29px}}
+
+/* Target-local melee: the weapon pivots into the existing contact point.
+   No cross-board projectile, new damage event, or impact canvas replacement. */
+.hero-fx-swing{margin:0;filter:none;z-index:100;transform:scaleX(var(--hero-facing));animation:heroWeaponReveal var(--hero-ms) linear var(--hero-delay) both,heroWeaponFade var(--hero-recovery) ease-out calc(var(--hero-delay) + var(--hero-ms)) forwards}
+.hero-fx-swing .hero-target-weapon{position:absolute;inset:0;transform-origin:50% 90%;animation:heroWeaponSwing var(--hero-ms) linear var(--hero-delay) both,heroWeaponFollow var(--hero-recovery) ease-out calc(var(--hero-delay) + var(--hero-ms)) forwards}
+.hero-fx-swing .hero-target-weapon span{position:absolute;display:block;box-sizing:border-box}
+.hero-fx-swing .hero-weapon-head{left:46%;top:15%;width:8%;height:58%;background:linear-gradient(90deg,#8197b2 0%,#eef7ff 42%,#fff 49%,#b4c7dd 54%,#57708b);clip-path:polygon(50% 0,100% 17%,86% 100%,14% 100%,0 17%)}
+.hero-fx-swing .hero-weapon-grip{left:46.5%;top:73%;width:7%;height:19%;border-radius:2px;background:repeating-linear-gradient(0deg,#493444 0 3px,#997461 3px 5px)}
+.hero-fx-swing .hero-weapon-guard{left:35%;top:71%;width:30%;height:5%;border-radius:35%;background:linear-gradient(#ffe2a3,#b67b3e);box-shadow:0 1px 1px #1b1722}
+.hero-fx-swing.weapon-axe .hero-weapon-head{left:33%;top:13%;width:39%;height:35%;clip-path:polygon(42% 0,64% 4%,87% 17%,100% 39%,98% 73%,82% 94%,57% 100%,62% 76%,50% 58%,36% 48%,15% 50%,22% 24%);background:linear-gradient(110deg,#9c6d44 0 22%,#e2d2b4 24% 52%,#fbf9e9 65%,#e2a25b 74%,#725c4e 83%,#f3e3cb)}
+.hero-fx-swing.weapon-axe .hero-weapon-grip{left:47%;top:29%;width:6%;height:64%;background:linear-gradient(90deg,#3a2930,#bd865b 45%,#6a402f);z-index:-1}
+.hero-fx-swing.weapon-axe .hero-weapon-guard{left:44%;top:45%;width:12%;height:5%;border-radius:2px}
+.hero-fx-swing.weapon-dagger .hero-weapon-head{left:43%;top:27%;width:14%;height:47%;background:linear-gradient(90deg,#665c86,#efe8ff 43%,#fff 49%,#9e8abb 53%,#544366)}
+.hero-fx-swing.weapon-dagger .hero-weapon-guard{left:39%;width:22%;background:linear-gradient(#dfc9f2,#83649a)}
+.hero-fx-swing.weapon-dagger .hero-weapon-grip{height:18%;background:repeating-linear-gradient(0deg,#32213d 0 3px,#846887 3px 5px)}
+.hero-fx-swing.weapon-hammer .hero-weapon-head{left:27%;top:15%;width:46%;height:25%;clip-path:polygon(6% 0,94% 0,100% 14%,100% 86%,94% 100%,6% 100%,0 86%,0 14%);background:linear-gradient(120deg,#fff0cc,#cea361 45%,#795a40 52%,#ddbc81)}
+.hero-fx-swing.weapon-hammer .hero-weapon-grip{top:36%;height:57%;background:linear-gradient(90deg,#49302a,#b0834a,#63402b)}
+.hero-fx-swing.weapon-hammer .hero-weapon-guard{display:none}
+.hero-fx-swing.weapon-slash .hero-target-weapon{display:none}
+.hero-fx-swing::before{inset:9% 1% 8% 9%;border:4px solid transparent;border-top-color:#ffe1accc;border-right-color:#fff2cc99;border-radius:50%;transform-origin:45% 89%;animation:heroWeaponArc var(--hero-ms) ease-in var(--hero-delay) both}
+.hero-fx-swing.weapon-dagger::before{border-top-color:#f4e8ffc9;border-right-color:#c8ace1aa;border-width:3px;inset:22% 12% 10% 20%}
+.hero-fx-swing.is-special::before{border-width:6px}
+@keyframes heroWeaponReveal{0%,8%{opacity:0}20%,100%{opacity:1}}
+@keyframes heroWeaponSwing{0%{transform:rotate(-6deg)}30%,72%{transform:rotate(var(--hero-windup-angle))}90%{transform:rotate(22deg)}100%{transform:rotate(var(--hero-contact-angle))}}
+@keyframes heroWeaponFollow{0%,34%{transform:rotate(var(--hero-contact-angle))}100%{transform:rotate(calc(var(--hero-contact-angle) + 13deg))}}
+@keyframes heroWeaponFade{0%,48%{opacity:1}100%{opacity:0}}
+@keyframes heroWeaponArc{0%,70%{opacity:0;transform:rotate(-35deg) scale(.8)}82%{opacity:.35}100%{opacity:.85;transform:rotate(64deg) scale(1)}}
+
+.hero-fx-swing .hero-melee-detailed-art{filter:drop-shadow(1px 2px 1px #030611) drop-shadow(-1px -1px 0 #fff5);z-index:3}
+.hero-fx-swing::before{border-width:8px;border-top-color:#fff3cce6;border-right-color:#e5b45a99;inset:0 -2% 0 4%}
+.hero-fx-swing.weapon-dagger::before{border-width:5px}
+.hero-fx-swing .hero-melee-hit{position:absolute;left:var(--hero-contact-x);top:var(--hero-contact-y);width:58%;height:58%;margin:-29%;animation:heroMeleeHit 180ms ease-out calc(var(--hero-delay) + var(--hero-ms)) both}
+.hero-fx-swing .hero-melee-hit::before,.hero-fx-swing .hero-melee-hit::after{content:'';position:absolute;pointer-events:none}
+.hero-fx-swing .hero-melee-hit::before{inset:44% 0;background:linear-gradient(90deg,transparent,#e99c43aa 15%,#fff3bc 40%,#fff 50%,#ffd77b 60%,transparent 95%);transform:rotate(55deg);box-shadow:0 2px 0 #24182766}
+.hero-fx-swing .hero-melee-hit::after{inset:34%;background:#fff1bc;clip-path:polygon(50% 0,59% 36%,92% 13%,68% 43%,100% 50%,67% 59%,87% 90%,58% 69%,50% 100%,42% 69%,8% 90%,30% 58%,0 50%,32% 42%,12% 12%,42% 34%)}
+.hero-fx-swing.weapon-dagger .hero-melee-hit::before{background:linear-gradient(90deg,transparent,#ac8ad4,#fff1ff 50%,#a27dc9,transparent)}
+@keyframes heroMeleeHit{0%{opacity:0;scale:.4}12%{opacity:.95;scale:1}45%{opacity:.7;scale:1.12}100%{opacity:0;scale:1.25}}
