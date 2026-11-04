@@ -63,15 +63,21 @@ source PNGs or old hash variants as part of this update.
   check for cold/warm loads, 390/1440-pixel galleries, repeated detail dialogs and
   four-commander onboarding. `HERO_BROWSER_TEST_RUNTIME` can select an existing
   Playwright module; `HERO_BROWSER_EXECUTABLE` can select installed Chromium.
-  This browser harness has only been syntax-checked here: Chromium launch was
-  blocked by the execution environment's local IPC socket restriction, including
-  after an approved elevated attempt. Browser warm-cache reuse and in-game
-  rendering have **not** been verified by this harness. Complete that check before
-  claiming browser validation. No push, PR or deployment was performed.
+  Local Chromium launch was blocked by the execution environment's IPC socket
+  restriction. Real Chromium 141.0.7390.37 subsequently passed the isolated
+  [GitHub Actions browser run](https://github.com/mehmetakgul91-cloud/hero-auction/actions/runs/41908656725)
+  on 2026-11-04. All 13 images transferred 7,311,920 bytes on a cold load and
+  0 bytes on the warm navigation, independently for normal and CrazyGames paths.
+  Both gallery widths, repeated detail dialogs and all four commander images
+  passed. The harness waits for all 50 gallery images and painting before taking
+  screenshots; review the latest PR run's artifacts for the current head.
+  The initial browser attempt sampled timing records too early; the corrected
+  test waits for complete Resource Timing entries without weakening cold/warm
+  assertions. No production deployment has been performed.
 - `.github/workflows/versioned-portraits-browser.yml` prepares the same browser
   checks on an isolated GitHub Actions runner, with read-only repository
   permissions, no production database and downloadable screenshots/results.
-  Preparing this workflow locally does not mean it has run or passed.
+  This is isolated test evidence, not a production-traffic or billing measurement.
 
 The existing lane-balance baseline hashes are retained. Their tests normalize
 only the nine exact portrait URL substitutions before comparing the historical

@@ -55,22 +55,25 @@ try{
   await page.goto(base+prefix+'/kahramanlar.html');
   await page.waitForSelector('.gallery-card');
   const loaded=await page.evaluate(async()=>{
-   const images=[...document.querySelectorAll('.gallery-card img')].filter(i=>i.src.includes('/images/optimized/'));
+   const images=[...document.querySelectorAll('.gallery-card img')];
    await Promise.all(images.map(async image=>{image.loading='eager';await image.decode();}));
+   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
    return images.map(i=>({url:new URL(i.src).pathname,width:i.naturalWidth,height:i.naturalHeight}));
   });
-  assert.equal(loaded.length,9);assert.ok(loaded.every(i=>i.width===1374&&i.height===1145));
+  assert.equal(loaded.length,50);assert.ok(loaded.every(i=>i.width>0&&i.height>0));
+  const optimized=loaded.filter(i=>i.url.includes('/images/optimized/'));
+  assert.equal(optimized.length,9);assert.ok(optimized.every(i=>i.width===1374&&i.height===1145));
   await page.screenshot({path:`${shots}/gallery-${prefix?'cg':'web'}-${width}.png`});
   await page.locator('.gallery-card').first().click();
   await page.waitForSelector('#hero-story-dialog[open]');
-  await page.locator('#hero-detail-portrait img').evaluate(image=>image.decode());
+  await page.locator('#hero-detail-portrait img').evaluate(async image=>{await image.decode();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));});
   await page.screenshot({path:`${shots}/detail-${prefix?'cg':'web'}-${width}.png`});
   await page.keyboard.press('Escape');
   await page.locator('.gallery-card').first().click();
   assert.equal(await page.locator('#hero-story-dialog[open]').count(),1);
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('#hero-story-dialog[open]').count(),0);
-  assert.deepEqual(errors,[]);results.push({kind:'gallery',prefix,width,optimizedHeroes:9,repeatedDialog:'passed'});
+  assert.deepEqual(errors,[]);results.push({kind:'gallery',prefix,width,decodedHeroes:50,optimizedHeroes:9,repeatedDialog:'passed'});
   await context.close();
  }
  const context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage();
