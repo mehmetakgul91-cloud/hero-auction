@@ -23,10 +23,24 @@ try{
    await cachePage.goto(base+'/privacy');
    const loaded=await cachePage.evaluate(async({assets,prefix})=>{
     performance.clearResourceTimings();
-    await Promise.all(assets.map(async asset=>{const image=new Image();image.src=prefix+asset.url;await image.decode();if(image.naturalWidth!==asset.width||image.naturalHeight!==asset.height)throw Error('Incorrect decoded dimensions: '+asset.url);}));
+    const container=document.createElement('div');document.body.append(container);
+    await Promise.all(assets.map(async asset=>{
+     const image=new Image();image.loading='eager';image.width=80;container.append(image);
+     const loaded=new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(Error('Image load failed: '+asset.url));});
+     image.src=prefix+asset.url;await loaded;await image.decode();
+     if(image.naturalWidth!==asset.width||image.naturalHeight!==asset.height)throw Error('Incorrect decoded dimensions: '+asset.url);
+    }));
+    // Image decoding and Resource Timing delivery are separate browser tasks.
+    // Exercise connected images and wait for the complete timing set, including
+    // warm memory-cache hits, rather than sampling the buffer in a microtask.
+    for(let n=0;n<100;n++){
+     if(performance.getEntriesByType('resource').filter(r=>r.name.includes('/images/optimized/')).length===assets.length)break;
+     await new Promise(resolve=>setTimeout(resolve,25));
+    }
     return performance.getEntriesByType('resource').filter(r=>r.name.includes('/images/optimized/')).map(r=>({url:new URL(r.name).pathname,transferSize:r.transferSize,encodedBodySize:r.encodedBodySize}));
    },{assets:manifest.assets,prefix});
-   assert.equal(loaded.length,13);loads.push(loaded);
+   console.log(JSON.stringify({kind:'cache-pass',prefix,pass,loaded}));
+   assert.equal(loaded.length,13,`Expected all image timing entries: prefix=${prefix}, pass=${pass}`);loads.push(loaded);
   }
   assert.ok(loads[0].every(r=>r.transferSize>0),'cold load must transfer each image');
   assert.ok(loads[1].every(r=>r.transferSize===0),'warm navigation must reuse all 13 cached images');
