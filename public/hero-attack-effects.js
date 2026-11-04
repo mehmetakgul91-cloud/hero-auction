@@ -1,3 +1,4 @@
+import {targetMeleeWeapon,targetSwingGeometry,targetWeaponProfile,appendTargetWeapon} from './hero-target-swing.js';
 import {appendHeroImpactArt} from './hero-impact-art.js';
 import {createCombatEffects} from './arena-combat-effects.js';
 import {heroCombatPresentation,heroVisualClass} from './hero-combat-presentation.js';
@@ -67,6 +68,7 @@ export function playHeroAttack({document,effects,actor,target,hero,kind,special=
  if(!actor||!target)return;
  const signature=heroAttackSignature(hero,kind);
  const roleClass=heroVisualClass(hero);
+ const weapon=targetMeleeWeapon(hero,signature),weaponProfile=targetWeaponProfile(weapon),recovery=weaponProfile.recovery;
  // Shield casts and non-healer healing are outside the attack redesign.
  const visualClass=signature==='shield'||(signature==='heal'&&roleClass!=='healer')?null:roleClass;
  const rect=el=>(el.querySelector('.arena-portrait')||el).getBoundingClientRect();
@@ -82,10 +84,18 @@ export function playHeroAttack({document,effects,actor,target,hero,kind,special=
   if(visualClass)node.className+=' class-'+visualClass;
   node.setAttribute('aria-hidden','true');
   const contact=phase==='impact'&&!['heal','shield'].includes(signature);
-  const size=contact?Math.max(44,Math.min(84,b.width*(special?1.12:1.02))):Math.max(56,Math.min(special?112:94,(phase==='cast'?a.width:b.width)*(special?1.4:1.2)));
+  const size=phase==='swing'?Math.max(weaponProfile.min,Math.min(weaponProfile.max,b.width*weaponProfile.scale*(special?1.08:1))):contact?Math.max(44,Math.min(84,b.width*(special?1.12:1.02))):Math.max(56,Math.min(special?112:94,(phase==='cast'?a.width:b.width)*(special?1.4:1.2)));
   if(contact)node.className+=' hero-contact';
   for(const [key,value] of Object.entries({'--hero-size':size+'px','--hero-ms':ms+'ms','--hero-delay':delay+'ms','--hero-angle':angle+'rad','--hero-dx':(to.x-from.x)+'px','--hero-dy':(to.y-from.y)+'px'}))node.style.setProperty(key,value);
   node.style.left=point.x+'px';node.style.top=point.y+'px';
+  if(phase==='swing'){
+   const direction=to.x>=from.x?1:-1,position=targetSwingGeometry(b,direction,size,weapon);
+   node.style.left=position.left+'px';node.style.top=position.top+'px';
+   node.style.setProperty('--hero-facing',String(direction));node.style.setProperty('--hero-recovery',recovery+'ms');
+   node.style.setProperty('--hero-contact-angle',weaponProfile.angle+'deg');node.style.setProperty('--hero-windup-angle',weaponProfile.windup+'deg');
+   node.style.setProperty('--hero-contact-x',position.contactX*100+'%');node.style.setProperty('--hero-contact-y',position.contactY*100+'%');
+   appendTargetWeapon(document,node,weapon);
+  }
   if(contact){
    node.style.left=b.left+'px';node.style.top=b.top+'px';node.style.width=b.width+'px';node.style.height=b.height+'px';
    const art=appendHeroImpactArt(document,node,signature,special,{width:b.width,height:b.height});
@@ -99,16 +109,23 @@ export function playHeroAttack({document,effects,actor,target,hero,kind,special=
     };
     effects.own?.(()=>{active=false;if(frameId!==undefined)cancel?.(frameId)},ms);
     draw();onImpact?.();
+    if(weapon&&!splash&&!settled&&!reducedMotion&&actor!==target){
+     const direction=to.x>=from.x?1:-1,kick=weapon==='dagger'?4:weapon==='axe'?10:8;
+     effects.animate?.(target.querySelector('.arena-portrait')||target,[{translate:'0px 0px',rotate:'0deg'},{translate:(direction*kick)+'px 2px',rotate:(direction*2.5)+'deg',offset:.14},{translate:(direction*kick)+'px 2px',rotate:(direction*2.5)+'deg',offset:.32},{translate:(-direction*kick*.35)+'px -1px',rotate:(-direction)+'deg',offset:.56},{translate:'0px 0px',rotate:'0deg'}],{duration:weapon==='dagger'?180:260,easing:'ease-out'});
+    }
    };
    if(delay>0)effects.schedule?.(start,delay);else start();
-  }else{
+  }else if(phase!=='swing'){
    for(let i=0;i<4;i++){const part=document.createElement('i');part.style.setProperty('--part',i);node.append(part)}
   }
-  effects.node(node,document.body,delay+ms+80);return node;
+  effects.node(node,document.body,delay+ms+(phase==='swing'?recovery:0)+80);return node;
  }
  if(!splash&&!settled&&!reducedMotion&&timing.arrival>0&&actor!==target){
   make('cast',from,timing.charge);
-  make('flight',from,timing.travel,timing.charge);
+  if(weapon){
+   const swing=Math.min(timing.travel,timing.arrival);
+   make('swing',to,swing,timing.arrival-swing);
+  }else make('flight',from,timing.travel,timing.charge);
  }
  // Healing state and its +value are already immediate. This gentle target cue
  // starts with them and hands over to the arriving ring, without another heal,

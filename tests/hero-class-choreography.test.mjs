@@ -90,7 +90,9 @@ test('restore cue is absent for self, shield, damage, splash, settled and reduce
 
 test('all added CSS selectors are class-scoped; target contact renderer remains unchanged',()=>{
  const css=readFileSync(new URL('../public/hero-attack-effects.css',import.meta.url),'utf8');
- const added=css.slice(css.indexOf('/* Class choreography'));
+ const start=css.indexOf('/* Class choreography');
+ const end=css.indexOf('/* Target-local melee',start);
+ const added=css.slice(start,end<0?undefined:end);
  for(const line of added.split('\n').filter(x=>x.startsWith('.hero-fx')))assert.match(line,/\.class-(mage|fighter|tank|healer)/);
  assert.match(added,/heroHammerStrike var\(--hero-ms\) ease-in var\(--hero-delay\)/);
  assert.match(added,/@keyframes heroClassTravel\{0%\{opacity:0/,'new class projectiles stay hidden during preparation');
