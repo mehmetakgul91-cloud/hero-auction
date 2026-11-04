@@ -1,6 +1,6 @@
 import {appendHeroImpactArt} from './hero-impact-art.js';
 import {createCombatEffects} from './arena-combat-effects.js';
-import {heroCombatPresentation} from './hero-combat-presentation.js';
+import {heroCombatPresentation,heroVisualClass} from './hero-combat-presentation.js';
 // Visual identity only. Formation roles and server combat rules are untouched.
 export function heroAttackSignature(hero,kind){
  if(['heal','shield','lightning'].includes(kind))return kind;
@@ -66,6 +66,9 @@ export function createHeroAttackPlayer({document,clock=()=>Date.now(),setTimer=s
 export function playHeroAttack({document,effects,actor,target,hero,kind,special=false,splash=false,settled=false,time=850,onImpact,reducedMotion=false,clock=()=>Date.now(),valid=()=>true,arrivalAtOverride}){
  if(!actor||!target)return;
  const signature=heroAttackSignature(hero,kind);
+ const roleClass=heroVisualClass(hero);
+ // Shield casts and non-healer healing are outside the attack redesign.
+ const visualClass=signature==='shield'||(signature==='heal'&&roleClass!=='healer')?null:roleClass;
  const rect=el=>(el.querySelector('.arena-portrait')||el).getBoundingClientRect();
  const a=rect(actor),b=rect(target),from={x:a.left+a.width/2,y:a.top+a.height/2},to={x:b.left+b.width/2,y:b.top+b.height/2};
  if(!a.width||!b.width)return;
@@ -76,6 +79,7 @@ export function playHeroAttack({document,effects,actor,target,hero,kind,special=
  function make(phase,point,ms,delay=0){
   const node=document.createElement('span');
   node.className=`hero-fx hero-fx-${phase} signature-${signature}${special?' is-special':''}${splash?' is-splash':''}`;
+  if(visualClass)node.className+=' class-'+visualClass;
   node.setAttribute('aria-hidden','true');
   const contact=phase==='impact'&&!['heal','shield'].includes(signature);
   const size=contact?Math.max(44,Math.min(84,b.width*(special?1.12:1.02))):Math.max(56,Math.min(special?112:94,(phase==='cast'?a.width:b.width)*(special?1.4:1.2)));
@@ -105,6 +109,12 @@ export function playHeroAttack({document,effects,actor,target,hero,kind,special=
  if(!splash&&!settled&&!reducedMotion&&timing.arrival>0&&actor!==target){
   make('cast',from,timing.charge);
   make('flight',from,timing.travel,timing.charge);
+ }
+ // Healing state and its +value are already immediate. This gentle target cue
+ // starts with them and hands over to the arriving ring, without another heal,
+ // callback or any delay to the authoritative snapshot. Self heals need no cue.
+ if(visualClass==='healer'&&signature==='heal'&&timing.arrival>0&&!splash){
+  make('restore',to,timing.arrival);
  }
  make('impact',to,timing.impact,timing.arrival);
  if(['heal','shield'].includes(signature)){if(timing.arrival>0)effects.schedule?.(()=>{if(valid())onImpact?.()},timing.arrival);else onImpact?.();}
