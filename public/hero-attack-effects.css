@@ -93,3 +93,51 @@
 .battle-arena .hero.primary-target{outline:0;box-shadow:none!important}
 .battle-arena .hero.primary-target .arena-portrait{box-shadow:none}
 @media(prefers-reduced-motion:reduce){.hero-fx-impact.hero-contact{display:block!important;animation:none}}
+
+/* Class choreography is opt-in: bow identities and approved contact canvases
+   keep their existing geometry, colors, clocks and accessibility behavior. */
+.hero-fx-flight.class-mage,.hero-fx-flight.class-fighter,.hero-fx-flight.class-tank,.hero-fx-flight.class-healer{animation-name:heroClassTravel}
+@keyframes heroClassTravel{0%{opacity:0;transform:translate(0,0) rotate(var(--hero-angle))}6%,92%{opacity:1}100%{opacity:0;transform:translate(var(--hero-dx),var(--hero-dy)) rotate(var(--hero-angle))}}
+.hero-fx-cast.class-mage::before{inset:8%;border:2px solid currentColor;border-left-color:transparent;border-right-color:transparent;animation:heroMageGather var(--hero-ms) ease-in both}
+.hero-fx-cast.class-mage::after{inset:27%;border:0;border-radius:50%;background:radial-gradient(circle,#fff7ff 0 8%,#dbb8ff99 26%,transparent 68%);animation:heroMageCore var(--hero-ms) ease-in both}
+.hero-fx-cast.class-mage i{width:4px;height:9px;border-radius:50%;animation:heroMageMotes var(--hero-ms) ease-in both}
+.hero-fx-flight.class-mage.signature-magic::before{inset:3px 4px 3px 16px;background:radial-gradient(ellipse at 65% 50%,#fffaff 0 12%,#e8cfff 18%,#b87bfa 42%,transparent 74%)}
+.hero-fx-flight.class-mage::after{height:14px;top:5px;background:linear-gradient(90deg,transparent,#9a66d944 30%,currentColor 88%,#fff5ff);clip-path:polygon(0 40%,58% 5%,100% 35%,100% 65%,58% 95%,0 60%)}
+.hero-fx-flight.class-mage i{left:calc(3px - var(--part)*12px);top:calc(4px + var(--part)*3px);width:4px;height:4px;border:0;border-radius:50%;background:#f3e2ff;transform:none;opacity:calc(.85 - var(--part)*.16)}
+.hero-fx-flight.class-mage.is-special i{width:6px;height:6px;box-shadow:0 0 5px currentColor}
+@keyframes heroMageGather{from{transform:rotate(-65deg) scale(1.16);opacity:.25}to{transform:rotate(35deg) scale(.66);opacity:1}}
+@keyframes heroMageCore{from{transform:scale(.35);opacity:.2}to{transform:scale(1.12);opacity:.9}}
+@keyframes heroMageMotes{from{transform:rotate(calc(var(--part)*90deg)) translateY(calc(var(--hero-size)*-.43));opacity:.2}to{transform:rotate(calc(var(--part)*90deg + 65deg)) translateY(calc(var(--hero-size)*-.18));opacity:.95}}
+
+.hero-fx-cast.class-fighter::before{inset:12%;border-width:3px;border-right-color:transparent;border-bottom-color:transparent;transform:rotate(-35deg);animation:heroSwordReady var(--hero-ms) ease-out both}
+.hero-fx-cast.class-fighter::after{display:none}
+.hero-fx-cast.class-fighter i{display:none}
+.hero-fx-flight.class-fighter.signature-blade::before{inset:4px -10px 4px 10px;width:64px;height:16px;border:0;border-radius:0;background:linear-gradient(180deg,#fff9e8,#fff2ce 40%,#c9954e 48%,#fff7e3 60%,#dcb777);clip-path:polygon(0 36%,74% 18%,100% 50%,74% 82%,0 64%);transform:none}
+.hero-fx-flight.class-fighter.signature-blade::after{height:20px;top:2px;width:65px;right:50%;background:linear-gradient(90deg,transparent,#ffc67b33,#fff2cfaa);clip-path:polygon(0 50%,100% 10%,100% 90%)}
+.hero-fx-flight.class-fighter.signature-blade i:first-child{left:8px;top:2px;width:4px;height:20px;border-radius:2px;background:#e9b465;transform:rotate(-12deg)}
+.hero-fx-flight.class-fighter.signature-blade i:nth-child(2){left:0;top:10px;width:14px;height:4px;background:#a8783f}
+.hero-fx-flight.class-fighter.signature-blade.is-special::before{height:20px;top:2px;filter:drop-shadow(0 0 3px #ffe0a0)}
+@keyframes heroSwordReady{from{transform:rotate(-70deg) scale(.82);opacity:.2}to{transform:rotate(-10deg) scale(1);opacity:.85}}
+
+.hero-fx-cast.class-tank::before{inset:30% 8% 6%;border-width:4px;border-top-color:transparent;border-right-color:currentColor;transform:scaleY(.6)}
+.hero-fx-cast.class-tank::after{inset:33%;border:2px solid #ffe7ae;border-radius:3px;background:#ffd68a22;transform:rotate(-25deg);animation:heroHammerReady var(--hero-ms) ease-in both}
+.hero-fx-cast.class-tank i{width:7px;height:4px;top:72%;left:calc(17% + var(--part)*21%);transform:none;opacity:.6}
+.hero-fx-flight.class-tank.signature-hammer::before{inset:-4px -2px auto auto;width:34px;height:29px;border:2px solid #fff1ca;border-radius:4px;background:linear-gradient(120deg,#fff4cd,#e7b25c 55%,#a96f32);transform:rotate(-12deg);transform-origin:0 70%;animation:heroHammerStrike var(--hero-ms) ease-in var(--hero-delay) both}
+.hero-fx-flight.class-tank.signature-hammer::after{right:24px;top:12px;width:40px;height:7px;border-radius:2px;background:linear-gradient(#ffe3a2,#a9703e);transform:rotate(-12deg)}
+.hero-fx-flight.class-tank.signature-hammer i{left:calc(-5px - var(--part)*10px);top:calc(12px + var(--part)*3px);width:calc(5px - var(--part)*.6px);height:3px;background:#ffdfaa;transform:rotate(-18deg);opacity:calc(.6 - var(--part)*.12)}
+.hero-fx-flight.class-tank.signature-hammer.is-special::before{width:39px;height:33px;top:-6px}
+@keyframes heroHammerReady{from{transform:translateY(4px) rotate(-12deg);opacity:.3}to{transform:translateY(-5px) rotate(-38deg);opacity:1}}
+@keyframes heroHammerStrike{from{transform:rotate(-38deg)}65%{transform:rotate(-24deg)}to{transform:rotate(8deg)}}
+
+.hero-fx-cast.class-healer::before{border:2px solid currentColor;border-top-color:transparent;border-bottom-color:transparent;inset:15%;opacity:.65}
+.hero-fx-cast.class-healer::after{inset:30%;border:0;border-radius:50%;background:radial-gradient(circle,#f2fff1aa,#b4f3db44 45%,transparent 72%);transform:none}
+.hero-fx-cast.class-healer i{width:4px;height:7px;border-radius:70% 20%;opacity:.7}
+.hero-fx-flight.class-healer::before{inset:4px 7px 4px 17px;background:radial-gradient(ellipse,#fffff3 0 12%,#d4ffedaa 30%,#a6e7ff55 52%,transparent 75%);box-shadow:none}
+.hero-fx-flight.class-healer::after{height:12px;top:6px;width:74px;background:linear-gradient(90deg,transparent,#b5f1df44,currentColor);opacity:.6;clip-path:polygon(0 40%,60% 15%,100% 35%,100% 65%,60% 85%,0 60%)}
+.hero-fx-flight.class-healer i{left:calc(13px - var(--part)*12px);top:calc(6px + var(--part)*2px);width:6px;height:3px;border:0;border-radius:80% 20%;background:#e1ffec;transform:rotate(-22deg);opacity:calc(.7 - var(--part)*.15)}
+.hero-fx-restore.class-healer{animation:heroRestoreWelcome var(--hero-ms) linear both;filter:none}
+.hero-fx-restore.class-healer::before{inset:17%;border:2px solid #87efb888;border-radius:50%;background:radial-gradient(circle,transparent 40%,#87efb81a 70%,transparent 72%)}
+.hero-fx-restore.class-healer::after{inset:39%;background:#caffdfaa;clip-path:polygon(35% 0,65% 0,65% 35%,100% 35%,100% 65%,65% 65%,65% 100%,35% 100%,35% 65%,0 65%,0 35%,35% 35%)}
+.hero-fx-restore.class-healer i{display:none}
+@keyframes heroRestoreWelcome{0%,70%{opacity:.65;scale:1}100%{opacity:0;scale:1.04}}
+@media(max-width:600px){.hero-fx-flight.class-fighter.signature-blade::before{width:52px}.hero-fx-flight.class-mage::after,.hero-fx-flight.class-healer::after{width:60px}.hero-fx-flight.class-tank.signature-hammer::before{width:29px;height:25px}.hero-fx-flight.class-tank.signature-hammer.is-special::before{width:33px;height:29px}}

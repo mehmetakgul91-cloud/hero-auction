@@ -47,7 +47,7 @@ test('splash and self effects do not launch extra projectiles, repeats remain bo
 });
 test('integration uses owned effects before actor movement and suppresses legacy duplicate impacts',()=>{
  const js=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8');
- assert.ok(js.indexOf('heroAttacks.play({')>0&&js.indexOf('heroAttacks.play({')<js.indexOf('if(!ranged)combatEffects.animate(actor'));
+ assert.ok(js.indexOf('heroAttacks.play({')>0&&js.indexOf('heroAttacks.play({')<js.indexOf('if(!ranged){'));
  assert.doesNotMatch(js,/battle-comic-banner|comicBattleCue/);
  assert.doesNotMatch(js,/combatEffects\.accent\(target|orb\.className='battle-projectile/);
  const css=readFileSync(new URL('../public/hero-attack-effects.css',import.meta.url),'utf8');
