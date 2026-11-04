@@ -1,0 +1,56 @@
+name: Versioned Portrait Browser QA
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'public/**'
+      - 'battle-roster.json'
+      - 'commander-original-roster.json'
+      - 'image-asset-manifest.json'
+      - 'versioned-portrait-assets.js'
+      - 'arena-decorative-assets.js'
+      - 'server.js'
+      - 'crazygames-build.js'
+      - 'tests/versioned-portraits.test.mjs'
+      - 'tools/test-versioned-portraits-browser.mjs'
+      - 'package*.json'
+      - '.github/workflows/versioned-portraits-browser.yml'
+permissions:
+  contents: read
+jobs:
+  portrait-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies and official headless Chromium
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          ./node_modules/.bin/playwright install --with-deps --only-shell chromium
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+      - name: Verify image identities and private API cache policy
+        run: |
+          node --test tests/versioned-portraits.test.mjs tests/hero-rarity.test.mjs tests/auction-results-layout.test.mjs
+          npm run audit:strict
+      - name: Test browser cache reuse and portrait rendering
+        env:
+          HERO_BROWSER_SCREENSHOTS: ${{ runner.temp }}/versioned-portrait-shots
+        run: |
+          mkdir -p "$HERO_BROWSER_SCREENSHOTS"
+          set -o pipefail
+          node tools/test-versioned-portraits-browser.mjs 2>&1 | tee "$HERO_BROWSER_SCREENSHOTS/run.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: versioned-portrait-browser-evidence
+          path: ${{ runner.temp }}/versioned-portrait-shots
+          if-no-files-found: warn
+          retention-days: 7

@@ -7,6 +7,7 @@ import {commanderOriginalRoster} from '../commander-original-roster.js';
 import {prepareLiveArenaTeams} from '../commander-live-team-preparation.js';
 import {preferredLane,buildDefaultFormation,validateFormation} from '../public/preparation-formation.js';
 import {selectBattleTarget} from '../battle-target-selection.js';
+import portraits from '../image-asset-manifest.json' with {type:'json'};
 
 // Approved swaps from main d6c04ccc51bf06e875a51529586a0b51ac48387b.
 // Pin old values independently so reversing only these swaps reconstructs the
@@ -31,7 +32,7 @@ const baselineHashes={
  'commander-original-roster.json':'4d2f30cd9d5014b1c8f4bd146d663b2197d0e34b5836524b72f6d8307f576bd7',
 };
 
-for(const [file,hash] of Object.entries(baselineHashes))test(`${file}: exactly six approved lane swaps and no other roster changes`,()=>{
+for(const [file,hash] of Object.entries(baselineHashes))test(`${file}: exactly six approved lane swaps and versioned portraits, with no other roster changes`,()=>{
  const roster=JSON.parse(readFileSync(new URL('../'+file,import.meta.url),'utf8'));
  assert.equal(roster.characters.length,50);
  const assassins=roster.characters.filter(hero=>hero.role==='assassin');
@@ -40,6 +41,14 @@ for(const [file,hash] of Object.entries(baselineHashes))test(`${file}: exactly s
  let reversed=0;
  for(const hero of roster.characters)if(swaps[hero.id]){hero.laneModifiers={...swaps[hero.id]};reversed++;}
  assert.equal(reversed,6);
+ // Normalize only the nine verified portrait substitutions to their original
+ // paths. Keep the independently pinned pre-optimization baseline hash intact.
+ for(let i=1;i<=9;i++){
+  const id='original:'+String(i).padStart(2,'0'),source='/images/original/hero-'+String(i).padStart(2,'0')+'.png';
+  const hero=roster.characters.find(h=>h.id===id),asset=portraits.assets.find(a=>a.source===source);
+  assert.equal(hero.portrait,asset.url,id+' must use its own optimized portrait');
+  hero.portrait=source;
+ }
  assert.equal(createHash('sha256').update(JSON.stringify(roster)).digest('hex'),hash,
   'all other heroes, stats, abilities, powers, portraits and roster metadata must remain unchanged');
 });
