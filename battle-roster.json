@@ -22,7 +22,7 @@
         "obsidyen-kalkan",
         "hasar-azaltma"
       ],
-      "portrait": "/images/original/hero-01.png",
+      "portrait": "/images/optimized/hero-01.b665ec740080815b.webp",
       "proposedPower": 90,
       "active": {
         "name": "obsidyen-kalkan",
@@ -61,7 +61,7 @@
         "celik-siper",
         "takim-koruma"
       ],
-      "portrait": "/images/original/hero-02.png",
+      "portrait": "/images/optimized/hero-02.cca2ad1bd9ab5154.webp",
       "proposedPower": 69,
       "active": {
         "name": "celik-siper",
@@ -100,7 +100,7 @@
         "yer-sarsintisi",
         "alan-kontrol"
       ],
-      "portrait": "/images/original/hero-03.png",
+      "portrait": "/images/optimized/hero-03.d3b4bd5f526fbdb5.webp",
       "proposedPower": 80,
       "active": {
         "name": "yer-sarsintisi",
@@ -139,7 +139,7 @@
         "donma",
         "buz-kalkani"
       ],
-      "portrait": "/images/original/hero-04.png",
+      "portrait": "/images/optimized/hero-04.288c0d6fe145b04e.webp",
       "proposedPower": 83,
       "active": {
         "name": "donma",
@@ -178,7 +178,7 @@
         "gorunmezlik",
         "kritik-darbe"
       ],
-      "portrait": "/images/original/hero-05.png",
+      "portrait": "/images/optimized/hero-05.4c20a67737b9604b.webp",
       "proposedPower": 90,
       "active": {
         "name": "gorunmezlik",
@@ -215,7 +215,7 @@
         "kutsal-kalkan",
         "takim-koruma"
       ],
-      "portrait": "/images/original/hero-06.png",
+      "portrait": "/images/optimized/hero-06.1c096faca531a26b.webp",
       "proposedPower": 91,
       "active": {
         "name": "kutsal-kalkan",
@@ -254,7 +254,7 @@
         "yakma",
         "alev-kilici"
       ],
-      "portrait": "/images/original/hero-07.png",
+      "portrait": "/images/optimized/hero-07.b3e0656bfdaee5d6.webp",
       "proposedPower": 84,
       "active": {
         "name": "yakma",
@@ -291,7 +291,7 @@
         "uzun-menzil",
         "dogal-yavaslatma"
       ],
-      "portrait": "/images/original/hero-08.png",
+      "portrait": "/images/optimized/hero-08.56fc32ad7b9822c6.webp",
       "proposedPower": 72,
       "active": {
         "name": "uzun-menzil",
@@ -328,7 +328,7 @@
         "ruh-cagirma",
         "can-emme"
       ],
-      "portrait": "/images/original/hero-09.png",
+      "portrait": "/images/optimized/hero-09.ba33aa1ebaf1431f.webp",
       "proposedPower": 90,
       "active": {
         "name": "Ruh Çağırma",

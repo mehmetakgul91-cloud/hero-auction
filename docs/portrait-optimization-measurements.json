@@ -1,0 +1,117 @@
+{
+  "baseCommit": "e5b9fb2ed95c1d9b7428e9448815506f42992089",
+  "measurement": "Encoded file sizes, not production traffic or billing",
+  "sourceBytes": 39251653,
+  "optimizedBytes": 7308020,
+  "bytesSaved": 31943633,
+  "reductionPercent": 81.38,
+  "qualityMetric": "FFmpeg SSIM, default ssim filter; supporting signal, not a lossless guarantee",
+  "minimumSSIM": 0.984215,
+  "maximumSSIM": 0.991485,
+  "files": [
+    {
+      "source": "/images/original/hero-01.png",
+      "webp": "/images/optimized/hero-01.b665ec740080815b.webp",
+      "sourceBytes": 3067229,
+      "webpBytes": 587764,
+      "ssim": 0.985734,
+      "sameDimensions": true
+    },
+    {
+      "source": "/images/original/hero-02.png",
+      "webp": "/images/optimized/hero-02.cca2ad1bd9ab5154.webp",
+      "sourceBytes": 2934251,
+      "webpBytes": 533662,
+      "ssim": 0.986321,
+      "sameDimensions": true
+    },
+    {
+      "source": "/images/original/hero-03.png",
+      "webp": "/images/optimized/hero-03.d3b4bd5f526fbdb5.webp",
+      "sourceBytes": 3059737,
+      "webpBytes": 633296,
+      "ssim": 0.984215,
+      "sameDimensions": true
+    },
+    {
+      "source": "/images/original/hero-04.png",
+      "webp": "/images/optimized/hero-04.288c0d6fe145b04e.webp",
+      "sourceBytes": 3267056,
+      "webpBytes": 672704,
+      "ssim": 0.986982,
+      "sameDimensions": true
+    },
+    {
+      "source": "/images/original/hero-05.png",
+      "webp": "/images/optimized/hero-05.4c20a67737b9604b.webp",
+      "sourceBytes": 3123340,
+      "webpBytes": 566604,
+      "ssim": 0.987008,
+      "sameDimensions": true
+    },
+    {
+      "source": "/images/original/hero-06.png",
+      "webp": "/images/optimized/hero-06.1c096faca531a26b.webp",
+      "sourceBytes": 3139038,
+      "webpBytes": 626686,
+      "ssim": 0.984915,
+      "sameDimensions": true
+    },
+    {
+      "source": "/images/original/hero-07.png",
+      "webp": "/images/optimized/hero-07.b3e0656bfdaee5d6.webp",
+      "sourceBytes": 2953132,
+      "webpBytes": 620732,
+      "ssim": 0.984928,
+      "sameDimensions": true
+    },
+    {
+      "source": "/images/original/hero-08.png",
+      "webp": "/images/optimized/hero-08.56fc32ad7b9822c6.webp",
+      "sourceBytes": 2951240,
+      "webpBytes": 517048,
+      "ssim": 0.989176,
+      "sameDimensions": true
+    },
+    {
+      "source": "/images/original/hero-09.png",
+      "webp": "/images/optimized/hero-09.ba33aa1ebaf1431f.webp",
+      "sourceBytes": 3100361,
+      "webpBytes": 567608,
+      "ssim": 0.989283,
+      "sameDimensions": true
+    },
+    {
+      "source": "/images/Ateşler İçinde Savaşçı Komutan.png",
+      "webp": "/images/optimized/commander-attack.bad033e5f738a797.webp",
+      "sourceBytes": 2665888,
+      "webpBytes": 436940,
+      "ssim": 0.990037,
+      "sameDimensions": true
+    },
+    {
+      "source": "/images/Altın Aslanın Kale Muhafızı.png",
+      "webp": "/images/optimized/commander-defense.d1127052dd9f841b.webp",
+      "sourceBytes": 3053663,
+      "webpBytes": 531118,
+      "ssim": 0.990958,
+      "sameDimensions": true
+    },
+    {
+      "source": "/images/Kozmik Rünlerin Büyücü Komutanı.png",
+      "webp": "/images/optimized/commander-magic.86e58333914984ea.webp",
+      "sourceBytes": 2942616,
+      "webpBytes": 511974,
+      "ssim": 0.989813,
+      "sameDimensions": true
+    },
+    {
+      "source": "/images/Zümrüt Işığın Şifacı Kraliçesi.png",
+      "webp": "/images/optimized/commander-support.d6ec4a88632b972d.webp",
+      "sourceBytes": 2994102,
+      "webpBytes": 501884,
+      "ssim": 0.991485,
+      "sameDimensions": true
+    }
+  ]
+}
