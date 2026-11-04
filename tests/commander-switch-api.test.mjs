@@ -14,7 +14,7 @@ assert.ok(begin>=0&&end>begin);
 const handlers=source.slice(begin,end);
 const account='isolated-commander-test';
 const initialProfile=()=>({commanderId:'attack',levels:{attack:40,defense:3,magic:2,support:1}});
-function fixture({gold=1000,profile=initialProfile(),failSave=false,lostCommit=false,preview=false}={}){
+function fixture({gold=100,profile=initialProfile(),failSave=false,lostCommit=false,preview=false}={}){
  const durable={gold,profile:structuredClone(profile)};
  const queries=[];let releases=0,lock=Promise.resolve();
  const database={
@@ -69,19 +69,19 @@ function fixture({gold=1000,profile=initialProfile(),failSave=false,lostCommit=f
 const plain=value=>JSON.parse(JSON.stringify(value));
 const debitQueries=f=>f.queries.filter(([sql])=>sql.startsWith('UPDATE hero_auction_wallets'));
 
-test('shared price is 1000; exactly 1000 gold switches once and preserves all progression',async()=>{
- assert.equal(COMMANDER_CHANGE_COST,1000);
+test('shared price is 100; exactly 100 gold switches once and preserves all progression',async()=>{
+ assert.equal(COMMANDER_CHANGE_COST,100);
  assert.match(source,/import \{COMMANDER_CHANGE_COST\} from '\.\/public\/commander-economy\.js'/);
  const f=fixture();const levels=structuredClone(f.durable.profile.levels);
  const result=await f.request('change',{commanderId:'defense',cost:0,gold:999999});
- assert.deepEqual(plain(result),{profile:{commanderId:'defense',levels},gold:0,cost:1000});
+ assert.deepEqual(plain(result),{profile:{commanderId:'defense',levels},gold:0,cost:100});
  assert.deepEqual(f.durable,{gold:0,profile:{commanderId:'defense',levels}});
- assert.deepEqual(plain(debitQueries(f)[0][1]),[account,1000]);
+ assert.deepEqual(plain(debitQueries(f)[0][1]),[account,100]);
  assert.equal(f.queries.at(-1)[0],'COMMIT');assert.equal(f.releases(),1);
 });
-for(const gold of [999,100,0,null])test(`${gold} gold cannot switch and changes neither balance nor profile`,async()=>{
+for(const gold of [99,50,0,null])test(`${gold} gold cannot switch and changes neither balance nor profile`,async()=>{
  const f=fixture({gold}),before=structuredClone(f.durable);
- await assert.rejects(f.request('change',{commanderId:'magic'}),e=>e.status===409&&e.message==='Komutan değiştirmek için 1000 altın gerekiyor.');
+ await assert.rejects(f.request('change',{commanderId:'magic'}),e=>e.status===409&&e.message==='Komutan değiştirmek için 100 altın gerekiyor.');
  assert.deepEqual(f.durable,before);assert.equal(f.queries.at(-1)[0],'ROLLBACK');assert.equal(f.releases(),1);
 });
 test('first selection is free at zero gold; repeating selection cannot replace it',async()=>{
@@ -102,7 +102,7 @@ test('retrying a completed request never debits twice, including a lost commit r
   const first=f.request('change',{commanderId:'magic'});
   if(lostCommit)await assert.rejects(first,/Lost COMMIT response/);else await first;
   await assert.rejects(f.request('change',{commanderId:'magic'}),e=>e.status===409);
-  assert.equal(f.durable.gold,4000);assert.equal(f.durable.profile.commanderId,'magic');assert.equal(debitQueries(f).length,1);assert.equal(f.releases(),2);
+  assert.equal(f.durable.gold,4900);assert.equal(f.durable.profile.commanderId,'magic');assert.equal(debitQueries(f).length,1);assert.equal(f.releases(),2);
  }
 });
 test('simultaneous identical requests lock the profile and debit only once',async()=>{
@@ -110,20 +110,20 @@ test('simultaneous identical requests lock the profile and debit only once',asyn
  const results=await Promise.allSettled([f.request('change',{commanderId:'support'}),f.request('change',{commanderId:'support'})]);
  assert.deepEqual(results.map(r=>r.status).sort(),['fulfilled','rejected']);
  assert.equal(results.find(r=>r.status==='rejected').reason.status,409);
- assert.equal(f.durable.gold,4000);assert.equal(f.durable.profile.commanderId,'support');assert.equal(debitQueries(f).length,1);
+ assert.equal(f.durable.gold,4900);assert.equal(f.durable.profile.commanderId,'support');assert.equal(debitQueries(f).length,1);
 });
-test('distinct successful switches each cost 1000; existing progression is retained',async()=>{
+test('distinct successful switches each cost 100; existing progression is retained',async()=>{
  const f=fixture({gold:5000}),levels=structuredClone(f.durable.profile.levels);
  for(const commanderId of ['support','magic','attack']){
-  const result=await f.request('change',{commanderId});assert.equal(result.cost,1000);assert.deepEqual(plain(result.profile.levels),levels);
+  const result=await f.request('change',{commanderId});assert.equal(result.cost,100);assert.deepEqual(plain(result.profile.levels),levels);
  }
- assert.equal(f.durable.gold,2000);
+ assert.equal(f.durable.gold,4700);
 });
 test('invalid target and missing first selection cannot debit',async()=>{
  const invalid=fixture(),missing=fixture({profile:null});
  await assert.rejects(invalid.request('change',{commanderId:'unknown'}),e=>e.status===400);
  await assert.rejects(missing.request('change',{commanderId:'support'}),e=>e.status===409);
- for(const f of [invalid,missing]){assert.equal(f.durable.gold,1000);assert.equal(debitQueries(f).length,0)}
+ for(const f of [invalid,missing]){assert.equal(f.durable.gold,100);assert.equal(debitQueries(f).length,0)}
 });
 test('profile persistence failure rolls the debit back and releases the client',async()=>{
  const f=fixture({failSave:true}),before=structuredClone(f.durable);

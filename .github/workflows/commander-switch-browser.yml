@@ -1,0 +1,47 @@
+name: Commander Switch Price Browser QA
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'public/commander-economy.js'
+      - 'public/index.html'
+      - 'public/app.js'
+      - 'public/crazygames-en.js'
+      - 'public/crazygames-ui-phrases.js'
+      - 'public/first-session.js'
+      - 'tests/commander-switch-*.test.mjs'
+      - 'tools/test-commander-switch-browser.mjs'
+      - '.github/workflows/commander-switch-browser.yml'
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install locked dependencies and official headless Chromium
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          ./node_modules/.bin/playwright install --with-deps --only-shell chromium
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+      - name: Test shared price, progression preservation and bilingual copy
+        run: node --test tests/commander-switch-api.test.mjs tests/commander-switch-ui.test.mjs tests/commander-progression.test.js tests/first-session.test.mjs tests/public-landing-social.test.mjs
+      - name: Verify actual app at 99 and 100 gold with synthetic accounts
+        env:
+          HERO_BROWSER_SCREENSHOTS: ${{ runner.temp }}/commander-switch-shots
+        run: env -u DATABASE_URL node tools/test-commander-switch-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: commander-switch-browser-frames
+          path: ${{ runner.temp }}/commander-switch-shots
+          if-no-files-found: warn

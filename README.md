@@ -35,7 +35,7 @@ Otomatik yerleşim **Hazırım** sayılmaz. Mevcut 60 saniyelik hazırlık süre
 
 ## Komutan seçimi ve değişimi
 
-İlk komutan seçimi ücretsizdir. Daha sonra farklı bir komutana geçiş 1000 altındır; gelişim seviyeleri korunur. Ücret sunucuda bakiye kontrolüyle birlikte tek işlemde kesilir. Aynı komutanı yeniden seçme isteği ücret kesmeden reddedilir. Komutan değiştirme ücreti bu güncellemede de 1000 altındır; gelişim fiyatları için aşağıdaki güncel ekonomi bölümüne bak.
+İlk komutan seçimi ücretsizdir. Daha sonra farklı bir komutana geçiş 100 altındır; gelişim seviyeleri korunur. Ücret sunucuda bakiye kontrolüyle birlikte tek işlemde kesilir. Aynı komutanı yeniden seçme isteği ücret kesmeden reddedilir. Gelişim fiyatları değişmez; aşağıdaki güncel ekonomi bölümüne bak.
 
 ## Güncel gelişim ve elmas hazırlığı (25 Ekim 2026)
 
