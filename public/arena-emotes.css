@@ -1,0 +1,31 @@
+.arena-emotes[hidden],.arena-emote-picker[hidden],.arena-emote-slot[hidden]{display:none!important}
+.arena-room-nav.has-arena-emotes>strong{display:none}
+.arena-emotes{display:flex;align-items:center;gap:3px;margin-left:auto;flex:none;height:44px;position:relative;z-index:10030}
+.arena-emote-toggle,.arena-emote-close,.arena-emote-mute,.arena-emote-choice{touch-action:manipulation;font:inherit;cursor:pointer}
+.arena-emote-toggle{display:grid;place-items:center;width:44px;height:44px;min-height:44px;padding:2px;border:1px solid #93c9df;border-radius:12px;background:#203448;color:#fff}
+.arena-emote-toggle>img{width:36px;height:36px;border-radius:9px}
+.arena-emote-slot{display:block;width:44px;height:44px;flex:none;pointer-events:none}
+.arena-emote-image{display:block;width:44px;height:44px;object-fit:contain;border-radius:12px;border:2px solid #78c8ff;background:#203448}
+.arena-emote-slot-1 .arena-emote-image{border-color:#ffa28e}
+.arena-emote-picker{position:fixed;z-index:10040;top:max(54px,calc(env(safe-area-inset-top) + 50px));left:50%;transform:translateX(-50%);width:min(278px,calc(100vw - 20px));max-height:calc(100dvh - 76px);overflow:auto;overscroll-behavior:contain;padding:10px;border:1px solid #92aec2;border-radius:16px;background:#142538;color:#fff;box-shadow:0 10px 36px #0009;text-align:center}
+.arena-emote-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-left:5px}
+.arena-emote-close{width:44px;height:44px;min-height:44px;padding:0;font-size:26px;border:0;border-radius:10px;color:#fff;background:#263e54}
+.arena-emote-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:6px 0}
+.arena-emote-choice{display:flex;flex-direction:column;align-items:center;gap:2px;min-height:76px;padding:4px;border:1px solid #4f6b81;border-radius:11px;color:#fff;background:#203448;font-size:11px;line-height:14px}
+.arena-emote-choice img{width:48px;height:48px;border-radius:7px}
+.arena-emote-choice:disabled{opacity:.45;cursor:wait}
+.arena-emote-mute{width:100%;min-height:44px;padding:7px;border:1px solid #6e8b9e;border-radius:9px;background:#293e51;color:#fff;font-size:12px}
+.arena-emote-mute[aria-pressed=true]{background:#674b29;border-color:#e7b966}
+.arena-emote-status{display:block;min-height:20px;padding-top:7px;font-size:11px;line-height:15px;color:#c8dfeb}
+.arena-emotes button:focus-visible,.arena-emote-picker button:focus-visible{outline:3px solid #ffe17b;outline-offset:2px}
+.auction-player-heading .arena-emotes{justify-content:flex-end;margin:4px 0 0;width:100%;height:44px;z-index:5}
+.auction-player-heading>.arena-emote-slot{margin:4px 0 0 auto}
+#game .arena-emote-toggle{width:44px;min-width:44px;padding:2px;letter-spacing:normal}
+#game .arena-emote-toggle:hover{transform:none}
+@media(max-width:350px){.arena-room.arena-fit .arena-room-nav.has-arena-emotes{gap:2px}.arena-room.arena-fit .arena-room-nav.has-arena-emotes>a{font-size:10px;padding:6px 3px}.arena-emotes{gap:1px}}
+@media(max-width:520px){
+ .arena-room.arena-fit .arena-room-nav.has-arena-emotes>.arena-home-link{flex:0 0 44px;width:44px;height:44px;font-size:0;justify-content:center}
+ .arena-room.arena-fit .arena-room-nav.has-arena-emotes>.arena-home-link::before{content:'⌂';font-size:24px}
+ .arena-room.arena-fit .arena-room-nav.has-arena-emotes>#arena-friend-opponent{flex:1 1 70px;min-width:44px;max-width:90px;height:44px;min-height:44px;padding:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+@media(prefers-reduced-motion:reduce){.arena-emotes,.arena-emotes *,.arena-emote-picker *{animation:none!important;transition:none!important}}

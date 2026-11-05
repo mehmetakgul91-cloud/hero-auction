@@ -42,7 +42,7 @@ test('unloaded roster cannot Ready; rejected Ready leaves edits available withou
 
 test('confirmed CG preparation signals loading complete before waiting for the opponent',()=>{
  const restoration=source.slice(source.indexOf(' if(preparation.ready){'),source.indexOf(" $('battle-lobby-status').textContent='Açık artırma kartların yüklendi"));
- const calls=[];runInNewContext(`function restore(){const preparation={ready:true};let prepDone=false,auctionLoaded=false,arenaMode=false;const auctionCode='ROOM',auctionToken='TOKEN';${restoration}}restore();`,{preparationDraft:{clear:()=>calls.push('clear')},window:{HeroPlatform:{loaded:()=>calls.push('loaded')}},enterArenaWithoutReload:()=>calls.push('arena'),encodeURIComponent});
+ const calls=[];runInNewContext(`function restore(){const preparation={ready:true};let prepDone=false,auctionLoaded=false,arenaMode=false;const auctionCode='ROOM',auctionToken='TOKEN',preparationMatchKey='1:100';${restoration}}restore();`,{preparationDraft:{clear:()=>calls.push('clear')},window:{HeroPlatform:{loaded:()=>calls.push('loaded')}},enterArenaWithoutReload:()=>calls.push('arena'),encodeURIComponent});
  assert.deepEqual(calls,['clear','loaded','arena']);
 });
 
