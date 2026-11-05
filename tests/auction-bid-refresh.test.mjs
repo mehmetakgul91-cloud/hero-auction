@@ -50,7 +50,7 @@ function harness(){
   setInterval:(callback,ms)=>intervals.push({callback,ms}),Date,
   post:async(url,body)=>{sent.push({url,body});return{room:context.next};}
  };
- vm.createContext(context);
+ Object.assign(context,{auctionEmotes:{update(){},hide(){},destroy(){}}});vm.createContext(context);
  vm.runInContext(source.slice(source.indexOf('function show(r)'),source.indexOf('// Recover game progress')),context);
  vm.runInContext(source.slice(source.indexOf('async function syncRoomSnapshot'),source.indexOf('// Guard reconnects')),context);
  vm.runInContext(source.slice(source.indexOf('async function act('),source.indexOf("\n\n$('create')")),context);

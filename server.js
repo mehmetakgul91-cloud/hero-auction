@@ -50,6 +50,7 @@ import {createLiveArenaLifecycle} from './commander-live-arena-lifecycle.js';
 import {prepareLiveArenaTeams} from './commander-live-team-preparation.js';
 import {createLiveCommanderCombat} from './commander-live-combat.js';
 import {isLiveCommanderApiAvailable} from './commander-live-api-access.js';
+import {createArenaEmotesService,arenaEmoteMatchKey,arenaEmotePlatformAllowed,validateArenaEmoteInput} from './arena-emotes-service.js';
 import {settleLiveBattle} from './live-battle-settlement.js';
 import {orientBattleSummary} from './public/battle-summary-data.js';
 import {createArena3dDemo} from './arena-3d-demo.js';
@@ -113,6 +114,20 @@ const liveArenaLifecycle=createLiveArenaLifecycle({readablePacing:true,intervalM
  if(settleLiveBattle(room,key,snapshot,settleFinishedMatch))publish(room);
 }});
 const liveArenaMatchKeys=new Map();
+const arenaEmotes=createArenaEmotesService({onEvent:room=>{
+ // Reuse auction SSE without publish(): reactions do not change revision,
+ // auction timing, room activity, presence, persistence or combat state.
+ if(room.phase==='auction')for(const client of listeners.get(room.code)||[]){if(client.roomCreated!==room.created||client.token!==room.players[client.seat]?.token||client.accountId!==room.players[client.seat]?.accountId)continue;try{client.res.write(`event: arena-emotes\ndata: ${JSON.stringify(arenaEmoteRoomSnapshot(room,client.seat))}\n\n`)}catch{}}
+}});
+function arenaEmoteContext(room,token,req={headers:{}}){
+ const activeMatchKey=room&&liveArenaMatchKeys.get(room.code);
+ return {room,token,activeMatchKey,liveRunning:liveArenaLifecycle.status(activeMatchKey)?.running===true,
+  moderationReady:moderationReady&&(!database||databaseReady),blocked:moderation.blocked(room?.players?.[0]?.accountId,room?.players?.[1]?.accountId),platformAllowed:arenaEmotePlatformAllowed(room,req.headers)};
+}
+function arenaEmoteRoomSnapshot(room,seat){
+ if(seat<0||!room.players[seat])return {matchKey:arenaEmoteMatchKey(room),serverTime:Date.now(),enabled:false,cooldownMs:0,events:[]};
+ return arenaEmotes.snapshot(arenaEmoteContext(room,room.players[seat].token));
+}
 // Match-scoped training opponents: no account progression or extra auction heroes.
 const lastBotCommanders=new Map();
 function assignBotCommander(room){
@@ -686,7 +701,7 @@ function availableRoomCode(){
  error('Tüm oyun odaları şu anda dolu. Biraz sonra tekrar dene.',503);
 }
 const token=()=>crypto.randomBytes(24).toString('hex');
-const publicRoom=(r,seat)=>({...auctionRevealSnapshot(r),presence:{...roomPresence.snapshot(r,{liveArena:liveArenaMatchKeys.has(r.code)}),serverNow:Date.now()},idleClosed:r.idleClosed||null,forfeit:r.disconnectForfeit?{winner:r.disconnectForfeit.winner,reason:'disconnect',deadline:r.disconnectForfeit.deadline}:null,cancellation:r.cancelled?{reason:'admin-entry-refund',refundGoldPerSeat:50}:null,arenaPresentation:roomArenaPresentation(r),...victoryChestView(r,seat),entryPaid:r.entryPaid===true,botSettlement:r.botSettlementReceipt||null,botSettlementPending:!!r.botSettlementPending,code:r.code,universe:r.universe,phase:r.phase,round:r.round,turn:r.turn,deadline:r.deadline||null,series:r.series||[0,0],rematch:r.rematch||[false,false],mode:r.mode||"friend",difficulty:r.mode==='bot'?(r.difficulty||'medium'):null,rankChange:r.phase==='finished'?(r.rankChange||[0,0]):null,rankBefore:r.phase==='finished'?(r.rankBefore||[null,null]):null,topBid:r.topBid,topSeat:r.topSeat,history:r.history,chat:(r.chat||[]).filter(message=>moderationReady&&seat>=0&&!moderation.blocked(r.players[seat]?.accountId,r.players[message.seat]?.accountId)),players:r.players.map((p,i)=>p?{name:p.name,commander:publicAuctionCommander(p.commander),credits:p.credits,team:p.team.map(x=>({name:x.name,universe:x.universe,cost:x.cost,rarity:rarityForPower(x.power)})),connected:roomPresence.snapshot(r).seats[i]?.connected===true,seat:i,playerId:seat>=0&&p.accountId?friends.playerId(p.accountId):null}:null),card:r.phase==='auction'?{name:r.cards[r.round].name,universe:r.cards[r.round].universe,rarity:rarityForPower(r.cards[r.round].power)}:null,final:r.phase==='finished'?r.players.map(p=>({name:p.name,score:Math.round(p.team.reduce((a,c)=>a+c.power,0)*(1+p.credits*0.01)*100)/100,credits:p.credits,team:p.team.map(c=>({name:c.name,universe:c.universe,cost:c.cost,power:c.power,rarity:rarityForPower(c.power)}))})):null,me:seat,catalogueCount:catalogue.size});
+const publicRoom=(r,seat)=>({...auctionRevealSnapshot(r),arenaEmotes:arenaEmoteRoomSnapshot(r,seat),presence:{...roomPresence.snapshot(r,{liveArena:liveArenaMatchKeys.has(r.code)}),serverNow:Date.now()},idleClosed:r.idleClosed||null,forfeit:r.disconnectForfeit?{winner:r.disconnectForfeit.winner,reason:'disconnect',deadline:r.disconnectForfeit.deadline}:null,cancellation:r.cancelled?{reason:'admin-entry-refund',refundGoldPerSeat:50}:null,arenaPresentation:roomArenaPresentation(r),...victoryChestView(r,seat),entryPaid:r.entryPaid===true,botSettlement:r.botSettlementReceipt||null,botSettlementPending:!!r.botSettlementPending,code:r.code,universe:r.universe,phase:r.phase,round:r.round,turn:r.turn,deadline:r.deadline||null,series:r.series||[0,0],rematch:r.rematch||[false,false],mode:r.mode||"friend",difficulty:r.mode==='bot'?(r.difficulty||'medium'):null,rankChange:r.phase==='finished'?(r.rankChange||[0,0]):null,rankBefore:r.phase==='finished'?(r.rankBefore||[null,null]):null,topBid:r.topBid,topSeat:r.topSeat,history:r.history,chat:(r.chat||[]).filter(message=>moderationReady&&seat>=0&&!moderation.blocked(r.players[seat]?.accountId,r.players[message.seat]?.accountId)),players:r.players.map((p,i)=>p?{name:p.name,commander:publicAuctionCommander(p.commander),credits:p.credits,team:p.team.map(x=>({name:x.name,universe:x.universe,cost:x.cost,rarity:rarityForPower(x.power)})),connected:roomPresence.snapshot(r).seats[i]?.connected===true,seat:i,playerId:seat>=0&&p.accountId?friends.playerId(p.accountId):null}:null),card:r.phase==='auction'?{name:r.cards[r.round].name,universe:r.cards[r.round].universe,rarity:rarityForPower(r.cards[r.round].power)}:null,final:r.phase==='finished'?r.players.map(p=>({name:p.name,score:Math.round(p.team.reduce((a,c)=>a+c.power,0)*(1+p.credits*0.01)*100)/100,credits:p.credits,team:p.team.map(c=>({name:c.name,universe:c.universe,cost:c.cost,power:c.power,rarity:rarityForPower(c.power)}))})):null,me:seat,catalogueCount:catalogue.size});
 function publish(r){roomPresenceSignatures.set(r,roomPresenceSignature(r));r.revision=(Number.isSafeInteger(r.revision)?r.revision:0)+1;markRoom(r);for(const client of listeners.get(r.code)||[]){try{client.res.write(`data: ${JSON.stringify(publicRoom(r,client.seat))}\n\n`)}catch{}}}
 function log(r,msg){r.history.push(msg);if(r.history.length>30)r.history.shift();}
 function forcedCardCost(card){return ({common:2,advanced:3,rare:4,legendary:5})[rarityForPower(card.power)]||2}
@@ -1280,6 +1295,22 @@ if(url.pathname==='/api/experimental/live-room-binding'&&req.method==='GET'){
   return send(200,{readyForPreparation:true,liveCombatReady:false,matchKey:binding.matchKey,side});
  }catch(e){return send(403,{error:e.message})}
 }
+if(url.pathname==='/api/arena-emotes'){
+ if(req.method!=='POST')return send(405,{error:'Yalnızca POST kullanılabilir.'});
+ let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>2000)return send(413,{error:'İstek çok büyük'})}
+ let body;try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz JSON'})}
+ try{
+  validateArenaEmoteInput(body);
+  const room=rooms.get(body.code.toUpperCase()),seat=room?.players?.findIndex(p=>p?.token===body.token)??-1;
+  if(!room||seat<0)return send(403,{error:'Oda veya oyuncu oturumu geçersiz'});
+  if(database&&!databaseReady)return send(503,{error:'Oyuncu güvenlik kayıtları geçici olarak kullanılamıyor.'});
+  if(databaseReady){const account=await database.query('SELECT banned FROM hero_auction_admin_accounts WHERE account_id=$1',[room.players[seat].accountId]);if(account.rows[0]?.banned)return send(403,{error:'Hesap askıya alınmıştır.'})}
+  // Serialize after pending block changes, then re-read the current room/match.
+  // No combat snapshot/cast, presence update, room persistence or game mutation.
+  const current=await moderation.afterMutations(()=>arenaEmotes.send(arenaEmoteContext(rooms.get(body.code.toUpperCase()),body.token,req),body));
+  return send(200,{arenaEmotes:current});
+ }catch(e){return send(e.status||503,{error:e.status?e.message:'Arena ifadeleri geçici olarak kullanılamıyor.'})}
+}
 if(url.pathname==='/api/experimental/commander-live'&&(req.method==='GET'||req.method==='POST')){
  let body={};
  if(req.method==='POST'){
@@ -1304,10 +1335,10 @@ if(url.pathname==='/api/experimental/commander-live'&&(req.method==='GET'||req.m
    if(body?.targetIds!==undefined&&(!Array.isArray(body.targetIds)||body.targetIds.length>2||body.targetIds.some(id=>typeof id!=='string'||id.length>120)||new Set(body.targetIds).size!==body.targetIds.length))return send(422,{error:'Geçersiz büyü hedefleri'});
    const cast=liveArenaLifecycle.cast({matchKey:liveKey,token:body.token,ability:body.ability,requestId:body.requestId,targetIds:body.targetIds,now:Date.now()});
    const current=snapshot();
-   return send(200,{...current,cast,serverTime:Date.now()});
+   return send(200,{...current,cast,serverTime:Date.now(),arenaEmotes:arenaEmotes.snapshot(arenaEmoteContext(room,body.token,req))});
   }
   const current=snapshot();
-  return send(200,{...current,commanderId:room.battleSync.commanderInput.commanders[side]?.commanderId,serverTime:Date.now()});
+  return send(200,{...current,commanderId:room.battleSync.commanderInput.commanders[side]?.commanderId,serverTime:Date.now(),arenaEmotes:arenaEmotes.snapshot(arenaEmoteContext(room,body.token,req))});
  }catch(e){return send(422,{error:e.message})}
 }
 if(url.pathname==='/api/experimental/commander-turn'&&(req.method==='GET'||req.method==='POST')){
@@ -1482,7 +1513,7 @@ if(req.method==='GET'&&url.pathname==='/api/battle-preview'){
  const result=simulateRosterBattle(ordered,cards(idsB,false),{seed:'hero-auction-preview-v1'});
  return send(200,{demo:true,winner:result.winner,rounds:result.rounds,teams:result.teams,initialShields:result.initialShields,log:result.log});
 }
-if(req.method==='GET'&&url.pathname==='/api/events'){const r=rooms.get((url.searchParams.get('code')||'').toUpperCase());const t=url.searchParams.get('token');const seat=r?.players.findIndex(p=>p&&p.token===t)??-1;const loggedIn=readLogin(url.searchParams.get('authToken'));if(!r||seat<0||!loggedIn||r.players[seat].accountId!==loggedIn.sub)return send(403,{error:'Yetkisiz'});requireRoomOpen(r);const presenceHandle=roomPresence.connect(r,seat);req.once('close',()=>{roomPresence.disconnect(r,presenceHandle);publishPresenceTransition(r);});roomRequestFlights.set(r,(roomRequestFlights.get(r)||0)+1);try{await hydrateAuctionCommanders(r)}finally{const n=(roomRequestFlights.get(r)||1)-1;if(n)roomRequestFlights.set(r,n);else roomRequestFlights.delete(r);}publishPresenceTransition(r);res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-cache','Connection':'keep-alive','X-Accel-Buffering':'no'});res.write(`data: ${JSON.stringify(publicRoom(r,seat))}\n\n`);const clients=listeners.get(r.code)||new Set();clients.add({res,seat});listeners.set(r.code,clients);const heartbeat=setInterval(()=>{if(!res.destroyed)res.write(': heartbeat\n\n')},15000);req.on('close',()=>{clearInterval(heartbeat);for(const c of clients)if(c.res===res)clients.delete(c);if(!clients.size)listeners.delete(r.code)});return}
+if(req.method==='GET'&&url.pathname==='/api/events'){const r=rooms.get((url.searchParams.get('code')||'').toUpperCase());const t=url.searchParams.get('token');const seat=r?.players.findIndex(p=>p&&p.token===t)??-1;const loggedIn=readLogin(url.searchParams.get('authToken'));if(!r||seat<0||!loggedIn||r.players[seat].accountId!==loggedIn.sub)return send(403,{error:'Yetkisiz'});requireRoomOpen(r);const presenceHandle=roomPresence.connect(r,seat);req.once('close',()=>{roomPresence.disconnect(r,presenceHandle);publishPresenceTransition(r);});roomRequestFlights.set(r,(roomRequestFlights.get(r)||0)+1);try{await hydrateAuctionCommanders(r)}finally{const n=(roomRequestFlights.get(r)||1)-1;if(n)roomRequestFlights.set(r,n);else roomRequestFlights.delete(r);}publishPresenceTransition(r);res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-cache','Connection':'keep-alive','X-Accel-Buffering':'no'});res.write(`data: ${JSON.stringify(publicRoom(r,seat))}\n\n`);const clients=listeners.get(r.code)||new Set();clients.add({res,seat,token:t,accountId:loggedIn.sub,roomCreated:r.created});listeners.set(r.code,clients);const heartbeat=setInterval(()=>{if(!res.destroyed)res.write(': heartbeat\n\n')},15000);req.on('close',()=>{clearInterval(heartbeat);for(const c of clients)if(c.res===res)clients.delete(c);if(!clients.size)listeners.delete(r.code)});return}
 if(req.method==='GET'&&url.pathname==='/api/heroes'){return send(200,{heroes:battleRoster.map(h=>({id:h.id,name:h.name,universe:h.universe,role:h.role,displayRole:h.displayRole||h.role,power:stablePower(h.id),rarity:h.rarity||null,portrait:h.portrait||null,stats:h.stats||null,active:h.active||null,passive:h.passive||null,laneModifiers:h.laneModifiers||null}))});}
 if(req.method==='GET'&&url.pathname==='/api/art'){
  const universe=url.searchParams.get('universe')||'';
