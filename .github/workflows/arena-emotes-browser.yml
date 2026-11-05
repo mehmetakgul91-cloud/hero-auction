@@ -32,3 +32,11 @@ jobs:
           node-version-file: package.json
       - name: Test production emote modules with synthetic accounts
         run: node tools/test-arena-emotes-browser.mjs
+      - name: Upload emote screenshots and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arena-emotes-browser-${{ github.run_attempt }}
+          path: artifacts/arena-emotes/
+          if-no-files-found: warn
+          retention-days: 14
