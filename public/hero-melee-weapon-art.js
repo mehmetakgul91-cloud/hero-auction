@@ -1,3 +1,4 @@
+import {HERO_SWORD_RASTER} from './hero-sword-raster.js';
 /** Cosmetic melee weapon art. All paths use a 100 × 100 viewBox.
  * The rotating arm's transform-origin must be 50% 90%.
  * Contact is the leading physical edge before arm rotation, never a glow.
@@ -90,6 +91,22 @@ export function appendDetailedWeapon(document, arm, weapon) {
   image.width = 100;
   image.height = 100;
   image.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:contain;pointer-events:none;user-select:none;';
+  if(weapon==='sword'){
+    image.src=HERO_SWORD_RASTER;image.decoding='sync';
+    image.style.cssText='position:absolute;left:1.05%;top:2.6%;width:97.9%;height:97.9%;display:block;object-fit:fill;pointer-events:none;user-select:none;';
+    const firePaths=[
+`<path d="M45 76C39 69 42 64 36 56C43 57 43 51 40 45C36 38 38 33 40 28C42 38 46 31 42 19C47 21 47 14 49 5C52 16 46 30 49 41L47 75Z"/><path d="M54 76C61 68 56 63 63 55C55 57 58 49 62 44C55 47 58 36 54 29C57 17 53 21 52 9C50 23 52 37 51 47L53 75Z"/>`,
+`<path d="M46 74C40 65 47 63 39 49C44 49 42 40 45 35C42 23 46 24 47 14C51 29 47 44 49 57L48 75Z"/><path d="M53 75C57 69 55 62 60 51C55 52 56 43 53 38C58 31 54 25 53 18C51 29 53 48 51 58L51 75Z"/>`
+    ];
+    for(const [index,paths] of firePaths.entries()){
+      const flame=document.createElement('img');flame.className='hero-sword-flames fire-'+(index?'b':'a');flame.alt='';flame.setAttribute('aria-hidden','true');flame.setAttribute('draggable','false');
+      flame.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="f" x1="0" y1="1" x2=".15" y2="0"><stop stop-color="#ff4800"/><stop offset=".25" stop-color="#ff8208"/><stop offset=".65" stop-color="#ffd642"/><stop offset="1" stop-color="#fff6b3"/></linearGradient></defs><g fill="url(#f)" stroke="${index?'#fff2ad':'#ed4600'}" stroke-width="${index?'.45':'.7'}" stroke-linejoin="round">${paths}</g></svg>`);arm.append(flame);
+    }
+    arm.append(image);
+    // Widen only the steel; preserve the guard, grip, length and center tip.
+    const blade=document.createElement('img');blade.className='hero-melee-detailed-art hero-sword-wide-blade';blade.src=image.src;blade.decoding='sync';blade.alt='';blade.setAttribute('aria-hidden','true');blade.setAttribute('draggable','false');blade.style.cssText=image.style.cssText;arm.append(blade);
+    return image;
+  }
   image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">${defs}${art[weapon]}</svg>`);
   arm.append(image);
   return image;

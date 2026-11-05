@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {HERO_SWORD_RASTER} from '../public/hero-sword-raster.js';
 import {targetMeleeWeapon,targetSwingGeometry,targetWeaponProfile} from '../public/hero-target-swing.js';
 import {playHeroAttack,createHeroAttackPlayer,heroAttackTiming} from '../public/hero-attack-effects.js';
 import {appendDetailedWeapon,DETAILED_WEAPON_GEOMETRY} from '../public/hero-melee-weapon-art.js';
@@ -107,7 +109,7 @@ test('bursts stay within four whole casts and six owned resources per target, th
 });
 
 test('weapon profiles preserve distinct sizes and rotated physical tips meet mirrored target points',()=>{
- const profiles={sword:{scale:3,max:280,min:120,angle:78,windup:-20,recovery:250},axe:{scale:2.6,max:240,min:110,angle:82,windup:-24,recovery:280},dagger:{scale:1.65,max:145,min:74,angle:64,windup:-30,recovery:180}};
+ const profiles={sword:{scale:1.55,max:110,min:30,angle:76,windup:-20,recovery:290},axe:{scale:1.4,max:100,min:28,angle:80,windup:-24,recovery:280},dagger:{scale:1.25,max:90,min:26,angle:66,windup:-30,recovery:180}};
  const tips={sword:[50,4],axe:[84,20],dagger:[50,18],hammer:[70.24,15]};
  for(const [weapon,profile] of Object.entries(profiles))assert.deepEqual(targetWeaponProfile(weapon),profile);
  for(const width of [32,44,54,84,120])for(const special of [false,true]){
@@ -123,7 +125,8 @@ test('weapon profiles preserve distinct sizes and rotated physical tips meet mir
     assert.ok(Math.abs(g.top+size*y-(rect.top+rect.height*.55))<1e-9);
    }
   }
-  assert.ok(sizes.sword>=sizes.dagger*1.5);
+  assert.ok(sizes.sword>sizes.dagger);
+  assert.ok(sizes.sword*.86>=sizes.dagger*.72*1.4,'physical sword blade remains clearly longer than dagger');
   for(const [weapon,id] of [['sword','original:02'],['axe','original:expansion-03'],['dagger','original:05']]){
    const h=setup({width});h.play({hero:{id,role:'fighter'},special});
    assert.equal(parseFloat(swings(h)[0].style.props['--hero-size']),sizes[weapon]);h.effects.clear();
@@ -133,9 +136,9 @@ test('weapon profiles preserve distinct sizes and rotated physical tips meet mir
  assert.equal(targetMeleeWeapon({id:'unknown',role:'fighter'},'blade'),'slash');
 });
 
-test('detailed art is distinct self-contained safe SVG with exact physical tip and pivot metadata',()=>{
+test('axe and dagger remain distinct safe SVG with exact physical tip and pivot metadata',()=>{
  const sources=new Set();
- for(const [weapon,contact] of [['sword',[50,4]],['axe',[84,20]],['dagger',[50,18]]]){
+ for(const [weapon,contact] of [['axe',[84,20]],['dagger',[50,18]]]){
   const h=setup(),arm=h.document.createElement('i'),img=appendDetailedWeapon(h.document,arm,weapon);
   assert.equal(arm.children.length,1);assert.equal(img.tag,'img');assert.equal(img.attributes['aria-hidden'],'true');assert.equal(img.attributes.draggable,'false');
   assert.match(img.src,/^data:image\/svg\+xml;charset=utf-8,/);
@@ -144,7 +147,7 @@ test('detailed art is distinct self-contained safe SVG with exact physical tip a
   assert.doesNotMatch(svg,/<(?:script|foreignObject|image|use)\b|\bhref\s*=|\bon\w+\s*=|url\(\s*[^#]/i);
   assert.deepEqual(DETAILED_WEAPON_GEOMETRY[weapon],{viewBox:[0,0,100,100],pivot:[50,90],contact});
  }
- assert.equal(sources.size,3);
+ assert.equal(sources.size,2);
  const h=setup(),arm=h.document.createElement('i');
  for(const weapon of ['hammer','slash','unknown','__proto__'])assert.equal(appendDetailedWeapon(h.document,arm,weapon),null);
  assert.equal(arm.children.length,0);
@@ -158,4 +161,42 @@ test('target-local CSS stays swing-scoped without cross-board travel or existing
  assert.match(added,/100%\{transform:rotate\(var\(--hero-contact-angle\)\)\}/);
  assert.match(added,/heroWeaponFollow var\(--hero-recovery\).*calc\(var\(--hero-delay\) \+ var\(--hero-ms\)\)/);
  assert.doesNotMatch(added,/--hero-dx|--hero-dy|signature-arrow|hero-fx-impact|\.hero-contact|@keyframes heroTravel|infinite/);
+});
+
+
+test('flaming sword preserves its steel, grip and physical tip with two owned decorative layers',()=>{
+ const h=setup(),arm=h.document.createElement('i'),img=appendDetailedWeapon(h.document,arm,'sword');
+ assert.equal(arm.children.length,4);
+ const flames=arm.children.filter(n=>n.className.includes('hero-sword-flames'));
+ const blade=arm.children.find(n=>n.className.includes('hero-sword-wide-blade'));
+ assert.equal(flames.length,2);assert.ok(blade);
+ assert.equal(img.src,HERO_SWORD_RASTER);assert.equal(blade.src,img.src);
+ assert.equal(img.decoding,'sync');assert.equal(blade.decoding,'sync');
+ assert.match(img.src,/^data:image\/png;base64,/);
+ const png=Buffer.from(img.src.split(',')[1],'base64');
+ assert.deepEqual(png,readFileSync(new URL('../public/images/effects/flaming-sword.png',import.meta.url)));
+ assert.equal(createHash('sha256').update(png).digest('hex'),'e69972d864dcba079814837c71ff467860d2629cd8631f96c10bf1f48c5d1fc7');
+ assert.deepEqual([...png.subarray(0,8)],[137,80,78,71,13,10,26,10]);
+ for(const child of arm.children){assert.equal(child.tag,'img');assert.equal(child.attributes['aria-hidden'],'true');assert.equal(child.attributes.draggable,'false');assert.equal(child.alt,'');}
+ for(const flame of flames){
+  assert.match(flame.src,/^data:image\/svg\+xml;charset=utf-8,/);
+  const svg=decodeURIComponent(flame.src.split(',')[1]);assert.match(svg,/viewBox="0 0 100 100"/);
+  assert.doesNotMatch(svg,/<(?:script|foreignObject|image|use)\b|\bhref\s*=|\bon\w+\s*=|url\(\s*[^#]/i);
+ }
+ assert.deepEqual(DETAILED_WEAPON_GEOMETRY.sword,{viewBox:[0,0,100,100],pivot:[50,90],contact:[50,4]});
+ const css=readFileSync(new URL('../public/hero-attack-effects.css',import.meta.url),'utf8');
+ assert.match(css,/hero-sword-wide-blade\{[^}]*clip-path:inset\(0 0 30% 0\);transform:scaleX\(1.25\)/);
+ assert.match(css,/hero-sword-flames\{[^}]*pointer-events:none/);
+ assert.doesNotMatch(css,/infinite/);
+});
+
+test('flame children expire with the sword owner before their finite decorative cycles finish',()=>{
+ for(const special of[false,true])for(const time of[450,850,1500]){
+  const h=setup(),timing=h.play({special,time}),node=swings(h)[0];
+  assert.equal(node.children[0].children.length,4);
+  const end=timing.arrival+targetWeaponProfile('sword').recovery+80;
+  assert.ok(end<180*10&&end<230*8);
+  h.advance(end-1);assert.notEqual(node.removed,true);h.advance(1);assert.equal(node.removed,true);
+  h.effects.clear();assert.equal(h.timers.size,0);
+ }
 });

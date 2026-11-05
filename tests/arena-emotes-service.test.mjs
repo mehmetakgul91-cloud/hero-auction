@@ -15,6 +15,7 @@ const status=expected=>error=>error.status===expected;
 
 test('six fixed IDs, authoritative time, exact public schema and receiver-relative sides',()=>{
  assert.deepEqual(ARENA_EMOTE_IDS,['laugh','slow_clap','fake_cry','yawn','sunglasses','nanik']);
+ assert.equal(ARENA_EMOTE_COOLDOWN_MS,5000);assert.equal(ARENA_EMOTE_LIFETIME_MS,5000);
  const h=fixture();
  for(const [i,emoteId] of ARENA_EMOTE_IDS.entries()){
   const own=h.service.send(h.context(),h.input({emoteId,requestId:`request-${i}`}));
@@ -53,15 +54,20 @@ test('cooldown is per seat, exact at five seconds, and retries never duplicate o
  const opponent=h.service.send(h.context(1),h.input({emoteId:'nanik'},1));
  assert.equal(opponent.events.length,2);assert.deepEqual(opponent.events.map(e=>e.side),[1,0]);
  h.advance(1800);
- assert.equal(h.service.snapshot(h.context()).events.length,1,'expires at exactly 2800ms');
+ assert.equal(h.service.snapshot(h.context()).events.length,2,'both expressions remain visible beyond the previous 2800ms lifetime');
  h.advance(2199);
  assert.equal(h.service.snapshot(h.context()).cooldownMs,1);
+ assert.equal(h.service.snapshot(h.context()).events.length,2,'the first expression remains visible until its full five seconds elapse');
  assert.throws(()=>h.service.send(h.context(),h.input({requestId:'request-0002'})),status(429));
  h.advance(1);
- const expiredRetry=h.service.send(h.context(),h.input());assert.equal(expiredRetry.cooldownMs,0);assert.deepEqual(expiredRetry.events,[]);
- const next=h.service.send(h.context(),h.input({requestId:'request-0002'}));assert.equal(next.events.length,1);assert.notEqual(next.events[0].id,first.events[0].id);
+ const opponentEvent={...opponent.events[1],side:1};
+ const expiredRetry=h.service.send(h.context(),h.input());assert.equal(expiredRetry.cooldownMs,0);assert.deepEqual(expiredRetry.events,[opponentEvent],'the later opponent expression still has one second left');
+ const next=h.service.send(h.context(),h.input({requestId:'request-0002'}));assert.equal(next.events.length,2);assert.deepEqual(next.events[0],opponentEvent);assert.notEqual(next.events[1].id,first.events[0].id);
  h.advance(500);
  const oldRetry=h.service.send(h.context(),h.input());assert.equal(oldRetry.cooldownMs,4500);assert.deepEqual(oldRetry.events,next.events);
+ h.advance(499);assert.equal(h.service.snapshot(h.context()).events.length,2);
+ h.advance(1);assert.deepEqual(h.service.snapshot(h.context()).events,[next.events[1]],'the opponent expression expires at its own five-second boundary');
+ h.advance(4000);assert.deepEqual(h.service.snapshot(h.context()).events,[],'retries do not extend either expression');
 });
 
 test('old matches and stale seat tokens cannot enter a rematch or a recycled room',()=>{

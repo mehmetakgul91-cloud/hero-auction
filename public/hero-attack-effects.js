@@ -110,7 +110,7 @@ export function playHeroAttack({document,effects,actor,target,hero,kind,special=
     effects.own?.(()=>{active=false;if(frameId!==undefined)cancel?.(frameId)},ms);
     draw();onImpact?.();
     if(weapon&&!splash&&!settled&&!reducedMotion&&actor!==target){
-     const direction=to.x>=from.x?1:-1,kick=weapon==='dagger'?4:weapon==='axe'?10:8;
+     const direction=to.x>=from.x?1:-1,kick=weapon==='sword'?4:weapon==='dagger'?2:weapon==='axe'?4:3;
      effects.animate?.(target.querySelector('.arena-portrait')||target,[{translate:'0px 0px',rotate:'0deg'},{translate:(direction*kick)+'px 2px',rotate:(direction*2.5)+'deg',offset:.14},{translate:(direction*kick)+'px 2px',rotate:(direction*2.5)+'deg',offset:.32},{translate:(-direction*kick*.35)+'px -1px',rotate:(-direction)+'deg',offset:.56},{translate:'0px 0px',rotate:'0deg'}],{duration:weapon==='dagger'?180:260,easing:'ease-out'});
     }
    };

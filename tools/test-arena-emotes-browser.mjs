@@ -23,10 +23,11 @@ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const origin='http://127.0.0.1:'+server.address().port;
 let browser;
 const emotes=(overrides={})=>({matchKey:'123:1:100',serverTime:Date.now(),enabled:true,cooldownMs:0,events:[],...overrides});
-const event=(id,emoteId='laugh',side=1)=>({id,emoteId,side,expiresAt:Date.now()+2800});
+const event=(id,emoteId='laugh',side=1)=>({id,emoteId,side,expiresAt:Date.now()+5000});
 const room=()=>({code:'123',matchKey:'123:1:100',matchNumber:1,created:100,revision:1,me:0,phase:'auction',round:6,card:{name:'Morvan',universe:'original',rarity:'legendary'},turn:0,topBid:0,topSeat:null,deadline:Date.now()+60000,universe:'mixed',mode:'friend',presence:{serverNow:Date.now(),seats:[]},history:[],chat:[],series:[0,0],rematch:[false,false],players:[{name:'Player',commander:{commanderId:'attack'},credits:10,team:[],playerId:'HA-PLAYER'},{name:'Opponent',commander:{commanderId:'defense'},credits:10,team:[],playerId:'HA-OPPONENT'}],arenaEmotes:emotes()});
 const overlap=(a,b)=>a&&b&&Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x)>1&&Math.min(a.y+a.height,b.y+b.height)-Math.max(a.y,b.y)>1;
 async function visible(page,selector){return page.locator(selector).first().isVisible();}
+async function documentBox(page,selector){return page.locator(selector).evaluate(node=>{const box=node.getBoundingClientRect();return {x:box.x+scrollX,y:box.y+scrollY,width:box.width,height:box.height};});}
 async function verifyPlacement(page,mode){
  const reaction=await page.locator('.arena-emotes').boundingBox();assert.ok(reaction,'reaction controls are visible');
  assert.ok(reaction.x>=-1&&reaction.x+reaction.width<=page.viewportSize().width+1,'reaction controls fit viewport');
@@ -35,9 +36,29 @@ async function verifyPlacement(page,mode){
   assert.ok(!overlap(reaction,await page.locator(selector).first().boundingBox()),`closed reactions must not overlap ${selector}`);
  }
 }
+async function verifyBubbles(page,mode){
+ const images=page.locator('.arena-emote-image');assert.equal(await images.count(),2,'both senders are visible simultaneously');
+ const boxes=[];
+ for(const img of await images.all()){
+  const box=await img.boundingBox();assert.equal(box.width,132,'reaction is exactly three times the old 44px width');assert.equal(box.height,132,'reaction is exactly three times the old 44px height');
+  assert.ok(box.x>=-1&&box.x+box.width<=page.viewportSize().width+1,'large reaction stays inside horizontal viewport');
+  assert.equal(await img.evaluate(node=>getComputedStyle(node.parentElement).pointerEvents),'none','reaction cannot intercept gameplay input');
+  for(const selector of mode==='arena'?['#arena-score','#battle-arena','#experimental-commander-controls','#arena-music-toggle','.arena-home-link','#arena-friend-opponent','.arena-emote-toggle']:['#bidrange','#bidbutton','#passbutton','#player0 .auction-commander','#player1 .auction-commander','.arena-emote-toggle']){
+   if(!await visible(page,selector))continue;
+   assert.ok(!overlap(box,await page.locator(selector).first().boundingBox()),`large reaction must not obscure ${selector}`);
+  }
+  if(mode==='auction'){
+   const card=await img.evaluate(node=>{const r=node.closest('.player-side').getBoundingClientRect();return {x:r.x,width:r.width};});
+   assert.ok(box.x>=card.x&&box.x+box.width<=card.x+card.width,'reaction fits inside its own commander card');
+  }
+  boxes.push(box);
+ }
+ assert.ok(!overlap(...boxes),'sender and opponent reactions stay separate');
+}
+
 try{
  browser=await chromium.launch({headless:true,...(process.env.HERO_BROWSER_EXECUTABLE?{executablePath:process.env.HERO_BROWSER_EXECUTABLE}:{}),args:['--no-sandbox']});
- for(const mode of ['arena','auction'])for(const viewport of [{width:320,height:740},{width:390,height:844},{width:844,height:390}]){
+ for(const mode of ['arena','auction'])for(const viewport of [{width:320,height:740},{width:390,height:844},{width:844,height:390},{width:1280,height:900}]){
   const context=await browser.newContext({viewport,reducedMotion:'reduce',serviceWorkers:'block'}),page=await context.newPage(),errors=[],sent=[];
   const caseName=`${mode}-${viewport.width}x${viewport.height}`,apiCalls=[];
   const screenshot=async name=>{await page.screenshot({path:path.join(artifacts,`${caseName}-${name}.png`),fullPage:true,animations:'disabled',timeout:10000});};
@@ -85,14 +106,14 @@ try{
   });
   if(mode==='arena'){
    await page.goto(origin+'/battle-preview.html?room=arena&auctionCode=123&auctionToken=synthetic-seat&auctionMatchKey=123%3A1%3A100&commanderTest=1');
-   await page.evaluate(()=>{document.body.classList.add('arena-room','arena-fit');for(const id of ['arena-score','battle-arena','experimental-commander-controls'])document.getElementById(id).hidden=false;document.querySelector('.formation').hidden=true;document.getElementById('battle-lobby').hidden=true;const nav=document.querySelector('.arena-room-nav');nav.classList.add('arena-social-nav');const friend=document.createElement('button');friend.id='arena-friend-opponent';friend.textContent='＋ Rakibi arkadaş ekle';nav.append(friend);});
+   await page.evaluate(()=>{document.body.classList.add('arena-room','arena-fit');for(const id of ['arena-score','battle-arena','experimental-commander-controls'])document.getElementById(id).hidden=false;const dock=document.createElement('div');dock.id='arena-commander-dock';dock.className='arena-commander-dock';document.getElementById('battle-arena').after(dock);dock.append(document.getElementById('arena-commander-matchup'),document.getElementById('experimental-commander-controls'));document.querySelector('.formation').hidden=true;document.getElementById('battle-lobby').hidden=true;const nav=document.querySelector('.arena-room-nav');nav.classList.add('arena-social-nav');const friend=document.createElement('button');friend.id='arena-friend-opponent';friend.textContent='＋ Rakibi arkadaş ekle';nav.append(friend);});
   }else{
    await page.goto(origin);await page.waitForFunction(()=>!!window.__emoteAuction);await page.waitForLoadState('networkidle');
    await page.evaluate(r=>{window.__emoteAuction.setContext();window.__emoteAuction.show(r);window.__emoteAuction.connect();},data);
   }
   await page.locator('.arena-emote-toggle').waitFor({state:'visible'});
   const push=async next=>{snapshot=next;if(mode==='arena')await page.evaluate(arenaEmotes=>window.dispatchEvent(new CustomEvent('heroarena:commander-state',{detail:{finished:false,arenaEmotes}})),next);else{data={...data,revision:data.revision+1,arenaEmotes:next};await page.evaluate(r=>window.__testStream.emit(r),data);}};
-  await verifyPlacement(page,mode);await screenshot('closed-controls');
+  await verifyPlacement(page,mode);const gameplayBefore=await documentBox(page,mode==='arena'?'#battle-arena':'#bidbutton');await screenshot('closed-controls');
   if(mode==='arena'){
    await page.evaluate(arenaEmotes=>window.dispatchEvent(new CustomEvent('heroarena:commander-state',{detail:{finished:true,arenaEmotes}})),emotes({matchKey:'123:0:100'}));
    assert.equal(await visible(page,'.arena-emotes'),true,'late finished snapshot from old match must not stop current reactions');
@@ -114,6 +135,13 @@ try{
   const current=snapshot;await push({...current,serverTime:current.serverTime-1000,events:[event('stale','fake_cry')]});
   assert.equal(await page.evaluate(()=>document.querySelector('.arena-emote-slot-1 img')===window.__firstBubble),true,'older snapshot cannot replace current reaction');snapshot=current;
   await screenshot('opponent-reaction');
+  await push(emotes({events:[event('large-own','laugh',0),event('large-opponent','nanik',1)]}));
+  await verifyBubbles(page,mode);
+  assert.deepEqual(await documentBox(page,mode==='arena'?'#battle-arena':'#bidbutton'),gameplayBefore,'reactions never move gameplay controls');
+  await screenshot('simultaneous-large-reactions');
+  await page.waitForTimeout(3100);assert.equal(await page.locator('.arena-emote-image').count(),2,'reactions remain beyond the old 2.8-second lifetime');
+  await page.waitForTimeout(2100);assert.equal(await page.locator('.arena-emote-image').count(),0,'both reactions disappear after five seconds');
+  assert.deepEqual(await documentBox(page,mode==='arena'?'#battle-arena':'#bidbutton'),gameplayBefore,'expiry does not shift gameplay');
   await page.emulateMedia({reducedMotion:'no-preference'});await push(emotes({events:[event('animated','slow_clap')]}));
   assert.match(await page.locator('.arena-emote-slot-1 img').getAttribute('src'),/\.webp(?:\?|$)/,'normal motion uses animated artwork');
   await page.emulateMedia({reducedMotion:'reduce'});await page.waitForFunction(()=>document.querySelector('.arena-emote-slot-1 img')?.src.endsWith('.png'));

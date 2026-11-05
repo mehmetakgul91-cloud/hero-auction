@@ -48,7 +48,7 @@ test('auction SSE, live polling, safety checks and rematches share isolated tran
   await event('message');
   const beforeAuction=(await post('/api/state',{code,...players[0]})).room;
   const first=(await post('/api/arena-emotes',input())).arenaEmotes;
-  assert.equal(first.enabled,true);assert.equal(first.cooldownMs,5000);assert.equal(first.events[0].side,0);assert.equal(first.events[0].expiresAt-first.events[0].at,2800);
+  assert.equal(first.enabled,true);assert.equal(first.cooldownMs,5000);assert.equal(first.events[0].side,0);assert.equal(first.events[0].expiresAt-first.events[0].at,5000);
   const received=await event('arena-emotes');assert.equal(received.events[0].id,first.events[0].id);assert.equal(received.events[0].side,1);
   const afterAuction=(await post('/api/state',{code,...players[0]})).room;
   assert.deepEqual({...afterAuction,arenaEmotes:null},{...beforeAuction,arenaEmotes:null},'reaction does not change auction revision, timer, bid, cards, currency, chat or room state');
@@ -68,7 +68,9 @@ test('auction SSE, live polling, safety checks and rematches share isolated tran
   assert.equal(live.arenaEmotes.enabled,true);assert.equal(live.arenaEmotes.matchKey,initialKey);assert.equal(live.arenaEmotes.cooldownMs,4000);assert.equal(live.arenaEmotes.events[0].id,first.events[0].id);
   const reversed=await get('/api/experimental/commander-live',{code,token:players[1].token});assert.deepEqual(reversed.arenaEmotes.events.map(e=>e.side),[1,0]);
   await post('/api/arena-emotes',input(0,{requestId:'reaction-0002'}),429);
-  await advance(4000);
+  await advance(3999);
+  const beforeExpiry=await get('/api/experimental/commander-live',{code,token:players[0].token});assert.equal(beforeExpiry.arenaEmotes.cooldownMs,1);assert.equal(beforeExpiry.arenaEmotes.events.length,2,'both expressions survive through 4999ms');
+  await advance(1);
   const expiredRetry=(await post('/api/arena-emotes',input())).arenaEmotes;assert.deepEqual(expiredRetry.events,[]);assert.equal(expiredRetry.cooldownMs,0);
   const beforeCombat=await get('/api/experimental/commander-live',{code,token:players[0].token});
   const next=(await post('/api/arena-emotes',input(0,{emoteId:'slow_clap',requestId:'reaction-0002'}))).arenaEmotes;

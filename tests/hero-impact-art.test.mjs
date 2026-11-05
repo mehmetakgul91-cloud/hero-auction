@@ -26,7 +26,13 @@ test('one bounded canvas replaces many DOM particles; no glyphs and target box',
  const document={createElement:tag=>({tag,style:{},setAttribute(){}})};
  appendHeroImpactArt(document,node,'magic',true);assert.equal(node.children.length,1);assert.equal(node.children[0].tag,'canvas');
  const css=readFileSync(new URL('../public/hero-attack-effects.css',import.meta.url),'utf8');
- const contact=css.slice(css.indexOf('/* Approved v2:'));
+ const start=css.indexOf('/* Approved v2:'),end=css.indexOf('/* Class choreography',start);
+ assert.ok(start>=0&&end>start);const contact=css.slice(start,end);
  assert.match(contact,/::after\{content:none;display:none\}/);assert.match(contact,/primary-target\{outline:0;box-shadow:none!important\}/);
  assert.doesNotMatch(contact,/infinite|brightness\(|heroContactSweep|heroContactScatter/);
+ assert.doesNotMatch(css,/infinite|heroContactSweep|heroContactScatter/);
+ const brightnessRules=[...css.matchAll(/([^{}]+)\{([^{}]*brightness\([^{}]*)\}/g)];
+ assert.equal(brightnessRules.length,1,'brightness is allowed only for the approved dagger artwork');
+ assert.equal(brightnessRules[0][1].trim(),'.hero-fx-swing.weapon-dagger .hero-melee-detailed-art');
+ assert.match(brightnessRules[0][2],/^filter:brightness\(1\.17\) /);
 });

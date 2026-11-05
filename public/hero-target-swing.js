@@ -22,7 +22,7 @@ export function targetSwingGeometry({left,top,width,height},direction,size,weapo
  return {left:x-size*(direction>0?contactX:1-contactX),top:y-size*contactY,contactX,contactY};
 }
 export function targetWeaponProfile(weapon){
- return ({sword:{scale:3,max:280,min:120,angle:78,windup:-20,recovery:250},axe:{scale:2.6,max:240,min:110,angle:82,windup:-24,recovery:280},dagger:{scale:1.65,max:145,min:74,angle:64,windup:-30,recovery:180}})[weapon]||{scale:2,max:180,min:95,angle:74,windup:-20,recovery:240};
+ return ({sword:{scale:1.55,max:110,min:30,angle:76,windup:-20,recovery:290},axe:{scale:1.4,max:100,min:28,angle:80,windup:-24,recovery:280},dagger:{scale:1.25,max:90,min:26,angle:66,windup:-30,recovery:180}})[weapon]||{scale:2,max:180,min:95,angle:74,windup:-20,recovery:240};
 }
 export function appendTargetWeapon(document,node,weapon){
  node.className+=' weapon-'+weapon;
