@@ -7,11 +7,12 @@ and tongue-out `nanik`. No chicken, commander portraits, or free-text arena chat
 
 - In the auction, the picker and own reaction sit inside the local player's
   commander heading; incoming reactions sit in the opposing commander heading.
-- In the live arena, a compact picker and the two reactions use the navigation
-  row, outside HP, hero portraits and ability controls. Mobile home navigation
+- In the live arena, a compact picker uses the navigation row. The two reactions
+  use a separate reserved 132-pixel rail below it, outside HP, hero portraits
+  and ability controls. Short screens scroll instead of shrinking artwork. Mobile home navigation
   retains its accessible label in a compact icon, and the friend action stays
   on one line. The user-open picker closes on selection, outside press or Escape.
-- Each reaction lasts at most 2.8 seconds. The server enforces five seconds
+- Each reaction lasts at most 5 seconds. The server enforces five seconds
   between sends per participant, shared across auction/preparation/arena.
 - Opponent reactions can be hidden; the preference follows the browser between
   both screens. Muting clears the visible opponent reaction immediately.
@@ -47,12 +48,15 @@ disabled. The same match's cooldown survives the preparation transition.
 ## Artwork
 
 The six 188×188 animations were cropped from the approved revised preview,
-preserving all original expressions and timing. They were not regenerated.
+preserving all original expressions and frames. They were not regenerated.
 The first five source sprite sheets were unavailable, so the approved dark
 blue background is intentionally retained as part of each compact reaction
 tile, rather than pretending these are transparent cutouts. Each is encoded
 as a one-shot animated WebP (under 150 KB) with a PNG still fallback. The
-on-screen image is 44 pixels; picker stills are 48 pixels.
+on-screen image is 132×132 pixels (three times the original 44-pixel size);
+picker stills remain 48 pixels and the trigger remains a 44-pixel touch target.
+Only WebP frame-duration metadata was stretched to five seconds; all compressed
+pixel data, frame order, artwork and the one-shot loop count are unchanged.
 
 Animated URLs include the server event ID to restart a repeated one-shot
 reaction reliably. Every path is selected from the fixed local allowlist.

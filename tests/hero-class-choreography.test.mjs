@@ -101,3 +101,27 @@ test('all added CSS selectors are class-scoped; target contact renderer remains 
  assert.match(source,/if\(heal\|\|shield\)onImpact\(\)/,'health and +value remain immediate');
  assert.match(source,/combatEffects.animate\(actor,choreography.frames,choreography.options\)/,'motion uses the shared cancellation owner');
 });
+
+test('selected sword choreography moves its grip, closes at most 90px and holds through unchanged contact',()=>{
+ const ids=['original:02','original:06','original:07','original:expansion-04','original:expansion-10','original:expansion-22'];
+ for(const id of ids)for(const special of[false,true])for(const speed of[450,850,1500])for(const direction of[-1,1]){
+  const {arrival}=heroAttackTiming(speed,{special});
+  const {frames,options}=heroClassMotion({id,role:'fighter'},{dx:330*direction,dy:150,arrival,special});
+  const cutStart=arrival-220,atContact=arrival/options.duration;
+  assert.ok(Math.abs(frames[2].offset*options.duration-cutStart)<1e-9);
+  assert.ok(frames[3].offset<atContact&&frames[4].offset>atContact);
+  assert.equal(frames[3].transform,frames[4].transform);
+  const [,x,y]=frames[3].transform.match(/translate\(([-.\d]+)px,([-.\d]+)px\)/);
+  assert.ok(Math.hypot(Number(x),Number(y))<=90+1e-9);assert.equal(Math.sign(Number(x)),direction);
+  assert.ok(frames.every((f,i)=>f.offset>=0&&f.offset<=1&&(!i||f.offset>=frames[i-1].offset)));
+  assert.equal(frames.at(-1).transform,'translate(0,0) scale(1)');
+ }
+ assert.equal(heroClassMotion({id:'original:07',role:'fighter'},{arrival:0}),null);
+ const css=readFileSync(new URL('../public/hero-attack-effects.css',import.meta.url),'utf8');
+ assert.match(css,/--hero-cut:min\(220ms,var\(--hero-ms\)\)/);
+ assert.match(css,/@keyframes heroSwordCut\{0%\{transform:translate\(-40%,-44%\) rotate\(-38deg\)\}/);
+ assert.match(css,/100%\{transform:translate\(0%,0%\) rotate\(var\(--hero-contact-angle\)\)\}/);
+ assert.match(css,/@keyframes heroSwordCarry.*100%\{transform:translate\(25%,34%\) rotate\(106deg\)\}/);
+ assert.match(css,/weapon-sword::before\{display:none\}/);
+ assert.doesNotMatch(css,/#arena-live-seconds|previewClock|heroSwordTrail/);
+});

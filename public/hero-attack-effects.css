@@ -178,3 +178,32 @@
 .hero-fx-swing .hero-melee-hit::after{inset:34%;background:#fff1bc;clip-path:polygon(50% 0,59% 36%,92% 13%,68% 43%,100% 50%,67% 59%,87% 90%,58% 69%,50% 100%,42% 69%,8% 90%,30% 58%,0 50%,32% 42%,12% 12%,42% 34%)}
 .hero-fx-swing.weapon-dagger .hero-melee-hit::before{background:linear-gradient(90deg,transparent,#ac8ad4,#fff1ff 50%,#a27dc9,transparent)}
 @keyframes heroMeleeHit{0%{opacity:0;scale:.4}12%{opacity:.95;scale:1}45%{opacity:.7;scale:1.12}100%{opacity:0;scale:1.25}}
+
+/* Approved balanced weapon sizes and carried flaming sword. */
+.hero-fx-swing::before{border-width:3px;inset:8% 4% 9% 10%;border-top-color:#fff1cc99;border-right-color:#e5b45a66}.hero-fx-swing.weapon-dagger::before{border-width:2px}.hero-fx-swing.is-special::before{border-width:4px}.hero-fx-swing .hero-melee-hit{width:28%;height:28%;margin:-14%}.hero-fx-swing .hero-melee-detailed-art{filter:drop-shadow(1px 1px 0 #030611) drop-shadow(-1px -1px 0 #fff5)}
+.hero-fx-swing.weapon-dagger .hero-melee-detailed-art{filter:brightness(1.17) drop-shadow(1px 1px 0 #030611) drop-shadow(-1px -1px 0 #e8dcffaa)}
+
+/* Sword cut: moving grip, fixed final cutting window, contact unchanged. */
+.hero-fx-swing.weapon-sword{--hero-cut:min(220ms,var(--hero-ms));animation:heroSwordReveal var(--hero-ms) linear var(--hero-delay) both,heroSwordFade var(--hero-recovery) linear calc(var(--hero-delay) + var(--hero-ms)) forwards}
+.hero-fx-swing.weapon-sword::before{display:none}
+.hero-fx-swing.weapon-sword .hero-target-weapon{animation:heroSwordLoad calc(var(--hero-ms) - var(--hero-cut)) linear var(--hero-delay) both,heroSwordCut var(--hero-cut) linear calc(var(--hero-delay) + var(--hero-ms) - var(--hero-cut)) forwards,heroSwordCarry var(--hero-recovery) linear calc(var(--hero-delay) + var(--hero-ms)) forwards}
+@keyframes heroSwordReveal{0%{opacity:0}9%,100%{opacity:1}}
+@keyframes heroSwordLoad{0%{transform:translate(-32%,-34%) rotate(-18deg)}50%{transform:translate(-39%,-43%) rotate(-43deg)}100%{transform:translate(-40%,-44%) rotate(-38deg)}}
+@keyframes heroSwordCut{0%{transform:translate(-40%,-44%) rotate(-38deg)}32%{transform:translate(-24%,-35%) rotate(-18deg)}62%{transform:translate(-10%,-22%) rotate(16deg)}82%{transform:translate(-3%,-11%) rotate(48deg)}100%{transform:translate(0%,0%) rotate(var(--hero-contact-angle))}}
+@keyframes heroSwordCarry{0%{transform:translate(0%,0%) rotate(var(--hero-contact-angle))}8%{transform:translate(2%,3%) rotate(79deg)}40%{transform:translate(15%,19%) rotate(95deg)}76%{transform:translate(23%,31%) rotate(104deg)}100%{transform:translate(25%,34%) rotate(106deg)}}
+@keyframes heroSwordFade{0%,50%{opacity:1}80%{opacity:.4}100%{opacity:0}}
+
+
+/* No rotating fan: blade and grip travel as a single carried weapon. */
+.hero-fx-swing.weapon-sword .hero-target-weapon::before{display:none}
+
+/* Wider steel and decorative fire stay inside the owned sword node.
+   Finite cycles outlive every supported swing; owner cleanup removes them first. */
+.hero-fx-swing.weapon-sword .hero-melee-detailed-art{filter:drop-shadow(1px 1px 0 #100604) drop-shadow(-1px -1px 0 #fff6)}
+.hero-fx-swing.weapon-sword .hero-sword-flames{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:contain;z-index:2;pointer-events:none;transform-origin:50% 70%;filter:drop-shadow(0 0 2px #ff6500b3)}
+.hero-fx-swing.weapon-sword .hero-sword-flames.fire-a{animation:heroSwordFlameFlowA 180ms ease-in-out 10 alternate;opacity:.9}
+.hero-fx-swing.weapon-sword .hero-sword-flames.fire-b{animation:heroSwordFlameFlowB 230ms ease-in-out 8 alternate;opacity:.55}
+@keyframes heroSwordFlameFlowA{from{transform:translate(.4%,-.6%) scaleX(.94);opacity:.84}to{transform:translate(-.5%,-1.5%) scaleX(1.08);opacity:1}}
+@keyframes heroSwordFlameFlowB{from{transform:translate(-.8%,.6%) scale(.94,1);opacity:.35}to{transform:translate(.9%,-2%) scale(1.06,1.02);opacity:.65}}
+
+.hero-fx-swing.weapon-sword .hero-sword-wide-blade{z-index:4;clip-path:inset(0 0 30% 0);transform:scaleX(1.25);transform-origin:50% 50%}

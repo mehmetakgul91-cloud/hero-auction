@@ -59,7 +59,7 @@ export function createArenaEmotes({window,document,nav,readContext,listenLive=tr
  function show(event,remaining){
   const item=definitions.get(event.emoteId);if(!item||![0,1].includes(event.side))return;
   clearBubble(event.side);
-  const img=element('img','arena-emote-image');img.width=44;img.height=44;img.alt=t(event.side===0?'Sen: ':'Rakip: ',event.side===0?'You: ':'Opponent: ')+(english()?item.en:item.label);
+  const img=element('img','arena-emote-image');img.width=132;img.height=132;img.alt=t(event.side===0?'Sen: ':'Rakip: ',event.side===0?'You: ':'Opponent: ')+(english()?item.en:item.label);
   // One-shot WebP resources may otherwise retain their completed animation
   // timeline when the same reaction is sent again in the same document.
   img.src=assets+item.id+(media.matches?'.png':'.webp?event='+encodeURIComponent(event.id));
@@ -78,7 +78,7 @@ export function createArenaEmotes({window,document,nav,readContext,listenLive=tr
   for(const event of Array.isArray(data.events)?data.events:[]){
    if(typeof event?.id!=='string'||!event.id||event.id.length>100||seen.has(event.id))continue;
    remember(event.id);
-   const remaining=Math.min(2800,event.expiresAt-data.serverTime);
+   const remaining=Math.min(5000,event.expiresAt-data.serverTime);
    if(first||initial||!allowed()||document.hidden||event.side===1&&muted||!Number.isFinite(remaining)||remaining<=0)continue;
    show(event,remaining);
   }

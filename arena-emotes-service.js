@@ -2,7 +2,7 @@ import {randomUUID} from 'node:crypto';
 
 export const ARENA_EMOTE_IDS=Object.freeze(['laugh','slow_clap','fake_cry','yawn','sunglasses','nanik']);
 export const ARENA_EMOTE_COOLDOWN_MS=5000;
-export const ARENA_EMOTE_LIFETIME_MS=2800;
+export const ARENA_EMOTE_LIFETIME_MS=5000;
 export const ARENA_EMOTE_MAX_REQUESTS_PER_SEAT=256;
 const allowedIds=new Set(ARENA_EMOTE_IDS);
 const inputKeys=new Set(['code','token','matchKey','emoteId','requestId']);

@@ -31,7 +31,7 @@ function fixture({external=false}={}){
  const api=createArenaEmotes({window,document,nav,now:()=>time,...(external?{readContext:()=>context}:{})});
  const nodes=()=>walk(document.body),cls=name=>nodes().filter(node=>node.className.split(' ').includes(name)),button=id=>nodes().find(node=>node.dataset.emoteId===id);
  const snapshot=(patch={})=>({matchKey:context?.matchKey||'ROOM:1:100',serverTime:time,enabled:true,cooldownMs:0,events:[],...patch});
- const event=(id='event',patch={})=>({id,emoteId:'laugh',side:1,at:time,expiresAt:time+2800,...patch});
+ const event=(id='event',patch={})=>({id,emoteId:'laugh',side:1,at:time,expiresAt:time+5000,...patch});
  const tick=ms=>{time+=ms;for(const [id,item] of [...timeouts])if(item.at<=time){timeouts.delete(id);item.callback();}for(const callback of intervals.values())callback();};
  return {api,window,document,media,storage,nav,cls,button,snapshot,event,requests,tick,timeouts,intervals,setContext:next=>{context=next;api.syncContext();},getContext:()=>context};
 }
@@ -41,7 +41,7 @@ test('only six approved IDs; baseline and duplicate snapshots never replay',()=>
  const h=fixture();h.api.apply(h.snapshot({events:[h.event('old')]}));assert.equal(h.cls('arena-emote-image').length,0);
  h.tick(20);h.api.apply(h.snapshot({events:[h.event('new')]}));const image=h.cls('arena-emote-image')[0];assert.ok(image.src.includes('laugh.webp?event='));
  h.tick(100);h.api.apply(h.snapshot({events:[h.event('new')]}));assert.equal(h.cls('arena-emote-image')[0],image);
- h.tick(2700);assert.equal(h.cls('arena-emote-image').length,0);h.api.destroy();assert.equal(h.intervals.size,0);
+ h.tick(4900);assert.equal(h.cls('arena-emote-image').length,0);h.api.destroy();assert.equal(h.intervals.size,0);
 });
 test('pending request and five-second cooldown prevent duplicate sends; payload is exact',async()=>{
  const h=fixture();h.api.apply(h.snapshot());h.button('nanik').click();h.button('nanik').click();assert.equal(h.requests.length,1);

@@ -4,8 +4,8 @@
 .arena-emote-toggle,.arena-emote-close,.arena-emote-mute,.arena-emote-choice{touch-action:manipulation;font:inherit;cursor:pointer}
 .arena-emote-toggle{display:grid;place-items:center;width:44px;height:44px;min-height:44px;padding:2px;border:1px solid #93c9df;border-radius:12px;background:#203448;color:#fff}
 .arena-emote-toggle>img{width:36px;height:36px;border-radius:9px}
-.arena-emote-slot{display:block;width:44px;height:44px;flex:none;pointer-events:none}
-.arena-emote-image{display:block;width:44px;height:44px;object-fit:contain;border-radius:12px;border:2px solid #78c8ff;background:#203448}
+.arena-emote-slot{display:block;width:132px;height:132px;flex:none;pointer-events:none}
+.arena-emote-image{display:block;box-sizing:border-box;width:132px;height:132px;object-fit:contain;border-radius:24px;border:2px solid #78c8ff;background:#203448}
 .arena-emote-slot-1 .arena-emote-image{border-color:#ffa28e}
 .arena-emote-picker{position:fixed;z-index:10040;top:max(54px,calc(env(safe-area-inset-top) + 50px));left:50%;transform:translateX(-50%);width:min(278px,calc(100vw - 20px));max-height:calc(100dvh - 76px);overflow:auto;overscroll-behavior:contain;padding:10px;border:1px solid #92aec2;border-radius:16px;background:#142538;color:#fff;box-shadow:0 10px 36px #0009;text-align:center}
 .arena-emote-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-left:5px}
@@ -18,8 +18,21 @@
 .arena-emote-mute[aria-pressed=true]{background:#674b29;border-color:#e7b966}
 .arena-emote-status{display:block;min-height:20px;padding-top:7px;font-size:11px;line-height:15px;color:#c8dfeb}
 .arena-emotes button:focus-visible,.arena-emote-picker button:focus-visible{outline:3px solid #ffe17b;outline-offset:2px}
-.auction-player-heading .arena-emotes{justify-content:flex-end;margin:4px 0 0;width:100%;height:44px;z-index:5}
-.auction-player-heading>.arena-emote-slot{margin:4px 0 0 auto}
+/* Reserve the whole reaction rail even between events: no combat/bid layout
+   jumps, and the 3x artwork never floats over HP, portraits or controls. */
+.arena-room-nav.has-arena-emotes{position:relative;align-items:flex-start;min-height:180px}
+.arena-room-nav.has-arena-emotes .arena-emotes{position:static}
+.arena-room-nav.has-arena-emotes .arena-emote-slot{position:absolute;bottom:0}
+.arena-room-nav.has-arena-emotes .arena-emote-slot-0{left:0}
+.arena-room-nav.has-arena-emotes .arena-emote-slot-1{right:0}
+.arena-room.arena-fit .arena-room-nav.has-arena-emotes{height:180px;min-height:180px}
+.arena-room.arena-fit .shell:has(>.arena-room-nav.has-arena-emotes){grid-template-rows:180px 64px minmax(280px,1fr) auto 44px}
+.arena-room.arena-fit .shell:has(>.arena-room-nav.has-arena-emotes)>#arena-music-toggle{align-self:start}
+.auction-player-heading .arena-emotes{justify-content:flex-end;align-items:flex-start;margin:4px 0 0;width:100%;height:180px;z-index:5}
+.auction-player-heading .arena-emotes>.arena-emote-slot{position:absolute;bottom:0;left:50%;transform:translateX(-50%)}
+.auction-player-heading>.arena-emote-slot{position:relative;left:50%;transform:translateX(-50%);margin:52px 0 0}
+@media(max-height:600px){.arena-room.arena-fit .shell:has(>.arena-room-nav.has-arena-emotes){grid-template-rows:180px 56px minmax(280px,1fr) auto 44px}}
+@media(min-width:600px) and (max-height:600px){.arena-room.arena-fit .shell:has(>.arena-room-nav.has-arena-emotes){grid-template-rows:180px 56px minmax(180px,1fr) 44px}}
 #game .arena-emote-toggle{width:44px;min-width:44px;padding:2px;letter-spacing:normal}
 #game .arena-emote-toggle:hover{transform:none}
 @media(max-width:350px){.arena-room.arena-fit .arena-room-nav.has-arena-emotes{gap:2px}.arena-room.arena-fit .arena-room-nav.has-arena-emotes>a{font-size:10px;padding:6px 3px}.arena-emotes{gap:1px}}
