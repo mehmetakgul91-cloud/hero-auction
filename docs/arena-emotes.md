@@ -5,11 +5,15 @@ and tongue-out `nanik`. No chicken, commander portraits, or free-text arena chat
 
 ## Interaction
 
-- In the auction, the picker and own reaction sit inside the local player's
-  commander heading; incoming reactions sit in the opposing commander heading.
+- In the auction, a 44-pixel picker control sits inside the local player's
+  commander heading alongside its portrait and player name. At standard widths
+  the shared heading is 51 pixels high, with small mobile growth allowed when
+  the self label wraps beside a real scrollbar. Both reactions overlay their existing player-card content
+  below the respective heading, without reserving space for artwork.
 - In the live arena, a compact picker uses the navigation row. The two reactions
-  use a separate reserved 132-pixel rail below it, outside HP, hero portraits
-  and ability controls. Short screens scroll instead of shrinking artwork. Mobile home navigation
+  overlay the battlefield's upper left and right corners, outside the score,
+  navigation and ability controls. Neither screen changes layout when reactions
+  appear or expire, and the artwork cannot intercept clicks or touches. Mobile home navigation
   retains its accessible label in a compact icon, and the friend action stays
   on one line. The user-open picker closes on selection, outside press or Escape.
 - Each reaction lasts at most 5 seconds. The server enforces five seconds
@@ -19,6 +23,29 @@ and tongue-out `nanik`. No chicken, commander portraits, or free-text arena chat
 - Reduced motion uses still artwork. Hidden tabs, finished matches, navigation,
   account changes, and safety restrictions remove reactions instead of queuing
   a replay. Initial snapshots do not replay earlier reactions.
+
+## Compact auction presentation
+
+The auction-only density stylesheet loads after the shared theme on both the
+normal and CrazyGames entry surfaces. Acquired cards use compact portrait/name,
+role, rarity border and cost rows. Portraits resolve from the production public
+team's name and universe through `/api/art`; IDs and direct portrait URLs are
+not required in room snapshots. In-flight and settled requests are cached across
+player-panel repaints. Detached prior nodes cannot receive late artwork, and
+missing or failed art keeps the card's name and price readable without a broken
+image. Unavailable metadata is cached for the page session rather than retried
+on every four-second room poll.
+
+The real active/passive ability explanations stay visible across the full width
+below the art and bidding composition; lane bonuses wrap at 11 pixels. No story
+section is added. Waiting, preparation and finished side-card markup retain
+their previous form. Budget controls are not replaced for presence/chat updates.
+
+At 390×844 the ten-card stress fixture fits without scrolling; at 320×740 it
+uses natural page scrolling. Empty teams do not reserve a 132-pixel blank area.
+Their transient reactions can extend into noninteractive chat heading/history,
+but must never obscure bid, commander, picker or chat composer controls. Layout
+must remain identical before, during and after reactions.
 
 ## Transport and safety
 
@@ -73,6 +100,11 @@ Client, service and real-HTTP tests cover duplication, cooldown, expiry,
 moderation, platform rules, auction-to-arena continuity, stale responses,
 rematches, cross-tab logout, reduced motion and cleanup. Browser checks cover
 the real frontend modules, mobile/landscape geometry and unchanged bid controls.
+Auction fixtures use only production public-room card metadata, with both empty
+and ten-card teams. They check real loaded art, name/price separation, full-width
+abilities, 390-pixel fit, composer safety and unchanged selected bids after
+repainting. Unit seams separately verify portrait errors, stale/disconnected
+nodes, auction-only markup and shared normal/CrazyGames stylesheet delivery.
 The local execution environment could not launch Chromium because its IPC
 socket operation was restricted; do not treat local unit/HTTP passes as visual
 verification. Run browser CI against the exact release commit before deployment.

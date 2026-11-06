@@ -10,7 +10,7 @@ export const ARENA_EMOTES=Object.freeze([
 const definitions=new Map(ARENA_EMOTES.map(item=>[item.id,item]));
 const assets='/images/arena-emotes/';
 
-export function createArenaEmotes({window,document,nav,readContext,listenLive=true,now=Date.now,request=window.fetch.bind(window)}){
+export function createArenaEmotes({window,document,nav,reactionHost=null,readContext,listenLive=true,now=Date.now,request=window.fetch.bind(window)}){
  let context=null,matchKey=null,lastServerTime=-1,enabled=false,stopped=false,pending=null,cooldownUntil=0,disposed=false;
  const seen=new Set(),bubbles=[null,null],timers=[null,null],media=window.matchMedia('(prefers-reduced-motion: reduce)');
  const english=()=>document.documentElement.lang==='en';
@@ -36,6 +36,9 @@ export function createArenaEmotes({window,document,nav,readContext,listenLive=tr
  const mute=element('button','arena-emote-mute');mute.type='button';
  const status=element('span','arena-emote-status');status.setAttribute('role','status');
  panel.append(heading,choices,mute,status);root.append(slots[0],toggle,slots[1]);nav.append(root);document.body.append(panel);
+ // Arena artwork belongs to the existing battlefield, outside the nav's flow.
+ // Auction hosts keep the same slots inside their repainted player headings.
+ if(reactionHost)reactionHost.append(...slots);
 
  function route(){if(readContext)return readContext();const params=new URLSearchParams(window.location.search);return params.get('auctionCode')&&params.get('auctionToken')?{code:params.get('auctionCode'),token:params.get('auctionToken'),matchKey:params.get('auctionMatchKey')||undefined,identity:readIdentity()}:null;}
  function sameRoute(){const next=route();return !!context&&next?.code===context.code&&next?.token===context.token&&next?.identity===context.identity&&next?.matchKey===context.matchKey;}
@@ -47,7 +50,7 @@ export function createArenaEmotes({window,document,nav,readContext,listenLive=tr
  function reset(){abort();clearBubbles();closePicker();context=route();matchKey=null;lastServerTime=-1;enabled=false;stopped=false;cooldownUntil=0;seen.clear();render();}
  function finish(){stopped=true;enabled=false;abort();clearBubbles();closePicker();render();}
  function render(){
-  const available=allowed(),remaining=Math.max(0,cooldownUntil-now());root.hidden=!available;slots[1].hidden=!available;nav.classList.toggle('has-arena-emotes',available);
+  const available=allowed(),remaining=Math.max(0,cooldownUntil-now());root.hidden=!available;for(const slot of slots)slot.hidden=!available;nav.classList.toggle('has-arena-emotes',available);
   for(const button of buttons)button.disabled=!available||!!pending||remaining>0;
   mute.textContent=muted?t('Rakibin ifadelerini göster','Show opponent reactions'):t('Rakibin ifadelerini gizle','Hide opponent reactions');mute.setAttribute('aria-pressed',String(muted));
   if(!available)closePicker();
@@ -119,12 +122,12 @@ export function createArenaEmotes({window,document,nav,readContext,listenLive=tr
  const ticker=window.setInterval(()=>{if(!root.hidden&&!document.hidden)render();},250);
  reset();
  return {apply,reset,syncContext(){if(!sameRoute())reset();},mount(host,opponentHost){
-  if(!host)return;nav.classList.remove('has-arena-emotes');nav=host;host.append(root);if(opponentHost)opponentHost.append(slots[1]);else root.append(slots[1]);render();
+  if(!host)return;nav.classList.remove('has-arena-emotes');nav=host;host.append(root);if(reactionHost)reactionHost.append(...slots);else if(opponentHost)opponentHost.append(slots[1]);else root.append(slots[1]);render();
  },destroy(){
   if(disposed)return;finish();disposed=true;window.clearInterval(ticker);media.removeEventListener('change',onMotion);
   document.removeEventListener('pointerdown',onOutside);document.removeEventListener('keydown',onKey);document.removeEventListener('visibilitychange',onVisibility);
   window.removeEventListener('heroarena:commander-state',snapshot);window.removeEventListener('heroarena:route-change',reset);window.removeEventListener('popstate',reset);window.removeEventListener('heroarena:battle-finished',finish);window.removeEventListener('heroarena:connection-lost',finish);window.removeEventListener('pagehide',finish);window.removeEventListener('pageshow',onPageShow);window.removeEventListener('hero:platform-settings',onSettings);
   window.removeEventListener('storage',onIdentity);window.removeEventListener('hero:login-changed',onIdentity);
-  root.remove();slots[1].remove();panel.remove();nav.classList.remove('has-arena-emotes');
+  root.remove();for(const slot of slots)slot.remove();panel.remove();nav.classList.remove('has-arena-emotes');
  }};
 }

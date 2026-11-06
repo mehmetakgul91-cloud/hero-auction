@@ -19,22 +19,45 @@ class Element extends EventTarget{
 }
 const walk=node=>[node,...node.children.flatMap(walk)];
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
-function fixture({external=false}={}){
+function fixture({external=false,battlefield=false}={}){
  const document=new EventTarget();document.documentElement={lang:'tr'};document.hidden=false;document.createElement=tag=>new Element(tag,document);document.body=document.createElement('body');
  const nav=document.createElement('nav');document.body.append(nav);
+ const reactionHost=battlefield?document.createElement('div'):null;if(reactionHost)document.body.append(reactionHost);
  const window=new EventTarget(),media=new EventTarget(),storage=new Map(),timeouts=new Map(),intervals=new Map();let time=10000,sequence=0;
  media.matches=false;window.location=new URL('https://game.test/battle-preview.html?auctionCode=ROOM&auctionToken=seat&auctionMatchKey=ROOM:1:100');window.matchMedia=()=>media;
  window.localStorage={getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)};
  window.crypto={randomUUID:()=>`request_${++sequence}`};window.setTimeout=(callback,ms)=>{const id=++sequence;timeouts.set(id,{callback,at:time+ms});return id;};window.clearTimeout=id=>timeouts.delete(id);window.setInterval=callback=>{const id=++sequence;intervals.set(id,callback);return id;};window.clearInterval=id=>intervals.delete(id);
  const requests=[];window.fetch=(url,options)=>new Promise((resolve,reject)=>requests.push({url,options,body:JSON.parse(options.body),resolve,reject}));
  let context={code:'ROOM',token:'seat',identity:'owner',matchKey:'ROOM:1:100'};
- const api=createArenaEmotes({window,document,nav,now:()=>time,...(external?{readContext:()=>context}:{})});
+ const api=createArenaEmotes({window,document,nav,reactionHost,now:()=>time,...(external?{readContext:()=>context}:{})});
  const nodes=()=>walk(document.body),cls=name=>nodes().filter(node=>node.className.split(' ').includes(name)),button=id=>nodes().find(node=>node.dataset.emoteId===id);
  const snapshot=(patch={})=>({matchKey:context?.matchKey||'ROOM:1:100',serverTime:time,enabled:true,cooldownMs:0,events:[],...patch});
  const event=(id='event',patch={})=>({id,emoteId:'laugh',side:1,at:time,expiresAt:time+5000,...patch});
  const tick=ms=>{time+=ms;for(const [id,item] of [...timeouts])if(item.at<=time){timeouts.delete(id);item.callback();}for(const callback of intervals.values())callback();};
- return {api,window,document,media,storage,nav,cls,button,snapshot,event,requests,tick,timeouts,intervals,setContext:next=>{context=next;api.syncContext();},getContext:()=>context};
+ return {api,window,document,media,storage,nav,reactionHost,cls,button,snapshot,event,requests,tick,timeouts,intervals,setContext:next=>{context=next;api.syncContext();},getContext:()=>context};
 }
+
+test('arena reactions are mounted outside navigation and clean up both external slots',()=>{
+ const h=fixture({battlefield:true}),root=h.cls('arena-emotes')[0],slots=h.cls('arena-emote-slot');
+ assert.equal(root.children.length,1,'only the picker trigger participates in the nav layout');
+ assert.equal(slots.length,2);assert.ok(slots.every(slot=>slot.parentNode===h.reactionHost&&slot.hidden));
+ h.api.apply(h.snapshot());h.tick(1);h.api.apply(h.snapshot({events:[h.event('own',{side:0}),h.event('other')]}));
+ assert.ok(slots.every(slot=>!slot.hidden&&slot.children.length===1));
+ const images=h.cls('arena-emote-image');assert.ok(images.every(img=>img.width===132&&img.height===132));
+ const newNav=h.document.createElement('nav');h.document.body.append(newNav);h.api.mount(newNav);
+ assert.ok(slots.every(slot=>slot.parentNode===h.reactionHost),'navigation remount does not move artwork out of the battlefield');
+ h.tick(4999);assert.equal(h.cls('arena-emote-image').length,2);h.tick(1);assert.equal(h.cls('arena-emote-image').length,0);
+ h.api.apply(h.snapshot({enabled:false}));assert.ok(slots.every(slot=>slot.hidden));
+ h.api.destroy();assert.equal(h.reactionHost.children.length,0);assert.equal(h.cls('arena-emote-slot').length,0);assert.equal(h.timeouts.size,0);assert.equal(h.intervals.size,0);
+});
+test('auction header repaint retains transient reactions without restarting their lifetime',()=>{
+ const h=fixture();h.api.apply(h.snapshot());h.tick(1);h.api.apply(h.snapshot({events:[h.event('own',{side:0}),h.event('other')]}));
+ const images=h.cls('arena-emote-image'),mine=h.document.createElement('div'),opponent=h.document.createElement('div');h.document.body.append(mine,opponent);
+ h.tick(3000);h.nav.replaceChildren();h.api.mount(mine,opponent);
+ assert.ok(mine.contains(images[0]));assert.ok(opponent.contains(images[1]));
+ assert.equal(h.cls('arena-emote-slot-1')[0].parentNode,opponent);
+ h.tick(1999);assert.equal(h.cls('arena-emote-image').length,2);h.tick(1);assert.equal(h.cls('arena-emote-image').length,0);h.api.destroy();
+});
 
 test('only six approved IDs; baseline and duplicate snapshots never replay',()=>{
  assert.deepEqual(ARENA_EMOTES.map(x=>x.id),['laugh','slow_clap','fake_cry','yawn','sunglasses','nanik']);
