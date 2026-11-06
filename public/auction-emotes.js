@@ -1,4 +1,4 @@
-import {createArenaEmotes} from './arena-emotes.js?v=original-six-20261105';
+import {createArenaEmotes} from './arena-emotes.js?v=compact-overlay-20261106';
 
 // Keep the picker and request state stable while player headers are repainted.
 export function createAuctionEmotes({window,document,getContext}){

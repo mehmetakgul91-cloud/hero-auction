@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {auctionViewKey} from '../public/auction-view-state.js';
 import {auctionMatchKey,isStaleAuctionSnapshot,createTailReceipts} from '../public/auction-delivery-state.js';
 import {isAuctionEntry} from '../public/auction-entry.js';
+import {createAuctionTeamPortraitLoader} from '../public/auction-team-portraits.js';
 import {collectOfferedAwards,displaySeat} from '../public/auction-awards.js';
 import {collectTailAwards} from '../public/auction-tail-reveal.js';
 const source=readFileSync(process.env.HERO_AUCTION_APP_SOURCE||new URL('../public/app.js',import.meta.url),'utf8');
@@ -17,14 +18,16 @@ const fixture=()=>({code:'123',matchKey:'123:1:100',matchNumber:1,created:100,re
 // Small DOM seam, not a browser/device test. Execute the real show(), polling,
 // snapshot and action code and record node replacement, focus and sent amounts.
 function harness(){
- const nodes=new Map(),intervals=[],sent=[];let context;
- const document={hidden:false,documentElement:{lang:'tr'},activeElement:null,querySelector:()=>null};
+ const nodes=new Map(),intervals=[],sent=[],artRequests=[];let context;
+ const document={hidden:false,documentElement:{lang:'tr'},activeElement:null,querySelector:()=>null,querySelectorAll:()=>[...nodes.values()].flatMap(node=>node.portraits||[])};
  function element(id){
   const el={id,dataset:{},classList:{add(){},remove(){}},textContent:'',value:'',children:[],querySelectorAll:()=>[],querySelector:()=>null};
   el.focus=()=>{document.activeElement=el;};
   let html='';
   Object.defineProperty(el,'innerHTML',{get:()=>html,set:value=>{
    html=value;
+   for(const img of el.portraits||[])img.isConnected=false;
+   el.portraits=[...value.matchAll(/<img class="side-hero-portrait" data-hero-name="([^"]*)" data-hero-universe="([^"]*)"[^>]*>/g)].map(([,heroName,heroUniverse])=>({dataset:{heroName,heroUniverse},isConnected:true,removeAttribute(name){delete this[name];}}));
    if(id!=='stage')return;
    if(el.children.includes(document.activeElement))document.activeElement=null;
    for(const child of el.children)nodes.delete(child.id);
@@ -44,6 +47,7 @@ function harness(){
   auctionMatchKey,isStaleAuctionSnapshot,isAuctionEntry,collectTailAwards,collectOfferedAwards,displaySeat,
   dailyRewardOverlay:{defer(){}},auctionCommanderDialog:{sync(){}},storefrontUI:{close(){}},roomInvitesUI:{setRoom(){}},friendsUI:{setRoom(){}},
   cancelAwardFlights(){},cancelAuctionReveal(){},animateWonAuctionCard(){},refreshGold(){},commanderVisibility(){},
+  loadAuctionTeamPortraits:createAuctionTeamPortraitLoader({fetch:async url=>{artRequests.push(url);return {ok:true,json:async()=>({url:'/images/portrait.webp'})};}}),
   auctionCommanderMarkup:()=>'',displayPlayerName:p=>p.name,esc:String,specialtyLabel:()=>'',rarityLabel:r=>r,
   resetAuctionEntryViewport(){},revealAuctionCard(){},loadHeroInfo(){},auctionDeckMarkup:()=>'',renderChat(){context.chat=context.room?.chat;},
   worldNames:{mixed:'Mixed',original:'Original'},emojis:{original:'Hero'},playAuctionActionSound(){},notify(){},
@@ -55,7 +59,7 @@ function harness(){
  vm.runInContext(source.slice(source.indexOf('async function syncRoomSnapshot'),source.indexOf('// Guard reconnects')),context);
  vm.runInContext(source.slice(source.indexOf('async function act('),source.indexOf("\n\n$('create')")),context);
  vm.runInContext(source.match(/setInterval\(\(\)=>\{if\(!session\|\|!room\|\|document.hidden\)return;[^\n]+/)[0],context);
- return {context,nodes,sent,document,show:r=>context.show(r),select:value=>{const input=nodes.get('bidrange');input.value=String(value);input.oninput({target:input});},poll:()=>intervals.find(i=>i.ms===4000).callback()};
+ return {context,nodes,sent,artRequests,document,showPlayers:r=>{context.r=r;vm.runInContext(source.slice(source.indexOf(' for(let i=0;i<2;i++){const seat=r.me===1?1-i:i;const p=r.players[seat];'),source.indexOf(' auctionEmotes.update();',source.indexOf('function show(r)'))),context);},show:r=>context.show(r),select:value=>{const input=nodes.get('bidrange');input.value=String(value);input.oninput({target:input});},poll:()=>intervals.find(i=>i.ms===4000).callback()};
 }
 
 test('real render/snapshot path preserves selected bid and connected controls on 4-second presence refresh',async()=>{
@@ -101,4 +105,34 @@ test('stale snapshots cannot erase current input; account, seat, re-entry and la
 test('missing/replaced stage is restored even when snapshot identity is unchanged',()=>{
  const h=harness(),r=fixture();h.show(r);h.select(6);h.nodes.get('stage').innerHTML='<p>Other content</p>';h.show(r);
  assert.equal(h.nodes.get('bidrange').value,'1');
+});
+
+
+test('production-shaped acquired teams preserve bid controls while every repaint reuses cached portraits',async()=>{
+ const h=harness(),r=fixture(),hero={name:'Morvan',universe:'original',rarity:'legendary',cost:2};
+ r.players=r.players.map(p=>({...p,team:[hero]}));h.show(r);h.select(6);
+ const input=h.nodes.get('bidrange'),old=h.nodes.get('player0').portraits[0];
+ h.show({...r,revision:2,chat:[{message:'Hello'}]});
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.nodes.get('bidrange'),input);assert.equal(input.value,'6');
+ assert.equal(old.isConnected,false);assert.equal(old.src,undefined,'late request never paints detached old nodes');
+ for(const id of ['player0','player1'])assert.equal(h.nodes.get(id).portraits[0].src,'/images/portrait.webp');
+ assert.deepEqual(h.artRequests,['/api/art?universe=original&name=Morvan']);
+ assert.match(h.nodes.get('player0').innerHTML,/🎴 1 KART <span>· 10 kredi<\/span>/);
+});
+
+test('compact portrait rows and spent summary apply only to auction, including empty teams and both seat orders',async()=>{
+ for(const me of [0,1])for(const phase of ['auction','waiting','matching','bot_offer','finished','preparation']){
+  const h=harness(),r={...fixture(),me,phase};
+  r.players[0].team=[{name:'Morvan',universe:'original',cost:2,rarity:'legendary'}];
+  h.showPlayers(r);await new Promise(resolve=>setImmediate(resolve));
+  const own=h.nodes.get(me===0?'player0':'player1').innerHTML,empty=h.nodes.get(me===0?'player1':'player0').innerHTML;
+  assert.match(empty,/Henüz karakter yok/);assert.doesNotMatch(empty,/side-hero-portrait/);
+  if(phase==='auction'){
+   assert.match(own,/data-hero-name="Morvan" data-hero-universe="original"/);assert.equal(h.artRequests.length,1);
+   assert.match(own,/🎴 1 KART/);assert.doesNotMatch(own,/KARTLAR/);
+  }else{
+   assert.doesNotMatch(own,/side-hero-portrait/);assert.match(own,/🎴 KARTLAR \(1\)/);assert.equal(h.artRequests.length,0);
+  }
+ }
 });

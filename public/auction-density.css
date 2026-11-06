@@ -1,0 +1,65 @@
+/* Compact auction presentation. Every rule is scoped away from arena/results. */
+#game[data-phase="auction"] .auction-card-details{border-top:1px solid #b5c3c7;margin-top:8px;padding-top:8px;text-align:left}
+#game[data-phase="auction"] .auction-card-details .auction-abilities{font-size:12px!important;line-height:1.4!important;margin:0!important;gap:4px!important}
+#game[data-phase="auction"] .player-side{padding:8px;position:relative;top:auto}
+#game[data-phase="auction"] .auction-player-heading{display:flex;align-items:center;gap:5px;padding-bottom:6px;min-height:50px;border-color:#8da6b3}
+#game[data-phase="auction"] .auction-commander{flex:1;gap:6px;min-height:44px;width:auto}
+#game[data-phase="auction"] .auction-commander img{width:34px;height:44px}
+#game[data-phase="auction"] .auction-commander .name{font-size:12px;line-height:1.2}
+#game[data-phase="auction"] .auction-commander-copy{gap:3px}
+#game[data-phase="auction"] .auction-commander-type{font-size:11px;color:#485666}
+#game[data-phase="auction"] .auction-commander-self{font-size:9px;color:#24637a}
+/* A static flex item must not trap its own reaction below the chat panel. */
+#game[data-phase="auction"] .auction-player-heading .arena-emotes{position:static;z-index:auto;flex:0 0 44px;margin:0;width:44px;height:44px}
+#game[data-phase="auction"] .auction-player-heading .arena-emote-slot{top:calc(100% + 23px)}
+#game[data-phase="auction"] .player-side>.credit,#game[data-phase="auction"] .player-side>.spent-credit{display:none}
+#game[data-phase="auction"] .side-team-title{font-size:11px;letter-spacing:0;border:0;padding:6px 0 4px;line-height:16px}
+#game[data-phase="auction"] .side-team-title>span{font-weight:500}
+#game[data-phase="auction"] .player-side .teams{margin:0;gap:4px;max-height:none;overflow:visible}
+#game[data-phase="auction"] .player-side .side-hero{display:grid;grid-template-columns:30px minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:5px;row-gap:1px;padding:4px;min-height:48px;align-items:center}
+#game[data-phase="auction"] .side-hero-portrait{width:30px;height:38px;object-fit:cover;object-position:center 25%;border-radius:5px;grid-row:1/3;grid-column:1}
+#game[data-phase="auction"] .side-hero-name{grid-column:2;grid-row:1;font-size:12px;line-height:1.2;font-weight:700;overflow-wrap:normal}
+#game[data-phase="auction"] .side-hero-name .rarity{display:none}
+#game[data-phase="auction"] .side-hero-role{grid-column:2;grid-row:2;font-size:10px;line-height:1.2;white-space:normal}
+#game[data-phase="auction"] .side-hero-cost{grid-column:3;grid-row:1/3;font-size:12px;line-height:1.2}
+#game[data-phase="auction"] .side-hero-cost small{display:block;font-size:9px}
+#game[data-phase="auction"] .side-hero:has(.rarity-legendary) .side-hero-portrait{border:2px solid #b58e32}
+#game[data-phase="auction"] .side-hero:has(.rarity-rare) .side-hero-portrait{border:2px solid #9b73d7}
+#game[data-phase="auction"] .side-hero:has(.rarity-advanced) .side-hero-portrait{border:2px solid #4b9cbd}
+#game[data-phase="auction"] .auction-main{align-items:start;gap:10px}
+#game[data-phase="auction"] .auction-action{position:static;align-self:stretch;padding:8px}
+#game[data-phase="auction"] .auction-budget{margin-bottom:6px;gap:5px}
+#game[data-phase="auction"] .auction-budget>div{padding:6px 3px}
+#game[data-phase="auction"] .auction-budget strong{font-size:22px}
+#game[data-phase="auction"] .auction-action .status{margin:6px 0;font-size:12px}
+#game[data-phase="auction"] .auction-action .bid-stepper{gap:4px;margin:8px 0 2px}
+#game[data-phase="auction"] .auction-action .bid-stepper button{flex:0 0 44px;min-width:44px;height:44px;padding:4px}
+#game[data-phase="auction"] .auction-action .big-bid{font-size:15px;line-height:1.2}
+#game[data-phase="auction"] .auction-action .range{height:24px;margin:0 0 5px}
+#game[data-phase="auction"] .auction-action .controls{gap:6px;flex-direction:column}
+#game[data-phase="auction"] .auction-action .controls button{min-height:44px;padding:8px 5px;font-size:11px}
+#game[data-phase="auction"] .auction-hero .card-art{height:180px}
+#game[data-phase="auction"] .auction-deck-scene{max-width:165px;margin-top:12px;margin-bottom:22px}
+#game[data-phase="auction"] .auction-deck-count{top:calc(100% + 5px);font-size:10px}
+#game[data-phase="auction"] .auction-hero .card-name{font-size:21px;margin:4px 0}
+#game[data-phase="auction"] .rarity-feature{font-size:10px;padding:4px 8px;margin:5px auto}
+#game[data-phase="auction"] #auction-lane-bonuses{font-size:11px;padding:3px 4px;white-space:normal}
+@media(max-width:360px){
+ #game[data-phase="auction"] .arena-stage{padding:8px}
+ #game[data-phase="auction"] .auction-main{gap:6px}
+ #game[data-phase="auction"] .auction-action{padding:5px}
+ #game[data-phase="auction"] .auction-action .bid-stepper{flex-wrap:wrap;justify-content:space-between}
+ #game[data-phase="auction"] .auction-action .big-bid{flex:0 0 100%;order:-1}
+ #game[data-phase="auction"] .auction-player-heading{align-items:flex-start}
+ #game[data-phase="auction"] .auction-commander{flex-wrap:wrap;gap:3px}
+ #game[data-phase="auction"] .auction-commander img{width:30px;height:38px}
+ #game[data-phase="auction"] .auction-commander-copy{flex-basis:100%}
+ #game[data-phase="auction"] .side-hero-name{font-size:11px}
+ #game[data-phase="auction"] .player-side .side-hero{grid-template-columns:26px minmax(0,1fr) auto;column-gap:3px}
+ #game[data-phase="auction"] .side-hero-portrait{width:26px}
+}
+@media(max-width:360px){
+ #game[data-phase="auction"] .side-hero-name{grid-column:2/4;overflow-wrap:anywhere}
+ #game[data-phase="auction"] .side-hero-cost{grid-row:2;font-size:11px}
+}
+#game[data-phase="auction"] .side-hero-portrait[data-portrait-state="missing"]{visibility:hidden}
