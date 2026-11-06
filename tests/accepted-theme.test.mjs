@@ -15,7 +15,7 @@ test('accepted theme loads once after original styles, followed only by the scop
  for(const page of pages){
   const html=publicFile(page+'.html'),head=html.slice(0,html.indexOf('</head>'));
   assert.equal((head.match(/href="\/theme\.css\?v=accepted-gray-20261026"/g)||[]).length,1,page);
-  if(page==='index')assert.match(head,/<link rel="stylesheet" href="\/theme\.css\?v=accepted-gray-20261026"><link rel="stylesheet" href="\/auction-density\.css\?v=compact-auction-20261106">$/,page);
+  if(page==='index')assert.match(head,/<link rel="stylesheet" href="\/theme\.css\?v=accepted-gray-20261026"><link rel="stylesheet" href="\/auction-density\.css\?v=compact-auction-reveal-fix-20261106">$/,page);
   else assert.match(head,/<link rel="stylesheet" href="\/theme\.css\?v=accepted-gray-20261026">$/,page);
   if(['privacy','crazygames-privacy','music-credits','commander-training'].includes(page))assert.match(html,new RegExp(`data-theme-page="${page}"`));
  }

@@ -16,6 +16,11 @@ on:
       - 'public/battle-preview*'
       - 'public/commander-experimental.js'
       - 'tools/test-arena-emotes-browser.mjs'
+      - 'tools/test-auction-delivery-browser.mjs'
+      - 'public/auction-tail-reveal.js'
+      - 'public/auction-delivery-state.js'
+      - 'public/auction-delivery-portraits.js'
+      - 'public/auction-card-flight.js'
       - '.github/workflows/arena-emotes-browser.yml'
 permissions:
   contents: read
@@ -38,11 +43,21 @@ jobs:
           node-version-file: package.json
       - name: Test production emote modules with synthetic accounts
         run: node tools/test-arena-emotes-browser.mjs
+      - name: Test remaining-card delivery layout with synthetic accounts
+        run: node tools/test-auction-delivery-browser.mjs
       - name: Upload emote screenshots and diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: arena-emotes-browser-${{ github.run_attempt }}
           path: artifacts/arena-emotes/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Upload delivery screenshots and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: auction-delivery-browser-${{ github.run_attempt }}
+          path: artifacts/auction-delivery/
           if-no-files-found: warn
           retention-days: 14
