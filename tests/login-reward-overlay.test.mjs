@@ -81,7 +81,7 @@ test('blocked journal never sends claim; visibility/hide/destroy cancels work an
 });
 test('app integration defers for live room, restore and navigation; modal CSS adapts to small screens',()=>{
  const app=readFileSync(new URL('../public/app.js',import.meta.url),'utf8'),css=readFileSync(new URL('../public/login-reward-overlay.css',import.meta.url),'utf8'),html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
- assert.match(app,/createLoginRewardOverlay/);assert.match(app,/canShow:\(\)=>!room&&!session&&!roomEntryPending&&!restorePending/);assert.match(app,/dailyRewardOverlay\.setLogin\(login\)/);assert.match(app,/restorePending=null;dailyRewardOverlay\.sync\(\)/);assert.match(app,/dailyRewardOverlay\.defer\(\);auctionCommanderDialog\.sync\(r\)/);assert.match(html,/login-reward-overlay\.css/);assert.match(css,/max-width:540px/);assert.match(css,/::backdrop/);assert.match(css,/focus-visible/);
+ assert.match(app,/createLoginRewardOverlay/);assert.match(app,/canShow:\(\)=>!newPlayerIntro.pending\(\)&&!room&&!session&&!roomEntryPending&&!restorePending/);assert.match(app,/dailyRewardOverlay\.setLogin\(login\)/);assert.match(app,/restorePending=null;newPlayerIntro\.sync\(\);dailyRewardOverlay\.sync\(\)/);assert.match(app,/dailyRewardOverlay\.defer\(\);auctionCommanderDialog\.sync\(r\)/);assert.match(html,/login-reward-overlay\.css/);assert.match(css,/max-width:540px/);assert.match(css,/::backdrop/);assert.match(css,/focus-visible/);
 });
 
 

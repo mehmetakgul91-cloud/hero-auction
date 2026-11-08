@@ -98,7 +98,7 @@ test('store replaces only Leagues in the six-slot nav; Contact and native home/b
  assert.equal((html.match(/id="home-store-tab"/g)||[]).length,1);assert.equal((html.match(/id="store-panel"/g)||[]).length,1);
  assert.doesNotMatch(nav,/Ligler|quick-nav-leagues|ligler\.html/);assert.match(nav,/<a href="mailto:destek@heroauction\.com\.tr\?subject=[^"]+" class="quick-nav-item quick-nav-contact">/);
  assert.match(html,/<footer>[\s\S]*mailto:destek/);assert.match(html,/id="store-close" class="outline">← ANA MENÜ/);assert.doesNotMatch(html,/LİGLERE DÖN|Liglere dön/);
- assert.match(css,/repeat\(7,minmax\(0,1fr\)\)/);assert.match(css,/@media\(max-width:350px\)/);assert.match(app,/homePlayTab.onclick=\(\)=>\{storefrontUI.close\(\)/);assert.match(app,/commander-open-profile'\).onclick=\(\)=>\{storefrontUI.close\(\)/);
+ assert.match(css,/repeat\(7,minmax\(0,1fr\)\)/);assert.match(css,/@media\(max-width:350px\)/);assert.match(app,/homePlayTab.onclick=\(\)=>\{if\(newPlayerIntro.pending\(\)\)\{newPlayerIntro.showStart\(\);return;\}storefrontUI.close\(\)/);assert.match(app,/commander-open-profile'\).onclick=\(\)=>\{storefrontUI.close\(\)/);
  const league=readFileSync(new URL('../public/ligler.html',import.meta.url),'utf8');assert.doesNotMatch(league,/id="store-panel"|id="home-store-tab"|storefront\.js/);assert.match(league,/Ligler|LİGLER/);
 });
 test('CrazyGames Basic Launch hides store and contact, leaves four compact entries and cannot start store actions',async()=>{

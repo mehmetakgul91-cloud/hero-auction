@@ -43,10 +43,11 @@ export function mountFirstMatchGuide(doc = document, storage) {
  dialog.addEventListener('cancel',event=>{event.preventDefault();close()});
  // A room/invite or navigation wins over the tutorial. Never cover a live timer.
  const sync=()=>{const homeVisible=!home.hidden&&home.getClientRects().length>0;
-  if(!homeVisible){close();return;}
+  if(home.getAttribute('data-first-bot-intro')==='done')markSeen();
+  if(!homeVisible||home.hasAttribute('data-first-bot-intro')){close();return;}
   if(guideCanAutoOpen({seen,homeVisible,invited:new URLSearchParams(location.search).has('join')}))open();
  };
- const observer=new MutationObserver(sync);observer.observe(home,{attributes:true,attributeFilter:['hidden']});sync();
+ const observer=new MutationObserver(sync);observer.observe(home,{attributes:true,attributeFilter:['hidden','data-first-bot-intro']});sync();
  return {open,close,destroy(){observer.disconnect();close();dialog.remove();replay.remove()}};
 }
 if(typeof document!=='undefined')mountFirstMatchGuide();
