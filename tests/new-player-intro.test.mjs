@@ -32,9 +32,9 @@ class Element{
  setAttribute(k,v){this.attrs[k]=v;}removeAttribute(k){delete this.attrs[k];}prepend(x){this.children.unshift(x);}append(...x){this.children.push(...x);}remove(){this.isConnected=false;}focus(){this.focused=true;}
  set innerHTML(html){for(const match of html.matchAll(/id="([^"]+)"/g))this.doc.nodes[match[1]]=new Element(this.doc);}
 }
-function fixture(){const doc={nodes:{},getElementById(id){return this.nodes[id];},createElement(){return new Element(this);}};doc.nodes.home=new Element(doc);
+function fixture(onEvent){const doc={nodes:{},getElementById(id){return this.nodes[id];},createElement(){return new Element(this);}};doc.nodes.home=new Element(doc);
  let c={enabled:true,account:'a',token:'token-a',profileReady:true,blocked:false,homeVisible:true,english:false},calls=0,resolve;
- const s=storage(),intro=createNewPlayerIntro({document:doc,storage:s,getContext:()=>c,start:()=>{calls++;return new Promise(r=>resolve=r);}});
+ const s=storage(),intro=createNewPlayerIntro({document:doc,storage:s,getContext:()=>c,onEvent,start:()=>{calls++;return new Promise(r=>resolve=r);}});
  return {doc,s,intro,get c(){return c;},setContext(value){c={...c,...value};intro.sync();},calls:()=>calls,resolve:v=>resolve(v),button:part=>doc.nodes['new-player-intro-'+part]};
 }
 test('three lessons, skip leads to explicit start; double-click cannot duplicate entry and failed start is retryable',async()=>{
@@ -69,4 +69,8 @@ test('approved portrait design uses real assets, bilingual stage content and ill
  assert.match(introScene(0),/Altın kesilmez/);assert.match(introScene(1),/20 KREDİ/);assert.match(introScene(2),/Hazırım/);
  assert.match(introScene(2,true),/Ready/);assert.match(introScene(2),/Örnek diziliş/);
  const css=readFileSync('public/new-player-intro.css','utf8');assert.match(css,/width:min\(620px,100%\)/);assert.match(css,/@media\(max-width:430px\)/);assert.match(css,/min-height:44px/);
+});
+
+test('analytics callback failure never blocks guide or explicit free match start',async()=>{
+ const f=fixture(()=>{throw Error('offline analytics');});f.intro.observeProfile(null);f.button('skip').onclick();const run=f.button('next').onclick();assert.equal(f.calls(),1);f.resolve(true);await run;assert.equal(f.intro.pending(),false);
 });

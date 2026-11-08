@@ -1,0 +1,130 @@
+{
+  "version": 1,
+  "postgresMajor": 18,
+  "schemaSha256": "bde8c685a3cdc55f0b8d32f5857a13507e8a7a0f52dadd569e6cc6038bb53817",
+  "tables": [
+    {
+      "name": "hero_auction_campaign_funnel",
+      "kind": "r",
+      "persistence": "p",
+      "rls": false,
+      "force_rls": false,
+      "user_triggers": 0,
+      "columns": [
+        {
+          "name": "account_id",
+          "type": "text",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "campaign_id",
+          "type": "character varying(48)",
+          "notnull": true,
+          "default": null
+        },
+        {
+          "name": "attributed_at",
+          "type": "timestamp with time zone",
+          "notnull": true,
+          "default": "clock_timestamp()"
+        },
+        {
+          "name": "intro_viewed_at",
+          "type": "timestamp with time zone",
+          "notnull": false,
+          "default": null
+        },
+        {
+          "name": "intro_completed_at",
+          "type": "timestamp with time zone",
+          "notnull": false,
+          "default": null
+        },
+        {
+          "name": "intro_skipped_at",
+          "type": "timestamp with time zone",
+          "notnull": false,
+          "default": null
+        }
+      ],
+      "constraints": [
+        {
+          "type": "c",
+          "definition": "CHECK (((campaign_id)::text ~ '^[a-z0-9][a-z0-9_-]{0,47}$'::text))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "c",
+          "definition": "CHECK (((intro_completed_at IS NULL) OR (intro_completed_at >= attributed_at)))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "c",
+          "definition": "CHECK (((intro_skipped_at IS NULL) OR (intro_skipped_at >= attributed_at)))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "c",
+          "definition": "CHECK (((intro_viewed_at IS NULL) OR (intro_viewed_at >= attributed_at)))",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "f",
+          "definition": "FOREIGN KEY (account_id) REFERENCES hero_auction_wallets(account_id) ON DELETE CASCADE",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL account_id",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL attributed_at",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "n",
+          "definition": "NOT NULL campaign_id",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        },
+        {
+          "type": "p",
+          "definition": "PRIMARY KEY (account_id)",
+          "validated": true,
+          "deferrable": false,
+          "enforced": true
+        }
+      ],
+      "indexes": [
+        {
+          "valid": true,
+          "ready": true,
+          "definition": "CREATE INDEX ON public.hero_auction_campaign_funnel USING btree (attributed_at)"
+        },
+        {
+          "valid": true,
+          "ready": true,
+          "definition": "CREATE UNIQUE INDEX ON public.hero_auction_campaign_funnel USING btree (account_id)"
+        }
+      ]
+    }
+  ]
+}

@@ -31,10 +31,11 @@ export function createIntroProgress({storage}={}){
  return {read,observeProfile(account,profile){if(profile===null&&!read(account))write(account,'pending');},complete(account){if(read(account)==='pending')write(account,'done');}};
 }
 export function introCanShow({enabled,account,profileReady,blocked,homeVisible,pending}){return !!(enabled&&account&&profileReady&&!blocked&&homeVisible&&pending);}
-export function createNewPlayerIntro({document:doc,storage,getContext,start,onChange=()=>{}}){
+export function createNewPlayerIntro({document:doc,storage,getContext,start,onChange=()=>{},onEvent=()=>{}}){
  const progress=createIntroProgress({storage}),home=doc.getElementById('home');
  let panel=null,step=0,identity=null,busy=false,generation=0;
  const context=()=>getContext();
+ const report=event=>{try{onEvent(event);}catch{}};
  const pending=()=>{const c=context();return !!(c.enabled&&c.account&&progress.read(c.account)==='pending');};
  function sync(){
   const c=context(),key=c.account+':'+c.token;
@@ -42,19 +43,20 @@ export function createNewPlayerIntro({document:doc,storage,getContext,start,onCh
   const active=pending();
   if(home){if(active)home.setAttribute('data-first-bot-intro','pending');else if(c.enabled&&progress.read(c.account)==='done')home.setAttribute('data-first-bot-intro','done');else home.removeAttribute('data-first-bot-intro');}
   if(!introCanShow({...c,pending:active})){if(panel)panel.hidden=true;return;}
-  if(!panel)build();panel.hidden=false;render();
+  if(!panel)build();panel.hidden=false;render();report('intro_viewed');
  }
  function build(){
   panel=doc.createElement('section');panel.id='new-player-intro';panel.className='new-player-intro';panel.setAttribute('aria-labelledby','new-player-intro-title');panel.setAttribute('translate','no');
   panel.innerHTML='<div class="intro-brand"><img src="/images/lobby-crest.svg" alt="" width="36" height="42"><span>HERO<small>AUCTION</small></span><span id="new-player-intro-label"></span></div><div id="new-player-intro-bars" class="intro-bars" aria-hidden="true"></div><div class="new-intro-top"><span id="new-player-intro-progress"></span><button type="button" id="new-player-intro-skip"></button></div><h2 id="new-player-intro-title"></h2><p id="new-player-intro-copy"></p><div id="new-player-intro-visual"></div><div class="new-intro-actions"><button type="button" id="new-player-intro-back"></button><button type="button" id="new-player-intro-next" class="primary"></button></div><p id="new-player-intro-status" role="status" aria-live="polite"></p>';
 
   home.prepend(panel);
-  el('skip').onclick=()=>{if(busy)return;step=2;render();el('next').focus();};
+  el('skip').onclick=()=>{if(busy)return;report('intro_skipped');step=2;render();el('next').focus();};
   el('back').onclick=()=>{if(!busy&&step>0){step--;render();}};
   el('next').onclick=async()=>{
    if(busy)return;
    if(step<2){step++;render();return;}
    const c=context();if(!introCanShow({...c,pending:pending()})){sync();return;}
+   report('intro_completed');
    const run=++generation,account=c.account,token=c.token;busy=true;render();el('status').textContent=c.english?'Starting your free Easy match…':'Ücretsiz kolay maçın başlatılıyor…';
    try{
     const started=await start();

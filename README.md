@@ -206,3 +206,7 @@ Beş kozmetik arena sahnesi: [arena temaları](docs/arena-themes.md).
 ### Yönetici ziyaret ölçümleri ve bakiye ekleme — inceleme taslağı
 
 Mevcut altın düzenleme korunarak elmas/büyü tozu ekleme makbuzları ve son 30 günlük, birinci taraf ön-plan oturum ölçümleri ayrı varsayılan-kapalı bayraklarla hazırlanmıştır. 28 Ekim geliştirme dalı yaklaşık ülke/şehir için ayrı varsayılan-kapalı yerel IP sorgusu ekler; ham IP veya kesin konum saklanmaz. [Yeni yönetici raporları, Android uyumluluğu ve yayın ön koşulları](docs/admin-dashboard-20261028.md). Yeni migrationlar otomatik uygulanmaz; geçmiş veri üretilmez. Yayın/etkinleştirme ve gizlilik değerlendirmesi ayrıdır: [kapsam, güvenlik, test ve yayın notları](docs/admin-player-analytics-wallets.md).
+
+## Optional minimal campaign funnel (prepared, disabled by default)
+
+Authenticated-newcomer campaign attribution and first-bot funnel preparation: [scope, configuration, privacy, migration and rollback](docs/campaign-measurement.md). Only explicit allowlisted campaigns; no organic traffic or raw URL/ad identifiers. Campaign and intro claims are client-reported; first Easy bot admission/result come from existing durable server records. New migration012 is not auto-applied or covered by old approved release operators; separate rollout approval and PostgreSQL validation are required.
