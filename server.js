@@ -1,3 +1,4 @@
+import {createCampaignPolicy,preflightCampaignMeasurement,attributeCampaign,recordCampaignIntro,readCampaignFunnel,cleanupCampaignMeasurement} from './campaign-measurement.js';
 import {resolveAccountRoom} from './room-recovery.js';
 import {createRoomPresence} from './room-presence.js';
 import {initializeRoomActivity,recordRoomAction,roomIdleDue,isArenaRoom,ROOM_IDLE_MS} from './room-inactivity.js';
@@ -73,6 +74,8 @@ const loginRewardPolicy=createLoginRewardPolicy(process.env);
 const adminWalletCreditPolicy=createAdminWalletCreditPolicy(process.env);
 const playerAnalyticsPolicy=createPlayerAnalyticsPolicy(process.env);
 let playerAnalyticsStorageReady=false;
+const campaignPolicy=createCampaignPolicy(process.env);
+let campaignStorageReady=false;
 const playerLocationResolver=await createManagedLocationResolver(process.env);
 let playerLocationsStorageReady=false;
 console.info('Login reward policy:',JSON.stringify({enabled:loginRewardPolicy.enabled,timezone:'Europe/Istanbul',day7Diamonds:5}));
@@ -814,6 +817,7 @@ async function adminApi(url,b,requestContext){
  const user=readLogin(b.authToken);
  if(!user||!ADMIN_GOOGLE_EMAIL||user.email!==ADMIN_GOOGLE_EMAIL||!isOwnerAdmin(user,ADMIN_GOOGLE_EMAIL))error('Yönetici yetkisi gerekli.',403);
  if(!database||!databaseReady)error('Veritabanı kullanılamıyor.',503);
+ if(url==='/api/admin/campaign-funnel'){if(!campaignStorageReady)return {available:false,reason:'storage_unavailable',campaigns:[]};return readCampaignFunnel({database,policy:campaignPolicy,days:b.days??7});}
  if(url==='/api/admin/location-status')return {available:playerLocationsStorageReady&&playerLocationResolver.available,buildDate:playerLocationResolver.buildDate||null,proxyMode:playerLocationResolver.proxyMode||null,location:playerLocationsStorageReady?playerLocationResolver.lookup(requestContext):null};
  if(url==='/api/admin/wallet/credit')return creditAdminWallet({database,user,ownerEmail:ADMIN_GOOGLE_EMAIL,request:b,policy:adminWalletCreditPolicy});
  if(url==='/api/admin/wallet/receipt')return readAdminWalletCreditReceipt({database,user,ownerEmail:ADMIN_GOOGLE_EMAIL,requestId:b.requestId});
@@ -1073,6 +1077,13 @@ async function apiInner(url,b,requestContext){
 async function apiAction(url,b,requestContext){if(url.startsWith('/api/admin/'))return adminApi(url,b,requestContext);if(url==='/api/auth/check'){const user=readLogin(b.authToken);if(!user)error('Oturumun sona erdi. Yeniden giriş yap.',401);await rememberDisplayName(user);return{user:{sub:user.sub,name:user.name,provider:user.provider},gold:await goldBalance(user.sub)}}if(url==='/api/auth/crazygames'){const user=await verifyCrazyGamesToken(b.credential);user.provider='crazygames';await rememberDisplayName(user);for(const r of rooms.values()){if(idleRoomJobs.has(r.code)||r.idleClosed)continue;let changed=false;for(const p of r.players){if(p?.accountId===user.sub&&p.name!==user.name){p.name=user.name;changed=true}}if(changed)publish(r)}return{user,authToken:signLogin(user),gold:await goldBalance(user.sub)}}if(url==='/api/auth/guest'){const name=assertModeratedText(b.name||'Oyuncu',{kind:'name'});const user={sub:'guest:'+crypto.randomUUID(),name,provider:'guest'};await rememberDisplayName(user);return{user:{sub:user.sub,name,provider:user.provider},authToken:signLogin(user),gold:await goldBalance(user.sub)}}
 if(!url.startsWith('/api/auth/')){const user=readLogin(b.authToken);if(!user)error('Odaya erişmek için giriş yapmalısın.',401);if(databaseReady){const block=await database.query('SELECT banned FROM hero_auction_admin_accounts WHERE account_id=$1',[user.sub]);if(block.rows[0]?.banned)error('Hesap askıya alınmıştır.',403)}}
 if(url==='/api/room/current'){const found=resolveAccountRoom({accountId:readLogin(b.authToken).sub,pointer:activeSeats.get(readLogin(b.authToken).sub),rooms});return found?{token:found.room.players[found.seat].token,room:publicRoom(found.room,found.seat),resumeStage:found.stage}:{room:null};}
+if(url.startsWith('/api/campaign/')){
+ if(!campaignPolicy.enabled||!campaignStorageReady||!database||!databaseReady)error('Kampanya ölçümü etkin değil.',503);
+ const identity=readLogin(b.authToken);
+ if(url==='/api/campaign/attribute')return attributeCampaign({database,policy:campaignPolicy,identity,request:{campaignId:b.campaignId}});
+ if(url==='/api/campaign/event')return recordCampaignIntro({database,policy:campaignPolicy,identity,request:{event:b.event}});
+ error('Bilinmeyen işlem.',404);
+}
 if(url.startsWith('/api/player-sessions/')){
  const event=url.slice('/api/player-sessions/'.length);
  if(!['start','heartbeat','end'].includes(event))error('Bilinmeyen işlem.',404);
@@ -1538,7 +1549,7 @@ if(req.method==='GET'&&url.pathname==='/api/online'){
  onlineVisitors.set(id,{seen:Date.now(),code:belongs?code:null});
  return send(200,onlineStats());
 }
-if(req.method==='GET'&&url.pathname==='/api/info')return send(200,{botEconomy:{...BOT_ECONOMY,available:botEconomyReady&&magicDustPolicy.enabled&&!previewGuestMode&&!paidEntryMaintenance.isPaused()},playerAnalytics:{enabled:playerAnalyticsPolicy.enabled&&playerAnalyticsStorageReady,retentionDays:playerAnalyticsPolicy.retentionDays},catalogueCount:catalogue.size,paidMatches:{paused:paidEntryMaintenance.isPaused()},victoryChests:{enabled:victoryChestPolicy.enabled,available:victoryChestPolicy.enabled&&victoryChestStorageReady&&victoryChestCreditHealthy,goldOptions:victoryChestPolicy.config?.gold||[],goldWeights:victoryChestPolicy.config?.goldWeights||[],magicDustOptions:victoryChestPolicy.config?.magicDust||[],magicDustChance:(victoryChestPolicy.config?.magicDustChance??0)/100,diamondChance:(victoryChestPolicy.config?.diamondChance??0)/100},counts:Object.fromEntries(['original'].map(k=>[k,[...catalogue.values()].filter(x=>x.universe===k).length]))});
+if(req.method==='GET'&&url.pathname==='/api/info')return send(200,{campaignMeasurement:{enabled:campaignPolicy.enabled&&campaignStorageReady,campaigns:campaignPolicy.enabled&&campaignStorageReady?campaignPolicy.campaigns:[]},botEconomy:{...BOT_ECONOMY,available:botEconomyReady&&magicDustPolicy.enabled&&!previewGuestMode&&!paidEntryMaintenance.isPaused()},playerAnalytics:{enabled:playerAnalyticsPolicy.enabled&&playerAnalyticsStorageReady,retentionDays:playerAnalyticsPolicy.retentionDays},catalogueCount:catalogue.size,paidMatches:{paused:paidEntryMaintenance.isPaused()},victoryChests:{enabled:victoryChestPolicy.enabled,available:victoryChestPolicy.enabled&&victoryChestStorageReady&&victoryChestCreditHealthy,goldOptions:victoryChestPolicy.config?.gold||[],goldWeights:victoryChestPolicy.config?.goldWeights||[],magicDustOptions:victoryChestPolicy.config?.magicDust||[],magicDustChance:(victoryChestPolicy.config?.magicDustChance??0)/100,diamondChance:(victoryChestPolicy.config?.diamondChance??0)/100},counts:Object.fromEntries(['original'].map(k=>[k,[...catalogue.values()].filter(x=>x.universe===k).length]))});
 if(req.method==='POST'&&url.pathname.startsWith('/api/')){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>12000)error('İstek çok büyük.')}let body;try{body=JSON.parse(raw)}catch{error('Geçersiz JSON')}return send(200,await api(url.pathname,body,req))}
 const audioHead=req.method==='HEAD'&&path.extname(decodeURIComponent(url.pathname)).toLowerCase()==='.mp3';
 if((req.method==='GET'||audioHead)&&(url.pathname==='/crazygames'||url.pathname.startsWith('/crazygames/'))){
@@ -1598,7 +1609,7 @@ if(r.mode==='bot'&&r.turn===1){
 if(r.deadline&&Date.now()>=r.deadline){const expiredSeat=r.turn;log(r,`${r.players[expiredSeat].name} süresi dolduğu için otomatik pas geçti.`);if(r.topSeat!==null){finishAuction(r);}else if(r.openingPassSeat===1-expiredSeat){finishUnbidCard(r);}else{r.openingPassSeat=expiredSeat;r.turn=1-expiredSeat;r.deadline=Date.now()+20000;log(r,`Sıra ${r.players[r.turn].name} oyuncusuna geçti.`);}r.lastActivity=Date.now();publish(r);}
 }expireRetainedRooms();for(const [id,w]of waiting)if(!rooms.has(w.code)||Date.now()-w.created>60000)waiting.delete(id)},500).unref();
 setInterval(()=>{for(const job of idleRoomJobs.values())if(!job.running)void runIdleRoomJob(job);flushRooms().catch(e=>console.error('Database flush:',e.message));flushGold().catch(e=>console.error('Gold flush:',e.message));flushVictoryChests().catch(e=>console.error('Chest flush:',e.message));flushBotSettlements().catch(e=>console.error('Bot settlement:',e.message));reconcileBotAdmissions().catch(e=>console.error('Bot admission:',e.message))},1000).unref();
-initializeDatabase().then(initializePaidEntryMaintenance).then(initializeVictoryChests).then(initializeBotEconomy).then(initializePlayerAnalytics).then(initializeIdleRooms).then(()=>{server.listen(PORT,'0.0.0.0',()=>console.log(`Hero Auction http://localhost:${PORT} | characters: ${catalogue.size}`));});
+initializeDatabase().then(initializePaidEntryMaintenance).then(initializeVictoryChests).then(initializeBotEconomy).then(initializePlayerAnalytics).then(initializeIdleRooms).then(()=>{void initializeCampaignMeasurement();server.listen(PORT,'0.0.0.0',()=>console.log(`Hero Auction http://localhost:${PORT} | characters: ${catalogue.size}`));});
 
 // Moderation evidence expiry only; no account deletion or native transport changes.
 setInterval(()=>{if(moderationReady&&(!database||databaseReady))moderation.prune().catch(e=>console.error('Moderation retention cleanup:',e.message))},3600000).unref();
@@ -1610,3 +1621,11 @@ async function initializePlayerAnalytics(){
  catch{playerAnalyticsStorageReady=false;console.error('Player session storage unavailable.');}
 }
 setInterval(()=>{if(playerAnalyticsStorageReady&&database&&databaseReady)cleanupPlayerAnalytics({database,policy:playerAnalyticsPolicy}).catch(()=>console.error('Player session retention cleanup unavailable.'))},3600000).unref();
+
+// Optional measurement never migrates or gates gameplay; expiry runs even with collection off.
+async function initializeCampaignMeasurement(){
+ if(!database||!databaseReady)return;
+ try{campaignStorageReady=await preflightCampaignMeasurement(database);if(campaignStorageReady)await cleanupCampaignMeasurement({database});}
+ catch{campaignStorageReady=false;console.error('Campaign measurement storage unavailable.');}
+}
+setInterval(()=>{if(campaignStorageReady&&database&&databaseReady)cleanupCampaignMeasurement({database}).catch(()=>console.error('Campaign retention cleanup unavailable.'))},3600000).unref();

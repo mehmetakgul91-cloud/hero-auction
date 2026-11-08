@@ -25,6 +25,12 @@ const reports=window.HeroAdminReports.create({document,request:api,isVerified:()
 const matches=window.HeroAdminMatches?.create({document,request:api,isVerified:()=>!!viewerAccount&&creditController.snapshot().verified,navigate:()=>window.HeroAdminNavigation?.show('match-records',true)});
 window.addEventListener('hero:admin-verified',()=>{void matches?.load();});
 window.addEventListener('hero:admin-unverified',()=>matches?.clear());
+let campaignReport=null;
+window.addEventListener('hero:admin-verified',()=>{void campaignReport?.load();});
+window.addEventListener('hero:admin-unverified',()=>campaignReport?.clear());
+// Optional read-only report cannot prevent the existing owner dashboard loading.
+import('/admin-campaign.js').then(({mountAdminCampaign})=>{campaignReport=mountAdminCampaign({document,request:api,isVerified:()=>!!viewerAccount&&creditController.snapshot().verified});if(viewerAccount&&creditController.snapshot().verified)void campaignReport.load();}).catch(()=>{});
+
 function renderCreditState(state){
  for(const {button,currency} of creditButtons)button.disabled=!state.canStart||!currencyAllowed(currency);
  $('wallet-credit-submit').disabled=!state.canStart||!creditTarget||!currencyAllowed(creditTarget.currency);

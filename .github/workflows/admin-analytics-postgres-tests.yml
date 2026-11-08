@@ -4,6 +4,13 @@ on:
     paths:
       - 'admin-wallet-credits.js'
       - 'player-sessions.js'
+      - 'campaign-measurement.js'
+      - 'tests/campaign-measurement*.mjs'
+      - 'tools/test-campaign-postgres.mjs'
+      - 'tools/campaign-*'
+      - 'tools/apply-campaign-migration.mjs'
+      - 'tools/test-campaign-release-postgres.mjs'
+      - 'tests/campaign-release-tools.test.mjs'
       - 'player-location.js'
       - 'player-geoip-database.js'
       - 'admin-player-reports.js'
@@ -28,6 +35,13 @@ on:
     paths:
       - 'admin-wallet-credits.js'
       - 'player-sessions.js'
+      - 'campaign-measurement.js'
+      - 'tests/campaign-measurement*.mjs'
+      - 'tools/test-campaign-postgres.mjs'
+      - 'tools/campaign-*'
+      - 'tools/apply-campaign-migration.mjs'
+      - 'tools/test-campaign-release-postgres.mjs'
+      - 'tests/campaign-release-tools.test.mjs'
       - 'player-location.js'
       - 'player-geoip-database.js'
       - 'admin-player-reports.js'
@@ -57,6 +71,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - database: hero_campaign_test
+            variable: HERO_CAMPAIGN_TEST_DB
+            script: tools/test-campaign-release-postgres.mjs
+          - database: hero_campaign_test
+            variable: HERO_CAMPAIGN_TEST_DB
+            script: tools/test-campaign-postgres.mjs
           - database: hero_admin_reports_test
             variable: HERO_ADMIN_REPORTS_TEST_DB
             script: tools/test-postgres-admin-reports.mjs
