@@ -5,6 +5,8 @@ import {createBotEntryConsent,botTerms,botSettlementCopy} from '/bot-entry.js';
 import {createRevealedTeams,renderDeliveryPortraits} from '/auction-delivery-portraits.js';
 import {createAccountPopover} from '/account-popover.js';
 import {mountFirstSession,describeFirstCommander} from '/first-session.js';
+import {createNewPlayerIntro} from '/new-player-intro.js';
+import {recordFirstBotMatch,createAuctionLesson} from '/first-bot-match-guide.js';
 import {auctionCommanderMarkup,createAuctionCommanderDialog} from '/auction-commander.js';
 import {createAuctionTeamPortraitLoader} from '/auction-team-portraits.js?v=compact-auction-20261106';
 import {createPlayerSessionTracker} from '/player-session-client.js';
@@ -90,7 +92,10 @@ const headerWallet=createHeaderWallet({document});
 const walletOperations=createWalletOperations({storage:()=>window.sessionStorage});
 const storefrontUI=createStorefront({walletOperations,canOpen:()=>!room&&!commanderProfileOpen,onOpen:()=>{friendsUI.close();const panel=$('home-play-panel');if(panel)panel.hidden=true;$('home-play-tab')?.setAttribute('aria-expanded','false');$('home-play-tab')?.classList.remove('selected');},onBalance:result=>{headerWallet.update(result,login?.authToken);if(Number.isSafeInteger(result.gold))showGold(result.gold);if(Number.isSafeInteger(result.diamonds))commanderDiamonds=result.diamonds;}});
 
-const dailyRewardOverlay=createLoginRewardOverlay({walletOperations,canShow:()=>!room&&!session&&!roomEntryPending&&!restorePending&&!commanderProfileOpen&&!$('home').hidden&&!webInvite?.pending,onBalance:result=>{headerWallet.update(result,login?.authToken);if(Number.isSafeInteger(result.gold))showGold(result.gold);if(Number.isSafeInteger(result.diamonds))commanderDiamonds=result.diamonds;},onNotice:message=>notify(message)});
+const newPlayerIntro=createNewPlayerIntro({document,storage:localStorage,getContext:()=>({enabled:!window.HeroPlatform,account:login?.user?.sub,token:login?.authToken,english:document.documentElement.lang==='en',profileReady:commanderLoaded&&!!commanderProfile,blocked:!!(room||session||roomEntryPending||restorePending||commanderProfileOpen||webInvite?.pending),homeVisible:!$('home').hidden}),start:()=>enterBotGame('/api/bot','easy'),onChange:()=>dailyRewardOverlay.sync()});
+const firstBotLesson=createAuctionLesson({document,storage:localStorage,getAccount:()=>login?.user?.sub,english:()=>document.documentElement.lang==='en'});
+
+const dailyRewardOverlay=createLoginRewardOverlay({walletOperations,canShow:()=>!newPlayerIntro.pending()&&!room&&!session&&!roomEntryPending&&!restorePending&&!commanderProfileOpen&&!$('home').hidden&&!webInvite?.pending,onBalance:result=>{headerWallet.update(result,login?.authToken);if(Number.isSafeInteger(result.gold))showGold(result.gold);if(Number.isSafeInteger(result.diamonds))commanderDiamonds=result.diamonds;},onNotice:message=>notify(message)});
 
 // A store request may finish after the player has opened the commander screen.
 // Refresh only that same open account; never reset navigation or apply old data
@@ -125,6 +130,7 @@ function commanderVisibility(){
  $('home').hidden=!logged||!!room||!commanderLoaded||needSelection||commanderProfileOpen;
  $('commander-open-profile').hidden=!commanderProfile;
  webInvite?.sync();
+ newPlayerIntro.sync();
  dailyRewardOverlay.sync();
 }
 function renderCommanderOnboarding(){
@@ -227,6 +233,7 @@ async function loadCommander(){
   const result=await post('/api/commander/get',{});
   if(!signedIn()||login.authToken!==authToken)return;
   commanderProfile=result.profile;commanderProgression=result.progression||null;commanderDiamonds=result.diamonds??null;commanderExchange=result.exchange||null;commanderLoaded=true;showGold(result.gold);
+  newPlayerIntro.observeProfile(result.profile);
   renderCommanderOnboarding();renderCommanderProfile();commanderVisibility();
  }catch(e){notify('Komutan profili yüklenemedi: '+e.message)}
  finally{commanderLoading=false}
@@ -234,8 +241,10 @@ async function loadCommander(){
 async function selectCommander(){
  if(!commanderPending||commanderBusy)return;
  commanderBusy=true;renderCommanderOnboarding();
+ const authToken=login?.authToken;
  try{
   const result=await post('/api/commander/select',{commanderId:commanderPending});
+  if(login?.authToken!==authToken)return;
   commanderProfile=result.profile;commanderProgression=result.progression||null;commanderDiamonds=result.diamonds??null;commanderExchange=result.exchange||null;commanderLoaded=true;showGold(result.gold);
   renderCommanderProfile();commanderVisibility();notify('Komutanın hesabına kaydedildi.');
  }catch(e){$('commander-onboarding-message').textContent=e.message}
@@ -412,7 +421,7 @@ let restorePending=null;
 function restoreGame(){
  if(webInvite?.pending){webInvite.sync();return signedIn()?validateLogin().then(()=>webInvite.sync()):Promise.resolve();}
  if(restorePending)return restorePending;
- restorePending=restoreSavedGame().finally(()=>{restorePending=null;dailyRewardOverlay.sync();});return restorePending;
+ restorePending=restoreSavedGame().finally(()=>{restorePending=null;newPlayerIntro.sync();dailyRewardOverlay.sync();});return restorePending;
 }
 async function readSavedRoom(){
  let stored;try{stored=JSON.parse(localStorage.getItem('hero-auction-session')||'null')}catch{return null}
@@ -470,7 +479,7 @@ $('lobby-home').onclick=async()=>{
 };
 
 const homeGuidePlay=$('home-guide-play');if(homeGuidePlay)homeGuidePlay.onclick=()=>{if(homePlayPanel.hidden)homePlayTab.click();else homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'});};
-if(homePlayTab&&homePlayPanel){homePlayTab.onclick=()=>{storefrontUI.close();friendsUI.close();homePlayPanel.hidden=false;homePlayTab.setAttribute('aria-expanded','true');homePlayTab.classList.add('selected');homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'});};const lobbyBack=$('play-lobby-back');if(lobbyBack)lobbyBack.onclick=()=>{webInvite?.cancel();homePlayPanel.hidden=true;homePlayTab.setAttribute('aria-expanded','false');homePlayTab.classList.remove('selected');homePlayTab.scrollIntoView({behavior:'smooth',block:'start'});};}
+if(homePlayTab&&homePlayPanel){homePlayTab.onclick=()=>{if(newPlayerIntro.pending()){newPlayerIntro.showStart();return;}storefrontUI.close();friendsUI.close();homePlayPanel.hidden=false;homePlayTab.setAttribute('aria-expanded','true');homePlayTab.classList.add('selected');homePlayPanel.scrollIntoView({behavior:'smooth',block:'start'});};const lobbyBack=$('play-lobby-back');if(lobbyBack)lobbyBack.onclick=()=>{webInvite?.cancel();homePlayPanel.hidden=true;homePlayTab.setAttribute('aria-expanded','false');homePlayTab.classList.remove('selected');homePlayTab.scrollIntoView({behavior:'smooth',block:'start'});};}
 mountFirstSession(document,{enabled:!!window.HeroPlatform});
 webInvite=createWebInvite({
  url:location.href,platform:!!window.HeroPlatform,
@@ -566,7 +575,7 @@ async function post(url,data){
  try{const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...gameIdentity(),...data})});const j=await res.json();if(!res.ok){const error=Error(j.error||'İşlem başarısız');error.status=res.status;throw error;}if(url!=='/api/wallet')headerWallet.receive(j,walletTicket,{mutation:['/api/commander/select','/api/commander/change','/api/commander/upgrade','/api/diamonds/exchange','/api/login-rewards/claim'].includes(url)});return j}
  finally{if(entry)roomEntryPending--;}
 }
-function save(token,r){session={token,code:r.code};localStorage.setItem('hero-auction-session',JSON.stringify(session));show(r);connect();refreshOnline()}
+function save(token,r){newPlayerIntro.played();session={token,code:r.code};localStorage.setItem('hero-auction-session',JSON.stringify(session));show(r);connect();refreshOnline()}
 async function syncRoomSnapshot({force=false}={}){
  const current=session,auth=login?.authToken;if(!current)return;
  const result=await post('/api/state',current);
@@ -688,7 +697,7 @@ function show(r){if(!signedIn()||!r||(session&&session.code!==r.code)||isStaleAu
   }});deliveryController=tailReveal;tailReveal.matchKey=auctionMatchKey(r);tailReveal.signature=JSON.stringify(r.final);return;
  }
  if(r.phase==='finished')tailReceipts.received(r,tailAwards);
- window.HeroPlatform?.gameplay(r.phase==='auction');const currentCardKey=r.phase==='auction'?r.code+':'+r.round+':'+r.card?.name:null;const isNewCard=!!currentCardKey&&currentCardKey!==lastCardKey;lastCardKey=currentCardKey;const wasFinished=room?.phase==='finished'&&room?.code===r.code;const enteredAuction=isAuctionEntry(room,r);room=r;$('game').dataset.phase=r.phase;window.HeroPlatform?.setRoom(r);if(window.HeroPlatform)commanderVisibility();if(enteredAuction)refreshGold();if(r.phase==='finished'&&!wasFinished){refreshGold();}
+ window.HeroPlatform?.gameplay(r.phase==='auction');const currentCardKey=r.phase==='auction'?r.code+':'+r.round+':'+r.card?.name:null;const isNewCard=!!currentCardKey&&currentCardKey!==lastCardKey;lastCardKey=currentCardKey;const wasFinished=room?.phase==='finished'&&room?.code===r.code;const enteredAuction=isAuctionEntry(room,r);room=r;newPlayerIntro.sync();firstBotLesson.update(r);$('game').dataset.phase=r.phase;window.HeroPlatform?.setRoom(r);if(window.HeroPlatform)commanderVisibility();if(enteredAuction)refreshGold();if(r.phase==='finished'&&!wasFinished){refreshGold();}
  for(let i=0;i<2;i++){const seat=r.me===1?1-i:i;const p=r.players[seat];$('player'+i).className='player player-side'+(r.me===seat?' me':'')+(r.phase==='auction'&&r.turn===seat?' active-turn':'');$('player'+i).innerHTML=p?`<div class="auction-player-heading">${(r.phase==='auction'?auctionCommanderMarkup(p.commander,seat,{english:document.documentElement.lang==='en',playerName:displayPlayerName(p,r.mode==='bot'&&seat===1),isMe:r.me===seat}):'')||`<div class="name">${esc(displayPlayerName(p,r.mode==='bot'&&seat===1))} ${r.me===seat?'(SEN)':''}</div>`}</div><div class="credit">${p.credits} <small>kalan kredi</small></div><div class="spent-credit">💸 ${20-p.credits} kredi kullanıldı</div><div class="side-team-title">${r.phase==='auction'?`🎴 ${p.team.length} ${document.documentElement.lang==='en'?'CARDS':'KART'} <span>· ${20-p.credits} ${document.documentElement.lang==='en'?'credits':'kredi'}</span>`:`🎴 KARTLAR (${p.team.length})`}</div><div class="teams">${p.team.map(x=>`<span class="side-hero">${r.phase==='auction'?`<img class="side-hero-portrait" data-hero-name="${esc(x.name)}" data-hero-universe="${esc(x.universe)}" alt="" width="30" height="38">`:''}<span class="side-hero-name">${esc(x.name)} <small class="rarity rarity-${esc(x.rarity||'common')}">${rarityLabel(x.rarity)}</small></span><small class="side-hero-role">${esc(specialtyLabel(x))}</small><span class="side-hero-cost">${Number(x.cost)||0} <small>kredi</small></span></span>`).join('')||'Henüz karakter yok'}</div>`:'<div class="name">2. OYUNCU</div><p class="status">Katılması bekleniyor…</p>'}
  if(r.phase==='auction')loadAuctionTeamPortraits(document);
  auctionEmotes.update();
@@ -763,13 +772,16 @@ async function enterBotGame(url,difficulty,currentRoom=null){
   scope=login.user.sub+':'+(currentRoom?currentRoom.matchId||auctionMatchKey(currentRoom):'direct');
   const consent=await botEntryConsent.request(scope,difficulty);if(!consent)return;
   if(login?.authToken!==auth||session!==current)return;
+  const firstIntro=newPlayerIntro.pending()&&url==='/api/bot'&&difficulty==='easy';
   const j=await post(url,{...(currentRoom?{...current,expectedMatchId:currentRoom.matchId||auctionMatchKey(currentRoom)}:{}),name:$('name').value,universe:world,...consent});
   botEntryConsent.complete(scope);
   if(login?.authToken!==auth||session!==current)return;
+  if(firstIntro&&j.room?.mode==='bot')recordFirstBotMatch(localStorage,login.user.sub,j.room);
   if(j.token)save(j.token,j.room);else show(j.room);
+  return true;
  }catch(e){notify(e.message)}finally{botEntryBusy=false;for(const button of entryButtons){if(button.isConnected){button.disabled=false;button.removeAttribute('aria-busy');}}}
 }
-$('bot').onclick=()=>enterBotGame('/api/bot',$('bot-difficulty').value);
+$('bot').onclick=()=>enterBotGame('/api/bot',newPlayerIntro.pending()?'easy':$('bot-difficulty').value);
 $('bot-difficulty').onchange=()=>renderBotEconomy();
 function renderBotEconomy(){
  const english=document.documentElement.lang==='en',terms=botTerms(botEconomyCapability,$('bot-difficulty').value),label=$('bot-economy');
@@ -777,7 +789,7 @@ function renderBotEconomy(){
  if(label)label.textContent=terms?(english?`Level ${terms.level} · Free entry · Win: ${terms.gold} gold${terms.magicDust?' + '+terms.magicDust+' magic dust':''} · No diamonds`:`Seviye ${terms.level} · Ücretsiz giriş · Galibiyet: ${terms.gold} altın${terms.magicDust?' + '+terms.magicDust+' büyü tozu':''} · Elmas yok`):(english?'Free entry · fixed win reward · unavailable until durable reward storage is ready.':'Ücretsiz giriş · galibiyette sabit ödül · kalıcı ödül altyapısı hazır olana kadar kullanılamaz.');
 }
 
-$('match').onclick=async()=>{if(!await validateLogin())return;try{const j=await post('/api/match',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
+$('match').onclick=async()=>{if(newPlayerIntro.pending()){newPlayerIntro.showStart();return;}if(!await validateLogin())return;try{const j=await post('/api/match',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
 setInterval(()=>{if(room?.phase==='auction'&&room.deadline){const el=$('turntimer');if(el)el.textContent='⏱ '+Math.max(0,Math.ceil((room.deadline-Date.now())/1000))+' saniye'}},250);
 const inviteSharer=createInviteSharer({origin:location.origin,navigator,notify,
  showLink:link=>window.prompt('Davet bağlantısını kopyalayıp WhatsApp sohbetine yapıştır:',link)

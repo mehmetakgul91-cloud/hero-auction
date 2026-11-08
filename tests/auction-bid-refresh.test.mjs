@@ -45,7 +45,7 @@ function harness(){
   login:{authToken:'test-account'},session:{code:'123',token:'test-seat'},signedIn:()=>true,
   auctionViewKey,renderedAuction:null,lastCardKey:null,tailReveal:null,awardFlights:new Set(),tailReceipts:createTailReceipts(),
   auctionMatchKey,isStaleAuctionSnapshot,isAuctionEntry,collectTailAwards,collectOfferedAwards,displaySeat,
-  dailyRewardOverlay:{defer(){}},auctionCommanderDialog:{sync(){}},storefrontUI:{close(){}},roomInvitesUI:{setRoom(){}},friendsUI:{setRoom(){}},
+  newPlayerIntro:{sync(){}},firstBotLesson:{update(){}},dailyRewardOverlay:{defer(){}},auctionCommanderDialog:{sync(){}},storefrontUI:{close(){}},roomInvitesUI:{setRoom(){}},friendsUI:{setRoom(){}},
   cancelAwardFlights(){},cancelAuctionReveal(){},animateWonAuctionCard(){},refreshGold(){},commanderVisibility(){},
   loadAuctionTeamPortraits:createAuctionTeamPortraitLoader({fetch:async url=>{artRequests.push(url);return {ok:true,json:async()=>({url:'/images/portrait.webp'})};}}),
   auctionCommanderMarkup:()=>'',displayPlayerName:p=>p.name,esc:String,specialtyLabel:()=>'',rarityLabel:r=>r,
