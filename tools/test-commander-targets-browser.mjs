@@ -6,12 +6,11 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {createLiveCommanderAbilities} from '../commander-live-abilities.js';
 import {createLiveCommanderCombat,castLiveCommanderCombat} from '../commander-live-combat.js';
-const {chromium}=await import(process.env.HERO_BROWSER_TEST_RUNTIME||'playwright');
-const root=fileURLToPath(new URL('../public/',import.meta.url)),markup=await readFile(path.join(root,'battle-preview.html'),'utf8');
+const root=path.resolve(fileURLToPath(new URL('../public/',import.meta.url))),markup=await readFile(path.join(root,'battle-preview.html'),'utf8');
 const panel=markup.slice(markup.indexOf('<section id="experimental-commander-controls"'),markup.indexOf('<section class="score"'));
 const fixtures=new Map(),failures=[];
 const snapshot=f=>({version:f.c.version,round:1,side:f.side,commanderId:f.id,revivalUsed:[...f.c.revivalUsed],ultimateUsed:[...f.c.abilities.ultimateUsed],teams:structuredClone(f.c.teams),abilities:f.c.abilities.energy.map((energy,side)=>({energy,ultimateEnergy:f.c.abilities.ultimateEnergy[side],cooldownMs:f.posts?5000:0,effectLockMs:0})),finished:false,events:f.events||[]});
-const pageHtml=`<!doctype html><html lang="tr"><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/commander-arena-magic-targeting.css"><style>body{font:16px sans-serif;margin:12px}button{padding:8px}.team{display:flex;gap:10px;margin:20px 0}.arena-hero{position:relative;width:90px;min-height:85px;border:2px solid #777;border-radius:10px;padding:8px}.arena-hero.dead{opacity:.5}</style></head><body>${panel}<h2>Allies / Enemies</h2><div id="team-a" class="team"></div><div id="team-b" class="team"></div><script>window.addEventListener('heroarena:experimental-round-end',event=>{event.detail.teams.forEach((team,side)=>{document.getElementById(side?'team-b':'team-a').innerHTML=team.map(hero=>'<div class="arena-hero '+(hero.hp<=0?'dead':'')+'" data-hero-id="'+hero.id+'"><span>'+hero.id+'</span><p>'+hero.hp+' HP</p></div>').join('')})});</script><script type="module" src="/commander-experimental.js"></script></body></html>`;
+const pageHtml=`<!doctype html><html lang="tr"><head><link rel="icon" href="data:,"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/commander-arena-magic-targeting.css"><style>body{font:16px sans-serif;margin:12px}button{padding:8px}.team{display:flex;gap:10px;margin:20px 0}.arena-hero{position:relative;width:90px;min-height:85px;border:2px solid #777;border-radius:10px;padding:8px}.arena-hero.dead{opacity:.5}</style></head><body>${panel}<h2>Allies / Enemies</h2><div id="team-a" class="team"></div><div id="team-b" class="team"></div><script>window.addEventListener('heroarena:experimental-round-end',event=>{event.detail.teams.forEach((team,side)=>{document.getElementById(side?'team-b':'team-a').innerHTML=team.map(hero=>'<div class="arena-hero '+(hero.hp<=0?'dead':'')+'" data-hero-id="'+hero.id+'"><span>'+hero.id+'</span><p>'+hero.hp+' HP</p></div>').join('')})});</script><script type="module" src="/commander-experimental.js"></script></body></html>`;
 const server=createServer(async(req,res)=>{
  try{
   const url=new URL(req.url,'http://local');
@@ -32,6 +31,24 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const origin='http://127.0.0.1:'+server.address().port;
+// Fail on a broken fixture/module graph before a hidden panel becomes a misleading UI timeout.
+const checked=new Set();
+async function checkModule(url){
+ if(checked.has(url))return;checked.add(url);
+ const response=await fetch(url);assert.equal(response.status,200,'Fixture module unavailable: '+url);
+ assert.match(response.headers.get('content-type')||'',/javascript/,'Fixture module MIME type: '+url);
+ const source=await response.text();
+ for(const match of source.matchAll(/^import\s+.*?from\s+['"]([^'"]+)['"]/gm))await checkModule(new URL(match[1],url).href);
+}
+try{
+ await checkModule(origin+'/commander-experimental.js');
+ const css=await fetch(origin+'/commander-arena-magic-targeting.css');assert.equal(css.status,200);assert.match(css.headers.get('content-type')||'',/css/);
+}catch(error){await new Promise(resolve=>server.close(resolve));throw error}
+if(process.argv.includes('--check-fixture')){
+ console.log(`PASS: fixture serves ${checked.size} controller/dependency modules and targeting CSS over HTTP.`);
+ await new Promise(resolve=>server.close(resolve));process.exit(0);
+}
+const {chromium}=await import(process.env.HERO_BROWSER_TEST_RUNTIME||'playwright');
 const browser=await chromium.launch({headless:true,...(process.env.HERO_BROWSER_EXECUTABLE?{executablePath:process.env.HERO_BROWSER_EXECUTABLE}:{}),args:['--no-sandbox']});
 let runs=0;
 try{
@@ -39,7 +56,7 @@ try{
   const code=String(++runs),targetSide=mode==='enemy'?1-side:side,c=createLiveCommanderCombat({teams:[0,1].map(s=>['a','b','c'].map(name=>({id:s+name,hp:100,maxHp:100,attack:50}))),commanders:[{commanderId:id},{commanderId:id}],abilities:createLiveCommanderAbilities({matchKey:'browser',energy:[100,100],ultimateEnergy:[100,100],now:0})});
   if(mode==='fallen')c.teams[side][1].hp=0;else c.teams[targetSide][0].hp=0;
   const f={c,id,side,posts:0};fixtures.set(code,f);
-  const context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1280,height:900},isMobile:mobile,hasTouch:mobile});const page=await context.newPage();page.on('pageerror',error=>failures.push(error.message));
+  const context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1280,height:900},isMobile:mobile,hasTouch:mobile});const page=await context.newPage();page.on('pageerror',error=>failures.push(error.message));page.on('response',response=>{if(response.status()>=400)failures.push(response.status()+' '+response.url())});
   await page.route('**/*',route=>new URL(route.request().url()).origin===origin?route.continue():route.abort());
   await page.goto(origin+'/fixture?commanderTest=1&auctionCode='+code+'&auctionToken=synthetic');
   const button=page.locator(`[data-command="${ability}"]`);await button.waitFor({state:'visible'});await page.waitForFunction(()=>!document.querySelector('[data-command="ultimate"]').disabled);
@@ -59,4 +76,4 @@ try{
   await context.close();
  }
  assert.deepEqual(failures,[]);console.log(`PASS: ${runs} real Chromium runs; all five targeted abilities, both seats, desktop click/keyboard and mobile tap; immediate cast, no confirmation DOM, cancel before selection, invalid targets, repeat inputs, authoritative energy/usage, no overflow or page errors.`);
-}finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
+}catch(error){if(failures.length)console.error('Browser fixture errors:',failures);throw error}finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
