@@ -689,9 +689,7 @@ body:has(#battle-arena) :is([data-energy-meter],[data-ultimate-energy-meter]){ba
 body:has(#battle-arena) #experimental-commander-controls [data-command="normal"]{background:#d0e4e3;border-color:#75a3b2;color:#234e60}
 body:has(#battle-arena) #experimental-commander-controls [data-command="ultimate"]{background:#e2d9e9;border-color:#ab8ebd;color:#634675}
 body:has(#battle-arena) #experimental-commander-controls [data-command]:disabled{background:#dde1dd;color:#526171;border-color:#bcc6c7;opacity:1}
-body:has(#battle-arena) #experimental-commander-controls [data-magic-confirm]{background:#d8c5e6;border-color:#9c72b9;color:#533469}
 body:has(#battle-arena) #experimental-commander-controls [data-magic-cancel]{background:#e2e8e0;border-color:#a9b7bb;color:#415467}
-body:has(#battle-arena) #experimental-commander-controls [data-magic-confirm]:disabled{background:#dde1dd;color:#526171;border-color:#bcc6c7;opacity:1}
 body:has(#battle-arena) .commander-ultimate-ready:not(:disabled){background:linear-gradient(135deg,#e7d6b4,#d7b97d)!important;color:#493b22!important;border-color:#a8874a!important}
 body:has(#battle-arena) #arena-music-toggle,body:has(#battle-arena) #arena-friend-opponent{background:#d8e5df;border-color:#89a7af;color:#234e60;box-shadow:0 3px 12px #20304714}
 body:has(#battle-arena) #arena-music-toggle[aria-pressed="false"]{background:#dfe3dc;border-color:#a4afb2;color:#526171}

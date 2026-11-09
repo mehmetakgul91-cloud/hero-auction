@@ -1,6 +1,6 @@
-// Arena card selection. Only the live controller can submit a confirmed cast.
+// Arena card selection. Only the live controller can submit a server-validated cast.
 import {requiredMagicTargets,validateMagicTargetSelection,commanderTargetMode,isCommanderTargetEligible} from './commander-magic-target-picker.js';
-export function createArenaMagicTargeting({root,enemySide=1,onConfirm=()=>{}}){
+export function createArenaMagicTargeting({root,enemySide=1,onConfirm=()=>{},onSelect=()=>{}}){
  if(!root||![0,1].includes(enemySide))throw Error('Invalid arena targeting');
  let heroes=[],selected=[],ability='normal',active=false,enabled=true,context={commanderId:'magic'};
  const cards=()=>[...root.querySelectorAll('.arena-hero[data-hero-id]')];
@@ -17,12 +17,12 @@ export function createArenaMagicTargeting({root,enemySide=1,onConfirm=()=>{}}){
    else {card.removeAttribute('role');card.removeAttribute('tabindex');}
   }
  }
- function toggle(id){
+ function select(id){
   if(!active||!enabled||!heroes.some(h=>h.id===id&&eligible(h)))return;
-  selected=selected.includes(id)?[]:[id];repaint();
+  selected=[id];repaint();return onSelect({ability,targetIds:[...selected]});
  }
- const click=e=>{const card=e.target.closest('.arena-hero[data-hero-id]');if(card&&root.contains(card))toggle(card.dataset.heroId)};
- const keydown=e=>{if(e.key!=='Enter'&&e.key!==' ')return;const card=e.target.closest('.arena-hero[data-hero-id]');if(card&&root.contains(card)){e.preventDefault();toggle(card.dataset.heroId)}};
+ const click=e=>{const card=e.target.closest('.arena-hero[data-hero-id]');if(card&&root.contains(card))return select(card.dataset.heroId)};
+ const keydown=e=>{if(e.key!=='Enter'&&e.key!==' ')return;const card=e.target.closest('.arena-hero[data-hero-id]');if(card&&root.contains(card)){e.preventDefault();if(!e.repeat)return select(card.dataset.heroId)}};
  root.addEventListener('click',click);root.addEventListener('keydown',keydown);
  return {
   begin(nextAbility,nextHeroes,options={}){ability=nextAbility;heroes=nextHeroes.map(h=>({...h}));context={commanderId:'magic',...options};selected=[];active=true;enabled=true;repaint();return requiredMagicTargets(ability,heroes,context)},

@@ -51,65 +51,77 @@ function harness(side=0,commanderId='magic'){
  };
 }
 
-for(const side of [0,1])test('live magic seat '+side+' selects a card, confirms once, then receives energy change and effect from server',async()=>{
- const h=harness(side);await h.respond(0,h.snapshot());
- h.click(h.normal);assert.equal(h.normal.hidden,true);assert.equal(h.confirm.hidden,false);assert.equal(h.confirm.disabled,true);
- h.target(1);assert.equal(h.confirm.disabled,false);assert.equal(h.requests.length,1);assert.equal(h.visuals.length,0);assert.equal(h.energy.textContent,'100 / 100');
- h.click(h.confirm);h.click(h.confirm);h.click(h.cancel);await flush();
- assert.equal(h.requests.length,2);assert.equal(h.cancel.disabled,true);assert.equal(h.visuals.length,0);assert.equal(h.energy.textContent,'100 / 100');
- assert.deepEqual(JSON.parse(h.requests[1].options.body).targetIds,[(1-side)+'b']);
+const targetedAbilities=[['magic','normal','enemy'],['magic','ultimate','ally'],['defense','ultimate','ally'],['attack','ultimate','enemy'],['support','ultimate','fallen']];
+for(const side of [0,1])for(const [id,ability,mode] of targetedAbilities)test(`${id} ${ability} seat ${side}: first valid target activation submits once, without confirmation`,async()=>{
+ const h=harness(side,id),targetSide=mode==='enemy'?1-side:side;
+ if(mode==='fallen')h.c.teams[side][1].hp=0;else h.c.teams[targetSide][0].hp=0;
+ await h.respond(0,h.snapshot());h.click(h[ability]);
+ assert.equal(h.normal.hidden,true);assert.equal(h.confirm.hidden,true);assert.equal(h.requests.length,1);assert.match(h.status.textContent,/Seçince hemen uygulanır/);
+ const target=mode==='enemy'?h.target:h.allyTarget,wrongTarget=mode==='enemy'?h.allyTarget:h.target;
+ wrongTarget(1);target(0);assert.equal(h.requests.length,1,'wrong side and ineligible life state never submit');
+ target(1,side===1?'Enter':undefined);target(1);target(2);h.click(h.confirm);h.click(h.cancel);
+ assert.equal(h.requests.length,2);assert.equal(h.cancel.disabled,true);assert.equal(h.energy.textContent,'100 / 100');assert.equal(h.visuals.length,0);
+ const payload=JSON.parse(h.requests[1].options.body);assert.equal(payload.ability,ability);assert.deepEqual(payload.targetIds,[targetSide+'b']);
  await h.accept(1);
- assert.equal(h.energy.textContent,'60 / 100');assert.equal(h.visuals.length,1);assert.equal(h.visuals[0].action,'commander-magic-normal');
- assert.deepEqual(h.visuals[0].impacts.map(e=>e.target),[(1-side)+'b']);assert.equal(h.confirm.hidden,true);assert.equal(h.normal.hidden,false);
+ assert.equal(h.confirm.hidden,true);assert.equal(h.normal.hidden,false);assert.equal(h.visuals.filter(event=>event.action===`commander-${id}-${ability}`).length,1);
+ assert.equal(h.c.abilities.energy[side],ability==='normal'?60:100);assert.equal(h.c.abilities.ultimateEnergy[side],ability==='ultimate'?100-getCommanderAbilityCost(id,ability):100);
+ if(ability==='ultimate')assert.equal(h.c.abilities.ultimateUsed[side],true);
+ if(id==='attack')assert.equal(h.c.teams[targetSide][1].commanderFocusUntilDeath,true);
+ if(id==='defense')assert.equal(h.c.teams[side][1].lastStandReady,true);
+ if(id==='support')assert.equal(h.c.teams[side][1].hp,40);
 });
 
-test('mage ultimate selects exactly one friendly card and survives replacement snapshots',async()=>{
- const h=harness();await h.respond(0,h.snapshot());h.click(h.ultimate);h.target(0);
- assert.equal(h.confirm.disabled,true);h.allyTarget(2,'Enter');assert.equal(h.confirm.disabled,false);
- const previous=h.allyRoot.cards;h.tick();await h.respond(1,h.snapshot({version:1}));
- assert.notEqual(h.allyRoot.cards,previous);assert.ok(h.allyRoot.cards[2].classes.has('magic-target-selected'));
- h.allyTarget(1);assert.equal(h.allyRoot.cards[2].classes.has('magic-target-selected'),false);
- h.click(h.confirm);assert.deepEqual(JSON.parse(h.requests[2].options.body).targetIds,['0b']);assert.equal(h.visuals.length,0);
+for(const side of [0,1])for(const [id,ability,mode] of targetedAbilities)test(`${id} ${ability} seat ${side}: cancel before choosing leaves both pools and usage intact`,async()=>{
+ const h=harness(side,id);if(mode==='fallen')h.c.teams[side][0].hp=0;await h.respond(0,h.snapshot());h.click(h[ability]);h.click(h.cancel);
+ (mode==='enemy'?h.target:h.allyTarget)(0);assert.equal(h.requests.length,1);assert.equal(h.energy.textContent,'100 / 100');assert.equal(h.nodes.get('[data-ultimate-energy]').textContent,'100 / 100');
+ assert.equal(h.c.abilities.ultimateUsed[side],false);assert.equal(h.normal.hidden,false);assert.equal(h.confirm.hidden,true);
 });
-test('selected ally death or a newly active buff invalidates selection without charging',async()=>{
- const h=harness();await h.respond(0,h.snapshot());h.click(h.ultimate);h.allyTarget(0);
- h.c.teams[0][0].hp=0;h.tick();await h.respond(1,h.snapshot({version:1}));assert.equal(h.confirm.disabled,true);
- h.allyTarget(1);assert.equal(h.confirm.disabled,false);
- h.c.teams[0][1].arcaneSurgeUntilRound=3;h.tick();await h.respond(2,h.snapshot({version:2}));assert.equal(h.confirm.disabled,true);
- h.click(h.confirm);assert.equal(h.requests.length,3);assert.equal(h.energy.textContent,'100 / 100');
+
+test('replacement snapshots update eligibility before a click, including ally death and an active mage buff',async()=>{
+ const h=harness();await h.respond(0,h.snapshot());h.click(h.ultimate);const previous=h.allyRoot.cards;
+ h.c.teams[0][0].hp=0;h.c.teams[0][1].arcaneSurgeUntilRound=3;h.tick();await h.respond(1,h.snapshot({version:1}));
+ assert.notEqual(h.allyRoot.cards,previous);h.allyTarget(0);h.allyTarget(1);h.target(2);assert.equal(h.requests.length,2);
+ h.allyTarget(2,' ');assert.equal(h.requests.length,3);assert.deepEqual(JSON.parse(h.requests[2].options.body).targetIds,['0c']);await h.accept(2);
+ assert.equal(h.c.abilities.ultimateUsed[0],true);
 });
-test('support ultimate targets only dead friendly cards and a revival snapshot clears stale selection',async()=>{
+
+test('a revived support target disappears from selection without sending a cast',async()=>{
  const h=harness(1,'support');h.c.teams[1][0].hp=0;await h.respond(0,h.snapshot());h.click(h.ultimate);
- h.allyTarget(1);assert.equal(h.confirm.disabled,true);h.target(0);assert.equal(h.confirm.disabled,true);
- h.allyTarget(0);assert.equal(h.confirm.disabled,false);assert.equal(h.requests.length,1);
- h.c.teams[1][0].hp=40;h.tick();await h.respond(1,h.snapshot({version:1}));assert.equal(h.confirm.hidden,true);h.click(h.confirm);assert.equal(h.requests.length,2);
+ h.c.teams[1][0].hp=40;h.tick();await h.respond(1,h.snapshot({version:1}));h.allyTarget(0);
+ assert.equal(h.requests.length,2);assert.equal(h.normal.hidden,false);assert.equal(h.confirm.hidden,true);assert.equal(h.c.abilities.ultimateUsed[1],false);
 });
-test('support already-used revival and per-archetype energy costs disable casts',async()=>{
- const h=harness(0,'support');h.c.teams[0][0].hp=0;await h.respond(0,h.snapshot({revivalUsed:[true,false]}));h.click(h.ultimate);assert.equal(h.requests.length,1);assert.equal(h.confirm.hidden,true);
- for(const [id,energy,ready]of [['attack',74,false],['attack',75,true],['defense',84,false],['defense',85,true],['magic',99,false],['support',89,false],['support',90,true]]){
-  const f=harness(0,id);f.c.teams[0][0].hp=id==='support'?0:100;await f.respond(0,f.snapshot({abilities:[{energy:0,ultimateEnergy:energy,cooldownMs:0,effectLockMs:0}]}));assert.equal(f.ultimate.disabled,!ready,id+' '+energy);
+
+test('a pending cast stays locked when an older in-flight refresh loses every target',async()=>{
+ const h=harness();await h.respond(0,h.snapshot());h.click(h.ultimate);h.tick();h.allyTarget(0);
+ assert.equal(h.requests.length,3);const teams=structuredClone(h.c.teams);teams[0].forEach(hero=>hero.hp=0);
+ await h.respond(1,h.snapshot({version:1,teams}));h.allyTarget(1);h.click(h.cancel);
+ assert.equal(h.requests.length,3);assert.equal(h.cancel.disabled,true);assert.equal(h.normal.hidden,true);
+ await h.respond(2,{error:'Hedef artık hayatta değil'},false);assert.equal(h.visuals.length,0);assert.equal(h.energy.textContent,'100 / 100');assert.equal(h.confirm.hidden,true);
+});
+
+test('server rejection has no success effect or charge and the same target retries on its next click',async()=>{
+ const h=harness();await h.respond(0,h.snapshot());h.click(h.normal);h.target(1);
+ await h.respond(1,{error:'Hedef artık hayatta değil'},false);
+ assert.equal(h.visuals.length,0);assert.equal(h.energy.textContent,'100 / 100');assert.equal(h.confirm.hidden,true);assert.match(h.status.textContent,/Hedef artık hayatta değil/);
+ await h.respond(2,h.snapshot());h.target(1);assert.equal(h.requests.length,4);await h.accept(3);assert.equal(h.c.abilities.energy[0],60);assert.equal(h.visuals.length,1);
+});
+
+test('finish while selecting or submitting prevents later clicks and late responses from reactivating controls',async()=>{
+ for(const pending of [false,true]){
+  const h=harness();await h.respond(0,h.snapshot());h.click(h.normal);if(pending)h.target(0);
+  h.window.dispatchEvent({type:'heroarena:battle-finished'});h.target(1);h.click(h.cancel);h.tick();
+  assert.equal(h.requests.length,pending?2:1);if(pending)await h.respond(1,h.snapshot({version:2,events:[{action:'commander-magic-normal',side:0}]}));
+  assert.equal(h.panel.hidden,true);assert.equal(h.confirm.hidden,true);assert.equal(h.visuals.length,0);assert.equal(h.normal.disabled,true);
  }
 });
 
-test('cancel and battle finish clear selection without a cast or an effect',async()=>{
- const h=harness();await h.respond(0,h.snapshot());h.click(h.normal);h.target(0);h.click(h.cancel);
- assert.equal(h.requests.length,1);assert.equal(h.energy.textContent,'100 / 100');assert.equal(h.normal.hidden,false);assert.ok(h.enemyRoot.cards.every(c=>!c.classes.has('magic-target-selected')));
- h.click(h.ultimate);h.allyTarget(0);h.window.dispatchEvent({type:'heroarena:battle-finished'});h.click(h.confirm);h.tick();await flush();
- assert.equal(h.panel.hidden,true);assert.equal(h.confirm.hidden,true);assert.equal(h.requests.length,1);assert.equal(h.visuals.length,0);
-});
-
-test('server rejection never displays a successful effect and leaves target selection retryable',async()=>{
- const h=harness();await h.respond(0,h.snapshot());h.click(h.normal);h.target(1);h.click(h.confirm);
- await h.respond(1,{error:'Hedef artık hayatta değil'},false);
- assert.equal(h.visuals.length,0);assert.equal(h.energy.textContent,'100 / 100');assert.equal(h.confirm.hidden,false);assert.match(h.status.textContent,/Hedef artık hayatta değil/);
-});
-
-test('insufficient energy and opponent effect lock cannot submit a magic cast',async()=>{
- const h=harness();await h.respond(0,h.snapshot({abilities:[{energy:30,cooldownMs:0}]}));
- h.click(h.normal);assert.equal(h.confirm.hidden,true);assert.equal(h.requests.length,1);
- h.tick();await h.respond(1,h.snapshot({version:1}));h.click(h.normal);h.target(1);
- h.window.heroCommanderEffectUntil=Date.now()+1200;h.window.dispatchEvent({type:'heroarena:commander-effect-lock'});
- assert.equal(h.confirm.disabled,true);h.click(h.confirm);assert.equal(h.requests.length,2);assert.equal(h.visuals.length,0);
+test('insufficient energy and opponent effect lock block a card activation until readiness returns',async()=>{
+ const h=harness();await h.respond(0,h.snapshot({abilities:[{energy:30,ultimateEnergy:100,cooldownMs:0}]}));h.click(h.normal);assert.equal(h.requests.length,1);
+ h.tick();await h.respond(1,h.snapshot({version:1}));h.click(h.normal);
+ h.window.heroCommanderEffectUntil=Date.now()+1200;h.window.dispatchEvent({type:'heroarena:commander-effect-lock'});h.target(1);
+ assert.equal(h.requests.length,2);assert.equal(h.visuals.length,0);assert.equal(h.confirm.hidden,true);
+ h.window.heroCommanderEffectUntil=0;h.window.dispatchEvent({type:'heroarena:commander-effect-lock'});h.target(1);
+ assert.equal(h.requests.filter(request=>request.options.method==='POST').length,1);
 });
 
 for(const id of ['attack','defense','magic','support'])for(const side of [0,1])test(`${id} used ultimate snapshot disables only ultimate for seat ${side}`,async()=>{
@@ -118,63 +130,30 @@ for(const id of ['attack','defense','magic','support'])for(const side of [0,1])t
  assert.equal(h.ultimate.disabled,true);assert.match(h.ultimate.textContent,/Kullanıldı/);assert.equal(h.normal.disabled,false);
  h.click(h.ultimate);assert.equal(h.requests.length,1);assert.equal(h.confirm.hidden,true);assert.equal(h.energy.textContent,'100 / 100');
 });
-test('authoritative used snapshot clears pending ultimate selection without charging',async()=>{
- const h=harness();await h.respond(0,h.snapshot());h.click(h.ultimate);h.allyTarget(0);assert.equal(h.confirm.disabled,false);
- h.tick();await h.respond(1,h.snapshot({ultimateUsed:[true,false]}));
- assert.equal(h.confirm.hidden,true);assert.match(h.ultimate.textContent,/Kullanıldı/);h.click(h.confirm);assert.equal(h.requests.length,2);assert.equal(h.energy.textContent,'100 / 100');
+test('authoritative used snapshot cancels an unsubmitted ultimate selection without charging',async()=>{
+ const h=harness();await h.respond(0,h.snapshot());h.click(h.ultimate);h.tick();await h.respond(1,h.snapshot({version:1,ultimateUsed:[true,false]}));h.allyTarget(0);
+ assert.equal(h.normal.hidden,false);assert.equal(h.confirm.hidden,true);assert.match(h.ultimate.textContent,/Kullanıldı/);assert.equal(h.requests.length,2);assert.equal(h.energy.textContent,'100 / 100');
 });
-test('canceling ultimate never marks it used',async()=>{
- const h=harness();await h.respond(0,h.snapshot());h.click(h.ultimate);h.allyTarget(0);h.click(h.cancel);
- assert.equal(h.ultimate.disabled,false);assert.doesNotMatch(h.ultimate.textContent,/Kullanıldı/);assert.equal(h.requests.length,1);
+test('per-archetype charge thresholds and already-used support revival disable unavailable casts',async()=>{
+ const h=harness(0,'support');h.c.teams[0][0].hp=0;await h.respond(0,h.snapshot({revivalUsed:[true,false]}));h.click(h.ultimate);assert.equal(h.requests.length,1);
+ for(const [id,energy,ready]of [['attack',74,false],['attack',75,true],['defense',84,false],['defense',85,true],['magic',99,false],['magic',100,true],['support',89,false],['support',90,true]]){
+  const f=harness(0,id);f.c.teams[0][0].hp=id==='support'?0:100;await f.respond(0,f.snapshot({abilities:[{energy:0,ultimateEnergy:energy,cooldownMs:0,effectLockMs:0}]}));assert.equal(f.ultimate.disabled,!ready,id+' '+energy);
+ }
 });
-
-test('support ultimate UI displays canonical 90 cost, normal remains 40',async()=>{
- const h=harness(0,'support');h.c.teams[0][0].hp=0;await h.respond(0,h.snapshot());
- assert.equal(h.ultimate.textContent,'Diriliş · 90 · Hazır');assert.equal(h.normal.textContent,'Normal · 40');
- h.click(h.ultimate);h.allyTarget(0);assert.match(h.confirm.textContent,/90/);
- assert.equal(h.requests.length,1);h.click(h.cancel);assert.equal(h.energy.textContent,'100 / 100');
-});
-
-for(const side of [0,1])test(`production seat ${side} keeps ultimate charge through a normal cast`,async()=>{
- const h=harness(side);await h.respond(0,h.snapshot());
- assert.equal(h.nodes.get('[data-ultimate-energy]').textContent,'100 / 100');
- h.click(h.normal);h.target(0);h.click(h.confirm);await h.accept(1);
- assert.equal(h.energy.textContent,'60 / 100');assert.equal(h.nodes.get('[data-ultimate-energy]').textContent,'100 / 100');
- assert.equal(h.c.abilities.energy[side],60);assert.equal(h.c.abilities.ultimateEnergy[side],100);
-});
-for(const side of [0,1])test(`production seat ${side} enables ultimate at zero normal energy and shows terminal used meter`,async()=>{
- const h=harness(side);h.c.abilities.energy[side]=0;await h.respond(0,h.snapshot());
- assert.equal(h.normal.disabled,true);assert.equal(h.ultimate.disabled,false);
- h.click(h.ultimate);h.allyTarget(0);h.click(h.cancel);assert.equal(h.requests.length,1);assert.equal(h.nodes.get('[data-ultimate-energy]').textContent,'100 / 100');
- const used=[false,false];used[side]=true;h.tick();await h.respond(1,h.snapshot({version:1,ultimateUsed:used}));
- assert.equal(h.ultimate.disabled,true);assert.equal(h.nodes.get('[data-ultimate-energy]').textContent,'Kullanıldı');assert.equal(h.nodes.get('[data-ultimate-energy-fill]').style.width,'0%');assert.equal(h.nodes.get('[data-ultimate-energy-meter]').attributes['aria-valuetext'],'Kullanıldı');
- h.tick();await h.respond(2,h.snapshot({version:0}));assert.equal(h.nodes.get('[data-ultimate-energy]').textContent,'Kullanıldı');
-});
-
-for(const side of [0,1])test(`production seat ${side}: normal cooldown leaves valid ultimate visibly ready`,async()=>{
- const h=harness(side,'magic');const abilities=h.snapshot().abilities;abilities[side]={...abilities[side],normalCooldownMs:5000,cooldownMs:5000,canUseNormal:false,canUseUltimate:true};await h.respond(0,h.snapshot({abilities}));
+for(const side of [0,1])test(`seat ${side}: normal cooldown keeps ultimate visibly ready and a stale snapshot cannot restore usage`,async()=>{
+ const h=harness(side),abilities=h.snapshot().abilities;abilities[side]={...abilities[side],energy:0,normalCooldownMs:5000,cooldownMs:5000,canUseNormal:false,canUseUltimate:true};await h.respond(0,h.snapshot({abilities}));
  assert.equal(h.normal.disabled,true);assert.equal(h.ultimate.disabled,false);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),true);assert.match(h.ultimate.textContent,/Hazır/);
- h.click(h.ultimate);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),false);h.allyTarget(0);assert.equal(h.confirm.disabled,false);h.click(h.cancel);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),true);assert.equal(h.requests.length,1);
- h.window.heroCommanderEffectUntil=Date.now()+1200;h.window.dispatchEvent({type:'heroarena:commander-effect-lock'});assert.equal(h.ultimate.disabled,true);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),false);assert.doesNotMatch(h.ultimate.textContent,/Hazır/);
+ h.click(h.ultimate);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),false);h.click(h.cancel);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),true);assert.equal(h.requests.length,1);
+ const used=[false,false];used[side]=true;h.tick();await h.respond(1,h.snapshot({version:2,ultimateUsed:used}));
+ assert.equal(h.ultimate.disabled,true);assert.equal(h.nodes.get('[data-ultimate-energy]').textContent,'Kullanıldı');assert.equal(h.nodes.get('[data-ultimate-energy-fill]').style.width,'0%');assert.equal(h.nodes.get('[data-ultimate-energy-meter]').attributes['aria-valuetext'],'Kullanıldı');
+ h.tick();await h.respond(2,h.snapshot({version:1}));assert.equal(h.nodes.get('[data-ultimate-energy]').textContent,'Kullanıldı');
 });
-for(const side of [0,1])test(`production seat ${side}: charged support has no ready cue until own fallen hero exists`,async()=>{
+for(const side of [0,1])test(`seat ${side}: charged support has no ready cue until own fallen hero exists`,async()=>{
  const h=harness(side,'support');await h.respond(0,h.snapshot());assert.equal(h.ultimate.disabled,true);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),false);assert.match(h.status.textContent,/Ulti dolu · uygun hedef yok/);
  h.c.teams[side][0].hp=0;h.tick();await h.respond(1,h.snapshot({version:1}));assert.equal(h.ultimate.disabled,false);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),true);
+ assert.equal(h.ultimate.textContent,'Diriliş · 90 · Hazır');assert.equal(h.normal.textContent,'Normal · 40');
  h.window.dispatchEvent({type:'heroarena:battle-finished'});assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),false);assert.equal(h.ultimate.disabled,true);
 });
-test('production readiness observes explicit authoritative canUseUltimate=false despite full meter',async()=>{
+test('readiness observes explicit authoritative canUseUltimate=false despite full meter',async()=>{
  const h=harness(0,'attack');await h.respond(0,h.snapshot({abilities:[{energy:100,ultimateEnergy:100,canUseUltimate:false,cooldownMs:0}]}));assert.equal(h.ultimate.disabled,true);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),false);assert.doesNotMatch(h.ultimate.textContent,/Hazır/);
-});
-
-for(const side of [0,1])test(`Av Emri production seat ${side}: explicit non-lowest opponent, cancel, single confirmation`,async()=>{
- const h=harness(side,'attack');h.c.teams[1-side][0].hp=1;await h.respond(0,h.snapshot());
- h.click(h.ultimate);assert.match(h.status.textContent,/Av Emri.*Rakip kartına dokun/);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),false);h.allyTarget(1);assert.equal(h.confirm.disabled,true);h.target(2);assert.equal(h.confirm.disabled,false);
- assert.equal(h.enemyRoot.cards[2].attributes['data-commander-target-label'],'✦ AV EMRİ');h.click(h.cancel);assert.equal(h.requests.length,1);assert.equal(h.c.abilities.ultimateEnergy[side],100);assert.equal(h.c.abilities.ultimateUsed[side],false);
- h.click(h.ultimate);h.target(2);h.click(h.confirm);h.click(h.confirm);await flush();assert.equal(h.requests.length,2);assert.deepEqual(JSON.parse(h.requests[1].options.body).targetIds,[(1-side)+'c']);await h.accept(1);
- assert.equal(h.c.abilities.ultimateEnergy[side],25);assert.equal(h.c.abilities.energy[side],100);assert.equal(h.c.abilities.ultimateUsed[side],true);assert.equal(h.c.teams[1-side].find(hero=>hero.id===(1-side)+'c').commanderFocusUntilDeath,true);assert.match(h.ultimate.textContent,/Kullanıldı/);
-});
-for(const side of [0,1])test(`Av Emri production seat ${side}: dead selected target is cleared without charge`,async()=>{
- const h=harness(side,'attack');await h.respond(0,h.snapshot());h.click(h.ultimate);h.target(1);assert.equal(h.confirm.disabled,false);
- h.c.teams[1-side][1].hp=0;h.tick();await h.respond(1,h.snapshot({version:1}));assert.equal(h.confirm.disabled,true);assert.equal(h.enemyRoot.cards[1].classes.has('magic-target-selected'),false);h.click(h.confirm);assert.equal(h.requests.length,2);assert.equal(h.c.abilities.ultimateEnergy[side],100);assert.equal(h.c.abilities.ultimateUsed[side],false);
- for(const hero of h.c.teams[1-side])hero.hp=0;h.tick();await h.respond(2,h.snapshot({version:2}));assert.equal(h.confirm.hidden,true);assert.equal(h.ultimate.disabled,true);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),false);
 });

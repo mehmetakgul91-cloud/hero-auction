@@ -565,6 +565,11 @@ body:not(.arena-room) .formation{margin-top:6px;padding:10px}
 /* One pending server-owned attack bonus; it can coexist with stun/protection. */
 .arena-hunt-status{position:absolute;left:50%;top:30px;transform:translateX(-50%);z-index:5;max-width:94%;padding:2px 4px;border:1px solid #ffc17c;border-radius:5px;background:#42260fed;color:#ffe4c1;font:800 8px/1.1 system-ui,sans-serif;white-space:nowrap;pointer-events:none}
 
+/* Fixed Arcane Surge bonus: persist through all three server-owned rounds. */
+.arena-surge-status{position:absolute;left:50%;bottom:25px;transform:translateX(-50%);z-index:5;max-width:94%;padding:2px 3px;border:1px solid #e1b0ff;border-radius:5px;background:#371253f2;color:#f5e5ff;font:800 7px/1.1 system-ui,sans-serif;white-space:nowrap;pointer-events:none}
+.arena-surge-status[data-state="pending"]{border-style:dashed;background:#252132ed}
+.arcane-surge-active .arena-portrait{outline:2px solid #cb91ef;outline-offset:-2px}
+
 /* Reserve the commander dock before late control initialization. The initial
    visible arena therefore has its final field height, not a cover-crop resize. */
 .arena-room.arena-fit .arena-commander-dock{min-height:142px}
