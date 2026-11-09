@@ -25,6 +25,17 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm test
       - run: npm run test:admin
+        if: ${{ !cancelled() }}
+  synthetic-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
       - name: Install isolated browser test runtime
         run: npm install --prefix /tmp/hero-browser --ignore-scripts --no-audit --no-fund playwright@1.65.0
       - name: Install Chromium
