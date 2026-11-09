@@ -1,0 +1,41 @@
+name: Google Ads read-only report tests
+on:
+  pull_request:
+    paths:
+      - 'google-ads-report.js'
+      - 'public/admin*'
+      - 'server.js'
+      - 'tests/google-ads-report*'
+      - 'tests/admin-ads*'
+      - '.github/workflows/google-ads-report-tests.yml'
+permissions:
+  contents: read
+jobs:
+  unit-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm test
+      - run: npm run test:admin
+      - name: Install isolated browser test runtime
+        run: npm install --prefix /tmp/hero-browser --ignore-scripts --no-audit --no-fund playwright@1.65.0
+      - name: Install Chromium
+        run: /tmp/hero-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Synthetic Ads mobile and desktop browser QA
+        env:
+          HERO_BROWSER_TEST_RUNTIME: /tmp/hero-browser/node_modules/playwright/index.mjs
+        run: node tools/test-ads-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: google-ads-synthetic-ui
+          path: qa/ads/
+          if-no-files-found: ignore

@@ -20,3 +20,13 @@
 #admin-campaign-results dl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 16px;margin:0}
 #admin-campaign-results dt{overflow-wrap:anywhere}
 #admin-campaign-results dd{margin:0;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* Google Ads aggregates, independent of game attribution. */
+#admin-ads-panel { min-width:0; overflow-wrap:anywhere; }
+#admin-ads-panel .admin-ads-controls { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+#admin-ads-results { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:16px 0; }
+#admin-ads-panel .admin-ads-metric { border:1px solid #3a4b64; border-radius:10px; padding:14px; min-width:0; display:flex; flex-direction:column; gap:8px; }
+#admin-ads-panel .admin-ads-metric strong { font-size:1.3rem; }
+#admin-ads-panel .admin-ads-note { opacity:.8; font-size:.9rem; line-height:1.5; }
+@media(max-width:760px){#admin-ads-results{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:420px){#admin-ads-results{grid-template-columns:1fr;}#admin-ads-panel .admin-ads-controls{align-items:stretch;flex-direction:column;}}
