@@ -1,3 +1,4 @@
+import {createGoogleAdsReporter} from './google-ads-report.js';
 import {createCampaignPolicy,preflightCampaignMeasurement,attributeCampaign,recordCampaignIntro,readCampaignFunnel,cleanupCampaignMeasurement} from './campaign-measurement.js';
 import {resolveAccountRoom} from './room-recovery.js';
 import {createRoomPresence} from './room-presence.js';
@@ -813,10 +814,12 @@ async function registerVerifiedDiamondMember(user,provider){
  await registerDiamondMember({database,accountId:user.sub,provider,policy:diamondSignupPolicy});
 }
 async function rememberDisplayName(user){if(user?.name){try{user.name=assertModeratedText(user.name,{kind:'name'})}catch{user.name='Oyuncu'}}if(user?.sub&&(!database||databaseReady))await friends.register(user.sub,user.name);if(database&&databaseReady&&user?.sub&&user?.name)await database.query('INSERT INTO hero_auction_user_profiles(account_id,display_name) VALUES($1,$2) ON CONFLICT(account_id) DO UPDATE SET display_name=EXCLUDED.display_name,updated_at=NOW()',[user.sub,user.name]);}
+const googleAdsReporter=createGoogleAdsReporter();
 async function adminApi(url,b,requestContext){
  const user=readLogin(b.authToken);
  if(!user||!ADMIN_GOOGLE_EMAIL||user.email!==ADMIN_GOOGLE_EMAIL||!isOwnerAdmin(user,ADMIN_GOOGLE_EMAIL))error('Yönetici yetkisi gerekli.',403);
  if(!database||!databaseReady)error('Veritabanı kullanılamıyor.',503);
+ if(url==='/api/admin/google-ads-report')return googleAdsReporter.read({days:b.days??7});
  if(url==='/api/admin/campaign-funnel'){if(!campaignStorageReady)return {available:false,reason:'storage_unavailable',campaigns:[]};return readCampaignFunnel({database,policy:campaignPolicy,days:b.days??7});}
  if(url==='/api/admin/location-status')return {available:playerLocationsStorageReady&&playerLocationResolver.available,buildDate:playerLocationResolver.buildDate||null,proxyMode:playerLocationResolver.proxyMode||null,location:playerLocationsStorageReady?playerLocationResolver.lookup(requestContext):null};
  if(url==='/api/admin/wallet/credit')return creditAdminWallet({database,user,ownerEmail:ADMIN_GOOGLE_EMAIL,request:b,policy:adminWalletCreditPolicy});
