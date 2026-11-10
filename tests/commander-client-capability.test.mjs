@@ -21,7 +21,8 @@ test('web preparation and match selection positively declare the current protoco
   const calls=[...source.matchAll(new RegExp("'/api/battle-auction-"+route+"\\?([^']*)'",'g'))];
   assert.ok(calls.length>0);for(const call of calls)assert.match(call[1],/^matchCommanderSelection=1&code=$/);
  }
- assert.match(source,/JSON.stringify\(\{code:auctionCode,token:auctionToken,matchKey:preparationMatchKey,matchCommanderSelection:1,\.\.\.formation\}\)/);
+ const combined=readFileSync(new URL('../public/combined-preparation.js',import.meta.url),'utf8');
+ assert.match(combined,/JSON.stringify\(\{code,token,matchKey,matchCommanderSelection:1,\.\.\.payload/);
  const picker=readFileSync(new URL('../public/match-commander-picker.js',import.meta.url),'utf8');
  assert.match(picker,/new URLSearchParams\(\{code,token,matchKey,matchCommanderSelection:1\}\)/);
  assert.match(picker,/commanderId,matchCommanderSelection:1,authToken:getAuthToken\(\)/);

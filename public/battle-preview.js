@@ -1,4 +1,4 @@
-import {mountMatchCommanderPicker} from '/match-commander-picker.js';
+import {mountCombinedPreparation} from '/combined-preparation.js';
 import {watchRecoveredRoom} from '/room-recovery-watch.js';
 import {roomReturnStatus} from '/room-return-status.js';
 import {createBotEntryConsent,botSettlementCopy} from '/bot-entry.js';
@@ -437,18 +437,18 @@ function primeArenaAudio(){
  void arenaMusic.prime().then(started=>{if(!started)arenaAudioPrimed=false;});
 }
 document.addEventListener('pointerdown',e=>{
- if(!arenaMode&&e.target.closest('.formation'))primeArenaAudio();
+ if(!arenaMode&&e.target.closest('.formation,.combined-preparation'))primeArenaAudio();
 },{capture:true});
 document.addEventListener('touchstart',e=>{
- if(!arenaMode&&e.target.closest('.formation'))primeArenaAudio();
+ if(!arenaMode&&e.target.closest('.formation,.combined-preparation'))primeArenaAudio();
 },{capture:true,passive:true});
 document.addEventListener('click',e=>{
- if(!arenaMode&&e.target.closest('.formation'))primeArenaAudio();
+ if(!arenaMode&&e.target.closest('.formation,.combined-preparation'))primeArenaAudio();
 },{capture:true,passive:true});
 function revealArenaAudio(){
  if(arenaMusicEnabled&&!document.hidden)void startArenaMusic();
 }
-let matchCommanderPicker=null;
+let matchCommanderPicker=null,combinedPreparationTeam=null,combinedPreparationInitial=null;
 function showMatchCommanderPicker(){
  if(leavingBattle)return;
  if(prepTimer!==null){clearInterval(prepTimer);prepTimer=null}
@@ -456,7 +456,7 @@ function showMatchCommanderPicker(){
  document.body.classList.add('commander-selection');
  const url=new URL(location.href);url.searchParams.set('room','commander');url.searchParams.delete('commanderTest');history.replaceState(null,'',url);
  matchCommanderPicker?.destroy();
- matchCommanderPicker=mountMatchCommanderPicker({root:$('match-commander-picker'),code:auctionCode,token:auctionToken,matchKey:preparationMatchKey,english:document.documentElement.lang==='en',onStarted:data=>{
+ matchCommanderPicker=mountCombinedPreparation({root:$('match-commander-picker'),code:auctionCode,token:auctionToken,matchKey:preparationMatchKey,team:combinedPreparationTeam,preparation:combinedPreparationInitial,draft:preparationDraft,getPortrait:loadHeroArt,english:document.documentElement.lang==='en',onStarted:data=>{
   if(leavingBattle)return;
   arenaCommanderProfile=data.selection||data.commanderSelection?.profile||null;
   enterArenaWithoutReload('/battle-preview.html?room=arena&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken)+'&auctionMatchKey='+encodeURIComponent(auctionCode+':'+preparationMatchKey)+'&commanderTest=1');
@@ -507,6 +507,7 @@ function enterArenaWithoutReload(url){
  }else if(!multiplayerCode){void build().then(()=>{if(events.length)startReplay()})}
 }
 async function lockFormation(){
+ if(auctionMode){if(auctionLoaded)await matchCommanderPicker?.state.confirm();return;}
  if(prepDone||prepSubmitting||auctionMode&&!auctionLoaded)return;
  if(!arenaMode&&arenaMusicEnabled&&!arenaAudioPrimed)primeArenaAudio();
  prepSubmitting=true;$('apply-roles').disabled=true;renderBoard();
@@ -514,14 +515,6 @@ async function lockFormation(){
   if(!arenaMode){
    try{sessionStorage.setItem('hero-auction-arena-music','1');if(!auctionMode){sessionStorage.setItem('hero-auction-formation',JSON.stringify(positions));sessionStorage.setItem('hero-auction-lanes',JSON.stringify(lanes))}}catch{}
    const formation=formationSnapshot();
-   if(auctionMode){
-    // Finish queued row changes before confirmation; Ready also carries the full final draft.
-    await preparationDraft?.flush();
-    const response=await fetch('/api/battle-auction-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,matchKey:preparationMatchKey,matchCommanderSelection:1,...formation})});
-    const data=await response.json();if(!response.ok)throw Error(data.error||'Diziliş gönderilemedi');
-    preparationDraft?.clear();prepDone=true;
-    showMatchCommanderPicker();return;
-   }
    if(multiplayerCode&&multiplayerToken){
     const response=await fetch('/api/battle-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ready',code:multiplayerCode,token:multiplayerToken,...formation})});
     const data=await response.json();if(!response.ok)throw Error(data.error);
@@ -537,13 +530,14 @@ async function lockFormation(){
  finally{prepSubmitting=false;if(!prepDone)renderBoard()}
 }
 function startPreparation(){
+ if(auctionMode)return;
  if(prepTimer!==null)clearInterval(prepTimer);prepDone=false;prepDeadline=Date.now()+60000;let expired=false;
  const tick=()=>{const remaining=Math.max(0,Math.ceil((prepDeadline-Date.now())/1000));$('prep-clock').textContent=String(Math.floor(remaining/60)).padStart(2,'0')+':'+String(remaining%60).padStart(2,'0');if(!remaining&&!expired){expired=true;void lockFormation()}};
  tick();prepTimer=setInterval(tick,200);
 }
 const roleIcons={tank:'🛡️',fighter:'⚔️',energy:'⚡',assassin:'🗡️',support:'💚'};
 $('apply-roles').onclick=lockFormation;
-if(auctionMode)$('apply-roles').textContent=document.documentElement.lang==='en'?'✓ CONFIRM FORMATION → CHOOSE COMMANDER':'✓ DİZİLİŞİ ONAYLA → KOMUTAN SEÇ';
+if(auctionMode)$('apply-roles').textContent=document.documentElement.lang==='en'?'Ready · Enter arena →':'Hazırım · Arenaya geç →';
 if(arenaMode){document.body.classList.add('arena-room');document.querySelector('.formation').hidden=true;$('battle-arena').hidden=true;$('play').textContent='▶ SAVAŞI BAŞLAT';mountCommanderDock()}else{renderBoard();if(!auctionMode)startPreparation();else{$('apply-roles').disabled=true;$('prep-clock').textContent='--:--';$('prep-note').textContent='Açık artırma kartları doğrulanıyor…'}}
 const combatEffects=createCombatEffects({document});
 const heroAttacks=createHeroAttackPlayer({document});
@@ -1105,9 +1099,9 @@ if(auctionCode&&auctionToken){void (async()=>{try{
  const pending=!preparation.ready&&!arenaMode?preparationDraft.pending():null;
  const restored=pending||preparation;positions.splice(0,5,...restored.positions);lanes.splice(0,5,...restored.lanes);
  if(pending)void preparationDraft.save(pending);
- if(preparation.ready){preparationDraft.clear();prepDone=true;window.HeroPlatform?.loaded();if(!arenaMode){auctionLoaded=true;showMatchCommanderPicker();return}}
- $('battle-lobby-status').textContent='Açık artırma kartların yüklendi · Kalan kredi: '+previewCredits+' · Bonus: %'+(creditBonus(previewCredits)*100).toFixed(1);
- if(!arenaMode){auctionLoaded=true;renderBoard();$('apply-roles').disabled=false;startPreparation();$('prep-note').textContent='Kahramanların hazır. İstersen ön/arka safı değiştir, sonra Hazırım.';window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(true)}else{window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(false);let auctionBattleStarted=false;const check=async()=>{if(auctionBattleStarted)return;try{const response=await fetch('/api/battle-auction-preview?matchCommanderSelection=1&code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});const data=await response.json();if(!response.ok)throw Error(data.error||'Savaş durumu alınamadı');if(data.started){auctionBattleStarted=true;if(battlePoll!==null){clearInterval(battlePoll);battlePoll=null}await build(data.result);if(data.result?.live){$('play').textContent='⚡ CANLI SAVAŞ SÜRÜYOR';await import('/commander-experimental.js?live='+encodeURIComponent(auctionCode))}else if(events.length)startReplay()}else $('message').textContent='Rakibin dizilişi bekleniyor… '+data.ready.filter(Boolean).length+'/2 hazır'}catch(e){$('message').textContent='⚠ '+e.message;void recoverBotServerFailure()}};await check();if(!auctionBattleStarted&&battlePoll===null)battlePoll=setInterval(check,1800)}
+ combinedPreparationTeam=own;combinedPreparationInitial={...restored,ready:preparation.ready};
+ if(preparation.ready){preparationDraft.clear();prepDone=true;}
+ auctionLoaded=true;showMatchCommanderPicker();return;
  }catch(e){$('prep-note').textContent='⚠ '+e.message;$('message').textContent='⚠ '+e.message;$('battle-lobby-status').textContent='⚠ Açık artırmada seçilen kahramanlar yüklenemedi: '+e.message;$('apply-roles').disabled=true;$('play').disabled=true;void recoverBotServerFailure()}})()}
 
 let botOutcomeTimer=null;

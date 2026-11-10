@@ -27,8 +27,8 @@ test('stale match and disposed results cannot start combat',async()=>{
 test('old in-flight GET cannot undo a newer confirmed choice',async()=>{
  let release;let count=0;const picker=createMatchCommanderState({matchKey:'match1',request:async(method)=>{if(method==='POST')return payload({selection:profile('magic')});if(++count===2)await new Promise(resolve=>release=resolve);return payload()}});await picker.refresh();picker.select('magic');const pending=picker.refresh();await picker.confirm();release();await pending;assert.equal(picker.snapshot().locked.commanderId,'magic');
 });
-test('formation and direct arena routes require picker; existing profile is not fetched',()=>{
- const source=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8');assert.ok(source.includes("pendingEntryUrl.searchParams.delete('commanderTest')"));assert.match(source,/preparationDraft\?\.clear\(\);prepDone=true;\s+showMatchCommanderPicker\(\);return/);assert.ok(!source.includes("fetch('/api/commander/get'"));assert.ok(source.includes("if(preparation.ready){preparationDraft.clear();prepDone=true;window.HeroPlatform?.loaded();if(!arenaMode){auctionLoaded=true;showMatchCommanderPicker();return}}"));
+test('formation and direct arena routes enter combined preparation; account default is not fetched',()=>{
+ const source=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8');assert.ok(source.includes("pendingEntryUrl.searchParams.delete('commanderTest')"));assert.match(source,/mountCombinedPreparation/);assert.ok(!source.includes("fetch('/api/commander/get'"));assert.ok(source.includes('auctionLoaded=true;showMatchCommanderPicker();return'));
 });
 test('authoritative level/stat changes replace options while identical polling preserves reference and selection',async()=>{
  let data=payload();const picker=createMatchCommanderState({matchKey:'match1',request:async()=>JSON.parse(JSON.stringify(data))});await picker.refresh();picker.select('magic');const original=picker.snapshot().options;await picker.refresh();assert.equal(picker.snapshot().options,original);

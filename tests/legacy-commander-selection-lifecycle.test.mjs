@@ -200,3 +200,31 @@ test('legacy human and server-controlled bot profiles stay separate and still re
  f.sync.ready[0]=f.formation;await f.choose(0);
  assert.equal(f.starts.length,1);assert.deepEqual(structuredClone(f.sync.result.commanders).map(p=>p.commanderId),['magic','defense']);assert.deepEqual(f.queries.map(q=>q.args[0]),['a']);
 });
+
+// Exercise the actual comparison route, not only the capability helper: moving
+// the observer into the serialized callback lets an older legacy read win.
+const comparisonRoute=source.slice(source.indexOf("if(url.pathname==='/api/battle-auction-commanders'&&"),source.indexOf("if(url.pathname==='/api/battle-auction-commander'&&"));
+for(const method of ['GET','POST'])test(`${method} comparison route latches modern capability before a queued legacy profile read returns`,async()=>{
+ const read=deferred(),f=fixture({lookup:()=>read.promise});
+ f.room.phase='finished';f.sync.commanderChoices[1]=createCommanderProfile('support');f.sync.commanderChoiceSources[1]='explicit';
+ Object.assign(f.context,{battlePreparationFlights:new Map(),auctionRoomToBattleState:()=>f.state,prepareBattleTeams:()=>f.teams,preparationTeams:x=>x,validateFormation:()=>true,commanderSelectionPreview:()=>({options:[],baseline:{}})});
+ vm.runInContext('async function comparisonRequest(req,url,send){'+comparisonRoute+'}',f.context);
+ const pendingLegacy=f.choose(0);await flush();assert.equal(f.queries.length,1);
+ const body={code:f.room.code,token:f.room.players[0].token,matchKey:f.sync.key,formation:f.formation};
+ const req={method,headers:{},async *[Symbol.asyncIterator](){yield JSON.stringify(body);}};
+ const url=new URL('http://localhost/api/battle-auction-commanders?'+new URLSearchParams(body));
+ const pendingModern=f.context.comparisonRequest(req,url,(status,body)=>({status,body}));await flush();
+ assert.equal(f.room.players[0].matchCommanderSelection,1,'modern requirement must be recorded before waiting for selection serialization');
+ assert.equal(f.queries.length,1,'comparison itself is queued behind legacy read');
+ read.resolve({rows:[{profile:f.stored.get('a')}]});await pendingLegacy;
+ const response=await pendingModern;assert.equal(response.status,200);assert.equal(response.body.selection,null);assert.equal(response.body.started,false);
+ assert.equal(f.sync.commanderChoices[0],null);assert.equal(f.sync.commanderChoiceSources[0],null);assert.equal(f.starts.length,0);
+ assert.equal(f.sync.commanderChoices[1].commanderId,'support');assert.equal(f.context.battlePreparationFlights.size,0);
+});
+for(const extra of [{token:'invalid'},{matchKey:'old-match'}])test(`comparison route rejects ${Object.keys(extra)[0]} before latching capability`,async()=>{
+ const f=fixture();f.room.phase='finished';f.context.battlePreparationFlights=new Map();
+ vm.runInContext('async function comparisonRequest(req,url,send){'+comparisonRoute+'}',f.context);
+ const url=new URL('http://localhost/api/battle-auction-commanders?'+new URLSearchParams({code:f.room.code,token:'token-a',matchKey:'1:1',...extra}));
+ const response=await f.context.comparisonRequest({method:'GET'},url,(status,body)=>({status,body}));
+ assert.ok([403,409].includes(response.status));assert.equal(f.room.players[0].matchCommanderSelection,undefined);assert.equal(f.queries.length,0);
+});

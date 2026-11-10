@@ -8,6 +8,7 @@ const {chromium}=await import(process.env.HERO_BROWSER_TEST_RUNTIME||'playwright
 const root=fileURLToPath(new URL('../public/',import.meta.url));
 const artifacts=path.resolve(process.env.HERO_BROWSER_SCREENSHOTS||'artifacts/match-commander-picker');await mkdir(artifacts,{recursive:true});
 const server=createServer(async(req,res)=>{try{
+ if(req.url==='/combined-fixture'){res.setHeader('Content-Type','text/html');res.end('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/battle-preview.css"><link rel="stylesheet" href="/combined-preparation.css"><link rel="stylesheet" href="/theme.css"></head><body class="commander-selection"><main class="shell"><section id="match-commander-picker"></section><div id="battle-arena" hidden></div></main></body></html>');return}
  if(req.url==='/fixture'){res.setHeader('Content-Type','text/html');res.end('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/match-commander-picker.css"><style>body{margin:0;background:#eef0f4;font-family:system-ui}*{box-sizing:border-box}button{font:inherit}</style></head><body><section id="picker"></section></body></html>');return}
  const file=path.resolve(root,'.'+req.url.split('?')[0]);if(!file.startsWith(root))throw Error();res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.webp')?'image/webp':'text/css');res.end(await readFile(file));
  }catch{res.writeHead(404).end()}});
@@ -31,5 +32,32 @@ try{
   await page.evaluate(()=>{window.picker.destroy();window.picker=window.mount()});await page.waitForFunction(()=>document.querySelector('[aria-pressed="true"]')?.textContent.includes('30'));assert.equal(await page.locator('.match-commander-option').first().isEnabled(),false);
   await page.evaluate(()=>{window.start=true;return window.picker.state.refresh()});assert.equal(await page.evaluate(()=>window.starts),1);assert.equal(await page.locator('#picker').isVisible(),false);await page.close();
  }
- assert.deepEqual(errors,[]);console.log('PASS: picker EN/TR at 320/390/1440px, server-stat comparison, no auto-pick, retained focus, lock/reload/wait/start.');
+ // Real shared CSS order catches ID-specific arena rules overriding the approved
+ // combined screen. Synthetic responses exercise UI only; HTTP tests cover engine parity.
+ for(const width of [320,390,1440])for(const english of [false,true]){
+  const page=await browser.newPage({viewport:{width,height:900},reducedMotion:'reduce'});page.on('pageerror',error=>errors.push(error.message));await page.route('**/*',route=>new URL(route.request().url()).origin===origin?route.continue():route.abort());await page.goto(origin+'/combined-fixture');
+  await page.evaluate(async english=>{
+   const {mountCombinedPreparation}=await import('/combined-preparation.js');
+   const team=['tank','fighter','energy','energy','support'].map((role,i)=>({id:'h'+i,name:['Obsidyen Muhafız','Kael','Morvan','Yıldırım Hükümdarı','Seraphine'][i],role}));
+   const formation={positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:team.map(h=>h.role)};
+   window.posts=0;window.locked=null;window.qaPicker=mountCombinedPreparation({root:document.getElementById('match-commander-picker'),english,code:'fixture',token:'seat',matchKey:'m1',team,preparation:formation,getAuthToken:()=> 'synthetic',onStarted:()=>{},fetcher:async(url,init)=>{
+    const p=JSON.parse(init.body);if(url.endsWith('/battle-auction-commander')){window.posts++;window.locked=p.commanderId;}
+    const heroes=team.map((h,i)=>({...h,lane:p.formation.lanes[i],attack:100+(p.formation.lanes[i]==='front'?2:0),defense:100,maxHp:200,speed:100}));const totals=heroes=>Object.fromEntries(['attack','defense','maxHp','speed'].map(k=>[k,heroes.reduce((sum,h)=>sum+h[k],0)]));
+    return {ok:true,json:async()=>({matchKey:'m1',preparation:{...p.formation,ready:!!window.locked},selection:window.locked?{commanderId:window.locked,levels:{magic:40}}:null,ready:[!!window.locked,false],started:false,baseline:{heroes,totals:totals(heroes)},options:['attack','defense','magic','support'].map(commanderId=>{const boosted=heroes.map(h=>({...h,attack:h.attack+(commanderId==='magic'&&h.role==='energy'?20:0)}));return {commanderId,profile:{commanderId,levels:{attack:30,defense:25,magic:40,support:30}},heroes:boosted,totals:totals(boosted)};})})};
+   }});
+  },english);
+  await page.waitForSelector('.combined-choice');assert.equal(await page.locator('.combined-ready').getAttribute('aria-disabled'),'true');assert.equal(await page.evaluate(()=>window.posts),0);
+  const initial=await page.locator('.combined-ready').evaluate(e=>getComputedStyle(e).backgroundColor);assert.equal(initial,'rgb(216, 222, 216)');
+  await page.locator('.combined-choice').nth(2).click();await page.mouse.move(0,0);
+  assert.equal(await page.locator('.combined-ready').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(215, 185, 125)');
+  assert.deepEqual(await page.locator('.combined-choice[aria-pressed=true]').evaluate(e=>[getComputedStyle(e).backgroundColor,getComputedStyle(e).borderColor]),['rgb(223, 235, 226)','rgb(52, 115, 93)']);
+  assert.match(await page.locator('.combined-stat-deltas').textContent(),/\+40/);
+  await page.locator('.combined-move[data-slot="2"]').click();await page.waitForFunction(()=>document.querySelector('[data-hero-id="h2"] .combined-hero-effect').textContent.includes('102'));
+  assert.equal(await page.evaluate(()=>document.activeElement?.dataset.slot),'2');assert.equal(await page.locator('.combined-choice[aria-pressed=true]').count(),1);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  assert.equal(await page.locator('.combined-preparation button').evaluateAll(nodes=>nodes.filter(e=>e.getBoundingClientRect().width>0).every(e=>e.getBoundingClientRect().height>=44)),true);
+  await page.screenshot({path:path.join(artifacts,`combined-${width}-${english?'en':'tr'}.png`),fullPage:true});
+  await page.locator('.combined-ready').click();await page.waitForFunction(()=>window.locked==='magic');assert.equal(await page.evaluate(()=>window.posts),1);assert.equal(await page.locator('.combined-move').first().isEnabled(),false);await page.close();
+ }
+ assert.deepEqual(errors,[]);console.log('PASS: combined preparation palette, mobile layout, engine deltas, lane focus and atomic Ready; legacy picker EN/TR at 320/390/1440px, server-stat comparison, no auto-pick, retained focus, lock/reload/wait/start.');
 }finally{await browser?.close();await new Promise(resolve=>server.close(resolve))}
