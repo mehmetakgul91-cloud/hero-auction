@@ -7,7 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {battleRoster} from '../battle-roster.js';
 import {commanderSelectionPreview} from '../commander-selection-preview.js';
 const {chromium}=await import(process.env.HERO_BROWSER_TEST_RUNTIME||'playwright');
-const root=fileURLToPath(new URL('../public/',import.meta.url)),artifacts=path.resolve(process.env.HERO_BROWSER_SCREENSHOTS||'artifacts/portrait-preparation');await mkdir(artifacts,{recursive:true});
+const root=path.resolve(fileURLToPath(new URL('../public/',import.meta.url))),artifacts=path.resolve(process.env.HERO_BROWSER_SCREENSHOTS||'artifacts/portrait-preparation');await mkdir(artifacts,{recursive:true});
 const names=['Gök Çekici','Kuzgun Hançer','Kristal Şifacı','Altın Ozan','Fırtına Çağıran'];
 const team=names.map((name,i)=>({...battleRoster.find(h=>h.name===name),power:[82,66,74,70,74][i]}));
 const base={positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:team.map(h=>h.role)};
