@@ -5,6 +5,7 @@ import {readFile} from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
 import {BOT_ECONOMY} from '../bot-economy.js';
 import {createServer} from 'node:net';
+import {request as httpRequest} from 'node:http';
 import {battleOutcome} from '../battle-result.js';
 import {applyHeroDamage,grantLastStand} from '../battle-hp-damage.js';
 
@@ -93,16 +94,23 @@ test('free bot matches run authoritative live combat, accept human casts, settle
    assert.equal(new Set(room.final.flatMap(p=>p.team.map(c=>c.name))).size,10,'only the ten purchased auction heroes enter combat');
    for(const p of room.final)assert.equal(p.credits,20-p.team.reduce((sum,c)=>sum+c.cost,0),'both seats pay the recorded auction prices');
    const teamResponse=await fetch(base+'/api/battle-auction-team?'+new URLSearchParams({code,token:player.token}));
-   assert.equal(teamResponse.status,200);const {teams}=await teamResponse.json();
-   const formation={code,token:player.token,positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:teams[0].map(h=>h.role)};
-   const started=await post('/api/battle-auction-preview',formation);
-   assert.deepEqual(started.ready,[true,true]);assert.equal(started.result.live,true);assert.equal(started.result.winner,null);
+   assert.equal(teamResponse.status,200);const {teams,preparation}=await teamResponse.json();
+   const formation={code,token:player.token,matchKey:preparation.matchKey,positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:teams[0].map(h=>h.role)};
+   const formed=await post('/api/battle-auction-preview',formation);
+   assert.deepEqual(formed.ready,[true,true]);assert.equal(formed.started,false);assert.equal(formed.result,null);
+   assert.deepEqual(formed.commanderSelection.ready,[false,true],'bot choice cannot stand in for the human choice');
+   if(match===3)assert.equal((await post('/api/commander/get',player)).profile,null,'formation alone never creates a commander profile');
+   const optionsResponse=await fetch(base+'/api/battle-auction-commanders?'+new URLSearchParams({code,token:player.token,matchKey:preparation.matchKey}));
+   assert.equal(optionsResponse.status,200);const options=await optionsResponse.json();assert.equal(options.options.length,4);assert.equal(options.selection,null);
+   const selectedCommanderId=match===3?'attack':'defense';
+   const started=await post('/api/battle-auction-commander',{code,...player,matchKey:preparation.matchKey,commanderId:selectedCommanderId});
+   assert.deepEqual(started.commanderSelection.ready,[true,true]);assert.equal(started.result.live,true);assert.equal(started.result.winner,null);
    const commander=started.result.commanders[1];assert.ok(['attack','defense','magic','support'].includes(commander.commanderId));
    const level={easy:15,medium:25,hard:40}[room.difficulty];
    assert.deepEqual(commander.levels,Object.fromEntries(['attack','defense','magic','support'].map(stat=>[stat,stat===commander.commanderId?level:Math.min(level,20)])),'selected branch follows difficulty; off-branches retain cap20');
    if(match<3)assert.deepEqual(started.result.commanders[0],{commanderId:'defense',levels:{attack:0,defense:0,magic:0,support:0}},'human progression is unchanged');
    if(previousCommander)assert.notEqual(commander.commanderId,previousCommander,'rematches and new bot rooms select a different commander');
-   if(match===3)assert.deepEqual(started.result.commanders[0],{commanderId:'attack',levels:{attack:0,defense:0,magic:0,support:0}},'a durable guest without a saved commander can play a free bot game');
+   if(match===3)assert.deepEqual(started.result.commanders[0],{commanderId:'attack',levels:{attack:0,defense:0,magic:0,support:0}},'a new durable guest explicitly chooses the commander after formation');
    previousCommander=commander.commanderId;
    assert.equal((await request('/api/battle-auction-complete',{code,token:player.token})).status,409,'cannot acknowledge an unfinished live battle');
    assert.notEqual((await request('/api/rematch',{code,...player})).status,200,'cannot skip live combat with rematch');
@@ -172,7 +180,7 @@ test('free bot matches run authoritative live combat, accept human casts, settle
   assert.ok(splashHits>0,'the real bot HTTP matches must contain actual mage splash attacks');
   console.log(JSON.stringify({botHttpSplashHits:splashHits,shieldedPrimarySplashHits}));
   assert.equal((await post('/api/wallet',player)).gold,expectedGold,'all entries and terminal receipts reconcile exactly');
-  assert.equal((await post('/api/commander/get',player)).profile,null,'bot commander fallback does not create a persistent human commander');
+  assert.deepEqual((await post('/api/commander/get',player)).profile,{commanderId:'attack',levels:{attack:0,defense:0,magic:0,support:0}},'the first explicit match choice creates the durable initial profile without spending gold');
   assert.doesNotMatch(logs,/Live arena stopped:|Bot commander action:/,'the bot must not throw or stop the live runner');
  }finally{child.kill('SIGTERM');await new Promise(resolve=>{if(child.exitCode!==null)return resolve();child.once('exit',resolve);setTimeout(resolve,2000).unref()})}
 });
@@ -249,9 +257,21 @@ test('real process restart retains free auction and settles interrupted live bat
   }
   assert.equal(room.phase,'finished');assert.equal(room.botSettlement,null);
   const teamResponse=await fetch(base+'/api/battle-auction-team?'+new URLSearchParams({code:identity.code,token:identity.token}));assert.equal(teamResponse.status,200);
-  const {teams}=await teamResponse.json();
-  const started=await post('/api/battle-auction-preview',{code:identity.code,token:identity.token,positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:teams[0].map(hero=>hero.role)});
+  const {teams,preparation}=await teamResponse.json();
+  const formed=await post('/api/battle-auction-preview',{code:identity.code,token:identity.token,matchKey:preparation.matchKey,positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:teams[0].map(hero=>hero.role)});
+  assert.equal(formed.started,false);assert.equal(formed.result,null);assert.deepEqual(formed.commanderSelection.ready,[false,true]);
+  // A process loss between formation and selection must retain the gate, without
+  // inventing a commander, starting combat, or settling a still-pending match.
+  for(let retry=0;retry<200;retry++){if((await durableRoom(identity.code))?.battleSync?.ready?.[0])break;await delay(25);}
+  assert.ok((await durableRoom(identity.code)).battleSync.ready[0]);
+  await stop('SIGKILL');await start();
+  const resumedResponse=await fetch(base+'/api/battle-auction-team?'+new URLSearchParams({code:identity.code,token:identity.token}));assert.equal(resumedResponse.status,200);
+  const resumed=await resumedResponse.json();assert.equal(resumed.preparation.ready,true);assert.deepEqual(resumed.commanderSelection.ready,[false,true]);
+  assert.equal((await post('/api/commander/get',{authToken:identity.authToken})).profile,null);
+  assert.deepEqual(await proof(matchId),paid,'commander selection restart cannot settle, charge or refund');
+  const started=await post('/api/battle-auction-commander',{...identity,matchKey:preparation.matchKey,commanderId:'support'});
   assert.equal(started.result.live,true);assert.notEqual(started.result.finished,true);
+  assert.equal(started.result.commanders[0].commanderId,'support');
   let persisted;
   for(let retry=0;retry<200;retry++){
    persisted=await durableRoom(identity.code);
@@ -283,5 +303,124 @@ test('real process restart retains free auction and settles interrupted live bat
   assert.deepEqual(await proof(matchId),refunded);
   assert.equal((await post('/api/bot',{authToken:auth.authToken,...terms})).room.matchId,matchId);
   assert.deepEqual(await proof(matchId),refunded);
+ }finally{try{await stop('SIGTERM')}finally{await fixtureDb.end()}}
+});
+
+test('real PostgreSQL legacy Android reconnect uses saved commander without charges and capability survives restart/rematch',{timeout:90000},async()=>{
+ const fixtureDb=new pg.Pool({host:'127.0.0.1',port:5432,database:'hero_bot_live_test',user:'test',password:'test',ssl:false,max:3,connectionTimeoutMillis:5000,idleTimeoutMillis:1000,options:'-c statement_timeout=10000 -c lock_timeout=5000',application_name:'hero-synthetic-legacy-commander-proof'});
+ const socket=createServer();await new Promise(resolve=>socket.listen(0,'127.0.0.1',resolve));
+ const port=socket.address().port;await new Promise(resolve=>socket.close(resolve));
+ const base='http://127.0.0.1:'+port;
+ const clock='data:text/javascript,'+encodeURIComponent(`
+  import crypto from 'node:crypto';
+  let roomCode=800;
+  crypto.randomInt=(min,max)=>max===undefined?0:(min===100&&max===1000?roomCode++:min);
+  Math.random=()=>0;
+  const interval=globalThis.setInterval;
+  globalThis.setInterval=(fn,ms,...args)=>interval(fn,ms===50?60000:ms===500?17:ms===1000?25:ms,...args);
+ `);
+ let child=null,logs='';
+ // Raw HTTP deliberately avoids fetch/Undici's Sec-Fetch-Mode header. These
+ // requests reproduce the exact old Android transport, with no capability hint.
+ function request(path,body,headers={}){
+  return new Promise((resolve,reject)=>{
+   const payload=body===undefined?null:JSON.stringify(body);
+   const req=httpRequest(base+path,{method:payload===null?'GET':'POST',headers:{'User-Agent':'okhttp/4.12.0',...(payload===null?{}:{'Content-Type':'application/json','Content-Length':Buffer.byteLength(payload)}),...headers}},res=>{
+    let text='';res.setEncoding('utf8');res.on('data',chunk=>text+=chunk);res.on('end',()=>{try{resolve({status:res.statusCode,body:JSON.parse(text)})}catch(error){reject(error)}});
+   });
+   req.on('error',reject);req.setTimeout(5000,()=>req.destroy(Error('Legacy fixture HTTP timeout')));req.end(payload);
+  });
+ }
+ async function ok(path,body,headers){const response=await request(path,body,headers);assert.equal(response.status,200,path+': '+JSON.stringify(response.body));return response.body;}
+ async function start(){
+  child=spawn(process.execPath,['--import','./tests/fixtures/fast-live-clock.mjs','--import',clock,'server.js'],{cwd:new URL('..',import.meta.url),env:{PATH:process.env.PATH,PORT:String(port),DATABASE_URL:APPROVED,AUTH_SIGNING_SECRET:'11'.repeat(32),COMMANDER_TEST_GUEST_MODE:'0',HERO_DIAMONDS_ENABLED:'1',HERO_MAGIC_DUST_ENABLED:'1',HERO_VICTORY_CHESTS_ENABLED:'0'},stdio:['ignore','pipe','pipe']});
+  child.stdout.on('data',b=>logs+=b);child.stderr.on('data',b=>logs+=b);
+  for(let retry=0;retry<150;retry++){
+   if(child.exitCode!==null||child.signalCode!==null)throw Error(logs);
+   try{if((await ok('/api/info')).botEconomy?.available)return}catch{}
+   await delay(40);
+  }
+  throw Error('Legacy fixture failed to start: '+logs);
+ }
+ async function stop(signal='SIGKILL'){
+  if(!child||child.exitCode!==null||child.signalCode!==null)return;
+  const current=child;
+  await new Promise((resolve,reject)=>{
+   const timeout=setTimeout(()=>{current.kill('SIGKILL');reject(Error('Legacy fixture stop timed out'))},5000);
+   current.once('exit',(_code,actualSignal)=>{clearTimeout(timeout);if(signal==='SIGKILL'&&actualSignal!=='SIGKILL')reject(Error('Expected actual SIGKILL'));else resolve()});current.kill(signal);
+  });
+ }
+ async function durable(code){return(await fixtureDb.query('SELECT state FROM hero_auction_rooms WHERE code=$1',[code])).rows[0]?.state;}
+ async function persisted(code,predicate){
+  for(let i=0;i<200;i++){const room=await durable(code);if(predicate(room))return room;await delay(25)}
+  assert.fail('Expected legacy fixture state was not persisted');
+ }
+ async function auction(identity){
+  let room=(await ok('/api/state',identity)).room;
+  for(let i=0;room.phase==='auction'&&i<400;i++){
+   if(room.turn===0)room=(await ok('/api/pass',identity)).room;
+   else{await delay(40);room=(await ok('/api/state',identity)).room;}
+  }
+  assert.equal(room.phase,'finished');
+  const team=await ok('/api/battle-auction-team?'+new URLSearchParams({code:identity.code,token:identity.token}));
+  return {...identity,matchKey:team.preparation.matchKey,positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:team.teams[0].map(hero=>hero.role)};
+ }
+ try{
+  await start();
+  const auth=await ok('/api/auth/guest',{name:'Synthetic Legacy Android'}),account={authToken:auth.authToken};
+  const created=await ok('/api/bot',{...account,...consent('medium')});
+  const identity={...account,code:created.room.code,token:created.token};
+  const before=await ok('/api/wallet',account);
+  const formation=await auction(identity),preview='/api/battle-auction-preview?'+new URLSearchParams({code:identity.code,token:identity.token});
+  const missing=await request('/api/battle-auction-preview',formation);
+  assert.equal(missing.status,409,'old Android without a saved commander must not receive an invented default');
+  assert.equal((await ok('/api/commander/get',account)).profile,null);
+  const ready=await persisted(identity.code,r=>r?.battleSync?.ready?.[0]);
+  assert.equal(ready.players[0].matchCommanderSelection,undefined);
+  assert.equal(ready.battleSync.result,null);assert.equal(ready.battleSync.commanderChoices[0],null);
+  assert.equal((await ok('/api/wallet',account)).gold,before.gold);
+  // This is a synthetic account's existing progression, not a production write.
+  await ok('/api/commander/select',{...account,commanderId:'defense'});
+  const saved={commanderId:'defense',levels:{attack:3,defense:7,magic:2,support:4}};
+  await fixtureDb.query('UPDATE hero_auction_commanders SET profile=$2::jsonb WHERE account_id=$1',[ready.players[0].accountId,JSON.stringify(saved)]);
+  await stop();await start();
+  const started=await ok(preview);
+  assert.equal(started.started,true,'legacy GET must recover an already-ready formation after real process restart');
+  assert.equal(started.result.live,true);assert.deepEqual(started.result.commanders[0],saved);
+  const legacy=await persisted(identity.code,r=>r?.battleSync?.result?.live);
+  assert.deepEqual(legacy.battleSync.commanderChoiceSources,['legacy','bot']);
+  assert.equal(legacy.players[0].matchCommanderSelection,undefined);
+  const repeat=await ok('/api/battle-auction-preview',formation);
+  assert.deepEqual(repeat.result.commanders,started.result.commanders,'legacy POST reconnect cannot reroll a running battle');
+  assert.deepEqual((await ok('/api/commander/get',account)).profile,saved);
+  assert.equal((await ok('/api/wallet',account)).gold,before.gold,'legacy profile reuse is free');
+  // Capability presence wins over the old UA, even when its value is zero.
+  const upgraded=await ok(preview,undefined,{'X-Hero-Match-Commander-Selection':'0'});
+  assert.deepEqual(upgraded.result.commanders,started.result.commanders,'upgrade cannot rewrite a live legacy selection');
+  await persisted(identity.code,r=>r?.players?.[0]?.matchCommanderSelection===1&&r.battleSync?.result?.live);
+  await stop();await start();
+  let settled;
+  for(let i=0;i<200;i++){settled=(await ok('/api/state',identity)).room;if(settled.botSettlement&&!settled.botSettlementPending)break;await delay(25)}
+  assert.equal(settled.botSettlement?.outcome,'server_failure');
+  assert.deepEqual(settled.botSettlement.rewards,{gold:0,magicDust:0,diamonds:0});
+  assert.equal((await durable(identity.code)).players[0].matchCommanderSelection,1,'capability survives real restart');
+  const rematch=await ok('/api/rematch',{...identity,...consent('medium'),expectedMatchId:settled.matchId});
+  assert.equal(rematch.room.phase,'auction');
+  assert.equal((await durable(identity.code)).players[0].matchCommanderSelection,1,'legacy rematch cannot downgrade capability');
+  const nextFormation=await auction(identity);
+  const pending=await ok('/api/battle-auction-preview',nextFormation);
+  assert.equal(pending.started,false);assert.equal(pending.result,null);assert.deepEqual(pending.commanderSelection.ready,[false,true]);
+  await persisted(identity.code,r=>r?.battleSync?.ready?.[0]&&!r.battleSync.result);
+  await stop();await start();
+  const resumed=await ok(preview);
+  assert.equal(resumed.started,false);assert.equal(resumed.result,null);assert.deepEqual(resumed.commanderSelection.ready,[false,true],'legacy reconnect cannot bypass durable explicit-selection gate');
+  assert.deepEqual((await ok('/api/commander/get',account)).profile,saved);
+  const explicit=await ok('/api/battle-auction-commander',{...identity,matchKey:nextFormation.matchKey,commanderId:'support',matchCommanderSelection:1});
+  assert.equal(explicit.started,true);assert.deepEqual(explicit.result.commanders[0],{...saved,commanderId:'support'});
+  const chosen=await persisted(identity.code,r=>r?.battleSync?.commanderChoiceSources?.[0]==='explicit');
+  assert.deepEqual(chosen.battleSync.commanderChoiceSources,['explicit','bot']);
+  assert.deepEqual((await ok('/api/commander/get',account)).profile,saved,'explicit match choice retains saved commander and progression');
+  const after=await ok('/api/wallet',account);
+  for(const currency of ['gold','magicDust','diamonds'])assert.equal(after[currency],before[currency],currency+' must not be charged or rewarded for preparation/recovery');
  }finally{try{await stop('SIGTERM')}finally{await fixtureDb.end()}}
 });

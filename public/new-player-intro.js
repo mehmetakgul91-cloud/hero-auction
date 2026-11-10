@@ -6,12 +6,12 @@ export const introLessons={
  tr:[
   ['İlk takımını kur.','İlk zaferine bilgisayara karşı hazırlan. Altın kesilmez; lig puanın değişmez.','Kolay bot · Ücretsiz'],
   ['Her kredi bir karar.','Kartı tanı. İstersen teklif ver, istemezsen pas geç.','20 kredi → 5 kahraman'],
-  ['Takımın hazır.','Safları kontrol et, ardından arenaya çık.','Kolay rakip · Ücretsiz giriş']
+  ['Takımın hazır.','Safları kontrol et, komutanını seç, ardından arenaya çık.','Kolay rakip · Ücretsiz giriş']
  ],
  en:[
   ['Build your first team.','Prepare for your first victory against the computer. No gold charged; no league points changed.','Easy bot · Free'],
   ['Every credit is a choice.','Know the card. Bid if you want it, or pass.','20 credits → 5 heroes'],
-  ['Your team is ready.','Check your rows, then enter the arena.','Easy opponent · Free entry']
+  ['Your team is ready.','Check your rows, choose your commander, then enter the arena.','Easy opponent · Free entry']
  ]
 };
 // These are the existing game portraits, not newly invented hero art.

@@ -19,7 +19,7 @@ test('real HTTP room, both seats, lane edits, rematch, blocked no-DB bot, previe
  const get=async(path,params={})=>{const response=await fetch(base+path+'?'+new URLSearchParams(params));assert.equal(response.status,200);return response.json()};
  const checkMeta=value=>{assert.deepEqual(Object.keys(value).sort(),['matchKey','theme','version']);assert.equal(value.version,1);assert.ok(ARENA_THEME_IDS.includes(value.theme));};
  try{
-  let ready=false;for(let i=0;i<100;i++){if(child.exitCode!==null)throw Error(logs);try{if((await fetch(base+'/api/info')).ok){ready=true;break}}catch{}await delay(40)}assert.ok(ready,logs);
+  let ready=false;for(let i=0;i<100;i++){if(child.exitCode!==null)throw Error(logs);try{if((await fetch(base+'/api/info')).ok){ready=true;break}}catch{}await new Promise(resolve=>setTimeout(resolve,40))}assert.ok(ready,logs);
   const players=[];for(let i=0;i<2;i++){const auth=await post('/api/auth/guest',{name:'Cosmetic Theme '+i});players.push({authToken:auth.authToken})}
   const forged={version:1,matchKey:'evil',theme:'invalid'};
   const created=await post('/api/create',{...players[0],arenaPresentation:forged}),code=created.room.code;players[0].token=created.token;
@@ -41,11 +41,13 @@ test('real HTTP room, both seats, lane edits, rematch, blocked no-DB bot, previe
     await post('/api/battle-auction-formation',formation);
     assert.deepEqual((await get('/api/battle-auction-team',{code,token:players[seat].token})).arenaPresentation,meta);
     const response=await post('/api/battle-auction-preview',formation);assert.deepEqual(response.arenaPresentation,meta);
+    await post('/api/battle-auction-commander',{code,...players[seat],matchKey:response.matchKey,commanderId:'attack'});
    }
    const snapshots=await Promise.all(players.map(player=>get('/api/battle-auction-preview',{code,token:player.token})));
    for(const view of snapshots){assert.equal(view.started,true);assert.deepEqual(view.result.arenaPresentation,meta)}
    assert.deepEqual(snapshots[0].result.teams,[...snapshots[1].result.teams].reverse(),'orientation remains gameplay-only');
    for(let repeat=0;repeat<3;repeat++)for(const player of players)assert.deepEqual((await post('/api/state',{code,...player})).room.arenaPresentation,meta);
+   let live;for(let poll=0;poll<350;poll++){live=await get('/api/experimental/commander-live',{code,token:players[0].token});if(live.finished)break;await new Promise(resolve=>setTimeout(resolve,40))}assert.equal(live.finished,true,'live combat must complete before rematch');
    for(const player of players)await post('/api/battle-auction-complete',{code,token:player.token});
    if(match<2){const pending=await post('/api/rematch',{code,...players[0]});assert.deepEqual(pending.room.arenaPresentation,meta);await post('/api/rematch',{code,...players[1],arenaPresentation:forged});}
    previous=meta;

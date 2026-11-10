@@ -1,10 +1,18 @@
-name: Commander Switch Price Browser QA
+name: Free Commander Choice Browser QA
 on:
   workflow_dispatch:
   pull_request:
     paths:
       - 'public/commander-economy.js'
+      - 'public/match-commander-picker.*'
+      - 'public/battle-preview.*'
+      - 'tests/match-commander-picker.test.mjs'
+      - 'tools/test-match-commander-picker-browser.mjs'
       - 'public/index.html'
+      - 'public/lobby-chrome.css'
+      - 'public/images/optimized/home-play-arena.*.webp'
+      - 'tests/home-play-artwork.test.mjs'
+      - 'tools/test-home-play-artwork-browser.mjs'
       - 'public/app.js'
       - 'public/crazygames-en.js'
       - 'public/crazygames-ui-phrases.js'
@@ -33,12 +41,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: package.json
-      - name: Test shared price, progression preservation and bilingual copy
-        run: node --test tests/commander-switch-api.test.mjs tests/commander-switch-ui.test.mjs tests/commander-progression.test.js tests/first-session.test.mjs tests/public-landing-social.test.mjs
-      - name: Verify actual app at 99 and 100 gold with synthetic accounts
+      - name: Test free choice, progression preservation and bilingual copy
+        run: node --test tests/commander-switch-api.test.mjs tests/commander-switch-ui.test.mjs tests/commander-progression.test.js tests/first-session.test.mjs tests/public-landing-social.test.mjs tests/match-commander-picker.test.mjs tests/preparation-ready.test.mjs tests/home-play-artwork.test.mjs
+      - name: Verify free choice at zero gold for new and existing accounts in TR and EN
         env:
           HERO_BROWSER_SCREENSHOTS: ${{ runner.temp }}/commander-switch-shots
         run: env -u DATABASE_URL node tools/test-commander-switch-browser.mjs
+      - name: Verify post-formation commander picker at mobile and desktop sizes
+        env:
+          HERO_BROWSER_SCREENSHOTS: ${{ runner.temp }}/commander-switch-shots/match-picker
+        run: env -u DATABASE_URL node tools/test-match-commander-picker-browser.mjs
+      - name: Verify distinct Play artwork at responsive sizes in TR and EN
+        env:
+          HERO_BROWSER_SCREENSHOTS: ${{ runner.temp }}/commander-switch-shots/play-artwork
+        run: env -u DATABASE_URL node tools/test-home-play-artwork-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

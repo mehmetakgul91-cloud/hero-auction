@@ -1,3 +1,4 @@
+import {preserveCommanderSelectionCapability} from '../commander-client-capability.js';
 import {initializeRoomActivity,recordRoomAction} from '../room-inactivity.js';
 import {requireModerationForInteraction} from '../moderation-availability.js';
 import test from 'node:test';
@@ -24,7 +25,7 @@ function fixture({gold=[500,500],lostCommit=false,receiptReadFails=false,paused=
   throw Error('unexpected query '+sql);
  }};
  const maintenance={isPaused:()=>paused,beginAdmission:()=>()=>{}};
- const ctx={initializeRoomActivity,recordRoomAction,idleRoomJobs:new Map(),paidEntryMaintenance:maintenance,requireVictoryChestStorage(){},requireVictoryChestProgression(){},structuredClone,Map,Date,JSON,console,roomFlushes:new Map(),rooms:new Map([['123',room]]),activeSeats:new Map(),token:()=> 'guest-room-token',log:(r,text)=>r.history.push(text),publish:()=>{},previewGuestMode:false,databaseReady:true,ratings:new Map(),matchRecords:new Map(),friends:{snapshot:()=>({})},roomInvites:{snapshot:()=>[['invite-1',invite]]},error:(message,status=400)=>{throw Object.assign(Error(message),{status})},database:{connect:async()=>client,query:async()=>{if(receiptReadFails)throw Error('database unavailable');return{rows:durable.receipt?[{state:durable.receipt}]:[]}}}};
+ const ctx={preserveCommanderSelectionCapability,initializeRoomActivity,recordRoomAction,idleRoomJobs:new Map(),paidEntryMaintenance:maintenance,requireVictoryChestStorage(){},requireVictoryChestProgression(){},structuredClone,Map,Date,JSON,console,roomFlushes:new Map(),rooms:new Map([['123',room]]),activeSeats:new Map(),token:()=> 'guest-room-token',log:(r,text)=>r.history.push(text),publish:()=>{},previewGuestMode:false,databaseReady:true,ratings:new Map(),matchRecords:new Map(),friends:{snapshot:()=>({})},roomInvites:{snapshot:()=>[['invite-1',invite]]},error:(message,status=400)=>{throw Object.assign(Error(message),{status})},database:{connect:async()=>client,query:async()=>{if(receiptReadFails)throw Error('database unavailable');return{rows:durable.receipt?[{state:durable.receipt}]:[]}}}};
  vm.createContext(ctx);vm.runInContext(functions,ctx);
  return{ctx,room,invite,durable,statements,setPaused:value=>paused=value,join:()=>ctx.commitInvitationJoin(invite,room,{sub:'guest',name:'Guest'})};
 }

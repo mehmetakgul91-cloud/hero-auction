@@ -39,7 +39,8 @@
 .nav-art{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:77px;pointer-events:none;overflow:hidden}
 .nav-art>img{display:block;flex:none;object-fit:cover}
 .nav-art-play>img,.nav-art-commander>img{position:absolute;width:100%;height:112%;top:0;object-position:center 20%;mask-image:linear-gradient(#000 46%,transparent 100%);-webkit-mask-image:linear-gradient(#000 46%,transparent 100%);opacity:.95}
-.nav-art-play>img{object-position:center 27%}
+/* Play uses its own wide arena emblem; commander portraits keep their crop. */
+.nav-art-play>img{height:100%;object-position:center 45%;mask-image:linear-gradient(#000 68%,transparent 100%);-webkit-mask-image:linear-gradient(#000 68%,transparent 100%);opacity:1}
 .nav-art-heroes>img{position:absolute;top:19px;width:36px;height:46px;border:1px solid #ceb4ff;border-radius:4px;box-shadow:0 3px 8px #0009;object-position:center 20%}
 .nav-art-heroes>img:first-child{transform:translateX(-19px) rotate(-17deg);opacity:.78}
 .nav-art-heroes>img:nth-child(2){transform:translateX(19px) rotate(17deg);opacity:.85}

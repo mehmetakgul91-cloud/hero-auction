@@ -31,11 +31,17 @@ Açık artırmada edinilen beş kahraman, kendi ön/arka saf tercihine (kahraman
 
 Saf tercihleri maç ve oyuncuya özel taslak olarak sunucuda saklanır; yenilemede korunur, rövanşta yeni kadro için yeniden oluşturulur. Henüz sunucuya ulaşmayan değişiklik aynı sekmede maç/kadro anahtarıyla saklanır ve yeniden gönderilir. Web ve CrazyGames tarayıcı kayıtları ayrıdır; hesapta kayıtlı komutan/diziliş verilerine toplu dönüşüm uygulanmaz.
 
-Otomatik yerleşim **Hazırım** sayılmaz. Mevcut 60 saniyelik hazırlık süresi veya oyuncunun Hazırım düğmesi dizilişi onaylar; savaş için her iki tarafın da hazır olması gerekir. Sunucu beş farklı kahramanı, değiştirilemeyen gerçek rollerini ve saf değerlerini doğrular. Onaylanmış diziliş ve eski maça ait istekler değişiklik kabul etmez.
+Otomatik yerleşim **Hazırım** sayılmaz. Mevcut 60 saniyelik hazırlık süresi veya oyuncunun Hazırım düğmesi yalnız dizilişi onaylar. Sonra her oyuncu bu maçın komutanını seçer; iki diziliş ve iki komutan onaylanmadan savaş başlamaz. Sunucu beş farklı kahramanı, değiştirilemeyen gerçek rollerini ve saf değerlerini doğrular. Onaylanmış diziliş ve eski maça ait istekler değişiklik kabul etmez.
 
 ## Komutan seçimi ve değişimi
 
-İlk komutan seçimi ücretsizdir. Daha sonra farklı bir komutana geçiş 100 altındır; gelişim seviyeleri korunur. Ücret sunucuda bakiye kontrolüyle birlikte tek işlemde kesilir. Aynı komutanı yeniden seçme isteği ücret kesmeden reddedilir. Gelişim fiyatları değişmez; aşağıdaki güncel ekonomi bölümüne bak.
+Komutan seçimi girişte zorunlu değildir. Her maçta dizilişten sonra, arenaya geçmeden komutan seçilir. Komutan menüsündeki seçim ve değişimler de ücretsizdir; gelişim seviyeleri korunur. Menüde zaten tercih edilen komutana geçiş reddedilir; maç içi aynı seçim isteğinin tekrar gönderilmesi güvenle mevcut onayı döndürür. Gelişim fiyatları değişmez; aşağıdaki güncel ekonomi bölümüne bak.
+
+Maç seçimi hesap tercihini değiştirmez; ilk profili olmayan hesapta ilk seçim sıfır seviyeli profili oluşturur. Kazanılmış seviyeler seçim anında maça kopyalanır, sonraki menü değişimi veya geliştirme bu savaşı etkilemez. Rövanşta yeni seçim gerekir. Seçim ekranı, aynı savaş hazırlama motoruyla dört komutanın başlangıç saldırı/savunma/can/hızını ve kahraman farklarını hesaplar. Kart gücü ayrı bir gösterge olarak kalır; aktif beceriler ve kullanım zamanı toplam başlangıç istatistiklerine eklenmez. Sıfır seviyede başlangıç değerlerinin aynı olması normaldir.
+
+İstemci sözleşmesi: `/api/info` içindeki `matchCommanderSelection:1` yeni akışı bildirir; `/api/commander/get` yanıtındaki `changeCost:0` ücretsiz menü değişimini doğrular. `/api/battle-auction-team` her zaman oyuncuya ait `commanderSelection` hazırlık durumunu taşır. Diziliş onayından sonra `/api/battle-auction-commanders` ile karşılaştırma okunur, `/api/battle-auction-commander` ile güncel maç kimliği ve oturumla seçim onaylanır. Yeni native her API isteğinde `X-Hero-Match-Commander-Selection: 1` ve uygulamaya özel User-Agent gönderir; web hazırlık isteklerinde `matchCommanderSelection:1` bildirir. Bir koltuk yeni akışı bildirdikten sonra yeteneği düşürülemez; aynı koltuk rövanşlarında korunur.
+
+Geçici eski Android uyumluluğu: yalnız tam `okhttp/4.12.0` taşıma izi, Origin/Sec-Fetch ve yetenek bildirimi bulunmayan isteklerde, onaylanmış dizilişten sonra oyuncunun mevcut kayıtlı komutanı ve seviyeleri maça kopyalanır. Bu iz uygulama kimliği veya yetki doğrulaması değildir; mevcut oda/hesap doğrulamaları korunur. Bilinmeyen istemciler ve bozuk/sıfır yetenek bildirimi yeni seçim akışında kalır. Kayıtlı profil yoksa anlaşılır hata döner, varsayılan profil oluşturulmaz. Karma maçta diğer oyuncunun seçimi atlanmaz. Seçim bekleyen eski maça yeniden bağlanma desteklenir; savaş başlamadan yeni istemciye geçilirse yalnız otomatik eski seçim kaldırılır. Başlamış savaş veya açıkça onaylanmış seçim değiştirilmez.
 
 ## Güncel gelişim ve elmas hazırlığı (25 Ekim 2026)
 

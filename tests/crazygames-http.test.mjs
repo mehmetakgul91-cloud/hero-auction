@@ -69,7 +69,9 @@ test('verified portal accounts retain progress; invites join once and preserve a
   assert.equal((await post('/api/battle-auction-preview',formation(0))).status,200);
   const duplicate=await post('/api/battle-auction-preview',{...formation(0),positions:[4,3,2,1,0]});
   assert.equal(duplicate.status,200);assert.deepEqual(duplicate.body.ready,[true,false]);
-  const started=await post('/api/battle-auction-preview',formation(1));
+  const formationsReady=await post('/api/battle-auction-preview',formation(1));assert.equal(formationsReady.body.started,false);
+  await post('/api/battle-auction-commander',{code,...players[0],matchKey:formationsReady.body.matchKey,commanderId:'attack'});
+  const started=await post('/api/battle-auction-commander',{code,...players[1],matchKey:formationsReady.body.matchKey,commanderId:'attack'});
   assert.equal(started.status,200);assert.equal(started.body.started,true);assert.equal(started.body.result.live,true);
   assert.equal(started.body.result.winner,null,'no predicted winner before live combat ends');
   assert.deepEqual((await post('/api/state',{code,...players[0]})).body.room.series,[0,0]);

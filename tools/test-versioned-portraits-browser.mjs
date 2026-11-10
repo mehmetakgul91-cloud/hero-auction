@@ -79,6 +79,7 @@ try{
  const context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage();
  await page.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
  await page.goto(base+'/');await page.locator('#guest-login').click();
+ await page.locator('#commander-open-profile').click();
  await page.waitForSelector('#commander-onboarding:not([hidden])');
  const commanders=await page.evaluate(async()=>{const images=[...document.querySelectorAll('#commander-onboarding-options img')];await Promise.all(images.map(i=>i.decode()));return images.map(i=>({url:new URL(i.src).pathname,width:i.naturalWidth,height:i.naturalHeight}));});
  assert.equal(commanders.length,4);assert.ok(commanders.every(i=>i.url.includes('/images/optimized/')&&i.width===1024&&i.height===1536));

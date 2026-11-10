@@ -63,7 +63,7 @@ test('auction SSE, live polling, safety checks and rematches share isolated tran
   assert.equal(room.phase,'finished');assert.equal(room.arenaEmotes.enabled,false);
   await post('/api/arena-emotes',input(0,{requestId:'during-preparation'}),409);
   const {teams}=await get('/api/battle-auction-team',{code,token:players[0].token});
-  for(let i=0;i<2;i++)await post('/api/battle-auction-preview',{code,token:players[i].token,positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:teams[i].map(h=>h.role)});
+  for(let i=0;i<2;i++){const prepared=await post('/api/battle-auction-preview',{code,token:players[i].token,positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:teams[i].map(h=>h.role)});await post('/api/battle-auction-commander',{code:code,...players[i],matchKey:prepared.matchKey,commanderId:'attack'});}
   const live=await get('/api/experimental/commander-live',{code,token:players[0].token});
   assert.equal(live.arenaEmotes.enabled,true);assert.equal(live.arenaEmotes.matchKey,initialKey);assert.equal(live.arenaEmotes.cooldownMs,4000);assert.equal(live.arenaEmotes.events[0].id,first.events[0].id);
   const reversed=await get('/api/experimental/commander-live',{code,token:players[1].token});assert.deepEqual(reversed.arenaEmotes.events.map(e=>e.side),[1,0]);

@@ -36,12 +36,15 @@ test('room invitations wait for authoritative live battle then join once, never 
   assert.equal((await post('/api/friend/invitations',guest)).incoming[0].status,'queued','finished auction is not a settled battle');
   const get=async(path,params)=>{const r=await fetch('http://127.0.0.1:'+port+path+'?'+new URLSearchParams(params));assert.equal(r.status,200);return r.json()};
   const {teams}=await get('/api/battle-auction-team',{code:source.room.code,token:source.token});
-  for(let i=0;i<2;i++)await post('/api/battle-auction-preview',{code:source.room.code,token:players[i].token,positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:teams[i].map(h=>h.role)});
+  for(let i=0;i<2;i++){const prepared=await post('/api/battle-auction-preview',{code:source.room.code,token:players[i].token,positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:teams[i].map(h=>h.role)});await post('/api/battle-auction-commander',{code:source.room.code,...players[i],matchKey:prepared.matchKey,commanderId:'attack'});}
   assert.equal((await post('/api/friend/invitations',guest)).incoming[0].status,'queued');
-  let live;for(let i=0;i<250;i++){live=await get('/api/experimental/commander-live',{code:source.room.code,token:source.token});if(live.finished)break;await new Promise(r=>setTimeout(r,40))}assert.equal(live.finished,true);
+  // This test covers queued joins, not host inactivity. With the accelerated
+  // clock a loaded full-suite run can exceed the separate 100-second room-idle
+  // policy. The waiting host re-sends the same idempotent invite to stay active.
+  let live;for(let i=0;i<250;i++){if(i%10===0)await post('/api/friend/invite',send);live=await get('/api/experimental/commander-live',{code:source.room.code,token:source.token});if(live.finished)break;await new Promise(r=>setTimeout(r,40))}assert.equal(live.finished,true);
   const beforeJoin=await Promise.all([host,guest].map(gold));
   const results=await Promise.all(Array.from({length:5},()=>post('/api/friend/invitations',guest)));
-  assert.ok(results.every(r=>r.incoming[0].status==='joined'));assert.equal(new Set(results.map(r=>r.incoming[0].token)).size,1);
+  assert.ok(results.every(r=>r.incoming[0].status==='joined'),JSON.stringify(results));assert.equal(new Set(results.map(r=>r.incoming[0].token)).size,1);
   assert.deepEqual(await Promise.all([host,guest].map(gold)),beforeJoin.map(g=>g-50));
   const joined=results[0].incoming[0];assert.equal(joined.room.code,target.room.code);assert.equal(joined.room.me,1);
   const hostResult=(await post('/api/friend/invitations',host)).outgoing[0];assert.equal(hostResult.status,'joined');assert.ok(!('token' in hostResult));assert.ok(!('room' in hostResult));

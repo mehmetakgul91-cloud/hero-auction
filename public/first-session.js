@@ -37,5 +37,5 @@ export function mountFirstSession(doc,{enabled=false}={}){
  // Move, never clone, the existing controls: IDs, difficulty and handlers remain authoritative.
  modes.prepend(bot);
  cta.onclick=()=>{doc.getElementById('home-play-tab').click();bot.scrollIntoView({behavior:'smooth',block:'center'});doc.getElementById('bot-difficulty').focus({preventScroll:true});};
- const intro=doc.querySelector('#commander-onboarding>p');if(intro){intro.textContent='Your first commander is free. Compare their abilities below, then confirm your choice. Changing later costs 100 gold; upgrade levels are kept.';intro.setAttribute('translate','no');}
+ const intro=doc.querySelector('#commander-onboarding>p');if(intro){intro.textContent='Choosing and changing commanders is free. Compare their abilities below. Select your match commander after formation; upgrade levels are kept.';intro.setAttribute('translate','no');}
 }

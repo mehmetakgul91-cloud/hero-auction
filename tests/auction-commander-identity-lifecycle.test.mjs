@@ -1,3 +1,4 @@
+import {COMMANDER_CHANGE_COST} from '../public/commander-economy.js';
 import {recordRoomAction} from '../room-inactivity.js';
 import {createRoomPresence} from '../room-presence.js';
 import test from 'node:test';
@@ -40,11 +41,11 @@ test('server account identity update reaches all account seats and publishes cha
 test('server updates auction identity only after successful select/change, using authenticated account and saved profile',async()=>{
  const source=fs.readFileSync(new URL('../server.js',import.meta.url),'utf8');const wrapper=source.slice(source.indexOf('async function api(url,b,requestContext)'),source.indexOf('async function apiAction(url,b,requestContext)'));
  let fail=false;const updates=[],saved={commanderId:'defense',levels:{defense:3}};
- const context={rooms:new Map(),idleRoomJobs:new Map(),roomRequestFlights:new Map(),roomPresence:createRoomPresence(),recordRoomAction,requireModerationForInteraction(){},moderationReady:true,diamondPolicy:{enabled:false},magicDustPolicy:{enabled:false},diamondExchangePolicy:{},diamondSignupPolicy:{enabled:false},diamondExchangeView:()=>({}),readLogin:()=>({sub:'verified-account'}),apiAction:async()=>{if(fail)throw Error('insufficient gold');return{profile:saved,progression:{}}},updateAuctionCommandersForAccount:(id,profile)=>updates.push({id,profile})};
+ const context={COMMANDER_CHANGE_COST,rooms:new Map(),idleRoomJobs:new Map(),roomRequestFlights:new Map(),roomPresence:createRoomPresence(),recordRoomAction,requireModerationForInteraction(){},moderationReady:true,diamondPolicy:{enabled:false},magicDustPolicy:{enabled:false},diamondExchangePolicy:{},diamondSignupPolicy:{enabled:false},diamondExchangeView:()=>({}),readLogin:()=>({sub:'verified-account'}),apiAction:async()=>{if(fail)throw Error('insufficient gold');return{profile:saved,progression:{}}},updateAuctionCommandersForAccount:(id,profile)=>updates.push({id,profile})};
  vm.createContext(context);vm.runInContext(wrapper,context);
  for(const route of ['/api/commander/select','/api/commander/change'])await context.api(route,{authToken:'signed',accountId:'forged',commanderId:'magic'});
  assert.deepEqual(updates,[{id:'verified-account',profile:saved},{id:'verified-account',profile:saved}]);
- for(const route of ['/api/commander/get','/api/commander/upgrade'])await context.api(route,{});assert.equal(updates.length,2);
+ for(const route of ['/api/commander/get','/api/commander/upgrade'])assert.equal((await context.api(route,{})).changeCost,0);assert.equal(updates.length,2);
  fail=true;await assert.rejects(context.api('/api/commander/change',{}),/insufficient gold/);assert.equal(updates.length,2);
 });
 test('state reconnect awaits hydration before producing the public snapshot',async()=>{

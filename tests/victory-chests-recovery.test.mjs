@@ -1,3 +1,4 @@
+import {preserveCommanderSelectionCapability} from '../commander-client-capability.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -14,7 +15,7 @@ const durable=()=>({intents:new Map(),receipts:new Map(),credits:0,rolls:0});
 const wait=()=>new Promise(resolve=>setImmediate(resolve));
 function fixture({restored=[],storage=durable(),enabled=true,ready=true,failPreflight=false,failIntent=null,failCredit=null}={}){
  const counters={persist:0,credit:0,recovery:0},published=[],marked=[],legacy=[],records=new Set(),queries=[];let intentFault=failIntent,creditFault=failCredit;
- const ctx={console:{error(){}},structuredClone,Map,Set,victoryMatchId,eligibleVictory,rooms:new Map(restored.map(r=>[r.code,r])),databaseReady:ready,victoryChestStorageReady:false,victoryChestPolicy:{enabled},pendingVictoryChests:new Map(),victoryChestFlights:new Set(),pendingGold:new Map(),MATCH_WIN_GOLD:120,
+ const ctx={preserveCommanderSelectionCapability,console:{error(){}},structuredClone,Map,Set,victoryMatchId,eligibleVictory,rooms:new Map(restored.map(r=>[r.code,r])),databaseReady:ready,victoryChestStorageReady:false,victoryChestPolicy:{enabled},pendingVictoryChests:new Map(),victoryChestFlights:new Set(),pendingGold:new Map(),MATCH_WIN_GOLD:120,
   database:{query:async query=>{queries.push(query);if(failPreflight)throw Error('missing schema');return{rows:[]}}},
   markRoom:r=>marked.push(victoryMatchId(r)),publish:r=>published.push(victoryMatchId(r)),queueGoldAward:r=>legacy.push(r.goldAward),log:(r,text)=>r.history.push(text),recordMatch:r=>records.add(victoryMatchId(r)),
   readVictoryChestRecovery:async(_database,ids)=>{counters.recovery++;return[...storage.intents.values()].filter(i=>!storage.receipts.has(i.match_id)||ids.some(id=>id.split(':')[0]===i.room_state.code)).map(i=>({...structuredClone(i),credited_match_id:storage.receipts.has(i.match_id)?i.match_id:null}))},

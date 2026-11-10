@@ -1,5 +1,5 @@
-// Shared display price; the server enforces the debit in the wallet transaction.
-export const COMMANDER_CHANGE_COST=100;
+// Commander choice is free; upgrades retain their separate economy.
+export const COMMANDER_CHANGE_COST=0;
 
 // Approved progression: 0→1 costs 200, then ×1.2 per level. Round once
 // from the initial price, not recursively; BigInt avoids floating point drift.

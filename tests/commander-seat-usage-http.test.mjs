@@ -12,10 +12,10 @@ import {roomArenaPresentation} from '../arena-theme.js';
 // this fixture avoids waiting for random drafts to produce a revival window.
 const source=fs.readFileSync(new URL('../server.js',import.meta.url),'utf8');
 const liveExpression=source.match(/const snapshot=\(\)=>\{const current=liveArenaLifecycle\.snapshot\([\s\S]*?\};(?=\n try\{)/)?.[0];
-const previewExpression=source.split('\n').find(line=>line.includes('return send(200,{arenaPresentation:roomArenaPresentation(room),ready:sync.ready.map(Boolean),started:Boolean(sync.result)'));
+const previewExpression=source.split('\n').find(line=>line.startsWith('function battlePreparationResponse('));
 assert.ok(liveExpression,'production live snapshot expression');assert.ok(previewExpression,'production initial-result expression');
 const liveSnapshot=new Function('liveArenaLifecycle','liveKey','body','sinceVersion','side','orientBattleSummary',liveExpression+'return snapshot();');
-const previewSnapshot=new Function('send','sync','seat','orientBattleSummary','roomArenaPresentation','room','victoryChestView',previewExpression);
+const previewSnapshot=new Function('send','sync','seat','orientBattleSummary','roomArenaPresentation','room','victoryChestView',previewExpression+';return send(200,battlePreparationResponse(room,sync,seat));');
 function fixture(usedSide){
  const hero=(id,hp)=>({id,hp,maxHp:100,attack:50,defense:30,shield:0});
  const c=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'seat-usage',energy:[100,100],now:0}),teams:[[hero('a0',100),hero('a1',0)],[hero('b0',100),hero('b1',0)]],commanders:[{commanderId:'support'},{commanderId:'support'}]});
@@ -28,7 +28,7 @@ for(const usedSide of [0,1])for(const path of ['/live','/preview'])test(`${path}
   const url=new URL(req.url,'http://localhost'),side=Number(url.searchParams.get('side'));
   const send=(status,value)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(value));};
   if(url.pathname==='/live')send(200,liveSnapshot({snapshot:()=>current},'seat-usage',{},0,side,s=>s));
-  else previewSnapshot(send,{ready:[true,true],result:current},side,s=>s,roomArenaPresentation,room,victoryChestView);
+  else previewSnapshot(send,{ready:[true,true],commanderChoices:[null,null],result:current},side,s=>s,roomArenaPresentation,room,victoryChestView);
  });
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  try{

@@ -1,3 +1,4 @@
+import {mountMatchCommanderPicker} from '/match-commander-picker.js';
 import {watchRecoveredRoom} from '/room-recovery-watch.js';
 import {roomReturnStatus} from '/room-return-status.js';
 import {createBotEntryConsent,botSettlementCopy} from '/bot-entry.js';
@@ -28,6 +29,12 @@ import {createArenaThemePresentation} from '/arena-theme.js';
 import {createArenaWeather} from '/arena-weather.js';
 import {mountVikingLayout} from '/arena-viking-layout.js';
 import {mountArenaSceneLayout} from '/arena-scene-layout.js';
+// Remove premature combat flags before portal authentication yields to other modules.
+// The live controls module must not initialize from a bookmarked arena URL.
+const pendingEntryUrl=new URL(location.href);
+if(pendingEntryUrl.searchParams.has('auctionCode')&&pendingEntryUrl.searchParams.has('auctionToken')){
+ pendingEntryUrl.searchParams.delete('commanderTest');pendingEntryUrl.searchParams.delete('room');history.replaceState(null,'',pendingEntryUrl);
+}
 // Verify the current portal account before accessing any saved arena seat.
 if(window.HeroPlatform){
  const restart=()=>{localStorage.removeItem('hero-auction-session');sessionStorage.removeItem('hero-auction-formation');sessionStorage.removeItem('hero-auction-lanes');window.HeroPlatform.beforeNavigate?.('/crazygames/');location.replace('/crazygames/')};
@@ -152,16 +159,8 @@ function commanderBonusForRole(role){
  const level=Number(p.levels[stat])||0;
  return Math.min(Math.max(0,level),p.commanderId===stat?40:20)*.005;
 }
-async function loadArenaCommander(){
- try{
-  const login=JSON.parse(localStorage.getItem('hero-auction-login')||'null');
-  if(!login?.authToken)return;
-  const response=await fetch('/api/commander/get',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({authToken:login.authToken})});
-  if(!response.ok)return;
-  const data=await response.json();arenaCommanderProfile=data.profile||null;
-  if(!prepDone){renderBoard()}
- }catch(error){console.warn('Komutan önizlemesi yüklenemedi:',error)}
-}
+// Account training defaults are not a commander selection for this match.
+
 
 let assignedRoles=demoA.map(x=>roleNames[x[1]]?x[1]:'fighter');
 const lanes=['front','front','back','back','back'];
@@ -198,6 +197,8 @@ let arenaMode=query.get('room')==='arena';
 const auctionCode=query.get('auctionCode');
 const auctionToken=query.get('auctionToken');
 const auctionMode=Boolean(auctionCode&&auctionToken);
+// Auction matches enter arena only after server-confirmed commander choices.
+if(auctionMode)arenaMode=false;
 // Reuse authenticated friendships/presence across the separate preparation/arena page.
 // The shared invitation dock has its own in-flow space, outside the fitted combat grid.
 let arenaFriends=null,arenaInvites=null;
@@ -447,7 +448,26 @@ document.addEventListener('click',e=>{
 function revealArenaAudio(){
  if(arenaMusicEnabled&&!document.hidden)void startArenaMusic();
 }
+let matchCommanderPicker=null;
+function showMatchCommanderPicker(){
+ if(leavingBattle)return;
+ if(prepTimer!==null){clearInterval(prepTimer);prepTimer=null}
+ document.querySelector('.formation').hidden=true;
+ document.body.classList.add('commander-selection');
+ const url=new URL(location.href);url.searchParams.set('room','commander');url.searchParams.delete('commanderTest');history.replaceState(null,'',url);
+ matchCommanderPicker?.destroy();
+ matchCommanderPicker=mountMatchCommanderPicker({root:$('match-commander-picker'),code:auctionCode,token:auctionToken,matchKey:preparationMatchKey,english:document.documentElement.lang==='en',onStarted:data=>{
+  if(leavingBattle)return;
+  arenaCommanderProfile=data.selection||data.commanderSelection?.profile||null;
+  enterArenaWithoutReload('/battle-preview.html?room=arena&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken)+'&auctionMatchKey='+encodeURIComponent(auctionCode+':'+preparationMatchKey)+'&commanderTest=1');
+ }});
+ window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(false);
+}
+window.addEventListener('pageshow',event=>{if(event.persisted&&auctionMode)location.reload()});
 function enterArenaWithoutReload(url){
+ matchCommanderPicker?.destroy();
+ $('match-commander-picker').hidden=true;
+ document.body.classList.remove('commander-selection');
  window.HeroPlatform?.gameplay(false);
  // Preserve the user-unlocked HTMLAudioElement across the formation-to-arena transition.
  history.replaceState(null,'',url);
@@ -470,7 +490,7 @@ function enterArenaWithoutReload(url){
  if(auctionMode&&auctionCode&&auctionToken){
   const check=async()=>{
    try{
-    const response=await fetch('/api/battle-auction-preview?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});
+    const response=await fetch('/api/battle-auction-preview?matchCommanderSelection=1&code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});
     const data=await response.json();
     if(!response.ok)throw Error(data.error||'Savaş durumu alınamadı');
     if(data.started){
@@ -497,10 +517,10 @@ async function lockFormation(){
    if(auctionMode){
     // Finish queued row changes before confirmation; Ready also carries the full final draft.
     await preparationDraft?.flush();
-    const response=await fetch('/api/battle-auction-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,matchKey:preparationMatchKey,...formation})});
+    const response=await fetch('/api/battle-auction-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,matchKey:preparationMatchKey,matchCommanderSelection:1,...formation})});
     const data=await response.json();if(!response.ok)throw Error(data.error||'Diziliş gönderilemedi');
     preparationDraft?.clear();prepDone=true;
-    enterArenaWithoutReload('/battle-preview.html?room=arena&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken)+'&auctionMatchKey='+encodeURIComponent(auctionCode+':'+preparationMatchKey)+'&commanderTest=1');return;
+    showMatchCommanderPicker();return;
    }
    if(multiplayerCode&&multiplayerToken){
     const response=await fetch('/api/battle-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ready',code:multiplayerCode,token:multiplayerToken,...formation})});
@@ -523,6 +543,7 @@ function startPreparation(){
 }
 const roleIcons={tank:'🛡️',fighter:'⚔️',energy:'⚡',assassin:'🗡️',support:'💚'};
 $('apply-roles').onclick=lockFormation;
+if(auctionMode)$('apply-roles').textContent=document.documentElement.lang==='en'?'✓ CONFIRM FORMATION → CHOOSE COMMANDER':'✓ DİZİLİŞİ ONAYLA → KOMUTAN SEÇ';
 if(arenaMode){document.body.classList.add('arena-room');document.querySelector('.formation').hidden=true;$('battle-arena').hidden=true;$('play').textContent='▶ SAVAŞI BAŞLAT';mountCommanderDock()}else{renderBoard();if(!auctionMode)startPreparation();else{$('apply-roles').disabled=true;$('prep-clock').textContent='--:--';$('prep-note').textContent='Açık artırma kartları doğrulanıyor…'}}
 const combatEffects=createCombatEffects({document});
 const heroAttacks=createHeroAttackPlayer({document});
@@ -640,7 +661,7 @@ async function build(overrideResult){
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
  try{
   let result=overrideResult;
-  if(!result&&auctionMode){const response=await fetch('/api/battle-auction-preview?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});const data=await response.json();if(!response.ok)throw Error(data.error||'Savaş alınamadı');if(!data.started){$('message').textContent='Rakibin dizilişi bekleniyor… '+data.ready.filter(Boolean).length+'/2 hazır';return}result=data.result}
+  if(!result&&auctionMode){const response=await fetch('/api/battle-auction-preview?matchCommanderSelection=1&code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});const data=await response.json();if(!response.ok)throw Error(data.error||'Savaş alınamadı');if(!data.started){$('message').textContent='Rakibin dizilişi bekleniyor… '+data.ready.filter(Boolean).length+'/2 hazır';return}result=data.result}
   if(!result){const response=await fetch('/api/battle-preview?roles='+encodeURIComponent(positions.map((i,slot)=>roleAt(slot)).join(','))+'&positions='+encodeURIComponent(positions.join(','))+'&lanes='+encodeURIComponent(lanes.join(',')),{cache:'no-store'});if(!response.ok)throw Error('Savaş verisi alınamadı ('+response.status+')');result=await response.json()}
   // Only already-validated room identity selects the decorative board; no URL override.
   const arenaMatch=auctionMode?(preparationMatchKey?auctionCode+':'+preparationMatchKey:null):multiplayerArenaKey||previewMusicMatchKey;
@@ -750,7 +771,7 @@ function showVictoryChest(result){
   victoryChestPresentation=createVictoryChestPresentation({root,matchId,accountScope:scope,winner:finalResult.winner,english:document.documentElement.lang==='en',storage,
    isCurrent:()=>{if(leavingBattle||panel.hidden||auctionCode+':'+preparationMatchKey!==matchId||finalResult?.winner!==0)return false;if(loginSnapshot===undefined)return true;try{return localStorage.getItem('hero-auction-login')===loginSnapshot}catch{return true}},
    load:async({signal})=>{
-    const response=await fetch('/api/battle-auction-preview?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store',signal});
+    const response=await fetch('/api/battle-auction-preview?matchCommanderSelection=1&code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store',signal});
     const value=await response.json();
     if(!response.ok)throw Object.assign(Error(value.error||'Sandık kaydı alınamadı'),{status:response.status});
     if(!value.started||value.result?.matchId&&value.result.matchId!==matchId)throw Object.assign(Error('Maç değişti'),{status:409});
@@ -1063,13 +1084,13 @@ $('reset').onclick=()=>{stop();$('play').textContent='▶ SAVAŞI OYNAT';$('even
 if(multiplayerCode&&multiplayerToken){const check=async()=>{try{const response=await fetch('/api/battle-room?code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken),{cache:'no-store'});const v=await response.json();if(!response.ok)throw Error(v.error);applyPreviewRoomTheme(v);if(v.started){clearInterval(battlePoll);battlePoll=null;document.body.classList.add('online-battle');if(!arenaMode){enterArenaWithoutReload('/battle-preview.html?room=arena&code='+encodeURIComponent(multiplayerCode)+'&token='+encodeURIComponent(multiplayerToken));return}await build(v.result);if(events.length)$('play').click()}else{$('message').textContent='Rakibin hazırlanması bekleniyor… '+v.ready.filter(Boolean).length+'/2 hazır';if(arenaMode)$('play').disabled=true}}catch(e){$('message').textContent='⚠ '+e.message}};void check();battlePoll=setInterval(check,1800)}else if(arenaMode&&!auctionCode){void build().then(()=>{if(events.length)$('play').click()})}
 
 if(auctionCode&&auctionToken){void (async()=>{try{
- const response=await fetch('/api/battle-auction-team?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});
+ const response=await fetch('/api/battle-auction-team?matchCommanderSelection=1&code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});
  const data=await response.json();if(!response.ok)throw Error(data.error||'Açık artırma verisi alınamadı');
  const own=data.teams[data.seat],rival=data.teams[1-data.seat];
  if(!Array.isArray(own)||own.length!==5||!Array.isArray(rival)||rival.length!==5)throw Error('Her oyuncunun beş kahramanı olmalı');
  if(own.some(c=>!c.id||!c.name)||rival.some(c=>!c.id||!c.name)||new Set(own.map(c=>c.id)).size!==5||new Set(rival.map(c=>c.id)).size!==5)throw Error('Açık artırma kahramanları doğrulanamadı');
  demoA=own.map(c=>[c.name,c.role||'fighter',c.power,c.universe,c.rarity]);demoB=rival.map(c=>[c.name,c.role||'fighter',c.power,c.universe,c.rarity]);
- previewCredits=data.credits[data.seat];assignedRoles=demoA.map(c=>c[1]);auctionLaneModifiers=own.map(c=>c.laneModifiers||{});heroArtCache.clear();void loadArenaCommander();
+ previewCredits=data.credits[data.seat];assignedRoles=demoA.map(c=>c[1]);auctionLaneModifiers=own.map(c=>c.laneModifiers||{});heroArtCache.clear();arenaCommanderProfile=null;
  const preparation=data.preparation;
  if(!preparation?.matchKey||!validateFormation(preparation,own))throw Error('Diziliş doğrulanamadı');
  preparationMatchKey=preparation.matchKey;
@@ -1079,14 +1100,14 @@ if(auctionCode&&auctionToken){void (async()=>{try{
  preparationDraft=createPreparationDraft({matchKey:auctionCode+':'+auctionToken+':'+preparationMatchKey,team:own,storage:draftStorage,
   save:async formation=>{
    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),5000);
-   try{const response=await fetch('/api/battle-auction-formation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...formation,matchKey:preparationMatchKey,code:auctionCode,token:auctionToken}),signal:controller.signal});const value=await response.json();if(!response.ok)throw Error(value.error||'Diziliş kaydedilemedi')}finally{clearTimeout(timeout)}
+   try{const response=await fetch('/api/battle-auction-formation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...formation,matchKey:preparationMatchKey,matchCommanderSelection:1,code:auctionCode,token:auctionToken}),signal:controller.signal});const value=await response.json();if(!response.ok)throw Error(value.error||'Diziliş kaydedilemedi')}finally{clearTimeout(timeout)}
   },onError:()=>{$('prep-note').textContent='Saf değişikliği bu cihazda saklandı. Hazırım ile tekrar gönderilecek.'}});
  const pending=!preparation.ready&&!arenaMode?preparationDraft.pending():null;
  const restored=pending||preparation;positions.splice(0,5,...restored.positions);lanes.splice(0,5,...restored.lanes);
  if(pending)void preparationDraft.save(pending);
- if(preparation.ready){preparationDraft.clear();prepDone=true;window.HeroPlatform?.loaded();if(!arenaMode){auctionLoaded=true;enterArenaWithoutReload('/battle-preview.html?room=arena&auctionCode='+encodeURIComponent(auctionCode)+'&auctionToken='+encodeURIComponent(auctionToken)+'&auctionMatchKey='+encodeURIComponent(auctionCode+':'+preparationMatchKey)+'&commanderTest=1');return}}
+ if(preparation.ready){preparationDraft.clear();prepDone=true;window.HeroPlatform?.loaded();if(!arenaMode){auctionLoaded=true;showMatchCommanderPicker();return}}
  $('battle-lobby-status').textContent='Açık artırma kartların yüklendi · Kalan kredi: '+previewCredits+' · Bonus: %'+(creditBonus(previewCredits)*100).toFixed(1);
- if(!arenaMode){auctionLoaded=true;renderBoard();$('apply-roles').disabled=false;startPreparation();$('prep-note').textContent='Kahramanların hazır. İstersen ön/arka safı değiştir, sonra Hazırım.';window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(true)}else{window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(false);let auctionBattleStarted=false;const check=async()=>{if(auctionBattleStarted)return;try{const response=await fetch('/api/battle-auction-preview?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});const data=await response.json();if(!response.ok)throw Error(data.error||'Savaş durumu alınamadı');if(data.started){auctionBattleStarted=true;if(battlePoll!==null){clearInterval(battlePoll);battlePoll=null}await build(data.result);if(data.result?.live){$('play').textContent='⚡ CANLI SAVAŞ SÜRÜYOR';await import('/commander-experimental.js?live='+encodeURIComponent(auctionCode))}else if(events.length)startReplay()}else $('message').textContent='Rakibin dizilişi bekleniyor… '+data.ready.filter(Boolean).length+'/2 hazır'}catch(e){$('message').textContent='⚠ '+e.message;void recoverBotServerFailure()}};await check();if(!auctionBattleStarted&&battlePoll===null)battlePoll=setInterval(check,1800)}
+ if(!arenaMode){auctionLoaded=true;renderBoard();$('apply-roles').disabled=false;startPreparation();$('prep-note').textContent='Kahramanların hazır. İstersen ön/arka safı değiştir, sonra Hazırım.';window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(true)}else{window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(false);let auctionBattleStarted=false;const check=async()=>{if(auctionBattleStarted)return;try{const response=await fetch('/api/battle-auction-preview?matchCommanderSelection=1&code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});const data=await response.json();if(!response.ok)throw Error(data.error||'Savaş durumu alınamadı');if(data.started){auctionBattleStarted=true;if(battlePoll!==null){clearInterval(battlePoll);battlePoll=null}await build(data.result);if(data.result?.live){$('play').textContent='⚡ CANLI SAVAŞ SÜRÜYOR';await import('/commander-experimental.js?live='+encodeURIComponent(auctionCode))}else if(events.length)startReplay()}else $('message').textContent='Rakibin dizilişi bekleniyor… '+data.ready.filter(Boolean).length+'/2 hazır'}catch(e){$('message').textContent='⚠ '+e.message;void recoverBotServerFailure()}};await check();if(!auctionBattleStarted&&battlePoll===null)battlePoll=setInterval(check,1800)}
  }catch(e){$('prep-note').textContent='⚠ '+e.message;$('message').textContent='⚠ '+e.message;$('battle-lobby-status').textContent='⚠ Açık artırmada seçilen kahramanlar yüklenemedi: '+e.message;$('apply-roles').disabled=true;$('play').disabled=true;void recoverBotServerFailure()}})()}
 
 let botOutcomeTimer=null;
@@ -1151,7 +1172,7 @@ async function showAuctionRematch(){
  const consent=state.room?.mode==='bot'?await botEntryConsent.request(botScope,state.room.difficulty||'medium'):{};
  if(!consent){button.disabled=false;return;}
  if(leavingBattle||preparationMatchKey!==completedMatchKey||JSON.parse(localStorage.getItem('hero-auction-login')||'null')?.authToken!==auth?.authToken){button.disabled=false;return;}
- const response=await fetch('/api/rematch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...identity,...consent,...(state.room?.mode==='bot'?{expectedMatchId:auctionCode+':'+completedMatchKey}:{})})});const result=await response.json();if(!response.ok)throw Error(result.error||'Rövanş gönderilemedi');botEntryConsent.complete(botScope);button.textContent='✓ RÖVANŞ İSTEĞİ GÖNDERİLDİ';const watch=setInterval(async()=>{try{const response=await fetch('/api/battle-auction-team?code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});if(response.status===409){clearInterval(watch);window.HeroPlatform?.beforeNavigate('/crazygames/');location.replace('/')} }catch{}},2500);}catch(e){button.disabled=false;$('message').textContent='⚠ '+e.message}};
+ const response=await fetch('/api/rematch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...identity,...consent,...(state.room?.mode==='bot'?{expectedMatchId:auctionCode+':'+completedMatchKey}:{})})});const result=await response.json();if(!response.ok)throw Error(result.error||'Rövanş gönderilemedi');botEntryConsent.complete(botScope);button.textContent='✓ RÖVANŞ İSTEĞİ GÖNDERİLDİ';const watch=setInterval(async()=>{try{const response=await fetch('/api/battle-auction-team?matchCommanderSelection=1&code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});if(response.status===409){clearInterval(watch);window.HeroPlatform?.beforeNavigate('/crazygames/');location.replace('/')} }catch{}},2500);}catch(e){button.disabled=false;$('message').textContent='⚠ '+e.message}};
  }catch(e){battleRematchShown=false;$('message').textContent='⚠ '+e.message}
 }
 

@@ -108,11 +108,10 @@ function app({storedLogin=false,profile=null,saved=null,commanderGate=null,state
  runInContext('show=r=>{room=r;applyLogin()}',context);
  return {$,context,calls,storage,location,run:code=>runInContext(code,context)};
 }
-for(const provider of ['guest','google'])test(provider+' login retains intent through commander selection, exposes parent panel, joins only on Accept',async()=>{
+for(const provider of ['guest','google'])test(provider+' login retains intent without commander selection, exposes parent panel, joins only on Accept',async()=>{
  const f=app();await flush();assert.equal(f.$('join-invite-notice').hidden,false);assert.equal(f.$('home').hidden,true);
  if(provider==='guest')await f.$('guest-login').click();else await f.context.window.heroGoogleCallback({credential:'fake'});
- await flush();assert.equal(f.$('commander-onboarding').hidden,false);assert.equal(f.calls.filter(c=>c.path==='/api/join').length,0);
- f.$('commander-onboarding-options').children[0].click();await f.$('commander-select-confirm').click();await flush();
+ await flush();assert.equal(f.$('commander-onboarding').hidden,true);assert.equal(f.calls.filter(c=>c.path==='/api/join').length,0);
  for(const id of ['home','home-play-panel','join-invite'])assert.equal(f.$(id).hidden,false,id+' visible');
  assert.equal(f.$('join').disabled,true);assert.equal(f.$('roomcode').disabled,true);assert.equal(f.$('match').disabled,true);
  assert.equal(f.calls.filter(c=>c.path==='/api/join').length,0);
@@ -146,4 +145,26 @@ test('cancelled invite restore cannot overwrite a newer explicit game',async()=>
  const gate=deferred(),f=app({storedLogin:true,profile:{commanderId:'attack',levels:{attack:1}},saved:{code:'456',token:'old'},stateGate:gate});await flush();
  f.$('join-invite-cancel').click();await flush();f.run("save('new-seat',{code:'789'})");gate.resolve();await flush();
  assert.equal(f.run('room.code'),'789');assert.equal(JSON.parse(f.storage.get('hero-auction-session')).token,'new-seat');
+});
+
+test('optional commander menu opens for a new account, closes without choosing, and uses select only on confirmation',async()=>{
+ const f=app({storedLogin:true});await flush();f.$('join-invite-cancel').click();await flush();
+ assert.equal(f.$('home').hidden,false);assert.equal(f.$('commander-open-profile').hidden,false);
+ f.$('commander-open-profile').click();assert.equal(f.$('commander-onboarding').hidden,false);
+ f.$('commander-onboarding-close').click();assert.equal(f.$('home').hidden,false);
+ assert.equal(f.calls.filter(c=>c.path==='/api/commander/select').length,0);
+ f.$('commander-open-profile').click();f.$('commander-onboarding-options').children[0].click();
+ await f.$('commander-select-confirm').click();await flush();
+ assert.equal(f.calls.filter(c=>c.path==='/api/commander/select').length,1);
+ assert.equal(f.$('commander-onboarding').hidden,true);assert.equal(f.$('commander-profile').hidden,false);
+ f.$('commander-profile-close').click();assert.equal(f.$('home').hidden,false);
+});
+
+test('a delayed commander read cannot block lobby or invite acceptance',async()=>{
+ const gate=deferred(),f=app({storedLogin:true,commanderGate:gate});await flush();
+ assert.equal(f.$('home').hidden,false);assert.equal(f.$('commander-onboarding').hidden,true);
+ f.$('join-invite-button').click();await flush();
+ assert.equal(f.calls.filter(c=>c.path==='/api/join').length,1);
+ gate.resolve();await flush();assert.equal(f.run('room.code'),'123');
+ assert.equal(f.$('commander-onboarding').hidden,true);
 });

@@ -1,5 +1,9 @@
 // Presentation copy only. Shared Turkish source, account data and game rules stay unchanged.
 export const uiPhrases = {
+'Giriş yap ve maça başla':'Sign in and start playing',
+'Misafir olarak hemen başla veya Google hesabınla devam et. Komutanını maçta dizilişten sonra, arenaya geçmeden ücretsiz seçersin.':'Start as a guest or continue with Google. Choose your commander for free after formation, before entering the arena.',
+'Beş kahramanın rollerine göre otomatik yerleşir. Ön saf ve arka saf düğmeleriyle dizilişi değiştirebilir, güç etkisini karşılaştırabilirsin. Boş yuva seçmen gerekmez. Süreyi takip et ve Hazırım düğmesiyle onayla. Ardından komutanını seçerek arenaya geç.':'Your five heroes are placed automatically by role. Use the Front and Back buttons to adjust your formation and compare power. No empty slots need selecting. Watch the timer and confirm with Ready. Then choose your commander and enter the arena.',
+
 'Kolay, orta veya zor bilgisayar maçlarından birini seç. Giriş ücretsizdir; kolay/orta/zor galibiyeti 100 altın / 125 altın + 2 büyü tozu / 175 altın + 5 büyü tozu kazandırır. Elmas veya lig puanı yoktur. Arkadaşlarınla oynamak için özel oda oluşturabilir, 3 haneli oda koduyla katılabilir veya rakip arayabilirsin. Çevrim içi maç giriş bedelini katılmadan önce kontrol et.':'Choose easy, medium or hard computer games. Entry is free; easy/medium/hard wins award 100 gold / 125 gold + 2 magic dust / 175 gold + 5 magic dust. No diamonds or league points. Create a private room, join with a three-digit code or search for an opponent to play with friends. Check entry fees before joining.',
 
 'Bilgisayar maçına giriş ücretsiz; galibiyette sabit ödül, lig puanı değişmez.':'Computer games are free; fixed rewards for wins, no league point changes.',
@@ -51,11 +55,9 @@ export const uiPhrases = {
  'Komutan seçimi':'Commander selection','Ana uzmanlık gelişimi':'Main specialty progress','Komutan seçimini kapat':'Close commander selection','Seçili komutan':'Selected commander',
  'Komutanın hesabına kaydedildi.':'Your commander was saved to your account.',
  'Komutan değiştirildi.':'Commander changed.',
- 'Komutan değiştirildi. 100 altın harcandı.':'Commander changed. 100 gold spent.',
  'Komutan profili yüklenemedi:':'Could not load commander profile:',
  'altın harcandı.':'gold spent.','gelişimi':'progress','SEÇ':'SELECT',
  'Bu cihazda odadan ayrılmak istiyor musun?':'Do you want to leave this room on this device?',
- 'komutanına geçmek için 100 altın harcamak istiyor musun? Gelişim seviyelerin korunacak.':'will cost 100 gold. Do you want to change commanders? Your upgrade levels will be preserved.',
  'Arkadaşına davet bağlantısını gönder. Bağlantıyı açtığında oda kodu hazır olacak.':'Send your friend the invite link. The room code will be ready when they open it.',
  'Davet bağlantısı kopyalandı.':'Invite link copied.',
  'Davet bağlantısı kopyalanamadı. CrazyGames davet düğmesini kullan.':'Could not copy the invite link. Use the CrazyGames invite button.',
@@ -100,7 +102,7 @@ export const uiPhrases = {
  'Aynı hesap iki oyuncu olarak katılamaz.':'The same account cannot join as both players.',
  'Bilinmeyen işlem.':'Unknown action.','Bu dal maksimum seviyede.':'This branch is at its maximum level.','Bu komutan zaten seçili.':'This commander is already selected.',
  'Geçersiz geliştirme alanı.':'Invalid upgrade branch.','Geçersiz hesap.':'Invalid account.','Hesap askıya alınmıştır.':'This account has been suspended.','Hesap bulunamadı.':'Account not found.',
- 'Kazanan teklif yok.':'No winning bid.','Komutan değiştirmek için 100 altın gerekiyor.':'Changing commanders requires 100 gold.',
+ 'Kazanan teklif yok.':'No winning bid.',
  'Komutan sistemi geçici olarak kullanılamıyor.':'The commander system is temporarily unavailable.',
  'Komutanın zaten seçilmiş. Değiştirilemez.':'Your commander is already selected and cannot be changed here.','Komutanın zaten seçilmiş.':'Your commander is already selected.',
  'Maç henüz bitmedi.':'The match has not finished yet.','Maça katılmak için en az 50 altın gerekli.':'You need at least 50 gold to join a match.',

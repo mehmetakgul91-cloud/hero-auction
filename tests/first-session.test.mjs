@@ -32,7 +32,7 @@ test('bilingual tutorial matches automatic role formation and retains manual row
  assert.match(guideSteps.en[1][1],/automatically by role/);assert.match(guideSteps.en[1][1],/Front \/ Back/);assert.doesNotMatch(guideSteps.en[1][1],/slot|swap/);assert.match(guideSteps.tr[1][1],/otomatik/);assert.doesNotMatch(guideSteps.tr[1][1],/yuvaya|yer değiştirir/);
 });
 test('portal compact guide moves existing controls and never starts a match',()=>{
- const src=readFileSync('public/first-session.js','utf8');assert.match(src,/modes.prepend\(bot\)/);assert.doesNotMatch(src,/cloneNode|fetch\(|\.post\(|getElementById\('bot'\)\.click/);assert.match(src,/100 gold/);assert.match(src,/mountFirstSession/);
+ const src=readFileSync('public/first-session.js','utf8');assert.match(src,/modes.prepend\(bot\)/);assert.doesNotMatch(src,/cloneNode|fetch\(|\.post\(|getElementById\('bot'\)\.click/);assert.match(src,/Choosing and changing commanders is free/);assert.match(src,/mountFirstSession/);
  const app=readFileSync('public/app.js','utf8');assert.match(app,/mountFirstSession\(document,\{enabled:!!window.HeroPlatform\}\)/);
  assert.match(crazyGamesSource(src,'.js'),/\.\/commander-profile-view\.js/);
 });

@@ -19,11 +19,11 @@ function element(){
 function harness({gold=100,language='tr',confirmed=true,post}={}){
  const elements=new Map(),calls=[],prompts=[];
  const $=id=>{if(!elements.has(id))elements.set(id,element());return elements.get(id)};
- const context=vm.createContext({$,COMMANDER_CHANGE_COST,walletGold:gold,
+ const context=vm.createContext({$,COMMANDER_CHANGE_COST,walletGold:gold,login:{authToken:"test"},
   document:{documentElement:{lang:language},createElement:element},
   window:{confirm:message=>{prompts.push(message);return confirmed}},
   uiText:text=>language==='en'?translate(text):text,
-  post:async(url,body)=>{calls.push({url,body:JSON.parse(JSON.stringify(body))});return post?post(url,body):{profile:{commanderId:body.commanderId,levels:{...levels}},gold:gold-100,cost:100}},
+  post:async(url,body)=>{calls.push({url,body:JSON.parse(JSON.stringify(body))});return post?post(url,body):{profile:{commanderId:body.commanderId,levels:{...levels}},gold,cost:0}},
   showGold:value=>{context.walletGold=value},
   renderCommanderProfile(){context.renderCommanderRoster()},
  });
@@ -35,93 +35,45 @@ function harness({gold=100,language='tr',confirmed=true,post}={}){
   state:()=>JSON.parse(vm.runInContext('JSON.stringify({commanderProfile,commanderChangePending,commanderChangeOpen,commanderBusy})',context))};
 }
 
-test('shared switch cost is 100 and static onboarding / fallback labels match in both languages',()=>{
- assert.equal(COMMANDER_CHANGE_COST,100);
- assert.match(crazyGamesSource(app,'.js'),/from '\/crazygames\/commander-economy\.js'/);
- assert.match(app,/import\s*\{\s*COMMANDER_CHANGE_COST\s*\}\s*from\s*['"]\/commander-economy\.js['"]/);
+test('commander choice is free and optional in both languages',()=>{
+ assert.equal(COMMANDER_CHANGE_COST,0);
  const html=read('public/index.html');
- const onboarding=html.slice(html.indexOf('<section id="commander-onboarding"'),html.indexOf('<section id="commander-profile"'));
- assert.match(onboarding,/Daha sonra 100 altın karşılığında komutanını değiştirebilirsin\./);
- const open=html.match(/<button[^>]+id="commander-change-open"[\s\S]*?<\/button>/)[0];
- const confirm=html.match(/<button[^>]+id="commander-change-confirm"[\s\S]*?<\/button>/)[0];
- assert.match(open,/100 ALTIN/);assert.match(confirm,/100 · KOMUTAN DEĞİŞTİR/);
- assert.equal(translate('İlk girişinde bir komutan seç. Seçim hesabına kaydedilir. Daha sonra 100 altın karşılığında komutanını değiştirebilirsin.'),'Choose a commander for your account. You can change commanders later for 100 gold.');
- assert.equal(translate('100 ALTIN'),'100 GOLD');
- assert.equal(translate('🪙 100 · KOMUTAN DEĞİŞTİR'),'🪙 100 · CHANGE COMMANDER');
- assert.doesNotMatch(onboarding+open+confirm+switching,/(?:1[.,]?000|5[.,]?000)/);
+ assert.match(html,/id="commander-onboarding-close"/);
+ assert.doesNotMatch(html,/<small>100 ALTIN|100 · KOMUTAN DEĞİŞTİR|Daha sonra 100 altın/);
+ assert.equal(translate('✓ Komutan ücretsiz değiştirildi.'),'✓ Commander changed for free.');
+ assert.match(app,/profileReady:commanderLoaded,/);
+ assert.match(app,/ready:signedIn\(\)&&!commanderProfileOpen&&!room/);
 });
-
-test('100 gold enables a selected new commander, 99 blocks both button and request',async()=>{
- const exact=harness();exact.choose(1);
- assert.equal(exact.$('commander-change-confirm').disabled,false);
- assert.match(exact.$('commander-change-confirm').textContent,/100/);
- await exact.change();assert.equal(exact.calls.length,1);assert.equal(exact.context.walletGold,0);
- const short=harness({gold:99});short.choose(1);
- assert.equal(short.$('commander-change-confirm').disabled,true);
- await short.change();assert.equal(short.calls.length,0);assert.equal(short.prompts.length,0);assert.equal(short.context.walletGold,99);
-});
-
-test('the current commander and empty selection cannot start a paid request',async()=>{
- const h=harness({gold:5000});
- assert.equal(h.$('commander-change-confirm').disabled,true);await h.change();
- h.choose(0);assert.equal(h.$('commander-change-confirm').disabled,true);await h.change();
- assert.equal(h.calls.length,0);assert.equal(h.prompts.length,0);assert.equal(h.context.walletGold,5000);
-});
-
-for(const language of ['tr','en'])test(`${language} confirmation quotes 100 and cancel spends nothing`,async()=>{
- const h=harness({language,confirmed:false});h.choose(1);await h.change();
- assert.equal(h.prompts.length,1);
- assert.match(h.prompts[0],language==='en'?/Spend 100 gold to switch to Defense Commander\?/:/Savunma Komutanı komutanına geçmek için 100 altın/);
- assert.doesNotMatch(h.prompts[0],/(?:1[.,]?000|5[.,]?000)/);
- assert.equal(h.calls.length,0);assert.equal(h.context.walletGold,100);
- assert.equal(h.state().commanderProfile.commanderId,'attack');assert.equal(h.state().commanderBusy,false);
+for(const language of ['tr','en'])test(language+' switches with zero gold and no spend prompt',async()=>{
+ const h=harness({gold:0,language,confirmed:false});h.choose(1);
  assert.equal(h.$('commander-change-confirm').disabled,false);
+ await h.change();assert.equal(h.calls.length,1);assert.equal(h.prompts.length,0);
+ assert.equal(h.context.walletGold,0);assert.equal(h.state().commanderProfile.commanderId,'defense');
+ assert.deepEqual(h.state().commanderProfile.levels,levels);
 });
-
-test('repeated clicks during a request send one debit and success updates the profile and wallet',async()=>{
- let complete;
- const pending=new Promise(resolve=>{complete=resolve});
- const h=harness({gold:3500,post:()=>pending});h.choose(2);
- const first=h.change();
- assert.equal(h.state().commanderBusy,true);assert.equal(h.$('commander-change-confirm').disabled,true);
- assert.ok(h.$('commander-roster-options').children.every(button=>button.disabled));
- await h.change();assert.equal(h.calls.length,1);assert.equal(h.prompts.length,1);
- complete({profile:{commanderId:'magic',levels:{...levels}},gold:3400,cost:100});await first;
- assert.deepEqual(h.calls,[{url:'/api/commander/change',body:{commanderId:'magic'}}]);
- assert.equal(h.context.walletGold,3400);assert.deepEqual(h.state().commanderProfile,{commanderId:'magic',levels});
- assert.equal(h.state().commanderBusy,false);assert.equal(h.state().commanderChangePending,null);
- assert.equal(h.$('commander-change-panel').hidden,true);assert.equal(h.$('commander-change-open').attributes['aria-expanded'],'false');
- assert.equal(h.$('commander-upgrade-message').textContent,'✓ Komutan değiştirildi. 100 altın harcandı.');
- assert.equal(translate(h.$('commander-upgrade-message').textContent),'✓ Commander changed. 100 gold spent.');
- await h.change();assert.equal(h.calls.length,1,'completed request clears selection and cannot be resubmitted');
+test('current commander and empty selection do not submit',async()=>{
+ const h=harness();await h.change();h.choose(0);await h.change();assert.equal(h.calls.length,0);
 });
-
-test('success reports the server cost, including the existing free preview response',async()=>{
- const h=harness({post:async()=>({profile:{commanderId:'defense',levels},gold:100,cost:0})});h.choose(1);await h.change();
- assert.equal(h.context.walletGold,100);
- assert.equal(h.$('commander-upgrade-message').textContent,'✓ Komutan değiştirildi. 0 altın harcandı.');
- assert.equal(translate(h.$('commander-upgrade-message').textContent),'✓ Commander changed. 0 gold spent.');
+test('repeated clicks send one request and success clears selection',async()=>{
+ let complete;const h=harness({post:()=>new Promise(resolve=>complete=resolve)});h.choose(2);
+ const first=h.change();await h.change();assert.equal(h.calls.length,1);
+ assert.ok(h.$('commander-roster-options').children.every(b=>b.disabled));
+ complete({profile:{commanderId:'magic',levels},gold:100,cost:0});await first;
+ assert.equal(h.state().commanderChangePending,null);assert.equal(h.$('commander-change-panel').hidden,true);
+ await h.change();assert.equal(h.calls.length,1);
 });
-
-test('missing cost in a compatible response falls back to 100',async()=>{
- const h=harness({post:async()=>({profile:{commanderId:'defense',levels},gold:0})});h.choose(1);await h.change();
- assert.equal(h.$('commander-upgrade-message').textContent,'✓ Komutan değiştirildi. 100 altın harcandı.');
-});
-
-test('server failure preserves profile and wallet, releases busy state and allows retry',async()=>{
- const h=harness({post:async()=>{throw Error('Komutan değiştirmek için 100 altın gerekiyor.')}});h.choose(1);await h.change();
+test('failed request preserves profile and wallet and can retry',async()=>{
+ const h=harness({post:async()=>{throw Error('Unavailable')}});h.choose(1);await h.change();
  assert.equal(h.context.walletGold,100);assert.equal(h.state().commanderProfile.commanderId,'attack');
  assert.equal(h.state().commanderBusy,false);assert.equal(h.$('commander-change-confirm').disabled,false);
- assert.equal(h.$('commander-upgrade-message').textContent,'⚠ Komutan değiştirmek için 100 altın gerekiyor.');
- assert.equal(translate(h.$('commander-upgrade-message').textContent),'⚠ Changing commanders requires 100 gold.');
 });
-
-test('closing and reopening the roster clears pending selection without sending a change',async()=>{
- const h=harness();h.choose(1);assert.equal(h.$('commander-change-confirm').disabled,false);
- h.$('commander-change-close').onclick();
- assert.equal(h.$('commander-change-panel').hidden,true);assert.equal(h.state().commanderChangePending,null);
- h.$('commander-change-open').onclick();
- assert.equal(h.$('commander-change-panel').hidden,false);assert.equal(h.$('commander-change-confirm').disabled,true);
- assert.match(h.$('commander-change-confirm').textContent,/100 · KOMUTAN DEĞİŞTİR/);
+test('closing and reopening clears pending choice',async()=>{
+ const h=harness();h.choose(1);h.$('commander-change-close').onclick();h.$('commander-change-open').onclick();
+ assert.equal(h.state().commanderChangePending,null);assert.equal(h.$('commander-change-confirm').disabled,true);
  await h.change();assert.equal(h.calls.length,0);
+});
+test('late change response cannot replace another account profile',async()=>{
+ let complete;const h=harness({post:()=>new Promise(resolve=>complete=resolve)});h.choose(2);const first=h.change();
+ h.context.login={authToken:'other'};complete({profile:{commanderId:'magic',levels},gold:0});await first;
+ assert.equal(h.state().commanderProfile.commanderId,'attack');assert.equal(h.context.walletGold,100);
 });

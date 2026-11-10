@@ -15,6 +15,7 @@ const {settleBotMatch,BOT_ECONOMY}=await import('../bot-economy.js');
 const {simulateRosterBattle}=await import('../battle-roster.js');
 const {prepareBattleTeams,auctionRoomToBattleState}=await import('../battle-match.js');
 const {battleRoster}=await import('../battle-roster.js');
+const {createCommanderProfile}=await import('../arena-commanders.js');
 const {buildDefaultFormation}=await import('../public/preparation-formation.js');
 const pool=new pg.Pool({host:'127.0.0.1',port:5432,database:'hero_bot_browser_test',user:'test',password:'test',ssl:false,max:5,connectionTimeoutMillis:5000,options:'-c statement_timeout=10000 -c lock_timeout=5000',application_name:'hero-disposable-bot-browser'});
 const artifacts=path.resolve(process.env.HERO_BROWSER_SCREENSHOTS||'artifacts/bot-browser');
@@ -127,12 +128,13 @@ try{
  for(const item of direct){
   const room=(await pool.query('SELECT state FROM hero_auction_rooms WHERE code=$1',[item.room.code])).rows[0].state;
   room.phase='finished';room.round=10;room.deadline=null;room.players.forEach((p,i)=>{p.team=room.cards.slice(i*5,i*5+5).map(c=>({...c,cost:0}));p.credits=20;});
+  const commanders=[createCommanderProfile('attack'),room.botCommander||createCommanderProfile('defense')];
   let teams=prepareBattleTeams(auctionRoomToBattleState(room)),result;
-  for(let attempt=0;attempt<100;attempt++){result=simulateRosterBattle(...teams,{seed:'browser-terminal-'+attempt,remainingCredits:[20,20]});if(result.winner===0)break;}
-  if(result.winner!==0){[room.players[0].team,room.players[1].team]=[room.players[1].team,room.players[0].team];teams=prepareBattleTeams(auctionRoomToBattleState(room));for(let attempt=0;attempt<100;attempt++){result=simulateRosterBattle(...teams,{seed:'browser-terminal-swapped-'+attempt,remainingCredits:[20,20]});if(result.winner===0)break;}}
+  for(let attempt=0;attempt<100;attempt++){result=simulateRosterBattle(...teams,{seed:'browser-terminal-'+attempt,remainingCredits:[20,20],commanders});if(result.winner===0)break;}
+  if(result.winner!==0){[room.players[0].team,room.players[1].team]=[room.players[1].team,room.players[0].team];teams=prepareBattleTeams(auctionRoomToBattleState(room));for(let attempt=0;attempt<100;attempt++){result=simulateRosterBattle(...teams,{seed:'browser-terminal-swapped-'+attempt,remainingCredits:[20,20],commanders});if(result.winner===0)break;}}
   assert.equal(result.winner,0,'synthetic terminal fixture must be a simulator win');assert.ok(result.log.length);
   const formations=teams.map(team=>buildDefaultFormation(team.map(card=>({...card,role:battleRoster.find(h=>h.id===card.id).role}))));
-  room.battleSync={key:(room.matchNumber||1)+':'+room.created,ready:formations,drafts:formations,result:{...result,live:false,finished:true,log:result.log.slice(-1)}};
+  room.battleSync={key:(room.matchNumber||1)+':'+room.created,ready:formations,drafts:formations,commanderChoices:commanders,result:{...result,live:false,finished:true,log:result.log.slice(-1)}};
   room.battleCompleted=[false,false];const settled=await settleBotMatch({database:pool,room,winner:0});item.receipt=settled.receipt;
  }
  await start();

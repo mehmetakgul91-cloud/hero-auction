@@ -1,5 +1,6 @@
 // Actual server helper integration with deterministic injected persistence.
 // These tests exercise orchestration, NOT PostgreSQL durability.
+import {preserveCommanderSelectionCapability} from '../commander-client-capability.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -13,7 +14,7 @@ const request={authToken:'synthetic-auth',difficulty:'medium',botTermsVersion:BO
 const offer=()=>({code:'123',created:1000,matchNumber:1,phase:'bot_offer',mode:'random',players:[{accountId:'synthetic-human',token:'seat-token',name:'Fixture',team:[],credits:20},null],cards:[],series:[0,0]});
 function fixture({lost=false,gold=500,ready=true}={}){
  let saved=null,admissions=0,settlements=0,sequence=0;
- const ctx={BOT_ECONOMY,verifyBotEconomySchema:async()=>true,structuredClone,console:{error(){}},databaseReady:true,previewGuestMode:false,magicDustPolicy:{enabled:true},database:{query:async()=>({rows:[]})},rooms:new Map(),activeSeats:new Map(),waiting:new Map(),roomFlushes:new Map(),auctionAdmissions:new WeakSet(),liveArenaMatchKeys:new Map(),dirtyRooms:new Set(),paidEntryMaintenance:{isPaused:()=>false},
+ const ctx={preserveCommanderSelectionCapability,BOT_ECONOMY,verifyBotEconomySchema:async()=>true,structuredClone,console:{error(){}},databaseReady:true,previewGuestMode:false,magicDustPolicy:{enabled:true},database:{query:async()=>({rows:[]})},rooms:new Map(),activeSeats:new Map(),waiting:new Map(),roomFlushes:new Map(),auctionAdmissions:new WeakSet(),liveArenaMatchKeys:new Map(),dirtyRooms:new Set(),paidEntryMaintenance:{isPaused:()=>false},
   readLogin:()=>({sub:'synthetic-human'}),seatRoom:p=>ctx.rooms.get(p.code),saveSocial:async()=>{},victoryMatchId:botMatchId,error:(message,status)=>{throw Object.assign(Error(message),{status})},
   publicRoom:r=>structuredClone(r),publish:r=>ctx.dirtyRooms.add(r.code),markRoom:r=>ctx.dirtyRooms.add(r.code),recordMatch(){},chosenName:()=> 'Fixture',crypto:{randomInt:()=>200+sequence++},token:()=>`token-${sequence++}`,newCards:()=>[],assignBotCommander:r=>{r.botCommander={commanderId:'attack',levels:{attack:25,defense:20,magic:20,support:20}}},startRoomArenaTheme(){},refreshAuctionIdentity:async()=>{},refreshAuctionCommanders:async()=>{},previewCommanderProfiles:new Map(),liveArenaLifecycle:{endRoom(){}},
   findBotAdmission:async()=>saved?{room:structuredClone(saved),replayed:true}:null,

@@ -29,6 +29,8 @@ test('online and rematch preparation auto-places once, persists lane edits, reje
    const views=await Promise.all(players.map(player=>get('/api/battle-auction-team',{code,token:player.token})));
    const first=views[0].preparation,key=first.matchKey;
    assert.notEqual(key,previousKey);assert.equal(first.ready,false);
+   assert.deepEqual((await get('/api/battle-auction-preview',{code,token:players[0].token})).commanderSelection,{ready:[false,false],profile:null},'rematch resets commander locks');
+   if(previousKey)assert.equal((await request('/api/battle-auction-commander',{code,...players[0],matchKey:previousKey,commanderId:'attack'})).status,409,'previous match choice cannot lock the rematch');
    for(const [seat,view] of views.entries())assert.deepEqual(view.preparation,{matchKey:key,...buildDefaultFormation(view.teams[seat]),ready:false});
    assert.deepEqual((await get('/api/battle-auction-preview',{code,token:players[0].token})).ready,[false,false]);
    const payload={code,token:players[0].token,...first,lanes:Array(5).fill('back')};
@@ -45,9 +47,12 @@ test('online and rematch preparation auto-places once, persists lane edits, reje
    assert.equal((await request('/api/battle-auction-formation',{...payload,lanes:Array(5).fill('back')})).status,409,'Ready locks draft');
    const confirmed=await get('/api/battle-auction-team',{code,token:players[0].token});assert.equal(confirmed.preparation.ready,true);assert.deepEqual(confirmed.preparation.lanes,payload.lanes);
    const again=await post('/api/battle-auction-preview',{...payload,lanes:Array(5).fill('back')});assert.equal(again.started,false);
-   const started=await post('/api/battle-auction-preview',{code,token:players[1].token,...views[1].preparation});assert.equal(started.started,true);
+   const bothReady=await post('/api/battle-auction-preview',{code,token:players[1].token,...views[1].preparation});assert.equal(bothReady.started,false);
+   await post('/api/battle-auction-commander',{code,...players[0],matchKey:key,commanderId:'attack'});
+   const started=await post('/api/battle-auction-commander',{code,...players[1],matchKey:key,commanderId:'support'});assert.equal(started.started,true);
    assert.deepEqual(started.result.teams[1].map(hero=>hero.lane),payload.lanes,'seat1-oriented result retains seat0 confirmed lanes');
    assert.deepEqual(started.result.teams[1].map(hero=>hero.id),views[0].teams[0].map(hero=>hero.id),'lane-only edits retain deterministic acquisition/combat order');
+   let live;for(let poll=0;poll<350;poll++){live=await get('/api/experimental/commander-live',{code,token:players[0].token});if(live.finished)break;await delay(40)}assert.equal(live.finished,true,'live combat must complete before rematch');
    for(const player of players)await post('/api/battle-auction-complete',{code,token:player.token});
    if(match===0){await post('/api/rematch',{code,...players[0]});await post('/api/rematch',{code,...players[1]});}
    previousKey=key;

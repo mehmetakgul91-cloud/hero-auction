@@ -22,7 +22,6 @@ import {createStorefront} from '/storefront.js';
 import {createLoginRewardOverlay} from '/login-reward-overlay.js';
 import {renderCommanderExchange,commanderExchangeQuote} from '/commander-exchange-view.js';
 import {renderCommanderSkills,renderCommanderDevelopment,commanderBranchView,commanderDiamondPolicyCopy} from '/commander-profile-view.js';
-import {COMMANDER_CHANGE_COST} from '/commander-economy.js';
 import {createRoomInvitesUI} from '/room-invites.js';
 import {createFriendsUI} from '/friends.js';
 import {heroDescriptionEnglish} from '/hero-stories-en.js';
@@ -96,7 +95,7 @@ const storefrontUI=createStorefront({walletOperations,canOpen:()=>!room&&!comman
 // Explicit captured auth prevents late attribution from following a switched account.
 const campaignMeasurement=createCampaignMeasurement({storage:(()=>{try{return window.sessionStorage}catch{return null}})(),search:location.search,enabled:!window.HeroPlatform,send:async(path,body,auth)=>{const response=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,authToken:auth})});if(!response.ok)throw Error('Campaign measurement unavailable');return response.json();}});
 window.addEventListener('storage',event=>{if(event.key===null||event.key==='hero-auction-login')campaignMeasurement.setLogin(null);});
-const newPlayerIntro=createNewPlayerIntro({document,storage:localStorage,getContext:()=>({enabled:!window.HeroPlatform,account:login?.user?.sub,token:login?.authToken,english:document.documentElement.lang==='en',profileReady:commanderLoaded&&!!commanderProfile,blocked:!!(room||session||roomEntryPending||restorePending||commanderProfileOpen||webInvite?.pending),homeVisible:!$('home').hidden}),start:()=>enterBotGame('/api/bot','easy'),onChange:()=>dailyRewardOverlay.sync(),onEvent:event=>campaignMeasurement.event(event)});
+const newPlayerIntro=createNewPlayerIntro({document,storage:localStorage,getContext:()=>({enabled:!window.HeroPlatform,account:login?.user?.sub,token:login?.authToken,english:document.documentElement.lang==='en',profileReady:commanderLoaded,blocked:!!(room||session||roomEntryPending||restorePending||commanderProfileOpen||webInvite?.pending),homeVisible:!$('home').hidden}),start:()=>enterBotGame('/api/bot','easy'),onChange:()=>dailyRewardOverlay.sync(),onEvent:event=>campaignMeasurement.event(event)});
 const firstBotLesson=createAuctionLesson({document,storage:localStorage,getAccount:()=>login?.user?.sub,english:()=>document.documentElement.lang==='en'});
 
 const dailyRewardOverlay=createLoginRewardOverlay({walletOperations,canShow:()=>!newPlayerIntro.pending()&&!room&&!session&&!roomEntryPending&&!restorePending&&!commanderProfileOpen&&!$('home').hidden&&!webInvite?.pending,onBalance:result=>{headerWallet.update(result,login?.authToken);if(Number.isSafeInteger(result.gold))showGold(result.gold);if(Number.isSafeInteger(result.diamonds))commanderDiamonds=result.diamonds;},onNotice:message=>notify(message)});
@@ -128,11 +127,11 @@ let commanderSelectedBranch=null,commanderProgression=null,commanderDiamonds=nul
 let commanderExchange=null,commanderExchangeAmount='1',commanderExchangeRequest=null;
 function commanderVisibility(){
  renderLobbyIdentity();
- const logged=signedIn(),needSelection=logged&&commanderLoaded&&!commanderProfile&&(!window.HeroPlatform||!room);
+ const logged=signedIn(),needSelection=logged&&commanderProfileOpen&&!commanderProfile&&!room;
  $('commander-onboarding').hidden=!needSelection;
- $('commander-profile').hidden=!logged||!commanderProfileOpen||!commanderProfile;
- $('home').hidden=!logged||!!room||!commanderLoaded||needSelection||commanderProfileOpen;
- $('commander-open-profile').hidden=!commanderProfile;
+ $('commander-profile').hidden=!logged||!!room||!commanderProfileOpen||!commanderProfile;
+ $('home').hidden=!logged||!!room||commanderProfileOpen;
+ $('commander-open-profile').hidden=!logged;
  webInvite?.sync();
  newPlayerIntro.sync();
  dailyRewardOverlay.sync();
@@ -142,13 +141,14 @@ function renderCommanderOnboarding(){
  for(const c of commanderOptions){
   const b=document.createElement('button');b.type='button';b.className='commander-option'+(commanderPending===c.id?' chosen':'');
   const img=document.createElement('img');img.src=commanderPortrait(c.id);img.alt='';img.loading='lazy';const label=document.createElement('span');label.textContent=c.name+' · '+c.detail;b.append(img,label);
+  b.disabled=commanderBusy;
   b.dataset.commander=c.id;
   b.setAttribute('aria-pressed',String(commanderPending===c.id));
   b.onclick=()=>{commanderPending=c.id;renderCommanderOnboarding();root.querySelector(`[data-commander="${c.id}"]`)?.focus()};
   root.append(b);
  }
  describeFirstCommander(root,commanderPending,{document});
- $('commander-select-confirm').disabled=!commanderPending||commanderBusy;
+ $('commander-select-confirm').disabled=!commanderLoaded||!commanderPending||commanderBusy;
 }
 function renderCommanderRoster(){
  $('commander-change-panel').hidden=!commanderChangeOpen;
@@ -169,18 +169,20 @@ function renderCommanderRoster(){
   root.append(button);
  }
  const confirm=$('commander-change-confirm');
- confirm.disabled=commanderBusy||!commanderChangePending||walletGold<COMMANDER_CHANGE_COST;
- confirm.textContent=commanderChangePending?`🪙 ${COMMANDER_CHANGE_COST} · `+commanderOptions.find(c=>c.id===commanderChangePending).name.toLocaleUpperCase('tr-TR')+' SEÇ':`🪙 ${COMMANDER_CHANGE_COST} · KOMUTAN DEĞİŞTİR`;
+ confirm.disabled=commanderBusy||!commanderChangePending;
+ confirm.textContent=commanderChangePending?uiText(commanderOptions.find(c=>c.id===commanderChangePending).name).toLocaleUpperCase(document.documentElement.lang==='en'?'en-US':'tr-TR')+' · '+uiText('ÜCRETSİZ SEÇ'):uiText('KOMUTAN DEĞİŞTİR');
 }
 async function changeCommander(){
- if(commanderBusy||!commanderChangePending||!commanderProfile||walletGold<COMMANDER_CHANGE_COST)return;
+ if(commanderBusy||!commanderChangePending||!commanderProfile)return;
  const target=commanderOptions.find(c=>c.id===commanderChangePending);
- if(!target||!window.confirm(document.documentElement.lang==='en'?`Spend ${COMMANDER_CHANGE_COST} gold to switch to `+uiText(target.name)+'? Your upgrade levels will be preserved.':target.name+` komutanına geçmek için ${COMMANDER_CHANGE_COST} altın harcamak istiyor musun? Gelişim seviyelerin korunacak.`))return;
+ if(!target)return;
+ const authToken=login?.authToken;
  commanderBusy=true;renderCommanderRoster();
  try{
   const result=await post('/api/commander/change',{commanderId:target.id});
+  if(login?.authToken!==authToken)return;
   commanderProfile=result.profile;commanderProgression=result.progression||null;commanderDiamonds=result.diamonds??null;commanderExchange=result.exchange||null;commanderChangePending=null;commanderChangeOpen=false;showGold(result.gold);
-  $('commander-upgrade-message').textContent=`✓ Komutan değiştirildi. ${result.cost??COMMANDER_CHANGE_COST} altın harcandı.`;
+  $('commander-upgrade-message').textContent=uiText('✓ Komutan ücretsiz değiştirildi.');
  }catch(e){$('commander-upgrade-message').textContent='⚠ '+e.message}
  finally{commanderBusy=false;renderCommanderProfile()}
 }
@@ -243,7 +245,7 @@ async function loadCommander(){
  finally{commanderLoading=false}
 }
 async function selectCommander(){
- if(!commanderPending||commanderBusy)return;
+ if(!commanderLoaded||!commanderPending||commanderBusy||!signedIn())return;
  commanderBusy=true;renderCommanderOnboarding();
  const authToken=login?.authToken;
  try{
@@ -327,7 +329,8 @@ async function upgradeCommander(stat){
  }
 }
 $('commander-select-confirm').onclick=()=>void selectCommander();
-$('commander-open-profile').onclick=()=>{storefrontUI.close();commanderProfileOpen=true;commanderVisibility();renderCommanderProfile()};
+$('commander-open-profile').onclick=()=>{storefrontUI.close();commanderProfileOpen=true;commanderPending=null;$('commander-onboarding-message').textContent='';renderCommanderOnboarding();commanderVisibility();renderCommanderProfile()};
+$('commander-onboarding-close').onclick=()=>{commanderProfileOpen=false;commanderPending=null;commanderVisibility()};
 $('commander-profile-close').onclick=()=>{commanderProfileOpen=false;commanderVisibility()};
 const botEntryConsent=createBotEntryConsent();
 let botEconomyCapability=null;
@@ -488,7 +491,7 @@ mountFirstSession(document,{enabled:!!window.HeroPlatform});
 webInvite=createWebInvite({
  url:location.href,platform:!!window.HeroPlatform,
  view:state=>{if(!window.HeroPlatform)renderWebInvite(document,state);},
- identity:()=>({authToken:login?.authToken,ready:signedIn()&&commanderLoaded&&!!commanderProfile&&!commanderProfileOpen&&!room}),
+ identity:()=>({authToken:login?.authToken,ready:signedIn()&&!commanderProfileOpen&&!room}),
  validate:validateLogin,savedRoom:readSavedRoom,
  join:code=>post('/api/join',{name:$('name').value,code}),save,
  clearUrl:()=>{const url=new URL(location.href);url.searchParams.delete('join');history.replaceState(history.state,'',url.pathname+url.search+url.hash);},

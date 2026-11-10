@@ -23,7 +23,7 @@ function fixture({auctionMode=false,initiallyVisible=false,fetchImpl=null,render
  const dispose=mountArenaViewport({window,document});calls.length=0;
  const context={document,window,$:node,arenaMode:true,auctionMode,auctionCode:'ROOM /',auctionToken:'seat&fake',multiplayerCode:null,multiplayerArenaKey:null,preparationMatchKey:'1:123',previewMusicMatchKey:'preview:123',
   arenaWeatherReady:true,arenaWeatherPageHidden:false,liveArenaMode:false,battlePresentationFinished:false,leavingBattle:false,timer:null,states:[],events:[],cursor:0,finalResult:null,
-  victoryPendingTimer:null,victoryRevealTimer:null,victoryRevealDone:false,prepTimer:null,prepDone:false,prepSubmitting:false,auctionLoaded:true,battlePoll:null,
+  matchCommanderPicker:{destroy:()=>calls.push('destroy-picker')},victoryPendingTimer:null,victoryRevealTimer:null,victoryRevealDone:false,prepTimer:null,prepDone:false,prepSubmitting:false,auctionLoaded:true,battlePoll:null,
   positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roleAt:()=> 'tank',
   history:{replaceState(...args){calls.push(['history',...args])}},CustomEvent:class{constructor(type,options){this.type=type;this.detail=options?.detail;}},
   setInterval(fn,ms){intervals.set(++intervalId,{fn,ms});return intervalId},clearInterval:id=>intervals.delete(id),clearTimeout:()=>{},
@@ -46,8 +46,8 @@ test('real direct-reload entry branch keeps the arena hidden and mounts controls
 });
 test('same-document entry and opponent polling preserve hidden waiting scene and existing read-only request',async()=>{
  const f=fixture({auctionMode:true});f.install(enterSource);f.context.url='/battle-preview.html?room=arena';f.run('enterArenaWithoutReload(url)');await flush();
- assert.equal(f.node('battle-arena').hidden,true);assert.equal(f.node('play').disabled,true);assert.match(f.node('message').textContent,/1\/2 hazır/);assert.equal(f.intervals.size,1);assert.equal([...f.intervals.values()][0].ms,1800);
- const requests=f.calls.filter(c=>Array.isArray(c)&&c[0]==='fetch');assert.equal(requests.length,1);assert.equal(requests[0][1],'/api/battle-auction-preview?code=ROOM%20%2F&token=seat%26fake');assert.equal(requests[0][2].cache,'no-store');assert.equal(requests[0][2].method,undefined);assert.equal(requests[0][2].body,undefined);assert.ok(!f.calls.includes('fit'));f.dispose();
+ assert.ok(f.calls.includes('destroy-picker'));assert.equal(f.node('match-commander-picker').hidden,true);assert.equal(f.classes.has('commander-selection'),false);assert.equal(f.node('battle-arena').hidden,true);assert.equal(f.node('play').disabled,true);assert.match(f.node('message').textContent,/1\/2 hazır/);assert.equal(f.intervals.size,1);assert.equal([...f.intervals.values()][0].ms,1800);
+ const requests=f.calls.filter(c=>Array.isArray(c)&&c[0]==='fetch');assert.equal(requests.length,1);assert.equal(requests[0][1],'/api/battle-auction-preview?matchCommanderSelection=1&code=ROOM%20%2F&token=seat%26fake');assert.equal(requests[0][2].cache,'no-store');assert.equal(requests[0][2].method,undefined);assert.equal(requests[0][2].body,undefined);assert.ok(!f.calls.includes('fit'));f.dispose();
 });
 test('ordinary preview entry remains hidden while its existing build is pending',async()=>{
  const f=fixture();f.context.build=()=>new Promise(()=>{});f.install(enterSource);f.run('enterArenaWithoutReload("/battle-preview.html?room=arena")');assert.equal(f.node('battle-arena').hidden,true);assert.equal(f.intervals.size,0);assert.ok(!f.calls.includes('render'));f.dispose();

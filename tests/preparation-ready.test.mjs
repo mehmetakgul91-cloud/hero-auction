@@ -9,7 +9,7 @@ function harness({loaded=true,reject=false}={}){
  const elements=new Map(),requests=[],routes=[];let release,now=100,tick;
  const context={Date:{now:()=>now},$:id=>{if(!elements.has(id))elements.set(id,{});return elements.get(id)},renderBoard(){},sessionStorage:{setItem(){}},encodeURIComponent,
   setInterval:fn=>{tick=fn;return 1},clearInterval(){},formationSnapshot:()=>({positions:[0,1,2,3,4],lanes:['front','back','back','front','back'],roles:['tank','energy','support','fighter','assassin']}),
-  fetch:async(path,options)=>{requests.push({path,body:JSON.parse(options.body)});await new Promise(resolve=>release=resolve);return {ok:!reject,json:async()=>reject?{error:'offline'}:{ready:[true,false],started:false}}},enterArenaWithoutReload:url=>routes.push(url)};
+  fetch:async(path,options)=>{requests.push({path,body:JSON.parse(options.body)});await new Promise(resolve=>release=resolve);return {ok:!reject,json:async()=>reject?{error:'offline'}:{ready:[true,false],started:false}}},enterArenaWithoutReload:url=>routes.push(url),showMatchCommanderPicker:()=>routes.push('room=commander')};
  const code=source.slice(source.indexOf('async function lockFormation('),source.indexOf('const roleIcons='));
  runInNewContext(`let prepDone=false,prepSubmitting=false,auctionMode=true,auctionLoaded=${loaded},arenaMode=false,arenaMusicEnabled=false,arenaAudioPrimed=false;
  let prepTimer=null,prepDeadline=0;const preparationDraft={flush:()=>Promise.resolve(),clear(){}},preparationMatchKey='match:1',auctionCode='ROOM',auctionToken='TOKEN';
@@ -30,7 +30,7 @@ test('repeated Ready clicks create one match-bound confirmation and wait for the
  const h=harness();const ready=h.actions.lockFormation();void h.actions.lockFormation();await Promise.resolve();
  assert.equal(h.requests.length,1);assert.equal(h.routes.length,0);assert.equal(h.actions.state().prepDone,false);
  assert.equal(h.requests[0].body.matchKey,'match:1');assert.deepEqual(h.requests[0].body.positions,[0,1,2,3,4]);
- h.release();await ready;assert.equal(h.routes.length,1);assert.match(h.routes[0],/room=arena/);assert.equal(h.actions.state().prepDone,true);
+ h.release();await ready;assert.equal(h.routes.length,1);assert.match(h.routes[0],/room=commander/);assert.equal(h.actions.state().prepDone,true);
 });
 
 test('unloaded roster cannot Ready; rejected Ready leaves edits available without auto-confirm retry storm',async()=>{
@@ -42,8 +42,8 @@ test('unloaded roster cannot Ready; rejected Ready leaves edits available withou
 
 test('confirmed CG preparation signals loading complete before waiting for the opponent',()=>{
  const restoration=source.slice(source.indexOf(' if(preparation.ready){'),source.indexOf(" $('battle-lobby-status').textContent='Açık artırma kartların yüklendi"));
- const calls=[];runInNewContext(`function restore(){const preparation={ready:true};let prepDone=false,auctionLoaded=false,arenaMode=false;const auctionCode='ROOM',auctionToken='TOKEN',preparationMatchKey='1:100';${restoration}}restore();`,{preparationDraft:{clear:()=>calls.push('clear')},window:{HeroPlatform:{loaded:()=>calls.push('loaded')}},enterArenaWithoutReload:()=>calls.push('arena'),encodeURIComponent});
- assert.deepEqual(calls,['clear','loaded','arena']);
+ const calls=[];runInNewContext(`function restore(){const preparation={ready:true};let prepDone=false,auctionLoaded=false,arenaMode=false;const auctionCode='ROOM',auctionToken='TOKEN',preparationMatchKey='1:100';${restoration}}restore();`,{preparationDraft:{clear:()=>calls.push('clear')},window:{HeroPlatform:{loaded:()=>calls.push('loaded')}},enterArenaWithoutReload:()=>calls.push('arena'),showMatchCommanderPicker:()=>calls.push('commander'),encodeURIComponent});
+ assert.deepEqual(calls,['clear','loaded','commander']);
 });
 
 test('new preparation storage stays portal-isolated and server errors translate',()=>{

@@ -37,7 +37,9 @@ test('two completed live matches retain the correct series for both seats and ch
    for(let i=0;i<2;i++){
     const formation=await post('/api/battle-auction-preview',{code,token:players[i].token,positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:teams[i].map(h=>h.role)});
     assert.equal(formation.status,200);
-    if(i===1){assert.equal(formation.body.result.live,true);assert.equal(formation.body.result.winner,null)}
+    assert.equal(formation.body.started,false);
+    const selection=await post('/api/battle-auction-commander',{code,...players[i],matchKey:formation.body.matchKey,commanderId:['attack','support'][i]});assert.equal(selection.status,200);
+    if(i===1){assert.equal(selection.body.result.live,true);assert.equal(selection.body.result.winner,null)}
    }
    let live;
    for(let i=0;i<240;i++){
