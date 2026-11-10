@@ -27,7 +27,11 @@ Kalkan kazanımı/yenilenmesi ve birikimi değişmez; yeni bir başlangıç veya
 
 ## Arena hazırlığı
 
-Açık artırmada edinilen beş kahraman, kendi ön/arka saf tercihine (kahramanın kayıtlı saf bonuslarına) göre tahtaya otomatik yerleşir. Oyuncu yalnızca **Ön saf / Arka saf** değişikliği yapar; boş yuva seçme, sürükleme veya kahramanları yeniden sıralama gerekmez. Saf değişikliği kahramanların edinilme/savaş sırasını değiştirmez. Mevcut kurallarda iki safın her biri sıfır ile beş kahraman içerebilir.
+Açık artırmada edinilen beş kahraman, kendi ön/arka saf tercihine (kahramanın kayıtlı saf bonuslarına) göre tahtaya otomatik yerleşir. Oyuncu **Ön saf / Arka saf** düğmeleriyle safı değiştirir. Aynı saftaki iki kahramana art arda dokunmak yerlerini değiştirir; rol kahramanla birlikte taşınır. Başka saftaki bir kahramana dokunmak yeni seçim yapar, saflar arasında takas yapmaz. Saf düğmesi tek başına kahraman sırasını değiştirmez. Mevcut kurallarda iki safın her biri sıfır ile beş kahraman içerebilir.
+
+Yeni savaş tam **2 ön + 3 arka** dizilişle başlıyorsa arka safın ortası, diğer dört kahramandan herhangi biri gerçekten ölene kadar otomatik ana hedef olamaz. Koruma ilk ölümde kalıcı olarak kalkar; diriltme geri getirmez. Av Emri, diğer komutan yetenekleri ve alan hasarı değişmez. Ayrıntılar: [merkez koruması](docs/center-protection.md).
+
+Yeni savaşta suikastçıların saf, kredi, komutan ve savaş başı pasiflerinden sonra hesaplanan başlangıç saldırısı **%10 artırılır**, sonuç en yakın tam sayıya yuvarlanır. Kart gücü, savunma, can, hız ve diğer roller değişmez. Mevcut savaş görüntüleri yeniden hesaplanmaz; tur geçişi veya diriltme aynı bonusu tekrar uygulamaz. Hazırlık ekranı aynı motoru kullandığı için bu saldırı artışını gösterir.
 
 Saf tercihleri maç ve oyuncuya özel taslak olarak sunucuda saklanır; yenilemede korunur, rövanşta yeni kadro için yeniden oluşturulur. Henüz sunucuya ulaşmayan değişiklik aynı sekmede maç/kadro anahtarıyla saklanır ve yeniden gönderilir. Web ve CrazyGames tarayıcı kayıtları ayrıdır; hesapta kayıtlı komutan/diziliş verilerine toplu dönüşüm uygulanmaz.
 

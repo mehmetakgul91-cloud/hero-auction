@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {createServer} from 'node:net';
-import {buildDefaultFormation} from '../public/preparation-formation.js';
+import {buildDefaultFormation,swapSameLaneHeroes} from '../public/preparation-formation.js';
 
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 test('online and rematch preparation auto-places once, persists lane edits, rejects stale/invalid drafts and waits for Ready',{timeout:30000},async()=>{
@@ -42,6 +42,10 @@ test('online and rematch preparation auto-places once, persists lane edits, reje
    assert.equal(saved.preparation.ready,false);assert.deepEqual(saved.preparation.lanes,payload.lanes);
    for(let i=0;i<3;i++)assert.deepEqual((await get('/api/battle-auction-team',{code,token:players[0].token})).preparation,saved.preparation,'refresh/poll must preserve edits');
    assert.deepEqual((await get('/api/battle-auction-team',{code,token:players[1].token})).preparation,views[1].preparation,'opponent receives only own draft');
+   const swapped=swapSameLaneHeroes(payload,views[0].teams[0],1,3);assert.ok(swapped);Object.assign(payload,swapped);
+   saved=await post('/api/battle-auction-formation',payload);
+   const restored=(await get('/api/battle-auction-team',{code,token:players[0].token})).preparation;
+   assert.deepEqual(restored.positions,swapped.positions,'same-lane hero order survives reload');assert.deepEqual(restored.roles,swapped.roles,'roles follow the swapped heroes');
    payload.lanes=Array(5).fill('front');saved=await post('/api/battle-auction-formation',payload);
    const waiting=await post('/api/battle-auction-preview',payload);assert.deepEqual(waiting.ready,[true,false]);assert.equal(waiting.started,false);
    assert.equal((await request('/api/battle-auction-formation',{...payload,lanes:Array(5).fill('back')})).status,409,'Ready locks draft');
@@ -51,7 +55,7 @@ test('online and rematch preparation auto-places once, persists lane edits, reje
    await post('/api/battle-auction-commander',{code,...players[0],matchKey:key,commanderId:'attack'});
    const started=await post('/api/battle-auction-commander',{code,...players[1],matchKey:key,commanderId:'support'});assert.equal(started.started,true);
    assert.deepEqual(started.result.teams[1].map(hero=>hero.lane),payload.lanes,'seat1-oriented result retains seat0 confirmed lanes');
-   assert.deepEqual(started.result.teams[1].map(hero=>hero.id),views[0].teams[0].map(hero=>hero.id),'lane-only edits retain deterministic acquisition/combat order');
+   assert.deepEqual(started.result.teams[1].map(hero=>hero.id),payload.positions.map(index=>views[0].teams[0][index].id),'explicit swaps survive lane edits into combat order');
    let live;for(let poll=0;poll<350;poll++){live=await get('/api/experimental/commander-live',{code,token:players[0].token});if(live.finished)break;await delay(40)}assert.equal(live.finished,true,'live combat must complete before rematch');
    for(const player of players)await post('/api/battle-auction-complete',{code,token:player.token});
    if(match===0){await post('/api/rematch',{code,...players[0]});await post('/api/rematch',{code,...players[1]});}

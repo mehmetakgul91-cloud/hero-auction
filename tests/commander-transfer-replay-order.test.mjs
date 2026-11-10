@@ -1,30 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {simulateBattle} from '../battle-engine.js';
 import {createBattleReplayHealth} from '../public/battle-replay-health.js';
-
-const roster=JSON.parse(fs.readFileSync(new URL('../battle-roster.json',import.meta.url),'utf8')).characters;
-const names=[
- ['Mor Hilal','Astral Kâhin','Kış Kraliçesi','Alev Zırhı','Seraphine'],
- ['Sancak Bekçisi','Ruh Dokuyucu','Kadim Koruyucu','Kaya Titanı','Alev Zırhı']
-];
+import {initializeCenterProtection} from '../battle-center-protection.js';
+import {grantArcaneSurge} from '../commander-ultimate-status.js';
+import {createLiveCommanderAbilities} from '../commander-live-abilities.js';
+import {createLiveCommanderCombat} from '../commander-live-combat.js';
+import {stepParityDamageSpecial} from '../commander-parity-damage-special.js';
 const surgeFields=['arcaneSurgeBonusAttack','arcaneSurgeFromRound','arcaneSurgeUntilRound'];
 
 test('legacy primary then successive splash casualties replay transfers in actual settlement order',()=>{
- const cards=names.map(team=>team.map((name,index)=>{
-  const hero=roster.find(entry=>entry.name===name);assert.ok(hero,name);
-  // This historical casualty chain tests replay ordering, not current balance.
-  // Keep its original Mor Hilal stats; current lane data and live preparation
-  // are independently covered by assassin-lane-bonuses.test.mjs.
-  const laneModifiers=hero.id==='original:expansion-26'?{front:.06,back:-.03}:hero.laneModifiers;
-  return {...structuredClone(hero),laneModifiers:{...laneModifiers},power:hero.proposedPower,lane:index<2?'front':'back'};
- }));
- const result=simulateBattle(...cards,{
-  seed:'chain:3698',maxRounds:6,
-  commanders:[null,{commanderId:'magic',levels:{attack:0,defense:0,magic:40,support:0}}],
-  commanderActions:[{round:4,side:1,ability:'ultimate',targetIds:['original:07']}]
- });
+ // Preserve this exact pre-cover recording instead of regenerating a historical
+ // casualty chain under new targeting rules. Current atomic ordering is tested
+ // separately below; old saved matches must still replay their recorded hits.
+ const result=JSON.parse(fs.readFileSync(new URL('./fixtures/commander-transfer-legacy-recording.json',import.meta.url),'utf8'));
+ assert.equal(result.sourceCommit,'6495f4a2bc9c5be1a4450f3f4b88a2a8af7b397c');
+ assert.equal(result.teams.flat().some(hero=>hero.centerProtection),false);
  const action=result.log.filter(event=>event.actionId==='6:0:original:expansion-28');
  const transfers=action.filter(event=>event.arcaneTransfer);
  assert.equal(transfers.length,2,'fixture must exercise primary death and transferred-bearer splash death');
@@ -57,4 +48,25 @@ test('legacy primary then successive splash casualties replay transfers in actua
  }
  assert.deepEqual(hp,result.teams.map(team=>team.map(hero=>hero.hp)),'full replay HP must agree with authoritative result');
  assert.deepEqual(replay.statusSnapshot(),result.teams.map(team=>team.map(hero=>Object.fromEntries(surgeFields.filter(key=>Number.isFinite(hero[key])).map(key=>[key,hero[key]])))),'final replay must not resurrect a buff on any fallen bearer');
+});
+
+test('new protected formation logs primary death before center splash death and both surge transfers',()=>{
+ const hero=(id,hp,position,lane='back',shield=0)=>({id,name:id,hp,maxHp:hp,attack:50,defense:0,speed:50,shield,lane,position,role:'fighter',damage:0,kills:0});
+ const defenders=initializeCenterProtection([
+  hero('source',100,0,'front'),hero('front',1,1,'front'),hero('survivor',50,2,'back',1000),hero('center',60,3),hero('rear',1,4)
+ ]);
+ grantArcaneSurge(defenders[0],3);
+ const attacker={...hero('attacker',1000,1,'front'),attack:400,role:'energy',active:{name:'Area',effect:'splash',power:1.2,splashRate:.25}};
+ const combat=createLiveCommanderCombat({teams:[[attacker],defenders],round:3,commanders:[{commanderId:'attack'},{commanderId:'magic'}],abilities:createLiveCommanderAbilities({matchKey:'new-transfer'})});
+ const initial=structuredClone(combat.teams),out=stepParityDamageSpecial(combat,{side:0,actorId:'attacker',round:3,critical:false});
+ const transfers=out.events.filter(event=>event.arcaneTransfer);
+ assert.deepEqual(transfers.map(event=>[event.damageType,event.arcaneTransfer.sourceId,event.arcaneTransfer.targetId]),[['special','source','center'],['splash','center','survivor']]);
+ assert.equal(combat.teams[1][3].centerProtection.broken,true);
+ assert.equal(combat.teams[1][2].arcaneSurgeUntilRound,5);
+ const replay=createBattleReplayHealth(initial);
+ replay.apply({round:3,side:1,action:'commander-magic-ultimate',impacts:[{target:'source',kind:'buff',value:50,fromRound:3,untilRound:5}]});
+ let hp;
+ for(const event of out.events)hp=replay.apply(event);
+ assert.deepEqual(hp,combat.teams.map(team=>team.map(hero=>hero.hp)));
+ assert.deepEqual(replay.statusSnapshot(),combat.teams.map(team=>team.map(hero=>Object.fromEntries(surgeFields.filter(key=>Number.isFinite(hero[key])).map(key=>[key,hero[key]])))));
 });

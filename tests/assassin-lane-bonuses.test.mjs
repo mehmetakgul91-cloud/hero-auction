@@ -79,7 +79,7 @@ for(const hero of battleRoster.filter(hero=>hero.role==='assassin')){
     assert.equal(actual.lane,lane);
     assert.equal(actual.role,'assassin');
     assert.equal(actual.compositionMultiplier,multiplier);
-    assert.equal(actual.attack,stat);
+    assert.equal(actual.attack,Math.round(stat*11/10),'new-battle assassin attack bonus is applied after the lane calculation');
     assert.equal(actual.defense,stat);
     assert.equal(actual.maxHp,Math.round(200*multiplier));
     assert.equal(actual.hp,actual.maxHp);

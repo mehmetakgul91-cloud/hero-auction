@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {createServer} from 'node:net';
+import {swapSameLaneHeroes} from '../public/preparation-formation.js';
 
 test('combined Ready compares exact unsaved draft, atomically confirms, and preserves legacy clients',{timeout:30000},async()=>{
  const socket=createServer();await new Promise(r=>socket.listen(0,'127.0.0.1',r));const port=socket.address().port;await new Promise(r=>socket.close(r));
@@ -18,13 +19,14 @@ test('combined Ready compares exact unsaved draft, atomically confirms, and pres
   assert.equal(room.phase,'finished');
   const team=seat=>ok('/api/battle-auction-team',{code,...players[seat]},'GET');
   const views=await Promise.all([team(0),team(1)]),matchKey=views[0].preparation.matchKey;
-  const formation={...views[0].preparation,lanes:Array(5).fill('back')};
+  const formation=swapSameLaneHeroes({...views[0].preparation,lanes:Array(5).fill('back')},views[0].teams[0],0,4);
+  assert.ok(formation);const expectedIds=formation.positions.map(index=>views[0].teams[0][index].id);
   const payload={code,...players[0],matchKey,formation};
   const preview=await ok('/api/battle-auction-commanders',payload);
   assert.equal(preview.preparation.ready,false);assert.deepEqual(preview.preparation.lanes,formation.lanes);
   assert.deepEqual((await team(0)).preparation,views[0].preparation,'preview does not save or lock draft');
   assert.equal((await ok('/api/commander/get',players[0])).profile,null,'preview never creates a default commander');
-  for(const option of preview.options)assert.deepEqual(option.heroes.map(h=>h.lane),formation.lanes);
+  for(const option of preview.options){assert.deepEqual(option.heroes.map(h=>h.lane),formation.lanes);assert.deepEqual(option.heroes.map(h=>h.id),expectedIds);assert.deepEqual(option.heroes.map(h=>h.role),formation.roles);}
   const confirm={...payload,commanderId:'magic',levels:{magic:40,attack:40}};
   for(const extra of [{commanderId:'bad'},{formation:{...formation,roles:Array(5).fill('wrong')}},{formation:{...formation,positions:[0,0,2,3,4]}},{formation:null}])assert.equal((await request('/api/battle-auction-commander',{...confirm,...extra})).status,400);
   assert.equal((await request('/api/battle-auction-commander',{...confirm,matchKey:'stale'})).status,409);
@@ -46,6 +48,7 @@ test('combined Ready compares exact unsaved draft, atomically confirms, and pres
   const mine=await ok('/api/battle-auction-commander',confirm);
   assert.equal(mine.started,true);
   const expected=preview.options.find(o=>o.commanderId==='magic');
+  assert.deepEqual(mine.result.teams[0].map(h=>h.id),expectedIds);assert.deepEqual(mine.result.teams[0].map(h=>h.role),formation.roles);assert.deepEqual(mine.result.teams[0].map(h=>h.position),[0,1,2,3,4]);
   for(let i=0;i<5;i++)for(const stat of ['attack','defense','maxHp','speed','lane'])assert.equal(mine.result.teams[0][i][stat],expected.heroes[i][stat]);
  }finally{child.kill('SIGTERM');await new Promise(r=>{if(child.exitCode!==null)return r();child.once('exit',r);setTimeout(r,2000).unref();});}
 });

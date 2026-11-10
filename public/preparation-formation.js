@@ -25,3 +25,20 @@ export function validateFormation(formation,team){
  // Existing battle rules permit zero through five heroes in either row.
  return Array.isArray(assigned)&&assigned.length===5&&assigned.every((role,slot)=>role===team[positions[slot]].role);
 }
+
+// Slots keep their lanes. A swap moves the hero and its intrinsic role together,
+// preserving the canonical global positions array consumed by the battle server.
+export function swapSameLaneHeroes(formation,team,first,second){
+ if(!validateFormation(formation,team)||!Number.isInteger(first)||!Number.isInteger(second)||first<0||first>=5||second<0||second>=5||first===second||formation.lanes[first]!==formation.lanes[second])return null;
+ const next={...formation,positions:[...formation.positions],lanes:[...formation.lanes],roles:[...formation.roles]};
+ for(const field of ['positions','roles'])[next[field][first],next[field][second]]=[next[field][second],next[field][first]];
+ return validateFormation(next,team)?next:null;
+}
+
+// Preparation-only visual hint. Combat freezes identities at battle start and
+// owns when protection ends; wrapping cards onto another screen row does not.
+export function preparationCenterSlot(formation){
+ if(!Array.isArray(formation?.lanes)||formation.lanes.length!==5||formation.lanes.filter(lane=>lane==='front').length!==2)return null;
+ const rear=formation.lanes.flatMap((lane,slot)=>lane==='back'?[slot]:[]);
+ return rear.length===3?rear[1]:null;
+}

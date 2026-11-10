@@ -1,4 +1,5 @@
 import {transferArcaneSurgeOnDeath} from './commander-ultimate-status.js';
+import {breakCenterProtectionOnDeath} from './battle-center-protection.js';
 import {calculateShieldAbsorption} from './battle-shield-absorption.js';
 // Son Kale waits for the first lethal atomic hit, then floors health at 1
 // for the rest of that round plus the next TWO FULL rounds. It never heals,
@@ -51,7 +52,7 @@ export function applyHeroDamage(target,raw,{round,executeThreshold=0,allies}={})
   }
  }
  target.hp=oldHp-damage-executedDamage;
- if(target.hp===0){clearLastStand(target);delete target.commanderFocusUntilDeath;delete target.commanderStunNextAttack;delete target.commanderHuntNextAttack;}
+ if(target.hp===0){clearLastStand(target);delete target.commanderFocusUntilDeath;delete target.commanderStunNextAttack;delete target.commanderHuntNextAttack;breakCenterProtectionOnDeath(target,allies);}
  const arcaneTransfer=target.hp===0&&allies?transferArcaneSurgeOnDeath(target,allies,round):null;
  return {damage,executedDamage,absorbed,rawDamage:raw,guardTriggered,...(guardTriggered&&isLastStandImmortal(target,round)?{lastStandTriggeredRound:target.lastStandTriggeredRound,lastStandImmortalUntilRound:target.lastStandImmortalUntilRound}:{}),...(arcaneTransfer?{arcaneTransfer}:{})};
 }

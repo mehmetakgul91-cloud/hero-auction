@@ -15,3 +15,43 @@ body.commander-selection #match-commander-picker .combined-ready:hover:not(:disa
 body.commander-selection #match-commander-picker .combined-ready[aria-disabled=true],body.commander-selection #match-commander-picker .combined-ready:disabled{background:#d8ded8;color:#536171;border-color:#acb7b8}
 body.commander-selection #match-commander-picker .combined-retry{background:transparent;color:#315e75;border:0}
 body.commander-selection #match-commander-picker .combined-choice[aria-pressed=true]:hover:not(:disabled){background:#dfebe2;border-color:#34735d}
+
+/* Portrait cards (approved A). A screen-row wrap never changes the tactical lane.
+   Five heroes use 3 + 2 centered; four use 2 + 2. No horizontal carousel. */
+.combined-formation-note{font-size:10px;line-height:1.45;color:#596f70;min-height:29px;margin:7px 0 0}
+.combined-lane-label small{font-size:9px;text-transform:none;letter-spacing:0;font-weight:400;color:#71817b}
+.combined-row{gap:8px;align-items:stretch}
+.combined-hero{width:calc((100% - 16px)/3);max-width:none;padding:0;border:1px solid #d1d8d0;border-radius:11px;background:#fff;overflow:hidden;text-align:left;box-shadow:0 2px 4px #2c3d3410}
+.combined-row[data-count="1"] .combined-hero{width:calc((100% - 8px)/2);max-width:180px}
+.combined-row[data-count="2"] .combined-hero,.combined-row[data-count="4"] .combined-hero{width:calc((100% - 8px)/2)}
+.combined-hero.combined-specialty{background:#f4f9f2;border-color:#92b39c}
+.combined-hero.combined-swap-selected{border-color:#28627f;outline:2px solid #28627f;outline-offset:1px;box-shadow:0 0 0 4px #28627f20}
+.combined-hero-pick{position:relative;display:block;width:100%;height:114px;min-height:114px;margin:0;padding:0;border:0;border-radius:0;background:#182432;color:#fff;text-align:left;white-space:normal;isolation:isolate}
+.combined-hero-pick:after{content:'';position:absolute;inset:25% 0 0;background:linear-gradient(transparent,#07151ce8);z-index:1;pointer-events:none}
+.combined-portrait-box{position:absolute;inset:0;display:block;width:100%;height:100%;margin:0}
+.combined-portrait,.combined-portrait-fallback{display:block;width:100%;height:100%;margin:0;border:0;border-radius:0;object-fit:cover;object-position:center 18%}
+.combined-portrait-fallback{display:grid;place-items:center;background:#34464b;color:#d3ded5;font-size:32px}
+.combined-hero-role,.combined-center-badge{position:absolute;left:7px;z-index:2;padding:3px 5px;border-radius:4px;font-size:8px;line-height:1.2;font-weight:600;letter-spacing:0;text-shadow:none}
+.combined-hero-role{top:7px;background:#263b41e8;color:#f5f5ec}
+.combined-center-badge{bottom:43px;background:#e5f2e6;color:#235c43;border:1px solid #8eb29a}
+.combined-hero-name{position:absolute;bottom:8px;left:7px;right:7px;z-index:2;display:flex;align-items:flex-end;min-height:28px;margin:0;color:#fff;font-size:11px;font-weight:750;line-height:1.2;overflow-wrap:anywhere;white-space:normal;text-shadow:0 1px 3px #0008}
+.combined-row[data-count="1"] .combined-hero-name,.combined-row[data-count="2"] .combined-hero-name,.combined-row[data-count="4"] .combined-hero-name{font-size:13px}
+.combined-hero-effect{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:17px 22px;align-items:center;justify-content:normal;gap:0 3px;min-height:47px;margin:0;padding:5px 7px 3px;font-size:11px;color:#758580;white-space:normal;font-variant-numeric:tabular-nums}
+.combined-effect-label{grid-column:1;grid-row:1;font-size:9px;line-height:1.2;color:#69757c}
+.combined-effect-values{grid-column:1/-1;grid-row:2;white-space:nowrap;line-height:1.2;font-size:10px}
+.combined-hero-effect .combined-effect-values b,.combined-hero-effect>b.combined-effect-values{font-size:15px;font-weight:750;color:#253448}
+.combined-hero-effect .combined-delta{grid-column:2;grid-row:1;justify-self:end;max-width:100%;font-size:9px;font-weight:700;line-height:1.2;padding:3px 4px;border-radius:4px;background:#e7f1e8;color:#2c7256;white-space:nowrap}
+.combined-effect-pending{grid-column:1/-1;grid-row:2;font-size:9px;line-height:1.2;overflow-wrap:anywhere}
+.combined-move{display:block;width:calc(100% - 12px);min-height:44px;margin:0 6px;padding:5px 0;border:0;border-top:1px solid #e2e8df;border-radius:0;background:transparent;color:#536c73;font-size:10px!important;white-space:normal}
+.combined-position-help{font-size:10px;color:#596f70;margin:4px 0 0}
+.combined-position-help>summary{display:flex;align-items:center;min-height:44px;width:fit-content;cursor:pointer;color:#315e75;font-size:10px}
+.combined-position-help>summary:after{content:'⌄';margin-left:6px}
+.combined-position-help[open]>summary:after{content:'⌃'}
+.combined-position-help p{font-size:11px;line-height:1.5;margin:0 0 8px}
+body.commander-selection #match-commander-picker .combined-hero-pick,
+body.commander-selection #match-commander-picker .combined-hero-pick:hover:not(:disabled),
+body.commander-selection #match-commander-picker .combined-hero-pick:disabled{background:#182432;color:#fff;border:0;border-radius:0;padding:0;box-shadow:none;opacity:1}
+body.commander-selection #match-commander-picker .combined-hero-pick:focus-visible{outline:3px solid #28627f;outline-offset:-3px}
+body.commander-selection #match-commander-picker .combined-move{border:0;border-top:1px solid #e2e8df;color:#536c73}
+@media(min-width:650px){.combined-hero-pick{height:124px;min-height:124px}.combined-hero-name{font-size:12px}.combined-hero-effect{font-size:11px}.combined-effect-values{font-size:11px}.combined-formation-note{font-size:11px;min-height:32px}}
+@media(max-width:350px){.combined-row{gap:6px}.combined-hero{width:calc((100% - 12px)/3)}.combined-row[data-count="1"] .combined-hero,.combined-row[data-count="2"] .combined-hero,.combined-row[data-count="4"] .combined-hero{width:calc((100% - 6px)/2)}.combined-hero-name{font-size:10px}.combined-hero-pick{height:110px;min-height:110px}.combined-hero-effect{padding-left:5px;padding-right:5px}.combined-effect-values{font-size:9px}.combined-hero-effect .combined-effect-values b{font-size:14px}.combined-move{font-size:9px!important}.combined-center-badge{font-size:7px;padding:3px 4px}}
