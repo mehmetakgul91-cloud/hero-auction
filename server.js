@@ -1340,6 +1340,8 @@ function noteCommanderSelectionClient(room,seat,request,input={},forceSelection=
  return mode;
 }
 
+function copyPreparationFormation(formation){return {positions:[...formation.positions],lanes:[...formation.lanes],roles:[...formation.roles]};}
+function samePreparationFormation(a,b){return ['positions','lanes','roles'].every(key=>a[key].length===b[key].length&&a[key].every((value,index)=>value===b[key][index]));}
 function orderedPreparationTeams(teams,sync){
  return teams.map((team,i)=>{const formation=sync.ready[i]||sync.drafts[i];return formation.positions.map((index,slot)=>({...team[index],lane:formation.lanes[slot],role:formation.roles[slot]}));});
 }
@@ -1543,24 +1545,48 @@ if(url.pathname==='/api/battle-auction-preview'&&(req.method==='POST'||req.metho
  return send(200,response);
  }catch(e){return send(e.status||422,{error:e.message,...(e.cancellation?{cancellation:e.cancellation}:{})})}finally{const remaining=(battlePreparationFlights.get(preparationId)||1)-1;if(remaining)battlePreparationFlights.set(preparationId,remaining);else battlePreparationFlights.delete(preparationId)}
 }
-if(url.pathname==='/api/battle-auction-commanders'&&req.method==='GET'){
- const room=rooms.get(String(url.searchParams.get('code')||'').toUpperCase()),seat=room?.players?.findIndex(p=>p?.token===url.searchParams.get('token'))??-1;
+if(url.pathname==='/api/battle-auction-commanders'&&(req.method==='GET'||req.method==='POST')){
+ let body;
+ if(req.method==='POST'){
+  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>5000)return send(413,{error:'İstek çok büyük'});}
+  try{body=JSON.parse(raw);}catch{return send(400,{error:'Geçersiz JSON'});}
+ }else body=Object.fromEntries(url.searchParams);
+ const room=rooms.get(String(body?.code||'').toUpperCase()),seat=room?.players?.findIndex(p=>p?.token===body?.token)??-1;
  if(!room||seat<0)return send(403,{error:'Yetkisiz oda'});
  if(room.phase!=='finished')return send(409,{error:'Açık artırma tamamlanmadı'});
+ try{requireBattleNotCancelled(room)}catch(e){return send(e.status||409,{error:e.message,...(e.cancellation?{cancellation:e.cancellation}:{})})}
+ if(body.matchKey!==String(room.matchNumber||1)+':'+String(room.created))return send(409,{error:'Komutan seçimi başka bir maça ait.'});
+ // Latch before queueing: an older legacy request may currently be awaiting its
+ // profile read. Its post-read guard must see this modern client's requirement.
+ // The shared observer still defers updates while cancellation/idle is reserved.
+ noteCommanderSelectionClient(room,seat,req,{body,searchParams:url.searchParams},true);
+ const preparationId=cancellationMatchId(room),player=room.players[seat];
+ battlePreparationFlights.set(preparationId,(battlePreparationFlights.get(preparationId)||0)+1);
  try{
-  requireBattleNotCancelled(room);
-  const state=auctionRoomToBattleState(room),teams=prepareBattleTeams(state),sync=ensureBattlePreparation(room,preparationTeams(teams));
-  if(url.searchParams.get('matchKey')!==sync.key)return send(409,{error:'Komutan seçimi başka bir maça ait.'});
-  noteCommanderSelectionClient(room,seat,req,{searchParams:url.searchParams},true);
-  if(!sync.ready[seat])return send(409,{error:'Önce dizilişini onaylamalısın.'});
-  prepareBotCommanderSelection(room,sync,teams);
-  const profile=sync.commanderChoices[seat]||await readMatchCommanderProfile(room.players[seat].accountId);
-  requireBattleNotCancelled(room);
-  if(room.battleSync!==sync)return send(409,{error:'Maç değişti.'});
-  const cards=orderedPreparationTeams(teams,sync);
-  const preview=commanderSelectionPreview(cards[0],cards[1],{seat,remainingCredits:[state.remainingCreditsA,state.remainingCreditsB],profile});
-  return send(200,{matchKey:sync.key,...preview,selection:sync.commanderChoices[seat],ready:sync.commanderChoices.map(Boolean),started:Boolean(sync.result)});
+  const response=await serializeCommanderSelection(room,async()=>{
+   requireBattleNotCancelled(room);
+   if(rooms.get(room.code)!==room||room.players[seat]!==player||cancellationMatchId(room)!==preparationId)error('Maç değişti.',409);
+   const state=auctionRoomToBattleState(room),teams=prepareBattleTeams(state),metadata=preparationTeams(teams),sync=ensureBattlePreparation(room,metadata);
+   if(body.matchKey!==sync.key)error('Komutan seçimi başka bir maça ait.',409);
+   let formation=sync.ready[seat];
+   if(req.method==='POST'){
+    if(!validateFormation(body.formation,metadata[seat]))error('Geçersiz diziliş veya kart türü',400);
+    formation=formation||copyPreparationFormation(body.formation);
+   }else if(!formation)error('Önce dizilişini onaylamalısın.',409);
+   const profile=sync.commanderChoices[seat]||await readMatchCommanderProfile(player.accountId);
+   requireBattleNotCancelled(room);
+   if(rooms.get(room.code)!==room||room.players[seat]!==player||room.battleSync!==sync||cancellationMatchId(room)!==preparationId)error('Maç değişti.',409);
+   // Project only this player's requested formation. Never save a preview as a
+   // draft or leak an opponent's hidden commander into engine calculations.
+   const projected={...sync,ready:[...sync.ready],drafts:[...sync.drafts]};
+   projected.ready[seat]=formation;
+   const cards=orderedPreparationTeams(teams,projected);
+   const preview=commanderSelectionPreview(cards[0],cards[1],{seat,remainingCredits:[state.remainingCreditsA,state.remainingCreditsB],profile});
+   return {matchKey:sync.key,...preview,preparation:{matchKey:sync.key,...copyPreparationFormation(formation),ready:Boolean(sync.ready[seat])},selection:sync.commanderChoices[seat],ready:sync.commanderChoices.map(Boolean),started:Boolean(sync.result)};
+  });
+  return send(200,response);
  }catch(e){return send(e.status||422,{error:e.message,...(e.cancellation?{cancellation:e.cancellation}:{})});}
+ finally{const remaining=(battlePreparationFlights.get(preparationId)||1)-1;if(remaining)battlePreparationFlights.set(preparationId,remaining);else battlePreparationFlights.delete(preparationId);}
 }
 if(url.pathname==='/api/battle-auction-commander'&&req.method==='POST'){
  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>5000)return send(413,{error:'İstek çok büyük'});}
@@ -1571,28 +1597,38 @@ if(url.pathname==='/api/battle-auction-commander'&&req.method==='POST'){
  if(body.matchKey!==String(room.matchNumber||1)+':'+String(room.created))return send(409,{error:'Komutan seçimi başka bir maça ait.'});
  try{requireBattleNotCancelled(room)}catch(e){return send(e.status||409,{error:e.message,...(e.cancellation?{cancellation:e.cancellation}:{})})}
  noteCommanderSelectionClient(room,seat,req,{body},true);
- const preparationId=cancellationMatchId(room);battlePreparationFlights.set(preparationId,(battlePreparationFlights.get(preparationId)||0)+1);
+ const preparationId=cancellationMatchId(room),player=room.players[seat];battlePreparationFlights.set(preparationId,(battlePreparationFlights.get(preparationId)||0)+1);
  try{
   const response=await serializeCommanderSelection(room,async()=>{
    requireBattleNotCancelled(room);
+   if(rooms.get(room.code)!==room||room.players[seat]!==player||cancellationMatchId(room)!==preparationId)error('Maç değişti.',409);
    const state=auctionRoomToBattleState(room),teams=prepareBattleTeams(state),sync=ensureBattlePreparation(room,preparationTeams(teams));
    if(body.matchKey!==sync.key)error('Komutan seçimi başka bir maça ait.',409);
-   if(!sync.ready[seat])error('Önce dizilişini onaylamalısın.',409);
+   const combined=body.formation!==undefined;
+   if(combined){
+    if(!validateFormation(body.formation,preparationTeams(teams)[seat]))error('Geçersiz diziliş veya kart türü',400);
+    if(sync.ready[seat]&&!samePreparationFormation(sync.ready[seat],body.formation))error('Hazır diziliş değiştirilemez.',409);
+   }else if(!sync.ready[seat])error('Önce dizilişini onaylamalısın.',409);
    if(sync.commanderChoices[seat]){
     if(sync.commanderChoices[seat].commanderId!==body.commanderId)error('Bu maçın komutanı zaten onaylandı.',409);
     prepareBotCommanderSelection(room,sync,teams);startSelectedCommanderBattle(room,sync,teams,state);
-    return battlePreparationResponse(room,sync,seat);
+    return {...battlePreparationResponse(room,sync,seat),...(combined?{preparation:preparationView(sync,seat)}:{})};
    }
    if(sync.result)error('Savaş zaten başladı.',409);
    const profile=await readMatchCommanderProfile(room.players[seat].accountId,{firstCommanderId:body.commanderId});
    requireBattleNotCancelled(room);
-   if(room.battleSync!==sync||cancellationMatchId(room)!==preparationId)error('Maç değişti.',409);
-   sync.commanderChoices[seat]={commanderId:body.commanderId,levels:{...profile.levels}};
+   if(rooms.get(room.code)!==room||room.players[seat]!==player||room.battleSync!==sync||cancellationMatchId(room)!==preparationId)error('Maç değişti.',409);
+   if(!profile)error('Komutan profili okunamadı. Tekrar dene.',503);
+   const choice={commanderId:body.commanderId,levels:{...profile.levels}};
+   // Commit both gates only after profile resolution succeeds. No await between
+   // these writes: failed or uncertain account reads leave formation editable.
+   if(combined&&!sync.ready[seat]){sync.ready[seat]=copyPreparationFormation(body.formation);sync.drafts[seat]=sync.ready[seat];}
+   sync.commanderChoices[seat]=choice;
    sync.commanderChoiceSources[seat]='explicit';
    recordRoomAction(room,{action:'commander',seat});roomPresence.touch(room,seat);
    prepareBotCommanderSelection(room,sync,teams);
    startSelectedCommanderBattle(room,sync,teams,state);markRoom(room);
-   return battlePreparationResponse(room,sync,seat);
+   return {...battlePreparationResponse(room,sync,seat),...(combined?{preparation:preparationView(sync,seat)}:{})};
   });
   return send(200,response);
  }catch(e){return send(e.status||422,{error:e.message,...(e.cancellation?{cancellation:e.cancellation}:{})});}

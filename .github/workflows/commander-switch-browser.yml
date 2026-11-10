@@ -5,6 +5,8 @@ on:
     paths:
       - 'public/commander-economy.js'
       - 'public/match-commander-picker.*'
+      - 'public/combined-preparation.*'
+      - 'tests/combined-preparation*.test.mjs'
       - 'public/battle-preview.*'
       - 'tests/match-commander-picker.test.mjs'
       - 'tools/test-match-commander-picker-browser.mjs'
@@ -42,12 +44,12 @@ jobs:
         with:
           node-version-file: package.json
       - name: Test free choice, progression preservation and bilingual copy
-        run: node --test tests/commander-switch-api.test.mjs tests/commander-switch-ui.test.mjs tests/commander-progression.test.js tests/first-session.test.mjs tests/public-landing-social.test.mjs tests/match-commander-picker.test.mjs tests/preparation-ready.test.mjs tests/home-play-artwork.test.mjs
+        run: node --test tests/commander-switch-api.test.mjs tests/commander-switch-ui.test.mjs tests/commander-progression.test.js tests/first-session.test.mjs tests/public-landing-social.test.mjs tests/match-commander-picker.test.mjs tests/combined-preparation.test.mjs tests/combined-preparation-http.test.mjs tests/combined-preparation-lifecycle.test.mjs tests/preparation-ready.test.mjs tests/home-play-artwork.test.mjs
       - name: Verify free choice at zero gold for new and existing accounts in TR and EN
         env:
           HERO_BROWSER_SCREENSHOTS: ${{ runner.temp }}/commander-switch-shots
         run: env -u DATABASE_URL node tools/test-commander-switch-browser.mjs
-      - name: Verify post-formation commander picker at mobile and desktop sizes
+      - name: Verify combined preparation and legacy picker at mobile and desktop sizes
         env:
           HERO_BROWSER_SCREENSHOTS: ${{ runner.temp }}/commander-switch-shots/match-picker
         run: env -u DATABASE_URL node tools/test-match-commander-picker-browser.mjs
