@@ -6,7 +6,9 @@ on:
       - 'public/commander-economy.js'
       - 'public/match-commander-picker.*'
       - 'public/combined-preparation.*'
+      - 'public/preparation-formation.js'
       - 'tests/combined-preparation*.test.mjs'
+      - 'tools/test-portrait-preparation-browser.mjs'
       - 'public/battle-preview.*'
       - 'tests/match-commander-picker.test.mjs'
       - 'tools/test-match-commander-picker-browser.mjs'
@@ -53,6 +55,10 @@ jobs:
         env:
           HERO_BROWSER_SCREENSHOTS: ${{ runner.temp }}/commander-switch-shots/match-picker
         run: env -u DATABASE_URL node tools/test-match-commander-picker-browser.mjs
+      - name: Verify portrait cards, same-lane swaps and protected center at all lane counts
+        env:
+          HERO_BROWSER_SCREENSHOTS: ${{ runner.temp }}/commander-switch-shots/portrait-preparation
+        run: env -u DATABASE_URL node tools/test-portrait-preparation-browser.mjs
       - name: Verify distinct Play artwork at responsive sizes in TR and EN
         env:
           HERO_BROWSER_SCREENSHOTS: ${{ runner.temp }}/commander-switch-shots/play-artwork

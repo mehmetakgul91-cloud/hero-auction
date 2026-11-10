@@ -1,4 +1,4 @@
-import {validateFormation} from './preparation-formation.js';
+import {validateFormation,swapSameLaneHeroes,preparationCenterSlot} from './preparation-formation.js';
 import {renderCommanderSkills} from './commander-profile-view.js';
 
 const copy=value=>structuredClone(value);
@@ -10,7 +10,7 @@ const portraits={attack:'/images/optimized/commander-attack.bad033e5f738a797.web
 // from the server's live preparation engine for this exact local formation.
 export function createCombinedPreparationState({matchKey,team,preparation,request,saveDraft=()=>{},beforeConfirm=()=>{},onLocked=()=>{},onChange=()=>{},onStarted=()=>{}}){
  if(!validateFormation(preparation,team))throw Error('Invalid preparation');
- let state={formation:copy(preparation),formationLocked:!!preparation.ready,options:[],baseline:null,selected:null,locked:null,ready:[],busy:false,previewPending:true,error:null,uncertain:false,required:false};
+ let state={formation:copy(preparation),formationLocked:!!preparation.ready,options:[],baseline:null,selected:null,selectedHeroSlot:null,locked:null,ready:[],busy:false,previewPending:true,error:null,uncertain:false,required:false};
  let disposed=false,started=false,revision=0,loading=false,refreshAgain=false;
  const publish=()=>{if(!disposed)onChange({...state})};
  const blocked=()=>disposed||state.busy||!!state.locked||state.uncertain||state.error==='MATCH_CHANGED';
@@ -20,7 +20,7 @@ export function createCombinedPreparationState({matchKey,team,preparation,reques
   const locked=data.selection??data.commanderSelection?.profile??null;
   if(data.preparation&&(data.preparation.ready||locked)){
    if(!validateFormation(data.preparation,team))throw Error('Invalid preparation');
-   state.formation=copy(data.preparation);state.formationLocked=!!data.preparation.ready;
+   state.formation=copy(data.preparation);state.formationLocked=!!data.preparation.ready;state.selectedHeroSlot=null;
   }
   if(data.options){state.options=data.options;state.baseline=data.baseline;}
   state.locked=locked;state.selected=locked?.commanderId??state.selected;
@@ -42,7 +42,7 @@ export function createCombinedPreparationState({matchKey,team,preparation,reques
   if(blocked())return;
   if(!state.selected){state.required=true;publish();return;}
   if(state.previewPending||state.error||!state.options.some(o=>o.commanderId===state.selected))return;
-  revision++;state.busy=true;publish();
+  revision++;state.busy=true;state.selectedHeroSlot=null;publish();
   const formation=copy(state.formation),commanderId=state.selected;
   try{await beforeConfirm();if(disposed)return;apply(await request('confirm',{formation,commanderId}));}
   catch(error){
@@ -54,13 +54,23 @@ export function createCombinedPreparationState({matchKey,team,preparation,reques
    catch(recovery){state.error=recovery.message;state.uncertain=true;}
   }finally{state.busy=false;publish();}
  }
+ function editFormation(formation){
+  state.formation=formation;state.selectedHeroSlot=null;
+  revision++;state.previewPending=true;state.error=null;state.baseline=null;state.options=[];publish();
+  void Promise.resolve(saveDraft(copy(state.formation))).catch(()=>{});void refresh();
+ }
  return {refresh,confirm,snapshot:()=>copy(state),
   select(id){if(blocked()||!state.options.some(o=>o.commanderId===id))return;state.selected=id;state.required=false;publish();},
   move(slot,lane){
    if(blocked()||state.formationLocked||!Number.isInteger(slot)||slot<0||slot>=5||!['front','back'].includes(lane)||state.formation.lanes[slot]===lane)return;
-   state.formation={...state.formation,lanes:[...state.formation.lanes]};state.formation.lanes[slot]=lane;
-   revision++;state.previewPending=true;state.error=null;state.baseline=null;state.options=[];publish();
-   void Promise.resolve(saveDraft(copy(state.formation))).catch(()=>{});void refresh();
+   const formation={...state.formation,lanes:[...state.formation.lanes]};formation.lanes[slot]=lane;editFormation(formation);
+  },
+  selectHero(slot){
+   if(blocked()||state.formationLocked||!Number.isInteger(slot)||slot<0||slot>=5||state.formation.lanes.filter(lane=>lane===state.formation.lanes[slot]).length<2)return;
+   const first=state.selectedHeroSlot;
+   if(first===slot){state.selectedHeroSlot=null;publish();return;}
+   if(first===null||state.formation.lanes[first]!==state.formation.lanes[slot]){state.selectedHeroSlot=slot;publish();return;}
+   const next=swapSameLaneHeroes(state.formation,team,first,slot);if(next)editFormation(next);
   },destroy(){disposed=true;revision++;},resolve:apply};
 }
 
@@ -69,12 +79,15 @@ export function mountCombinedPreparation({root,code,token,matchKey,team,preparat
  const el=(tag,text,cls)=>{const node=doc.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
  const fmt=n=>Number(n??0).toLocaleString(english?'en-US':'tr-TR',{maximumFractionDigits:2}),delta=n=>(n>0?'+':'')+fmt(n);
  const names={attack:pick('Saldırı','Attack'),defense:pick('Savunma','Defense'),magic:pick('Büyücü','Mage'),support:pick('Şifacı','Healer')};
+ const roleNames={tank:pick('Tank','Tank'),fighter:pick('Savaşçı','Fighter'),assassin:pick('Suikastçı','Assassin'),energy:pick('Büyücü','Mage'),support:pick('Destek','Support')};
  const labels={attack:pick('Saldırı','Attack'),defense:pick('Savunma','Defense'),maxHp:pick('Can','HP'),speed:pick('Hız','Speed')};
  root.hidden=false;root.className='combined-preparation';root.setAttribute('aria-labelledby','combined-preparation-title');
  const header=el('header',undefined,'combined-header'),heading=el('div');heading.append(el('small','HERO AUCTION'));
  const title=el('h1',pick('Diziliş ve komutan','Formation & commander'));title.id='combined-preparation-title';title.tabIndex=-1;heading.append(title);header.append(heading,el('span',pick('Açık artırma bitti','Auction complete')));
- const panel=el('section',undefined,'combined-panel'),content=el('div',undefined,'combined-content'),formationSection=el('section'),formationHeading=el('div',undefined,'combined-section-title');formationHeading.append(el('h2',pick('Dizilişin','Your formation')),el('span',pick('Otomatik yerleştirildi','Placed automatically')));formationSection.append(formationHeading);
- const rows={};for(const lane of ['front','back']){formationSection.append(el('div',lane==='front'?pick('Ön saf','Front'):pick('Arka saf','Back'),'combined-lane-label'));rows[lane]=el('div',undefined,'combined-row');rows[lane].dataset.lane=lane;formationSection.append(rows[lane]);}
+ const panel=el('section',undefined,'combined-panel'),content=el('div',undefined,'combined-content'),formationSection=el('section'),formationHeading=el('div',undefined,'combined-section-title');formationHeading.append(el('h2',pick('Dizilişin','Your formation')),el('span',pick('5 kahraman','5 heroes')));formationSection.append(formationHeading);
+ const formationNote=el('p',undefined,'combined-formation-note');formationNote.setAttribute('role','status');formationSection.append(formationNote);
+ const rows={},laneCounts={};for(const lane of ['front','back']){const label=el('div',undefined,'combined-lane-label');label.append(el('span',lane==='front'?pick('Ön saf','Front'):pick('Arka saf','Back')));laneCounts[lane]=el('small');label.append(laneCounts[lane]);formationSection.append(label);rows[lane]=el('div',undefined,'combined-row');rows[lane].dataset.lane=lane;formationSection.append(rows[lane]);}
+ const positionHelp=el('details',undefined,'combined-position-help'),positionHelpSummary=el('summary',pick('Yerleşim ve koruma','Positioning and protection')),centerHelp=el('p',pick('Yer değiştirmek için aynı saftaki iki kahramana sırayla dokun. Yalnızca 2 ön + 3 arka dizilişinde arka safın ortası korumalıdır. Önündeki veya yanındaki dört kahramandan ilk biri öldüğünde otomatik saldırıya açılır; diriltme korumayı geri getirmez. Av Emri, diğer komutan yetenekleri ve alan hasarı bu korumadan etkilenmez.','Tap two heroes in the same row to swap them. Only a 2-front + 3-back formation protects the rear center. The first death among its four front or side allies permanently opens it to automatic attacks; reviving an ally does not restore protection. Hunt Order, other commander abilities and area damage are unaffected.'));centerHelp.id='combined-center-help';positionHelp.append(positionHelpSummary,centerHelp);formationSection.append(positionHelp);
  const commanderSection=el('section',undefined,'combined-commanders'),commanderHeading=el('div',undefined,'combined-section-title');commanderHeading.append(el('h2',pick('Komutanını seç','Choose commander')),el('span',pick('Ücretsiz','Free')));
  const choices=el('div',undefined,'combined-choices');choices.setAttribute('role','group');choices.setAttribute('aria-label',pick('Komutan seçenekleri','Commander options'));
  const note=el('p',undefined,'combined-commander-note');note.setAttribute('role','status');commanderSection.append(commanderHeading,choices,note);content.append(formationSection,commanderSection);
@@ -99,25 +112,33 @@ export function mountCombinedPreparation({root,code,token,matchKey,team,preparat
   const abort=new AbortController(),timeout=setTimeout(()=>abort.abort(),8000);
   try{const response=await fetcher(kind==='preview'?'/api/battle-auction-commanders':'/api/battle-auction-commander',{method:'POST',cache:'no-store',signal:abort.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({code,token,matchKey,matchCommanderSelection:1,...payload,...(kind==='confirm'?{authToken:getAuthToken()}: {})})});const data=await response.json();if(!response.ok&&response.status===409&&['Komutan seçimi başka bir maça ait.','Diziliş başka bir maça ait.','Maç değişti.','Açık artırma tamamlanmadı'].includes(data.error))throw Error('MATCH_CHANGED');if(!response.ok)throw Error(data.error||pick('Hazırlık doğrulanamadı.','Could not verify preparation.'));return data;}finally{clearTimeout(timeout);}
  },onChange:s=>{
-  const focusedMove=root.contains(doc.activeElement)&&doc.activeElement?.classList.contains('combined-move')?doc.activeElement.dataset.slot:null;
+  const active=root.contains(doc.activeElement)?doc.activeElement:null;
+  const focusClass=active?.classList.contains('combined-move')?'combined-move':active?.classList.contains('combined-hero-pick')?'combined-hero-pick':null;
+  const focusedHero=focusClass?active.dataset.heroId:null;
   const unavailable=s.previewPending||!!s.error,option=s.options.find(o=>o.commanderId===s.selected),current=option||s.baseline;
-  const frozen=s.busy||!!s.locked||s.uncertain||s.error==='MATCH_CHANGED';
-  const boardKey=JSON.stringify([s.formation,s.formationLocked,current,s.baseline,s.selected,unavailable,frozen]);
+  const frozen=s.busy||!!s.locked||s.uncertain||s.error==='MATCH_CHANGED',centerSlot=preparationCenterSlot(s.formation);
+  const boardKey=JSON.stringify([s.formation,s.formationLocked,current,s.baseline,s.selected,s.selectedHeroSlot,unavailable,frozen]);
   if(boardKey!==lastBoard){lastBoard=boardKey;for(const row of Object.values(rows))row.replaceChildren();
    for(const [slot,index]of s.formation.positions.entries()){
     const hero=team[index],lane=s.formation.lanes[slot],unit=current?.heroes.find(h=>h.id===hero.id),base=s.baseline?.heroes.find(h=>h.id===hero.id),field=roleField[hero.role];
-    const card=el('article',undefined,'combined-hero');card.dataset.heroId=hero.id;card.classList.toggle('combined-specialty',s.selected===roleBranch[hero.role]);
-    const imageBox=el('div',undefined,'combined-portrait-box');card.append(imageBox,el('strong',hero.name,'combined-hero-name'));
-    const effect=el('span',undefined,'combined-hero-effect');
-    if(unavailable||!unit||!base)effect.textContent=pick('Hesaplanıyor…','Calculating…');
-    else if(option){const values=el('span');values.append(el('span',fmt(base[field])+' → '),el('b',fmt(unit[field])));effect.append(values,el('span',delta(unit[field]-base[field])+' '+labels[field],'combined-delta'));}
-    else effect.textContent=labels[field]+' '+fmt(unit[field]);
-    const move=el('button',lane==='front'?pick('↓ Arka','↓ Back'):pick('↑ Ön','↑ Front'),'combined-move');move.type='button';move.dataset.slot=slot;move.disabled=frozen||s.formationLocked;move.setAttribute('aria-label',hero.name+' · '+(lane==='front'?pick('Arka safa taşı','Move to back'):pick('Ön safa taşı','Move to front')));move.onclick=()=>{controller.move(slot,lane==='front'?'back':'front');root.querySelector('.combined-move[data-slot="'+slot+'"]')?.focus({preventScroll:true});};
-    card.append(effect,move);rows[lane].append(card);portrait(index,imageBox);
+    const card=el('article',undefined,'combined-hero');card.dataset.heroId=hero.id;card.classList.toggle('combined-specialty',s.selected===roleBranch[hero.role]);card.classList.toggle('combined-swap-selected',s.selectedHeroSlot===slot);
+    const canSwap=s.formation.lanes.filter(value=>value===lane).length>1;
+    const pickHero=el('button',undefined,'combined-hero-pick');pickHero.type='button';pickHero.dataset.slot=slot;pickHero.dataset.heroId=hero.id;pickHero.disabled=frozen||s.formationLocked||!canSwap;pickHero.setAttribute('aria-pressed',String(s.selectedHeroSlot===slot));pickHero.setAttribute('aria-label',hero.name+' · '+(lane==='front'?pick('Ön saf','Front'):pick('Arka saf','Back'))+' · '+(!canSwap?pick('Bu safta tek kahraman','Only hero in this row'):s.selectedHeroSlot===slot?pick('Seçildi. Seçimi kaldır','Selected. Clear selection'):pick('Yer değiştirmek için seç','Select to swap'))+(slot===centerSlot?' · '+pick('Korumalı merkez','Protected center'):''));
+    const imageBox=el('div',undefined,'combined-portrait-box');pickHero.append(imageBox,el('span',roleNames[hero.role],'combined-hero-role'),el('strong',hero.name,'combined-hero-name'));
+    if(slot===centerSlot){const badge=el('span',pick('Korumalı','Protected'),'combined-center-badge');pickHero.append(badge);pickHero.setAttribute('aria-describedby',centerHelp.id);}
+    pickHero.onclick=()=>{controller.selectHero(slot);root.querySelector('.combined-hero-pick[data-hero-id="'+hero.id+'"]')?.focus({preventScroll:true});};
+    const effect=el('span',undefined,'combined-hero-effect');effect.append(el('span',labels[field],'combined-effect-label'));
+    if(unavailable||!unit||!base)effect.append(el('span',pick('Hesaplanıyor…','Calculating…'),'combined-effect-pending'));
+    else if(option){const values=el('span',undefined,'combined-effect-values');values.append(el('span',fmt(base[field])+' → '),el('b',fmt(unit[field])));effect.append(values,el('span',delta(unit[field]-base[field]),'combined-delta'));effect.setAttribute('aria-label',labels[field]+': '+fmt(base[field])+' → '+fmt(unit[field])+'; '+pick('Komutan katkısı ','Commander bonus ')+delta(unit[field]-base[field]));}
+    else effect.append(el('b',fmt(unit[field]),'combined-effect-values'));
+    const move=el('button',lane==='front'?pick('↓ Arkaya çek','↓ Move back'):pick('↑ Öne çek','↑ Move forward'),'combined-move');move.type='button';move.dataset.slot=slot;move.dataset.heroId=hero.id;move.disabled=frozen||s.formationLocked;move.setAttribute('aria-label',hero.name+' · '+(lane==='front'?pick('Arkaya çek','Move back'):pick('Öne çek','Move forward')));move.onclick=()=>{controller.move(slot,lane==='front'?'back':'front');root.querySelector('.combined-move[data-hero-id="'+hero.id+'"]')?.focus({preventScroll:true});};
+    card.append(pickHero,effect,move);rows[lane].append(card);portrait(index,imageBox);
    }
-   for(const row of Object.values(rows))if(!row.children.length)row.append(el('span',pick('Bu safta kahraman yok','No heroes in this row'),'combined-empty'));
+   for(const [lane,row]of Object.entries(rows)){const count=row.children.length;row.dataset.count=String(count);laneCounts[lane].textContent=count+' '+pick('kahraman','heroes');if(!count)row.append(el('span',pick('Bu safta kahraman yok','No heroes in this row'),'combined-empty'));}
   }
-  if(focusedMove!==null)root.querySelector('.combined-move[data-slot="'+focusedMove+'"]')?.focus({preventScroll:true});
+  const picked=s.selectedHeroSlot===null?null:team[s.formation.positions[s.selectedHeroSlot]];
+  formationNote.textContent=s.locked||s.formationLocked?pick('Diziliş kilitlendi.','Formation locked.'):s.busy?pick('Diziliş onaylanıyor…','Confirming formation…'):s.uncertain?pick('Onay sonucu doğrulanıyor…','Verifying confirmation…'):s.error==='MATCH_CHANGED'?pick('Maç değişti. Güncel maçı yükle.','The match changed. Reload the current match.'):picked?picked.name+' · '+pick('Aynı saftaki başka kahramana dokun.','Tap another hero in the same row.'):pick('Yer değiştirmek için aynı saftaki iki kahramana dokun.','Tap two heroes in the same row to swap them.');
+  if(focusedHero!==null)root.querySelector('.'+focusClass+'[data-hero-id="'+focusedHero+'"]')?.focus({preventScroll:true});
   const choiceKey=JSON.stringify(s.options.map(o=>[o.commanderId,o.profile.levels]));
   // Keep choices present during a lane refresh; only values are unavailable.
   if(s.options.length&&choiceKey!==lastChoices){lastChoices=choiceKey;choices.replaceChildren();buttons=new Map();for(const option of s.options){const id=option.commanderId,button=el('button',undefined,'combined-choice'),img=el('img');button.type='button';img.src=portraits[id];img.alt='';img.onerror=()=>{img.hidden=true;};button.append(img,el('strong',names[id]));button.setAttribute('aria-label',names[id]+' · '+pick('Seviye ','Level ')+(option.profile.levels[id]??0));button.onclick=()=>{controller.select(id);buttons.get(id)?.focus({preventScroll:true});};choices.append(button);buttons.set(id,button);}}

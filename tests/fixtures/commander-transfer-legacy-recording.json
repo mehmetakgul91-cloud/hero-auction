@@ -1,0 +1,2114 @@
+{
+  "sourceCommit": "6495f4a2bc9c5be1a4450f3f4b88a2a8af7b397c",
+  "seed": "chain:3698",
+  "teams": [
+    [
+      {
+        "id": "original:expansion-26",
+        "name": "Mor Hilal",
+        "power": 92,
+        "role": "assassin",
+        "lane": "front",
+        "position": 0,
+        "specialty": "assassin",
+        "laneModifiers": {
+          "front": 0.06,
+          "back": -0.03
+        },
+        "attack": 98,
+        "defense": 98,
+        "maxHp": 195,
+        "hp": 0,
+        "speed": 106,
+        "shield": 0,
+        "kills": 0,
+        "damage": 127,
+        "healing": 0,
+        "active": {
+          "name": "Hilal Baskını",
+          "effect": "pierce",
+          "power": 1.14,
+          "pierceRate": 0.45
+        },
+        "passive": {
+          "name": "Gölge Çevikliği",
+          "effect": "evasion",
+          "value": 0.08
+        },
+        "compositionMultiplier": 1.06,
+        "auctionCreditMultiplier": 1,
+        "lastActionRound": 4
+      },
+      {
+        "id": "original:expansion-13",
+        "name": "Astral Kâhin",
+        "power": 85,
+        "role": "energy",
+        "lane": "front",
+        "position": 1,
+        "specialty": "energy",
+        "laneModifiers": {
+          "front": -0.07,
+          "back": 0.09
+        },
+        "attack": 84,
+        "defense": 67,
+        "maxHp": 158,
+        "hp": 0,
+        "speed": 79,
+        "shield": 0,
+        "kills": 0,
+        "damage": 128,
+        "healing": 0,
+        "active": {
+          "name": "Astral Dalga",
+          "effect": "splash",
+          "power": 1.12,
+          "splashRate": 0.27
+        },
+        "passive": {
+          "name": "Yıldız Odağı",
+          "effect": "focus",
+          "value": 0.06
+        },
+        "compositionMultiplier": 0.9299999999999999,
+        "auctionCreditMultiplier": 1,
+        "lastActionRound": 4,
+        "delayProtectedThroughRound": 4
+      },
+      {
+        "id": "original:expansion-28",
+        "name": "Kış Kraliçesi",
+        "power": 91,
+        "role": "energy",
+        "lane": "back",
+        "position": 2,
+        "specialty": "energy",
+        "laneModifiers": {
+          "front": -0.04,
+          "back": 0.07
+        },
+        "attack": 97,
+        "defense": 105,
+        "maxHp": 195,
+        "hp": 137,
+        "speed": 97,
+        "shield": 0,
+        "kills": 4,
+        "damage": 240,
+        "healing": 0,
+        "active": {
+          "name": "Kış Fırtınası",
+          "effect": "splash",
+          "power": 1.14,
+          "splashRate": 0.3
+        },
+        "passive": {
+          "name": "Buz Direnci",
+          "effect": "resist",
+          "value": 0.08
+        },
+        "compositionMultiplier": 1.07,
+        "auctionCreditMultiplier": 1,
+        "lastActionRound": 6
+      },
+      {
+        "id": "original:07",
+        "name": "Alev Zırhı",
+        "power": 84,
+        "role": "fighter",
+        "lane": "back",
+        "position": 3,
+        "specialty": "fighter",
+        "laneModifiers": {
+          "front": 0.05,
+          "back": -0.03
+        },
+        "attack": 81,
+        "defense": 81,
+        "maxHp": 163,
+        "hp": 155,
+        "speed": 81,
+        "shield": 30,
+        "kills": 1,
+        "damage": 131,
+        "healing": 0,
+        "active": {
+          "name": "yakma",
+          "effect": "burst",
+          "power": 1.1,
+          "delay": true
+        },
+        "passive": {
+          "name": "alev-kilici",
+          "effect": "rage",
+          "value": 0.11
+        },
+        "compositionMultiplier": 0.97,
+        "auctionCreditMultiplier": 1,
+        "lastActionRound": 5
+      },
+      {
+        "id": "original:15",
+        "name": "Seraphine",
+        "power": 92,
+        "role": "support",
+        "lane": "back",
+        "position": 4,
+        "specialty": "support",
+        "laneModifiers": {
+          "front": -0.03,
+          "back": 0.07
+        },
+        "attack": 98,
+        "defense": 106,
+        "maxHp": 197,
+        "hp": 173,
+        "speed": 98,
+        "shield": 0,
+        "kills": 0,
+        "damage": 164,
+        "healing": 102,
+        "active": {
+          "name": "Ejderha Kalkanı",
+          "effect": "shield",
+          "power": 1.14,
+          "supportHybrid": true,
+          "healRate": 0.52,
+          "allyShieldRate": 0.28
+        },
+        "passive": {
+          "name": "Buz Direnci",
+          "effect": "resist",
+          "value": 0.08
+        },
+        "compositionMultiplier": 1.07,
+        "auctionCreditMultiplier": 1,
+        "lastActionRound": 6
+      }
+    ],
+    [
+      {
+        "id": "original:expansion-31",
+        "name": "Sancak Bekçisi",
+        "power": 76,
+        "role": "support",
+        "lane": "front",
+        "position": 0,
+        "specialty": "support",
+        "laneModifiers": {
+          "front": 0.06,
+          "back": -0.04
+        },
+        "attack": 81,
+        "defense": 86,
+        "maxHp": 161,
+        "hp": 0,
+        "speed": 81,
+        "shield": 0,
+        "kills": 0,
+        "damage": 61,
+        "healing": 0,
+        "active": {
+          "name": "Sancak Koruması",
+          "effect": "shield",
+          "power": 1.12,
+          "supportHybrid": true,
+          "healRate": 0.48,
+          "allyShieldRate": 0.2
+        },
+        "passive": {
+          "name": "Sancak Direnci",
+          "effect": "guard",
+          "value": 0.06
+        },
+        "compositionMultiplier": 1.06,
+        "auctionCreditMultiplier": 1,
+        "lastActionRound": 2
+      },
+      {
+        "id": "original:expansion-11",
+        "name": "Ruh Dokuyucu",
+        "power": 90,
+        "role": "support",
+        "lane": "front",
+        "position": 1,
+        "specialty": "support",
+        "laneModifiers": {
+          "front": -0.07,
+          "back": 0.09
+        },
+        "attack": 84,
+        "defense": 91,
+        "maxHp": 167,
+        "hp": 0,
+        "speed": 84,
+        "shield": 0,
+        "kills": 0,
+        "damage": 63,
+        "healing": 0,
+        "active": {
+          "name": "Ruh Şifası",
+          "effect": "heal",
+          "power": 1.14,
+          "healRate": 0.64
+        },
+        "passive": {
+          "name": "Ruh Perdesi",
+          "effect": "resist",
+          "value": 0.08
+        },
+        "compositionMultiplier": 0.9299999999999999,
+        "auctionCreditMultiplier": 1,
+        "lastActionRound": 2
+      },
+      {
+        "id": "original:08",
+        "name": "Kadim Koruyucu",
+        "power": 72,
+        "role": "fighter",
+        "lane": "back",
+        "position": 2,
+        "specialty": "fighter",
+        "laneModifiers": {
+          "front": -0.04,
+          "back": 0.06
+        },
+        "attack": 81,
+        "defense": 76,
+        "maxHp": 153,
+        "hp": 0,
+        "speed": 76,
+        "shield": 0,
+        "kills": 1,
+        "damage": 133,
+        "healing": 0,
+        "active": {
+          "name": "uzun-menzil",
+          "effect": "sunder",
+          "power": 1.12,
+          "sunderRate": 0.15
+        },
+        "passive": {
+          "name": "dogal-yavaslatma",
+          "effect": "focus",
+          "value": 0.06
+        },
+        "compositionMultiplier": 1.06,
+        "auctionCreditMultiplier": 1,
+        "lastActionRound": 5
+      },
+      {
+        "id": "original:03",
+        "name": "Kaya Titanı",
+        "power": 80,
+        "role": "tank",
+        "lane": "back",
+        "position": 3,
+        "specialty": "tank",
+        "laneModifiers": {
+          "front": 0.07,
+          "back": -0.09
+        },
+        "attack": 73,
+        "defense": 77,
+        "maxHp": 146,
+        "hp": 0,
+        "speed": 73,
+        "shield": 0,
+        "kills": 0,
+        "damage": 142,
+        "healing": 0,
+        "active": {
+          "name": "yer-sarsintisi",
+          "effect": "shield",
+          "power": 1.12,
+          "shieldRate": 0.42,
+          "frontShieldRate": 0.16,
+          "tankShieldRate": 0.2
+        },
+        "passive": {
+          "name": "alan-kontrol",
+          "effect": "guard",
+          "value": 0.06
+        },
+        "compositionMultiplier": 0.91,
+        "auctionCreditMultiplier": 1,
+        "lastActionRound": 5
+      },
+      {
+        "id": "original:07",
+        "name": "Alev Zırhı",
+        "power": 84,
+        "role": "fighter",
+        "lane": "back",
+        "position": 4,
+        "specialty": "fighter",
+        "laneModifiers": {
+          "front": 0.05,
+          "back": -0.03
+        },
+        "attack": 89,
+        "defense": 81,
+        "maxHp": 163,
+        "hp": 0,
+        "speed": 81,
+        "shield": 0,
+        "kills": 1,
+        "damage": 146,
+        "healing": 0,
+        "active": {
+          "name": "yakma",
+          "effect": "burst",
+          "power": 1.1,
+          "delay": true
+        },
+        "passive": {
+          "name": "alev-kilici",
+          "effect": "rage",
+          "value": 0.11
+        },
+        "compositionMultiplier": 0.97,
+        "auctionCreditMultiplier": 1,
+        "lastActionRound": 5,
+        "rageActivated": true
+      }
+    ]
+  ],
+  "log": [
+    {
+      "round": 1,
+      "side": 0,
+      "actor": "original:expansion-26",
+      "action": "attack",
+      "target": "original:03",
+      "value": 32,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 32,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "1:0:original:expansion-26",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 1,
+      "side": 0,
+      "actor": "original:15",
+      "action": "attack",
+      "target": "original:expansion-11",
+      "value": 48,
+      "critical": true,
+      "absorbed": 0,
+      "rawDamage": 48,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "1:0:original:15",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 1,
+      "side": 0,
+      "actor": "original:expansion-28",
+      "action": "attack",
+      "target": "original:expansion-11",
+      "value": 34,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 34,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "1:0:original:expansion-28",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 1,
+      "side": 1,
+      "actor": "original:expansion-11",
+      "action": "attack",
+      "target": "original:expansion-26",
+      "value": 30,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 30,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "1:1:original:expansion-11",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 1,
+      "side": 0,
+      "actor": "original:07",
+      "action": "attack",
+      "target": "original:expansion-31",
+      "value": 30,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 30,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "1:0:original:07",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 1,
+      "side": 1,
+      "actor": "original:expansion-31",
+      "action": "attack",
+      "target": "original:expansion-13",
+      "value": 32,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 32,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "1:1:original:expansion-31",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 1,
+      "side": 1,
+      "actor": "original:07",
+      "action": "attack",
+      "target": "original:expansion-13",
+      "value": 31,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 31,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "1:1:original:07",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 1,
+      "side": 0,
+      "actor": "original:expansion-13",
+      "action": "attack",
+      "target": "original:expansion-31",
+      "value": 39,
+      "critical": true,
+      "absorbed": 0,
+      "rawDamage": 39,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "1:0:original:expansion-13",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 1,
+      "side": 1,
+      "actor": "original:08",
+      "action": "attack",
+      "target": "original:expansion-13",
+      "value": 31,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 31,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "1:1:original:08",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 1,
+      "side": 1,
+      "actor": "original:03",
+      "action": "attack",
+      "target": "original:expansion-26",
+      "value": 25,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 25,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "1:1:original:03",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 2,
+      "side": 0,
+      "actor": "original:expansion-26",
+      "action": "attack",
+      "target": "original:07",
+      "value": 32,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 32,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "2:0:original:expansion-26",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 2,
+      "side": 0,
+      "actor": "original:15",
+      "action": "attack",
+      "target": "original:expansion-31",
+      "value": 37,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 37,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "2:0:original:15",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 2,
+      "side": 0,
+      "actor": "original:expansion-28",
+      "action": "attack",
+      "target": "original:expansion-31",
+      "value": 35,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 35,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "2:0:original:expansion-28",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 2,
+      "side": 1,
+      "actor": "original:expansion-11",
+      "action": "attack",
+      "target": "original:expansion-13",
+      "value": 33,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 33,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "2:1:original:expansion-11",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 2,
+      "side": 0,
+      "actor": "original:07",
+      "action": "attack",
+      "target": "original:expansion-11",
+      "value": 29,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 29,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "2:0:original:07",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 2,
+      "side": 1,
+      "actor": "original:expansion-31",
+      "action": "attack",
+      "target": "original:expansion-26",
+      "value": 29,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 29,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "2:1:original:expansion-31",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 2,
+      "side": 1,
+      "actor": "original:07",
+      "action": "attack",
+      "target": "original:expansion-26",
+      "value": 28,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 28,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "2:1:original:07",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 2,
+      "side": 0,
+      "actor": "original:expansion-13",
+      "action": "attack",
+      "target": "original:expansion-11",
+      "value": 29,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 29,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "2:0:original:expansion-13",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 2,
+      "side": 1,
+      "actor": "original:08",
+      "action": "attack",
+      "target": "original:expansion-26",
+      "value": 28,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 28,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "2:1:original:08",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 2,
+      "side": 1,
+      "actor": "original:03",
+      "action": "attack",
+      "target": "original:expansion-13",
+      "value": 28,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 28,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "2:1:original:03",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 3,
+      "side": 0,
+      "actor": "original:expansion-26",
+      "action": "Hilal Baskını",
+      "target": "original:08",
+      "value": 47,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 47,
+      "damageType": "special",
+      "executedDamage": 0,
+      "actionId": "3:0:original:expansion-26",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 3,
+      "side": 0,
+      "actor": "original:15",
+      "action": "heal",
+      "target": "original:expansion-13",
+      "value": 51,
+      "actionId": "3:0:original:15",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 3,
+      "side": 0,
+      "actor": "original:15",
+      "action": "shield",
+      "target": "original:expansion-13",
+      "value": 30,
+      "actionId": "3:0:original:15",
+      "shieldSnapshot": [
+        [
+          0,
+          30,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 3,
+      "side": 0,
+      "actor": "original:expansion-28",
+      "action": "Kış Fırtınası",
+      "target": "original:expansion-11",
+      "value": 27,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 39,
+      "damageType": "special",
+      "executedDamage": 0,
+      "actionId": "3:0:original:expansion-28",
+      "shieldSnapshot": [
+        [
+          0,
+          30,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 3,
+      "side": 0,
+      "actor": "original:expansion-28",
+      "action": "splash",
+      "target": "original:expansion-31",
+      "value": 11,
+      "absorbed": 0,
+      "rawDamage": 11,
+      "damageType": "splash",
+      "actionId": "3:0:original:expansion-28",
+      "shieldSnapshot": [
+        [
+          0,
+          30,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 3,
+      "side": 0,
+      "actor": "original:expansion-28",
+      "action": "splash",
+      "target": "original:08",
+      "value": 11,
+      "absorbed": 0,
+      "rawDamage": 11,
+      "damageType": "splash",
+      "actionId": "3:0:original:expansion-28",
+      "shieldSnapshot": [
+        [
+          0,
+          30,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 3,
+      "side": 0,
+      "actor": "original:expansion-28",
+      "action": "splash",
+      "target": "original:03",
+      "value": 11,
+      "absorbed": 0,
+      "rawDamage": 11,
+      "damageType": "splash",
+      "actionId": "3:0:original:expansion-28",
+      "shieldSnapshot": [
+        [
+          0,
+          30,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 3,
+      "side": 0,
+      "actor": "original:expansion-28",
+      "action": "splash",
+      "target": "original:07",
+      "value": 11,
+      "absorbed": 0,
+      "rawDamage": 11,
+      "damageType": "splash",
+      "actionId": "3:0:original:expansion-28",
+      "shieldSnapshot": [
+        [
+          0,
+          30,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 3,
+      "side": 0,
+      "actor": "original:07",
+      "action": "yakma",
+      "target": "original:expansion-31",
+      "value": 9,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 33,
+      "damageType": "special",
+      "executedDamage": 0,
+      "actionId": "3:0:original:07",
+      "shieldSnapshot": [
+        [
+          0,
+          30,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 3,
+      "side": 1,
+      "actor": "original:07",
+      "action": "yakma",
+      "target": "original:expansion-13",
+      "value": 11,
+      "critical": false,
+      "absorbed": 23,
+      "rawDamage": 34,
+      "damageType": "special",
+      "executedDamage": 0,
+      "actionId": "3:1:original:07",
+      "shieldSnapshot": [
+        [
+          0,
+          7,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 3,
+      "side": 1,
+      "actor": "original:07",
+      "action": "delay",
+      "target": "original:expansion-13",
+      "value": 0,
+      "dueRound": 3,
+      "protectedThroughRound": 4,
+      "actionId": "3:1:original:07",
+      "shieldSnapshot": [
+        [
+          0,
+          7,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 3,
+      "side": 1,
+      "actor": "original:08",
+      "action": "armor-break",
+      "target": "original:expansion-13",
+      "value": 0,
+      "actionId": "3:1:original:08",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 3,
+      "side": 1,
+      "actor": "original:08",
+      "action": "uzun-menzil",
+      "target": "original:expansion-13",
+      "value": 28,
+      "critical": false,
+      "absorbed": 7,
+      "rawDamage": 35,
+      "damageType": "special",
+      "executedDamage": 0,
+      "actionId": "3:1:original:08",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 3,
+      "side": 1,
+      "actor": "original:03",
+      "action": "shield",
+      "target": "original:03",
+      "value": 32,
+      "actionId": "3:1:original:03",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          32,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 3,
+      "side": 1,
+      "actor": "original:03",
+      "action": "yer-sarsintisi",
+      "target": "original:expansion-26",
+      "value": 37,
+      "critical": true,
+      "absorbed": 0,
+      "rawDamage": 37,
+      "damageType": "special",
+      "executedDamage": 0,
+      "actionId": "3:1:original:03",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          47,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 3,
+      "side": 0,
+      "actor": "original:expansion-13",
+      "action": "Astral Dalga",
+      "target": "original:03",
+      "value": 11,
+      "critical": false,
+      "absorbed": 25,
+      "rawDamage": 36,
+      "damageType": "special",
+      "executedDamage": 0,
+      "actionId": "3:0:original:expansion-13",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          22,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 3,
+      "side": 0,
+      "actor": "original:expansion-13",
+      "action": "splash",
+      "target": "original:08",
+      "value": 9,
+      "absorbed": 0,
+      "rawDamage": 9,
+      "damageType": "splash",
+      "actionId": "3:0:original:expansion-13",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          22,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 3,
+      "side": 0,
+      "actor": "original:expansion-13",
+      "action": "splash",
+      "target": "original:07",
+      "value": 9,
+      "absorbed": 0,
+      "rawDamage": 9,
+      "damageType": "splash",
+      "actionId": "3:0:original:expansion-13",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          22,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 4,
+      "side": 1,
+      "actor": "commander:1",
+      "action": "commander-magic-ultimate",
+      "value": 81,
+      "impacts": [
+        {
+          "target": "original:07",
+          "kind": "buff",
+          "value": 81,
+          "fromRound": 4,
+          "untilRound": 6
+        }
+      ],
+      "commanderLevel": 40,
+      "abilityBonusPercent": 40,
+      "energy": 100,
+      "ultimateEnergy": 0,
+      "ultimateUsed": true,
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          22,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 4,
+      "side": 0,
+      "actor": "original:expansion-26",
+      "action": "attack",
+      "target": "original:03",
+      "value": 16,
+      "critical": false,
+      "absorbed": 22,
+      "rawDamage": 38,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "4:0:original:expansion-26",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 4,
+      "side": 0,
+      "actor": "original:15",
+      "action": "attack",
+      "target": "original:07",
+      "value": 39,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 39,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "4:0:original:15",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 4,
+      "side": 0,
+      "actor": "original:expansion-28",
+      "action": "attack",
+      "target": "original:08",
+      "value": 37,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 37,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "4:0:original:expansion-28",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 4,
+      "side": 0,
+      "actor": "original:07",
+      "action": "attack",
+      "target": "original:03",
+      "value": 32,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 32,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "4:0:original:07",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 4,
+      "side": 1,
+      "actor": "original:07",
+      "action": "attack",
+      "target": "original:expansion-26",
+      "value": 18,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 57,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "4:1:original:07",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 4,
+      "side": 0,
+      "actor": "original:expansion-13",
+      "action": "attack",
+      "target": "original:07",
+      "value": 31,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 31,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "4:0:original:expansion-13",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 4,
+      "side": 1,
+      "actor": "original:08",
+      "action": "attack",
+      "target": "original:expansion-13",
+      "value": 15,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 33,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "4:1:original:08",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 4,
+      "side": 1,
+      "actor": "original:03",
+      "action": "attack",
+      "target": "original:07",
+      "value": 28,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 28,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "4:1:original:03",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 5,
+      "actor": "original:07",
+      "action": "rage",
+      "value": 89,
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 5,
+      "side": 0,
+      "actor": "original:15",
+      "action": "attack",
+      "target": "original:08",
+      "value": 40,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 40,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "5:0:original:15",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 5,
+      "side": 0,
+      "actor": "original:expansion-28",
+      "action": "attack",
+      "target": "original:03",
+      "value": 37,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 37,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "5:0:original:expansion-28",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 5,
+      "side": 0,
+      "actor": "original:07",
+      "action": "attack",
+      "target": "original:07",
+      "value": 31,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 31,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "5:0:original:07",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 5,
+      "side": 1,
+      "actor": "original:07",
+      "action": "attack",
+      "target": "original:expansion-28",
+      "value": 58,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 58,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "5:1:original:07",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 5,
+      "side": 1,
+      "actor": "original:08",
+      "action": "attack",
+      "target": "original:07",
+      "value": 31,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 31,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "5:1:original:08",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 5,
+      "side": 1,
+      "actor": "original:03",
+      "action": "attack",
+      "target": "original:15",
+      "value": 24,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 24,
+      "damageType": "normal",
+      "executedDamage": 0,
+      "actionId": "5:1:original:03",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 6,
+      "side": 0,
+      "actor": "original:15",
+      "action": "heal",
+      "target": "original:07",
+      "value": 51,
+      "actionId": "6:0:original:15",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 6,
+      "side": 0,
+      "actor": "original:15",
+      "action": "shield",
+      "target": "original:07",
+      "value": 30,
+      "actionId": "6:0:original:15",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          30,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 6,
+      "side": 0,
+      "actor": "original:expansion-28",
+      "action": "Kış Fırtınası",
+      "target": "original:07",
+      "value": 10,
+      "critical": false,
+      "absorbed": 0,
+      "rawDamage": 41,
+      "damageType": "special",
+      "executedDamage": 0,
+      "arcaneTransfer": {
+        "sourceId": "original:07",
+        "targetId": "original:08",
+        "fromRound": 6,
+        "untilRound": 6,
+        "bonusAttack": 81
+      },
+      "actionId": "6:0:original:expansion-28",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          30,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 6,
+      "side": 0,
+      "actor": "original:expansion-28",
+      "action": "splash",
+      "target": "original:08",
+      "value": 9,
+      "absorbed": 0,
+      "rawDamage": 12,
+      "damageType": "splash",
+      "arcaneTransfer": {
+        "sourceId": "original:08",
+        "targetId": "original:03",
+        "fromRound": 6,
+        "untilRound": 6,
+        "bonusAttack": 73
+      },
+      "actionId": "6:0:original:expansion-28",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          30,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "round": 6,
+      "side": 0,
+      "actor": "original:expansion-28",
+      "action": "splash",
+      "target": "original:03",
+      "value": 7,
+      "absorbed": 0,
+      "rawDamage": 12,
+      "damageType": "splash",
+      "actionId": "6:0:original:expansion-28",
+      "shieldSnapshot": [
+        [
+          0,
+          0,
+          0,
+          30,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    }
+  ]
+}

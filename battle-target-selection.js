@@ -1,9 +1,12 @@
 import {selectCommanderFocusTarget} from './battle-commander-focus.js';
+import {isCenterProtected} from './battle-center-protection.js';
 // Shared by live and simulated battles: assassins exhaust the rear line first.
 export function selectBattleTarget(enemies,attacker,round){
  const focused=selectCommanderFocusTarget(attacker,enemies,round);
  if(focused)return focused;
- const alive=enemies.filter(x=>x.hp>0);
+ // Hunt Order has already overridden cover. Only automatic primary targeting
+ // filters the center; splash and explicit commander targets never use it.
+ const alive=enemies.filter(x=>x.hp>0&&!isCenterProtected(x,enemies));
  if(!alive.length)return null;
  const frontline=alive.filter(x=>x.lane==='front');
  const rear=alive.filter(x=>x.lane==='back');
