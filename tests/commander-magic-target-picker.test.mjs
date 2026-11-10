@@ -35,3 +35,16 @@ test('a buffed ally is excluded rather than refreshing or stacking',()=>{
  assert.equal(requiredMagicTargets('ultimate',heroes,options),0);
  assert.equal(validateMagicTargetSelection('ultimate',heroes,['a'],options),false);
 });
+
+test('standalone picker also applies a target immediately, has no confirm button and blocks repeated clicks',async()=>{
+ const {createMagicTargetPicker}=await import('../public/commander-magic-target-picker.js');
+ const oldDocument=globalThis.document;
+ class Node {children=[];dataset={};style={};listeners=new Map();append(node){this.children.push(node)}replaceChildren(){this.children=[]}setAttribute(){}addEventListener(type,fn){this.listeners.set(type,fn)}click(){return this.listeners.get('click')?.()}}
+ globalThis.document={createElement:()=>new Node()};
+ try{
+  const root=new Node(),sent=[];let release;const picker=createMagicTargetPicker(root,{onConfirm:cast=>{sent.push(cast);return new Promise(resolve=>release=resolve)}});
+  picker.show('normal',heroes);assert.equal(root.children.length,heroes.length+1);const target=root.children[1];const pending=target.click();await target.click();await root.children[3].click();
+  assert.deepEqual(sent,[{ability:'normal',targetIds:['a']}]);assert.ok(root.children.slice(1).every(button=>button.disabled));release();await pending;
+  await root.children[1].click();assert.equal(sent.length,1);assert.ok(root.children.slice(1).every(button=>button.disabled));
+ }finally{globalThis.document=oldDocument}
+});

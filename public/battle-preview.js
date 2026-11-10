@@ -636,7 +636,7 @@ async function build(overrideResult){
  $('battle-arena').hidden=true;
  arenaWeatherReady=false;arenaWeather.clear();arenaSceneLayout.clear();
  document.body.classList.remove('arena-results');document.querySelector('.controls').hidden=false;
- clearCombatPresentation();stop();if(victoryPendingTimer!==null){clearTimeout(victoryPendingTimer);victoryPendingTimer=null}resetArenaClock();arenaTeamRenderer.reset();battlePresentationFinished=false;cursor=0;events=[];$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;victoryRevealDone=false;if(victoryRevealTimer!==null){clearTimeout(victoryRevealTimer);victoryRevealTimer=null}if($('arena-victory-reveal'))$('arena-victory-reveal').hidden=true;$('next').disabled=true;$('play').disabled=true;
+ clearCombatPresentation();stop();if(victoryPendingTimer!==null){clearTimeout(victoryPendingTimer);victoryPendingTimer=null}resetArenaClock();$('round').textContent='0';arenaTeamRenderer.reset();battlePresentationFinished=false;cursor=0;events=[];$('arena-score').hidden=true;if($('battle-summary'))$('battle-summary').hidden=true;victoryRevealDone=false;if(victoryRevealTimer!==null){clearTimeout(victoryRevealTimer);victoryRevealTimer=null}if($('arena-victory-reveal'))$('arena-victory-reveal').hidden=true;$('next').disabled=true;$('play').disabled=true;
  $('message').textContent='Sunucudan gerçek savaş sonucu alınıyor…';
  try{
   let result=overrideResult;
@@ -719,11 +719,11 @@ window.addEventListener('heroarena:experimental-round-end',e=>{
  const snapshot=e.detail.teams;
  for(let side=0;side<2;side++){
   const hpById=new Map((snapshot[side]||[]).map(u=>[u.id,u.hp]));
-  for(const unit of states[side])if(hpById.has(unit.id)){const live=snapshot[side].find(u=>u.id===unit.id);delete unit.commanderFocusUntilDeath;delete unit.commanderStunNextAttack;delete unit.commanderHuntNextAttack;for(const key of ['lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'])delete unit[key];Object.assign(unit,live);if(e.detail.finished){delete unit.commanderFocusUntilDeath;delete unit.commanderStunNextAttack;delete unit.commanderHuntNextAttack;for(const key of ['lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'])delete unit[key];}unit.hp=Math.max(0,Math.min(unit.maxHp,Number(live.hp)||0));unit.shield=Number(live.shield)||0;unit.shieldKnown=true;}
+  for(const unit of states[side])if(hpById.has(unit.id)){const live=snapshot[side].find(u=>u.id===unit.id);delete unit.commanderFocusUntilDeath;delete unit.commanderStunNextAttack;delete unit.commanderHuntNextAttack;for(const key of ['arcaneSurgeBonusAttack','arcaneSurgeFromRound','arcaneSurgeUntilRound','lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'])delete unit[key];Object.assign(unit,live);if(e.detail.finished){delete unit.commanderFocusUntilDeath;delete unit.commanderStunNextAttack;delete unit.commanderHuntNextAttack;for(const key of ['arcaneSurgeBonusAttack','arcaneSurgeFromRound','arcaneSurgeUntilRound','lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'])delete unit[key];}unit.hp=Math.max(0,Math.min(unit.maxHp,Number(live.hp)||0));unit.shield=Number(live.shield)||0;unit.shieldKnown=true;}
  }
  const fresh=(e.detail.events||[]).filter(entry=>Number.isSafeInteger(entry.version)&&entry.version>feedbackVersion);
  for(const entry of fresh){appendBattleFeedback(entry);feedbackVersion=Math.max(feedbackVersion,entry.version);}
- render();
+ render(undefined,e.detail.round);
  if(e.detail?.presentation?.castKey!==undefined)heroAttacks.acceptContact(e.detail.presentation.castKey);
  heroAttacks.prune();
  $('round').textContent=String(e.detail.round||0);$('message').textContent=e.detail.finished?'Canlı savaş tamamlandı':'Canlı savaş · Tur '+e.detail.round;
@@ -766,12 +766,13 @@ window.addEventListener('pageshow',()=>{arenaWeatherPageHidden=false;syncArenaWe
 window.addEventListener('hero:login-changed',()=>{arenaWeatherReady=false;arenaWeather.clear();arenaSceneLayout.clear();});
 window.addEventListener('storage',event=>{if(event.key==='hero-auction-login')resetVictoryChestPresentation()});
 window.addEventListener('hero:login-changed',resetVictoryChestPresentation);
-function render(flash){
+function render(flash,displayRound){
+ const round=Number.isInteger(displayRound)?displayRound:cursor?events[cursor-1].round:Number($('round').textContent)||0;
  const fittedLayout=getArenaLaneLayout(states);
  for(let side=0;side<2;side++){
   const parent=$(side?'team-b':'team-a');
   const laneRows=fittedLayout.teams[side];
-  arenaTeamRenderer.update(parent,states[side],{side,rows:fittedLayout.rows,laneRows,fittedRows:fittedLayout.teams[side],flash,roleNames});
+  arenaTeamRenderer.update(parent,states[side],{side,rows:fittedLayout.rows,laneRows,fittedRows:fittedLayout.teams[side],flash,roleNames,round});
   $(side?'score-b':'score-a').textContent=states[side].filter(u=>u.hp>0).length+' / 5';
   const suffix=side?'b':'a';
   const maxHp=states[side].reduce((sum,u)=>sum+Math.max(0,Number(u.maxHp)||0),0);
@@ -783,7 +784,7 @@ function render(flash){
   $('team-hp-'+suffix+'-track').setAttribute('aria-valuetext',Math.round(remainingHp)+' / '+Math.round(maxHp)+' HP');
  }
  syncArenaWeather();arenaSceneLayout.refresh();arenaWeather.refresh();
- $('round').textContent=cursor?events[cursor-1].round:'0';
+ $('round').textContent=String(round);
  $('next').disabled=cursor>=events.length;
  $('play').disabled=cursor>=events.length;
  if(events.length&&cursor===events.length){
@@ -981,7 +982,7 @@ async function requestArenaWakeLock(){
  finally{arenaWakeRequestPending=false}
 }
 window.addEventListener('heroarena:battle-finished',()=>{
- for(const team of states)for(const unit of team){delete unit.commanderFocusUntilDeath;delete unit.commanderStunNextAttack;delete unit.commanderHuntNextAttack;for(const key of ['lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'])delete unit[key];}
+ for(const team of states)for(const unit of team){delete unit.commanderFocusUntilDeath;delete unit.commanderStunNextAttack;delete unit.commanderHuntNextAttack;for(const key of ['arcaneSurgeBonusAttack','arcaneSurgeFromRound','arcaneSurgeUntilRound','lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'])delete unit[key];}
  battlePresentationFinished=true;syncArenaWeather();stopArenaMusic(true);releaseArenaWakeLock();
 });
 window.addEventListener('heroarena:connection-lost',()=>{

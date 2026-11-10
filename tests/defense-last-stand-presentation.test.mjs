@@ -43,27 +43,25 @@ test('defense ultimate accepts exactly one living ally; normal still has no targ
  assert.equal(validateMagicTargetSelection('ultimate',heroes,['a'],options),true);
  for(const ids of [[],['b'],['a','a'],['a','b'],['enemy']])assert.equal(validateMagicTargetSelection('ultimate',heroes,ids,options),false);
 });
-test('defense picker uses own living cards, does not cast before confirm, and cancel spends nothing',async()=>{
+test('defense picker casts immediately on one living ally; invalid cards and pre-selection cancel spend nothing',async()=>{
  const sent=[],f=pickerFixture(async value=>sent.push(value));f.controls.begin('ultimate',f.heroes);
- await f.enemyRoot.fire('click',{target:f.enemyRoot.cards[0]});assert.equal(f.confirmButton.disabled,true);
- await f.allyRoot.fire('click',{target:f.allyRoot.cards[2]});assert.equal(f.confirmButton.disabled,true);
- await f.allyRoot.fire('click',{target:f.allyRoot.cards[1]});assert.equal(f.confirmButton.disabled,false);assert.deepEqual(sent,[]);
+ await f.enemyRoot.fire('click',{target:f.enemyRoot.cards[0]});await f.allyRoot.fire('click',{target:f.allyRoot.cards[2]});assert.deepEqual(sent,[]);
  assert.match(f.allyRoot.cards[1].attributes['data-commander-target-label'],/SON KALE/);
  await f.cancelButton.fire('click');assert.deepEqual(sent,[]);assert.equal(f.controls.isSelecting(),false);
- f.controls.begin('ultimate',f.heroes);await f.allyRoot.fire('click',{target:f.allyRoot.cards[1]});await f.confirmButton.fire('click');
+ f.controls.begin('ultimate',f.heroes);await f.allyRoot.fire('click',{target:f.allyRoot.cards[1]});
  assert.deepEqual(sent,[{ability:'ultimate',targetIds:['other']}]);assert.equal(f.confirmButton.hidden,true);f.controls.destroy();
 });
-test('target dying during selection invalidates confirmation; repeat confirms cannot double-submit pending cast',async()=>{
+test('death before selection blocks the card; repeat target clicks cannot double-submit a pending cast',async()=>{
  let release;const sent=[],f=pickerFixture(value=>{sent.push(value);return new Promise(resolve=>release=resolve);});
- f.controls.begin('ultimate',f.heroes);await f.allyRoot.fire('click',{target:f.allyRoot.cards[1]});
- f.controls.refresh(f.heroes.map(hero=>({...hero,hp:hero.id==='other'?0:hero.hp})));await f.confirmButton.fire('click');assert.deepEqual(sent,[]);
- await f.allyRoot.fire('click',{target:f.allyRoot.cards[0]});const pending=f.confirmButton.fire('click');await f.confirmButton.fire('click');await f.cancelButton.fire('click');
+ f.controls.begin('ultimate',f.heroes);f.controls.refresh(f.heroes.map(hero=>({...hero,hp:hero.id==='other'?0:hero.hp})));
+ await f.allyRoot.fire('click',{target:f.allyRoot.cards[1]});assert.deepEqual(sent,[]);
+ const pending=f.allyRoot.fire('click',{target:f.allyRoot.cards[0]});await f.allyRoot.fire('click',{target:f.allyRoot.cards[0]});await f.cancelButton.fire('click');
  assert.equal(sent.length,1);assert.equal(f.cancelButton.disabled,true);release();await pending;assert.equal(f.controls.isSelecting(),false);f.controls.destroy();
 });
-test('defense picker rejects without claiming success and can retry the same chosen ally',async()=>{
+test('defense picker rejects without claiming success and can retry the same ally with one click',async()=>{
  let count=0;const f=pickerFixture(async()=>{if(++count===1)throw Error('Target rejected');});
- f.controls.begin('ultimate',f.heroes);await f.allyRoot.fire('click',{target:f.allyRoot.cards[0]});await f.confirmButton.fire('click');
- assert.match(f.status.textContent,/Target rejected/);assert.equal(f.confirmButton.disabled,false);await f.confirmButton.fire('click');assert.equal(count,2);assert.equal(f.controls.isSelecting(),false);f.controls.destroy();
+ f.controls.begin('ultimate',f.heroes);await f.allyRoot.fire('click',{target:f.allyRoot.cards[0]});
+ assert.match(f.status.textContent,/Target rejected/);assert.equal(f.confirmButton.hidden,true);await f.allyRoot.fire('click',{target:f.allyRoot.cards[0]});assert.equal(count,2);assert.equal(f.controls.isSelecting(),false);f.controls.destroy();
 });
 for(const side of [0,1])test(`bridge requires selector and living own target on seat ${side}; cancelled selection never casts`,async()=>{
  const ui={normalButton:new Node(),ultimateButton:new Node(),energyLabel:new Node(),statusLabel:new Node()},sent=[];

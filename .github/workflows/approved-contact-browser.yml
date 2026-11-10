@@ -7,7 +7,15 @@ on:
       - 'public/arena-combat-effects.js'
       - 'public/battle-preview.js'
       - 'public/arena-team-renderer.js'
+      - 'public/arcane-surge-presentation.js'
+      - 'public/battle-preview.css'
+      - 'public/battle-preview.html'
+      - 'public/commander-*.js'
+      - 'public/commander-*.css'
+      - 'public/battle-replay-health.js'
       - 'tools/test-approved-contact-browser.mjs'
+      - 'tools/test-mage-surge-browser.mjs'
+      - 'tools/test-commander-targets-browser.mjs'
       - '.github/workflows/approved-contact-browser.yml'
 permissions:
   contents: read
@@ -43,6 +51,12 @@ jobs:
         env:
           HERO_BROWSER_SCREENSHOTS: ${{ runner.temp }}/approved-contact-shots
         run: node tools/test-approved-contact-browser.mjs
+      - name: Test mage surge duration, transfer and bilingual card status
+        env:
+          HERO_BROWSER_SCREENSHOTS: ${{ runner.temp }}/approved-contact-shots
+        run: node tools/test-mage-surge-browser.mjs
+      - name: Test immediate targeted abilities on desktop and mobile
+        run: node tools/test-commander-targets-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
