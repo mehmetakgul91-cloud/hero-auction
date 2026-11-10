@@ -108,7 +108,7 @@ test('route/background/reduced-motion cleanup and victory deadline cancel hero-o
  assert.ok(heroAttackTiming(1500,{special:true}).total+80<2400);
  assert.match(js,/if\(document.hidden\)clearCombatPresentation\(\)/);
  assert.match(js,/prefers-reduced-motion: reduce.*clearCombatPresentation/);
- assert.match(js,/render\(\);\s*if\(e.detail\?\.presentation\?\.castKey!==undefined\)heroAttacks.acceptContact\(e.detail.presentation.castKey\);\s*heroAttacks.prune\(\)/);
+ assert.match(js,/render\(undefined,e.detail.round\);\s*if\(e.detail\?\.presentation\?\.castKey!==undefined\)heroAttacks.acceptContact\(e.detail.presentation.castKey\);\s*heroAttacks.prune\(\)/);
 });
 
 test('damage callback and contact share arrival, including special, clamped speeds, and instant impact',()=>{

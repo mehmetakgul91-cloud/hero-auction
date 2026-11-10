@@ -81,7 +81,7 @@ test('free bot matches run authoritative live combat, accept human casts, settle
   let code=created.room.code;player.token=created.token;
   assert.deepEqual(created.room.players.map(p=>[p.credits,p.team.length]),[[20,0],[20,0]]);
   assert.equal(created.room.difficulty,'hard');
-  const expectedSeries=[0,0];let previousCommander;let shieldedHits=0;
+  const expectedSeries=[0,0];let previousCommander;let shieldedHits=0,splashHits=0,shieldedPrimarySplashHits=0;
   for(let match=0;match<4;match++){
    let room=(await post('/api/state',{code,...player})).room;
    for(let i=0;room.phase==='auction'&&i<400;i++){
@@ -132,6 +132,14 @@ test('free bot matches run authoritative live combat, accept human casts, settle
    for(const event of damageEvents){
     assertShieldDamageEvent(event);
     if(event.absorbed>0)shieldedHits++;
+    if(event.damageType==='splash'){
+     const primary=live.events.find(e=>e.version===event.version&&e.actor===event.actor&&e.damageType==='special');
+     const actor=live.teams[event.side].find(hero=>hero.id===event.actor);
+     assert.ok(primary&&actor,'each bot HTTP splash must retain its actor and primary hit');
+     const rate=actor.active?.effect==='splash'?actor.active.splashRate:.15;
+     assert.equal(event.rawDamage,Math.max(1,Math.floor(primary.rawDamage*rate)),'bot HTTP splash uses primary raw damage, never health loss');
+     splashHits++;if(primary.absorbed>0)shieldedPrimarySplashHits++;
+    }
    }
    assert.equal(live.winner,battleOutcome(live.teams).winner);
    assert.ok(live.summary.actionCount>0);
@@ -161,6 +169,8 @@ test('free bot matches run authoritative live combat, accept human casts, settle
    }
   }
   assert.ok(shieldedHits>0,'the bot/live shield check must exercise real shield absorption');
+  assert.ok(splashHits>0,'the real bot HTTP matches must contain actual mage splash attacks');
+  console.log(JSON.stringify({botHttpSplashHits:splashHits,shieldedPrimarySplashHits}));
   assert.equal((await post('/api/wallet',player)).gold,expectedGold,'all entries and terminal receipts reconcile exactly');
   assert.equal((await post('/api/commander/get',player)).profile,null,'bot commander fallback does not create a persistent human commander');
   assert.doesNotMatch(logs,/Live arena stopped:|Bot commander action:/,'the bot must not throw or stop the live runner');

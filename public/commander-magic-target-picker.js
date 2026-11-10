@@ -1,4 +1,4 @@
-// Selection is presentation-only. Only a confirmed server-validated cast spends energy.
+// Selection is presentation-only. Only a server-validated cast spends energy.
 export function commanderTargetMode(commanderId,ability){
  if(!['normal','ultimate'].includes(ability))throw Error('Invalid commander selection');
  if(commanderId==='magic')return ability==='normal'?'enemy-alive':'ally-alive';
@@ -22,18 +22,23 @@ export function validateMagicTargetSelection(ability,heroes,selectedIds,options=
 }
 export function createMagicTargetPicker(root,{onConfirm=()=>{}}={}){
  if(!root||typeof root.replaceChildren!=='function')throw Error('Invalid picker root');
- let heroes=[],ability='normal',selected=[],context={commanderId:'magic'};
+ let heroes=[],ability='normal',selected=[],context={commanderId:'magic'},pending=false,submitted=false,generation=0,error='';
  const render=()=>{
   root.replaceChildren();const mode=commanderTargetMode(context.commanderId,ability);
-  const heading=document.createElement('p');heading.textContent=(mode==='enemy-alive'?'Rakip hedef':mode==='ally-dead'?'Düşen müttefik':'Yaşayan müttefik')+' · '+selected.length+'/'+requiredMagicTargets(ability,heroes,context);root.append(heading);
+  const heading=document.createElement('p');heading.textContent=error||(pending?'Yetenek komutu gönderiliyor…':(mode==='enemy-alive'?'Rakip hedef':mode==='ally-dead'?'Düşen müttefik':'Yaşayan müttefik')+' · Seçince hemen uygulanır');root.append(heading);
   for(const hero of heroes){
    const button=document.createElement('button');button.type='button';button.textContent=hero.name||hero.id;button.dataset.magicTarget=hero.id;
-   button.disabled=!isCommanderTargetEligible(hero,mode,context);button.setAttribute('aria-pressed',String(selected.includes(hero.id)));
+   button.disabled=pending||submitted||!isCommanderTargetEligible(hero,mode,context);button.setAttribute('aria-pressed',String(selected.includes(hero.id)));
    button.style.cssText='margin:4px;padding:10px;min-height:44px;border-radius:10px;border:2px solid '+(selected.includes(hero.id)?'#bc8bff':'#526078')+';background:#1b2140;color:white';
-   button.addEventListener('click',()=>{if(button.disabled)return;selected=selected.includes(hero.id)?[]:[hero.id];render()});root.append(button);
+   button.addEventListener('click',async()=>{
+    if(button.disabled||pending||submitted)return;
+    selected=[hero.id];if(!validateMagicTargetSelection(ability,heroes,selected,context))return;
+    const current=generation;pending=true;error='';render();
+    try{await onConfirm({ability,targetIds:[...selected]});if(current===generation)submitted=true;}
+    catch(reason){if(current===generation){selected=[];error='⚠ '+(reason?.message||'Yetenek komutu reddedildi');}}
+    finally{if(current===generation){pending=false;render();}}
+   });root.append(button);
   }
-  const confirm=document.createElement('button');confirm.type='button';confirm.textContent='Hedefi onayla';confirm.disabled=!validateMagicTargetSelection(ability,heroes,selected,context);
-  confirm.addEventListener('click',()=>{if(!confirm.disabled)onConfirm({ability,targetIds:[...selected]})});root.append(confirm);
  };
- return {show(nextAbility,nextHeroes,options={}){ability=nextAbility;heroes=nextHeroes.map(h=>({...h}));context={commanderId:'magic',...options};selected=[];render()},getSelection:()=>[...selected]};
+ return {show(nextAbility,nextHeroes,options={}){generation++;ability=nextAbility;heroes=nextHeroes.map(h=>({...h}));context={commanderId:'magic',...options};selected=[];pending=false;submitted=false;error='';render()},getSelection:()=>[...selected]};
 }

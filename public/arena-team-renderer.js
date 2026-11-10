@@ -1,3 +1,4 @@
+import {arcaneSurgePresentation} from './arcane-surge-presentation.js';
 import {heroHealthMeter} from './hero-health-meter.js';
 import {applyHeroRarity} from './hero-rarity.js';
 // Shield is always taken from the server snapshot, never inferred from damage text.
@@ -13,7 +14,7 @@ export function arenaShieldMeter(unit){
 // Each team owns its cards: the same hero ID can exist on both sides.
 export function createArenaTeamRenderer({document,loadArt,onDefeated=()=>{}}){
  let teams=new WeakMap();
- function update(parent,units,{side,rows,laneRows,fittedRows,flash,roleNames}){
+ function update(parent,units,{side,rows,laneRows,fittedRows,flash,roleNames,round}){
   let cards=teams.get(parent);
   if(!cards){cards=new Map();teams.set(parent,cards);parent.replaceChildren();}
   const ids=new Set(units.map(unit=>unit.id));
@@ -34,8 +35,9 @@ export function createArenaTeamRenderer({document,loadArt,onDefeated=()=>{}}){
     const stunBadge=document.createElement('span');stunBadge.className='arena-stun-status';stunBadge.hidden=true;
     const lastStandBadge=document.createElement('span');lastStandBadge.className='arena-last-stand-status';lastStandBadge.hidden=true;
     const huntBadge=document.createElement('span');huntBadge.className='arena-hunt-status';huntBadge.hidden=true;
-    card.append(portrait,label,bar,shieldBar,stunBadge,lastStandBadge,huntBadge);parent.append(card);
-    entry={card,portrait,bar,fill,shieldBar,shieldFill,stunBadge,lastStandBadge,huntBadge,name:unit.name,hp:unit.hp};cards.set(unit.id,entry);
+    const surgeBadge=document.createElement('span');surgeBadge.className='arena-surge-status';surgeBadge.hidden=true;
+    card.append(portrait,label,bar,shieldBar,stunBadge,lastStandBadge,huntBadge,surgeBadge);parent.append(card);
+    entry={card,portrait,bar,fill,shieldBar,shieldFill,stunBadge,lastStandBadge,huntBadge,surgeBadge,name:unit.name,hp:unit.hp};cards.set(unit.id,entry);
     Promise.resolve(loadArt(unit)).then(url=>{
      if(!url||!portrait.isConnected)return;
      const image=document.createElement('img');image.className='arena-portrait-image';image.alt=unit.name;image.decoding='async';
@@ -43,7 +45,7 @@ export function createArenaTeamRenderer({document,loadArt,onDefeated=()=>{}}){
      image.src=url;
     }).catch(()=>{});
    }
-   const {card,portrait,bar,fill,shieldBar,shieldFill,stunBadge,lastStandBadge,huntBadge}=entry,lane=unit.lane==='front'?'front':'back',laneIndex=laneIndices[lane]++;
+   const {card,portrait,bar,fill,shieldBar,shieldFill,stunBadge,lastStandBadge,huntBadge,surgeBadge}=entry,lane=unit.lane==='front'?'front':'back',laneIndex=laneIndices[lane]++;
    if(parent.children[index]!==card)parent.insertBefore(card,parent.children[index]||null);
    card.classList.toggle('frontline',lane==='front');card.classList.toggle('backline',lane==='back');card.classList.toggle('dead',unit.hp<=0);
    card.classList.toggle('cast',flash?.action!=='stun-skip'&&flash?.actorId===unit.id);card.classList.toggle('hit',flash?.action!=='stun-skip'&&flash?.targetId===unit.id);
@@ -77,6 +79,9 @@ export function createArenaTeamRenderer({document,loadArt,onDefeated=()=>{}}){
    const huntDescription=english?'Hunt Order: +20% attack for the next attack only':'Av Emri: sonraki tek saldırı için +%20 saldırı';
    huntBadge.title=huntDescription;huntBadge.setAttribute('aria-label',huntDescription);
    if(huntReady)card.title+=' · '+huntDescription;
+   const surge=arcaneSurgePresentation(unit,{round,english});
+   surgeBadge.hidden=!surge;card.classList.toggle('arcane-surge-active',!!surge&&!surge.pending);
+   if(surge){surgeBadge.textContent=surge.text;surgeBadge.dataset.state=surge.pending?'pending':'active';surgeBadge.title=surge.description;surgeBadge.setAttribute('aria-label',surge.description);card.title+=' · '+surge.description;}
    if(entry.hp>0&&unit.hp<=0)onDefeated(card);
    entry.hp=unit.hp;
   });

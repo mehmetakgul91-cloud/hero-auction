@@ -1,5 +1,5 @@
 import {getCommanderAbilityCost} from './commander-ability-rules.js';
-import {createMagicCastControls} from './commander-magic-cast-controls.js?v=commander-ultimate-selection';
+import {createMagicCastControls} from './commander-magic-cast-controls.js?v=instant-commander-targets-20261110';
 import {commanderTargetMode,requiredMagicTargets} from './commander-magic-target-picker.js';
 import {commanderUltimateName,commanderUltimateDescription} from './commander-ultimate-presentation.js';
 
@@ -90,7 +90,7 @@ function initializeCommanderControls(){
   if(commanderTargetMode(state.commanderId,ability)){
    if(!magicControls)magicControls=createMagicCastControls({
     enemyRoot:document.getElementById(state.side===0?'team-b':'team-a'),allyRoot:document.getElementById(state.side===0?'team-a':'team-b'),commanderId:state.commanderId,
-    confirmButton:$('[data-magic-confirm]'),cancelButton:$('[data-magic-cancel]'),status,canCast,onCast:sendCast,
+    cancelButton:$('[data-magic-cancel]'),status,canCast,onCast:sendCast,
     onSelectionChange:()=>renderControls()
    });
    magicControls.begin(ability,targetHeroes(ability),targetContext(ability));
