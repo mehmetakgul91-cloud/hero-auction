@@ -90,6 +90,8 @@ try{
    else if(url.pathname==='/api/friends')data={friends:[],incoming:[],outgoing:[]};
    else if(url.pathname==='/api/friends/presence')data={ok:true}; // Ordinary app heartbeat, not admission/payment.
    else if(url.pathname==='/api/store/status')data={gold:1000,diamonds:0};
+   // ad-rewards.js reads this on each boot; server rewardedAdStatus() only counts claims.
+   else if(url.pathname==='/api/rewarded/status')data={enabled:false,rewardGold:100,dailyLimit:5,used:0,remaining:0,message:'Google reklam onayı ve güvenli ödül doğrulaması bekleniyor.'};
    else if(url.pathname==='/api/info')data={catalogueCount:10,playerAnalytics:{enabled:false},campaignMeasurement:null,victoryChests:{enabled:false}};
    else if(url.pathname==='/api/heroes')data={heroes:[]};
    else if(url.pathname==='/api/online')data={players:0,matches:0,waiting:0};
