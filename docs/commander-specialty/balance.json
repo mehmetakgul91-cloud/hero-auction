@@ -1,0 +1,2311 @@
+{
+  "baselineCommanderRules": "df3798d",
+  "simulations": 10368,
+  "method": "6 role compositions versus each other, equal power80, levels0/10/30/40,4 commanders,3seeds,mirrored seats. Opponent has no commander upgrades. No manual casts. Only commander rules differ in old comparison. Seed is reproducible, not action-keyed after order changes. Not population balance proof.",
+  "summary": {
+    "mixed:attack:0": {
+      "n": 36,
+      "old": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      },
+      "revised": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      },
+      "none": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      }
+    },
+    "mixed:defense:0": {
+      "n": 36,
+      "old": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      },
+      "revised": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      },
+      "none": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      }
+    },
+    "mixed:magic:0": {
+      "n": 36,
+      "old": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      },
+      "revised": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      },
+      "none": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      }
+    },
+    "mixed:support:0": {
+      "n": 36,
+      "old": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      },
+      "revised": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      },
+      "none": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      }
+    },
+    "mixed:attack:10": {
+      "n": 36,
+      "old": {
+        "wins": 19,
+        "draws": 0,
+        "healing": 4671,
+        "damage": 31848,
+        "rounds": 335
+      },
+      "revised": {
+        "wins": 11,
+        "draws": 0,
+        "healing": 4311,
+        "damage": 28587,
+        "rounds": 315
+      },
+      "none": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      }
+    },
+    "mixed:defense:10": {
+      "n": 36,
+      "old": {
+        "wins": 19,
+        "draws": 0,
+        "healing": 4671,
+        "damage": 31848,
+        "rounds": 335
+      },
+      "revised": {
+        "wins": 9,
+        "draws": 0,
+        "healing": 4230,
+        "damage": 28189,
+        "rounds": 305
+      },
+      "none": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      }
+    },
+    "mixed:magic:10": {
+      "n": 36,
+      "old": {
+        "wins": 19,
+        "draws": 0,
+        "healing": 4671,
+        "damage": 31848,
+        "rounds": 335
+      },
+      "revised": {
+        "wins": 13,
+        "draws": 0,
+        "healing": 4549,
+        "damage": 29991,
+        "rounds": 330
+      },
+      "none": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      }
+    },
+    "mixed:support:10": {
+      "n": 36,
+      "old": {
+        "wins": 19,
+        "draws": 0,
+        "healing": 4671,
+        "damage": 31848,
+        "rounds": 335
+      },
+      "revised": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4488,
+        "damage": 27922,
+        "rounds": 306
+      },
+      "none": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      }
+    },
+    "mixed:attack:30": {
+      "n": 36,
+      "old": {
+        "wins": 23,
+        "draws": 0,
+        "healing": 4598,
+        "damage": 32931,
+        "rounds": 321
+      },
+      "revised": {
+        "wins": 15,
+        "draws": 0,
+        "healing": 4364,
+        "damage": 30776,
+        "rounds": 319
+      },
+      "none": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      }
+    },
+    "mixed:defense:30": {
+      "n": 36,
+      "old": {
+        "wins": 24,
+        "draws": 0,
+        "healing": 4720,
+        "damage": 33076,
+        "rounds": 326
+      },
+      "revised": {
+        "wins": 10,
+        "draws": 0,
+        "healing": 4339,
+        "damage": 28779,
+        "rounds": 312
+      },
+      "none": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      }
+    },
+    "mixed:magic:30": {
+      "n": 36,
+      "old": {
+        "wins": 24,
+        "draws": 0,
+        "healing": 4713,
+        "damage": 33223,
+        "rounds": 324
+      },
+      "revised": {
+        "wins": 19,
+        "draws": 0,
+        "healing": 4494,
+        "damage": 31723,
+        "rounds": 329
+      },
+      "none": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      }
+    },
+    "mixed:support:30": {
+      "n": 36,
+      "old": {
+        "wins": 23,
+        "draws": 0,
+        "healing": 4583,
+        "damage": 32872,
+        "rounds": 328
+      },
+      "revised": {
+        "wins": 9,
+        "draws": 0,
+        "healing": 5162,
+        "damage": 28152,
+        "rounds": 308
+      },
+      "none": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      }
+    },
+    "mixed:attack:40": {
+      "n": 36,
+      "old": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 4608,
+        "damage": 33291,
+        "rounds": 312
+      },
+      "revised": {
+        "wins": 19,
+        "draws": 0,
+        "healing": 4273,
+        "damage": 31710,
+        "rounds": 312
+      },
+      "none": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      }
+    },
+    "mixed:defense:40": {
+      "n": 36,
+      "old": {
+        "wins": 24,
+        "draws": 0,
+        "healing": 4755,
+        "damage": 33087,
+        "rounds": 326
+      },
+      "revised": {
+        "wins": 10,
+        "draws": 0,
+        "healing": 4332,
+        "damage": 28980,
+        "rounds": 313
+      },
+      "none": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      }
+    },
+    "mixed:magic:40": {
+      "n": 36,
+      "old": {
+        "wins": 24,
+        "draws": 0,
+        "healing": 4688,
+        "damage": 33247,
+        "rounds": 319
+      },
+      "revised": {
+        "wins": 21,
+        "draws": 0,
+        "healing": 4436,
+        "damage": 31884,
+        "rounds": 323
+      },
+      "none": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      }
+    },
+    "mixed:support:40": {
+      "n": 36,
+      "old": {
+        "wins": 23,
+        "draws": 0,
+        "healing": 4583,
+        "damage": 32872,
+        "rounds": 328
+      },
+      "revised": {
+        "wins": 9,
+        "draws": 0,
+        "healing": 5590,
+        "damage": 28227,
+        "rounds": 309
+      },
+      "none": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 4146,
+        "damage": 27546,
+        "rounds": 302
+      }
+    },
+    "fighters:attack:0": {
+      "n": 36,
+      "old": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      },
+      "revised": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      },
+      "none": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      }
+    },
+    "fighters:defense:0": {
+      "n": 36,
+      "old": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      },
+      "revised": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      },
+      "none": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      }
+    },
+    "fighters:magic:0": {
+      "n": 36,
+      "old": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      },
+      "revised": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      },
+      "none": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      }
+    },
+    "fighters:support:0": {
+      "n": 36,
+      "old": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      },
+      "revised": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      },
+      "none": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      }
+    },
+    "fighters:attack:10": {
+      "n": 36,
+      "old": {
+        "wins": 12,
+        "draws": 0,
+        "healing": 3390,
+        "damage": 27951,
+        "rounds": 310
+      },
+      "revised": {
+        "wins": 11,
+        "draws": 0,
+        "healing": 3255,
+        "damage": 27178,
+        "rounds": 305
+      },
+      "none": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      }
+    },
+    "fighters:defense:10": {
+      "n": 36,
+      "old": {
+        "wins": 12,
+        "draws": 0,
+        "healing": 3390,
+        "damage": 27951,
+        "rounds": 310
+      },
+      "revised": {
+        "wins": 6,
+        "draws": 0,
+        "healing": 3483,
+        "damage": 26138,
+        "rounds": 311
+      },
+      "none": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      }
+    },
+    "fighters:magic:10": {
+      "n": 36,
+      "old": {
+        "wins": 12,
+        "draws": 0,
+        "healing": 3390,
+        "damage": 27951,
+        "rounds": 310
+      },
+      "revised": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      },
+      "none": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      }
+    },
+    "fighters:support:10": {
+      "n": 36,
+      "old": {
+        "wins": 12,
+        "draws": 0,
+        "healing": 3390,
+        "damage": 27951,
+        "rounds": 310
+      },
+      "revised": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3497,
+        "damage": 25067,
+        "rounds": 301
+      },
+      "none": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      }
+    },
+    "fighters:attack:30": {
+      "n": 36,
+      "old": {
+        "wins": 13,
+        "draws": 0,
+        "healing": 3388,
+        "damage": 30033,
+        "rounds": 310
+      },
+      "revised": {
+        "wins": 14,
+        "draws": 0,
+        "healing": 3300,
+        "damage": 29715,
+        "rounds": 311
+      },
+      "none": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      }
+    },
+    "fighters:defense:30": {
+      "n": 36,
+      "old": {
+        "wins": 12,
+        "draws": 0,
+        "healing": 3428,
+        "damage": 29117,
+        "rounds": 311
+      },
+      "revised": {
+        "wins": 6,
+        "draws": 0,
+        "healing": 3428,
+        "damage": 26523,
+        "rounds": 311
+      },
+      "none": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      }
+    },
+    "fighters:magic:30": {
+      "n": 36,
+      "old": {
+        "wins": 12,
+        "draws": 0,
+        "healing": 3388,
+        "damage": 28723,
+        "rounds": 307
+      },
+      "revised": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      },
+      "none": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      }
+    },
+    "fighters:support:30": {
+      "n": 36,
+      "old": {
+        "wins": 12,
+        "draws": 0,
+        "healing": 3568,
+        "damage": 28774,
+        "rounds": 316
+      },
+      "revised": {
+        "wins": 5,
+        "draws": 0,
+        "healing": 4176,
+        "damage": 25705,
+        "rounds": 305
+      },
+      "none": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      }
+    },
+    "fighters:attack:40": {
+      "n": 36,
+      "old": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 3464,
+        "damage": 31418,
+        "rounds": 310
+      },
+      "revised": {
+        "wins": 17,
+        "draws": 0,
+        "healing": 3288,
+        "damage": 30927,
+        "rounds": 305
+      },
+      "none": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      }
+    },
+    "fighters:defense:40": {
+      "n": 36,
+      "old": {
+        "wins": 12,
+        "draws": 0,
+        "healing": 3383,
+        "damage": 29174,
+        "rounds": 306
+      },
+      "revised": {
+        "wins": 8,
+        "draws": 0,
+        "healing": 3518,
+        "damage": 27226,
+        "rounds": 318
+      },
+      "none": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      }
+    },
+    "fighters:magic:40": {
+      "n": 36,
+      "old": {
+        "wins": 12,
+        "draws": 0,
+        "healing": 3388,
+        "damage": 28723,
+        "rounds": 307
+      },
+      "revised": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      },
+      "none": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      }
+    },
+    "fighters:support:40": {
+      "n": 36,
+      "old": {
+        "wins": 12,
+        "draws": 0,
+        "healing": 3658,
+        "damage": 29136,
+        "rounds": 320
+      },
+      "revised": {
+        "wins": 5,
+        "draws": 0,
+        "healing": 4638,
+        "damage": 26027,
+        "rounds": 313
+      },
+      "none": {
+        "wins": 4,
+        "draws": 0,
+        "healing": 3168,
+        "damage": 24949,
+        "rounds": 297
+      }
+    },
+    "tanks:attack:0": {
+      "n": 36,
+      "old": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      },
+      "revised": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      },
+      "none": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      }
+    },
+    "tanks:defense:0": {
+      "n": 36,
+      "old": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      },
+      "revised": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      },
+      "none": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      }
+    },
+    "tanks:magic:0": {
+      "n": 36,
+      "old": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      },
+      "revised": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      },
+      "none": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      }
+    },
+    "tanks:support:0": {
+      "n": 36,
+      "old": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      },
+      "revised": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      },
+      "none": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      }
+    },
+    "tanks:attack:10": {
+      "n": 36,
+      "old": {
+        "wins": 29,
+        "draws": 0,
+        "healing": 6098,
+        "damage": 36785,
+        "rounds": 400
+      },
+      "revised": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      },
+      "none": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      }
+    },
+    "tanks:defense:10": {
+      "n": 36,
+      "old": {
+        "wins": 29,
+        "draws": 0,
+        "healing": 6098,
+        "damage": 36785,
+        "rounds": 400
+      },
+      "revised": {
+        "wins": 28,
+        "draws": 0,
+        "healing": 6109,
+        "damage": 36488,
+        "rounds": 402
+      },
+      "none": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      }
+    },
+    "tanks:magic:10": {
+      "n": 36,
+      "old": {
+        "wins": 29,
+        "draws": 0,
+        "healing": 6098,
+        "damage": 36785,
+        "rounds": 400
+      },
+      "revised": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 5930,
+        "damage": 35141,
+        "rounds": 392
+      },
+      "none": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      }
+    },
+    "tanks:support:10": {
+      "n": 36,
+      "old": {
+        "wins": 29,
+        "draws": 0,
+        "healing": 6098,
+        "damage": 36785,
+        "rounds": 400
+      },
+      "revised": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 6311,
+        "damage": 35107,
+        "rounds": 398
+      },
+      "none": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      }
+    },
+    "tanks:attack:30": {
+      "n": 36,
+      "old": {
+        "wins": 33,
+        "draws": 0,
+        "healing": 5578,
+        "damage": 36976,
+        "rounds": 379
+      },
+      "revised": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      },
+      "none": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      }
+    },
+    "tanks:defense:30": {
+      "n": 36,
+      "old": {
+        "wins": 34,
+        "draws": 0,
+        "healing": 5300,
+        "damage": 36999,
+        "rounds": 366
+      },
+      "revised": {
+        "wins": 30,
+        "draws": 0,
+        "healing": 6120,
+        "damage": 37493,
+        "rounds": 407
+      },
+      "none": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      }
+    },
+    "tanks:magic:30": {
+      "n": 36,
+      "old": {
+        "wins": 35,
+        "draws": 0,
+        "healing": 5354,
+        "damage": 36801,
+        "rounds": 352
+      },
+      "revised": {
+        "wins": 34,
+        "draws": 0,
+        "healing": 5746,
+        "damage": 37124,
+        "rounds": 375
+      },
+      "none": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      }
+    },
+    "tanks:support:30": {
+      "n": 36,
+      "old": {
+        "wins": 34,
+        "draws": 0,
+        "healing": 5548,
+        "damage": 37054,
+        "rounds": 378
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 7469,
+        "damage": 35735,
+        "rounds": 403
+      },
+      "none": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      }
+    },
+    "tanks:attack:40": {
+      "n": 36,
+      "old": {
+        "wins": 33,
+        "draws": 0,
+        "healing": 5578,
+        "damage": 36976,
+        "rounds": 379
+      },
+      "revised": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      },
+      "none": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      }
+    },
+    "tanks:defense:40": {
+      "n": 36,
+      "old": {
+        "wins": 35,
+        "draws": 0,
+        "healing": 5002,
+        "damage": 36523,
+        "rounds": 348
+      },
+      "revised": {
+        "wins": 30,
+        "draws": 0,
+        "healing": 5627,
+        "damage": 37328,
+        "rounds": 393
+      },
+      "none": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      }
+    },
+    "tanks:magic:40": {
+      "n": 36,
+      "old": {
+        "wins": 36,
+        "draws": 0,
+        "healing": 4949,
+        "damage": 36049,
+        "rounds": 332
+      },
+      "revised": {
+        "wins": 34,
+        "draws": 0,
+        "healing": 5394,
+        "damage": 36587,
+        "rounds": 358
+      },
+      "none": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      }
+    },
+    "tanks:support:40": {
+      "n": 36,
+      "old": {
+        "wins": 34,
+        "draws": 0,
+        "healing": 5458,
+        "damage": 37031,
+        "rounds": 374
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 7784,
+        "damage": 35707,
+        "rounds": 404
+      },
+      "none": {
+        "wins": 25,
+        "draws": 0,
+        "healing": 5974,
+        "damage": 34992,
+        "rounds": 395
+      }
+    },
+    "mages:attack:0": {
+      "n": 36,
+      "old": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      },
+      "none": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      }
+    },
+    "mages:defense:0": {
+      "n": 36,
+      "old": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      },
+      "none": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      }
+    },
+    "mages:magic:0": {
+      "n": 36,
+      "old": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      },
+      "none": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      }
+    },
+    "mages:support:0": {
+      "n": 36,
+      "old": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      },
+      "none": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      }
+    },
+    "mages:attack:10": {
+      "n": 36,
+      "old": {
+        "wins": 32,
+        "draws": 0,
+        "healing": 857,
+        "damage": 34458,
+        "rounds": 290
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1005,
+        "damage": 35130,
+        "rounds": 317
+      },
+      "none": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      }
+    },
+    "mages:defense:10": {
+      "n": 36,
+      "old": {
+        "wins": 32,
+        "draws": 0,
+        "healing": 857,
+        "damage": 34458,
+        "rounds": 290
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1020,
+        "damage": 35036,
+        "rounds": 318
+      },
+      "none": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      }
+    },
+    "mages:magic:10": {
+      "n": 36,
+      "old": {
+        "wins": 32,
+        "draws": 0,
+        "healing": 857,
+        "damage": 34458,
+        "rounds": 290
+      },
+      "revised": {
+        "wins": 31,
+        "draws": 0,
+        "healing": 882,
+        "damage": 34434,
+        "rounds": 294
+      },
+      "none": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      }
+    },
+    "mages:support:10": {
+      "n": 36,
+      "old": {
+        "wins": 32,
+        "draws": 0,
+        "healing": 857,
+        "damage": 34458,
+        "rounds": 290
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      },
+      "none": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      }
+    },
+    "mages:attack:30": {
+      "n": 36,
+      "old": {
+        "wins": 36,
+        "draws": 0,
+        "healing": 659,
+        "damage": 33038,
+        "rounds": 252
+      },
+      "revised": {
+        "wins": 29,
+        "draws": 0,
+        "healing": 897,
+        "damage": 34322,
+        "rounds": 299
+      },
+      "none": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      }
+    },
+    "mages:defense:30": {
+      "n": 36,
+      "old": {
+        "wins": 36,
+        "draws": 0,
+        "healing": 646,
+        "damage": 33033,
+        "rounds": 251
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 994,
+        "damage": 34944,
+        "rounds": 315
+      },
+      "none": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      }
+    },
+    "mages:magic:30": {
+      "n": 36,
+      "old": {
+        "wins": 36,
+        "draws": 0,
+        "healing": 624,
+        "damage": 32948,
+        "rounds": 245
+      },
+      "revised": {
+        "wins": 36,
+        "draws": 0,
+        "healing": 644,
+        "damage": 32948,
+        "rounds": 248
+      },
+      "none": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      }
+    },
+    "mages:support:30": {
+      "n": 36,
+      "old": {
+        "wins": 36,
+        "draws": 0,
+        "healing": 659,
+        "damage": 33038,
+        "rounds": 252
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      },
+      "none": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      }
+    },
+    "mages:attack:40": {
+      "n": 36,
+      "old": {
+        "wins": 36,
+        "draws": 0,
+        "healing": 659,
+        "damage": 33038,
+        "rounds": 252
+      },
+      "revised": {
+        "wins": 29,
+        "draws": 0,
+        "healing": 897,
+        "damage": 34337,
+        "rounds": 299
+      },
+      "none": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      }
+    },
+    "mages:defense:40": {
+      "n": 36,
+      "old": {
+        "wins": 36,
+        "draws": 0,
+        "healing": 638,
+        "damage": 33028,
+        "rounds": 250
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 974,
+        "damage": 34939,
+        "rounds": 313
+      },
+      "none": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      }
+    },
+    "mages:magic:40": {
+      "n": 36,
+      "old": {
+        "wins": 36,
+        "draws": 0,
+        "healing": 569,
+        "damage": 32893,
+        "rounds": 234
+      },
+      "revised": {
+        "wins": 36,
+        "draws": 0,
+        "healing": 579,
+        "damage": 32893,
+        "rounds": 236
+      },
+      "none": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      }
+    },
+    "mages:support:40": {
+      "n": 36,
+      "old": {
+        "wins": 36,
+        "draws": 0,
+        "healing": 659,
+        "damage": 33038,
+        "rounds": 252
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      },
+      "none": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 1040,
+        "damage": 35018,
+        "rounds": 320
+      }
+    },
+    "healers2:attack:0": {
+      "n": 36,
+      "old": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      },
+      "revised": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      },
+      "none": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      }
+    },
+    "healers2:defense:0": {
+      "n": 36,
+      "old": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      },
+      "revised": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      },
+      "none": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      }
+    },
+    "healers2:magic:0": {
+      "n": 36,
+      "old": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      },
+      "revised": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      },
+      "none": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      }
+    },
+    "healers2:support:0": {
+      "n": 36,
+      "old": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      },
+      "revised": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      },
+      "none": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      }
+    },
+    "healers2:attack:10": {
+      "n": 36,
+      "old": {
+        "wins": 32,
+        "draws": 0,
+        "healing": 10295,
+        "damage": 36711,
+        "rounds": 385
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 10517,
+        "damage": 35617,
+        "rounds": 397
+      },
+      "none": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      }
+    },
+    "healers2:defense:10": {
+      "n": 36,
+      "old": {
+        "wins": 32,
+        "draws": 0,
+        "healing": 10295,
+        "damage": 36711,
+        "rounds": 385
+      },
+      "revised": {
+        "wins": 29,
+        "draws": 0,
+        "healing": 10718,
+        "damage": 36517,
+        "rounds": 402
+      },
+      "none": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      }
+    },
+    "healers2:magic:10": {
+      "n": 36,
+      "old": {
+        "wins": 32,
+        "draws": 0,
+        "healing": 10295,
+        "damage": 36711,
+        "rounds": 385
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 10715,
+        "damage": 35988,
+        "rounds": 404
+      },
+      "none": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      }
+    },
+    "healers2:support:10": {
+      "n": 36,
+      "old": {
+        "wins": 32,
+        "draws": 0,
+        "healing": 10295,
+        "damage": 36711,
+        "rounds": 385
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 11245,
+        "damage": 35726,
+        "rounds": 403
+      },
+      "none": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      }
+    },
+    "healers2:attack:30": {
+      "n": 36,
+      "old": {
+        "wins": 34,
+        "draws": 0,
+        "healing": 9207,
+        "damage": 36002,
+        "rounds": 359
+      },
+      "revised": {
+        "wins": 29,
+        "draws": 0,
+        "healing": 9208,
+        "damage": 35175,
+        "rounds": 358
+      },
+      "none": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      }
+    },
+    "healers2:defense:30": {
+      "n": 36,
+      "old": {
+        "wins": 34,
+        "draws": 0,
+        "healing": 9059,
+        "damage": 35916,
+        "rounds": 351
+      },
+      "revised": {
+        "wins": 30,
+        "draws": 0,
+        "healing": 10402,
+        "damage": 36245,
+        "rounds": 389
+      },
+      "none": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      }
+    },
+    "healers2:magic:30": {
+      "n": 36,
+      "old": {
+        "wins": 34,
+        "draws": 0,
+        "healing": 9079,
+        "damage": 35923,
+        "rounds": 352
+      },
+      "revised": {
+        "wins": 32,
+        "draws": 0,
+        "healing": 9120,
+        "damage": 35570,
+        "rounds": 350
+      },
+      "none": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      }
+    },
+    "healers2:support:30": {
+      "n": 36,
+      "old": {
+        "wins": 34,
+        "draws": 0,
+        "healing": 9245,
+        "damage": 36038,
+        "rounds": 359
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 12921,
+        "damage": 35986,
+        "rounds": 396
+      },
+      "none": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      }
+    },
+    "healers2:attack:40": {
+      "n": 36,
+      "old": {
+        "wins": 33,
+        "draws": 0,
+        "healing": 9188,
+        "damage": 35932,
+        "rounds": 356
+      },
+      "revised": {
+        "wins": 29,
+        "draws": 0,
+        "healing": 9203,
+        "damage": 35170,
+        "rounds": 357
+      },
+      "none": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      }
+    },
+    "healers2:defense:40": {
+      "n": 36,
+      "old": {
+        "wins": 34,
+        "draws": 0,
+        "healing": 8988,
+        "damage": 35916,
+        "rounds": 351
+      },
+      "revised": {
+        "wins": 30,
+        "draws": 0,
+        "healing": 10359,
+        "damage": 36257,
+        "rounds": 388
+      },
+      "none": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      }
+    },
+    "healers2:magic:40": {
+      "n": 36,
+      "old": {
+        "wins": 35,
+        "draws": 0,
+        "healing": 8598,
+        "damage": 35503,
+        "rounds": 335
+      },
+      "revised": {
+        "wins": 33,
+        "draws": 0,
+        "healing": 8673,
+        "damage": 35419,
+        "rounds": 338
+      },
+      "none": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      }
+    },
+    "healers2:support:40": {
+      "n": 36,
+      "old": {
+        "wins": 35,
+        "draws": 0,
+        "healing": 9278,
+        "damage": 36080,
+        "rounds": 359
+      },
+      "revised": {
+        "wins": 29,
+        "draws": 0,
+        "healing": 13468,
+        "damage": 36181,
+        "rounds": 393
+      },
+      "none": {
+        "wins": 26,
+        "draws": 0,
+        "healing": 10703,
+        "damage": 35609,
+        "rounds": 406
+      }
+    },
+    "healers3:attack:0": {
+      "n": 36,
+      "old": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      },
+      "revised": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      },
+      "none": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      }
+    },
+    "healers3:defense:0": {
+      "n": 36,
+      "old": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      },
+      "revised": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      },
+      "none": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      }
+    },
+    "healers3:magic:0": {
+      "n": 36,
+      "old": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      },
+      "revised": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      },
+      "none": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      }
+    },
+    "healers3:support:0": {
+      "n": 36,
+      "old": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      },
+      "revised": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      },
+      "none": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      }
+    },
+    "healers3:attack:10": {
+      "n": 36,
+      "old": {
+        "wins": 19,
+        "draws": 0,
+        "healing": 16124,
+        "damage": 33423,
+        "rounds": 416
+      },
+      "revised": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15725,
+        "damage": 32423,
+        "rounds": 406
+      },
+      "none": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      }
+    },
+    "healers3:defense:10": {
+      "n": 36,
+      "old": {
+        "wins": 19,
+        "draws": 0,
+        "healing": 16124,
+        "damage": 33423,
+        "rounds": 416
+      },
+      "revised": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 16284,
+        "damage": 33029,
+        "rounds": 417
+      },
+      "none": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      }
+    },
+    "healers3:magic:10": {
+      "n": 36,
+      "old": {
+        "wins": 19,
+        "draws": 0,
+        "healing": 16124,
+        "damage": 33423,
+        "rounds": 416
+      },
+      "revised": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      },
+      "none": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      }
+    },
+    "healers3:support:10": {
+      "n": 36,
+      "old": {
+        "wins": 19,
+        "draws": 0,
+        "healing": 16124,
+        "damage": 33423,
+        "rounds": 416
+      },
+      "revised": {
+        "wins": 20,
+        "draws": 0,
+        "healing": 16727,
+        "damage": 32802,
+        "rounds": 402
+      },
+      "none": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      }
+    },
+    "healers3:attack:30": {
+      "n": 36,
+      "old": {
+        "wins": 29,
+        "draws": 0,
+        "healing": 14211,
+        "damage": 34894,
+        "rounds": 384
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 14349,
+        "damage": 34200,
+        "rounds": 384
+      },
+      "none": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      }
+    },
+    "healers3:defense:30": {
+      "n": 36,
+      "old": {
+        "wins": 28,
+        "draws": 0,
+        "healing": 14392,
+        "damage": 34782,
+        "rounds": 394
+      },
+      "revised": {
+        "wins": 20,
+        "draws": 0,
+        "healing": 15837,
+        "damage": 33532,
+        "rounds": 415
+      },
+      "none": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      }
+    },
+    "healers3:magic:30": {
+      "n": 36,
+      "old": {
+        "wins": 29,
+        "draws": 0,
+        "healing": 14351,
+        "damage": 34904,
+        "rounds": 386
+      },
+      "revised": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      },
+      "none": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      }
+    },
+    "healers3:support:30": {
+      "n": 36,
+      "old": {
+        "wins": 29,
+        "draws": 0,
+        "healing": 14351,
+        "damage": 34904,
+        "rounds": 386
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 19745,
+        "damage": 33425,
+        "rounds": 407
+      },
+      "none": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      }
+    },
+    "healers3:attack:40": {
+      "n": 36,
+      "old": {
+        "wins": 29,
+        "draws": 0,
+        "healing": 13953,
+        "damage": 34802,
+        "rounds": 379
+      },
+      "revised": {
+        "wins": 27,
+        "draws": 0,
+        "healing": 14087,
+        "damage": 34109,
+        "rounds": 377
+      },
+      "none": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      }
+    },
+    "healers3:defense:40": {
+      "n": 36,
+      "old": {
+        "wins": 28,
+        "draws": 0,
+        "healing": 14092,
+        "damage": 34795,
+        "rounds": 390
+      },
+      "revised": {
+        "wins": 21,
+        "draws": 0,
+        "healing": 15242,
+        "damage": 33784,
+        "rounds": 409
+      },
+      "none": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      }
+    },
+    "healers3:magic:40": {
+      "n": 36,
+      "old": {
+        "wins": 29,
+        "draws": 0,
+        "healing": 14351,
+        "damage": 34904,
+        "rounds": 386
+      },
+      "revised": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      },
+      "none": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      }
+    },
+    "healers3:support:40": {
+      "n": 36,
+      "old": {
+        "wins": 29,
+        "draws": 0,
+        "healing": 14401,
+        "damage": 34904,
+        "rounds": 386
+      },
+      "revised": {
+        "wins": 29,
+        "draws": 0,
+        "healing": 20821,
+        "damage": 33583,
+        "rounds": 409
+      },
+      "none": {
+        "wins": 18,
+        "draws": 0,
+        "healing": 15854,
+        "damage": 32426,
+        "rounds": 408
+      }
+    }
+  }
+}

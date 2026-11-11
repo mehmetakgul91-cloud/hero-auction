@@ -42,11 +42,11 @@ for(const id of ['attack','defense','magic','support'])for(const level of [0,1,1
  assert.deepEqual(p,before);
 });
 
-test('switched level40 is visibly retained, only20 active; no truncation, excess progress or repurchase',()=>{
+test('switched level40 is visibly retained, zero active; no truncation, excess progress or repurchase',()=>{
  const p=profile('magic');p.levels.attack=40;
  const root=render(p,{selected:'attack'}),view=commanderBranchView(p,'attack',{gold:1_000_000});
- assert.equal(view.level,40);assert.equal(view.effectiveLevel,20);assert.equal(view.retainedLevel,20);assert.equal(view.bonus,10);
- assert.match(root.textContent,/40 seviye kayıtlı: 20 etkin \+ 20 saklı/);
+ assert.equal(view.level,40);assert.equal(view.effectiveLevel,20);assert.equal(view.retainedLevel,20);assert.equal(view.bonus,0);assert.equal(view.activeLevel,0);
+ assert.match(root.textContent,/40 seviye kayıtlı.*mevcut komutanla bonus vermez/);
  assert.equal(find(root,'cp-upgrade-button')[0].disabled,true);
  assert.equal(find(root,'cp-progress')[0].attributes['aria-valuenow'],'20');
  assert.equal(find(root,'cp-progress')[0].children[0].style.width,'100%');assert.equal(p.levels.attack,40);

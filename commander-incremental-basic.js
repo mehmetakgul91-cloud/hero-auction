@@ -12,7 +12,7 @@ export function stepBasicHeroCombat(combat,{side,actorId,round=combat?.round}={}
  if(!combat||combat.finished||![0,1].includes(side)||round!==combat.round)throw Error('Invalid combat step');
  const actor=combat.teams[side].find(u=>u.id===actorId&&u.hp>0);
  if(!actor)throw Error('Invalid acting hero');
- if(!Number.isSafeInteger(actor.attack)||actor.attack<0)throw Error('Invalid hero attack');
+ if(!Number.isFinite(actor.attack)||actor.attack<0||actor.attack>Number.MAX_SAFE_INTEGER)throw Error('Invalid hero attack');
  if(actor.active||actor.passive)throw Error('Special hero mechanics require incremental engine integration');
  const enemies=alive(combat.teams[1-side]);
  if(!enemies.length)throw Error('No living target');

@@ -4,10 +4,10 @@ import {commanderUltimateName,commanderUltimateDescription} from './commander-ul
 
 // Presentation only: the saved profile and every purchase stay server-owned.
 export const COMMANDER_BRANCHES=Object.freeze([
- {id:'attack',icon:'⚔',name:['Savaş Ustalığı','Battle Mastery'],role:['Savaşçı / Suikastçı','Fighter / Assassin'],effect:['Saldırı · temel güç oranı','Attack · base power ratio'],basis:['Temel kahraman gücü × bu oran, saldırıya eklenir.','Base hero power × this ratio is added to attack.']},
- {id:'defense',icon:'◈',name:['Çelik İrade','Iron Will'],role:['Tank','Tank'],effect:['Savunma · temel güç oranı','Defense · base power ratio'],basis:['Temel kahraman gücü × bu oran, savunmaya eklenir.','Base hero power × this ratio is added to defense.']},
+ {id:'attack',icon:'⚔',name:['Savaş Ustalığı','Battle Mastery'],role:['Savaşçı / Suikastçı','Fighter / Assassin'],effect:['Saldırı artışı','Attack increase'],basis:['Savaşçı ve suikastçıların mevcut saldırısı bu oranda artar.','Fighter and assassin current attack increases by this percentage.']},
+ {id:'defense',icon:'◈',name:['Çelik İrade','Iron Will'],role:['Tank','Tank'],effect:['Savunma artışı','Defense increase'],basis:['Tankların mevcut savunması bu oranda artar.','Tank current defense increases by this percentage.']},
  {id:'magic',icon:'✦',name:['Arkane Güç','Arcane Power'],role:['Enerji','Energy'],effect:['Saldırı artışı','Attack increase'],basis:['Enerji kahramanlarının saldırısı bu oranda artar.','Energy heroes gain this percentage of their attack.']},
- {id:'support',icon:'❧',name:['Yaşam Enerjisi','Life Energy'],role:['Destek','Support'],effect:['Azami can · 2× temel güç oranı','Max health · 2× base power ratio'],basis:['Temel kahraman gücünün 2 katı × bu oran, azami cana eklenir.','Twice the base hero power × this ratio is added to max health.']}
+ {id:'support',icon:'❧',name:['Yaşam Enerjisi','Life Energy'],role:['Destek','Support'],effect:['Şifa oranı · yüzde puanı','Healing rate · percentage points'],basis:['Destek kahramanlarının şifa oranına yüzde puanı eklenir. Örnek: %40 + 15 puan = %55. Saldırı, can ve kalkan değişmez.','Adds percentage points to support heroes’ healing rate: 40% + 15 points = 55%. Attack, HP and shields stay unchanged.']}
 ]);
 const normalNames={attack:['Güçlü Darbe','Power Strike'],defense:['Koruyucu Kalkan','Protective Shield'],magic:['Sersemletme','Stun'],support:['Şifa Dokunuşu','Healing Touch']};
 const normalDetails={
@@ -52,7 +52,7 @@ export function commanderBranchView(profile,id,{gold=0,diamonds=null,magicDust=n
  const points=[0,Math.floor(effectiveLevel/10)*10,effectiveLevel,...(maxed?[]:[nextLevel]),cap];
  const nodes=[...new Set(points)].sort((a,b)=>a-b).map(value=>({level:value,state:value===effectiveLevel?'current':value<effectiveLevel?'earned':value===nextLevel?'next':'future'}));
  return {...branch,level,primary,cap,effectiveLevel,retainedLevel:Math.max(0,level-cap),maxed,nextLevel,cost,
-  diamondCost,requiresDiamonds,magicDustCost,requiresMagicDust,reason,canUpgrade:!maxed&&!reason,progress:100*effectiveLevel/cap,bonus:effectiveLevel*.5,nextBonus:maxed?effectiveLevel*.5:nextLevel*.5,stats,nextStats,nodes};
+  diamondCost,requiresDiamonds,magicDustCost,requiresMagicDust,reason,canUpgrade:!maxed&&!reason,progress:100*effectiveLevel/cap,activeLevel:primary?effectiveLevel:0,bonus:primary?effectiveLevel*.5:0,nextBonus:primary?(maxed?effectiveLevel*.5:nextLevel*.5):0,stats,nextStats,nodes};
 }
 
 export function renderCommanderSkills(root,profile,{english=false,document=root.ownerDocument}={}){
@@ -92,7 +92,7 @@ export function renderCommanderDevelopment(root,profile,{selected=profile.comman
   const art=el('img','cp-glyph');art.src='/images/commander-branch-'+branch.id+'.svg';art.alt='';icon.append(art);
   if(branch.primary)icon.append(el('span','cp-main-star','✦'));
   const text=el('span','cp-branch-copy');text.append(el('strong','',pick(branch.name)));
-  const progress=el('span','cp-branch-level',`${branch.effectiveLevel} / ${branch.cap}`);progress.setAttribute('aria-label',pick(['Etkin seviye','Active level'])+' '+branch.effectiveLevel+' / '+branch.cap+(branch.retainedLevel?' · '+branch.retainedLevel+' '+pick(['seviye saklı','levels retained']):''));
+  const progress=el('span','cp-branch-level',`${branch.effectiveLevel} / ${branch.cap}`);progress.setAttribute('aria-label',pick(['Geliştirme seviyesi','Upgrade level'])+' '+branch.effectiveLevel+' / '+branch.cap+(branch.retainedLevel?' · '+branch.retainedLevel+' '+pick(['seviye saklı','levels retained']):''));
   if(branch.retainedLevel)progress.append(el('small','cp-retained-label','+'+branch.retainedLevel+' '+pick(['saklı','retained'])));
   const milestones=el('span','cp-node-milestones');milestones.setAttribute('aria-hidden','true');
   for(let point=1;point<=4;point++){const level=branch.cap*point/4,dot=el('i',branch.effectiveLevel>=level?'earned':'');dot.dataset.level=String(level);milestones.append(dot);}
@@ -109,17 +109,17 @@ export function renderCommanderDevelopment(root,profile,{selected=profile.comman
  const labels={earned:pick(['Alındı','Earned']),current:pick(['Mevcut','Current']),next:pick(['Sıradaki','Next']),future:pick(['İleride','Later'])};
  for(const node of chosen.nodes){const item=el('li','cp-level-node '+node.state);item.append(el('b','',String(node.level)),el('span','',labels[node.state]));if(node.state==='current')item.setAttribute('aria-current','step');path.append(item);}panel.append(path);
  const progress=el('div','cp-progress');progress.setAttribute('role','progressbar');progress.setAttribute('aria-label',pick(chosen.name));progress.setAttribute('aria-valuemin','0');progress.setAttribute('aria-valuemax',String(chosen.cap));progress.setAttribute('aria-valuenow',String(chosen.effectiveLevel));progress.setAttribute('aria-valuetext',`${chosen.effectiveLevel} / ${chosen.cap}`);const fill=el('span','');fill.style.width=chosen.progress+'%';progress.append(fill);panel.append(progress);
- if(chosen.retainedLevel)panel.append(el('p','cp-retained',english?`${chosen.level} levels saved: ${chosen.cap} active + ${chosen.retainedLevel} retained. Retained levels activate when this becomes your main branch again.`:`${chosen.level} seviye kayıtlı: ${chosen.cap} etkin + ${chosen.retainedLevel} saklı. Bu dal yeniden ana dalın olduğunda saklı seviyeler etkinleşir.`));
+ if(!chosen.primary)panel.append(el('p','cp-retained',english?`${chosen.level} levels saved. This branch grants no bonus with your current commander. Select this branch’s commander to activate all saved levels.`:`${chosen.level} seviye kayıtlı. Bu dal mevcut komutanla bonus vermez. Kayıtlı seviyelerin tümünü etkinleştirmek için bu dalın komutanını seç.`));
  const effects=el('dl','cp-preview');
  const row=(label,current,next)=>{const line=el('div','cp-preview-row');line.append(el('dt','',label));const value=el('dd','');value.append(el('span','',current));if(!chosen.maxed){const arrow=el('span','cp-arrow','→');arrow.setAttribute('aria-label',pick(['sonraki','next']));value.append(arrow,el('b','',next));}line.append(value);effects.append(line);};
- row(pick({attack:['Saldırı · temel güç','Attack · base power'],defense:['Savunma · temel güç','Defense · base power'],magic:['Saldırı artışı','Attack increase'],support:['Can · 2× temel güç','HP · 2× base power']}[chosen.id]),'+'+pct(chosen.bonus),'+'+pct(chosen.nextBonus));
+ row(pick({attack:['Saldırı artışı','Attack increase'],defense:['Savunma artışı','Defense increase'],magic:['Saldırı artışı','Attack increase'],support:['Şifa oranı · yüzde puanı','Healing rate · percentage points']}[chosen.id]),chosen.id==='support'?'+'+number(chosen.bonus,english)+' '+pick(['puan','points']):'+'+pct(chosen.bonus),chosen.id==='support'?'+'+number(chosen.nextBonus,english)+' '+pick(['puan','points']):'+'+pct(chosen.nextBonus));
  if(chosen.primary){
   if(chosen.id==='magic')row(pick(['Sersemletme · sabit etki','Stun · fixed effect']),pick(['1 saldırı atlanır','1 attack skipped']),pick(['1 saldırı atlanır','1 attack skipped']));
   else row(pick(['Normal beceri etkisi','Normal ability effect']),pct(chosen.stats.normalRate*100),pct(chosen.nextStats.normalRate*100));
   row(pick(['Her dolum / tur','Each pool / round']),'+'+chosen.stats.energyPerRound,'+'+chosen.nextStats.energyPerRound);
   if(chosen.id==='defense')row(pick(['Son Kale · kalkan','Last Bastion · shield']),pct(chosen.stats.ultimateRate*100),pct(chosen.nextStats.ultimateRate*100));
  }
- const explanation=el('details','cp-detail-help');explanation.append(el('summary','',pick(['Etki ayrıntıları','Effect details'])),el('p','cp-basis',pick(chosen.basis)+' '+pick(['Değerler savaşta tam sayıya yuvarlanır.','Values are rounded to whole numbers in battle.'])));
+ const explanation=el('details','cp-detail-help');explanation.append(el('summary','',pick(['Etki ayrıntıları','Effect details'])),el('p','cp-basis',pick(chosen.basis)+' '+pick(['Saldırı ve savunma kesirleri korunur; son hasar ve şifa miktarları tam sayıya yuvarlanır.','Attack and defense keep fractions; final damage and healing amounts use whole numbers.'])));
  if(chosen.primary)explanation.append(el('p','cp-fixed-note',chosen.id==='defense'?pick(['Ölümcül darbede başlayan 1 can koruması kalan tur ve sonraki 2 tam tur sürer; seviyeden bağımsızdır.','The 1-health floor starts on a lethal hit and lasts through the rest of that round and the next 2 full rounds, at every level.']):pick(['Nihai becerinin hedefi, süresi ve özel etkisi seviyeden bağımsızdır.','The ultimate’s targeting, duration and special effect do not scale with level.'])));
  panel.append(effects);
  const button=el('button','cp-upgrade-button');button.type='button';button.dataset.upgrade=chosen.id;

@@ -42,8 +42,8 @@ try{
    const formation={positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:team.map(h=>h.role)};
    window.posts=0;window.locked=null;window.qaPicker=mountCombinedPreparation({root:document.getElementById('match-commander-picker'),english,code:'fixture',token:'seat',matchKey:'m1',team,preparation:formation,getAuthToken:()=> 'synthetic',onStarted:()=>{},fetcher:async(url,init)=>{
     const p=JSON.parse(init.body);if(url.endsWith('/battle-auction-commander')){window.posts++;window.locked=p.commanderId;}
-    const heroes=team.map((h,i)=>({...h,lane:p.formation.lanes[i],attack:100+(p.formation.lanes[i]==='front'?2:0),defense:100,maxHp:200,speed:100}));const totals=heroes=>Object.fromEntries(['attack','defense','maxHp','speed'].map(k=>[k,heroes.reduce((sum,h)=>sum+h[k],0)]));
-    return {ok:true,json:async()=>({matchKey:'m1',preparation:{...p.formation,ready:!!window.locked},selection:window.locked?{commanderId:window.locked,levels:{magic:40}}:null,ready:[!!window.locked,false],started:false,baseline:{heroes,totals:totals(heroes)},options:['attack','defense','magic','support'].map(commanderId=>{const boosted=heroes.map(h=>({...h,attack:h.attack+(commanderId==='magic'&&h.role==='energy'?20:0)}));return {commanderId,profile:{commanderId,levels:{attack:30,defense:25,magic:40,support:30}},heroes:boosted,totals:totals(boosted)};})})};
+    const heroes=team.map((h,i)=>({...h,lane:p.formation.lanes[i],attack:100+(p.formation.lanes[i]==='front'?2:0),defense:100,maxHp:200,speed:100,healingRate:h.role==='support'?40:0,healingPower:h.role==='support'?40:0}));const totals=heroes=>Object.fromEntries(['attack','defense','maxHp','speed','healingPower'].map(k=>[k,heroes.reduce((sum,h)=>sum+h[k],0)]));
+    return {ok:true,json:async()=>({matchKey:'m1',preparation:{...p.formation,ready:!!window.locked},selection:window.locked?{commanderId:window.locked,levels:{magic:40}}:null,ready:[!!window.locked,false],started:false,baseline:{heroes,totals:totals(heroes)},options:['attack','defense','magic','support'].map(commanderId=>{const boosted=heroes.map(h=>({...h,attack:h.attack+(commanderId==='magic'&&h.role==='energy'?20:0),healingRate:h.healingRate+(commanderId==='support'&&h.role==='support'?15:0),healingPower:h.healingPower+(commanderId==='support'&&h.role==='support'?15:0)}));return {commanderId,profile:{commanderId,levels:{attack:30,defense:25,magic:40,support:30}},heroes:boosted,totals:totals(boosted)};})})};
    }});
   },english);
   await page.waitForSelector('.combined-choice');assert.equal(await page.locator('.combined-ready').getAttribute('aria-disabled'),'true');assert.equal(await page.evaluate(()=>window.posts),0);
@@ -57,6 +57,11 @@ try{
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   assert.equal(await page.locator('.combined-preparation button').evaluateAll(nodes=>nodes.filter(e=>e.getBoundingClientRect().width>0).every(e=>e.getBoundingClientRect().height>=44)),true);
   await page.screenshot({path:path.join(artifacts,`combined-${width}-${english?'en':'tr'}.png`),fullPage:true});
+  await page.locator('.combined-choice').nth(3).click();
+  assert.match(await page.locator('[data-hero-id="h4"] .combined-hero-effect').textContent(),/40.*55.*\+15/);
+  assert.match(await page.locator('.combined-stat-deltas').textContent(),/\+15/);
+  await page.screenshot({path:path.join(artifacts,`healing-${width}-${english?'en':'tr'}.png`),fullPage:true});
+  await page.locator('.combined-choice').nth(2).click();
   await page.locator('.combined-ready').click();await page.waitForFunction(()=>window.locked==='magic');assert.equal(await page.evaluate(()=>window.posts),1);assert.equal(await page.locator('.combined-move').first().isEnabled(),false);await page.close();
  }
  assert.deepEqual(errors,[]);console.log('PASS: combined preparation palette, mobile layout, engine deltas, lane focus and atomic Ready; legacy picker EN/TR at 320/390/1440px, server-stat comparison, no auto-pick, retained focus, lock/reload/wait/start.');

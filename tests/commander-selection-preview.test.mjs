@@ -9,13 +9,14 @@ import {createLiveCommanderAbilities} from '../commander-live-abilities.js';
 import {createLiveCommanderCombat,castLiveCommanderCombat} from '../commander-live-combat.js';
 import {commanderAbilityStats} from '../public/commander-ability-rules.js';
 
-const stats=['attack','defense','maxHp','speed'];
+import {heroHealingRate,calculateSpecialHeal} from '../battle-special-formulas.js';
+const stats=['attack','defense','maxHp','speed','healingPower'];
 const levels={attack:40,defense:40,magic:40,support:40};
 const profile={commanderId:'support',levels};
 const cards=heroes=>heroes.map((hero,index)=>({id:hero.id,role:hero.role,power:60+index*7,lane:index<2?'front':'back'}));
 const heavy=role=>cards([...battleRoster.filter(hero=>hero.role===role).slice(0,4),battleRoster.find(hero=>hero.role==='tank')]);
 const mixed=()=>cards(['fighter','assassin','tank','energy','support'].map(role=>battleRoster.find(hero=>hero.role===role)));
-const view=({id,name,role,lane,power,attack,defense,maxHp,speed})=>({id,name,role,lane,power,attack,defense,maxHp,speed});
+const view=hero=>{const {id,name,role,lane,power,attack,defense,maxHp,speed}=hero;return {id,name,role,lane,power,attack,defense,maxHp,speed,healingRate:Number((heroHealingRate(hero)*100).toFixed(6)),healingPower:role==='support'?calculateSpecialHeal({attack,missingHp:Number.MAX_SAFE_INTEGER,skill:hero.active,healingBonus:hero.commanderHealingBonus||0}):0};};
 const freeze=value=>{Object.freeze(value);for(const child of Object.values(value))if(child&&typeof child==='object')freeze(child);return value;};
 function assertParity(a,b,options){
  const preview=commanderSelectionPreview(a,b,options);
@@ -26,10 +27,10 @@ function assertParity(a,b,options){
   const commanders=[null,null];commanders[options.seat]=option.profile;
   const actual=prepareLiveArenaTeams(a,b,{remainingCredits:options.remainingCredits,commanders,cardAdapter:'auction'})[options.seat];
   assert.deepEqual(option.heroes.map(({delta,...hero})=>hero),actual.map(view));
-  for(const [index,hero] of option.heroes.entries())for(const key of stats)assert.equal(hero.delta[key],actual[index][key]-base[index][key]);
+  for(const [index,hero] of option.heroes.entries())for(const key of stats)assert.equal(hero.delta[key],view(actual[index])[key]-view(base[index])[key]);
   for(const key of [...stats,'cardPower']){
    const field=key==='cardPower'?'power':key;
-   const sum=actual.reduce((n,hero)=>n+hero[field],0),baseSum=base.reduce((n,hero)=>n+hero[field],0);
+   const sum=actual.map(view).reduce((n,hero)=>n+hero[field],0),baseSum=base.map(view).reduce((n,hero)=>n+hero[field],0);
    assert.equal(option.totals[key],sum);assert.equal(preview.baseline.totals[key],baseSum);assert.equal(option.delta[key],sum-baseSum);
   }
  }
@@ -44,11 +45,11 @@ for(const role of ['energy','fighter'])for(const seat of [0,1])test(`${role}-hea
  assert.ok(specialty.totals.attack>other.totals.attack);
 });
 
-test('preserves earned levels and uses primary 40 / other 20 effective caps',()=>{
+test('preserves earned levels and activates only the selected specialty',()=>{
  const result=assertParity(mixed(),mixed(),{seat:0,profile});
  for(const option of result.options){
   assert.deepEqual(option.profile.levels,levels);
-  for(const stat of Object.keys(levels))assert.equal(commanderStatBonus(option.profile,stat),stat===option.commanderId ? .2 : .1);
+  for(const stat of Object.keys(levels))assert.equal(commanderStatBonus(option.profile,stat),stat===option.commanderId ? .2 : 0);
  }
  // Returning to the original commander restores its stored specialty effect.
  const switched={commanderId:'attack',levels:{attack:34,defense:8,magic:37,support:6}};
@@ -101,7 +102,7 @@ test('preview rejects invalid seat, profile, cards and credits',()=>{
 });
 
 // This deliberately uses unequal levels: switching must not borrow support's
-// level 40 for attack abilities or destroy it when applying the off-role cap.
+// level 40 for attack abilities or destroy it while the support branch is inactive.
 const retainedLevels={attack:12,defense:7,magic:9,support:40};
 function supportRoundTrip(a,b,seat=0){
  const initial={commanderId:'support',levels:{...retainedLevels}};
@@ -116,17 +117,18 @@ function supportRoundTrip(a,b,seat=0){
  return {baseline:first.baseline,support,attack,restored};
 }
 
-for(const seat of [0,1])test(`support 40 → attack → support restores actual support HP and preview at seat ${seat}`,()=>{
+for(const seat of [0,1])test(`support 40 → attack → support restores actual support healing and preview at seat ${seat}`,()=>{
  const {baseline,support,attack,restored}=supportRoundTrip(mixed(),mixed(),seat);
  const healerIndex=baseline.heroes.findIndex(hero=>hero.role==='support');
  assert.ok(healerIndex>=0);
  const base=baseline.heroes[healerIndex];
- assert.equal(support.heroes[healerIndex].maxHp,base.maxHp+Math.round(base.power*2*.20));
- assert.equal(attack.heroes[healerIndex].maxHp,base.maxHp+Math.round(base.power*2*.10));
- assert.ok(support.heroes[healerIndex].maxHp>attack.heroes[healerIndex].maxHp);
+ assert.equal(support.heroes[healerIndex].maxHp,base.maxHp);
+ assert.equal(support.heroes[healerIndex].attack,base.attack);
+ assert.equal(support.heroes[healerIndex].healingRate,base.healingRate+20);
+ assert.equal(attack.heroes[healerIndex].maxHp,base.maxHp);
+ assert.ok(support.heroes[healerIndex].healingPower>attack.heroes[healerIndex].healingPower);
  assert.deepEqual(restored.heroes,support.heroes);
- // A genuinely trained level-20 support stat gives the same off-role combat
- // result as stored level 40, without rewriting the stored level to 20.
+ // All off-specialty levels are inactive, regardless of stored level.
  const commanders=[null,null];
  commanders[seat]={...attack.profile,levels:{...retainedLevels,support:20}};
  const capped=prepareLiveArenaTeams(mixed(),mixed(),{commanders,cardAdapter:'auction'})[seat];

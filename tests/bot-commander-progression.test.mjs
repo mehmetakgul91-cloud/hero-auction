@@ -29,8 +29,10 @@ for(const [difficulty,level,gain] of [['easy',15,19],['medium',25,24],['hard',40
   const prepared=prepareLiveArenaTeams(cards,cards,{commanders:[createCommanderProfile('attack'),profile],cardAdapter:'auction'});
   assert.deepEqual(prepared[0],baseline[0],'human team receives no bot upgrades');
   for(let i=0;i<5;i++){
-   const stat=['attack','attack','defense','attack','maxHp'][i];
-   assert.ok(prepared[1][i][stat]>baseline[1][i][stat],cards[i].role+' has its real branch bonus');
+   const stat=['attack','attack','defense','attack','commanderHealingBonus'][i];
+   const matching=['attack','attack','defense','magic','support'][i]===id;
+   if(matching)assert.ok(prepared[1][i][stat]>(baseline[1][i][stat]||0),cards[i].role+' has the selected branch bonus');
+   else assert.deepEqual(prepared[1][i],baseline[1][i],'unselected branches grant no bonus');
   }
   const combat=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'energy',now:0}),teams:teams(),commanders:[createCommanderProfile('attack'),profile]});
   assert.deepEqual(combat.abilities.energy,[30,30]);beginServerCombatRound(combat,2);

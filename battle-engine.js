@@ -12,7 +12,7 @@ import {consumeCommanderFocus,expireCommanderFocus,clearCommanderFocus} from './
 import crypto from 'node:crypto';
 import {orderHeroActions} from './battle-action-scheduler.js';
 import {selectBattleTarget} from './battle-target-selection.js';
-import {initializeCenterProtection} from './battle-center-protection.js';
+import {initializeCenterDefenseBonus} from './battle-center-defense.js';
 import {applyAssassinStartingAttackBonus} from './battle-assassin-attack.js';
 import {calculateHeroRawDamage} from './battle-damage-formula.js';
 import {calculateSplashRawDamage,resolveSpecialHealing} from './battle-special-formulas.js';
@@ -89,7 +89,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
     if(p.effect==='focus')u.attack=Math.round(u.attack*(1+p.value));
     if(p.effect==='evasion'||p.effect==='momentum')u.speed=Math.round(u.speed*(1+p.value));
   }
-  for(const team of teams){applyAssassinStartingAttackBonus(team);initializeCenterProtection(team);}
+  for(const team of teams){applyAssassinStartingAttackBonus(team);initializeCenterDefenseBonus(team);}
   const initialShields=shieldSnapshot();
   const commanderAttackBasis=teams.map(commanderAttackPower);
   const commanderResourcesByRound=[],commanderEnergy=[0,0],commanderUltimateEnergy=[0,0],revivalUsed=[false,false],ultimateUsed=[false,false];

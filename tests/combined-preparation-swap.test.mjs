@@ -10,9 +10,9 @@ const formation={positions:[0,1,2,3,4],lanes:['front','front','back','back','bac
 const levels={attack:30,defense:25,magic:40,support:30};
 const profile=commanderId=>({commanderId,levels});
 const payload=(f=formation,extra={})=>{
- const heroes=f.positions.map((index,slot)=>({...team[index],lane:f.lanes[slot],attack:100+index,defense:110+index,maxHp:200+index,speed:90+index}));
- const totals=heroes=>Object.fromEntries(['attack','defense','maxHp','speed'].map(key=>[key,heroes.reduce((sum,h)=>sum+h[key],0)]));
- return {matchKey:'m1',preparation:{...structuredClone(f),ready:false},selection:null,ready:[false,false],started:false,baseline:{heroes,totals:totals(heroes)},options:['attack','defense','magic','support'].map(commanderId=>{const boosted=heroes.map(h=>({...h,attack:h.attack+7,defense:h.defense+6,maxHp:h.maxHp+13}));return {commanderId,profile:profile(commanderId),heroes:boosted,totals:totals(boosted)}}),...extra};
+ const heroes=f.positions.map((index,slot)=>({...team[index],lane:f.lanes[slot],attack:100+index,defense:110+index,maxHp:200+index,speed:90+index,healingRate:team[index].role==='support'?40:0,healingPower:team[index].role==='support'?42:0}));
+ const totals=heroes=>Object.fromEntries(['attack','defense','maxHp','speed','healingPower'].map(key=>[key,heroes.reduce((sum,h)=>sum+h[key],0)]));
+ return {matchKey:'m1',preparation:{...structuredClone(f),ready:false},selection:null,ready:[false,false],started:false,baseline:{heroes,totals:totals(heroes)},options:['attack','defense','magic','support'].map(commanderId=>{const boosted=heroes.map(h=>({...h,attack:h.attack+7,defense:h.defense+6,maxHp:h.maxHp+13,healingRate:h.healingRate+(commanderId==='support'&&h.role==='support'?15:0),healingPower:h.healingPower+(commanderId==='support'&&h.role==='support'?15:0)}));return {commanderId,profile:profile(commanderId),heroes:boosted,totals:totals(boosted)}}),...extra};
 };
 const setup=extra=>createCombinedPreparationState({matchKey:'m1',team,preparation:formation,request:async(_kind,p)=>payload(p.formation),...extra});
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
@@ -109,10 +109,22 @@ test('every distribution keeps all five cards and correct counts; no false cente
 });
 test('English controls are localized, and locking disables both swap and move buttons',async()=>{
  const h=await mounted(true);try{
-  assert.equal(h.root.querySelector('.combined-move').textContent,'↓ Move back');assert.match(h.root.querySelector('.combined-center-badge').textContent,/Protected/);h.root.querySelectorAll('.combined-choice')[2].click();await h.picker.state.confirm();
+  assert.equal(h.root.querySelector('.combined-move').textContent,'↓ Move back');assert.match(h.root.querySelector('.combined-center-badge').textContent,/\+15% defense/);h.root.querySelectorAll('.combined-choice')[2].click();await h.picker.state.confirm();
   assert.ok(h.root.querySelectorAll('.combined-hero-pick').every(n=>n.disabled));assert.ok(h.root.querySelectorAll('.combined-move').every(n=>n.disabled));assert.match(h.root.querySelector('.combined-formation-note').textContent,/locked/);
  }finally{h.close()}
 });
 test('approved A layout uses count-driven centered wraps, large portraits and minimum touch controls',()=>{
  const css=readFileSync(new URL('../public/combined-preparation.css',import.meta.url),'utf8');assert.match(css,/\.combined-row\{gap:8px;align-items:stretch\}/);assert.match(css,/\.combined-row\[data-count="4"\] \.combined-hero\{width:calc\(\(100% - 8px\)\/2\)\}/);assert.match(css,/\.combined-hero-pick\{[^}]*height:114px/);assert.match(css,/\.combined-move\{[^}]*min-height:44px/);assert.match(css,/justify-content:center/);assert.match(css,/object-position:center 18%/);assert.match(css,/combined-swap-selected/);
+});
+
+for(const english of [false,true])test(`healing preview shows additive rate and healing amount in ${english?'English':'Turkish'}`,async()=>{
+ const h=await mounted(english);try{
+  h.root.querySelectorAll('.combined-choice')[3].click();
+  const hero=h.root.querySelector('.combined-hero[data-hero-id="h4"]');
+  assert.match(hero.querySelector('.combined-hero-effect').textContent,/40.*55.*\+15/);
+  assert.match(hero.querySelector('.combined-effect-label').textContent,english?/Healing rate/:/Şifa oranı/);
+  assert.match(h.root.querySelector('.combined-stat-deltas').textContent,english?/\+15 Healing power/:/\+15 Şifa gücü/);
+  h.root.querySelectorAll('.combined-choice')[0].click();
+  assert.match(h.root.querySelector('.combined-hero[data-hero-id="h4"]').querySelector('.combined-hero-effect').textContent,/40.*40/);
+ }finally{h.close()}
 });

@@ -39,27 +39,29 @@ export function previewCommanderUpgrade(profile,stat,gold){
 export function commanderStatBonus(profile,stat){
  validateCommanderProfile(profile);
  if(!COMMANDER_STATS.includes(stat))throw Error('Geçersiz geliştirme alanı');
- return Math.min(profile.levels[stat],commanderLevelCap(profile.commanderId,stat))*.005;
+ // Stored off-specialty upgrades remain available when that commander is selected.
+ return stat===profile.commanderId?Math.min(profile.levels[stat],COMMANDER_SPECIALTY_MAX_LEVEL)*.005:0;
 }
 export function applyCommanderSupport(team,commanderOrProfile){
  if(!commanderOrProfile)return team;
  const profile=typeof commanderOrProfile==='string'?createCommanderProfile(commanderOrProfile):commanderOrProfile;
  validateCommanderProfile(profile);
- // Add the bonus from the card's original power, independently of the capped formation multiplier.
+ // Scale the matching combat stat, not card power. Keep fractional stats;
+ // damage/healing round at their existing final calculation boundary.
  for(const hero of team){
   const role=hero.role;
   if(role==='fighter'||role==='assassin'){
    const bonus=commanderStatBonus(profile,'attack');
-   if(bonus)hero.attack=Math.max(1,hero.attack+Math.round(hero.power*bonus));
+   if(bonus)hero.attack=Math.max(1,Number((hero.attack*(1+bonus)).toFixed(6)));
   }else if(role==='tank'){
    const bonus=commanderStatBonus(profile,'defense');
-   if(bonus)hero.defense=Math.max(1,hero.defense+Math.round(hero.power*bonus));
+   if(bonus)hero.defense=Math.max(1,Number((hero.defense*(1+bonus)).toFixed(6)));
   }else if(role==='energy'){
    const bonus=commanderStatBonus(profile,'magic');
-   if(bonus)hero.attack=Math.max(1,Math.round(hero.attack*(1+bonus)));
+   if(bonus)hero.attack=Math.max(1,Number((hero.attack*(1+bonus)).toFixed(6)));
   }else if(role==='support'){
    const bonus=commanderStatBonus(profile,'support');
-   if(bonus){hero.maxHp=Math.max(1,hero.maxHp+Math.round(hero.power*2*bonus));hero.hp=hero.maxHp}
+   if(bonus)hero.commanderHealingBonus=bonus;
   }
  }
  return team;

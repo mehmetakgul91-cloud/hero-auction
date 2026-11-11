@@ -20,7 +20,7 @@ import {battleRoster} from '../battle-roster.js';
 const h=(id,position=0,lane='front',extra={})=>({id,name:id,position,lane,role:'fighter',hp:1000,maxHp:1000,attack:50,defense:50,speed:50,shield:0,damage:0,kills:0,healing:0,...extra});
 const team=(prefix='e',front=2)=>Array.from({length:5},(_,i)=>h(prefix+i,i,i<front?'front':'back'));
 const protectedTeam=()=>initializeCenterProtection(team());
-const center=units=>units.find(u=>u.centerProtection);
+const center=units=>units.find(u=>u.centerProtection||u.centerDefenseBonus);
 const combat=(defenders,actor=h('actor',0,'front',{role:'assassin'}),round=1)=>createLiveCommanderCombat({teams:[[actor],defenders],round,commanders:[{commanderId:'attack'},{commanderId:'support'}],abilities:createLiveCommanderAbilities({matchKey:'center:test',energy:[100,100],ultimateEnergy:[100,100],now:0})});
 
 test('only the initial 2+3 composition marks exactly the second rear hero and its four allies',()=>{
@@ -150,25 +150,20 @@ test('fresh live preparation honors swapped order and never trusts incoming stal
  const cards=battleRoster.slice(0,5).map((hero,i)=>({id:hero.id,power:50,lane:i<2?'front':'back',centerProtection:{version:1,protectorIds:['fake'],broken:true}}));
  [cards[2],cards[3]]=[cards[3],cards[2]];
  const first=prepareLiveArenaTeams(cards,cards,{cardAdapter:'auction'});
- assert.equal(center(first[0]).id,cards[3].id);assert.deepEqual(center(first[0]).centerProtection.protectorIds,cards.filter((_,i)=>i!==3).map(c=>c.id));
+ assert.equal(center(first[0]).id,cards[3].id);assert.deepEqual(center(first[0]).centerDefenseBonus,{version:1,multiplier:1.15});
  applyHeroDamage(first[0][0],10000,{round:1,allies:first[0]});
- const rematch=prepareLiveArenaTeams(cards,cards,{cardAdapter:'auction'});assert.equal(center(rematch[0]).centerProtection.broken,false);
- const changed=cards.map((c,i)=>({...c,lane:i<3?'front':'back'}));assert.equal(prepareLiveArenaTeams(changed,cards,{cardAdapter:'auction'})[0].some(u=>u.centerProtection),false);
+ const rematch=prepareLiveArenaTeams(cards,cards,{cardAdapter:'auction'});assert.equal(center(rematch[0]).centerDefenseBonus.multiplier,1.15);
+ const changed=cards.map((c,i)=>({...c,lane:i<3?'front':'back'}));assert.equal(prepareLiveArenaTeams(changed,cards,{cardAdapter:'auction'})[0].some(u=>u.centerDefenseBonus),false);
  const zeroHp=cards.map(c=>({...c,power:1}));
  const zeroStart=prepareLiveArenaTeams(zeroHp,zeroHp,{remainingCredits:[-99,-99],cardAdapter:'auction'});
- assert.equal(zeroStart.flat().some(u=>u.centerProtection),false,'cover is initialized after final HP preparation, not before credit multipliers');
+ assert.equal(zeroStart.flat().some(u=>u.centerDefenseBonus),false,'cover is initialized after final HP preparation, not before credit multipliers');
 });
 
-test('deterministic simulation installs the same cover and never attacks it automatically before a protector death',()=>{
+test('deterministic simulation installs permanent center defense and allows immediate targeting',()=>{
  const cards=team('a').map(u=>({id:u.id,role:'assassin',power:60,lane:u.lane})),defenders=team('b').map(u=>({id:u.id,role:'fighter',power:60,lane:u.lane}));
  const result=simulateBattle(cards,defenders,{seed:'protected-center',maxRounds:15});
  assert.equal(center(result.teams[0]).id,'a3');assert.equal(center(result.teams[1]).id,'b3');
- const hp=result.teams.map(units=>new Map(units.map(u=>[u.id,u.maxHp])));
- for(const event of result.log){
-  if(!['normal','special','splash'].includes(event.damageType))continue;
-  const side=1-event.side,middle=side?'b3':'a3';
-  if(event.target===middle&&event.damageType!=='splash')assert.ok([...hp[side]].some(([id,value])=>id!==middle&&value===0));
-  hp[side].set(event.target,Math.max(0,hp[side].get(event.target)-event.value-(event.executedDamage||0)));
- }
+ assert.ok(result.log.some(event=>event.target==='b3'&&event.damageType==='normal'&&event.round===1));
+ assert.deepEqual(center(result.teams[1]).centerDefenseBonus,{version:1,multiplier:1.15});
  assert.deepEqual(simulateBattle(cards,defenders,{seed:'protected-center',maxRounds:15}),result);
 });

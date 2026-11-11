@@ -29,7 +29,7 @@ Kalkan kazanımı/yenilenmesi ve birikimi değişmez; yeni bir başlangıç veya
 
 Açık artırmada edinilen beş kahraman, kendi ön/arka saf tercihine (kahramanın kayıtlı saf bonuslarına) göre tahtaya otomatik yerleşir. Oyuncu **Ön saf / Arka saf** düğmeleriyle safı değiştirir. Aynı saftaki iki kahramana art arda dokunmak yerlerini değiştirir; rol kahramanla birlikte taşınır. Başka saftaki bir kahramana dokunmak yeni seçim yapar, saflar arasında takas yapmaz. Saf düğmesi tek başına kahraman sırasını değiştirmez. Mevcut kurallarda iki safın her biri sıfır ile beş kahraman içerebilir.
 
-Yeni savaş tam **2 ön + 3 arka** dizilişle başlıyorsa arka safın ortası, diğer dört kahramandan herhangi biri gerçekten ölene kadar otomatik ana hedef olamaz. Koruma ilk ölümde kalıcı olarak kalkar; diriltme geri getirmez. Av Emri, diğer komutan yetenekleri ve alan hasarı değişmez. Ayrıntılar: [merkez koruması](docs/center-protection.md).
+Yeni savaş tam **2 ön + 3 arka** dizilişle başlıyorsa arka safın ortasındaki kahramanın başlangıç savunması **%15 artırılır** ve en yakın tam sayıya yuvarlanır. Bu bonus savaş boyunca sürer; ölümler ve diriltme bonusu kaldırmaz veya tekrar uygulamaz. Kahraman normal saf öncelikleriyle otomatik hedeflenebilir. Av Emri, komutan ve alan hasarı formülleri değişmez. Ayrıntılar: [merkez savunması](docs/center-protection.md).
 
 Yeni savaşta suikastçıların saf, kredi, komutan ve savaş başı pasiflerinden sonra hesaplanan başlangıç saldırısı **%10 artırılır**, sonuç en yakın tam sayıya yuvarlanır. Kart gücü, savunma, can, hız ve diğer roller değişmez. Mevcut savaş görüntüleri yeniden hesaplanmaz; tur geçişi veya diriltme aynı bonusu tekrar uygulamaz. Hazırlık ekranı aynı motoru kullandığı için bu saldırı artışını gösterir.
 
@@ -57,8 +57,14 @@ Geçici eski Android uyumluluğu: yalnız tam `okhttp/4.12.0` taşıma izi, Orig
 
 Komutan ekranında dört bağımsız gelişim dalı seçilir; sıkıştırılmış bağlantılı
 seviye yolu mevcut ve sıradaki seviyeyi gösterir. Dal seçimi harcama yapmaz.
-Ana dal 40, yan dal 20 etkin seviyedir; komutan değişince fazladan kayıtlı
-seviyeler silinmez, saklı olarak gösterilir. Sonraki gerçek sınıf/beceri/dolum
+Yalnız seçilen komutanın dalı, ilgili kahraman türlerine seviye başına %0,5
+bonus verir (en fazla 40 seviye / %20). Saldırı komutanı savaşçı/suikastçı
+saldırısını, büyü komutanı enerji kahramanı saldırısını, savunma komutanı tank
+savunmasını mevcut değer üzerinden çarpar: 50 × 1,15 = 57,5. Destek komutanı
+saldırıyı veya canı değiştirmeden şifa oranına yüzde puanı ekler: %40 + 15 = %55.
+Şifa+kalkan kahramanlarında yalnız şifa oranı değişir, kalkan oranı sabit kalır. Diğer dallar bu maçta bonus vermez;
+kayıtlı seviyeleri korunur ve kendi komutanı seçildiğinde yeniden etkinleşir.
+Geliştirme satın alma sınırları ana dalda 40, diğer dallarda 20 olarak korunur. Sonraki gerçek sınıf/beceri/dolum
 etkileri ve sunucunun ücreti birlikte görünür.
 
 - Altın: hedef seviye `L` için `ceil(200 × 1,2^(L−1))`; ilk fiyatlar 200, 240,

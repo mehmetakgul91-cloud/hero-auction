@@ -10,7 +10,7 @@ export function stepParityBasicAttack(combat,{side,actorId,round=combat?.round,c
  const actor=combat.teams[side].find(u=>u.id===actorId&&u.hp>0);
  if(!actor||(actor.passive&&!((allowThornsPassive&&actor.passive.effect==='thorns')||(allowRoundPassives&&['guard','resist','focus','evasion','momentum','regen','rage'].includes(actor.passive.effect))))||(actor.active&&!((allowHealActive&&actor.active.effect==='heal')||(allowShieldDrainActive&&['shield','drain'].includes(actor.active.effect))||(allowStatActive&&['sunder','weaken','haste'].includes(actor.active.effect)&&actor.role!=='tank')||(allowExecuteActive&&actor.active.effect==='execute'&&!['tank','energy'].includes(actor.role))||(allowDamageActive&&['burst','pierce','splash','headshot'].includes(actor.active.effect)))))throw Error('Special hero mechanics require incremental engine integration');
  if(specialFallback&&(round%3!==0||(actor.active&&actor.active.effect!=='heal')))throw Error('Invalid special fallback');
- if(!Number.isSafeInteger(actor.attack)||actor.attack<0||!Number.isFinite(actor.position)||!Number.isFinite(actor.defense))throw Error('Invalid hero stats');
+ if(!Number.isFinite(actor.attack)||actor.attack<0||actor.attack>Number.MAX_SAFE_INTEGER||!Number.isFinite(actor.position)||!Number.isFinite(actor.defense))throw Error('Invalid hero stats');
  const enemies=combat.teams[1-side];
  const target=selectBattleTarget(enemies,actor,round);
  if(!target)throw Error('No living target');
