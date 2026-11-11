@@ -388,8 +388,21 @@ function legacyRewardCopy(r,tied,iWon){
 }
 function showGold(value){walletGold=Math.max(0,Number(value)||0);if(commanderProfileOpen)renderCommanderProfile();}
 async function refreshGold(){if(!signedIn())return;const ticket=headerWallet.begin(login.authToken);try{const data=await post('/api/wallet',{});if(headerWallet.receive(data,ticket,{complete:true})&&Number.isSafeInteger(data.gold))showGold(data.gold)}catch(e){headerWallet.unavailable(ticket);console.warn('Wallet balance unavailable:',e.message)}}
-function clearExpiredLogin(){login=null;session=null;room=null;stream?.close();localStorage.removeItem('hero-auction-login');localStorage.removeItem('hero-auction-session');showGold(0);commanderProfile=null;commanderLoaded=false;commanderProfileOpen=false;applyLogin();notify('Oturumun sona ermiş. Lütfen yeniden giriş yap.');}
-async function validateLogin(){if(!signedIn())return false;try{const auth=login.authToken,result=await post('/api/auth/check',{});if(login?.authToken!==auth)return false;if(result.user?.sub){login.user=result.user;localStorage.setItem('hero-auction-login',JSON.stringify(login));}showGold(result.gold);if(!commanderLoaded)void loadCommander();return true}catch(e){if(/giriş yap|Oturumun sona erdi|401/.test(e.message)){clearExpiredLogin();return false}notify('Sunucuya bağlanılamadı. Tekrar dene.');return false}}
+function clearExpiredLogin(auth=login?.authToken,expiredSession=session){
+ if(login?.authToken!==auth||session!==expiredSession)return;
+ let newerStoredLogin=false;
+ try{
+  const savedLogin=JSON.parse(localStorage.getItem('hero-auction-login')||'null');
+  const savedSeat=JSON.parse(localStorage.getItem('hero-auction-session')||'null');
+  newerStoredLogin=Boolean(savedLogin?.authToken&&savedLogin.authToken!==auth);
+  // Shared storage may already belong to a newer login or room in another tab.
+  if(savedLogin?.authToken===auth)localStorage.removeItem('hero-auction-login');
+  if(!newerStoredLogin&&expiredSession&&savedSeat?.code===expiredSession.code&&savedSeat?.token===expiredSession.token)localStorage.removeItem('hero-auction-session');
+ }catch{}
+ clearRoomPresentation();login=null;session=null;room=null;showGold(0);commanderProfile=null;commanderLoaded=false;commanderProfileOpen=false;applyLogin();
+ notify(newerStoredLogin?(document.documentElement?.lang==='en'?'Your session changed in another tab. Refresh the page to use the current account.':'Oturum başka bir sekmede değişti. Güncel hesabına dönmek için sayfayı yenile.'):'Oturumun sona ermiş. Lütfen yeniden giriş yap.');
+}
+async function validateLogin(){if(!signedIn())return false;const auth=login.authToken,current=session;try{const result=await post('/api/auth/check',{});if(login?.authToken!==auth||session!==current)return false;if(result.user?.sub){login.user=result.user;localStorage.setItem('hero-auction-login',JSON.stringify(login));}showGold(result.gold);if(!commanderLoaded)void loadCommander();return true}catch(e){if(login?.authToken!==auth||session!==current)return false;if(/giriş yap|Oturumun sona erdi|401/.test(e.message)){clearExpiredLogin(auth,current);return false}notify('Sunucuya bağlanılamadı. Tekrar dene.');return false}}
 function renderLobbyIdentity(){
  const active=signedIn(),bar=$('account-bar');if(!bar)return;
  bar.hidden=!active;
@@ -450,10 +463,10 @@ async function restoreSavedGame(){
   const current=await post('/api/room/current',{});
   const previous=current?.room?current:await readSavedRoom();
   if(webInvite?.pending||login?.authToken!==auth||session!==initialSession||room!==initialRoom)return;
-  if(previous){save(previous.token,previous.room);const resumePath=roomResumePath(previous);if(resumePath){window.HeroPlatform?.beforeNavigate(resumePath);location.replace(resumePath);}}
+  if(previous){const resumePath=roomResumePath(previous,{reviewPending:tailReceipts.reviewPending(previous.room,collectTailAwards(null,previous.room))});save(previous.token,previous.room,{render:!resumePath});if(resumePath){window.HeroPlatform?.beforeNavigate(resumePath);location.replace(resumePath);}}
  }catch(e){
   if(login?.authToken!==auth)return;
-  if(/giriş yap|Oturumun sona erdi|401/.test(e.message))clearExpiredLogin();
+  if(/giriş yap|Oturumun sona erdi|401/.test(e.message))clearExpiredLogin(auth,initialSession);
   else notify('Bağlantı kurulamadı. Biraz sonra tekrar dene.');
  }
 }
@@ -582,15 +595,33 @@ async function post(url,data){
  try{const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...gameIdentity(),...data})});const j=await res.json();if(!res.ok){const error=Error(j.error||'İşlem başarısız');error.status=res.status;throw error;}if(url!=='/api/wallet')headerWallet.receive(j,walletTicket,{mutation:['/api/commander/select','/api/commander/change','/api/commander/upgrade','/api/diamonds/exchange','/api/login-rewards/claim'].includes(url)});return j}
  finally{if(entry)roomEntryPending--;}
 }
-function save(token,r){newPlayerIntro.played();session={token,code:r.code};localStorage.setItem('hero-auction-session',JSON.stringify(session));show(r);connect();refreshOnline()}
+function save(token,r,{render=true}={}){newPlayerIntro.played();session={token,code:r.code};localStorage.setItem('hero-auction-session',JSON.stringify(session));if(render){show(r);connect();refreshOnline()}else room=r;}
 async function syncRoomSnapshot({force=false}={}){
  const current=session,auth=login?.authToken;if(!current)return;
- const result=await post('/api/state',current);
+ let result;
+ try{result=await post('/api/state',current);}catch(e){
+  // Foreground recovery must not depend on a suspended EventSource reporting an error.
+  if(e.status===401&&session===current&&login?.authToken===auth)clearExpiredLogin(auth,current);
+  else if(e.message==='Oda bulunamadı.'||e.message==='Oyuncu yetkisi geçersiz.')clearMissingRoom(current,auth);
+  throw e;
+ }
  if(session!==current||login?.authToken!==auth)return;
  const next=result.room;
  // Emotes may change without changing auction decisions or bid controls.
  if(next?.matchKey===room?.matchKey&&next?.arenaEmotes){room={...room,arenaEmotes:next.arenaEmotes};auctionEmotes.update();}
  if(force||next?.revision!==room?.revision||next?.matchKey!==room?.matchKey||next?.phase!==room?.phase||next?.round!==room?.round||next?.chat?.length!==room?.chat?.length||JSON.stringify(next?.presence)!==JSON.stringify(room?.presence))show(next);
+}
+function clearRoomPresentation(){
+ tailReveal?.cancel();tailReveal=null;cancelAwardFlights();cancelAuctionReveal($('stage'));
+ stream?.close();stream=null;lastCardKey=null;renderedAuction=null;
+ $('game').classList.remove('auction-results-only','auction-delivery-active');
+ window.HeroPlatform?.setRoom(null);window.HeroPlatform?.gameplay(false);
+}
+function clearMissingRoom(current,auth){
+ if(session!==current||login?.authToken!==auth)return;
+ clearRoomPresentation();
+ try{const saved=JSON.parse(localStorage.getItem('hero-auction-session')||'null');if(saved?.code===current.code&&saved?.token===current.token)localStorage.removeItem('hero-auction-session');}catch{}
+ session=null;room=null;applyLogin();notify('Oyun odası artık mevcut değil. Yeni bir oyun oluşturabilirsin.');
 }
 // Guard reconnects against stale room and account sessions.
 function connect(){stream?.close();if(!session)return;
@@ -601,11 +632,7 @@ function connect(){stream?.close();if(!session)return;
   if(stream!==source||source.__rechecking)return;source.__rechecking=true;
   setTimeout(async()=>{
    if(stream!==source||session!==current||login?.authToken!==auth)return;
-   try{await syncRoomSnapshot();}catch(e){
-    if(stream===source&&session===current&&login?.authToken===auth&&(e.message==='Oda bulunamadı.'||e.message==='Oyuncu yetkisi geçersiz.')){
-     source.close();localStorage.removeItem('hero-auction-session');session=null;room=null;applyLogin();notify('Oyun odası artık mevcut değil. Yeni bir oyun oluşturabilirsin.');
-    }
-   }finally{source.__rechecking=false;}
+   try{await syncRoomSnapshot();}catch{}finally{source.__rechecking=false;}
   },3000);
  };
 }
@@ -758,8 +785,8 @@ if(canBid&&max>=min){$('bidrange').oninput=e=>$('bidview').textContent=e.target.
 setInterval(()=>{if(!session||!room||document.hidden)return;void syncRoomSnapshot().catch(()=>{});},4000);
 document.addEventListener('visibilitychange',()=>{
  if(document.hidden){cancelAwardFlights();tailReveal?.cancel();tailReveal=null;cancelAuctionReveal($('stage'));return;}
- if(room?.phase==='finished')show(room);
- void syncRoomSnapshot().catch(()=>{});
+ // Verify before replaying a cached final, even when the revision is unchanged.
+ void syncRoomSnapshot({force:true}).catch(()=>{});
 });
 // PokeAPI species are indexed by national Pokédex number; name mapping is loaded lazily.
 let pokeMap={};async function loadPokeMap(){try{const r=await fetch('https://pokeapi.co/api/v2/pokemon-species?limit=1025');const j=await r.json();j.results.forEach((x,i)=>pokeMap[x.name.replaceAll('-',' ').toLowerCase()]=i+1);if(room)show(room)}catch{}}
@@ -931,7 +958,7 @@ window.addEventListener('hero:platform-settings',()=>{if(room)renderChat(room);i
 
 window.addEventListener('pagehide',()=>{cancelAwardFlights();tailReveal?.cancel();tailReveal=null;cancelAuctionReveal($('stage'));});
 
-window.addEventListener('pageshow',event=>{if(event.persisted)void refreshGold();if(event.persisted&&session){if(room)show(room);void syncRoomSnapshot({force:true}).catch(()=>{});}});
+window.addEventListener('pageshow',event=>{if(event.persisted)void refreshGold();if(event.persisted&&session)void syncRoomSnapshot({force:true}).catch(()=>{});});
 
 // Separate from bid timer and arena: only server presence can start this notice.
 let returnStatusRoom=null,returnStatusReceivedAt=0;

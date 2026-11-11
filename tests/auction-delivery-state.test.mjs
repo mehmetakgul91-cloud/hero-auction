@@ -1,5 +1,6 @@
 import {createRevealedTeams,renderDeliveryPortraits} from '../public/auction-delivery-portraits.js';
-import {deliveryBox} from './helpers/delivery-dom.mjs';
+import {deliveryBox,deliveryDocument} from './helpers/delivery-dom.mjs';
+import {roomResumePath} from '../public/room-resume.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -80,10 +81,12 @@ test('background final snapshot preserves unseen cards until visible instead of 
  assert.equal(h.queues.length,0);assert.equal(h.context.results,0);assert.equal(h.context.room,done);
  h.context.document.hidden=false;h.context.show(h.context.room);assert.equal(h.queues.length,1);assert.equal(h.queues[0].items.length,2);
  await h.queues[0].options.startAfter;h.queues[0].options.onArrive(done.tailAwards[0]);
- const listeners={};h.context.document.addEventListener=(name,fn)=>listeners[name]=fn;h.context.syncRoomSnapshot=()=>Promise.resolve();
+ const listeners={},requests=[];let resume;h.context.document.addEventListener=(name,fn)=>listeners[name]=fn;
+ h.context.syncRoomSnapshot=options=>{requests.push(options);return new Promise(resolve=>{resume=()=>{h.context.show({...done});resolve();};});};
  const start=app.indexOf("document.addEventListener('visibilitychange'"),end=app.indexOf('\n// PokeAPI species',start);vm.runInContext(app.slice(start,end),h.context);
  h.context.document.hidden=true;listeners.visibilitychange();assert.equal(h.context.tailReveal,null);
- h.context.document.hidden=false;listeners.visibilitychange();assert.equal(h.queues.length,2);assert.deepEqual(h.queues[1].items,[done.tailAwards[1]]);
+ h.context.document.hidden=false;listeners.visibilitychange();assert.equal(h.queues.length,1,'do not replay a cached snapshot before the server responds');assert.equal(requests.length,1);assert.equal(requests[0].force,true);
+ resume();await Promise.resolve();assert.equal(h.queues.length,2);assert.deepEqual(h.queues[1].items,[done.tailAwards[1]]);
 });
 
 test('revealed cards remain reviewable across refresh until the separate confirmation, independently per seat and rematch',async()=>{
@@ -101,4 +104,80 @@ test('hidden-tab snapshot cannot silently confirm a fully revealed review',async
  const {done}=snapshots(),receipts=createTailReceipts();receipts.received(done,done.tailAwards);
  const h=harness(null,{receipts});h.context.document.hidden=true;h.context.show(done);assert.equal(h.context.results,0);assert.equal(h.queues.length,0);
  h.context.document.hidden=false;h.context.show(done);assert.equal(h.queues.length,1);assert.equal(h.queues[0].items.length,0);assert.equal(h.queues[0].options.reviewItems.length,done.tailAwards.length);
+});
+
+// Exercise the complete real restore, save and show functions together. A direct
+// show() test cannot catch restore navigating away immediately after a reveal.
+function coldRestoreHarness(recovery,{receipts=createTailReceipts(),hidden=false,stored=null}={}){
+ const h=harness(null,{receipts}),calls=[],memory=new Map(),listeners={},requests=[];
+ if(stored)memory.set('hero-auction-session',JSON.stringify(stored));
+ const node=()=>({children:[],textContent:'',setAttribute(){},append(...children){this.children.push(...children)},replaceChildren(...children){this.children=children}});
+ h.elements.log=node();h.elements['confirm-arena-entry']=node();h.elements.stage.querySelector=selector=>selector==='#confirm-arena-entry'?h.elements['confirm-arena-entry']:null;
+ h.elements.stage.replaceChildren=(...children)=>{h.elements.stage.children=children;};
+ for(const side of [0,1])h.elements['player'+side].replaceChildren=(...children)=>{h.elements['player'+side].children=children;};
+ const localStorage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value),removeItem:key=>memory.delete(key)};
+ Object.assign(h.context,{login:{authToken:'account-auth'},webInvite:null,URLSearchParams,roomResumePath,localStorage,lastCardKey:null,
+  newPlayerIntro:{played(){calls.push('played')},sync(){}},firstBotLesson:{update(){}},isAuctionEntry:()=>false,rarityLabel:String,specialtyLabel:()=>'',auctionCalculationMarkup:()=>'<p>Calculation ready</p>',
+  commanderVisibility(){},validateLogin:async()=>true,connect:()=>calls.push('connect'),refreshOnline:()=>calls.push('online'),clearExpiredLogin:()=>calls.push('expired'),notify:message=>calls.push(['error',message]),
+  post:async(path,data)=>{requests.push({path,data});if(path==='/api/room/current')return stored?{room:null}:recovery;if(path==='/api/state')return{room:recovery.room};throw Error('Unexpected request '+path);},
+  location:{replace:path=>calls.push(['replace',path]),assign:path=>calls.push(['assign',path])},
+ });
+ Object.assign(h.context.document,{hidden,createElement:deliveryDocument().createElement,addEventListener:(name,fn)=>listeners[name]=fn});
+ h.context.window.HeroPlatform={setRoom(){},gameplay(){},beforeNavigate:path=>calls.push(['beforeNavigate',path])};
+ const restoreStart=app.indexOf('async function readSavedRoom()'),restoreEnd=app.indexOf('const homePlayTab=',restoreStart);
+ const saveStart=app.indexOf('function save('),saveEnd=app.indexOf('// Guard reconnects',saveStart);
+ const showStart=app.indexOf('function showCancelledRoom('),showEnd=app.indexOf('// Recover game progress',showStart);
+ const visibilityStart=app.indexOf("document.addEventListener('visibilitychange'"),visibilityEnd=app.indexOf('// PokeAPI species',visibilityStart);
+ for(const source of [app.slice(restoreStart,restoreEnd),app.slice(saveStart,saveEnd),app.slice(showStart,showEnd),app.slice(visibilityStart,visibilityEnd)])vm.runInContext(source,h.context);
+ return {...h,calls,memory,listeners,requests};
+}
+function persistentReceipts(done,{seen=0,confirmed=false}={}){
+ const memory=new Map(),storage={getItem:key=>memory.get(key),setItem:(key,value)=>memory.set(key,value)};
+ const before=createTailReceipts({storage:()=>storage});before.received(done,done.tailAwards.slice(0,seen));if(confirmed)before.confirmReview(done);
+ return createTailReceipts({storage:()=>storage});
+}
+for(const me of [0,1])for(const seen of [0,1,3])test(`real cold restore keeps seat ${me}'s ${seen}/3 received cards in unconfirmed review`,async()=>{
+ const {done}=snapshots(1,3,me),receipts=persistentReceipts(done,{seen}),h=coldRestoreHarness({room:done,token:'seat-token',resumeStage:'formation'},{receipts});
+ await h.context.restoreSavedGame();
+ assert.equal(h.queues.length,1);assert.deepEqual(h.queues[0].items,done.tailAwards.slice(seen));assert.deepEqual(h.queues[0].options.reviewItems,done.tailAwards);
+ assert.equal(h.calls.some(call=>Array.isArray(call)&&['replace','assign'].includes(call[0])),false);
+ assert.equal(h.calls.filter(call=>call==='connect').length,1);assert.equal(h.context.room,done);assert.deepEqual(JSON.parse(h.memory.get('hero-auction-session')),{token:'seat-token',code:done.code});
+ assert.equal(receipts.reviewPending(done,done.tailAwards),true);assert.deepEqual(receipts.pending(done,done.tailAwards),done.tailAwards.slice(seen));assert.deepEqual(h.requests.map(r=>r.path),['/api/room/current']);
+ await h.queues[0].options.startAfter;h.queues[0].options.onComplete();
+ assert.equal(receipts.reviewPending(done,done.tailAwards),false);assert.match(h.elements.stage.innerHTML,/Calculation ready/);assert.equal(h.calls.some(call=>Array.isArray(call)&&call[0]==='replace'),false);
+ h.elements['confirm-arena-entry'].onclick();assert.equal(h.calls.filter(call=>Array.isArray(call)&&call[0]==='assign').length,1);
+ assert.equal(h.calls.some(call=>Array.isArray(call)&&call[0]==='error'),false);
+});
+test('confirmed cold restore navigates to formation without rendering or reconnecting the lobby snapshot',async()=>{
+ const {done}=snapshots(),receipts=persistentReceipts(done,{seen:2,confirmed:true}),h=coldRestoreHarness({room:done,token:'seat-token',resumeStage:'formation'},{receipts});
+ await h.context.restoreSavedGame();assert.equal(h.queues.length,0);assert.equal(h.context.room,done);assert.ok(!h.calls.includes('connect'));assert.equal(h.elements.game.hidden,true);
+ const navigation=h.calls.find(call=>Array.isArray(call)&&call[0]==='replace');assert.ok(navigation);assert.equal(new URL(navigation[1],'https://example.test').searchParams.get('room'),null);
+});
+test('authoritative arena cold restore ignores stale local review without consuming receipts or flashing a reveal',async()=>{
+ const {done}=snapshots(),receipts=createTailReceipts(),h=coldRestoreHarness({room:done,token:'seat-token',resumeStage:'arena'},{receipts});
+ await h.context.restoreSavedGame();assert.equal(h.queues.length,0);assert.equal(h.context.room,done);assert.ok(!h.calls.includes('connect'));assert.equal(h.elements.game.hidden,true);
+ assert.deepEqual(receipts.pending(done,done.tailAwards),done.tailAwards);assert.equal(receipts.reviewPending(done,done.tailAwards),true);
+ const navigation=h.calls.find(call=>Array.isArray(call)&&call[0]==='replace');assert.equal(new URL(navigation[1],'https://example.test').searchParams.get('room'),'arena');
+});
+for(const terminal of [{idleClosed:{auctionStarted:true}},{forfeit:{winner:1}},{cancellation:{reason:'admin-entry-refund',refundGoldPerSeat:50}}])test('terminal cold restore bypasses tail review without confirming receipts '+Object.keys(terminal)[0],async()=>{
+ const {done}=snapshots(),room={...done,...terminal},receipts=createTailReceipts(),h=coldRestoreHarness({room,token:'seat-token',resumeStage:'arena'},{receipts});
+ await h.context.restoreSavedGame();assert.equal(h.queues.length,0);assert.equal(h.context.room,room);assert.equal(h.elements.game.hidden,false);assert.equal(h.elements.stage.children[0].className,'auction-summary match-cancelled');
+ assert.equal(h.calls.some(call=>Array.isArray(call)&&['replace','error'].includes(call[0])),false);assert.deepEqual(receipts.pending(room,room.tailAwards),room.tailAwards);assert.equal(receipts.reviewPending(room,room.tailAwards),true);
+});
+test('legacy saved-seat fallback also preserves the unconfirmed review on cold restore',async()=>{
+ const {done}=snapshots(),h=coldRestoreHarness({room:done,token:'seat-token'},{stored:{code:done.code,token:'seat-token'}});await h.context.restoreSavedGame();
+ assert.deepEqual(h.requests.map(r=>r.path),['/api/room/current','/api/state']);assert.equal(h.queues.length,1);assert.equal(h.calls.some(call=>Array.isArray(call)&&call[0]==='replace'),false);
+});
+test('hidden cold restore waits for an unchanged authoritative snapshot before resuming review',async()=>{
+ const {done}=snapshots(),receipts=persistentReceipts(done,{seen:1}),h=coldRestoreHarness({room:done,token:'seat-token',resumeStage:'formation'},{receipts,hidden:true});
+ await h.context.restoreSavedGame();assert.equal(h.queues.length,0);assert.equal(receipts.reviewPending(done,done.tailAwards),true);
+ let release;h.context.post=(path,data)=>{h.requests.push({path,data});return new Promise(resolve=>release=resolve)};
+ h.context.document.hidden=false;h.listeners.visibilitychange();assert.equal(h.queues.length,0);assert.equal(h.requests.at(-1).path,'/api/state');
+ release({room:{...done}});await new Promise(resolve=>setImmediate(resolve));assert.equal(h.queues.length,1);assert.deepEqual(h.queues[0].items,done.tailAwards.slice(1));
+});
+test('hidden cold restore receives terminal authority before any stale review is shown',async()=>{
+ const {done}=snapshots(),receipts=persistentReceipts(done,{seen:2}),h=coldRestoreHarness({room:done,token:'seat-token',resumeStage:'formation'},{receipts,hidden:true});
+ await h.context.restoreSavedGame();let release;h.context.post=()=>new Promise(resolve=>release=resolve);h.context.document.hidden=false;h.listeners.visibilitychange();assert.equal(h.queues.length,0);
+ release({room:{...done,revision:22,idleClosed:{auctionStarted:true}}});await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.queues.length,0);assert.equal(h.elements.stage.children[0].className,'auction-summary match-cancelled');assert.equal(receipts.reviewPending(done,done.tailAwards),true);
 });
