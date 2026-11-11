@@ -4,8 +4,8 @@ import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {createHeaderWallet} from '../public/header-wallet.js';
 const source=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
-const refresh=source.slice(source.indexOf('async function refreshGold(){'),source.indexOf('\nfunction clearExpiredLogin()'));
-const post=source.slice(source.indexOf('async function post(url,data){'),source.indexOf('\nfunction save(token,r)'));
+const refresh=source.slice(source.indexOf('async function refreshGold(){'),source.indexOf('\nfunction clearExpiredLogin('));
+const post=source.slice(source.indexOf('async function post(url,data){'),source.indexOf('\nfunction save('));
 const fixture=()=>{
  const nodes=new Map(),document={documentElement:{lang:'tr'},getElementById(id){if(!nodes.has(id))nodes.set(id,{textContent:'',dataset:{},setAttribute(){}});return nodes.get(id)}};
  const headerWallet=createHeaderWallet({document});headerWallet.setLogin({authToken:'a'});

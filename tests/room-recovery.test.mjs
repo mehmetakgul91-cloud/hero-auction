@@ -11,3 +11,17 @@ test('ambiguous rooms fail closed rather than choosing arbitrary wallet match',(
 test('formation and ongoing arena recover actual stage, closed match stays result',()=>{const r=room();r.phase='finished';r.players.forEach(p=>p.team=Array(5).fill({}));assert.equal(roomRecoveryStage(r),'formation');r.battleSync={result:{live:true}};assert.equal(roomRecoveryStage(r),'arena');for(const state of [{matchSettled:true},{idleClosed:{}},{disconnectForfeit:{winner:1}},{cancelled:{}}])assert.equal(roomRecoveryStage({...r,...state}),'result');});
 test('resume links are encoded, preserve token and never admit or debit',()=>{const path=roomResumePath({room:room(),token:'x&unsafe',resumeStage:'arena'}),url=new URL(path,'https://example.test');assert.equal(url.pathname,'/battle-preview.html');assert.equal(url.searchParams.get('auctionToken'),'x&unsafe');assert.equal(url.searchParams.get('room'),'arena');assert.equal(url.searchParams.get('auctionCode'),'123');});
 test('terminal snapshots never navigate even with stale arena stage',()=>{for(const state of [{idleClosed:{}},{forfeit:{}},{cancellation:{}}])assert.equal(roomResumePath({room:{...room(),...state},token:'x',resumeStage:'arena'}),null);assert.equal(roomResumePath({room:room(),token:'x',resumeStage:'result'}),null);});
+
+for(const battle of [{live:true,finished:true},{live:false},{winner:0}])test('settled battle with a durable result recovers the arena summary '+JSON.stringify(battle),()=>{
+ const r={...room(),phase:'finished',matchSettled:true,battleSync:{result:battle}};
+ assert.equal(roomRecoveryStage(r),'arena');
+ for(const terminal of [{idleClosed:{}},{disconnectForfeit:{winner:1}},{cancelled:{}},{phase:'closed'},{phase:'cancelled'}])assert.equal(roomRecoveryStage({...r,...terminal}),'result');
+});
+test('formation recovery waits for the separate tail review confirmation but arena recovery ignores stale review',()=>{
+ const recovery={room:room(),token:'secret-a',resumeStage:'formation'};
+ assert.equal(roomResumePath(recovery,{reviewPending:true}),null);
+ assert.match(roomResumePath(recovery,{reviewPending:false}),/^\/battle-preview\.html\?/);
+ const arena=new URL(roomResumePath({...recovery,resumeStage:'arena'},{reviewPending:true}),'https://example.test');
+ assert.equal(arena.searchParams.get('room'),'arena');
+ for(const terminal of [{idleClosed:{}},{forfeit:{}},{cancellation:{}}])assert.equal(roomResumePath({...recovery,room:{...room(),...terminal},resumeStage:'arena'},{reviewPending:true}),null);
+});

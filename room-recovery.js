@@ -1,7 +1,9 @@
 // Identity-bound read only recovery. Never admits a player or changes a match.
 export function roomRecoveryStage(room) {
- if(room.idleClosed||room.disconnectForfeit||room.cancelled||room.matchSettled||['closed','cancelled'].includes(room.phase))return 'result';
- if(room.battleSync?.result)return 'arena';
+ if(room.idleClosed||room.disconnectForfeit||room.cancelled||['closed','cancelled'].includes(room.phase))return 'result';
+ const battle=room.battleSync?.result;
+ if(battle&&(!room.matchSettled||battle.finished===true||battle.live!==true))return 'arena';
+ if(room.matchSettled)return 'result';
  if(room.phase==='finished'&&room.players?.every(p=>p?.team?.length===5))return 'formation';
  return room.phase==='auction'?'auction':'waiting';
 }

@@ -496,7 +496,7 @@ function enterArenaWithoutReload(url){
     if(data.started){
      if(battlePoll!==null){clearInterval(battlePoll);battlePoll=null}
      await build(data.result);
-     if(data.result?.live){
+     if(data.result?.live&&data.result.finished!==true){
       $('play').textContent='⚡ CANLI SAVAŞ SÜRÜYOR';
       await import('/commander-experimental.js?live='+encodeURIComponent(auctionCode));
      }else if(events.length)startReplay();
@@ -661,6 +661,14 @@ async function build(overrideResult){
   const arenaMatch=auctionMode?(preparationMatchKey?auctionCode+':'+preparationMatchKey:null):multiplayerArenaKey||previewMusicMatchKey;
   arenaTheme.apply(result.arenaPresentation,arenaMatch);
   renderArenaCommanderMatchup(result.commanders);
+  // Persisted completed live results render directly, even without a live registry.
+  if(result.live===true&&result.finished===true){
+   liveArenaMode=false;battlePresentationFinished=true;
+   states=result.teams.map(team=>team.map(unit=>({...unit})));
+   finalResult={...result,finalHealthTeams:captureFinalHeroHealth(result.teams)};
+   $('round').textContent=String(result.rounds??0);$('play').textContent='✓ SAVAŞ TAMAMLANDI';
+   window.HeroPlatform?.loaded();window.HeroPlatform?.gameplay(false);showBattleSummary();return;
+  }
   liveArenaMode=!!result.live;
   states=result.teams.map((team,side)=>team.map((u,index)=>({...u,hp:u.maxHp,shieldKnown:liveArenaMode||Number.isFinite(result.initialShields?.[side]?.[index]),shield:liveArenaMode?(Number(u.shield)||0):(Number(result.initialShields?.[side]?.[index])||0)})));
   if(!liveArenaMode)for(const unit of states.flat())for(const key of ['arcaneSurgeBonusAttack','arcaneSurgeFromRound','arcaneSurgeUntilRound','commanderFocusUntilDeath','commanderStunNextAttack','commanderHuntNextAttack','lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'])delete unit[key];
