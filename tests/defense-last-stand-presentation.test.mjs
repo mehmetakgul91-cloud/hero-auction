@@ -11,8 +11,8 @@ import {describeBattleEvent} from '../public/battle-event-text.js';
 import {renderCommanderSkills} from '../public/commander-profile-view.js';
 const lastStandKeys=['lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'];
 const teams=()=>[0,1].map(()=>[{id:'same',name:'Hero',hp:100,maxHp:100,role:'fighter',lane:'front'}]);
-const cast=(side=0)=>({round:1,side,actor:'commander:'+side,action:'commander-defense-ultimate',impacts:[{target:'same',kind:'guard',value:1,immortalRounds:2}]});
-const trigger=(side=0,round=8)=>({round,side:1-side,actor:'same',target:'same',action:'attack',value:99,guardTriggered:true,lastStandTriggeredRound:round,lastStandImmortalUntilRound:round+2});
+const cast=(side=0)=>({round:1,side,actor:'commander:'+side,action:'commander-defense-ultimate',impacts:[{target:'same',kind:'guard',value:1,immortalRounds:1}]});
+const trigger=(side=0,round=8)=>({round,side:1-side,actor:'same',target:'same',action:'attack',value:99,guardTriggered:true,lastStandTriggeredRound:round,lastStandImmortalUntilRound:round+1});
 class Node {
  children=[];parent=null;dataset={};attributes={};classes=new Set();listeners=new Map();hidden=false;disabled=false;
  style={setProperty(key,value){this[key]=value;}};classList={toggle:(key,on)=>on?this.classes.add(key):this.classes.delete(key)};
@@ -73,14 +73,14 @@ for(const side of [0,1])test(`bridge requires selector and living own target on 
  selection=['same'];await ui.ultimateButton.fire('click');assert.deepEqual(sent,[{ability:'ultimate',targetIds:['same'],side}]);
  snapshot.teams[side][0].hp=0;await bridge.refresh();assert.equal(ui.ultimateButton.disabled,true);bridge.destroy();
 });
-for(const side of [0,1])test(`replay seat ${side} waits for lethal trigger, never refreshes duration and expires after two full following rounds`,()=>{
- const final=teams();Object.assign(final[side][0],{lastStandTriggeredRound:8,lastStandImmortalUntilRound:10});const replay=createBattleReplayHealth(final);
+for(const side of [0,1])test(`replay seat ${side} waits for lethal trigger, never refreshes duration and expires after one full following round`,()=>{
+ const final=teams();Object.assign(final[side][0],{lastStandTriggeredRound:8,lastStandImmortalUntilRound:9});const replay=createBattleReplayHealth(final);
  assert.deepEqual(replay.statusSnapshot(),[[{}],[{}]]);replay.apply(cast(side));replay.apply({round:7,action:'delay'});
  assert.equal(replay.statusSnapshot()[side][0].lastStandReady,true);assert.equal(replay.statusSnapshot()[1-side][0].lastStandReady,undefined);
- replay.apply(trigger(side));assert.equal(replay.statusSnapshot()[side][0].lastStandReady,undefined);assert.equal(replay.statusSnapshot()[side][0].lastStandImmortalUntilRound,10);
- replay.apply({...trigger(side),round:10,value:0});assert.equal(replay.statusSnapshot()[side][0].lastStandImmortalUntilRound,10);
- assert.equal(replay.apply({round:10,side,actor:'same',target:'same',action:'heal',value:40})[side][0],41);
- replay.apply({round:11,action:'delay'});assert.deepEqual(replay.statusSnapshot()[side][0],{});
+ replay.apply(trigger(side));assert.equal(replay.statusSnapshot()[side][0].lastStandReady,undefined);assert.equal(replay.statusSnapshot()[side][0].lastStandImmortalUntilRound,9);
+ replay.apply({...trigger(side),round:9,value:0});assert.equal(replay.statusSnapshot()[side][0].lastStandImmortalUntilRound,9);
+ assert.equal(replay.apply({round:9,side,actor:'same',target:'same',action:'heal',value:40})[side][0],41);
+ replay.apply({round:10,action:'delay'});assert.deepEqual(replay.statusSnapshot()[side][0],{});
 });
 test('old one-hit logs do not gain immortality; death, revival, finish and fresh replay clear all protection',()=>{
  const replay=createBattleReplayHealth(teams());const old=cast();delete old.impacts[0].immortalRounds;replay.apply(old);replay.apply({round:2,side:1,actor:'same',target:'same',action:'attack',value:99,guardTriggered:true});assert.deepEqual(replay.statusSnapshot(),[[{}],[{}]]);
@@ -95,25 +95,25 @@ for(const english of [false,true])test(`armed and immortal badges are distinct a
  const document={documentElement:{lang:english?'en':'tr'},createElement:()=>new Node()},root=new Node(),unit=teams()[0][0];const renderer=createArenaTeamRenderer({document,loadArt:()=>null});
  const update=()=>renderer.update(root,[unit],{side:0,rows:1,laneRows:{front:[1],back:[]},fittedRows:{front:[1],back:[]},roleNames:{fighter:'Fighter'}});
  update();const card=root.children[0],badge=card.children[5];assert.equal(badge.hidden,true);
- Object.assign(unit,{lastStandReady:true,lastStandPersistent:true,lastStandImmortalRounds:2});update();assert.equal(badge.hidden,false);assert.equal(badge.dataset.state,'armed');assert.match(badge.title,english?/waiting for the first lethal hit/:/ilk ölümcül darbeyi bekliyor/);
- for(const key of lastStandKeys)delete unit[key];Object.assign(unit,{lastStandTriggeredRound:8,lastStandImmortalUntilRound:10});update();assert.equal(card.children[5],badge);assert.equal(badge.dataset.state,'active');assert.match(badge.title,english?/through round 10/:/10. tur sonuna kadar/);
+ Object.assign(unit,{lastStandReady:true,lastStandPersistent:true,lastStandImmortalRounds:1});update();assert.equal(badge.hidden,false);assert.equal(badge.dataset.state,'armed');assert.match(badge.title,english?/waiting for the first lethal hit/:/ilk ölümcül darbeyi bekliyor/);
+ for(const key of lastStandKeys)delete unit[key];Object.assign(unit,{lastStandTriggeredRound:8,lastStandImmortalUntilRound:9});update();assert.equal(card.children[5],badge);assert.equal(badge.dataset.state,'active');assert.match(badge.title,english?/through round 9/:/9. tur sonuna kadar/);
  unit.commanderStunNextAttack=true;update();assert.equal(card.children[4].hidden,false);assert.equal(badge.hidden,false);
  unit.hp=0;update();assert.equal(badge.hidden,true);unit.hp=40;for(const key of lastStandKeys)delete unit[key];update();assert.equal(badge.hidden,true);
- const skills=new Node();renderCommanderSkills(skills,{commanderId:'defense',levels:{defense:40}},{document,english});assert.match(skills.textContent,english?/selected ally.*next 2 full rounds/:/seçilen müttefike.*sonraki 2 tam tur/);
+ const skills=new Node();renderCommanderSkills(skills,{commanderId:'defense',levels:{defense:40}},{document,english});assert.match(skills.textContent,english?/selected ally.*next 1 full round/:/seçilen müttefike.*sonraki 1 tam tur/);
 });
 test('new-rule logs show exact expiry while historical logs keep their one-hit description',()=>{
  for(const english of [false,true]){
-  assert.match(describeBattleEvent(trigger(),{english}),english?/health stays at least 1 through round 10/:/10. tur sonuna kadar can en az 1/);
-  assert.match(describeBattleEvent(cast(),{english}),english?/next 2 full rounds/:/sonraki 2 tam tur/);
-  assert.doesNotMatch(describeBattleEvent({side:1,action:'attack',value:99,guardTriggered:true},{english}),/round 10|2 full|2 tam/);
+  assert.match(describeBattleEvent(trigger(),{english}),english?/health stays at least 1 through round 9/:/9. tur sonuna kadar can en az 1/);
+  assert.match(describeBattleEvent(cast(),{english}),english?/next 1 full round/:/sonraki 1 tam tur/);
+  assert.doesNotMatch(describeBattleEvent({side:1,action:'attack',value:99,guardTriggered:true},{english}),/round 9|2 full|2 tam/);
  }
 });
 test('new live snapshots remove old armed/active fields and battle completion clears supplied protection',()=>{
- const source=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8'),state=teams();Object.assign(state[0][0],{lastStandReady:true,lastStandPersistent:true,lastStandImmortalRounds:2});let receive;
+ const source=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8'),state=teams();Object.assign(state[0][0],{lastStandReady:true,lastStandPersistent:true,lastStandImmortalRounds:1});let receive;
  const context={window:{addEventListener:(name,fn)=>receive=fn},timer:null,victoryRevealDone:false,states:state,feedbackVersion:0,heroAttacks:{prune(){}},render(){},$:()=>({}),liveArenaMode:false};
  const start=source.indexOf("window.addEventListener('heroarena:experimental-round-end',e=>{"),end=source.indexOf('\n});',start)+4;runInNewContext(source.slice(start,end),context);
- const active=teams();Object.assign(active[0][0],{lastStandTriggeredRound:8,lastStandImmortalUntilRound:10});receive({detail:{teams:active,round:8,events:[]}});assert.equal(state[0][0].lastStandReady,undefined);assert.equal(state[0][0].lastStandImmortalUntilRound,10);
- receive({detail:{teams:teams(),round:11,events:[]}});for(const key of lastStandKeys)assert.equal(state[0][0][key],undefined);
+ const active=teams();Object.assign(active[0][0],{lastStandTriggeredRound:8,lastStandImmortalUntilRound:9});receive({detail:{teams:active,round:8,events:[]}});assert.equal(state[0][0].lastStandReady,undefined);assert.equal(state[0][0].lastStandImmortalUntilRound,9);
+ receive({detail:{teams:teams(),round:10,events:[]}});for(const key of lastStandKeys)assert.equal(state[0][0][key],undefined);
  receive({detail:{teams:active,round:8,events:[],finished:true}});for(const key of lastStandKeys)assert.equal(state[0][0][key],undefined);
 });
 
@@ -127,19 +127,19 @@ test('real server cast and lethal-hit metadata replay the chosen ally without gu
  const castEvents=structuredClone(castResult.events);const hit=applyServerHeroAction(c,{side:1,actorId:'same',targetId:'same',value:10000}).event;
  const replay=createBattleReplayHealth(c.teams);for(const event of castEvents)replay.apply(event);
  assert.equal(replay.statusSnapshot()[0][0].lastStandReady,true);assert.equal(replay.statusSnapshot()[0][1].lastStandReady,undefined);
- replay.apply(hit);assert.equal(replay.statusSnapshot()[0][0].lastStandTriggeredRound,3);assert.equal(replay.statusSnapshot()[0][0].lastStandImmortalUntilRound,5);
+ replay.apply(hit);assert.equal(replay.statusSnapshot()[0][0].lastStandTriggeredRound,3);assert.equal(replay.statusSnapshot()[0][0].lastStandImmortalUntilRound,4);
  assert.match(describeBattleEvent(castEvents.find(event=>event.action==='commander-defense-ultimate'),{english:true,names:new Map([['same','Chosen Ally']])}),/→ Chosen Ally/);
 });
 
 
 test('malformed or stale replay metadata cannot restore expired immortality',()=>{
- const bad=[{round:7},{round:11},{round:undefined},{lastStandTriggeredRound:8,lastStandImmortalUntilRound:11},{lastStandTriggeredRound:'8'},{lastStandTriggeredRound:0,lastStandImmortalUntilRound:2}];
+ const bad=[{round:7},{round:10},{round:undefined},{lastStandTriggeredRound:8,lastStandImmortalUntilRound:11},{lastStandTriggeredRound:'8'},{lastStandTriggeredRound:0,lastStandImmortalUntilRound:2}];
  for(const fields of bad){const replay=createBattleReplayHealth(teams());replay.apply(cast());replay.apply({...trigger(),...fields});assert.equal(replay.statusSnapshot()[0][0].lastStandImmortalUntilRound,undefined,JSON.stringify(fields));}
- const replay=createBattleReplayHealth(teams());replay.apply(cast());replay.apply(trigger());replay.apply({round:11,action:'delay'});replay.apply({...trigger(),value:0});assert.equal(replay.statusSnapshot()[0][0].lastStandImmortalUntilRound,undefined);
+ const replay=createBattleReplayHealth(teams());replay.apply(cast());replay.apply(trigger());replay.apply({round:10,action:'delay'});replay.apply({...trigger(),value:0});assert.equal(replay.statusSnapshot()[0][0].lastStandImmortalUntilRound,undefined);
 });
-test('badge rejects non-two-round or malformed immortal snapshot fields',()=>{
+test('badge rejects unsupported or malformed immortal snapshot fields',()=>{
  const document={documentElement:{lang:'en'},createElement:()=>new Node()},root=new Node(),unit=teams()[0][0],renderer=createArenaTeamRenderer({document,loadArt:()=>null});
- for(const fields of [{lastStandTriggeredRound:8,lastStandImmortalUntilRound:9},{lastStandTriggeredRound:8,lastStandImmortalUntilRound:11},{lastStandTriggeredRound:'8',lastStandImmortalUntilRound:10},{lastStandTriggeredRound:0,lastStandImmortalUntilRound:2}]){
+ for(const fields of [{lastStandTriggeredRound:8,lastStandImmortalUntilRound:8},{lastStandTriggeredRound:8,lastStandImmortalUntilRound:11},{lastStandTriggeredRound:'8',lastStandImmortalUntilRound:9},{lastStandTriggeredRound:0,lastStandImmortalUntilRound:2}]){
   Object.assign(unit,fields);renderer.update(root,[unit],{side:0,rows:1,laneRows:{front:[1],back:[]},fittedRows:{front:[1],back:[]},roleNames:{fighter:'Fighter'}});assert.equal(root.children[0].children[5].hidden,true,JSON.stringify(fields));
  }
 });
@@ -159,4 +159,23 @@ test('legacy training defense uses authoritative friendly picker, cancels and va
  nodes.get('focus-target').value='high';nodes.get('focus-target').onchange();assert.equal(nodes.get('ultimate').disabled,false);nodes.get('focus-cancel').onclick();assert.equal(requests.length,1);assert.equal(nodes.get('ultimate').disabled,true);
  nodes.get('focus-target').value='high';nodes.get('focus-target').onchange();for(let i=0;i<5;i++)nodes.get('advance').onclick();assert.equal(nodes.get('focus-target').value,'');assert.equal(nodes.get('ultimate').disabled,true);
  nodes.get('focus-target').value='low';nodes.get('focus-target').onchange();const cast=nodes.get('ultimate').onclick();assert.deepEqual(JSON.parse(requests[1].options.body).actions,[{round:6,ability:'ultimate',targetIds:['low']}]);await reply(1,{error:'target no longer alive'},false);await cast;assert.equal(nodes.get('focus-target').value,'');assert.equal(nodes.get('ultimate').disabled,true);assert.equal(nodes.get('ultimate-energy-label').textContent,'Ulti dolumu: 100 / 100');
+});
+
+test('recorded three-round casts, expiry and badges retain their historical duration',()=>{
+ const oldCast=cast();oldCast.impacts[0].immortalRounds=2;
+ const oldTrigger={...trigger(),lastStandImmortalUntilRound:10},replay=createBattleReplayHealth(teams());
+ replay.apply(oldCast);assert.equal(replay.statusSnapshot()[0][0].lastStandImmortalRounds,2);replay.apply(oldTrigger);
+ replay.apply({round:10,action:'delay'});assert.equal(replay.statusSnapshot()[0][0].lastStandImmortalUntilRound,10);
+ replay.apply({round:11,action:'delay'});assert.deepEqual(replay.statusSnapshot()[0][0],{});
+ for(const english of [false,true])assert.match(describeBattleEvent(oldCast,{english}),english?/next 2 full rounds/:/sonraki 2 tam tur/);
+ const document={documentElement:{lang:'en'},createElement:()=>new Node()},root=new Node(),unit={...teams()[0][0],lastStandTriggeredRound:8,lastStandImmortalUntilRound:10};
+ createArenaTeamRenderer({document,loadArt:()=>null}).update(root,[unit],{side:0,rows:1,laneRows:{front:[1],back:[]},fittedRows:{front:[1],back:[]},roleNames:{fighter:'Fighter'}});
+ assert.equal(root.children[0].children[5].hidden,false);assert.match(root.children[0].children[5].title,/through round 10/);
+});
+test('all current bilingual commander descriptions advertise only one following round',async()=>{
+ const {commanderUltimateDescription}=await import('../public/commander-ultimate-presentation.js');
+ for(const english of [false,true])assert.match(commanderUltimateDescription('defense',{english}),english?/next 1 full round/:/sonraki 1 tam tur/);
+ for(const file of ['auction-commander.js','commander-profile-view.js','commander-ultimate-presentation.js']){
+  const source=readFileSync(new URL('../public/'+file,import.meta.url),'utf8');assert.doesNotMatch(source,/sonraki 2 (?:tam )?tur|next 2 (?:full )?rounds/);
+ }
 });

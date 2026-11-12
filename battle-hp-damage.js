@@ -3,8 +3,10 @@ import {transferArcaneSurgeOnDeath} from './commander-ultimate-status.js';
 import {breakCenterProtectionOnDeath} from './battle-center-protection.js';
 import {calculateShieldAbsorption} from './battle-shield-absorption.js';
 // Son Kale waits for the first lethal atomic hit, then floors health at 1
-// for the rest of that round plus the next TWO FULL rounds. It never heals,
+// for the rest of that round plus the next ONE FULL round (two rounds total). It never heals,
 // resurrects, refreshes itself, or bypasses per-hit shield absorption.
+// Saved three-round effects keep their original recorded duration.
+const validFollowingRounds=rounds=>rounds===1||rounds===2;
 const validRound=round=>Number.isInteger(round)&&round>=1;
 const lastStandFields=['lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound'];
 const clearLastStand=target=>{for(const field of lastStandFields)delete target[field];};
@@ -16,8 +18,8 @@ function isLastStandArmed(target,round){
  return target.lastStandPersistent===undefined&&validRound(target.lastStandUntilRound)&&target.lastStandUntilRound>=round;
 }
 export function isLastStandImmortal(target,round){
- return !!(living(target)&&validRound(round)&&validRound(target.lastStandTriggeredRound)&&
-  target.lastStandImmortalUntilRound===target.lastStandTriggeredRound+2&&
+ return !!(living(target)&&validRound(round)&&validRound(target.lastStandTriggeredRound)&&validRound(target.lastStandImmortalUntilRound)&&
+  validFollowingRounds(target.lastStandImmortalUntilRound-target.lastStandTriggeredRound)&&
   round>=target.lastStandTriggeredRound&&round<=target.lastStandImmortalUntilRound);
 }
 export function isLastStandActive(target,round){return isLastStandArmed(target,round)||isLastStandImmortal(target,round);}
@@ -25,7 +27,7 @@ export function grantLastStand(target,round){
  if(!validRound(round))throw Error('Invalid last stand round');
  if(!living(target)||isLastStandActive(target,round))return false;
  clearLastStand(target);
- target.lastStandReady=true;target.lastStandPersistent=true;target.lastStandImmortalRounds=2;return true;
+ target.lastStandReady=true;target.lastStandPersistent=true;target.lastStandImmortalRounds=1;return true;
 }
 export function expireLastStandGuards(teams,round){
  if(!Array.isArray(teams)||teams.some(team=>!Array.isArray(team))||!validRound(round))throw Error('Invalid last stand expiry');
@@ -49,7 +51,7 @@ export function applyHeroDamage(target,raw,{round,executeThreshold=0,allies}={})
   damage=Math.min(damage,budget);executedDamage=Math.min(executedDamage,Math.max(0,budget-damage));
   if(!immortal){
    const duration=target.lastStandImmortalRounds;clearLastStand(target);
-   if(duration===2){target.lastStandTriggeredRound=round;target.lastStandImmortalUntilRound=round+2;}
+   if(validFollowingRounds(duration)){target.lastStandTriggeredRound=round;target.lastStandImmortalUntilRound=round+duration;}
   }
  }
  target.hp=oldHp-damage-executedDamage;
