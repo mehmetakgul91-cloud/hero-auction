@@ -10,14 +10,14 @@ const hero=name=>roster.find(h=>h.name===name);
 const compact=ability=>abilityImpact(ability,{compact:true});
 const quantities=text=>(text.match(/\d+(?:[.,]\d+)?/g)||[]).map(n=>Number(n.replace(',','.'))).sort((a,b)=>a-b);
 
-test('all 100 full descriptions match the authorized personal-clock and stun-copy snapshot in both languages',()=>{
+test('all 100 full descriptions match the authorized personal-clock, tank balance and stun-copy snapshot in both languages',()=>{
  const full=roster.map(h=>({id:h.id,...Object.fromEntries(['active','passive'].flatMap(k=>[[k,abilityImpact(h[k])],[k+'English',abilityImpact(h[k],{english:true})]]))}));
  assert.equal(crypto.createHash('sha256').update(JSON.stringify(full)).digest('hex'),
-  '2ae0a368dd4ee0952c4c43ec4f87ea155ff4511fb5e10654559bd138ac9fcc66');
+  '28250dc76cd6342cdd34c9f1fdda8a8b3ff6a3ffb8624293e8df6e7573d8fe52');
  // Removing only the approved cadence and stun-trigger wording recovers the
- // previous snapshot, guarding every unrelated full-description byte.
+ // tank-balanced snapshot without cadence/stun changes.
  const previous=JSON.stringify(full).replaceAll('Tamamlanan her 3 eylemde: ','Her 3 turda: ').replaceAll('Every 3 completed actions: ','Every 3 rounds: ').replaceAll('; sersemken tetiklenmez','').replaceAll('; cannot trigger while stunned','');
- assert.equal(crypto.createHash('sha256').update(previous).digest('hex'),'fb2c7cef63b4728b3f6680cb08ec1bb8063bd384eed72798d7b7b85a31bcb337');
+ assert.equal(crypto.createHash('sha256').update(previous).digest('hex'),'65cc01758b3e62ed07adb69a671c506c02cef0617bec99de1c37f54c0f517efe');
  for(const h of roster)for(const kind of ['active','passive'])assert.equal(abilityImpact(h[kind]),abilityImpact(h[kind],{compact:false}));
 });
 
@@ -41,7 +41,7 @@ test('all 100 gameplay summaries are shorter, retain every quantity and translat
 
 test('tank summary keeps separately rounded shield rates, own-defense basis and duration',()=>{
  assert.equal(compact(hero('Obsidyen Muhafız').active),
-  'Her 3 eylemde: Kendi savunmasından kendine %45 + %20, ön safa +%18 kalkan (tükenene dek)');
+  'Her 3 eylemde: Kendi savunmasından kendine %39, diğer ön safa +%9 kalkan (tükenene dek)');
  assert.equal(compact({effect:'shield',shieldRate:.4}),
   'Her 3 eylemde: Kendine savunması × %40 kalkan; tükenene dek kalır');
  assert.match(abilityImpact(hero('Obsidyen Muhafız').active),/her yaşayan ön saf müttefikine ek kalkan/);

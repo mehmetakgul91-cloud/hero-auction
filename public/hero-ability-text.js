@@ -16,6 +16,7 @@ const templates=Object.freeze({
  delay:['hedefin hareketini atlamadan sırasını turun sonuna erteler; hareket ettiyse sonraki tur; geciktirilen hareketten sonraki tur boyunca yeniden geciktirmeye bağışık','moves the target to the end of the round without skipping its action; next round if it already acted; immune to further delay through the round after the delayed action'],
  shield:['Kendine kalkan: kendi savunması × %{0}','Self shield equal to {0}% of own defense'],
  front:['her yaşayan ön saf müttefikine ek kalkan: kendi savunması × %{0}','also shields each living front-row ally for {0}% of own defense'],
+ otherFront:['kendisi hariç her yaşayan ön saf müttefikine ek kalkan: kendi savunması × %{0}','also shields each other living front-row ally for {0}% of own defense'],
  tankSelf:['kendine ek kalkan: kendi savunması × %{0}','also gains an extra self shield for {0}% of own defense'],
  shieldDuration:['kalkan tükenene kadar kalır','shield lasts until consumed'],
  hybrid:['Can oranı en düşük yaşayan müttefike şifa: kendi saldırısı × %{0}; kalkan: kendi savunması × %{1}; tam canda da kalkan verir, saldırmaz','Heals the living ally with the lowest health ratio for {0}% of own attack and shields them for {1}% of own defense; shields even at full health, does not attack'],
@@ -60,6 +61,10 @@ const compactTemplates=Object.freeze({
  "tankShield": [
   "Kendi savunmasından kendine %{0} + %{2}, ön safa +%{1} kalkan (tükenene dek)",
   "Shields from own defense: {0}% + {2}% to self, +{1}% to front row (until consumed)"
+ ],
+ "singleTankShield": [
+  "Kendi savunmasından kendine %{0}, diğer ön safa +%{1} kalkan (tükenene dek)",
+  "Shields from own defense: {0}% to self, +{1}% to other front-row allies (until consumed)"
  ],
  "shieldDuration": [
   "tükenene dek kalır",
@@ -143,6 +148,10 @@ export function abilityImpact(ability,{english=false,compact=false}={}){
   case 'burst':text=make('burst',(abilityValue(ability,'power')-1)*100)+(ability.delay?'; '+make('delay'):'');break;
   case 'shield':
    if(ability.supportHybrid)text=make('hybrid',pct('healRate'),pct('allyShieldRate'));
+   else if(ability.singleSelfShield){
+    text=compact?make('singleTankShield',pct('shieldRate'),pct('frontShieldRate')):
+     [make('shield',pct('shieldRate')),make('otherFront',pct('frontShieldRate')),make('shieldDuration')].join('; ');
+   }
    else if(compact&&ability.frontShieldRate!==undefined&&ability.tankShieldRate!==undefined)text=make('tankShield',pct('shieldRate'),pct('frontShieldRate'),pct('tankShieldRate'));
    else {text=make('shield',pct('shieldRate'));if(ability.frontShieldRate!==undefined)text+='; '+make('front',pct('frontShieldRate'));if(ability.tankShieldRate!==undefined)text+='; '+make('tankSelf',pct('tankShieldRate'));text+='; '+make('shieldDuration');}
    break;

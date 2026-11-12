@@ -32,7 +32,7 @@ const baselineHashes={
  'commander-original-roster.json':'4d2f30cd9d5014b1c8f4bd146d663b2197d0e34b5836524b72f6d8307f576bd7',
 };
 
-for(const [file,hash] of Object.entries(baselineHashes))test(`${file}: exactly six approved lane swaps and versioned portraits, with no other roster changes`,()=>{
+for(const [file,hash] of Object.entries(baselineHashes))test(`${file}: approved lane swaps, portraits and tank shields, with no unrelated roster changes`,()=>{
  const roster=JSON.parse(readFileSync(new URL('../'+file,import.meta.url),'utf8'));
  assert.equal(roster.characters.length,50);
  const assassins=roster.characters.filter(hero=>hero.role==='assassin');
@@ -48,6 +48,13 @@ for(const [file,hash] of Object.entries(baselineHashes))test(`${file}: exactly s
   const hero=roster.characters.find(h=>h.id===id),asset=portraits.assets.find(a=>a.source===source);
   assert.equal(hero.portrait,asset.url,id+' must use its own optimized portrait');
   hero.portrait=source;
+ }
+ // Reverse the separately tested tank balance change to keep the historical baseline.
+ for(const hero of roster.characters)if(hero.role==='tank'){
+  hero.active.shieldRate={legendary:.45,rare:.42,advanced:.40}[hero.rarity];
+  hero.active.frontShieldRate*=2;
+  delete hero.active.singleSelfShield;
+  hero.active.tankShieldRate=.20;
  }
  assert.equal(createHash('sha256').update(JSON.stringify(roster)).digest('hex'),hash,
   'all other heroes, stats, abilities, powers, portraits and roster metadata must remain unchanged');

@@ -7,7 +7,7 @@ const specs=Object.freeze({
 });
 const effects=new Set(['burst','shield','heal','pierce','splash','sunder','weaken','drain','execute','haste','headshot']);
 const passives=new Set(['guard','resist','focus','evasion','momentum','rage','regen','thorns']);
-const specific={shieldRate:'shield',healRate:['heal','shield'],allyShieldRate:'shield',supportHybrid:'shield',pierceRate:'pierce',splashRate:'splash',sunderRate:'sunder',weakenRate:'weaken',drainRate:'drain',executeThreshold:'execute',hasteAmount:'haste',delay:'burst'};
+const specific={shieldRate:'shield',healRate:['heal','shield'],allyShieldRate:'shield',supportHybrid:'shield',singleSelfShield:'shield',pierceRate:'pierce',splashRate:'splash',sunderRate:'sunder',weakenRate:'weaken',drainRate:'drain',executeThreshold:'execute',hasteAmount:'haste',delay:'burst'};
 export function abilityValue(ability,key){
  const spec=Object.hasOwn(specs,key)?specs[key]:null;if(!spec)throw Error('Unknown ability parameter: '+key);
  const value=ability&&Object.hasOwn(ability,key)?ability[key]:spec[0];
@@ -22,10 +22,11 @@ export function validateHeroAbility(hero){
   if(!effects.has(active.effect)||typeof active.name!=='string'||!active.name)throw Error('Invalid active ability');
   for(const key of Object.keys(active)){
    if(['name','effect'].includes(key))continue;
-   if(key==='delay'||key==='supportHybrid'){if(typeof active[key]!=='boolean')throw Error('Invalid ability flag: '+key);}
+   if(key==='delay'||key==='supportHybrid'||key==='singleSelfShield'){if(typeof active[key]!=='boolean')throw Error('Invalid ability flag: '+key);}
    else abilityValue(active,key);
    const allowed=specific[key];if(allowed&&!(Array.isArray(allowed)?allowed:[allowed]).includes(active.effect))throw Error('Parameter incompatible with effect: '+key);
   }
+  if(active.singleSelfShield&&(hero.role!=='tank'||active.frontShieldRate===undefined||active.tankShieldRate!==undefined))throw Error('Single self shield requires tank front shielding without an extra self shield');
   if(active.supportHybrid&&(hero.role!=='support'||active.effect!=='shield'))throw Error('Hybrid requires shield support');
   if(active.allyShieldRate!==undefined&&!active.supportHybrid)throw Error('Ally shield requires hybrid support');
   if(active.healRate!==undefined&&active.effect==='shield'&&!active.supportHybrid)throw Error('Shield heal requires hybrid support');
