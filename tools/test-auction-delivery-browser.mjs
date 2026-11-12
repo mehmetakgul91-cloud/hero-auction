@@ -40,6 +40,17 @@ function fixture(me,tailCount,matchNumber=1){
  return {auction,finished};
 }
 const overlap=(a,b)=>Math.min(a.right,b.right)-Math.max(a.left,b.left)>1&&Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>1;
+async function verifyStoneSurfaces(page,selectors){
+ for(const selector of selectors){
+  const background=await page.locator(selector).evaluate(node=>getComputedStyle(node).backgroundImage);
+  assert.match(background,/preparation-ground\.webp/,`${selector} retains the arena stone texture`);
+ }
+ for(const selector of ['#chat-messages','#chat-input']){
+  const color=await page.locator(selector).evaluate(node=>getComputedStyle(node).backgroundColor);
+  const channels=color.match(/\d+/g).map(Number);
+  assert.ok(channels.slice(0,3).every(value=>value<96)&&channels[3]!==0,`${selector} has a dark well`);
+ }
+}
 async function verifyCompactAuction(page){
  assert.equal(await page.locator('#game').getAttribute('data-phase'),'auction');
  assert.equal(await page.locator('#game').evaluate(node=>node.classList.contains('auction-delivery-active')),false);
@@ -140,10 +151,12 @@ try{
    await open();await show(auction);
    await page.waitForFunction(()=>document.querySelector('#stage .card-art img')?.naturalWidth>0);
    await verifyCompactAuction(page);
+   await verifyStoneSurfaces(page,['body','#chat-panel','#activity']);
    // Let the normal bidding flip settle before its offered card takes flight.
    await page.waitForFunction(()=>!document.querySelector('#stage .auction-drawing'));
    await begin(finished);
    if(reducedMotion==='no-preference')await page.waitForFunction(()=>!document.querySelector('.auction-tail-sequence .auction-drawing'));
+   await verifyStoneSurfaces(page,['body','.auction-tail-sequence','#chat-panel']);
    const geometry=await verifyDeliveryGeometry(page);
    assert.equal(await page.locator('#player0 .name').textContent(),finished.final[me].name,'own player remains the left receiver for both server seats');
    assert.equal(await page.locator('#player1 .name').textContent(),finished.final[1-me].name);
@@ -164,6 +177,7 @@ try{
    }
    await page.locator('.auction-tail-review').waitFor();
    await verifyDeliveryGeometry(page);
+   await verifyStoneSurfaces(page,['body','.auction-tail-review','#chat-panel']);
    assert.equal(await page.locator('.auction-tail-review-card').count(),tailCount);
    for(const side of [0,1]){
     assert.equal(await page.locator(`#player${side} .delivery-count`).textContent(),'5 / 5');
@@ -180,6 +194,7 @@ try{
    const proceed=page.locator('.auction-tail-review button.primary');
    await proceed.click();await page.locator('#confirm-arena-entry').waitFor();
    assert.equal(await page.locator('#game').getAttribute('data-phase'),'finished');
+   await verifyStoneSurfaces(page,['body','#stage','#chat-panel']);
    assert.equal(await page.locator('#game').evaluate(node=>node.classList.contains('auction-delivery-active')),false);
    assert.equal(await page.locator('.auction-tail-sequence,.auction-card-glide').count(),0,'continue cleans up the reveal and ghosts');
    await show({...finished,revision:4});

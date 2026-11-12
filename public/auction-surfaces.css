@@ -1,12 +1,11 @@
 /* The terrain is shared with formation. No extra layers participate in hit testing. */
-body:has(#game[data-phase="auction"]:not([hidden],.auction-delivery-active)),
-body:has(#game.auction-results-only:not([hidden])) {
+body:has(#game:is([data-phase="auction"],.auction-results-only):not([hidden])) {
   background: radial-gradient(ellipse at 14% 0%, #5c696627, transparent 50rem),
               linear-gradient(160deg, #1d2829ce, #10191bd9),
               url('/images/arena-themes/preparation-ground.webp') center top / 70rem auto repeat #192224;
 }
 
-#game:is([data-phase="auction"]:not(.auction-delivery-active),.auction-results-only) {
+#game:is([data-phase="auction"],.auction-results-only) {
   --pit-ground: url('/images/arena-themes/preparation-ground.webp');
   --pit-rim: #827b64;
   --pit-ink: #f3ece0;
@@ -14,6 +13,63 @@ body:has(#game.auction-results-only:not([hidden])) {
   --pit-gold: #ebcc8d;
   --pit-depth: inset 0 2px 1px #080e10, inset 3px 7px 12px #060c0fcc,
                inset -1px -2px 1px #dfd1a34d, 0 1px 0 #d6c29559;
+  --pit-panel: linear-gradient(155deg, #1d2a2bd9, #172225f2), var(--pit-ground) center / cover #1b2729;
+  color: var(--pit-ink);
+  & .room-tools {background: #20292b; color: var(--pit-muted); border-color: #59605a}
+  & .room-code-label strong {color: var(--pit-gold)}
+  & :is(.chat-panel,.activity-collapsible) {
+    background: var(--pit-panel);
+    border-color: var(--pit-rim);
+    box-shadow: var(--pit-depth);
+  }
+  & .chat-panel h3, & .activity-chevron {color: var(--pit-gold)}
+  & .chat-messages, & #chat-input {
+    background: #121e21;
+    color: var(--pit-ink);
+    box-shadow: inset 0 2px 5px #060d10a6;
+  }
+  & #chat-input {border-color: #74837e; caret-color: var(--pit-gold)}
+  & #chat-input::placeholder, & .chat-messages .status, & .event {color: var(--pit-muted)}
+  & .chat-line {background: #41322e; color: var(--pit-ink)}
+  & .chat-mine {background: #25414a}
+  & .chat-author {color: #efc4aa}
+  & .chat-mine .chat-author {color: #b6dfe8}
+  & .activity-collapsible summary {color: var(--pit-ink)}
+  & .event {border-color: #65716b}
+  & :is(#leave,#friend-opponent,.auction-tail-sequence > .outline) {
+    background: linear-gradient(155deg, #354344, #233033);
+    border-color: #798477; color: var(--pit-ink);
+  }
+  & :is(#chat-send,.auction-tail-sequence > .primary) {
+    background: linear-gradient(110deg, #e9cf99, #cdaa68);
+    border-color: #c6a264; color: #20292a;
+  }
+  & :is(#chat-send,#friend-opponent,.auction-tail-sequence > button):disabled {
+    background: #344143 !important; border-color: #68746f !important; color: #ccd4cf !important;
+  }
+  & :is(button,summary,input):focus-visible, & #chat-input:focus {outline-color: var(--pit-gold)}
+}
+body:has(#game:is([data-phase="auction"],.auction-results-only):not([hidden])) .site-support .support-menu > summary {color: #c9d1cf}
+
+#game.auction-delivery-active {
+  & #stage {background: transparent; border-color: transparent !important; box-shadow: none}
+  & .auction-tail-sequence {
+    background: linear-gradient(145deg, #1a2528b8, #10191dec), var(--pit-ground) center / cover #1c2829;
+    color: var(--pit-ink); border-color: var(--pit-rim);
+    box-shadow: inset 0 1px #ddc59b5c, inset 0 0 0 3px #060d103d, 0 16px 32px #05090bad;
+  }
+  & .auction-tail-progress {color: var(--pit-gold)}
+  & :is(.player-side.me,[data-team="own"]) {
+    --auction-team-bg: #223840; --auction-team-panel: #2d4148; --auction-team-border: #789ba4; --receipt-accent: #b5dce8;
+  }
+  & :is(.player-side:not(.me),[data-team="opponent"]) {
+    --auction-team-bg: #3e302c; --auction-team-panel: #4b3730; --auction-team-border: #ac8775; --receipt-accent: #efc1a7;
+  }
+  & .player-side {box-shadow: inset 0 2px #d7c49d38, 0 5px 18px #060d10a6}
+  & .player-side .name, & .auction-tail-review-card strong {color: var(--pit-ink)}
+  & .delivery-count, & .auction-tail-review-card[data-team] small {color: var(--receipt-accent)}
+  & .auction-tail-review-card span, & .delivery-slot {color: var(--pit-muted)}
+  & .auction-tail-review-card[data-team], & .delivery-slot {box-shadow: inset 0 2px 5px #080e1259}
 }
 #game:is([data-phase="auction"]:not(.auction-delivery-active),.auction-results-only) #stage {
   background: var(--stage-overlay, linear-gradient(145deg, #242b2740, #101a1e87)),
@@ -23,8 +79,6 @@ body:has(#game.auction-results-only:not([hidden])) {
   color: var(--pit-ink);
 }
 #game[data-phase="auction"]:not(.auction-delivery-active) {
-  & .room-tools {background: #20292b; color: var(--pit-muted); border-color: #59605a}
-  & .room-code-label strong {color: var(--pit-gold)}
   & .auction-hero {
     background: radial-gradient(ellipse at 48% 36%, #6d69400a, #111b2047 72%),
                 linear-gradient(156deg, #141b1e35, #19232162);
