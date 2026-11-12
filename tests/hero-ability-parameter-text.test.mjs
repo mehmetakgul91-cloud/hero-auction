@@ -12,7 +12,7 @@ test('all roster descriptions render finite declared values, cadence and bilingu
   assert.doesNotMatch(tr,/undefined|NaN|\{\d+\}/);assert.doesNotMatch(en,/undefined|NaN|\{\d+\}/);
   assert.equal(translateAbilityDescription(tr),en,hero.name+' '+kind);
   assert.equal(translate(tr),en,hero.name+' '+kind+' DOM translation');
-  if(kind==='active')assert.match(tr,/^Her 3 turda:/);
+  if(kind==='active')assert.match(tr,/^Tamamlanan her 3 eylemde:/);
  }
 });
 test('custom rates display their actual fields rather than old hardcoded percentages',()=>{

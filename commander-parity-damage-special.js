@@ -1,3 +1,4 @@
+import {isHeroSpecialTurn,completeHeroAction,heroActionMetadata} from './public/hero-action-clock.js';
 import {expireCommanderStun} from './commander-stun-status.js';
 import {consumeCommanderHunt,expireCommanderHunt} from './commander-hunt-status.js';
 import {applyServerStunSkip} from './commander-live-combat.js';
@@ -15,13 +16,14 @@ import {grantLiveCommanderEnergy} from './commander-live-abilities.js';
 const effects=new Set(['burst','pierce','splash','headshot']);
 const roundEffects=new Set(['guard','resist','focus','evasion','momentum','regen','rage']);
 export function stepParityDamageSpecial(combat,{side,actorId,round=combat?.round,critical=false,allowThornsPassive=false,allowRoundPassives=false}={}){
- if(!combat||combat.finished||![0,1].includes(side)||round!==combat.round||round%3!==0||typeof critical!=='boolean')throw Error('Invalid damage special');
+ if(!combat||combat.finished||![0,1].includes(side)||round!==combat.round||typeof critical!=='boolean')throw Error('Invalid damage special');
  const teams=structuredClone(combat.teams);
  const actor=teams[side].find(u=>u.id===actorId&&u.hp>0);
  const skill=actor?.active;
  if(!actor||!effects.has(skill?.effect)||(actor.passive&&!((allowThornsPassive&&actor.passive.effect==='thorns')||(allowRoundPassives&&roundEffects.has(actor.passive.effect)))))throw Error('Unsupported damage special');
  const enemies=teams[1-side],target=selectBattleTarget(enemies,actor,round);
  if(!target)throw Error('No living target');
+ if(!isHeroSpecialTurn(actor,round))throw Error('Invalid special action turn');
  const skipped=applyServerStunSkip(combat,{side,actorId,round});if(skipped)return skipped;
  const guarded=target.lane!=='front'&&enemies.some(u=>u.hp>0&&u.lane==='front');
  const weakened=commanderWeakenRate(actor,round);
@@ -46,10 +48,11 @@ export function stepParityDamageSpecial(combat,{side,actorId,round=combat?.round
  if(actor.role==='tank')actor.shield=(actor.shield||0)+Math.round(actor.defense*abilityValue(actor.active,'tankShieldRate'));
  consumeCommanderWeaken(actor);
  if(consumeCommanderHunt(actor))events.find(event=>['normal','special'].includes(event.damageType)).huntAttackConsumed=true;
+ completeHeroAction(actor,round);
  combat.teams=teams;combat.version++;
- for(const event of events){event.version=combat.version;combat.events.push(event)}
+ for(const event of events){Object.assign(event,heroActionMetadata(actor,round,true));event.version=combat.version;combat.events.push(event)}
  for(const id of deaths)grantLiveCommanderEnergy(combat.abilities,1-side,10);
- expireCommanderFocus(teams,round);expireCommanderHunt(teams);expireCommanderStun(teams);
+ expireCommanderFocus(teams,round);expireCommanderHunt(teams);expireCommanderStun(teams,round);
  combat.finished=teams.some(team=>team.every(u=>u.hp<=0));
  combat.abilities.finished=combat.finished;
  return {version:combat.version,events,teams:structuredClone(teams),finished:combat.finished};

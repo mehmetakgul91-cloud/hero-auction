@@ -5,7 +5,7 @@ import {commanderRoundEnergy} from './public/commander-ability-rules.js';
 import {simulateBattle} from './battle-engine.js';
 import {createTurnSubmissionState,submitTurnCommand,resolveTurnSubmissions,validateCommanderTurnTargets} from './commander-turns.js';
 
-export function replayCommanderTranscript(cardsA,cardsB,{commanders,turns,seed='commander-transcript',maxRounds=15,remainingCredits=[0,0]}={}){
+export function replayCommanderTranscript(cardsA,cardsB,{commanders,turns,seed='commander-transcript',maxRounds=15,remainingCredits=[0,0],heroActionClockVersion=0}={}){
  if(!Array.isArray(commanders)||commanders.length!==2||commanders.some(c=>!c?.commanderId))throw Error('Two commander profiles required');
  if(!Number.isInteger(maxRounds)||maxRounds<1||maxRounds>15)throw Error('Invalid maximum rounds');
  if(!Array.isArray(turns)||turns.length>maxRounds)throw Error('Invalid turn transcript');
@@ -28,7 +28,7 @@ export function replayCommanderTranscript(cardsA,cardsB,{commanders,turns,seed='
    validateCommanderTurnTargets(entry.command,{commanderId:commanders[side].commanderId,targetIds:entry.targetIds,teams:previous?.teams,side});
   }
   actions.push(...resolveTurnSubmissions(state));
-  previous=simulateBattle(cardsA,cardsB,{seed,maxRounds:round,remainingCredits,commanders,commanderActions:actions,partial:round<maxRounds});
+  previous=simulateBattle(cardsA,cardsB,{seed,maxRounds:round,remainingCredits,commanders,commanderActions:actions,commanderStunVersion:heroActionClockVersion===1?2:1,heroActionClockVersion,partial:round<maxRounds});
  }
- return previous??simulateBattle(cardsA,cardsB,{seed,maxRounds,remainingCredits,commanders,commanderActions:actions});
+ return previous??simulateBattle(cardsA,cardsB,{seed,maxRounds,remainingCredits,commanders,commanderActions:actions,commanderStunVersion:heroActionClockVersion===1?2:1,heroActionClockVersion});
 }

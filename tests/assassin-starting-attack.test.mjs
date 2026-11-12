@@ -89,7 +89,8 @@ test('raw old snapshots retain their prior attack through load, rounds, death an
  const current=prepareLiveArenaTeams(input,input,{cardAdapter:'auction'})[0];
  for(const units of [prior,current]){
   const saved=JSON.parse(JSON.stringify(units)),attack=saved[0].attack;
-  const combat=createLiveCommanderCombat({teams:[saved,structuredClone(saved)],commanders:[{commanderId:'attack'},{commanderId:'support'}],abilities:createLiveCommanderAbilities({matchKey:'snapshot:test'}),round:1});
+  // This is an explicit historical snapshot load, not a newly started battle.
+  const combat=createLiveCommanderCombat({heroActionClockVersion:0,teams:[saved,structuredClone(saved)],commanders:[{commanderId:'attack'},{commanderId:'support'}],abilities:createLiveCommanderAbilities({matchKey:'snapshot:test'}),round:1});
   assert.deepEqual(combat.teams[0],saved,'loading does not run fresh preparation');
   beginServerCombatRound(combat,2);assert.equal(combat.teams[0][0].attack,attack);
   applyHeroDamage(combat.teams[0][0],10000,{round:2,allies:combat.teams[0]});reviveCommanderAlly(combat.teams[0][0],2);

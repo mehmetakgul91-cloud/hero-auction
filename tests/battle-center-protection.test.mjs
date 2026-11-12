@@ -21,7 +21,7 @@ const h=(id,position=0,lane='front',extra={})=>({id,name:id,position,lane,role:'
 const team=(prefix='e',front=2)=>Array.from({length:5},(_,i)=>h(prefix+i,i,i<front?'front':'back'));
 const protectedTeam=()=>initializeCenterProtection(team());
 const center=units=>units.find(u=>u.centerProtection||u.centerDefenseBonus);
-const combat=(defenders,actor=h('actor',0,'front',{role:'assassin'}),round=1)=>createLiveCommanderCombat({teams:[[actor],defenders],round,commanders:[{commanderId:'attack'},{commanderId:'support'}],abilities:createLiveCommanderAbilities({matchKey:'center:test',energy:[100,100],ultimateEnergy:[100,100],now:0})});
+const combat=(defenders,actor=h('actor',0,'front',{role:'assassin'}),round=1,heroActionClockVersion=round===1?1:0)=>createLiveCommanderCombat({heroActionClockVersion,teams:[[actor],defenders],round,commanders:[{commanderId:'attack'},{commanderId:'support'}],abilities:createLiveCommanderAbilities({matchKey:'center:test',energy:[100,100],ultimateEnergy:[100,100],now:0})});
 
 test('only the initial 2+3 composition marks exactly the second rear hero and its four allies',()=>{
  for(let front=0;front<=5;front++){
@@ -142,7 +142,8 @@ test('unmarked older snapshots keep previous target rotation and are not upgrade
  assert.equal(c.teams[1].some(u=>u.centerProtection),false);
  assert.equal(selectBattleTarget(c.teams[1],{role:'assassin',position:0},1).id,'e3');
  const marked=protectedTeam();applyHeroDamage(marked[0],2000,{round:1,allies:marked});reviveCommanderAlly(marked[0],1);
- const loaded=combat(JSON.parse(JSON.stringify(marked)));
+ // Preserve the complete raw historical snapshot, including absent clock metadata.
+ const loaded=combat(JSON.parse(JSON.stringify(marked)),undefined,1,0);
  assert.deepEqual(viewLiveCommanderCombat(loaded).teams[1],marked);assert.equal(isCenterProtected(center(loaded.teams[1]),loaded.teams[1]),false);
 });
 

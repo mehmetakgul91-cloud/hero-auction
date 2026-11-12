@@ -5,7 +5,8 @@ import {createLiveCommanderCombat} from '../commander-live-combat.js';
 import {applyServerSplashAction} from '../commander-live-splash.js';
 function make(){
  const hero=(id,hp=100,shield=0)=>({id,hp,maxHp:100,attack:100,defense:0,shield,role:'energy',lane:'back',position:0});
- return createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'splash:1',energy:[0,0],now:1000}),teams:[[hero('a')],[hero('b'),hero('c',20,10),hero('d',5)]],commanders:[{commanderId:'attack'},{commanderId:'defense'}]});
+// Isolate the historical secondary-hit helper without a primary-action phase.
+ return createLiveCommanderCombat({heroActionClockVersion:0,abilities:createLiveCommanderAbilities({matchKey:'splash:1',energy:[0,0],now:1000}),teams:[[hero('a')],[hero('b'),hero('c',20,10),hero('d',5)]],commanders:[{commanderId:'attack'},{commanderId:'defense'}]});
 }
 test('splash damages secondary enemies and consumes shield before HP atomically',()=>{
  const c=make();

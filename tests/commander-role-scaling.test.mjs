@@ -21,7 +21,7 @@ for(const kind of ['defense','support','magic'])test(kind+' normal preserves its
   if(kind==='magic'){
    assert.deepEqual(c.teams[side],before[side]);const main=level+5,area=Math.round(main*.25);assert.equal(summary.value,main+(survivors>1?area:0));
    for(const u of c.teams[1-side]){assert.equal(u.commanderStunNextAction,u.id===target?true:undefined);assert.equal(u.commanderWeaken,undefined);}
-   assert.deepEqual(summary.impacts.filter(i=>i.kind==='stun'),[{target,kind:'stun',value:1,nextAction:true}]);assert.deepEqual(result.events.filter(e=>e.action==='commander-hit').map(e=>e.rawDamage),survivors>1?[main,area]:[main]);
+   assert.deepEqual(summary.impacts.filter(i=>i.kind==='stun'),[{target,kind:'stun',value:1,nextAction:true,stunVersion:2,blockedRound:1,passiveSilence:true,heroActionClockVersion:1}]);assert.deepEqual(result.events.filter(e=>e.action==='commander-hit').map(e=>e.rawDamage),survivors>1?[main,area]:[main]);
   }else{
    assert.deepEqual(c.teams[1-side],before[1-side]);const expected=Math.round(level+(kind==='defense'?100*.2:100*.52*.05));
    assert.equal(summary.value,expected);assert.equal(summary.impacts.reduce((sum,u)=>sum+u.value,0),expected);for(const u of c.teams[side])assert.ok(u.hp<=u.maxHp);
@@ -63,7 +63,7 @@ test('magic normal skips one attack at every level, without stacking level-based
    if(round>1)beginServerCombatRound(c,round);
    const before=c.teams[0].map(u=>u.hp),hit=stepParityBasicAttack(c,{side:1,actorId:'1-0'});
    if(round===1){assert.equal(hit.event.action,'stun-skip');assert.equal(hit.event.value,0);assert.deepEqual(c.teams[0].map(u=>u.hp),before);}
-   else assert.equal(hit.event.rawDamage,70);
+   else assert.equal(hit.event.rawDamage,round===4?80:70);
    assert.equal(c.teams[1][0].commanderStunNextAction,undefined);
    assert.equal(c.teams[1][0].commanderWeaken,undefined);
   }
@@ -72,7 +72,7 @@ test('magic normal skips one attack at every level, without stacking level-based
 test('magic ultimate doubles selected ally damage for three rounds at all levels then restores base',()=>{
  for(const level of [0,1,10,20,40]){
   const c=combat('magic',level);for(const u of c.teams[1])u.defense=0;cast(c,'ultimate',0,['0-0']);
-  for(let round=1;round<=4;round++){if(round>1)beginServerCombatRound(c,round);const hit=stepParityBasicAttack(c,{side:0,actorId:'0-0'});assert.equal(hit.event.rawDamage,round<=3?140:70);assert.equal(c.teams[0][0].attack,100);}
+  for(let round=1;round<=4;round++){if(round>1)beginServerCombatRound(c,round);const hit=stepParityBasicAttack(c,{side:0,actorId:'0-0'});assert.equal(hit.event.rawDamage,round===3?160:round<=3?140:70);assert.equal(c.teams[0][0].attack,100);}
  }
 });
 test('legacy defense preserves the full shield budget too',()=>{

@@ -1,3 +1,4 @@
+import {commanderPassivesSuppressed} from './commander-stun-status.js';
 // Exact legacy start-of-combat and round-start passive rules.
 // All operations are server-owned and applied atomically to cloned combat teams.
 export function applyLegacyStartPassives(teams){
@@ -17,7 +18,7 @@ export function applyLegacyRoundPassives(combat){
  if(!combat||combat.finished||!Array.isArray(combat.teams)||!Number.isInteger(combat.round))throw Error('Invalid passive combat');
  const next=structuredClone(combat.teams),events=[];
  for(const team of next)for(const u of team){
-  if(u.hp<=0||!u.passive)continue;
+  if(u.hp<=0||!u.passive||commanderPassivesSuppressed(u,combat.round))continue;
   const {effect,value}=u.passive;
   if(!Number.isFinite(value)||value<0)throw Error('Invalid passive value');
   if(effect==='regen'){

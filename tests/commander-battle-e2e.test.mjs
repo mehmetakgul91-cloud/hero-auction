@@ -9,7 +9,7 @@ const commanders=[createCommanderProfile('attack'),createCommanderProfile('defen
 const pass=()=>({command:'pass'});
 test('commander transcript and direct engine produce identical rounds and energy',()=>{
  const turns=Array.from({length:4},()=>[pass(),pass()]);
- const options={seed:'replay-check',commanders,remainingCredits:[2,3]};
+ const options={heroActionClockVersion:1,seed:'replay-check',commanders,remainingCredits:[2,3]};
  const replay=replayCommanderTranscript(cards('a'),cards('b'),{...options,turns});
  const direct=simulateBattle(cards('a'),cards('b'),{...options,maxRounds:4});
  assert.deepEqual(replay.log,direct.log);

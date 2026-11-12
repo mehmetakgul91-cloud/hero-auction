@@ -9,6 +9,7 @@ export function acceptCommanderSnapshot(sync,payload){
  if(payload.version<=sync.version)return {accepted:false,version:sync.version,events:[]};
  const events=Array.isArray(payload.events)?payload.events.filter(e=>Number.isSafeInteger(e?.version)&&e.version>sync.version&&e.version<=payload.version):[];
  sync.version=payload.version;
+ if(payload.heroActionClockVersion===1)sync.heroActionClockVersion=1;else delete sync.heroActionClockVersion;
  sync.teams=structuredClone(payload.teams);
  sync.finished=!!payload.finished;
  sync.events.push(...structuredClone(events));

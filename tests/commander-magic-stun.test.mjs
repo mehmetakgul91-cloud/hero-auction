@@ -33,7 +33,7 @@ for(const[name,extra,step]of cases)test(name+': entire next attack is skipped wi
  const c=make(extra);cast(c);const before=structuredClone(c.teams),energy=[...c.abilities.energy],ultimate=[...c.abilities.ultimateEnergy],n=c.events.length;
  const out=step(c),event=out.event;assert.equal(event.action,'stun-skip');assert.equal(event.stunScope,'action');assert.equal(event.value,0);assert.equal(event.rawDamage,undefined);assert.equal(event.damageType,undefined);assert.equal(c.events.length,n+1);
  assert.deepEqual(c.teams[1],before[1]);assert.deepEqual(c.abilities.energy,energy);assert.deepEqual(c.abilities.ultimateEnergy,ultimate);
- delete before[0][0].commanderStunNextAction;before[0][0].lastActionRound=3;assert.deepEqual(c.teams[0],before[0]);
+ delete before[0][0].commanderStunNextAction;before[0][0].lastActionRound=3;before[0][0].commanderStunConsumedRound=3;assert.deepEqual(c.teams[0],before[0]);
  const start=c.events.length;step(c);assert.ok(c.events.slice(start).some(e=>e.rawDamage>0||e.action==='attack'&&e.value>0));assert.equal(c.events.slice(start).some(e=>e.action==='stun-skip'),false);
 });
 for(const side of [0,1])for(const bot of [false,true])for(const alreadyActed of [false,true])test(`${bot?'bot':'PvP'} seat ${side}, already acted=${alreadyActed}: authenticated cast skips exactly the next cursor attack`,()=>{
@@ -107,7 +107,7 @@ for(const [label,active] of [['hybrid',{effect:'shield',name:'hybrid',supportHyb
  const out=stepLiveArenaHero(arena);
  assert.equal(out.result.event.action,'stun-skip');assert.equal(out.result.event.stunScope,'action');
  assert.equal(c.events.length,n+1);assert.equal(hasCommanderActionStun(c.teams[0][0]),false);
- delete before[0][0].commanderStunNextAction;before[0][0].lastActionRound=3;
+ delete before[0][0].commanderStunNextAction;before[0][0].lastActionRound=3;before[0][0].commanderStunConsumedRound=3;
  assert.deepEqual(c.teams,before);assert.deepEqual(c.abilities.energy,energy);assert.deepEqual(c.abilities.ultimateEnergy,ultimate);
  while(viewLiveArenaSession(arena).nextHero)stepLiveArenaHero(arena);advanceLiveArenaRound(arena);
  assert.notEqual(stepLiveArenaHero(arena).result.event.action,'stun-skip');
@@ -116,7 +116,7 @@ for(const action of ['heal','shield'])test('new cast prevents direct '+action+' 
  const c=make({hp:4000});cast(c);const before=structuredClone(c.teams),energy=[...c.abilities.energy];
  const out=applyServerHeroAction(c,{side:0,actorId:'actor',targetId:'actor',action,value:10});
  assert.equal(out.event.action,'stun-skip');assert.equal(out.event.stunScope,'action');
- delete before[0][0].commanderStunNextAction;before[0][0].lastActionRound=3;
+ delete before[0][0].commanderStunNextAction;before[0][0].lastActionRound=3;before[0][0].commanderStunConsumedRound=3;
  assert.deepEqual(c.teams,before);assert.deepEqual(c.abilities.energy,energy);
  assert.equal(applyServerHeroAction(c,{side:0,actorId:'actor',targetId:'actor',action,value:10}).event.action,action);
 });
@@ -124,15 +124,15 @@ test('new cast also skips standalone hybrid special-heal resolution',()=>{
  const c=make({role:'support',hp:4000,active:{effect:'shield',supportHybrid:true,allyShieldRate:.15,healRate:.5}});cast(c);
  const before=structuredClone(c.teams);
  assert.equal(applyServerSpecialHeal(c,{side:0,actorId:'actor'}).event.action,'stun-skip');
- delete before[0][0].commanderStunNextAction;before[0][0].lastActionRound=3;
+ delete before[0][0].commanderStunNextAction;before[0][0].lastActionRound=3;before[0][0].commanderStunConsumedRound=3;
  assert.deepEqual(c.teams,before);
 });
-test('automatic regeneration still runs before a stunned scheduled action and does not consume it',()=>{
+test('new stun suppresses automatic regeneration before and after its scheduled action',()=>{
  const c=make({hp:4000,speed:100,passive:{effect:'regen',value:.05}});cast(c);
  const arena=createLiveArenaSession(c,{parity:true,roundPassives:true});
- assert.equal(c.teams[0][0].hp,4250);assert.equal(hasCommanderActionStun(c.teams[0][0]),true);
+ assert.equal(c.teams[0][0].hp,4000);assert.equal(hasCommanderActionStun(c.teams[0][0]),true);
  assert.equal(stepLiveArenaHero(arena).result.event.action,'stun-skip');
- assert.equal(c.teams[0][0].hp,4250);assert.equal(hasCommanderActionStun(c.teams[0][0]),false);
+ assert.equal(c.teams[0][0].hp,4000);assert.equal(hasCommanderActionStun(c.teams[0][0]),false);
 });
 test('terminal death clears both new and historical pending stun on survivors',()=>{
  const c=make();grantCommanderActionStun(c.teams[1][0]);grantCommanderStun(c.teams[1][1]);

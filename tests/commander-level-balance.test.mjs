@@ -80,7 +80,7 @@ test('incoming cast values cannot forge level and changing the source profile ca
  saved.levels.magic=40;
  const cast=castLiveCommanderCombat(combat,{side:0,ability:'normal',requestId:'level_cast_01',matchKey:'level',now:1000,targetIds:['1-0'],commanderProfile:saved,commanderLevel:40});
  assert.equal(cast.teams[1][0].commanderStunNextAction,true);assert.equal(cast.teams[1][0].commanderWeaken,undefined);
- assert.deepEqual(cast.events.at(-1).impacts.filter(i=>i.kind==='stun'),[{target:'1-0',kind:'stun',value:1,nextAction:true}]);assert.equal(cast.events[0].rawDamage,6);assert.ok(cast.events.slice(1,-1).every(e=>e.rawDamage===2));
+ assert.deepEqual(cast.events.at(-1).impacts.filter(i=>i.kind==='stun'),[{target:'1-0',kind:'stun',value:1,nextAction:true,stunVersion:2,blockedRound:1,passiveSilence:true,heroActionClockVersion:1}]);assert.equal(cast.events[0].rawDamage,6);assert.ok(cast.events.slice(1,-1).every(e=>e.rawDamage===2));
  assert.equal(cast.events.at(-1).commanderLevel,6);
  beginServerCombatRound(combat,2);assert.equal(combat.abilities.energy[0],55);
 });

@@ -24,12 +24,16 @@ Capture the prepared energy-role attack total once at battle start, after battle
 - Validate exactly one living enemy before spending resources. Resolve area recipients from the frozen formation before damage. Hit the main target first, then area targets in deterministic captured-team order. Main death never retargets the remaining area damage.
 - Apply each raw budget through the shared hero-damage path: shield absorption, Last Stand, lethal cleanup and Arcane Surge transfer remain authoritative. Do not add another defense, critical or skill multiplier.
 - Only the selected main target, if it survives its hit, gains `commanderStunNextAction`. Area recipients are not stunned.
-- At its next scheduled action, consume this flag before healing, shield-only or attack branches. The entire action, including attack splash and action-linked effects, is skipped. Automatic passive effects remain unaffected.
+- At its next scheduled action, consume this flag before healing, shield-only or attack branches. The entire action, including attack splash and action-linked effects, is skipped. Self-triggered passives are also suppressed for the entire scheduled blocked round, including after consumption of the action flag. Prepared starting buffs, existing rage/shields and incoming ally effects are not removed.
 - The pending flag survives round boundaries, does not stack and clears on death, revival or battle finish. It is one scheduled action, not an elapsed-round lock.
 
 ## Events, replay and historical compatibility
 
-Emit one `commander-hit` per recipient with raw damage, actual HP loss, absorption, guard and transfer metadata. The `commander-magic-normal` summary reports damage impacts and surviving-main-target stun `{kind:'stun', value:1, nextAction:true}`. Replay applies damage events once, not summary damage a second time.
+Emit one `commander-hit` per recipient with raw damage, actual HP loss, absorption, guard and transfer metadata. The `commander-magic-normal` summary reports damage impacts and surviving-main-target stun `{kind:'stun', value:1, nextAction:true, stunVersion:2, blockedRound, passiveSilence:true}`. Replay applies damage events once, not summary damage a second time.
+
+Version-2 stun retains `commanderStunVersion` and `commanderStunBlockedRound` after consumption until the blocked round ends. A pending next-action flag survives round boundaries. Reapplication never queues multiple skipped actions. Death, revival and finish clear all stun fields. Historical action-only events without `stunVersion` remain action-only.
+
+New battles use a per-hero `heroActionClockVersion:1` and `completedActionTurns`; every third completed action is special. A skipped action never advances this counter. Death and revival preserve it. Successful action events explicitly include the updated absolute count and `heroSpecial`. Replay uses only this metadata, never final-state counters or inferred increments; heal/shield animation falls back to global round cadence only for unversioned historical logs. One skip postpones action 3 to round 4; two skips before action 6 postpone it to round 8. This does not postpone round-based commander durations such as Arcane Surge.
 
 New skip events carry `stunScope:'action'`. Historical `nextAttack:true` impacts and `commanderStunNextAttack` remain attack-only: healing and shield-only actions do not consume them. A historical skip without a scope retains the legacy attack meaning. Old weakening logs are not converted to either stun. Live and replay badges, impact labels and event text distinguish new action skips from old attack skips in Turkish and English.
 
@@ -38,7 +42,7 @@ Shared legacy/live helpers preserve target validation, normal energy and cooldow
 ## Verification
 
 - Geometry tests cover supported lane splits, mirror seats, exact center boundaries, same-lane edges and stable dead-slot adjacency.
-- Damage and lifecycle tests cover the prepared attack snapshot, rounding, shield/Last Stand, main-first resolution, lethal main and area hits, surviving-primary-only stun, action consumption including heal/shield, passive independence and death/revival/finish cleanup.
+- Damage and lifecycle tests cover the prepared attack snapshot, rounding, shield/Last Stand, main-first resolution, lethal main and area hits, surviving-primary-only stun, action consumption including heal/shield, whole-round self-passive silence and personal-skill-clock continuity and death/revival/finish cleanup.
 - Presentation tests cover Turkish/English descriptions, frozen 5% rate metadata, costs, badges, committed effects, scope-aware replay, historical logs, duplicate summaries and live snapshot cleanup.
 - Target controls retain rejection/retry, cancellation and repeated-click protections. Browser test fixtures expect 40 normal energy remaining after spending 60 from 100.
 - Focused frontend checks passed locally. Real visual browser verification remains outstanding due to the environment limitations already recorded; DOM/VM checks are not a visual QA claim. Balance simulations are controlled comparisons, not evidence of real-player win rates or guaranteed balance.

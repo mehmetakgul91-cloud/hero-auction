@@ -145,6 +145,7 @@ test('round-trip selected profiles drive live attack versus healing abilities, n
   teams[0][0].hp=Math.floor(teams[0][0].maxHp/2);
   const abilities=createLiveCommanderAbilities({matchKey:'retained-levels',energy:[100,100],now:0});
   const combat=createLiveCommanderCombat({abilities,teams,commanders});
+  const startingTeams=structuredClone(combat.teams);
   assert.equal(combat.abilities.commanderIds[0],selected.commanderId);
   const stats=commanderAbilityStats(selected);
   assert.equal(stats.level,selected.commanderId==='support'?40:12);
@@ -156,10 +157,10 @@ test('round-trip selected profiles drive live attack versus healing abilities, n
   assert.equal(event.commanderLevel,stats.level);
   if(selected.commanderId==='support'){
    assert.ok(result.teams[0][0].hp>teams[0][0].hp);
-   assert.deepEqual(result.teams[1],teams[1]);
+   assert.deepEqual(result.teams[1],startingTeams[1]);
    assert.ok(event.impacts.length>0&&event.impacts.every(impact=>impact.kind==='heal'));
   }else{
-   assert.deepEqual(result.teams[0],teams[0]);
+   assert.deepEqual(result.teams[0],startingTeams[0]);
    assert.ok(result.teams[1].some((hero,index)=>hero.hp<teams[1][index].hp));
    assert.ok(event.impacts.length>0&&event.impacts.every(impact=>impact.kind==='damage'));
   }

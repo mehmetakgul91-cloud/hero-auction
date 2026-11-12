@@ -52,7 +52,7 @@ for(const [round,level] of [[2,40],[3,15]])test('legacy and live mage normal mat
  const hits=output.events.filter(e=>e.action==='commander-hit');
  assert.deepEqual(hits.map(e=>[e.target,e.rawDamage]),[[targetId,main],...defenderIds.filter(id=>id!==targetId).map(id=>[id,area])]);
  const cast=output.events.find(e=>e.action==='commander-magic-normal');
- assert.deepEqual(cast.impacts.filter(i=>i.kind==='stun'),[{target:targetId,kind:'stun',value:1,nextAction:true}]);
+ assert.deepEqual(cast.impacts.filter(i=>i.kind==='stun'),[{target:targetId,kind:'stun',value:1,nextAction:true,stunVersion:2,blockedRound:round,passiveSilence:true,heroActionClockVersion:1}]);
  assert.equal(legacy.commanderEnergy[0],energy-60);
  assert.equal(output.energy,energy-60);
  const skips=legacy.log.filter(e=>e.action==='stun-skip');

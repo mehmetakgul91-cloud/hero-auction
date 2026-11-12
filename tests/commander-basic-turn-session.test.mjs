@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import {createLiveCommanderAbilities} from '../commander-live-abilities.js';
 import {createLiveCommanderCombat,castLiveCommanderCombat} from '../commander-live-combat.js';
 import {createBasicTurnSession,peekBasicTurn,stepBasicTurn,advanceBasicTurnSession} from '../commander-basic-turn-session.js';
-function make(){
+// Special-round fixtures opt into the historical clock rather than inventing prior actions.
+function make(heroActionClockVersion=1){
  const teams=[[{id:'a',hp:100,maxHp:100,attack:30,defense:0,shield:0,lane:'front',speed:20,position:0}],[{id:'b',hp:100,maxHp:100,attack:30,defense:0,shield:0,lane:'front',speed:10,position:0}]];
  const abilities=createLiveCommanderAbilities({matchKey:'cursor:1',energy:[40,40],now:1000});
- return createLiveCommanderCombat({abilities,teams,commanders:[{commanderId:'defense'},{commanderId:'attack'}]});
+ return createLiveCommanderCombat({heroActionClockVersion,abilities,teams,commanders:[{commanderId:'defense'},{commanderId:'attack'}]});
 }
 test('only scheduled hero acts once per round',()=>{
  const s=createBasicTurnSession(make());
@@ -59,7 +60,7 @@ test('opt-in parity session calculates legacy damage with server-owned critical'
 });
 
 test('opt-in support heals injured ally on third round instead of attacking',()=>{
- const c=make();c.round=3;
+ const c=make(0);c.round=3;
  c.teams[0][0].role='support';c.teams[0][0].attack=100;
  c.teams[0].push({id:'injured',hp:20,maxHp:100,attack:10,defense:0,shield:0,lane:'back',speed:5,position:1});
  const session=createBasicTurnSession(c,{parity:true,specialHealing:true});
@@ -70,7 +71,7 @@ test('opt-in support heals injured ally on third round instead of attacking',()=
  assert.equal(c.teams[1][0].hp,100);
 });
 test('full-HP healer fallback preserves its special multiplier instead of an ordinary attack',()=>{
- const c=make();c.round=3;
+ const c=make(0);c.round=3;
  c.teams[0][0].active={effect:'heal',name:'Prayer',power:1.12};
  c.teams[0][0].role='support';c.teams[0][0].attack=100;
  c.teams[1][0].defense=50;c.teams[1][0].hp=c.teams[1][0].maxHp=1000;
@@ -88,7 +89,7 @@ test('unported special effects remain blocked even with healing enabled',()=>{
 });
 
 test('opt-in energy splash applies primary and secondary damage in one scheduled turn',()=>{
- const c=make();c.round=3;
+ const c=make(0);c.round=3;
  c.teams[0][0].role='energy';
  c.teams[1].push({id:'b2',hp:100,maxHp:100,attack:30,defense:0,shield:10,lane:'back',speed:5,position:1});
  const s=createBasicTurnSession(c,{parity:true,energySplash:true});
@@ -110,7 +111,7 @@ test('energy splash is inactive on ordinary rounds',()=>{
 });
 
 test('scheduled shield special applies only on third round',()=>{
- const c=make();c.round=3;c.teams[0][0].active={effect:'shield',name:'Guard'};
+ const c=make(0);c.round=3;c.teams[0][0].active={effect:'shield',name:'Guard'};
  const s=createBasicTurnSession(c,{parity:true,shieldDrain:true});
  const {result}=stepBasicTurn(s);
  assert.equal(result.events.some(e=>e.action==='shield'),true);
@@ -118,7 +119,7 @@ test('scheduled shield special applies only on third round',()=>{
  assert.equal(peekBasicTurn(s).actorId,'b');
 });
 test('scheduled drain special heals based on actual damage',()=>{
- const c=make();c.round=3;c.teams[0][0].active={effect:'drain',name:'Drain'};c.teams[0][0].hp=70;
+ const c=make(0);c.round=3;c.teams[0][0].active={effect:'drain',name:'Drain'};c.teams[0][0].hp=70;
  const s=createBasicTurnSession(c,{parity:true,shieldDrain:true});
  const {result}=stepBasicTurn(s);
  assert.equal(result.events.some(e=>e.action==='heal'),true);
@@ -134,7 +135,7 @@ test('shield skill attacks normally outside special rounds',()=>{
 
 for(const [effect,action] of [['sunder','armor-break'],['weaken','weaken'],['haste','haste']]){
  test('scheduled '+effect+' special updates stats on third round',()=>{
-  const c=make();c.round=3;c.teams[0][0].active={effect,name:effect};
+  const c=make(0);c.round=3;c.teams[0][0].active={effect,name:effect};
   const original={defense:c.teams[1][0].defense,attack:c.teams[1][0].attack,speed:c.teams[0][0].speed};
   const session=createBasicTurnSession(c,{parity:true,statSpecial:true});
   const {result}=stepBasicTurn(session);
@@ -153,7 +154,7 @@ test('stat special actor uses ordinary attack on non-special round',()=>{
 });
 
 test('execute finishes target only when post-hit HP falls strictly below 12 percent',()=>{
- const c=make();c.round=3;c.teams[0][0].active={effect:'execute',name:'Finisher'};
+ const c=make(0);c.round=3;c.teams[0][0].active={effect:'execute',name:'Finisher'};
  c.teams[1][0].maxHp=100;c.teams[1][0].hp=35;
  const session=createBasicTurnSession(c,{parity:true,executeSpecial:true});
  const {result}=stepBasicTurn(session);
@@ -187,7 +188,7 @@ test('thorns passive requires explicit opt-in',()=>{
 });
 
 test('thorns combines with shield special exactly once',()=>{
- const c=make();c.round=3;c.teams[0][0].active={effect:'shield',name:'Guard'};
+ const c=make(0);c.round=3;c.teams[0][0].active={effect:'shield',name:'Guard'};
  c.teams[0][0].passive={effect:'thorns',value:.2};
  c.teams[0][0].defense=50;
  const d=c.teams[0][0].defense;
@@ -197,7 +198,7 @@ test('thorns combines with shield special exactly once',()=>{
  assert.equal(result.events.filter(e=>e.action==='thorns-shield').length,1);
 });
 test('thorns combines with execute special exactly once',()=>{
- const c=make();c.round=3;c.teams[0][0].active={effect:'execute',name:'Finisher'};
+ const c=make(0);c.round=3;c.teams[0][0].active={effect:'execute',name:'Finisher'};
  c.teams[0][0].passive={effect:'thorns',value:.2};
  c.teams[0][0].defense=50;
  const expected=Math.floor(c.teams[0][0].defense*.2);
@@ -208,7 +209,7 @@ test('thorns combines with execute special exactly once',()=>{
 });
 
 test('energy splash with thorns adds one shield after area attack',()=>{
- const c=make();c.round=3;c.teams[0][0].role='energy';c.teams[0][0].defense=50;
+ const c=make(0);c.round=3;c.teams[0][0].role='energy';c.teams[0][0].defense=50;
  c.teams[0][0].passive={effect:'thorns',value:.2};
  c.teams[1].push({id:'b2',hp:100,maxHp:100,attack:30,defense:0,shield:0,lane:'back',speed:5,position:1});
  const session=createBasicTurnSession(c,{parity:true,energySplash:true,thornsPassive:true});

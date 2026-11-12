@@ -6,7 +6,7 @@ import {validateTurnCommand,validateCommanderTurnTargets} from './commander-turn
 export function createCommanderMatchSession({cardsA,cardsB,commanders,seed,remainingCredits=[0,0]}){
  if(!Array.isArray(cardsA)||cardsA.length!==5||!Array.isArray(cardsB)||cardsB.length!==5)throw Error('Invalid teams');
  if(!Array.isArray(commanders)||commanders.length!==2||commanders.some(c=>!c?.commanderId))throw Error('Two commander profiles required');
- return {cardsA:structuredClone(cardsA),cardsB:structuredClone(cardsB),
+ return {heroActionClockVersion:1,cardsA:structuredClone(cardsA),cardsB:structuredClone(cardsB),
   commanders:structuredClone(commanders),seed:String(seed||'commander-session'),
   remainingCredits:[...remainingCredits],round:1,pending:[undefined,undefined],
   turns:[],result:null,finished:false};
@@ -32,7 +32,7 @@ export function submitCommanderMatchTurn(session,{side,round,command,targetIds})
  const turns=[...session.turns,nextPending.map(x=>({...x}))];
  // Validate and compute the complete round before mutating committed state.
  const result=replayCommanderTranscript(session.cardsA,session.cardsB,{
-  commanders:session.commanders,turns,seed:session.seed,
+  commanders:session.commanders,turns,seed:session.seed,heroActionClockVersion:session.heroActionClockVersion??0,
   remainingCredits:session.remainingCredits
  });
  session.turns=turns;session.result=result;

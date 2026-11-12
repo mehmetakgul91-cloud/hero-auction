@@ -25,7 +25,7 @@ const stun=result=>result.events.at(-1).impacts.filter(impact=>impact.kind==='st
 for(const side of [0,1])test(`seat ${side}: 25 main plus 6 EACH adjacent/diagonal, one main-only next-action stun`,()=>{
  const c=make({side}),result=cast(c,{side});
  assert.deepEqual(hits(result).map(e=>[e.target,e.rawDamage,e.value]),[['b3',25,25],['b0',6,6],['b1',6,6],['b2',6,6],['b4',6,6]]);
- assert.deepEqual(stun(result),[{target:'b3',kind:'stun',value:1,nextAction:true}]);
+ assert.deepEqual(stun(result),[{target:'b3',kind:'stun',value:1,nextAction:true,stunVersion:2,blockedRound:2,passiveSilence:true}]);
  assert.equal(result.events.at(-1).value,49);
  assert.deepEqual(c.teams[1-side].map(u=>u.commanderStunNextAction),[undefined,undefined,undefined,true,undefined]);
  assert.ok(c.teams[1-side].every(u=>u.commanderStunNextAttack===undefined));
@@ -140,7 +140,7 @@ test('damage events + summary impacts replay once, preserve action-stun, and sum
 });
 
 test('historical passive-heal bridge preserves automatic healing without consuming pending action stun',()=>{
- const c=make();cast(c);const target=c.teams[1][3],before=target.hp;
+ const c=make();const target=c.teams[1][3];target.hp-=5;target.commanderStunNextAction=true;const before=target.hp; // Historical action-only snapshot has no stunVersion.
  const out=applyBattleLogHeroEvent(c,{round:2,side:1,actor:'b3',target:'b3',action:'passive-heal',value:2});
  assert.equal(out.event.action,'passive-heal');assert.equal(c.teams[1][3].hp,before+2);
  assert.equal(c.teams[1][3].commanderStunNextAction,true);assert.equal(c.teams[1][3].lastActionRound,undefined);

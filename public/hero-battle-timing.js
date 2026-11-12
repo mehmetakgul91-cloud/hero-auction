@@ -7,7 +7,7 @@ export const HERO_SPECIAL_MS=1500;
 export const HERO_BASELINE_MS=900;
 export function heroActionDuration(events=[]){
  const entries=Array.isArray(events)?events:[events];
- return entries.some(e=>['special','splash'].includes(e?.damageType)||(e?.round%3===0&&['heal','shield'].includes(e?.action)))?HERO_SPECIAL_MS:HERO_NORMAL_MS;
+ return entries.some(e=>['special','splash'].includes(e?.damageType)||(['heal','shield'].includes(e?.action)&&(typeof e?.heroSpecial==='boolean'?e.heroSpecial:e?.heroActionClockVersion==null&&e?.round%3===0)))?HERO_SPECIAL_MS:HERO_NORMAL_MS;
 }
 export function heroPlaybackInterval(events,speed=850){
  return Math.round(heroActionDuration(events)*Math.max(.8,Math.min(1.15,(Number(speed)||850)/850)));

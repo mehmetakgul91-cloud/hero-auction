@@ -15,8 +15,8 @@ import {stepParityExecute} from '../commander-parity-execute.js';
 import {applyBattleLogHeroEvent} from '../commander-battle-log-bridge.js';
 
 const hero=(id,extra={})=>({id,hp:1000,maxHp:1000,attack:100,defense:0,speed:50,shield:0,role:'fighter',lane:'front',position:0,...extra});
-function combat({shield=50,hp=1000,round=1,actor={}}={}){
- return createLiveCommanderCombat({round,abilities:createLiveCommanderAbilities({matchKey:'shield:rule',energy:[0,0],now:1000}),teams:[[hero('a',actor)],[hero('b',{shield,hp})]],commanders:[{commanderId:'attack'},{commanderId:'defense'}]});
+function combat({shield=50,hp=1000,round=1,actor={},heroActionClockVersion=round===1?1:0}={}){
+ return createLiveCommanderCombat({heroActionClockVersion,round,abilities:createLiveCommanderAbilities({matchKey:'shield:rule',energy:[0,0],now:1000}),teams:[[hero('a',actor)],[hero('b',{shield,hp})]],commanders:[{commanderId:'attack'},{commanderId:'defense'}]});
 }
 for(const [shield,damage,absorbed] of [[50,50,35],[20,50,20],[0,50,0],[100,1,0],[100,2,1],[100,3,2],[100,5,3],[100,90,63],[100,2.9,2],[1.5,50,1.5],[1000000,1000000,700000],[Number.MAX_VALUE,Number.MAX_VALUE,Math.floor(Number.MAX_VALUE*.7)]]){
  test(`shield ${shield} absorbs ${absorbed} from ${damage}`,()=>assert.equal(calculateShieldAbsorption(shield,damage),absorbed));
@@ -45,7 +45,8 @@ test('lethal leakage preserves remaining shield and credits one casualty without
  assert.equal(c.abilities.energy[1],10);assert.equal(c.finished,true);
 });
 test('shield gains are uncapped and later hits apply the rule once',()=>{
- const c=combat();
+ // Isolated repeated-hit arithmetic retains historical same-round semantics.
+ const c=combat({heroActionClockVersion:0});
  applyServerHeroAction(c,{side:1,actorId:'b',targetId:'b',action:'shield',value:10000});
  assert.equal(c.teams[1][0].shield,10050);
  const first=applyServerHeroAction(c,{side:0,actorId:'a',targetId:'b',value:50});
@@ -60,7 +61,7 @@ test('commander area damage independently splits each shielded target',()=>{
  for(const hit of hits){assert.equal(hit.absorbed,Math.floor(hit.rawDamage*7/10));assert.equal(hit.value,hit.rawDamage-hit.absorbed);}
 });
 test('standalone splash uses 70 percent after the splash multiplier, not twice',()=>{
- const c=combat({shield:10000,actor:{role:'energy'}});c.teams[1].push(hero('b2',{shield:10000}));
+ const c=combat({shield:10000,actor:{role:'energy'},heroActionClockVersion:0});c.teams[1].push(hero('b2',{shield:10000}));
  const {events}=applyServerSplashAction(c,{side:0,actorId:'a',primaryTargetId:'b',primaryRaw:100});
  assert.equal(events.length,1);assert.equal(events[0].rawDamage,15);
  assert.equal(events[0].absorbed,10);assert.equal(events[0].value,5);

@@ -14,7 +14,7 @@ function selectedFriendly(allies,targetIds,{dead=false}={}){
  if(!target)throw Error(dead?'Select a fallen friendly hero':'Select a living friendly hero');return target;
 }
 // Pure transaction preparation: no energy, battle flags or input teams mutate.
-export function applyLiveCommanderEffect(teams,{side,ability,commanderId,commanderProfile={commanderId},normalBasis,magicPower,enemyFormation,round=1,targetIds,revivalUsed=false}){
+export function applyLiveCommanderEffect(teams,{side,ability,commanderId,commanderProfile={commanderId},normalBasis,magicPower,enemyFormation,round=1,targetIds,revivalUsed=false,stunVersion=2}){
  if(!Array.isArray(teams)||teams.length!==2||teams.some(t=>!Array.isArray(t))||![0,1].includes(side)||!Number.isInteger(round)||round<1)throw Error('Invalid battle snapshot');
  if(!['normal','ultimate'].includes(ability))throw Error('Invalid ability');
  if(!['attack','defense','magic','support'].includes(commanderId))throw Error('Invalid commander');
@@ -78,10 +78,10 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
    impacts.push({target:victim.id,kind:'damage',value:hit.damage,absorbed:hit.absorbed,...metadata});
    log.push({round,side,actor:'commander:'+side,action:'commander-hit',target:victim.id,value:hit.damage,absorbed:hit.absorbed,rawDamage,damageType:'commander',...metadata});
   }
-  if(target.hp>0){grantCommanderActionStun(target);impacts.push({target:target.id,kind:'stun',value:1,nextAction:true});}
+  if(target.hp>0){grantCommanderActionStun(target,stunVersion===2?round:undefined);impacts.push({target:target.id,kind:'stun',value:1,nextAction:true,...(stunVersion===2?{stunVersion:2,blockedRound:target.commanderStunBlockedRound,passiveSilence:true}:{}),...(target.heroActionClockVersion===1?{heroActionClockVersion:1}:{})});}
  }
  expireCommanderFocus(next,round);
- expireCommanderHunt(next);expireCommanderStun(next);
+ expireCommanderHunt(next);expireCommanderStun(next,round);
  log.push({round,side,actor:'commander:'+side,action:'commander-'+commanderId+'-'+ability,value,impacts,...(commanderId==='attack'&&strong?{focusUntilDeath:true}:{}),commanderLevel:stats.level,abilityBonusPercent:stats.bonusPercent});
  return {teams:next,log,revivalUsed:nextRevivalUsed,finished:next.some(team=>team.every(u=>u.hp<=0))};
 }
