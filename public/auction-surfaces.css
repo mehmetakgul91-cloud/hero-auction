@@ -2,7 +2,7 @@
 body:has(#game[data-phase="auction"]:not([hidden],.auction-delivery-active)),
 body:has(#game.auction-results-only:not([hidden])) {
   background: radial-gradient(ellipse at 14% 0%, #5c696627, transparent 50rem),
-              linear-gradient(160deg, #1d2829ee, #10191be8),
+              linear-gradient(160deg, #1d2829ce, #10191bd9),
               url('/images/arena-themes/preparation-ground.webp') center top / 70rem auto repeat #192224;
 }
 
@@ -16,7 +16,7 @@ body:has(#game.auction-results-only:not([hidden])) {
                inset -1px -2px 1px #dfd1a34d, 0 1px 0 #d6c29559;
 }
 #game:is([data-phase="auction"]:not(.auction-delivery-active),.auction-results-only) #stage {
-  background: var(--stage-overlay, linear-gradient(145deg, #242b2770, #101a1ec4)),
+  background: var(--stage-overlay, linear-gradient(145deg, #242b2740, #101a1e87)),
               var(--pit-ground) center 46% / cover #20292a;
   border: 2px solid var(--pit-rim) !important;
   box-shadow: var(--pit-depth), 0 8px 16px #04080870;
@@ -26,8 +26,8 @@ body:has(#game.auction-results-only:not([hidden])) {
   & .room-tools {background: #20292b; color: var(--pit-muted); border-color: #59605a}
   & .room-code-label strong {color: var(--pit-gold)}
   & .auction-hero {
-    background: radial-gradient(ellipse at 48% 36%, #6d694014, #111b207d 72%),
-                linear-gradient(156deg, #141b1e66, #1923219c);
+    background: radial-gradient(ellipse at 48% 36%, #6d69400a, #111b2047 72%),
+                linear-gradient(156deg, #141b1e35, #19232162);
     border: 1px solid #3b4037;
     border-radius: 13px;
     box-shadow: var(--pit-depth);
@@ -43,7 +43,7 @@ body:has(#game.auction-results-only:not([hidden])) {
   }
   & :is(.auction-abilities,.status) {color: var(--pit-muted)}
   & .auction-action {
-    background: linear-gradient(155deg,#303b3a,#202b2e);
+    background: linear-gradient(155deg,#253333a6,#182529db);
     border: 1px solid #686b5c; box-shadow: inset 0 1px #f3e9cc42, 1px 4px 8px #060c0ebf;
   }
   & .auction-budget > div {
@@ -55,10 +55,10 @@ body:has(#game.auction-results-only:not([hidden])) {
   & .auction-budget-rival strong {color: #f1c3ae}
   & .big-bid {color: var(--pit-gold)}
   & .player-side {
-    --auction-team-bg: #e8d7ca; --auction-team-panel: #493a34;
+    --auction-team-bg: #e8d7ca; --auction-team-panel: #493a34c9;
     border-color: #a48f79; box-shadow: inset 0 2px 5px #4a2c214d, inset 0 -1px #f5e2bf, 1px 4px 7px #0a111477;
   }
-  & .player-side.me {--auction-team-bg: #d1e1e8; --auction-team-panel: #2e4146; border-color: #829da5}
+  & .player-side.me {--auction-team-bg: #d1e1e8; --auction-team-panel: #2e4146c9; border-color: #829da5}
   & .player-side .name {color: var(--pit-ink)}
   & .player-side :is(.auction-commander-type,.side-team-title) {color: #d0d6d2}
   & .player-side .auction-commander-self {color: #b8dcee}
@@ -66,22 +66,22 @@ body:has(#game.auction-results-only:not([hidden])) {
 }
 
 #game.auction-results-only {
-  --stage-overlay: linear-gradient(145deg,#1c26298c,#10191eca);
+  --stage-overlay: linear-gradient(145deg,#1c262954,#10191e98);
   & .auction-summary h2 {color: var(--pit-ink); text-shadow: 0 2px 4px #0d1317}
   & .calculation-team[data-team] {
     --theme-ink: #f3eee4; --theme-muted: #c7d3d4;
-    position: relative; color: var(--theme-ink); box-shadow: 0 0 0 2px #111819,0 1px 0 3px #a5a0887d,1px 5px 9px #091114ab;
+    position: relative; background: transparent; color: var(--theme-ink); box-shadow: 0 0 0 2px #111819,0 1px 0 3px #a5a0887d,1px 5px 9px #091114ab;
   }
   & .calculation-team[data-team]::after {
     content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
     box-shadow: inset 3px 5px 9px #070d1070, inset -1px -2px 1px #d6c9a54f;
   }
   & .calculation-team[data-team="own"] {
-    --calculation-row: #23343d; --calculation-heading: #2c424b; --calculation-total: #304753;
+    --calculation-row: #23343d; --calculation-heading: #213c47b8; --calculation-total: #304753;
     --calculation-border: #465b61; --calculation-accent: #8bbac8;
   }
   & .calculation-team[data-team="opponent"] {
-    --calculation-row: #382e2c; --calculation-heading: #4a3933; --calculation-total: #4d3b33;
+    --calculation-row: #382e2c; --calculation-heading: #49332bbf; --calculation-total: #4d3b33;
     --calculation-border: #65514a; --calculation-accent: #cb9a82;
   }
   & .calculation-team-heading {box-shadow: inset 2px 4px 7px #080e125c,inset 0 -1px #d4cba22a}
