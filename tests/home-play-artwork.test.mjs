@@ -46,7 +46,7 @@ test('landscape crop and mask are scoped only to Play, with cache-busted CSS',()
  assert.match(rule,/mask-image:linear-gradient\(#000 68%,transparent 100%\)/);
  assert.match(rule,/-webkit-mask-image:linear-gradient\(#000 68%,transparent 100%\)/);
  assert.match(rule,/opacity:1/);
- assert.match(html,/\/lobby-chrome\.css\?v=play-arena-20261110/);
+ assert.match(html,/\/lobby-chrome\.css\?v=lobby-scenes-20261113/);
 });
 
 test('Play artwork is served intact by normal web and CrazyGames routes',{timeout:15000},async()=>{
@@ -67,7 +67,7 @@ test('Play artwork is served intact by normal web and CrazyGames routes',{timeou
    assert.equal(response.headers.get('cache-control'),'no-store','new menu artwork does not broaden immutable cache allowlists');
    assert.deepEqual(Buffer.from(await response.arrayBuffer()),read('public'+source));
    const page=await fetch(origin+prefix+'/');assert.equal(page.status,200);
-   const pageHtml=await page.text();assert.ok(pageHtml.includes('home-play-arena.da9037bd905f1998.webp'));assert.ok(pageHtml.includes('lobby-chrome.css?v=play-arena-20261110'));
+   const pageHtml=await page.text();assert.ok(pageHtml.includes('home-play-arena.da9037bd905f1998.webp'));assert.ok(pageHtml.includes('lobby-chrome.css?v=lobby-scenes-20261113'));
   }
  }finally{server.kill('SIGTERM');await new Promise(resolve=>{if(server.exitCode!==null)return resolve();server.once('exit',resolve);setTimeout(resolve,2000).unref();});}
 });
