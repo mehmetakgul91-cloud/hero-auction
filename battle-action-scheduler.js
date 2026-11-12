@@ -1,3 +1,4 @@
+import {usesHeroActionClock} from './public/hero-action-clock.js';
 // Shared deterministic hero action scheduler for legacy and incremental combat.
 // The ordering is recalculated at round start, not after each action.
 export function orderHeroActions(teams,{round=0}={}){
@@ -9,6 +10,6 @@ export function orderHeroActions(teams,{round=0}={}){
 // changing the round's originally scheduled order.
 export function nextScheduledHeroAction(order,cursor=0,{round=Number.MAX_SAFE_INTEGER}={}){
  if(!Array.isArray(order)||!Number.isSafeInteger(cursor)||cursor<0||cursor>order.length)throw Error('Invalid action cursor');
- for(let i=cursor;i<order.length;i++)if(order[i].unit.hp>0&&(!Number.isInteger(order[i].unit.canActFromRound)||order[i].unit.canActFromRound<=round))return {index:i,nextCursor:i+1,side:order[i].side,unit:order[i].unit};
+ for(let i=cursor;i<order.length;i++)if(order[i].unit.hp>0&&(!usesHeroActionClock(order[i].unit)||!(order[i].unit.lastActionRound>=round))&&(!Number.isInteger(order[i].unit.canActFromRound)||order[i].unit.canActFromRound<=round))return {index:i,nextCursor:i+1,side:order[i].side,unit:order[i].unit};
  return null;
 }

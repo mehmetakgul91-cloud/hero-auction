@@ -1,5 +1,6 @@
 import {chooseCommanderFocusEnemy,hasCommanderFocus} from './battle-commander-focus.js';
-import {hasCommanderStun} from './commander-stun-status.js';
+import {hasCommanderStun,hasCommanderActionStun} from './commander-stun-status.js';
+const hasPendingCommanderStun=unit=>hasCommanderStun(unit)||hasCommanderActionStun(unit);
 import {getCommanderAbilityCost} from './public/commander-ability-rules.js';
 // Server-owned decisions, restricted to information a player can observe.
 // Difficulty changes choices, reaction time and the temporary commander profile.
@@ -109,8 +110,8 @@ export function chooseBotCast(snapshot,commanderId,difficulty,{now=Date.now(),la
    const shields=allies.reduce((n,u)=>n+(u.shield||0),0);
    if(shields>maxHp*.3&&!urgent)return null;
   }else if(commanderId==='magic'&&cast==='normal'){
-   // Do not spend normal energy reapplying the same one-attack stun.
-   const worthwhile=enemies.some(u=>!hasCommanderStun(u));
+   // Do not spend normal energy reapplying the same pending stun.
+   const worthwhile=enemies.some(u=>!hasPendingCommanderStun(u));
    if(!worthwhile)return null;
 
   }
@@ -120,7 +121,7 @@ export function chooseBotCast(snapshot,commanderId,difficulty,{now=Date.now(),la
  else if(cast==='ultimate'&&friendlyTarget)result.targetIds=[friendlyTarget.id];
  else if(commanderId==='magic'){
   const ranked=level==='hard'?[...enemies].sort((a,b)=>{
-   const value=u=>(u.attack||u.baseAttack||0)*(hasCommanderStun(u)?0:1)*(u.hp/u.maxHp>.2?1:.6);
+   const value=u=>(u.attack||u.baseAttack||0)*(hasPendingCommanderStun(u)?0:1)*(u.hp/u.maxHp>.2?1:.6);
    return value(b)-value(a)||String(a.id).localeCompare(String(b.id));
   }):enemies;
   result.targetIds=ranked.slice(0,1).map(u=>u.id);

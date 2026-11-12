@@ -10,7 +10,7 @@ import {createLiveArenaLifecycle} from '../commander-live-arena-lifecycle.js';
 
 const flags={parity:true,specialHealing:true,energySplash:true,shieldDrain:true,statSpecial:true,executeSpecial:true,thornsPassive:true,roundPassives:true,damageSpecial:true};
 const roster=[...battleRoster.filter(h=>h.role==='tank').slice(0,4),...battleRoster.filter(h=>h.role==='energy').slice(0,6)];
-for(const difficulty of ['easy','medium','hard'])test(`${difficulty}: real bot formation and casts preserve first-death cover through paced matches and rematches`,()=>{
+for(const difficulty of ['easy','medium','hard'])test(`${difficulty}: real bot formation and casts preserve permanent center defense through paced matches and rematches`,()=>{
  let now=0,callback,casts=0,deaths=0,protectedSnapshots=0;
  const lifecycle=createLiveArenaLifecycle({readablePacing:true,clock:()=>now,scheduler:fn=>{callback=fn;return 1},canceller(){}});
  for(let match=1;match<=2;match++){
@@ -23,20 +23,20 @@ for(const difficulty of ['easy','medium','hard'])test(`${difficulty}: real bot f
   const centers=teams.map(team=>team.filter(h=>h.lane==='back')[1].id);
   for(const [side,team] of teams.entries()){
    assert.equal(team.filter(h=>h.lane==='front').length,2,'actual bot chooses eligible 2/3 formation');
-   assert.deepEqual(team.find(h=>h.id===centers[side]).centerProtection,{version:1,protectorIds:team.filter(h=>h.id!==centers[side]).map(h=>h.id),broken:false},'each fresh rematch initializes a new mark');
+   assert.deepEqual(team.find(h=>h.id===centers[side]).centerDefenseBonus,{version:1,multiplier:1.15},'each fresh rematch initializes a new mark');
   }
   const combat=createLiveCommanderCombat({teams,commanders,abilities:createLiveCommanderAbilities({matchKey,now})});
   lifecycle.begin({matchKey,tokens:['human','bot'],combat,options:flags});
   const broken=[false,false];
   const audit=state=>{
    for(const [side,team] of state.teams.entries()){
-    const center=team.find(h=>h.id===centers[side]),mark=center.centerProtection;
-    assert.deepEqual(mark.protectorIds,ordered[side].filter(h=>h.id!==center.id).map(h=>h.id));
-    const dead=team.some(h=>mark.protectorIds.includes(h.id)&&h.hp===0);
+    const center=team.find(h=>h.id===centers[side]),mark=center.centerDefenseBonus;
+    assert.equal(mark.multiplier,1.15);
+    const dead=team.some(h=>h.id!==center.id&&h.hp===0);
     if(dead&&!broken[side])deaths++;
     broken[side] ||= dead;
-    assert.equal(mark.broken,broken[side],'first actual protector death breaks cover permanently');
-    if(!mark.broken)protectedSnapshots++;
+    assert.deepEqual(mark,{version:1,multiplier:1.15},'bonus persists after casualties');
+    if(!broken[side])protectedSnapshots++;
    }
   };
   let lastCastAt=0,finished=false;
@@ -50,8 +50,7 @@ for(const difficulty of ['easy','medium','hard'])test(`${difficulty}: real bot f
    const after=lifecycle.snapshot({matchKey,token:'human',now});audit(after);
    // A server tick is a real automatic hero action, unlike explicit commander casts.
    for(const event of after.events.filter(e=>e.version>before.version&&e.damageType==='normal')){
-    const prior=before.teams[1-event.side].find(h=>h.id===centers[1-event.side]);
-    if(!prior.centerProtection.broken)assert.notEqual(event.target,prior.id,'automatic primary hits cannot choose the covered rear center');
+    assert.ok(before.teams[1-event.side].some(h=>h.id===event.target&&h.hp>0),'automatic target is a living enemy');
    }
    finished=after.finished;
   }

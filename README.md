@@ -29,7 +29,7 @@ Kalkan kazanımı/yenilenmesi ve birikimi değişmez; yeni bir başlangıç veya
 
 Açık artırmada edinilen beş kahraman, kendi ön/arka saf tercihine (kahramanın kayıtlı saf bonuslarına) göre tahtaya otomatik yerleşir. Oyuncu **Ön saf / Arka saf** düğmeleriyle safı değiştirir. Aynı saftaki iki kahramana art arda dokunmak yerlerini değiştirir; rol kahramanla birlikte taşınır. Başka saftaki bir kahramana dokunmak yeni seçim yapar, saflar arasında takas yapmaz. Saf düğmesi tek başına kahraman sırasını değiştirmez. Mevcut kurallarda iki safın her biri sıfır ile beş kahraman içerebilir.
 
-Yeni savaş tam **2 ön + 3 arka** dizilişle başlıyorsa arka safın ortası, diğer dört kahramandan herhangi biri gerçekten ölene kadar otomatik ana hedef olamaz. Koruma ilk ölümde kalıcı olarak kalkar; diriltme geri getirmez. Av Emri, diğer komutan yetenekleri ve alan hasarı değişmez. Ayrıntılar: [merkez koruması](docs/center-protection.md).
+Yeni savaş tam **2 ön + 3 arka** dizilişle başlıyorsa arka safın ortasındaki kahramanın başlangıç savunması **%15 artırılır** ve en yakın tam sayıya yuvarlanır. Bu bonus savaş boyunca sürer; ölümler ve diriltme bonusu kaldırmaz veya tekrar uygulamaz. Kahraman normal saf öncelikleriyle otomatik hedeflenebilir. Av Emri, komutan ve alan hasarı formülleri değişmez. Ayrıntılar: [merkez savunması](docs/center-protection.md).
 
 Yeni savaşta suikastçıların saf, kredi, komutan ve savaş başı pasiflerinden sonra hesaplanan başlangıç saldırısı **%10 artırılır**, sonuç en yakın tam sayıya yuvarlanır. Kart gücü, savunma, can, hız ve diğer roller değişmez. Mevcut savaş görüntüleri yeniden hesaplanmaz; tur geçişi veya diriltme aynı bonusu tekrar uygulamaz. Hazırlık ekranı aynı motoru kullandığı için bu saldırı artışını gösterir.
 
@@ -57,8 +57,14 @@ Geçici eski Android uyumluluğu: yalnız tam `okhttp/4.12.0` taşıma izi, Orig
 
 Komutan ekranında dört bağımsız gelişim dalı seçilir; sıkıştırılmış bağlantılı
 seviye yolu mevcut ve sıradaki seviyeyi gösterir. Dal seçimi harcama yapmaz.
-Ana dal 40, yan dal 20 etkin seviyedir; komutan değişince fazladan kayıtlı
-seviyeler silinmez, saklı olarak gösterilir. Sonraki gerçek sınıf/beceri/dolum
+Yalnız seçilen komutanın dalı, ilgili kahraman türlerine seviye başına %0,5
+bonus verir (en fazla 40 seviye / %20). Saldırı komutanı savaşçı/suikastçı
+saldırısını, büyü komutanı enerji kahramanı saldırısını, savunma komutanı tank
+savunmasını mevcut değer üzerinden çarpar: 50 × 1,15 = 57,5. Destek komutanı
+saldırıyı veya canı değiştirmeden şifa oranına yüzde puanı ekler: %40 + 15 = %55.
+Şifa+kalkan kahramanlarında yalnız şifa oranı değişir, kalkan oranı sabit kalır. Diğer dallar bu maçta bonus vermez;
+kayıtlı seviyeleri korunur ve kendi komutanı seçildiğinde yeniden etkinleşir.
+Geliştirme satın alma sınırları ana dalda 40, diğer dallarda 20 olarak korunur. Sonraki gerçek sınıf/beceri/dolum
 etkileri ve sunucunun ücreti birlikte görünür.
 
 - Altın: hedef seviye `L` için `ceil(200 × 1,2^(L−1))`; ilk fiyatlar 200, 240,
@@ -165,19 +171,19 @@ Test: `node --test tests/arena-music.test.mjs tests/static-audio.test.mjs tests/
 
 Kahraman aktifleri/pasifleri nadirlik ve rol bütçeleriyle kayıtlı parametrelerden hesaplanır; istemci kendi beceri gücünü gönderemez. Ayrıntılı 50 kahraman önce/sonra tablosu `docs/ability-balance/roster-changes.md` içindedir. Kael ve Alev Zırhı özel turda hedefin hareketini sıra sonuna taşır; hareket iptal edilmez veya çoğaltılmaz, geciktirilen hareketten sonraki tam tur zincirlemeye karşı korunur. Seraphine ve Sancak Bekçisi aynı düşük-canlı müttefike sınırlı şifa ve kalkan uygular.
 
-Şifacıların tam-can özel vuruşu iki savaş yolunda eşittir. Bitirici hasar non-live tekrarın can göstergesine dahil edilir. Büyücü komutanının mevcut zayıflatması iki motorda da üç tur (uygulandığı tur dahil) sürer. Hazırlık ekranındaki yaklaşık güç, bütün savaş istatistiklerinin aynı sayıya dönüştüğü anlamına gelmez; kredi ve komutanın mevcut rol bazlı hesapları değişmez.
+Şifacıların tam-can özel vuruşu iki savaş yolunda eşittir. Bitirici hasar non-live tekrarın can göstergesine dahil edilir. Büyücünün güncel normal becerisi iki motorda da ana/alan hasarı verir ve yalnız yaşayan ana hedefin sonraki planlı eylemini atlatır; tarihî zayıflatma kayıtları kendi davranışını korur. Hazırlık ekranındaki yaklaşık güç, bütün savaş istatistiklerinin aynı sayıya dönüştüğü anlamına gelmez; kredi ve komutanın mevcut rol bazlı hesapları değişmez.
 
 `node tools/verify-ability-parity.mjs` tüm kahramanlarla aynı kritik akışında legacy/canlı durumlarını karşılaştırır. `node tools/compare-ability-balance.mjs` sabit başlangıç commitine karşı kontrollü takım matrisi çalıştırır; sonuçlar gerçek oyuncu kitlesi kazanma oranı tahmini değildir. Görsel tarayıcı QA ortam kısıtı nedeniyle tamamlanamadı; işlevsel DOM/API testleri bu sınırdan ayrıdır.
 
 
 ## Komutan nihai becerileri
 
-Her oyuncu savaş başına bir nihai kullanabilir. Normal enerji ve ulti dolumu ayrı havuzlardır; ikisi30 ile başlar, mevcut tur/seviye ve kahraman kaybı kazanımlarını ayrı ayrı alır,100 ile sınırlıdır. Normal beceri yalnız normal enerjiden40 harcar; ulti yalnız kendi dolumundan saldırı75, savunma85, büyü100, destek90 harcar. Normal kullanmak ulti dolumunu azaltmaz; kullanılan ulti göstergesi tekrar dolmaz. İptal/yanlış hedef hak veya enerji tüketmez. Kullanım hakkı sunucu oturumundadır; yeniden bağlanma yenilemez, yeni maç sıfırlar.
+Her oyuncu savaş başına bir nihai kullanabilir. Normal enerji ve ulti dolumu ayrı havuzlardır; ikisi30 ile başlar, mevcut tur/seviye ve kahraman kaybı kazanımlarını ayrı ayrı alır,100 ile sınırlıdır. Normal beceri yalnız normal enerjiden büyücü için 60, diğer komutanlar için 40 harcar; ulti yalnız kendi dolumundan saldırı75, savunma85, büyü100, destek90 harcar. Normal kullanmak ulti dolumunu azaltmaz; kullanılan ulti göstergesi tekrar dolmaz. İptal/yanlış hedef hak veya enerji tüketmez. Kullanım hakkı sunucu oturumundadır; yeniden bağlanma yenilemez, yeni maç sıfırlar.
 
 - Av Emri: Hedef ölünceye kadar takımın saldırıları oyuncunun seçtiği yaşayan rakibe yönelir. Odakta tur veya saldırı sayısı sınırı yoktur. Ayrıca kullanım anında yaşayan her müttefikin sonraki tek saldırısındaki saldırı değeri %20 artar; alan vuruşları aynı bonusu bir kez kullanır. Bu bonus kalıcı değildir, birikmez ve kahraman ölürse silinir. Sersemleme nedeniyle atlanan saldırı, şifa ve yalnız kalkan eylemleri bonusu tüketmez. Kullanımda düşmüş olan veya sonradan dirilen kahramana yeni bonus verilmez. Ek saldırı vermez; şifa/kalkan eylemlerini saldırıya çevirmez ve alan saldırılarının diğer hedeflerini değiştirmez. Hedef ilk öldüğünde odak kalıcı olarak biter; dirilse de geri gelmez. Hedefin ölmesi, yaşayan müttefiklerin henüz kullanmadığı saldırı bonusunu silmez.
 - Son Kale: takım kalkanı ve oyuncunun seçtiği yaşayan bir müttefik için ilk ölümcül darbede 1 canla kurtulma. O turun kalanı ve sonraki 2 tam tur boyunca canı 1’in altına düşmez. Süre kullanırken değil, ölümcül darbede başlar; başka kahramana geçmez.
 - Aşırı Yük: seçilen dostun kullanım anındaki saldırısı kadar sabit bonus, üç hareket turu. Katlanmaz; alan hasarı aynı güçlendirilmiş saldırıdan bir kez hesaplanır, şifa/kalkan büyümez. Ölürse kalan süre kendi takımındaki mevcut canı en yüksek yaşayan dosta, yeni dostun kendi saldırı değeriyle aktarılır; süre uzamaz ve aynı tur fazladan güçlendirilmiş hareket verilmez.
-- Diriliş: seçilen düşmüş dost%40azami can ve sıfır kalkanla döner; en erken sonraki tur hareket eder. Bitmiş savaşta kullanılamaz.
+- Diriliş: seçilen düşmüş dost %55 azami can ve sıfır kalkanla döner; en erken sonraki tur hareket eder. Bitmiş savaşta kullanılamaz.
 
 Normal beceri maliyetleri, kredi/altın politikası, müzik, kahraman temel güçleri ve%70kalkan emilim kuralı korunur. Kontrollü simülasyonlar gerçek oyuncu kazanma oranı veya tüm koşullarda kusursuz denge iddiası değildir.
 
@@ -207,7 +213,11 @@ TR/EN açıklamaları ile karttaki **+%20 saldırı** göstergesi bu ayrı yük�
 
 ### Son Kale ve büyücü normal becerisi
 Son Kale için oyuncu yaşayan bir müttefik seçer; bot en düşük can oranını açık hedef kimliğiyle seçer. Koruma ilk ölümcül darbeye kadar tur sınırı olmadan bekler. Ölümcül darbede 1 canla kurtarır; tetiklendiği turun kalanı ve sonraki 2 tam tur canı 1’in altına düşmez (3. turda tetiklenirse 5. tur sonuna kadar, 6. tur başında biter). Şifa normal çalışır; süre iyileştirme, tekrar darbe veya sersemlemeyle yenilenmez. Başka kahramana geçmez. Takım kalkanı, 85 ulti dolumu ve savaşta tek kullanım değişmez. Eski kayıtlar yeni kurala dönüştürülmez. Ayrıntı: `docs/commander-defense-immortality.md`.
-Büyücünün normal becerisi tek rakibin sonraki ilk gerçek saldırısını zayıflatır. Temel oran %35; 10 seviyede %38,5, 20 seviyede %42. Saldırana kadar bekler; aynı saldırının alan hasarı da etkilenir, iyileştirme/kalkan eylemleri ve komutan saldırıları hakkı tüketmez. Tek yük tutulur; tekrar kullanım ek yük biriktirmez. Önceki çok turlu etkinin yerini alır; bu değişiklik için yeni kapsamlı denge simülasyonu yapılmamıştır.
+Büyücünün normal becerisi yerel kodda uygulanmıştır: 60 normal enerji karşılığında seçilen yaşayan rakibe `yuvarla(komutan seviyesi + 0,05 × savaş başında hazırlanmış enerji kahramanlarının toplam saldırısı)` ana hasar verir. Her yaşayan komşu ayrı ayrı `yuvarla(ana hasar × 0,25)` alan hasarı alır. Ana vuruş önce uygulanır; alan hedefleri vuruştan önce sabit dizilimden belirlenir. Savaş başlangıcı saldırı toplamı sonraki ölümler veya güçlendirmelerle değişmez.
+
+Komşuluk başlangıçtaki görsel saf merkezlerine göre sabittir: aynı safta hemen önceki/sonraki indeks, karşı safta normalize merkez uzaklığı `≤ 1 / max(saf boyutları)`. Sıfır tabanlı `i,j` indeksleri ve `n,m` saf boyutları için tam sayı koşulu `abs((2*i+1)*m - (2*j+1)*n) ≤ 2*min(n,m)` olur. 2 ön + 3 arka diziliminde arka ortanın alanı iki ön kahramanı ve iki arka komşuyu kapsar; 1 ön + 4 arkada ön hedef yalnız arka ortadaki iki yuvayı vurur. Düşen kahraman yuvaları kapatılmaz, komşuluk yeniden dağıtılmaz.
+
+Yalnız ana hedef vuruştan sonra hayattaysa sonraki planlı eyleminin tamamı, şifa ve kalkan dallarından önce atlanır. Atlanan eylemin turunda kahramanın kendi tetiklediği pasifler de durur. Hazırlanmış başlangıç bonusları, önceki öfke/kalkanlar ve müttefiklerden gelen etkiler silinmez. Yeni savaşlarda her kahraman tamamladığı eylemleri ayrı sayar; her üçüncü eylem özeldir. Sersemleme bu sayacı ilerletmez: bir atlama ilk özel beceriyi 3. turdan 4. tura, altıncı eylem öncesindeki iki atlama ikinci özel beceriyi 6. turdan 8. tura kaydırır. Sayaç ölüm/dirilme boyunca korunur. Sersemletme tur değişiminde bitmez, birikmez; ölüm, dirilme ve savaş sonunda temizlenir. Yeni `stunVersion: 2`, `passiveSilence: true`, `blockedRound` kayıtları eylem ve o turdaki kendi pasiflerini durdurur; sürümsüz `nextAction: true` kayıtları eski yalnız-eylem davranışını korur; tarihî `nextAttack: true` kayıtları yalnız saldırı atlatmaya devam eder. TR/EN açıklamaları, canlı durum ve tekrar gösterimi bu ayrımı korur. Uygulama ve sınama sözleşmesi: [büyücü normal becerisi](docs/commander-normal/mage-design-pending.md). Bu yerel uygulama yayın veya görsel tarayıcı QA tamamlandı anlamına gelmez.
 
 ## Zafer sandığı ve büyü tozu — ayrı etkinleştirmeli hazırlık
 

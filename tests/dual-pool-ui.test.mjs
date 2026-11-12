@@ -11,7 +11,7 @@ for(const [commanderId,cost]of Object.entries({attack:75,defense:85,magic:100,su
  assert.equal(ui.normalButton.disabled,false);assert.equal(ui.ultimateButton.disabled,true);
  state.energy=0;state.ultimateEnergy=cost;controls.refresh();
  assert.equal(ui.normalButton.disabled,true);assert.equal(ui.ultimateButton.disabled,false);assert.match(ui.energyLabel.textContent,new RegExp(`Normal: 0/100 · Ulti: ${cost}/100`));
- state.ultimateUsed=true;state.energy=40;controls.refresh();assert.equal(ui.normalButton.disabled,false);assert.equal(ui.ultimateButton.disabled,true);assert.match(ui.energyLabel.textContent,/Ulti: Kullanıldı/);controls.destroy();
+ state.ultimateUsed=true;state.energy=commanderId==='magic'?60:40;controls.refresh();assert.equal(ui.normalButton.disabled,false);assert.equal(ui.ultimateButton.disabled,true);assert.match(ui.energyLabel.textContent,/Ulti: Kullanıldı/);controls.destroy();
 });
 test('cancel/rejected ultimate does not locally debit either authoritative pool',async()=>{
  const ui=elements(),state={commanderId:'magic',ultimateTargetAvailable:true,energy:17,ultimateEnergy:100};let cancel=true,sent=0;

@@ -12,7 +12,7 @@ for(const side of [0,1])test(`legacy side${side} preserves explicitly selected e
  const result=simulateBattle(cards('a'),cards('b'),{seed:'selected-focus',maxRounds:5,commanders,commanderActions:[{round:5,side,ability:'ultimate',targetIds}]});
  const event=result.log.find(e=>e.action==='commander-attack-ultimate');assert.equal(event.impacts[0].target,targetIds[0]);assert.equal(event.side,side);
  const turns=Array.from({length:5},()=>[{command:'pass'},{command:'pass'}]);turns[4][side]={command:'ultimate',targetIds};
- const replay=replayCommanderTranscript(cards('a'),cards('b'),{seed:'selected-focus',commanders,turns});assert.deepEqual(replay.log,result.log);assert.equal(replay.commanderUltimateEnergy[side],3);
+ const replay=replayCommanderTranscript(cards('a'),cards('b'),{heroActionClockVersion:1,seed:'selected-focus',commanders,turns});assert.deepEqual(replay.log,result.log);assert.equal(replay.commanderUltimateEnergy[side],3);
 });
 test('turn target validation rejects omitted, duplicate, own, dead and missing enemy IDs',()=>{
  const teams=[[{id:'a0',hp:100}],[{id:'b0',hp:100},{id:'b1',hp:0}]];

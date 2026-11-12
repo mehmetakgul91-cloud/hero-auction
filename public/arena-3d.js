@@ -23,7 +23,7 @@ function describe(frame){
  const event=primaryAction(frame);if(!event){$('action-kicker').textContent='YENİ TUR';$('action-text').textContent='Kahramanlar sıradaki hamleye hazırlanıyor.';$('action-symbol').textContent='✦';return;}
  if(event.action==='stun-skip'){
   const actor=currentTeams[event.side]?.find(hero=>hero.id===event.actor);
-  $('action-kicker').textContent='SERSEMLEDİ';$('action-text').textContent=(actor?.name||'Kahraman')+' · Saldırı atlandı';$('action-symbol').textContent='✦';
+  $('action-kicker').textContent='SERSEMLEDİ';$('action-text').textContent=(actor?.name||'Kahraman')+(event.stunScope==='action'?' · Eylem atlandı':' · Saldırı atlandı');$('action-symbol').textContent='✦';
  }else if(String(event.actor).startsWith('commander:')){
   const heal=event.action.includes('support');$('action-kicker').textContent=heal?'DESTEK KOMUTANI':'SAVUNMA KOMUTANI';$('action-text').textContent=heal?'Yaşam enerjisi yaralı kahramanlara ulaşıyor.':'Takımın etrafında koruyucu kalkan oluşuyor.';$('action-symbol').textContent=heal?'✚':'◇';
  }else{

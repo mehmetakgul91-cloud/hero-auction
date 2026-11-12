@@ -1,5 +1,8 @@
+import {initializeHeroActionClocks,assertHeroActionAvailable,completeHeroAction,heroActionMetadata,isHeroSpecialTurn} from './public/hero-action-clock.js';
+import {captureMagicNormalPower} from './commander-magic-normal-power.js';
+import {captureCommanderFormation} from './public/commander-formation.js';
 import {consumeCommanderHunt,expireCommanderHunt} from './commander-hunt-status.js';
-import {consumeCommanderStun,expireCommanderStun} from './commander-stun-status.js';
+import {consumeCommanderStun,consumeCommanderActionStun,expireCommanderStun,commanderPassivesSuppressed} from './commander-stun-status.js';
 import {finishHeroDelay} from './battle-delay.js';
 import {consumeCommanderWeaken,expireCommanderWeaken} from './commander-weaken-status.js';
 import {expireCommanderFocus} from './battle-commander-focus.js';
@@ -10,15 +13,15 @@ import {commanderEnergyPerRound} from './public/commander-ability-rules.js';
 // Keep this adapter isolated until hero attacks are driven by the same live session.
 import {grantLiveCommanderEnergy,castLiveCommanderAbility} from './commander-live-abilities.js';
 import {applyLiveCommanderEffect} from './commander-live-effects.js';
-import {commanderAttackPower} from './commander-attack-damage.js';
+import {commanderNormalPower} from './commander-normal-power.js';
 
-export function createLiveCommanderCombat({abilities,teams,commanders,round=1}){
+export function createLiveCommanderCombat({abilities,teams,commanders,round=1,heroActionClockVersion=round===1?1:0}){
  if(!abilities||!Array.isArray(teams)||teams.length!==2||!Array.isArray(commanders)||commanders.length!==2)throw Error('Invalid live combat');
  if(commanders.some(c=>!['attack','defense','magic','support'].includes(c?.commanderId)))throw Error('Invalid commander profiles');
  // Actual authoritative profiles override any standalone ability fixture IDs.
  abilities.commanderIds=Object.freeze(commanders.map(profile=>profile.commanderId));
  abilities.ultimateUsed??=[false,false];
- return {abilities,ultimateUsed:abilities.ultimateUsed,teams:structuredClone(teams),commanders:structuredClone(commanders),commanderAttackPower:teams.map(commanderAttackPower),round,version:0,events:[],revivalUsed:[false,false],finished:false};
+ return {abilities,ultimateUsed:abilities.ultimateUsed,teams:initializeHeroActionClocks(structuredClone(teams),heroActionClockVersion),...(heroActionClockVersion?{heroActionClockVersion}:{}),commanders:structuredClone(commanders),commanderNormalPower:Object.freeze(teams.map(commanderNormalPower)),commanderMagicNormalPower:Object.freeze(teams.map(captureMagicNormalPower)),commanderFormations:Object.freeze(teams.map(captureCommanderFormation)),round,version:0,events:[],revivalUsed:[false,false],finished:false};
 }
 export function castLiveCommanderCombat(combat,{side,ability,requestId,matchKey,now=Date.now(),targetIds}){
  if(!combat||combat.finished)throw Error('Battle already finished');
@@ -31,7 +34,7 @@ export function castLiveCommanderCombat(combat,{side,ability,requestId,matchKey,
  }
  if(ability==='ultimate'&&combat.abilities.ultimateUsed?.[side])throw Error('Commander ultimate already used');
  // Compute effects first, without changing energy or HP if the cast cannot apply.
- const effect=applyLiveCommanderEffect(combat.teams,{side,ability,commanderId:combat.commanders[side].commanderId,commanderProfile:combat.commanders[side],attackBasis:combat.commanderAttackPower[side],round:combat.round,targetIds,revivalUsed:!!combat.revivalUsed?.[side]});
+ const effect=applyLiveCommanderEffect(combat.teams,{side,ability,commanderId:combat.commanders[side].commanderId,commanderProfile:combat.commanders[side],normalBasis:combat.commanderNormalPower[side],magicPower:combat.commanderMagicNormalPower[side],enemyFormation:combat.commanderFormations[1-side],round:combat.round,targetIds,revivalUsed:!!combat.revivalUsed?.[side]});
  const cast=castLiveCommanderAbility(combat.abilities,{side,ability,requestId,matchKey,now});
  combat.teams=effect.teams;
  combat.revivalUsed??=[false,false];combat.revivalUsed[side]=effect.revivalUsed;
@@ -46,20 +49,22 @@ export function castLiveCommanderCombat(combat,{side,ability,requestId,matchKey,
 }
 export function viewLiveCommanderCombat(combat,{sinceVersion=0}={}){
  if(!combat||!Number.isSafeInteger(sinceVersion)||sinceVersion<0)throw Error('Invalid snapshot request');
- return {version:combat.version,round:combat.round,teams:structuredClone(combat.teams),ultimateUsed:[...(combat.abilities.ultimateUsed||[false,false])],revivalUsed:[...(combat.revivalUsed||[false,false])],
+ return {version:combat.version,round:combat.round,...(combat.heroActionClockVersion?{heroActionClockVersion:combat.heroActionClockVersion}:{}),teams:structuredClone(combat.teams),ultimateUsed:[...(combat.abilities.ultimateUsed||[false,false])],revivalUsed:[...(combat.revivalUsed||[false,false])],
   events:combat.events.filter(e=>e.version>sinceVersion),finished:combat.finished};
 }
 
-// A skipped attack is one authoritative action, but never damage, a special,
-// an AoE hit or a focus charge. Healing/shield-only callers do not invoke this.
-export function applyServerStunSkip(combat,{side,actorId,round=combat?.round}){
- if(!combat||combat.finished||![0,1].includes(side)||round!==combat.round)throw Error('Invalid stun action');
+// A new stun skips any scheduled action. Old snapshot flags skip attacks only.
+// The skip never deals damage, triggers specials or consumes a focus charge.
+export function applyServerStunSkip(combat,{side,actorId,round=combat?.round,attacking=true}){
+ if(!combat||combat.finished||![0,1].includes(side)||round!==combat.round||typeof attacking!=='boolean')throw Error('Invalid stun action');
  const actor=combat.teams[side].find(u=>u.id===actorId&&u.hp>0);
  if(!actor)throw Error('Invalid acting hero');
- if(!consumeCommanderStun(actor))return null;
+ assertHeroActionAvailable(actor,round);
+ const stunScope=consumeCommanderActionStun(actor,round)?'action':attacking&&consumeCommanderStun(actor)?'attack':null;
+ if(!stunScope)return null;
  actor.lastActionRound=round;finishHeroDelay(actor,round);
  combat.version++;
- const event={round,side,actor:actorId,action:'stun-skip',target:actorId,value:0,version:combat.version};
+ const event={round,side,actor:actorId,action:'stun-skip',stunScope,target:actorId,value:0,version:combat.version,...heroActionMetadata(actor,round,false),...(actor.commanderStunVersion===2?{stunVersion:2,blockedRound:actor.commanderStunBlockedRound,passiveSilence:true}:{})};
  combat.events.push(event);
  return {version:combat.version,event,teams:structuredClone(combat.teams),finished:combat.finished};
 }
@@ -68,13 +73,15 @@ export function applyServerStunSkip(combat,{side,actorId,round=combat?.round}){
 // snapshot as commander abilities. Never accept this action from an HTTP client.
 export function applyServerHeroAction(combat,{side,actorId,targetId,action='attack',value,round=combat?.round,applyThorns=false}){
  if(!combat||combat.finished)throw Error('Battle already finished');
- if(![0,1].includes(side)||!['attack','heal','shield'].includes(action)||!Number.isSafeInteger(value)||value<0||value>1000000||!Number.isInteger(round)||round!==combat.round)throw Error('Invalid server hero action');
+ if(![0,1].includes(side)||!['attack','heal','passive-heal','shield'].includes(action)||!Number.isSafeInteger(value)||value<0||value>1000000||!Number.isInteger(round)||round!==combat.round)throw Error('Invalid server hero action');
  const next=structuredClone(combat.teams);
  const actor=next[side].find(u=>u.id===actorId&&u.hp>0);
- const targetSide=action==='heal'||action==='shield'?side:1-side;
+ const targetSide=action==='heal'||action==='passive-heal'||action==='shield'?side:1-side;
  const target=next[targetSide].find(u=>u.id===targetId&&u.hp>0);
  if(!actor||!target)throw Error('Invalid living actor or target');
- if(action==='attack'){const skipped=applyServerStunSkip(combat,{side,actorId,round});if(skipped)return skipped;}
+ if(action==='passive-heal'&&commanderPassivesSuppressed(actor,round))return {version:combat.version,event:null,events:[],teams:structuredClone(combat.teams),finished:combat.finished,suppressed:true};
+ const special=isHeroSpecialTurn(actor,round);
+ if(action!=='passive-heal'){const skipped=applyServerStunSkip(combat,{side,actorId,round,attacking:action==='attack'});if(skipped)return skipped;}
  let applied=0,absorbed=0,guardTriggered=false,lastStandTriggeredRound,lastStandImmortalUntilRound,arcaneTransfer;
  if(action==='attack'){
   ({damage:applied,absorbed,guardTriggered,lastStandTriggeredRound,lastStandImmortalUntilRound,arcaneTransfer}=applyHeroDamage(target,value,{round,allies:next[targetSide]}));
@@ -95,14 +102,15 @@ export function applyServerHeroAction(combat,{side,actorId,targetId,action='atta
  }
  if(action==='attack')consumeCommanderWeaken(actor);
  const huntAttackConsumed=action==='attack'&&consumeCommanderHunt(actor);
+ if(action!=='passive-heal')completeHeroAction(actor,round);
  combat.teams=next;
  combat.version++;
- const event={round,side,actor:actorId,action,target:targetId,value:applied,absorbed,version:combat.version,...(huntAttackConsumed?{huntAttackConsumed:true}:{}),...(guardTriggered?{guardTriggered:true}:{}),...(lastStandImmortalUntilRound?{lastStandTriggeredRound,lastStandImmortalUntilRound}:{}),...(arcaneTransfer?{arcaneTransfer}:{})};
+ const event={round,side,actor:actorId,action,target:targetId,value:applied,absorbed,version:combat.version,...(action!=='passive-heal'?heroActionMetadata(actor,round,special):{}),...(huntAttackConsumed?{huntAttackConsumed:true}:{}),...(guardTriggered?{guardTriggered:true}:{}),...(lastStandImmortalUntilRound?{lastStandTriggeredRound,lastStandImmortalUntilRound}:{}),...(arcaneTransfer?{arcaneTransfer}:{})};
  if(applyThorns&&action==='attack'&&actor.passive?.effect==='thorns')event.thornsShield=Math.floor(actor.defense*actor.passive.value);
  combat.events.push(event);
  // Preserve the existing per-casualty energy bonus once, per affected side.
  if(action==='attack'&&target.hp===0)grantLiveCommanderEnergy(combat.abilities,targetSide,10);
- expireCommanderFocus(next,round);expireCommanderHunt(next);
+ expireCommanderFocus(next,round);expireCommanderHunt(next);expireCommanderStun(next,round);
  combat.finished=next.some(team=>team.every(u=>u.hp<=0));
  combat.abilities.finished=combat.finished;
  return {version:combat.version,event,teams:structuredClone(next),finished:combat.finished};
@@ -114,7 +122,7 @@ export function beginServerCombatRound(combat,round){
  expireCommanderUltimateStatuses(combat.teams,round);
  expireCommanderFocus(combat.teams,round);expireCommanderHunt(combat.teams);
  expireCommanderWeaken(combat.teams,round);
- expireCommanderStun(combat.teams);
+ expireCommanderStun(combat.teams,round);
  for(let side=0;side<2;side++)grantLiveCommanderEnergy(combat.abilities,side,commanderEnergyPerRound(combat.commanders[side]));
  combat.version++;
  const event={round,action:'round-start',energy:[...combat.abilities.energy],ultimateEnergy:[...combat.abilities.ultimateEnergy],version:combat.version};

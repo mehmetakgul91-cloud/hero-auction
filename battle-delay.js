@@ -1,11 +1,12 @@
+import {isHeroSpecialTurn} from './public/hero-action-clock.js';
 // Server-owned initiative delay. A delayed hero still gets exactly one turn;
 // this never removes actions, grants extra actions, or changes raw speed.
 const scheduledId=entry=>entry.id??entry.unit?.id;
-export function applyHeroDelay({teams,order,cursor,round,side,actorId,targetId}){
+export function applyHeroDelay({teams,order,cursor,round,side,actorId,targetId,special}){
  if(!Array.isArray(teams)||teams.length!==2||!Array.isArray(order)||!Number.isSafeInteger(cursor)||cursor<0||cursor>order.length||!Number.isInteger(round)||round<1||![0,1].includes(side))throw Error('Invalid hero delay state');
  const actor=teams[side].find(unit=>unit.id===actorId&&unit.hp>0);
  const target=teams[1-side].find(unit=>unit.id===targetId&&unit.hp>0);
- if(!actor||!target||round%3!==0||actor.active?.effect!=='burst'||actor.active.delay!==true)return null;
+ if(!actor||!target||!(special??isHeroSpecialTurn(actor,round))||actor.active?.effect!=='burst'||actor.active.delay!==true)return null;
  // Protect the delayed action and the complete following round. A second
  // source cannot keep rescheduling the same action or perpetually end-lock it.
  if(Number.isInteger(target.delayProtectedThroughRound)&&round<=target.delayProtectedThroughRound)return null;

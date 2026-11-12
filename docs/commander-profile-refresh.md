@@ -19,7 +19,7 @@ it does not render 80–100 individually interactive nodes.
   only when the selected branch is the active commander's main branch.
 - Current shared ultimate names, descriptions and archetype-specific costs are
   reused. Only Last Bastion's shield percentage scales; target selection,
-  1-health protection, Arcane Surge duration and Revival's 40% remain unchanged.
+  1-health protection, Arcane Surge duration and Revival's 55% do not scale with level.
 - Server progression quotes supply gold/diamond prices, affordability and feature
   availability. No payment provider, checkout or sale packages are invented.
 - Expected level, commander and request ID are sent for purchases. Repeated clicks

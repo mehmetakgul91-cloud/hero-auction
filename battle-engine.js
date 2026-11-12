@@ -1,10 +1,13 @@
+import {initializeHeroActionClocks,isHeroSpecialTurn,completeHeroAction,heroActionMetadata} from './public/hero-action-clock.js';
+import {captureMagicNormalPower} from './commander-magic-normal-power.js';
+import {captureCommanderFormation} from './public/commander-formation.js';
 import {consumeCommanderHunt,expireCommanderHunt,clearCommanderHunt} from './commander-hunt-status.js';
-import {consumeCommanderStun,expireCommanderStun} from './commander-stun-status.js';
+import {consumeCommanderStun,consumeCommanderActionStun,expireCommanderStun,clearCommanderStun,commanderPassivesSuppressed} from './commander-stun-status.js';
 import {commanderWeakenRate,consumeCommanderWeaken,expireCommanderWeaken} from './commander-weaken-status.js';
 import {applyHeroDamage,expireLastStandGuards} from './battle-hp-damage.js';
 import {expireCommanderUltimateStatuses} from './commander-ultimate-status.js';
 import {commanderRoundEnergy,getCommanderAbilityCost} from './public/commander-ability-rules.js';
-import {commanderAttackPower} from './commander-attack-damage.js';
+import {commanderNormalPower} from './commander-normal-power.js';
 import {applyLiveCommanderEffect} from './commander-live-effects.js';
 import {consumeCommanderFocus,expireCommanderFocus,clearCommanderFocus} from './battle-commander-focus.js';
 // Hero Auction 2.0 - isolated, deterministic automatic battle prototype.
@@ -12,7 +15,7 @@ import {consumeCommanderFocus,expireCommanderFocus,clearCommanderFocus} from './
 import crypto from 'node:crypto';
 import {orderHeroActions} from './battle-action-scheduler.js';
 import {selectBattleTarget} from './battle-target-selection.js';
-import {initializeCenterProtection} from './battle-center-protection.js';
+import {initializeCenterDefenseBonus} from './battle-center-defense.js';
 import {applyAssassinStartingAttackBonus} from './battle-assassin-attack.js';
 import {calculateHeroRawDamage} from './battle-damage-formula.js';
 import {calculateSplashRawDamage,resolveSpecialHealing} from './battle-special-formulas.js';
@@ -42,12 +45,12 @@ export function fighterFromCard(card,position=0){
 function isFront(unit){return unit.lane==='front'}
 
 // Manual commander commands are validated against actual round energy; no command means no active ability.
-export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,remainingCredits=[0,0],commanders=[null,null],commanderActions=[],partial=false}={}){
+export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,remainingCredits=[0,0],commanders=[null,null],commanderActions=[],partial=false,heroActionClockVersion=1,commanderStunVersion=2}={}){
   if(!Array.isArray(remainingCredits)||remainingCredits.length!==2||remainingCredits.some(v=>!Number.isSafeInteger(v)||v< -10000||v>10000))throw Error('Invalid auction remaining credits');
   if(!Array.isArray(cardsA)||!Array.isArray(cardsB)||cardsA.length!==5||cardsB.length!==5)throw Error('Each team must contain exactly five cards.');
   if(!Number.isInteger(maxRounds)||maxRounds<1||maxRounds>100)throw Error('Invalid round limit.');
   const random=seedRandom(seed);
-  const teams=[cardsA,cardsB].map(cards=>cards.map((c,i)=>fighterFromCard(c,i)));
+  const teams=initializeHeroActionClocks([cardsA,cardsB].map(cards=>cards.map((c,i)=>fighterFromCard(c,i))),heroActionClockVersion);
   // One bounded tactical multiplier: formation + duplicate penalty.
   // No stacking of independent bonuses beyond the 0.90–1.10 interval.
   for(const team of teams){
@@ -89,9 +92,13 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
     if(p.effect==='focus')u.attack=Math.round(u.attack*(1+p.value));
     if(p.effect==='evasion'||p.effect==='momentum')u.speed=Math.round(u.speed*(1+p.value));
   }
-  for(const team of teams){applyAssassinStartingAttackBonus(team);initializeCenterProtection(team);}
+  for(const team of teams){applyAssassinStartingAttackBonus(team);initializeCenterDefenseBonus(team);}
   const initialShields=shieldSnapshot();
-  const commanderAttackBasis=teams.map(commanderAttackPower);
+  const commanderNormalBasis=teams.map(commanderNormalPower);
+  const commanderMagicPower=teams.map(captureMagicNormalPower);
+  // Commander-free roster probes historically allow repeated card IDs. Only
+  // mage opponents need target-ID geometry; real match rosters have unique IDs.
+  const commanderFormations=teams.map((team,side)=>commanders?.[1-side]?.commanderId==='magic'?captureCommanderFormation(team):null);
   const commanderResourcesByRound=[],commanderEnergy=[0,0],commanderUltimateEnergy=[0,0],revivalUsed=[false,false],ultimateUsed=[false,false];
   if(!Array.isArray(commanderActions)||commanderActions.length>200)throw Error('Invalid commander actions');
   const actions=new Map();
@@ -112,7 +119,7 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
     // Legacy scripted normal magic keeps deterministic targeting when omitted.
     // New selected-friendly ultimates require explicit authoritative hero IDs.
     if(id==='magic'&&ability==='normal'&&targetIds===undefined)targetIds=[...teams[1-side]].filter(u=>u.hp>0).sort((a,b)=>b.attack-a.attack||a.id.localeCompare(b.id)).slice(0,1).map(u=>u.id);
-    const effect=applyLiveCommanderEffect(teams,{side,ability,commanderId:id,commanderProfile:commander,attackBasis:commanderAttackBasis[side],round,targetIds,revivalUsed:revivalUsed[side]});
+    const effect=applyLiveCommanderEffect(teams,{side,ability,commanderId:id,commanderProfile:commander,normalBasis:commanderNormalBasis[side],magicPower:commanderMagicPower[side],enemyFormation:commanderFormations[1-side],round,targetIds,revivalUsed:revivalUsed[side],stunVersion:commanderStunVersion});
     pool[side]-=cost;revivalUsed[side]=effect.revivalUsed;if(ability==='ultimate')ultimateUsed[side]=true;
     teams[0]=effect.teams[0];teams[1]=effect.teams[1];
     for(const event of effect.log)record({...event,energy:commanderEnergy[side],ultimateEnergy:commanderUltimateEnergy[side],ultimateUsed:ultimateUsed[side]});
@@ -120,13 +127,13 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
   for(let round=1;round<=maxRounds;round++){
     actionId=null;
     expireLastStandGuards(teams,round);expireCommanderUltimateStatuses(teams,round);expireCommanderFocus(teams,round);expireCommanderHunt(teams);
-    expireCommanderWeaken(teams,round);expireCommanderStun(teams);
+    expireCommanderWeaken(teams,round);expireCommanderStun(teams,round);
     for(let side=0;side<2;side++){
       commanderEnergy[side]=commanderRoundEnergy(commanderEnergy[side],round,commanders?.[side]);
       if(!ultimateUsed[side])commanderUltimateEnergy[side]=commanderRoundEnergy(commanderUltimateEnergy[side],round,commanders?.[side]);
     }
     for(const team of teams)for(const u of team){
-      if(u.hp<=0||!u.passive)continue;
+      if(u.hp<=0||!u.passive||commanderPassivesSuppressed(u,round))continue;
       const {effect,value}=u.passive;
       if(effect==='regen'){const healed=Math.min(u.maxHp-u.hp,Math.max(1,Math.floor(u.maxHp*value)));u.hp+=healed;u.healing+=healed;if(healed)record({round,actor:u.id,action:'passive-heal',value:healed});}
       if(effect==='rage'&&u.hp/u.maxHp<.5&&!u.rageActivated){u.attack=Math.max(u.attack,Math.min(180,u.attack+Math.max(1,Math.floor(u.attack*value))));u.rageActivated=true;record({round,actor:u.id,action:'rage',value:u.attack});}
@@ -140,22 +147,27 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       if(unit.hp<=0||unit.canActFromRound>round)continue;
       const allies=teams[side],enemies=teams[1-side];
       if(!enemies.some(x=>x.hp>0))break;
-      const special=round%3===0;
+      if(consumeCommanderActionStun(unit,round)){
+        unit.lastActionRound=round;finishHeroDelay(unit,round);
+        record({round,side,actor:unit.id,action:'stun-skip',stunScope:'action',target:unit.id,value:0,...heroActionMetadata(unit,round,false),...(unit.commanderStunVersion===2?{stunVersion:2,blockedRound:unit.commanderStunBlockedRound,passiveSilence:true}:{})});
+        continue;
+      }
+      const special=isHeroSpecialTurn(unit,round),actionLogStart=log.length;
       const skill=special?unit.active:null;
       if(special){
         const healing=resolveSpecialHealing(unit,allies);
         if(healing){
           const {target:recipient,heal,shield}=healing;
-          recipient.hp+=heal;unit.healing+=heal;
-          if(heal>0)record({round,side,actor:unit.id,action:'heal',target:recipient.id,value:heal});
-          if(shield>0){recipient.shield+=shield;record({round,side,actor:unit.id,action:'shield',target:recipient.id,value:shield});}
+          recipient.hp+=heal;unit.healing+=heal;completeHeroAction(unit,round);
+          if(heal>0)record({round,side,actor:unit.id,action:'heal',target:recipient.id,value:heal,...heroActionMetadata(unit,round,true)});
+          if(shield>0){recipient.shield+=shield;record({round,side,actor:unit.id,action:'shield',target:recipient.id,value:shield,...heroActionMetadata(unit,round,true)});}
           unit.lastActionRound=round;finishHeroDelay(unit,round);
           continue;
         }
       }
       if(consumeCommanderStun(unit)){
         unit.lastActionRound=round;finishHeroDelay(unit,round);
-        record({round,side,actor:unit.id,action:'stun-skip',target:unit.id,value:0});
+        record({round,side,actor:unit.id,action:'stun-skip',stunScope:'attack',target:unit.id,value:0,...heroActionMetadata(unit,round,false)});
         continue;
       }
       const target=selectBattleTarget(enemies,unit,round);
@@ -180,16 +192,17 @@ export function simulateBattle(cardsA,cardsB,{seed='hero-auction',maxRounds=15,r
       if(skill?.effect==='splash'||unit.role==='energy'&&special)for(const other of enemies.filter(x=>x!==target&&x.hp>0)){const splashRaw=calculateSplashRawDamage(raw,{skill,role:unit.role,special});const splashHit=applyHeroDamage(other,splashRaw,{round,allies:teams[1-side]});const splashAbsorbed=splashHit.absorbed,extra=splashHit.damage;unit.damage+=extra;if(other.hp===0){unit.kills++;commanderEnergy[1-side]=Math.min(100,commanderEnergy[1-side]+10);if(!ultimateUsed[1-side])commanderUltimateEnergy[1-side]=Math.min(100,commanderUltimateEnergy[1-side]+10);}record({round,side,actor:unit.id,action:'splash',target:other.id,value:extra,absorbed:splashAbsorbed,rawDamage:splashRaw,damageType:'splash',...(splashHit.guardTriggered?{guardTriggered:true}:{}),...(splashHit.lastStandImmortalUntilRound?{lastStandTriggeredRound:splashHit.lastStandTriggeredRound,lastStandImmortalUntilRound:splashHit.lastStandImmortalUntilRound}:{}),...(splashHit.arcaneTransfer?{arcaneTransfer:splashHit.arcaneTransfer}:{})});}
       if(unit.passive?.effect==='thorns'&&unit.hp>0)unit.shield+=Math.floor(unit.defense*unit.passive.value);
       if(unit.role==='tank'&&special)unit.shield+=Math.round(unit.defense*abilityValue(skill,'tankShieldRate'));
-      consumeCommanderWeaken(unit);consumeCommanderHunt(unit);unit.lastActionRound=round;finishHeroDelay(unit,round);consumeCommanderFocus(unit);expireCommanderFocus(teams,round);expireCommanderHunt(teams);
-      if(skill?.delay){const delayed=applyHeroDelay({teams,order,cursor:cursor+1,round,side,actorId:unit.id,targetId:target.id});if(delayed)record(delayed);}
+      consumeCommanderWeaken(unit);consumeCommanderHunt(unit);completeHeroAction(unit,round);finishHeroDelay(unit,round);consumeCommanderFocus(unit);expireCommanderFocus(teams,round);expireCommanderHunt(teams);
+      if(skill?.delay){const delayed=applyHeroDelay({teams,order,cursor:cursor+1,round,side,actorId:unit.id,targetId:target.id,special:true});if(delayed)record(delayed);}
       // The final event represents the completed atomic hero action, including
       // role/passive shield gains which do not have separate animation events.
+      for(let index=actionLogStart;index<log.length;index++)Object.assign(log[index],heroActionMetadata(unit,round,special));
       log[log.length-1].shieldSnapshot=shieldSnapshot();
     }
     if(teams.some(team=>team.every(x=>x.hp<=0)))break;
   }
   // Transcript sessions recompute unfinished rounds; keep their current order.
-  if(!partial||teams.some(team=>team.every(unit=>unit.hp<=0))){clearCommanderFocus(teams);clearCommanderHunt(teams);}
+  if(!partial||teams.some(team=>team.every(unit=>unit.hp<=0))){clearCommanderFocus(teams);clearCommanderHunt(teams);clearCommanderStun(teams);}
   const {winner,damage,survivors}=battleOutcome(teams);
-  return {version:4,initialShields,commanderEnergy,commanderUltimateEnergy,commanderResourcesByRound,revivalUsed,ultimateUsed,commanders:Array.isArray(commanders)?commanders.slice(0,2):[null,null],remainingCredits:[...remainingCredits],seed:String(seed),winner,rounds:Math.max(0,...log.map(x=>x.round)),teams,damage,survivors,log};
+  return {version:4,...(heroActionClockVersion?{heroActionClockVersion}:{}),initialShields,commanderEnergy,commanderUltimateEnergy,commanderResourcesByRound,revivalUsed,ultimateUsed,commanders:Array.isArray(commanders)?commanders.slice(0,2):[null,null],remainingCredits:[...remainingCredits],seed:String(seed),winner,rounds:Math.max(0,...log.map(x=>x.round)),teams,damage,survivors,log};
 }

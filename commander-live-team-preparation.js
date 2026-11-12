@@ -5,7 +5,7 @@ import {applyCommanderSupport} from './arena-commanders.js';
 import {applyLegacyStartPassives} from './commander-parity-passives.js';
 import {battleCard,battleRoster} from './battle-roster.js';
 import {fighterFromCard} from './battle-engine.js';
-import {initializeCenterProtection} from './battle-center-protection.js';
+import {initializeCenterDefenseBonus} from './battle-center-defense.js';
 import {applyAssassinStartingAttackBonus} from './battle-assassin-attack.js';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const roles=['tank','fighter','energy','assassin','support'];
@@ -40,6 +40,6 @@ export function prepareLiveArenaTeams(cardsA,cardsB,{remainingCredits=[0,0],comm
  }
  for(let side=0;side<2;side++)applyCommanderSupport(teams[side],commanders[side]);
  const prepared=applyLegacyStartPassives(teams);
- for(const team of prepared){applyAssassinStartingAttackBonus(team);initializeCenterProtection(team);}
+ for(const team of prepared){applyAssassinStartingAttackBonus(team);initializeCenterDefenseBonus(team);}
  return prepared;
 }

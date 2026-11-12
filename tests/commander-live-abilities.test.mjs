@@ -7,7 +7,7 @@ test('cast is optional even at full energy',()=>{
  assert.equal(viewLiveCommanderAbilities(s,0,2000).energy,100);
  assert.equal(s.casts.length,0);
 });
-test('normal costs 40 and blocks both abilities for five seconds',()=>{
+test('default defense normal costs 40 and blocks repeat normals for five seconds',()=>{
  const s=setup();
  const cast=castLiveCommanderAbility(s,{side:0,ability:'normal',matchKey:'583:1',now:2000,requestId:'request_001'});
  assert.equal(cast.energy,60);

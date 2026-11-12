@@ -1,3 +1,5 @@
+import {usesHeroActionClock,heroActionMetadata} from './public/hero-action-clock.js';
+import {expireCommanderStun} from './commander-stun-status.js';
 import {expireCommanderFocus} from './battle-commander-focus.js';
 import {applyHeroDamage} from './battle-hp-damage.js';
 // Experimental server-only multi-target splash action. Atomic snapshot update.
@@ -9,6 +11,12 @@ export function applyServerSplashAction(combat,{side,actorId,primaryTargetId,pri
  const actor=next[side].find(u=>u.id===actorId&&u.hp>0);
  const primary=next[1-side].find(u=>u.id===primaryTargetId&&u.hp>0);
  if(!actor||!primary||(!special&&skill?.effect!=='splash'))throw Error('Invalid splash actor or primary target');
+ // This legacy helper settles a secondary phase, never another hero turn.
+ // New battles require its already-completed special primary and reject retries.
+ if(usesHeroActionClock(actor)){
+  const primaryEvent=combat.events.find(e=>e.round===round&&e.side===side&&e.actor===actorId&&e.target===primaryTargetId&&e.heroSpecial===true&&e.damageType!=='splash');
+  if(!primaryEvent||actor.lastActionRound!==round||combat.events.some(e=>e.round===round&&e.side===side&&e.actor===actorId&&e.action==='splash'))throw Error('No pending special splash phase');
+ }
  if(actor.active||actor.passive)throw Error('Special hero mechanics require incremental engine integration');
  const splashRaw=calculateSplashRawDamage(primaryRaw,{skill,role:actor.role,special});
  if(!splashRaw)throw Error('No splash effect');
@@ -21,9 +29,9 @@ export function applyServerSplashAction(combat,{side,actorId,primaryTargetId,pri
  }
  combat.teams=next;
  combat.version++;
- for(const event of events){event.version=combat.version;combat.events.push(event);}
+ for(const event of events){Object.assign(event,heroActionMetadata(actor,round,special));event.version=combat.version;combat.events.push(event);}
  for(const id of killed)grantLiveCommanderEnergy(combat.abilities,1-side,10);
- expireCommanderFocus(next,round);
+ expireCommanderFocus(next,round);expireCommanderStun(next,round);
  combat.finished=next.some(team=>team.every(u=>u.hp<=0));
  combat.abilities.finished=combat.finished;
  return {version:combat.version,events,teams:structuredClone(next),finished:combat.finished};

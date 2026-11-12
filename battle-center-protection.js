@@ -1,3 +1,5 @@
+// Legacy version-1 saved battle compatibility. New preparation uses
+// battle-center-defense.js; do not install targeting immunity in new battles.
 // Only fresh combat preparation calls this initializer. The ordered roster is
 // the same order rendered by the arena: in a 2-front/3-back formation its second
 // rear hero is protected until any of the other four heroes first dies.

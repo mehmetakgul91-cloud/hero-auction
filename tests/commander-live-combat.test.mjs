@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createLiveCommanderAbilities} from '../commander-live-abilities.js';
 import {createLiveCommanderCombat,castLiveCommanderCombat,viewLiveCommanderCombat,beginServerCombatRound} from '../commander-live-combat.js';
 const make=(kind='attack')=>{
- const teams=[0,1].map(side=>Array.from({length:5},(_,i)=>({id:side+'-'+i,hp:100,maxHp:100,attack:50,shield:0})));
+ const teams=[0,1].map(side=>Array.from({length:5},(_,i)=>({id:side+'-'+i,role:['fighter','assassin','tank','support','energy'][i],hp:100,maxHp:100,attack:50,shield:0})));
  const abilities=createLiveCommanderAbilities({matchKey:'room:1',energy:[100,100],now:1000});
  return createLiveCommanderCombat({abilities,teams,commanders:[{commanderId:kind},{commanderId:'defense'}]});
 };
@@ -57,7 +57,7 @@ test('magic normal requires one living enemy; ultimate buffs one living ally',()
  assert.equal(cast.version,1);
  assert.equal(combat.teams[0][1].arcaneSurgeBonusAttack,50);
  assert.equal(combat.teams[0][1].arcaneSurgeUntilRound,3);
- assert.equal(combat.teams[1][0].commanderWeaken,undefined);assert.equal(combat.teams[1][0].commanderStunNextAttack,undefined);
+ assert.equal(combat.teams[1][0].commanderWeaken,undefined);assert.equal(combat.teams[1][0].commanderStunNextAction,undefined);
  assert.equal(combat.abilities.ultimateEnergy[0],0);
  assert.throws(()=>castLiveCommanderCombat(combat,{side:0,ability:'ultimate',requestId:'magic_valid_001',matchKey:'room:1',now:2001,targetIds:['1-2','1-3']}),/conflict/);
 });
@@ -80,10 +80,10 @@ test('magic ultimate rejects enemy, dead ally, multiple or missing targets atomi
  assert.equal(result.version,1);assert.equal(combat.abilities.ultimateEnergy[0],0);
  assert.equal(combat.abilities.cooldownUntil[0],1000);
  assert.equal(combat.teams[0][0].arcaneSurgeBonusAttack,50);
- assert.ok(combat.teams[1].every(u=>u.commanderWeaken===undefined&&u.commanderStunNextAttack===undefined));
+ assert.ok(combat.teams[1].every(u=>u.commanderWeaken===undefined&&u.commanderStunNextAction===undefined));
 });
 
-test('round changes increment snapshot version while pending next-attack magic persists',()=>{
+test('round changes increment snapshot version while pending next-action magic persists',()=>{
  const combat=make('magic');
  castLiveCommanderCombat(combat,{side:0,ability:'normal',requestId:'magic_round_01',matchKey:'room:1',now:2000,targetIds:['1-0']});
  const first=beginServerCombatRound(combat,2);
@@ -91,7 +91,7 @@ test('round changes increment snapshot version while pending next-attack magic p
  assert.equal(viewLiveCommanderCombat(combat,{sinceVersion:1}).events[0].action,'round-start');
  beginServerCombatRound(combat,3);
  beginServerCombatRound(combat,4);
- assert.equal(combat.teams[1][0].commanderWeaken,undefined);assert.equal(combat.teams[1][0].commanderStunNextAttack,true);
+ assert.equal(combat.teams[1][0].commanderWeaken,undefined);assert.equal(combat.teams[1][0].commanderStunNextAction,true);
  assert.equal(combat.version,4);
  assert.equal(viewLiveCommanderCombat(combat,{sinceVersion:3}).events[0].round,4);
 });

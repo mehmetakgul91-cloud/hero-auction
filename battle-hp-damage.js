@@ -1,3 +1,4 @@
+import {clearHeroCommanderStun} from './commander-stun-status.js';
 import {transferArcaneSurgeOnDeath} from './commander-ultimate-status.js';
 import {breakCenterProtectionOnDeath} from './battle-center-protection.js';
 import {calculateShieldAbsorption} from './battle-shield-absorption.js';
@@ -52,7 +53,7 @@ export function applyHeroDamage(target,raw,{round,executeThreshold=0,allies}={})
   }
  }
  target.hp=oldHp-damage-executedDamage;
- if(target.hp===0){clearLastStand(target);delete target.commanderFocusUntilDeath;delete target.commanderStunNextAttack;delete target.commanderHuntNextAttack;breakCenterProtectionOnDeath(target,allies);}
+ if(target.hp===0){clearLastStand(target);delete target.commanderFocusUntilDeath;clearHeroCommanderStun(target);delete target.commanderHuntNextAttack;breakCenterProtectionOnDeath(target,allies);}
  const arcaneTransfer=target.hp===0&&allies?transferArcaneSurgeOnDeath(target,allies,round):null;
  return {damage,executedDamage,absorbed,rawDamage:raw,guardTriggered,...(guardTriggered&&isLastStandImmortal(target,round)?{lastStandTriggeredRound:target.lastStandTriggeredRound,lastStandImmortalUntilRound:target.lastStandImmortalUntilRound}:{}),...(arcaneTransfer?{arcaneTransfer}:{})};
 }

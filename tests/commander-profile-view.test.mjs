@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {commanderBranchView,commanderDiamondPolicyCopy,renderCommanderDevelopment,renderCommanderSkills,COMMANDER_BRANCHES} from '../public/commander-profile-view.js';
-import {commanderAbilityStats,getCommanderAbilityCost} from '../public/commander-ability-rules.js';
+import {commanderAbilityStats,commanderAbilityDescription,getCommanderAbilityCost} from '../public/commander-ability-rules.js';
 import {commanderUltimateName,commanderUltimateDescription} from '../public/commander-ultimate-presentation.js';
 import {createCommanderProfile,commanderStatBonus,previewCommanderUpgrade} from '../arena-commanders.js';
 import {crazyGamesSource} from '../crazygames-build.js';
@@ -42,11 +42,11 @@ for(const id of ['attack','defense','magic','support'])for(const level of [0,1,1
  assert.deepEqual(p,before);
 });
 
-test('switched level40 is visibly retained, only20 active; no truncation, excess progress or repurchase',()=>{
+test('switched level40 is visibly retained, zero active; no truncation, excess progress or repurchase',()=>{
  const p=profile('magic');p.levels.attack=40;
  const root=render(p,{selected:'attack'}),view=commanderBranchView(p,'attack',{gold:1_000_000});
- assert.equal(view.level,40);assert.equal(view.effectiveLevel,20);assert.equal(view.retainedLevel,20);assert.equal(view.bonus,10);
- assert.match(root.textContent,/40 seviye kayıtlı: 20 etkin \+ 20 saklı/);
+ assert.equal(view.level,40);assert.equal(view.effectiveLevel,20);assert.equal(view.retainedLevel,20);assert.equal(view.bonus,0);assert.equal(view.activeLevel,0);
+ assert.match(root.textContent,/40 seviye kayıtlı.*mevcut komutanla bonus vermez/);
  assert.equal(find(root,'cp-upgrade-button')[0].disabled,true);
  assert.equal(find(root,'cp-progress')[0].attributes['aria-valuenow'],'20');
  assert.equal(find(root,'cp-progress')[0].children[0].style.width,'100%');assert.equal(p.levels.attack,40);
@@ -99,7 +99,7 @@ test('disabled, exact-funds and busy states guard callbacks as well as buttons',
 
 test('active magic9→10 shows fixed one-attack stun and each pool16→17; side branch does not imply ability growth',()=>{
  const root=render(profile('magic',9),{selected:'magic',english:true});
- assert.match(root.textContent,/Stun · fixed effect 1 attack skipped → 1 attack skipped/);assert.doesNotMatch(root.textContent,/38.15%|38.5%/);assert.match(root.textContent,/Each pool \/ round \+16 → \+17/);assert.match(root.textContent,/1,032 GOLD/);
+ assert.match(root.textContent,/Stun · fixed effect 1 action skipped → 1 action skipped/);assert.doesNotMatch(root.textContent,/38.15%|38.5%/);assert.match(root.textContent,/Each pool \/ round \+16 → \+17/);assert.match(root.textContent,/1,032 GOLD/);
  assert.match(root.textContent,/do not scale with level/);
  assert.doesNotMatch(render(profile('magic',9),{selected:'attack',english:true}).textContent,/Normal ability effect|Each pool/);
 });
@@ -108,6 +108,7 @@ for(const id of ['attack','defense','magic','support'])test(`${id} skill cards u
  for(const english of [false,true]){
   const root=new Element();renderCommanderSkills(root,profile(id,20),{document,english});
   assert.equal(root.children.length,2);
+  assert.ok(root.children[0].textContent.includes((id==='magic'?60:40)+' '+(english?'NORMAL ENERGY':'NORMAL ENERJİ')));
   const ultimate=root.children[1];assert.match(ultimate.textContent,new RegExp(String(getCommanderAbilityCost(id,'ultimate'))));
   assert.ok(ultimate.textContent.includes(commanderUltimateName(id,{english})));assert.ok(ultimate.textContent.includes(commanderUltimateDescription(id,{english})));
   assert.equal(find(ultimate,'cp-skill-main')[0].children.some(node=>node.tagName==='strong'),id==='defense');
@@ -212,4 +213,49 @@ for(const english of [false,true])test(`Hunt Order profile separates until-death
  assert.match(summary.textContent,english?/Every ally alive when cast gains \+20% attack for its next attack only/:/Kullanım anında yaşayan her müttefike sonraki tek saldırısı için \+%20 saldırı/);
  assert.match(root.children[1].textContent,english?/no round or attack-count limit/:/tur veya saldırı sayısı sınırı yoktur/);
  assert.doesNotMatch(root.children[1].textContent,/next round|Sonraki tur/);
+});
+
+const normalRates={attack:.10,defense:.20,support:.05};
+for(const [id,rate] of Object.entries(normalRates))for(const english of [false,true])test(`${id} normal formulas show the flat level, fixed role share and battle-start basis (${english?'EN':'TR'})`,()=>{
+ const basis={attack:english?/fighter and assassin attack/:/savaşçı ve suikastçıların toplam saldırısı/,defense:english?/tank defense/:/tankların toplam savunması/,support:english?/raw support healing power/:/desteklerin toplam ham şifa gücü/}[id];
+ const pct=english?`${rate*100}%`:`%${rate*100}`;
+ for(const level of [0,1,19,20,39,40]){
+  const p=profile(id,level),stats=commanderAbilityStats(p),root=new Element();
+  assert.equal(stats.normalBase,level);assert.equal(stats.normalRate,rate);
+  assert.equal(stats.energyPerRound,12+Math.floor(level/2));
+  assert.equal(getCommanderAbilityCost(id,'normal'),40);
+  const ultimateBase={attack:.30,defense:.20,support:.30}[id];
+  assert.equal(stats.ultimateRate,Number((ultimateBase*(1+level*.01)).toFixed(4)));
+  renderCommanderSkills(root,p,{document,english});const normal=root.children[0];
+  assert.equal(find(normal,'cp-skill-main')[0].children[0].textContent,`${level} + ${pct}`);
+  assert.match(normal.textContent,basis);
+  assert.match(normal.textContent,english?/Battle-start values are fixed.*later deaths, buffs and debuffs/:/Savaş başındaki değerler sabitlenir.*sonraki ölümler, güçlendirmeler ve zayıflatmalar/);
+  assert.match(normal.textContent,english?/Each level adds \+1 to the flat base; the percentage stays fixed/:/Her seviye tabana \+1 ekler; oran sabittir/);
+  assert.doesNotMatch(normal.textContent,/missing health|eksik can|maximum health|azami can/i);
+  if(id==='support')assert.match(normal.textContent,english?/attack × base healing rate, excluding the commander healing bonus/:/saldırı × temel şifa oranı; komutan şifa bonusu dahil değildir/);
+  const development=render(p,{english}),effectRow=find(development,'cp-preview-row').find(node=>node.children[0].textContent===(english?'Normal ability effect':'Normal beceri etkisi'));
+  assert.equal(effectRow.children[1].children[0].textContent,`${level} + ${pct}`);
+  if(level<40){assert.equal(effectRow.children[1].children[2].textContent,`${level+1} + ${pct}`);assert.equal(commanderBranchView(p,id).nextStats.normalRate,rate);}
+  else assert.equal(effectRow.children[1].children.length,1);
+  assert.match(find(development,'cp-normal-basis')[0].textContent,basis);
+  const original=commanderAbilityDescription(p).split(' Normal beceri ')[0],description=english?translate(original):original;
+  assert.ok(description.includes(english?`${level} + (${rate*100}%`:`${level} + (%${rate*100}`));
+  assert.match(description,basis);assert.doesNotMatch(description,/missing health|eksik can|maximum health|azami can/i);
+  if(english)assert.doesNotMatch(description,/[çğıöşüÇĞİÖŞÜ]/u);
+ }
+});
+
+test('inactive branches do not preview a normal formula or borrow the selected level',()=>{
+ const p={...profile('support',0),levels:{attack:12,defense:7,magic:9,support:40}};
+ for(const selected of ['attack','defense','magic']){
+  const root=render(p,{selected,english:true});
+  assert.equal(find(root,'cp-normal-basis').length,0);
+  assert.doesNotMatch(root.textContent,/Normal ability effect/);
+ }
+ const attack={...p,commanderId:'attack'},view=commanderBranchView(attack,'attack');
+ assert.equal(view.stats.normalBase,12);assert.equal(view.nextStats.normalBase,13);assert.equal(view.stats.normalRate,.10);
+ const root=new Element();renderCommanderSkills(root,p,{document,english:true});
+ assert.equal(find(root.children[0],'cp-skill-main')[0].children[0].textContent,'40 + 5%');
+ renderCommanderSkills(root,attack,{document,english:true});
+ assert.equal(find(root.children[0],'cp-skill-main')[0].children[0].textContent,'12 + 10%');
 });

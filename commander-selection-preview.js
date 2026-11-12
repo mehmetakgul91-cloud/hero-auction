@@ -1,11 +1,13 @@
 import {COMMANDERS,COMMANDER_STATS,createCommanderProfile,validateCommanderProfile} from './arena-commanders.js';
 import {prepareLiveArenaTeams} from './commander-live-team-preparation.js';
 
-const stats=['attack','defense','maxHp','speed'];
+import {heroHealingRate,calculateSpecialHeal} from './battle-special-formulas.js';
+
+const stats=['attack','defense','maxHp','speed','healingPower'];
 const totalStats=[...stats,'cardPower'];
 const difference=(value,baseline,keys)=>Object.fromEntries(keys.map(key=>[key,value[key]-baseline[key]]));
 function summarize(team){
- const heroes=team.map(({id,name,role,lane,power,attack,defense,maxHp,speed})=>({id,name,role,lane,power,attack,defense,maxHp,speed}));
+ const heroes=team.map(hero=>{const {id,name,role,lane,power,attack,defense,maxHp,speed}=hero;return {id,name,role,lane,power,attack,defense,maxHp,speed,healingRate:Number((heroHealingRate(hero)*100).toFixed(6)),healingPower:role==='support'?calculateSpecialHeal({attack,missingHp:Number.MAX_SAFE_INTEGER,skill:hero.active,healingBonus:hero.commanderHealingBonus||0}):0};});
  const totals=Object.fromEntries(totalStats.map(key=>[key,heroes.reduce((sum,hero)=>sum+hero[key==='cardPower'?'power':key],0)]));
  return {totals,heroes};
 }
@@ -25,8 +27,8 @@ export function commanderSelectionPreview(cardsA,cardsB,{seat,remainingCredits=[
  };
  const baseline=prepare(null);
  const options=COMMANDERS.map(({id:commanderId})=>{
-  // Preserve earned levels. The shared combat engine applies the selected
-  // specialty's 40 / other branches' 20 effective caps without erasing levels.
+  // Preserve every earned level. Only the selected specialty contributes
+  // its role bonus; switching back restores the other branch's full effect.
   const candidate={commanderId,levels:{...levels}};
   const prepared=prepare(candidate);
   return {commanderId,profile:candidate,totals:prepared.totals,delta:difference(prepared.totals,baseline.totals,totalStats),

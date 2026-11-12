@@ -9,9 +9,9 @@ import {createCommanderProfile} from '../arena-commanders.js';
 import {createLiveArenaCommanderControls} from '../public/commander-live-arena-controls.js';
 const costs={attack:75,defense:85,magic:100,support:90};
 const hero=id=>({id,hp:100,maxHp:100,attack:100,defense:50,speed:50,position:0,role:'fighter',lane:'front',shield:0});
-test('archetype prices are explicit while compatibility constant, normal40 and capacity100 remain',()=>{
+test('archetype prices are explicit while compatibility constant, non-mage normal40 and capacity100 remain',()=>{
  assert.deepEqual(COMMANDER_ULTIMATE_COSTS,costs);assert.deepEqual(COMMANDER_ABILITY_COSTS,{normal:40,ultimate:85});assert.equal(COMMANDER_MAX_ENERGY,100);
- for(const [kind,cost]of Object.entries(costs)){assert.equal(getUltimateEnergyCost(kind),cost);assert.equal(getCommanderAbilityCost(kind,'normal'),40);assert.equal(calculateNextTurnEnergy(100,{ability:'ultimate'},{commanderProfile:createCommanderProfile(kind)}),100);assert.equal(calculateNextTurnUltimateEnergy(100,{ability:'ultimate'},{commanderProfile:createCommanderProfile(kind)}),100-cost);}
+ for(const [kind,cost]of Object.entries(costs)){assert.equal(getUltimateEnergyCost(kind),cost);assert.equal(getCommanderAbilityCost(kind,'normal'),kind==='magic'?60:40);assert.equal(calculateNextTurnEnergy(100,{ability:'ultimate'},{commanderProfile:createCommanderProfile(kind)}),100);assert.equal(calculateNextTurnUltimateEnergy(100,{ability:'ultimate'},{commanderProfile:createCommanderProfile(kind)}),100-cost);}
 });
 for(const [kind,cost]of Object.entries(costs)){
  for(const energy of new Set([cost-1,cost,100]))test(`${kind} authoritative ultimate price ${cost}, boundary energy ${energy}`,()=>{

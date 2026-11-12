@@ -1,31 +1,18 @@
-# Büyücü komutanı: bir sonraki saldırıyı sersemletme
+# Büyücü komutanı: alan hasarı ve sonraki eylemi sersemletme
 
 Yerel taslak, 27 Ekim 2026. Temel: `8e7e693d5ffe6d7e8cb9c52d00df6db9d9caa391`.
 Yayın, PR veya üretim değişikliği yapılmadı.
 
-## Normal beceri
+## Normal beceri (güncel yerel taslak)
 
-- Oyuncu yaşayan **bir rakip kahraman** seçer. Sunucu seçimi ve oyuncunun tarafını doğrular.
-- Eski yüzdeyle saldırı zayıflatma yerine **bir sonraki saldırı eylemi tamamen atlanır**.
-  Yeni kullanım ayrıca zayıflatma eklemez. Önceden kaydedilmiş zayıflatma durumlarının
-  eski davranışı korunur; geçmiş sonuçlar dönüştürülmez.
-- Hedef bu tur saldırdıysa etki sonraki saldırısını bekler; tur sonunda kaybolmaz.
-  Normal, özel ve alan saldırısının tamamı atlanır; hasar, infaz, saldırıya bağlı
-  şifa/kalkan/stat etkileri veya ek alan vuruşları oluşmaz.
-- Yalnız şifa/kalkan yapan hareketler etkilenmez ve bekleyen sersemletmeyi tüketmez.
-  İlk sonraki saldırı atlanır. Pasif tur başlangıcı etkileri değişmez.
-- Tek bekleyen durum vardır; tekrar kullanım ek atlanan saldırı biriktirmez.
-  Kabul edilen tekrar kullanım normal enerji/bekleme kurallarına tabidir.
-  Aynı istek kimliğinin ağ tekrarı ikinci kez ücret veya durum oluşturmaz.
-- Ölüm ve dirilme bekleyen sersemletmeyi temizler; 1 canda kurtulma ölüm değildir.
-- Her seviyede **1 saldırı** atlanır. Eski yüzde zayıflatma artışı artık yeni normal
-  becerinin etkisi değildir. 40 normal enerji, 5 saniye normal beklemesi, ayrı ulti
-  dolumu, sınıf bonusları ve seviye bazlı enerji kazanımı değişmez.
-- Bot ve iki oyunculu maçlar aynı sunucu motorunu kullanır. Zor bot bekleyen
-  sersemletmeyi üst üste harcamak yerine uygun başka hedefi seçer.
-- Türkçe/İngilizce beceri açıklamaları, seviye önizlemesi, savaş kaydı ve hedef
-  rozeti aynı kuralı gösterir. İptal/seçim yalnızca arayüzde kaldığı sürece enerji
-  harcanmaz; hasar veya durum tarayıcı tarafından hesaplanmaz.
+- Oyuncu yaşayan bir rakip seçer. Normal bedeli 60 enerji, normal beklemesi 5 saniyedir.
+- Ana hasar = yuvarla(komutan seviyesi + savaş başında hazırlanmış enerji kahramanlarının toplam saldırısının %5’i). Sonraki ölümler ve güçlendirmeler başlangıç toplamını değiştirmez.
+- Hedefin başlangıç dizilimindeki komşu yuvalarında bulunan yaşayan rakiplerin her biri yuvarla(ana hasar × %25) alan hasarı alır. Çapraz yuvalar dahildir. Boş veya düşen kahraman yuvaları kapanmaz; alan bunların üzerinden yayılmaz.
+- Yalnız seçilen hedef hasardan sonra yaşıyorsa sonraki planlı eylemini tamamen atlar. Saldırı, alan vuruşları, şifa ve kalkan dahildir. Atlanan eylemin turunda kendi tetiklediği pasifler de engellenir; eylem atlandıktan sonra tur sonuna kadar engel sürer. Hazırlanmış başlangıç bonusları, önceki öfke/kalkanlar ve müttefik etkileri kaldırılmaz. Etki tur sonunda kaybolmaz ve birikmez.
+- Yeni kayıtlar `nextAction: true`, `stunVersion: 2`, `passiveSilence: true` ve kesin `blockedRound` kullanır. Her kahramanın `heroActionClockVersion: 1` / `completedActionTurns` sayacı yalnız tamamlanan eylemlerde artar; her üçüncü eylem özeldir. Sersemleme sayacı ilerletmez, ölüm/dirilme sıfırlamaz. Sürümsüz `nextAction` kayıtları yalnız eylemi atlatır. Eski `nextAttack: true` kayıtları yalnız saldırı atlatır; eski şifa/kalkan davranışı ve yüzde zayıflatma kayıtları yeniden yorumlanmaz.
+- Ölüm, dirilme ve savaş bitişi bekleyen durumu temizler. 1 canda kurtulma ölüm değildir.
+- İptal veya geçersiz hedef enerji harcamaz. Ağ tekrarı ikinci ücret oluşturmaz. Arayüz hasarı kendisi uygulamaz; sunucunun hedef vuruşlarını ve durumlarını gösterir.
+- Türkçe/İngilizce profil, açık artırma ve eğitim açıklamaları aynı kuralı gösterir. Rozet ve kayıtlarda eski saldırı sersemletmesi yeni eylem sersemletmesinden ayrılır.
 
 ## Ulti denetimi
 

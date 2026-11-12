@@ -1,14 +1,13 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
 import {commanderAbilityStats,commanderAbilityDescription,getCommanderAbilityCost} from '../public/commander-ability-rules.js';
 import {translate} from '../public/crazygames-en.js';
-for(const [level,rate] of [[0,.35],[10,.385],[20,.42],[40,.49]])test(`mage level ${level}: fixed next-attack stun and translated scope`,()=>{
+for(const [level,rate] of [[0,.05],[10,.05],[20,.05],[40,.05]])test(`mage level ${level}: fixed 5% damage and next-action stun and translated scope`,()=>{
  const profile={commanderId:'magic',levels:{magic:level}},stats=commanderAbilityStats(profile),description=commanderAbilityDescription(profile),normal=description.split(' Normal beceri ')[0];
- // Legacy numeric rate remains available for old saved snapshots, not new casts.
- assert.equal(stats.normalRate,rate);assert.match(normal,/sersemletir/);assert.match(normal,/bir sonraki saldırısı/);assert.match(normal,/tur değişiminde bitmez/);assert.match(normal,/Şifa ve kalkan eylemleri etkilenmez/);assert.match(normal,/her seviyede 1 saldırı/);assert.doesNotMatch(normal,/%|azalır/);
- const en=translate(normal);assert.match(en,/stuns the selected living enemy/);assert.match(en,/skips its next attack and all area hits/);assert.match(en,/Healing and shield actions are unaffected/);assert.match(en,/persists across rounds/);assert.match(en,/Does not stack/);assert.doesNotMatch(en,/[çğıöşüÇĞİÖŞÜ]/u);
- assert.equal(getCommanderAbilityCost('magic','normal'),40);assert.equal(getCommanderAbilityCost('magic','ultimate'),100);
+ assert.equal(stats.normalRate,rate);assert.match(normal,/%5/);assert.match(normal,/%25/);assert.match(normal,/şifa ve kalkan dahil sonraki eylemini/);assert.match(normal,/kendi tetiklediği pasifler de engellenir/);
+ const en=translate(normal);assert.match(en,/5%/);assert.match(en,/25%/);assert.match(en,/skips its next action, including healing and shields/);assert.match(en,/Self-triggered passives are also blocked/);assert.match(en,/does not stack/);assert.doesNotMatch(en,/[çğıöşüÇĞİÖŞÜ]/u);
+ assert.equal(getCommanderAbilityCost('magic','normal'),60);assert.equal(getCommanderAbilityCost('magic','ultimate'),100);
 });
-test('other normal rates and mage ultimate scaling remain unchanged',()=>{
- for(const [id,normal,ultimate]of [['attack',.12,.3],['defense',.08,.2],['support',.12,.3],['magic',.35,.4]]){const stats=commanderAbilityStats({commanderId:id,levels:{[id]:0}});assert.equal(stats.normalRate,normal);assert.equal(stats.ultimateRate,ultimate);}
+test('non-mage normal rates use fixed role formulas and mage ultimate scaling remains unchanged',()=>{
+ for(const [id,normal,ultimate]of [['attack',.10,.3],['defense',.20,.2],['support',.05,.3],['magic',.05,.4]]){const stats=commanderAbilityStats({commanderId:id,levels:{[id]:0}});assert.equal(stats.normalRate,normal);assert.equal(stats.ultimateRate,ultimate);}
  const source=readFileSync(new URL('../public/commander-arena-effects.js',import.meta.url),'utf8');assert.match(source,/weaken:text\('SONRAKİ SALDIRI','NEXT ATTACK'\)/);
 });

@@ -51,8 +51,8 @@ test('PvP same-lane permutation survives draft, Ready, reconnect and fresh remat
      for(let side=0;side<2;side++){
       const prepared=locked.result.teams[1-side];
       assert.deepEqual(prepared.map(h=>h.id),expected[side]);
-      assert.deepEqual(prepared[3].centerProtection,{version:1,protectorIds:expected[side].filter((_,i)=>i!==3),broken:false},'new battle, including rematch, starts with fresh unbroken cover');
-      assert.equal(prepared.filter(h=>h.centerProtection).length,1);
+      assert.deepEqual(prepared[3].centerDefenseBonus,{version:1,multiplier:1.15},'new battle, including rematch, starts with permanent center defense');
+      assert.equal(prepared.filter(h=>h.centerDefenseBonus).length,1);
      }
     }
    }
@@ -63,18 +63,18 @@ test('PvP same-lane permutation survives draft, Ready, reconnect and fresh remat
     for(let side=0;side<2;side++){
      const ids=expected[seat===0?side:1-side],heroes=resumed.teams[side];
      assert.deepEqual(heroes.map(h=>h.id),ids);
-     assert.deepEqual(heroes[3].centerProtection.protectorIds,ids.filter((_,i)=>i!==3));
+     assert.equal(heroes[3].centerDefenseBonus.multiplier,1.15);
     }
    }
-   const broken=[false,false];let state,observedDeath=false;
+   let state,observedDeath=false;
    for(let poll=0;poll<700;poll++){
     state=await live(0);
     for(let side=0;side<2;side++){
      const heroes=state.teams[side];assert.deepEqual(heroes.map(h=>h.id),expected[side]);
-     const mark=heroes[3].centerProtection;
-     assert.deepEqual(mark.protectorIds,expected[side].filter((_,i)=>i!==3));
-     if(heroes.some((h,i)=>i!==3&&h.hp===0)){broken[side]=true;observedDeath=true;}
-     assert.equal(mark.broken,broken[side],'live snapshots preserve the first-death latch');
+     const mark=heroes[3].centerDefenseBonus;
+     assert.equal(heroes[3].centerDefenseBonus.multiplier,1.15);
+     if(heroes.some((h,i)=>i!==3&&h.hp===0)){observedDeath=true;}
+     assert.deepEqual(mark,{version:1,multiplier:1.15},'bonus persists after casualties');
     }
     if(state.finished)break;
     await delay(20);

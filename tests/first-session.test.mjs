@@ -15,9 +15,9 @@ class Node{
 function fixture(enabled=true){const doc={nodes:{},documentElement:{classList:{contains:()=>enabled}},createElement:tag=>new Node(tag,doc),getElementById:id=>doc.nodes[id]};doc.nodes['commander-onboarding']=new Node('section',doc);const root=new Node('div',doc);for(const id of Object.keys(commanderIntroductions)){const b=new Node('button',doc);b.dataset.commander=id;root.append(b);}return{doc,root};}
 for(const id of Object.keys(commanderIntroductions))test(`${id} onboarding reuses actual zero-level skills without spending or changing profile`,()=>{
  const {doc,root}=fixture();describeFirstCommander(root,id,{document:doc});const detail=doc.nodes['first-commander-details'];
- assert.equal(detail.hidden,false);assert.match(detail.textContent,/no upgrade bonus/);assert.match(detail.textContent,/NORMAL ABILITY/);assert.match(detail.textContent,/ULTIMATE/);assert.match(detail.textContent,/40 NORMAL ENERGY/);
+ assert.equal(detail.hidden,false);assert.match(detail.textContent,/no upgrade bonus/);assert.match(detail.textContent,/NORMAL ABILITY/);assert.match(detail.textContent,/ULTIMATE/);assert.match(detail.textContent,new RegExp((id==='magic'?60:40)+' NORMAL ENERGY'));
  const profile=createCommanderProfile(id);assert.equal(commanderStatBonus(profile,id),0);const stats=commanderAbilityStats(profile);
- if(id!=='magic')assert.ok(detail.textContent.includes(String(stats.normalRate*100)+'%'));else assert.match(detail.textContent,/1 ATTACK/);
+ if(id!=='magic')assert.ok(detail.textContent.includes(String(stats.normalRate*100)+'%'));else assert.match(detail.textContent,/5%.*25%.*next action/);
  assert.equal(root.children.length,4);assert.ok(root.children.every(b=>b.children.length===1));
 });
 test('normal site is untouched and unselected state never invents a commander',()=>{

@@ -29,8 +29,10 @@ for(const [difficulty,level,gain] of [['easy',15,19],['medium',25,24],['hard',40
   const prepared=prepareLiveArenaTeams(cards,cards,{commanders:[createCommanderProfile('attack'),profile],cardAdapter:'auction'});
   assert.deepEqual(prepared[0],baseline[0],'human team receives no bot upgrades');
   for(let i=0;i<5;i++){
-   const stat=['attack','attack','defense','attack','maxHp'][i];
-   assert.ok(prepared[1][i][stat]>baseline[1][i][stat],cards[i].role+' has its real branch bonus');
+   const stat=['attack','attack','defense','attack','commanderHealingBonus'][i];
+   const matching=['attack','attack','defense','magic','support'][i]===id;
+   if(matching)assert.ok(prepared[1][i][stat]>(baseline[1][i][stat]||0),cards[i].role+' has the selected branch bonus');
+   else assert.deepEqual(prepared[1][i],baseline[1][i],'unselected branches grant no bonus');
   }
   const combat=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'energy',now:0}),teams:teams(),commanders:[createCommanderProfile('attack'),profile]});
   assert.deepEqual(combat.abilities.energy,[30,30]);beginServerCombatRound(combat,2);
@@ -46,13 +48,13 @@ for(const [difficulty,level,gain] of [['easy',15,19],['medium',25,24],['hard',40
    const base=castAt(createCommanderProfile(id)),upgraded=castAt(profile);
    assert.equal(upgraded.events.at(-1).commanderLevel,level);
    assert.equal(upgraded.events.at(-1).abilityBonusPercent,level);
-   if(id==='magic'&&ability==='normal'){assert.equal(upgraded.teams[0][0].commanderStunNextAttack,true);assert.equal(upgraded.teams[0][0].commanderWeaken,undefined);assert.deepEqual(upgraded.events.at(-1).impacts,base.events.at(-1).impacts,'normal stun is one skipped attack at every difficulty');}
+   if(id==='magic'&&ability==='normal'){assert.equal(upgraded.teams[0][0].commanderStunNextAction,true);assert.equal(upgraded.teams[0][0].commanderWeaken,undefined);assert.deepEqual(upgraded.events.at(-1).impacts.filter(i=>i.kind==='stun'),base.events.at(-1).impacts.filter(i=>i.kind==='stun'),'normal stun is one skipped action at every difficulty');assert.equal(upgraded.events[0].rawDamage,base.events[0].rawDamage+level);assert.ok(upgraded.events.slice(1,-1).every(e=>e.rawDamage===Math.round(level*.25)));}
    else if(ability==='ultimate'&&id==='magic'){
     assert.equal(upgraded.teams[1][0].attack,1000);assert.equal(upgraded.teams[1][0].arcaneSurgeBonusAttack,1000);assert.equal(upgraded.teams[1][0].arcaneSurgeFromRound,1);assert.equal(upgraded.teams[1][0].arcaneSurgeUntilRound,3);
     assert.equal(upgraded.events.at(-1).value,base.events.at(-1).value,'surge utility duration and snapshot multiplier do not grow with level');
    }else if(ability==='ultimate'&&id==='support'){
-    assert.equal(upgraded.teams[1][4].hp,2000);assert.equal(upgraded.teams[1][4].canActFromRound,2);assert.equal(upgraded.teams[1][4].shield,0);
-    assert.equal(upgraded.events.at(-1).value,base.events.at(-1).value,'revival is a fixed bounded 40% life, not level-scaled resurrection');
+    assert.equal(upgraded.teams[1][4].hp,2750);assert.equal(upgraded.teams[1][4].canActFromRound,2);assert.equal(upgraded.teams[1][4].shield,0);
+    assert.equal(upgraded.events.at(-1).value,base.events.at(-1).value,'revival is a fixed bounded 55% life, not level-scaled resurrection');
    }else if(ability==='ultimate'&&id==='attack'){
     assert.equal(upgraded.teams[0][0].commanderFocusUntilDeath,true);assert.ok(upgraded.teams[0].every(u=>u.hp===2500));
     assert.equal(upgraded.events.at(-1).value,base.events.at(-1).value,'focus orders do not add level-scaled bonus attacks');

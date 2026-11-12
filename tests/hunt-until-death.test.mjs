@@ -26,7 +26,8 @@ import {battleRoster} from '../battle-roster.js';
 import {simulateBattle,fighterFromCard} from '../battle-engine.js';
 import {prepareLiveArenaTeams} from '../commander-live-team-preparation.js';
 const hero=(id,extra={})=>({id,name:id,hp:10000,maxHp:10000,attack:20,defense:50,speed:50,position:0,role:'fighter',lane:'front',shield:0,...extra});
-const make=({round=1,actor={},target={},allies}={})=>createLiveCommanderCombat({round,teams:[allies??[hero('actor',{speed:90,...actor}),hero('ally',{speed:80,position:1})],[hero('front',{speed:20}),hero('chosen',{speed:10,lane:'back',position:1,...target})]],abilities:createLiveCommanderAbilities({matchKey:'hunt',energy:[100,100],ultimateEnergy:[100,100],now:0}),commanders:[{commanderId:'attack'},{commanderId:'support'}]});
+// Focus persistence probes deliberately repeat attacks and jump rounds on the historical clock.
+const make=({round=1,actor={},target={},allies}={})=>createLiveCommanderCombat({heroActionClockVersion:0,round,teams:[allies??[hero('actor',{speed:90,...actor}),hero('ally',{speed:80,position:1})],[hero('front',{speed:20}),hero('chosen',{speed:10,lane:'back',position:1,...target})]],abilities:createLiveCommanderAbilities({matchKey:'hunt',energy:[100,100],ultimateEnergy:[100,100],now:0}),commanders:[{commanderId:'attack'},{commanderId:'support'}]});
 const cast=c=>castLiveCommanderCombat(c,{side:0,ability:'ultimate',targetIds:['chosen'],requestId:'hunt-first',matchKey:'hunt',now:0});
 const marked=c=>c.teams[1].find(u=>u.id==='chosen');
 const options={parity:true,specialHealing:true,energySplash:true,shieldDrain:true,statSpecial:true,executeSpecial:true,thornsPassive:true,roundPassives:true,damageSpecial:true};

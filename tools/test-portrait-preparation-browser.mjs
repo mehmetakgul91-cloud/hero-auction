@@ -38,7 +38,7 @@ try{
   await page.locator('.combined-hero-pick[data-slot="2"]').click();assert.equal(await page.locator('.combined-hero-pick[data-slot="2"]').getAttribute('aria-pressed'),'true');await page.locator('.combined-hero-pick[data-slot="3"]').click();await page.waitForFunction(()=>!window.picker.state.snapshot().previewPending);
   assert.deepEqual(await page.evaluate(()=>window.picker.state.snapshot().formation.positions),[0,1,3,2,4]);assert.equal(await page.locator('.combined-center-badge').evaluate(e=>e.parentElement.dataset.heroId),team[2].id);
   assert.equal(await page.evaluate(()=>document.activeElement.dataset.heroId),team[3].id);
-  const wanted=await page.locator('.combined-hero-pick[data-slot="3"]').getAttribute('aria-label');assert.match(wanted,new RegExp(english?'Protected center':'Korumalı merkez'));
+  const wanted=await page.locator('.combined-hero-pick[data-slot="3"]').getAttribute('aria-label');assert.ok(wanted.includes(english?'Center: +15% defense':'Merkez: +%15 savunma'));assert.doesNotMatch(wanted,/Protected center|Korumalı merkez/);
   await page.screenshot({path:path.join(artifacts,`swap-${width}-${english?'en':'tr'}.png`),fullPage:true});
   for(let mask=0;mask<32;mask++){
    await page.evaluate(mask=>{const f={...window.fixtureBase,lanes:Array.from({length:5},(_,i)=>mask&(1<<i)?'front':'back')};window.mount(f)},mask);

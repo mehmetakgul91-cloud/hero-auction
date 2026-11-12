@@ -6,11 +6,14 @@ export const COMMANDER_NORMAL_COOLDOWN_MS=5000;
 export const COMMANDER_COOLDOWN_MS=COMMANDER_NORMAL_COOLDOWN_MS;
 export const COMMANDER_EFFECT_MS=1200;
 export {COMMANDER_ABILITY_COSTS};
+// Standalone legacy fixtures default to defense. Live combat replaces these IDs
+// with the validated server-owned profiles before any ability is used.
 export function createLiveCommanderAbilities({matchKey,energy=[COMMANDER_START_ENERGY,COMMANDER_START_ENERGY],ultimateEnergy=energy,commanderIds=['defense','defense'],now=Date.now()}={}){
  if(!matchKey||!Array.isArray(energy)||energy.length!==2||energy.some(n=>!Number.isInteger(n)||n<0||n>100))throw Error('Invalid live commander session');
  if(!Array.isArray(ultimateEnergy)||ultimateEnergy.length!==2||ultimateEnergy.some(n=>!Number.isInteger(n)||n<0||n>100))throw Error('Invalid ultimate charge');
  if(!Array.isArray(commanderIds)||commanderIds.length!==2)throw Error('Invalid commander cost bindings');
- commanderIds.forEach(getUltimateEnergyCost);
+ // Check every seat, including holes in a sparse array; unknown bindings fail closed.
+ for(const commanderId of commanderIds)getUltimateEnergyCost(commanderId);
  return {matchKey,commanderIds:Object.freeze([...commanderIds]),energy:[...energy],ultimateEnergy:[...ultimateEnergy],ultimateUsed:[false,false],cooldownUntil:[now,now],effectUntil:now,casts:[],requests:new Map(),finished:false};
 }
 export function viewLiveCommanderAbilities(session,side,now=Date.now()){
@@ -20,8 +23,8 @@ export function viewLiveCommanderAbilities(session,side,now=Date.now()){
  const effectLockMs=Math.max(0,(session.effectUntil||0)-now);
  const energy=session.energy[side],ultimateEnergy=session.ultimateEnergy[side];
  return {energy,ultimateEnergy,ultimateUsed:!!session.ultimateUsed?.[side],effectLockMs,effectUntil:session.effectUntil||0,normalCooldownMs:cooldownMs,normalCooldownUntil:session.cooldownUntil[side],cooldownMs,cooldownUntil:session.cooldownUntil[side],finished:session.finished,
-  canUseNormal:!session.finished&&cooldownMs===0&&effectLockMs===0&&energy>=getCommanderAbilityCost(session.commanderIds?.[side]??'defense','normal'),
-  canUseUltimate:!session.ultimateUsed?.[side]&&!session.finished&&effectLockMs===0&&ultimateEnergy>=getCommanderAbilityCost(session.commanderIds?.[side]??'defense','ultimate'),
+  canUseNormal:!session.finished&&cooldownMs===0&&effectLockMs===0&&energy>=getCommanderAbilityCost(session.commanderIds?.[side],'normal'),
+  canUseUltimate:!session.ultimateUsed?.[side]&&!session.finished&&effectLockMs===0&&ultimateEnergy>=getCommanderAbilityCost(session.commanderIds?.[side],'ultimate'),
   lastCast:session.casts.at(-1)||null};
 }
 export function grantLiveCommanderEnergy(session,side,amount){
@@ -41,7 +44,7 @@ export function castLiveCommanderAbility(session,{side,ability,now=Date.now(),ma
   return {...previous.result,duplicate:true};
  }
  if(ability==='ultimate'&&session.ultimateUsed?.[side])throw Error('Commander ultimate already used');
- const cost=getCommanderAbilityCost(session.commanderIds?.[side]??'defense',ability);
+ const cost=getCommanderAbilityCost(session.commanderIds?.[side],ability);
  if(!cost)throw Error('Invalid commander ability');
  if(!Number.isFinite(now))throw Error('Invalid time');
  if(now<(session.effectUntil||0))throw Error('Komutan efekti sürüyor. Bekleme süresinin bitmesini bekle.');

@@ -24,11 +24,11 @@ function expectedStart(hero,lane,credit,commander){
  const out={power:Math.round(power*credits*100)/100,attack:Math.round(Math.round(power*multiplier)*credits),defense:Math.round(Math.round(power*multiplier)*credits),maxHp:Math.round(Math.round(power*2*multiplier)*credits),speed:Math.round(Math.round(power*multiplier)*credits)};
  if(commander){
   const stat=hero.role==='tank'?'defense':hero.role==='energy'?'magic':hero.role==='support'?'support':'attack';
-  const rate=Math.min(commander.levels[stat],commander.commanderId===stat?40:20)*.005;
-  if(hero.role==='tank')out.defense+=Math.round(out.power*rate);
-  else if(hero.role==='support')out.maxHp+=Math.round(out.power*2*rate);
-  else if(hero.role==='energy')out.attack=Math.round(out.attack*(1+rate));
-  else out.attack+=Math.round(out.power*rate);
+  const rate=commander.commanderId===stat?Math.min(commander.levels[stat],40)*.005:0;
+  if(hero.role==='tank')out.defense=Number((out.defense*(1+rate)).toFixed(6));
+  else if(hero.role==='support'){} // Healing-rate bonus does not change these stats.
+  else if(hero.role==='energy')out.attack=Number((out.attack*(1+rate)).toFixed(6));
+  else out.attack=Number((out.attack*(1+rate)).toFixed(6));
  }
  const passive=hero.passive;
  if(passive?.effect==='guard'||passive?.effect==='resist')out.defense=Math.round(out.defense*(1+passive.value));
@@ -52,6 +52,7 @@ for(const assassin of assassins)test(`${assassin.name}: bonus follows lane, cred
   assert.deepEqual(input,before);
   for(const side of [0,1])for(let i=0;i<input.length;i++){
    const hero=battleRoster.find(h=>h.id===input[i].id),expected=expectedStart(hero,input[i].lane,credit,commander);
+   if(lane==='front'&&i===3)expected.defense=Math.round(expected.defense*1.15);
    for(const [stat,value] of Object.entries(expected))assert.equal(prepared[side][i][stat],value,`${hero.name} ${lane} ${credit} ${commander?.commanderId} ${stat}`);
    assert.deepEqual(prepared[side][i].active,hero.active);assert.deepEqual(prepared[side][i].passive,hero.passive);
   }
@@ -88,7 +89,8 @@ test('raw old snapshots retain their prior attack through load, rounds, death an
  const current=prepareLiveArenaTeams(input,input,{cardAdapter:'auction'})[0];
  for(const units of [prior,current]){
   const saved=JSON.parse(JSON.stringify(units)),attack=saved[0].attack;
-  const combat=createLiveCommanderCombat({teams:[saved,structuredClone(saved)],commanders:[{commanderId:'attack'},{commanderId:'support'}],abilities:createLiveCommanderAbilities({matchKey:'snapshot:test'}),round:1});
+  // This is an explicit historical snapshot load, not a newly started battle.
+  const combat=createLiveCommanderCombat({heroActionClockVersion:0,teams:[saved,structuredClone(saved)],commanders:[{commanderId:'attack'},{commanderId:'support'}],abilities:createLiveCommanderAbilities({matchKey:'snapshot:test'}),round:1});
   assert.deepEqual(combat.teams[0],saved,'loading does not run fresh preparation');
   beginServerCombatRound(combat,2);assert.equal(combat.teams[0][0].attack,attack);
   applyHeroDamage(combat.teams[0][0],10000,{round:2,allies:combat.teams[0]});reviveCommanderAlly(combat.teams[0][0],2);
@@ -97,15 +99,15 @@ test('raw old snapshots retain their prior attack through load, rounds, death an
  assert.equal(prior[0].attack,73,'raw historical snapshot did not receive the new rule');
 });
 
-test('same-lane swap selects an assassin center; boosted attackers still obey cover until the first casualty',()=>{
+test('same-lane swap selects an assassin center; boosted attackers can hit the center and its defense persists through casualties',()=>{
  const roster=[...otherRoles.slice(0,2),assassins[0],otherRoles[2],otherRoles[3]].map(hero=>({...hero,power:73}));
  const formation={positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:roster.map(h=>h.role)};
  const swapped=swapSameLaneHeroes(formation,roster,2,3);assert.equal(preparationCenterSlot(swapped),3);
  const ordered=swapped.positions.map((index,slot)=>({...roster[index],role:swapped.roles[slot],lane:swapped.lanes[slot]}));
  const teams=prepareLiveArenaTeams(ordered,ordered,{cardAdapter:'auction'}),middle=teams[1][3];
- assert.equal(middle.id,assassins[0].id);assert.ok(middle.centerProtection);assert.equal(middle.attack,expectedStart(assassins[0],'back',0,null).attack);
+ assert.equal(middle.id,assassins[0].id);assert.ok(middle.centerDefenseBonus);assert.equal(middle.attack,expectedStart(assassins[0],'back',0,null).attack);
  const combat=createLiveCommanderCombat({teams,commanders:[{commanderId:'attack'},{commanderId:'support'}],abilities:createLiveCommanderAbilities({matchKey:'combined:test'})});
  const hit=stepParityBasicAttack(combat,{side:0,actorId:assassins[0].id,allowDamageActive:true,allowThornsPassive:true,allowRoundPassives:true});
- assert.notEqual(hit.event.target,middle.id);assert.equal(combat.teams[1][3].hp,middle.hp);
- applyHeroDamage(combat.teams[1][0],10000,{round:1,allies:combat.teams[1]});assert.equal(combat.teams[1][3].centerProtection.broken,true);
+ assert.equal(hit.event.target,middle.id);assert.ok(combat.teams[1][3].hp<middle.hp);
+ applyHeroDamage(combat.teams[1][0],10000,{round:1,allies:combat.teams[1]});assert.equal(combat.teams[1][3].defense,middle.defense);assert.deepEqual(combat.teams[1][3].centerDefenseBonus,{version:1,multiplier:1.15});
 });

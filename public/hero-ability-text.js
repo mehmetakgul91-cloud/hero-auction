@@ -11,7 +11,7 @@ export const abilityEffects = Object.freeze({
 // Templates are shared by the direct renderer and the DOM English translator.
 // Numeric placeholders preserve server-owned rates; flavor names never imply mechanics.
 const templates=Object.freeze({
- cadence:['Her 3 turda: ','Every 3 rounds: '],
+ cadence:['Tamamlanan her 3 eylemde: ','Every 3 completed actions: '],
  burst:['Vuruş hasarı +%{0}','Hit damage +{0}%'],
  delay:['hedefin hareketini atlamadan sırasını turun sonuna erteler; hareket ettiyse sonraki tur; geciktirilen hareketten sonraki tur boyunca yeniden geciktirmeye bağışık','moves the target to the end of the round without skipping its action; next round if it already acted; immune to further delay through the round after the delayed action'],
  shield:['Kendine kalkan: kendi savunması × %{0}','Self shield equal to {0}% of own defense'],
@@ -31,8 +31,8 @@ const templates=Object.freeze({
  defense:['Savaş başında savunmayı %{0} artırır','Increases defense by {0}% at battle start'],
  speed:['Savaş başında hızı %{0} artırır; yalnız sıra, kaçınma değil','Increases speed by {0}% at battle start; initiative only, not evasion'],
  focus:['Savaş başında saldırıyı %{0} artırır','Increases attack by {0}% at battle start'],
- rage:['Tur başında can %50 altındaysa bir kez saldırı +%{0}; iyileşse de kalır','Once at round start below 50% health: attack +{0}%; persists after healing'],
- regen:['Her tur başında şifa: azami can × %{0}; eksik canla sınırlı','Restores {0}% of max health at each round start; capped by missing health'],
+ rage:['Tur başında can %50 altındaysa bir kez saldırı +%{0}; iyileşse de kalır; sersemken tetiklenmez','Once at round start below 50% health: attack +{0}%; persists after healing; cannot trigger while stunned'],
+ regen:['Her tur başında şifa: azami can × %{0}; eksik canla sınırlı; sersemken tetiklenmez','Restores {0}% of max health at each round start; capped by missing health; cannot trigger while stunned'],
  thorns:['Vuruş sonrası kendine kalkan: savunma × %{0}','After attacking, gains a self shield for {0}% of defense'],
  unknown:['Etki belirtilmemiş','Effect not specified']
 });
@@ -40,6 +40,7 @@ const templates=Object.freeze({
 // retain the complete descriptions above by default, without an extra click.
 // Secondary conditions remain in full copy; summaries keep effect, target and rates.
 const compactTemplates=Object.freeze({
+ cadence:['Her 3 eylemde: ','Every 3 actions: '],
  "delay": [
   "hedefin sonraki hareketini sona erteler",
   "moves the target’s next action to the end"
@@ -113,12 +114,12 @@ const compactTemplates=Object.freeze({
   "Battle start: attack +{0}%"
  ],
  "rage": [
-  "Tur başı can %50 altındaysa bir kez kalıcı saldırı +%{0}",
-  "Once at round start below 50% health: permanent attack +{0}%"
+  "Sersem değilse tur başı can <%50: tek kalıcı SAL +%{0}",
+  "Not stunned at round start, HP <50%: once permanent ATK +{0}%"
  ],
  "regen": [
-  "Tur başı: azami can × %{0} şifa",
-  "Round start: heals {0}% of max health"
+  "Sersem değilse tur başı: azami can × %{0} şifa",
+  "Unless stunned: round-start heal {0}% max HP"
  ],
  "thorns": [
   "Vuruş sonrası kendine savunma × %{0} kalkan",

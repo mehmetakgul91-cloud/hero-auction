@@ -1,8 +1,8 @@
 {
   "cases": 5600,
   "passed": 5600,
-  "damageChecks": 289085,
-  "delays": 10357,
+  "damageChecks": 284975,
+  "delays": 10227,
   "errors": [],
   "method": "All50, both lanes, actual/equal80,7 credit/commander contexts,2seed, mirroredseats; exact common critical stream; no manual commander casts. Temporary source injection only."
 }

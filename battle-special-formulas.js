@@ -6,9 +6,13 @@ export function calculateSplashRawDamage(raw,{skill=null,role='',special=false}=
  const percent=skill?.effect==='splash'?abilityValue(skill,'splashRate'):.15;
  return Math.max(1,Math.floor(raw*percent));
 }
-export function calculateSpecialHeal({attack,missingHp,skill=null}){
- if(!Number.isFinite(attack)||attack<0||!Number.isFinite(missingHp)||missingHp<0)throw Error('Invalid heal stats');
- return Math.min(missingHp,Math.max(1,Math.round(attack*abilityValue(skill,'healRate'))));
+export function heroHealingRate(actor){
+ if(actor?.role!=='support')return 0;
+ return abilityValue(actor.active,'healRate')+Number(actor.commanderHealingBonus||0);
+}
+export function calculateSpecialHeal({attack,missingHp,skill=null,healingBonus=0}){
+ if(!Number.isFinite(attack)||attack<0||!Number.isFinite(missingHp)||missingHp<0||!Number.isFinite(healingBonus)||healingBonus<0||healingBonus>.2)throw Error('Invalid heal stats');
+ return Math.min(missingHp,Math.max(1,Math.round(attack*(abilityValue(skill,'healRate')+healingBonus))));
 }
 // Select once, so a hybrid's heal and shield always protect the same ally.
 // This is pure: caller commits the result atomically and records both events.
@@ -21,7 +25,7 @@ export function resolveSpecialHealing(actor,allies){
  let target=actor.role==='support'?[...eligible].sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0]??null:null;
  if(!target&&actor.active?.effect==='heal'&&actor.hp<actor.maxHp)target=actor;
  if(!target)return null;
- const heal=calculateSpecialHeal({attack:actor.attack,missingHp:Math.max(0,target.maxHp-target.hp),skill:actor.active});
+ const heal=calculateSpecialHeal({attack:actor.attack,missingHp:Math.max(0,target.maxHp-target.hp),skill:actor.active,healingBonus:actor.role==='support'?Number(actor.commanderHealingBonus||0):0});
  const shield=hybrid?Math.round(actor.defense*abilityValue(actor.active,'allyShieldRate')):0;
  return {target,heal,shield};
 }
