@@ -15,7 +15,7 @@ export function createRoomPresence({now = Date.now, fallbackLeaseMs = 45_000} = 
     const key = identity(room);
     let state = states.get(room);
     if (!state || state.key !== key) {
-      state = {key, lastAt: at, seats: [0,1].map(() => ({connections: new Set(), leaseUntil: 0, online: false, presentSince: null, absentSince: at}))};
+      state = {key, lastAt: at, seats: [0,1].map(() => ({connections: new Set(), lastContactAt: null, leaseUntil: 0, online: false, presentSince: null, absentSince: at}))};
       states.set(room, state);
     }
     // A wall-clock rollback must not resurrect expired leases or extend grace.
@@ -42,6 +42,7 @@ export function createRoomPresence({now = Date.now, fallbackLeaseMs = 45_000} = 
       if (!human(room, seat)) return null;
       const state = context(room, at), entry = state.seats[seat];
       const handle = Object.freeze({match: state.key, seat});
+      entry.lastContactAt = state.lastAt;
       entry.connections.add(handle);refresh(entry, state.lastAt);
       return handle;
     },
@@ -51,6 +52,7 @@ export function createRoomPresence({now = Date.now, fallbackLeaseMs = 45_000} = 
       if (handle.match !== state.key || !human(room, handle.seat)) return false;
       const entry = state.seats[handle.seat];
       if (!entry.connections.delete(handle)) return false;
+      entry.lastContactAt = state.lastAt;
       // A dead SSE connection is evidence as of now, not an ancient poll.
       if (!entry.connections.size) {
         // An authenticated closed transport is stronger evidence than an older
@@ -70,9 +72,19 @@ export function createRoomPresence({now = Date.now, fallbackLeaseMs = 45_000} = 
     touch(room, seat, at = now()) {
       if (!human(room, seat)) return false;
       const state = context(room, at), entry = state.seats[seat];
+      entry.lastContactAt = state.lastAt;
       entry.leaseUntil = Math.max(entry.leaseUntil, state.lastAt + fallbackLeaseMs);
       refresh(entry, state.lastAt);
       return true;
+    },
+    canAutoReturn(room, seat, at = now()) {
+      if (!human(room, seat)) return false;
+      const state = context(room, at), entry = state.seats[seat];
+      if (entry.connections.size) return true;
+      // Poll leases govern forfeit decisions. A recovery read uses actual contact
+      // and never adds the polling lease to the player's return window.
+      const lastContact = entry.lastContactAt ?? (room.playerActivity?.at ?? room.lastActivity ?? room.created ?? 0);
+      return state.lastAt - lastContact < ROOM_IDLE_MS;
     },
     snapshot(room, {at = now(), liveArena = false} = {}) {
       const state = context(room, at);

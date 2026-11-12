@@ -1,3 +1,4 @@
+import {watchRoomDeparture} from '/room-return-window.js';
 import {mountCombinedPreparation} from '/combined-preparation.js';
 import {watchRecoveredRoom} from '/room-recovery-watch.js';
 import {roomReturnStatus} from '/room-return-status.js';
@@ -50,13 +51,37 @@ if(window.HeroPlatform){
    localStorage.setItem('hero-auction-login',JSON.stringify({type:'crazygames',user:result.user,authToken:result.authToken}));
   }else if(saved?.type!=='guest')throw Error('Misafir oturumu gerekli');
  }catch{restart();await new Promise(()=>{})}
- const portalParams=new URLSearchParams(location.search),portalCode=portalParams.get('auctionCode'),portalSeat=portalParams.get('auctionToken');
- if(portalCode&&portalSeat){
-  try{const saved=JSON.parse(localStorage.getItem('hero-auction-login')||'null');const response=await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:portalCode,token:portalSeat,authToken:saved?.authToken})});if(response.ok)window.HeroPlatform.setRoom((await response.json()).room)}catch{}
- }
  window.HeroPlatform.onJoin(code=>{const url='/crazygames/?join='+encodeURIComponent(code);window.HeroPlatform.beforeNavigate?.(url);location.assign(url)});
  const invite=window.HeroPlatform.takeInviteCode();
  if(invite){window.HeroPlatform.beforeNavigate?.('/crazygames/?join='+encodeURIComponent(invite));location.replace('/crazygames/?join='+encodeURIComponent(invite));await new Promise(()=>{})}
+}
+// A mobile browser can reopen the formation/arena URL directly, bypassing the lobby.
+const returnSeat={code:pendingEntryUrl.searchParams.get('auctionCode'),token:pendingEntryUrl.searchParams.get('auctionToken')};
+if(returnSeat.code&&returnSeat.token){
+ const home=window.HeroPlatform?'/crazygames/':'/';
+ let returningHome=false;
+ const goHome=()=>{returningHome=true;window.HeroPlatform?.beforeNavigate(home);location.replace(home);};
+ const departure=watchRoomDeparture({window,document,storage:localStorage,getSeat:()=>returningHome?null:returnSeat,onExpire:goHome});
+ let expired=departure.expired(returnSeat);
+ if(!expired){
+  try{
+   const auth=JSON.parse(localStorage.getItem('hero-auction-login'));
+   if(auth?.authToken){
+    const response=await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...returnSeat,authToken:auth.authToken,automaticReturn:true})});
+    if(response.ok){
+     const result=await response.json();expired=result.returnExpired===true;
+     if(result.room)window.HeroPlatform?.setRoom(result.room);
+    }
+    else if([403,404,410].includes(response.status))expired=true;
+    else throw Error('Automatic room recovery unavailable');
+   }
+  }catch{
+   // Defer to authenticated lobby recovery before any arena polling can renew presence.
+   goHome();await new Promise(()=>{});
+  }
+ }
+ if(expired){departure.forget(returnSeat);goHome();await new Promise(()=>{});}
+ if(!document.hidden)departure.activate(returnSeat);
 }
 // Browser-only battle replay preview. No wallet or live room mutations.
 const $=id=>document.getElementById(id);

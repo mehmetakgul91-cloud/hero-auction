@@ -77,3 +77,18 @@ test('last SSE close starts grace immediately even after a recent authenticated 
  assert.equal(state.seats[1].absentSince,6000);assert.equal(state.deadline,106000);
  assert.equal(p.snapshot(room,{at:105999}).winner,null);assert.equal(p.snapshot(room,{at:106000}).winner,0);
 });
+
+test('automatic return uses the absent seat’s last contact across all match stages',()=>{
+ for(const extra of [{},{mode:'bot'},{phase:'finished'},{battleSync:{result:{live:true}}},{matchSettled:true,battleSync:{result:{finished:true}}},{idleClosed:{}}]){
+  const {r,p,a}=setup(extra);p.disconnect(r,a,5000);
+  p.touch(r,1,104000);
+  assert.equal(p.canAutoReturn(r,0,104999),true);
+  for(const at of [105000,3605000])assert.equal(p.canAutoReturn(r,0,at),false);
+ }
+});
+test('automatic return reads do not renew a polling lease or an old stored room after restart',()=>{
+ const r=room({playerActivity:{at:1000},lastActivity:8_000_000}),p=createRoomPresence();
+ p.initialize(r,1_000_000);assert.equal(p.canAutoReturn(r,0,1_000_000),false);
+ p.touch(r,0,2_000_000);
+ assert.equal(p.canAutoReturn(r,0,2_099_999),true);assert.equal(p.canAutoReturn(r,0,2_100_000),false);
+});

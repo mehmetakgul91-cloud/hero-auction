@@ -74,7 +74,7 @@ try{
   await page.route('**/*',async route=>{
    const request=route.request(),url=new URL(request.url());
    if(url.origin!==origin)return route.abort(); // No production, login, art CDN or other external requests.
-   if(url.pathname==='/battle-preview.html')return route.fulfill({contentType:'text/html',body:'<!doctype html><p id="verified-arena-navigation">Synthetic arena destination</p>'});
+   if(url.pathname==='/battle-preview.html'&&!state.realArena)return route.fulfill({contentType:'text/html',body:'<!doctype html><p id="verified-arena-navigation">Synthetic arena destination</p>'});
    if(!url.pathname.startsWith('/api/'))return route.continue();
    const body=request.postData()?request.postDataJSON():null;
    requests.push({path:url.pathname,method:request.method(),body});
@@ -138,13 +138,53 @@ try{
    assert.deepEqual(unexpected,[],'restore may only call allowlisted reads and ordinary presence; no create/join/bot/match/rematch, claims or purchases');
    const admissions=requests.filter(r=>/^\/api\/(create|join|match|bot(?:-accept)?|rematch|room\/detach|diamonds\/exchange|login-rewards\/claim)$/.test(r.path));
    assert.deepEqual(admissions,[],'restore never creates, joins, pays for, detaches or rematches a room');
-   for(const r of requests.filter(r=>r.path==='/api/room/current'))assert.deepEqual(r.body,{authToken:account.authToken},'account recovery sends only its identity, not an admission request');
-   for(const r of requests.filter(r=>r.path==='/api/state'))assert.deepEqual(r.body,{authToken:account.authToken,...seat},'snapshot reads keep the same saved seat');
+   for(const r of requests.filter(r=>r.path==='/api/room/current'))assert.deepEqual(r.body,{authToken:account.authToken,automaticReturn:true},'account recovery sends only its identity, not an admission request');
+   for(const r of requests.filter(r=>r.path==='/api/state'))assert.deepEqual(r.body,{authToken:account.authToken,...seat,...(r.body.automaticReturn===true?{automaticReturn:true}:{})},'snapshot reads keep the same saved seat');
    console.log(`PASS ${width}px: ${label}.`);
   }catch(error){console.error(`FAIL ${width}px: ${label}; URL=${page.url()}; APIs=${JSON.stringify(requests.map(r=>r.path))}; page errors=${JSON.stringify(errors)}`);throw error;}
   finally{state.gate?.release.resolve();await context.close();}
  }
  for(const width of [1440,390]){
+  for(const gap of [99_000,100_000,3_600_000])await run(width,`resume after ${gap/1000} seconds`,async({page,boot,tail,suspend} )=>{
+   await boot();await tail().waitFor();
+   await suspend('visibility');
+   // Move the browser clock relative to the real departure without waiting an hour.
+   await page.evaluate(gap=>{
+    const original=Date.now;Date.now=()=>original()+gap;
+    window.__returnHidden=false;document.dispatchEvent(new Event('visibilitychange'));
+   },gap);
+   if(gap<100_000){await tail().waitFor();assert.equal(await page.locator('#game').isVisible(),true);}
+   else{
+    await page.locator('#home').waitFor();assert.equal(await page.locator('#game').isVisible(),false);
+    assert.equal(await page.evaluate(()=>localStorage.getItem('hero-auction-session')),null);
+   }
+  });
+  for(const fallback of [false,true])await run(width,'one-hour-old saved room opens the main menu on repeated cold starts',async({page,state,boot,tail})=>{
+   await boot();await tail().waitFor();
+   state.currentMissing=fallback;
+   await page.addInitScript(()=>{
+    const seat=JSON.parse(localStorage.getItem('hero-auction-session'));
+    if(seat)localStorage.setItem('hero-auction-room-departure',JSON.stringify({...seat,at:Date.now()-3_600_000}));
+   });
+   for(let n=0;n<2;n++){
+    await boot(true);assert.equal(await page.locator('#home').isVisible(),true);
+    assert.equal(await page.locator('#game').isVisible(),false);
+    assert.ok(await page.evaluate(()=>JSON.parse(localStorage.getItem('hero-auction-login')).authToken));
+   }
+  });
+  await run(width,'restored arena URL with expired seat leads straight to home',async({page,state,boot,tail,requests})=>{
+   await boot();await tail().waitFor();
+   state.realArena=true;
+   await page.addInitScript(()=>{
+    const seat=JSON.parse(localStorage.getItem('hero-auction-session'));
+    if(seat)localStorage.setItem('hero-auction-room-departure',JSON.stringify({...seat,at:Date.now()-3_600_000}));
+   });
+   const before=requests.length;
+   await page.goto(origin+'/battle-preview.html?'+new URLSearchParams({auctionCode:seat.code,auctionToken:seat.token,room:'arena'}),{waitUntil:'commit'});
+   await page.waitForURL(origin+'/');await page.waitForFunction(()=>!!window.__returnTest);
+   await page.evaluate(()=>window.__returnTest.restored());assert.equal(await page.locator('#home').isVisible(),true);
+   assert.equal(requests.slice(before).some(r=>r.path==='/api/battle-auction-preview'),false);
+  });
   await run(width,'cold reload and interrupted seven-card review preserve separate confirmation',async h=>{
    const {page,state,requests,tail,review,proceed,receiptIds,noPrematureEntry,boot,suspend,resume}=h;
    await boot();await tail().waitFor({state:'visible'});await noPrematureEntry();
@@ -210,5 +250,5 @@ try{
    });
   }
  }
- console.log('PASS: 10 isolated Chromium scenarios, desktop 1440px/mobile 390px; no real accounts, paid endpoints or external traffic. Lifecycle dispatch is synthetic; server inactivity/fees and actual iOS/BFCache require separate coverage.');
+ console.log('PASS: 22 isolated Chromium scenarios, desktop 1440px/mobile 390px; no real accounts, paid endpoints or external traffic. Lifecycle dispatch is synthetic; server inactivity/fees and actual iOS/BFCache require separate coverage.');
 }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}

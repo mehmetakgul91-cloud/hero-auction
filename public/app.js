@@ -1,3 +1,4 @@
+import {watchRoomDeparture} from '/room-return-window.js';
 import {createCampaignMeasurement} from '/campaign-measurement.js';
 import {roomResumePath} from '/room-resume.js';
 import {roomReturnStatus} from '/room-return-status.js';
@@ -44,6 +45,9 @@ import {commanderAbilityStats,COMMANDER_START_ENERGY} from '/commander-ability-r
 import {abilityImpact} from '/hero-ability-text.js?v=ability-amounts-20261021';
 const $=id=>document.getElementById(id);
 let session=null,room=null,stream=null;
+const roomDeparture=watchRoomDeparture({window,document,storage:localStorage,getSeat:()=>session,onExpire:()=>{
+ clearRoomPresentation();session=null;room=null;applyLogin();
+}});
 const auctionCommanderDialog=createAuctionCommanderDialog({document,getRoom:()=>room});
 let roomEntryPending=0;
 const world='mixed';
@@ -446,7 +450,12 @@ function restoreGame(){
 async function readSavedRoom(){
  let stored;try{stored=JSON.parse(localStorage.getItem('hero-auction-session')||'null')}catch{return null}
  if(!stored?.token||!stored?.code)return null;
- try{const j=await post('/api/state',stored);return {token:stored.token,room:j.room};}
+ if(roomDeparture.expired(stored)){roomDeparture.forget(stored);return null;}
+ try{
+  const j=await post('/api/state',{...stored,automaticReturn:true});
+  if(!j.room){if(j.returnExpired)roomDeparture.forget(stored);return null;}
+  return {token:stored.token,room:j.room};
+ }
  catch(e){
   if(e.message==='Oda bulunamadı.'||e.message==='Oyuncu yetkisi geçersiz.'){
    // Do not erase a different seat written while this request was pending.
@@ -460,9 +469,13 @@ async function restoreSavedGame(){
  const auth=login?.authToken,initialSession=session,initialRoom=room;
  if(!signedIn()||!await validateLogin()||webInvite?.pending||login?.authToken!==auth)return;
  try{
-  const current=await post('/api/room/current',{});
+  let stored;try{stored=JSON.parse(localStorage.getItem('hero-auction-session'));}catch{}
+  const current=await post('/api/room/current',{automaticReturn:true});
+  if(webInvite?.pending||login?.authToken!==auth||session!==initialSession||room!==initialRoom)return;
+  if(current.returnExpired){roomDeparture.forget(stored);return;}
   const previous=current?.room?current:await readSavedRoom();
   if(webInvite?.pending||login?.authToken!==auth||session!==initialSession||room!==initialRoom)return;
+  if(previous&&roomDeparture.expired({code:previous.room.code,token:previous.token})){roomDeparture.forget({code:previous.room.code,token:previous.token});return;}
   if(previous){const resumePath=roomResumePath(previous,{reviewPending:tailReceipts.reviewPending(previous.room,collectTailAwards(null,previous.room))});save(previous.token,previous.room,{render:!resumePath});if(resumePath){window.HeroPlatform?.beforeNavigate(resumePath);location.replace(resumePath);}}
  }catch(e){
   if(login?.authToken!==auth)return;
@@ -595,7 +608,7 @@ async function post(url,data){
  try{const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...gameIdentity(),...data})});const j=await res.json();if(!res.ok){const error=Error(j.error||'İşlem başarısız');error.status=res.status;throw error;}if(url!=='/api/wallet')headerWallet.receive(j,walletTicket,{mutation:['/api/commander/select','/api/commander/change','/api/commander/upgrade','/api/diamonds/exchange','/api/login-rewards/claim'].includes(url)});return j}
  finally{if(entry)roomEntryPending--;}
 }
-function save(token,r,{render=true}={}){newPlayerIntro.played();session={token,code:r.code};localStorage.setItem('hero-auction-session',JSON.stringify(session));if(render){show(r);connect();refreshOnline()}else room=r;}
+function save(token,r,{render=true}={}){newPlayerIntro.played();session={token,code:r.code};localStorage.setItem('hero-auction-session',JSON.stringify(session));roomDeparture.activate(session);if(render){show(r);connect();refreshOnline()}else room=r;}
 async function syncRoomSnapshot({force=false}={}){
  const current=session,auth=login?.authToken;if(!current)return;
  let result;

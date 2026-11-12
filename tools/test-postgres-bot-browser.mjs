@@ -12,6 +12,7 @@ if(process.env.HERO_BOT_BROWSER_TEST_DB!==APPROVED||process.env.DATABASE_URL||pr
 const {default:pg}=await import('pg');
 const {chromium}=await import(process.env.HERO_BROWSER_TEST_RUNTIME||'playwright');
 const {settleBotMatch,BOT_ECONOMY}=await import('../bot-economy.js');
+const {recordRoomAction}=await import('../room-inactivity.js');
 const {simulateRosterBattle}=await import('../battle-roster.js');
 const {prepareBattleTeams,auctionRoomToBattleState}=await import('../battle-match.js');
 const {battleRoster}=await import('../battle-roster.js');
@@ -135,6 +136,9 @@ try{
   assert.equal(result.winner,0,'synthetic terminal fixture must be a simulator win');assert.ok(result.log.length);
   const formations=teams.map(team=>buildDefaultFormation(team.map(card=>({...card,role:battleRoster.find(h=>h.id===card.id).role}))));
   room.battleSync={key:(room.matchNumber||1)+':'+room.created,ready:formations,drafts:formations,commanderChoices:commanders,result:{...result,live:false,finished:true,log:result.log.slice(-1)}};
+  // This fixture synthesizes both Ready submissions immediately before the battle.
+  // Record the human's Ready as the live handler does, including its recovery timestamp.
+  assert.equal(recordRoomAction(room,{action:'ready',seat:0}),true);
   room.battleCompleted=[false,false];const settled=await settleBotMatch({database:pool,room,winner:0});item.receipt=settled.receipt;
  }
  await start();
