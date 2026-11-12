@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {createServer} from 'node:net';
+import {battleRoster} from '../battle-roster.js';
+import {abilityImpact} from '../public/hero-ability-text.js';
 import manifest from '../image-asset-manifest.json' with {type:'json'};
 const {chromium}=await import(process.env.HERO_BROWSER_TEST_RUNTIME||'playwright');
 const shots=process.env.HERO_BROWSER_SCREENSHOTS||'/tmp/hero-versioned-portraits-browser';
@@ -73,6 +75,21 @@ try{
   assert.equal(await page.locator('#hero-story-dialog[open]').count(),1);
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('#hero-story-dialog[open]').count(),0);
+  await page.locator('#hero-role').selectOption('tank');
+  const tanks=battleRoster.filter(hero=>hero.role==='tank');
+  assert.equal(await page.locator('.gallery-card').count(),tanks.length);
+  for(const [index,hero] of tanks.entries()){
+   const expected=abilityImpact(hero.active,{english:prefix==='/crazygames'});
+   const card=page.locator('.gallery-card').nth(index);
+   await page.waitForFunction(({index,expected})=>
+    document.querySelectorAll('.gallery-card')[index]?.querySelector('.gallery-skill strong')?.textContent===expected,
+    {index,expected});
+   await card.click();
+   await page.waitForFunction(expected=>
+    document.querySelector('#hero-story-dialog[open] .hero-ability-box--active h3')?.textContent===expected,expected);
+   await page.keyboard.press('Escape');
+  }
+  results.push({kind:'tank-shield-descriptions',prefix,width,tanks:tanks.length});
   assert.deepEqual(errors,[]);results.push({kind:'gallery',prefix,width,decodedHeroes:50,optimizedHeroes:9,repeatedDialog:'passed'});
   await context.close();
  }

@@ -250,3 +250,7 @@ Aşırı Yük, normal ve hasar veren özel yeteneklerde sabit saldırı bonusunu
 Kahraman kartında sunucunun başlangıç/bitiş turlarına göre kalıcı Aşırı Yük etiketi, kalan tur ve sabit ek saldırı açıklaması gösterilir. Henüz başlamayan etki kesik kenarlıklıdır. Süre bitimi, ölüm/aktarım ve maç bitimi eski kart durumunu temizler. Yeniden çizim süreyi uzatmaz.
 
 `tests/commander-mage-full-roster.test.mjs` bütün 50 kahramanı, iki koltuğu, eylemden önce/sonra kullanımı ve üçüncü tur özel yollarını kapsar. `tools/test-mage-surge-browser.mjs` gerçek yerel arena sayfasında 1440/390/320 genişlikte TR/EN durum, aktarım, yeniden boyutlandırma ve bitiş kontrolü içindir; sentetik verilerle çalışır, canlı maç değildir.
+
+## Tank kalkanı revizyonu
+
+Tanklar özel eylemlerinde katalog güçlerine göre kendi savunmalarının %25–40'ı kadar tek bir kendi kalkanı üretir. Kendileri hariç yaşayan ön saf müttefiklerine verilen oran öncekinin yarısıdır; ayrı +%20 kendi kalkanı kaldırılmıştır. Bu oran biriken toplam kalkanın tavanı değildir. Diğer kahramanlar, tankların taban güçleri/pasifleri, komutan becerileri, kişisel hareket sayacı ve %70 emilim kuralı değişmez. Oranlar ve doğrulama kapsamı: [tank kalkan dengesi](docs/tank-shield-balance.md).

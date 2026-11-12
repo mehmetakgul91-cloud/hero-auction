@@ -39,13 +39,13 @@ export function stepParityShieldDrain(combat,{side,actorId,round=combat?.round,c
   actor.shield=(actor.shield||0)+amount;
   events.push({round,side,actor:actorId,action:'shield',target:actorId,value:amount});
  }
- if(actor.role==='tank')for(const ally of teams[side].filter(u=>u.hp>0&&u.lane==='front')){
+ if(actor.role==='tank')for(const ally of teams[side].filter(u=>u.hp>0&&u.lane==='front'&&(!actor.active.singleSelfShield||u!==actor))){
   const amount=Math.max(1,Math.round(actor.defense*abilityValue(actor.active,'frontShieldRate')));
   ally.shield=(ally.shield||0)+amount;
   events.push({round,side,actor:actorId,action:'tank-front-shield',target:ally.id,value:amount});
  }
  events.push({round,side,actor:actorId,action:actor.active.name||'special',target:target.id,value:damage,critical,absorbed,rawDamage:raw,damageType:'special',...(guardTriggered?{guardTriggered:true}:{}),...(lastStandImmortalUntilRound?{lastStandTriggeredRound,lastStandImmortalUntilRound}:{}),...(arcaneTransfer?{arcaneTransfer}:{})});
- if(actor.role==='tank'){
+ if(actor.role==='tank'&&!actor.active.singleSelfShield){
   const amount=Math.round(actor.defense*abilityValue(actor.active,'tankShieldRate'));
   actor.shield=(actor.shield||0)+amount;
   events.push({round,side,actor:actorId,action:'tank-self-shield',target:actorId,value:amount});

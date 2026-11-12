@@ -28,9 +28,9 @@
         "name": "obsidyen-kalkan",
         "effect": "shield",
         "power": 1.14,
-        "shieldRate": 0.45,
-        "frontShieldRate": 0.18,
-        "tankShieldRate": 0.2
+        "shieldRate": 0.39,
+        "frontShieldRate": 0.09,
+        "singleSelfShield": true
       },
       "passive": {
         "name": "hasar-azaltma",
@@ -67,9 +67,9 @@
         "name": "celik-siper",
         "effect": "shield",
         "power": 1.1,
-        "shieldRate": 0.4,
-        "frontShieldRate": 0.14,
-        "tankShieldRate": 0.2
+        "shieldRate": 0.25,
+        "frontShieldRate": 0.07,
+        "singleSelfShield": true
       },
       "passive": {
         "name": "takim-koruma",
@@ -106,9 +106,9 @@
         "name": "yer-sarsintisi",
         "effect": "shield",
         "power": 1.12,
-        "shieldRate": 0.42,
-        "frontShieldRate": 0.16,
-        "tankShieldRate": 0.2
+        "shieldRate": 0.32,
+        "frontShieldRate": 0.08,
+        "singleSelfShield": true
       },
       "passive": {
         "name": "alan-kontrol",
@@ -145,9 +145,9 @@
         "name": "donma",
         "effect": "shield",
         "power": 1.12,
-        "shieldRate": 0.42,
-        "frontShieldRate": 0.16,
-        "tankShieldRate": 0.2
+        "shieldRate": 0.34,
+        "frontShieldRate": 0.08,
+        "singleSelfShield": true
       },
       "passive": {
         "name": "buz-kalkani",
@@ -221,9 +221,9 @@
         "name": "kutsal-kalkan",
         "effect": "shield",
         "power": 1.14,
-        "shieldRate": 0.45,
-        "frontShieldRate": 0.2,
-        "tankShieldRate": 0.2
+        "shieldRate": 0.39,
+        "frontShieldRate": 0.1,
+        "singleSelfShield": true
       },
       "passive": {
         "name": "takim-koruma",
@@ -371,9 +371,9 @@
         "name": "Taret Siperi",
         "effect": "shield",
         "power": 1.12,
-        "shieldRate": 0.42,
-        "frontShieldRate": 0.16,
-        "tankShieldRate": 0.2
+        "shieldRate": 0.29,
+        "frontShieldRate": 0.08,
+        "singleSelfShield": true
       },
       "passive": {
         "name": "Mekanik Zırh",
@@ -410,9 +410,9 @@
         "name": "buz-alan-hasari",
         "effect": "shield",
         "power": 1.14,
-        "shieldRate": 0.45,
-        "frontShieldRate": 0.18,
-        "tankShieldRate": 0.2
+        "shieldRate": 0.4,
+        "frontShieldRate": 0.09,
+        "singleSelfShield": true
       },
       "passive": {
         "name": "yavaslatma",
@@ -760,9 +760,9 @@
         "name": "Kutsal Çan",
         "effect": "shield",
         "power": 1.12,
-        "shieldRate": 0.42,
-        "frontShieldRate": 0.16,
-        "tankShieldRate": 0.2
+        "shieldRate": 0.3,
+        "frontShieldRate": 0.08,
+        "singleSelfShield": true
       },
       "passive": {
         "name": "Sabır Zırhı",
@@ -861,9 +861,9 @@
         "name": "Kara Kalkan",
         "effect": "shield",
         "power": 1.12,
-        "shieldRate": 0.42,
-        "frontShieldRate": 0.16,
-        "tankShieldRate": 0.2
+        "shieldRate": 0.3,
+        "frontShieldRate": 0.08,
+        "singleSelfShield": true
       },
       "passive": {
         "name": "Çelik Direnç",
@@ -1358,9 +1358,9 @@
         "name": "Kadim Kabuk",
         "effect": "shield",
         "power": 1.12,
-        "shieldRate": 0.42,
-        "frontShieldRate": 0.16,
-        "tankShieldRate": 0.2
+        "shieldRate": 0.33,
+        "frontShieldRate": 0.08,
+        "singleSelfShield": true
       },
       "passive": {
         "name": "Kabuk Zırhı",

@@ -16,8 +16,8 @@ test('all 50 trusted kits validate and both authoritative catalogues agree',()=>
  assert.deepEqual(roster,JSON.parse(fs.readFileSync(new URL('../commander-original-roster.json',import.meta.url))).characters);
 });
 test('rarity-specific protection and healing budgets are explicit',()=>{
- assert.equal(hero('Demir Sur').active.shieldRate,.4);assert.equal(hero('Brunn').active.shieldRate,.42);assert.equal(hero('Obsidyen Muhafız').active.shieldRate,.45);
- assert.equal(hero('Altın Muhafız').active.frontShieldRate,.20);
+ assert.equal(hero('Demir Sur').active.shieldRate,.25);assert.equal(hero('Brunn').active.shieldRate,.29);assert.equal(hero('Obsidyen Muhafız').active.shieldRate,.39);
+ assert.equal(hero('Altın Muhafız').active.frontShieldRate,.10);
  assert.deepEqual(['Fener Şifacısı','Şafak Azizesi','Ruh Dokuyucu'].map(n=>hero(n).active.healRate),[.52,.58,.64]);
  assert.deepEqual(['Kum Hançeri','Kuzgun Hançer','Mor Hilal'].map(n=>hero(n).active.pierceRate),[.35,.40,.45]);
 });
