@@ -99,7 +99,7 @@ test('component swap updates card order, center badge, role, focus and per-hero 
   h.root.querySelector('.combined-move[data-hero-id="h3"]').click();await flush();assert.equal(h.picker.state.snapshot().formation.lanes[2],'front');assert.equal(h.root.querySelectorAll('.combined-center-badge').length,0);assert.equal(h.document.activeElement.dataset.heroId,'h3');
  }finally{h.close()}
 });
-test('every distribution keeps all five cards and correct counts; no false center on 3+2 screen wrap',async()=>{
+test('every distribution keeps all five cards and correct counts; no false center in single-lane rows',async()=>{
  const h=await mounted();try{
   for(const lane of ['front','back']){
    for(let slot=0;slot<5;slot++)h.picker.state.move(slot,lane);await flush();await flush();
@@ -113,8 +113,8 @@ test('English controls are localized, and locking disables both swap and move bu
   assert.ok(h.root.querySelectorAll('.combined-hero-pick').every(n=>n.disabled));assert.ok(h.root.querySelectorAll('.combined-move').every(n=>n.disabled));assert.match(h.root.querySelector('.combined-formation-note').textContent,/locked/);
  }finally{h.close()}
 });
-test('approved A layout uses count-driven centered wraps, large portraits and minimum touch controls',()=>{
- const css=readFileSync(new URL('../public/combined-preparation.css',import.meta.url),'utf8');assert.match(css,/\.combined-row\{gap:8px;align-items:stretch\}/);assert.match(css,/\.combined-row\[data-count="4"\] \.combined-hero\{width:calc\(\(100% - 8px\)\/2\)\}/);assert.match(css,/\.combined-hero-pick\{[^}]*height:114px/);assert.match(css,/\.combined-move\{[^}]*min-height:44px/);assert.match(css,/justify-content:center/);assert.match(css,/object-position:center 18%/);assert.match(css,/combined-swap-selected/);
+test('approved compact layout keeps five heroes in one row and minimum touch controls',()=>{
+ const css=readFileSync(new URL('../public/combined-preparation.css',import.meta.url),'utf8');assert.match(css,/\.combined-lane \.combined-row\{[^}]*flex-wrap:nowrap/);assert.match(css,/\.combined-lane \.combined-row \.combined-hero\{[^}]*\/5\)/);assert.match(css,/\.combined-lane \.combined-hero-pick\{height:100px;min-height:100px/);assert.match(css,/background:#f3ded7/);assert.match(css,/background:#223c55/);assert.match(css,/\.combined-move\{[^}]*min-height:44px/);assert.match(css,/justify-content:center/);assert.match(css,/object-position:center 18%/);assert.match(css,/combined-swap-selected/);
 });
 
 for(const english of [false,true])test(`healing preview shows additive rate and healing amount in ${english?'English':'Turkish'}`,async()=>{

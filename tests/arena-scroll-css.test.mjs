@@ -34,6 +34,7 @@ test('independent lane spans use sixty gapless tracks in fitted and ordinary are
  assert.equal(fitted['grid-template-rows'],'repeat(60,minmax(0,1fr))');assert.equal(fitted['row-gap'],'0');assert.equal(fitted['min-height'],'0');
  const ordinary=rules('.arena-room .arena-side .team,.arena-side .team').map(properties).at(-1);
  assert.equal(ordinary['grid-template-rows'],'repeat(60,minmax(0,1fr))');assert.equal(ordinary['row-gap'],'0');
- const hero=rules('.arena-room.arena-fit .arena-side .arena-hero').map(properties).at(-1);
- assert.equal(hero.height,'calc(100% - 3px)');assert.equal(hero['align-self'],'center');
+ const heroes=rules('.arena-room.arena-fit .arena-side .arena-hero').map(properties);
+ assert.ok(heroes.some(hero=>hero.height==='calc(100% - 12px)'&&hero['align-self']==='center'));
+ assert.equal(heroes.at(-1).height,'calc(100% - 8px)');
 });

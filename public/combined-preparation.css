@@ -55,3 +55,27 @@ body.commander-selection #match-commander-picker .combined-hero-pick:focus-visib
 body.commander-selection #match-commander-picker .combined-move{border:0;border-top:1px solid #e2e8df;color:#536c73}
 @media(min-width:650px){.combined-hero-pick{height:124px;min-height:124px}.combined-hero-name{font-size:12px}.combined-hero-effect{font-size:11px}.combined-effect-values{font-size:11px}.combined-formation-note{font-size:11px;min-height:32px}}
 @media(max-width:350px){.combined-row{gap:6px}.combined-hero{width:calc((100% - 12px)/3)}.combined-row[data-count="1"] .combined-hero,.combined-row[data-count="2"] .combined-hero,.combined-row[data-count="4"] .combined-hero{width:calc((100% - 6px)/2)}.combined-hero-name{font-size:10px}.combined-hero-pick{height:110px;min-height:110px}.combined-hero-effect{padding-left:5px;padding-right:5px}.combined-effect-values{font-size:9px}.combined-hero-effect .combined-effect-values b{font-size:14px}.combined-move{font-size:9px!important}.combined-center-badge{font-size:7px;padding:3px 4px}}
+
+/* Five heroes remain in their tactical lane without wrapping or scrolling.
+   Compact cards preserve the live stat preview and the 44px move action. */
+.combined-lane{min-width:0;margin-top:12px;padding:8px 4px;border:1px solid #b75f4d;border-radius:12px;background:#f3ded7}
+.combined-lane[data-lane="back"]{background:#223c55;border-color:#223c55}
+.combined-lane .combined-lane-label{margin:0 3px 8px;color:#9b3f30;font-weight:800}
+.combined-lane .combined-lane-label small{color:inherit;margin-left:auto}
+.combined-lane .combined-lane-label:after{display:none}
+.combined-lane[data-lane="back"] .combined-lane-label,.combined-lane[data-lane="back"] .combined-empty{color:#e5edf4}
+.combined-lane .combined-row{display:flex;flex-wrap:nowrap;gap:clamp(6px,2.5vw,10px);align-items:stretch;min-width:0}
+.combined-lane .combined-row .combined-hero{flex:0 1 calc((100% - 24px)/5);width:calc((100% - 24px)/5);min-width:0;max-width:110px;padding:0;border-radius:7px}
+.combined-lane .combined-hero-pick{height:100px;min-height:100px}
+.combined-lane .combined-portrait-box{height:64px}
+.combined-lane .combined-hero-pick:after{display:none}
+.combined-lane .combined-hero-name{left:2px;right:2px;bottom:2px;min-height:30px;justify-content:center;align-items:center;text-align:center;font-size:9px;line-height:1.1;text-shadow:none}
+.combined-lane .combined-hero-role{left:1px;top:1px;padding:2px;font-size:7px;max-width:calc(100% - 2px)}
+.combined-lane .combined-center-badge{left:1px;bottom:36px;padding:2px;font-size:6px}
+.combined-lane .combined-hero-effect{display:flex;flex-direction:column;justify-content:center;gap:2px;min-height:38px;padding:3px 1px;text-align:center}
+.combined-lane .combined-effect-label{font-size:7px}
+.combined-lane .combined-effect-values,.combined-lane .combined-effect-pending{font-size:8px;white-space:normal;overflow-wrap:anywhere}
+.combined-lane .combined-hero-effect .combined-effect-values b,.combined-lane .combined-hero-effect>b.combined-effect-values{font-size:10px}
+.combined-lane .combined-hero-effect .combined-delta{font-size:7px;padding:1px 2px}
+.combined-lane .combined-move{width:100%;margin:0;min-height:44px;padding:3px 1px;font-size:8px!important}
+.combined-lane .combined-empty{padding:16px 4px;text-align:center}
