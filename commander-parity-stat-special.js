@@ -1,3 +1,4 @@
+import {expireCommanderStun} from './commander-stun-status.js';
 import {consumeCommanderHunt,expireCommanderHunt} from './commander-hunt-status.js';
 import {applyServerStunSkip} from './commander-live-combat.js';
 import {expireCommanderFocus} from './battle-commander-focus.js';
@@ -41,7 +42,7 @@ export function stepParityStatSpecial(combat,{side,actorId,round=combat?.round,c
  combat.teams=teams;combat.version++;
  for(const event of events){event.version=combat.version;combat.events.push(event);}
  for(let i=0;i<Number(killed)+splashDeaths;i++)grantLiveCommanderEnergy(combat.abilities,1-side,10);
- expireCommanderFocus(teams,round);expireCommanderHunt(teams);
+ expireCommanderFocus(teams,round);expireCommanderHunt(teams);expireCommanderStun(teams);
  combat.finished=teams.some(team=>team.every(u=>u.hp<=0));
  combat.abilities.finished=combat.finished;
  return {version:combat.version,events,teams:structuredClone(teams),finished:combat.finished};

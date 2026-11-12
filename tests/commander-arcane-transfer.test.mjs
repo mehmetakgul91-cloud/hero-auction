@@ -40,7 +40,7 @@ test('execute transfers but a last-stand lethal guard prevents transfer until ac
 });
 test('reviving original does not steal back transferred surge',()=>{
  const {original,high,allies}=setup();applyHeroDamage(original,100,{round:1,allies});reviveCommanderAlly(original,2);
- assert.equal(original.hp,400);assert.equal(original.arcaneSurgeUntilRound,undefined);assert.equal(high.arcaneSurgeUntilRound,3);
+ assert.equal(original.hp,550);assert.equal(original.arcaneSurgeUntilRound,undefined);assert.equal(high.arcaneSurgeUntilRound,3);
 });
 test('expired or consumed final-round surge grants no fresh duration',()=>{
  for(const round of [3,4]){const {original,high,allies}=setup();original.lastActionRound=round;applyHeroDamage(original,100,{round,allies});assert.equal(high.arcaneSurgeUntilRound,undefined);assert.equal(arcaneDamageAttack(high,round+1),60);}
@@ -77,8 +77,8 @@ test('authoritative energy splash logs transfer once and damages new bearer with
 
 import {applyLiveCommanderEffect} from '../commander-live-effects.js';
 test('commander damage also transfers surge on actual casualty with serializable hit metadata',()=>{
- const c=liveScenario();c.teams[1][0].hp=1;
- const result=applyLiveCommanderEffect(c.teams,{side:0,ability:'normal',commanderId:'attack',commanderProfile:{commanderId:'attack'},attackBasis:1000,round:3});
+ const c=liveScenario();c.teams[1][0].hp=1;c.teams[0][0].attack=1000;
+ const result=applyLiveCommanderEffect(c.teams,{side:0,ability:'normal',commanderId:'attack',commanderProfile:{commanderId:'attack'},round:3});
  assert.equal(result.teams[1][0].hp,0);assert.equal(result.teams[1][1].arcaneSurgeUntilRound,5);
  const transfer=result.log.find(e=>e.arcaneTransfer)?.arcaneTransfer;
  assert.equal(transfer?.targetId,'high');assert.deepEqual(JSON.parse(JSON.stringify(transfer)),transfer);

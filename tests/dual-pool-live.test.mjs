@@ -24,7 +24,7 @@ test('authoritative registry keeps both pools across reconnect views, rejects fo
  const {createLiveArenaRegistry}=await import('../commander-live-arena-registry.js');
  const hero=(id,hp=100)=>({id,hp,maxHp:100,attack:50,defense:30,speed:50,shield:0});
  for(const side of [0,1]){
-  const abilities=createLiveCommanderAbilities({matchKey:'registry',energy:[40,40],ultimateEnergy:[100,100],now:0});
+  const abilities=createLiveCommanderAbilities({matchKey:'registry',energy:[60,60],ultimateEnergy:[100,100],now:0});
   const c=createLiveCommanderCombat({abilities,teams:[[hero('a')],[hero('b')]],commanders:[{commanderId:'magic'},{commanderId:'magic'}]});
   const r=createLiveArenaRegistry();r.register({matchKey:'registry',tokens:['token-a','token-b'],combat:c});
   const token=side?'token-b':'token-a',own=side?'b':'a',enemy=side?'a':'b';

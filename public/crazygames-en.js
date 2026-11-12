@@ -360,6 +360,7 @@ export const phrases = {
 'Saldırı komutanı':'Attack commander','Savunma komutanı':'Defense commander','Büyü komutanı':'Magic commander','Destek komutanı':'Support commander',
 'Geliştirme yok':'No upgrades','Komutan seçilmedi':'No commander selected','Bonus yok':'No bonus','Enerji:':'Energy:',
 'Normal beceri 40 normal enerji harcar; ulti dolumu azalmaz.':'Normal abilities spend 40 normal energy; ultimate charge is unaffected.',
+'Normal beceri 60 normal enerji harcar; ulti dolumu azalmaz.':'Normal abilities spend 60 normal energy; ultimate charge is unaffected.',
 'Normal beceri enerjisi':'Normal ability energy','Normal enerji':'Normal energy','Ulti dolumu':'Ultimate charge','ulti dolumu':'ultimate charge','Ulti:':'Ultimate:',
 'Normal enerji veya ulti dolumu yeterliyse becerini kullanabilirsin':'Use an ability when its normal energy or ultimate charge is sufficient.',
 'normal + ulti':'normal + ultimate','normal':'normal',

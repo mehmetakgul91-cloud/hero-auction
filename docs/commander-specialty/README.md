@@ -7,7 +7,7 @@ Only the selected commander's branch contributes hero-stat bonuses. Other branch
 - Defense commander: tank current defense × (1 + bonus).
 - Support commander: add the bonus as percentage points to support healing rate, not attack, HP or shield. A 40% heal plus 15 points becomes 55%. Hybrid healer/shield heroes retain the same shield rule.
 
-The stat modifier keeps fractions to six decimal places: 50 × 1.15 = 57.5. Existing subsequent start passives/assassin bonuses retain their own rounding rules. Damage and healing retain their final integer rounding and healing cannot exceed missing HP. Hero automatic healing still occurs on rounds 3, 6, 9, 12 and 15 when the healer acts; commander active abilities and regeneration passives are unchanged.
+The stat modifier keeps fractions to six decimal places: 50 × 1.15 = 57.5. Existing subsequent start passives/assassin bonuses retain their own rounding rules. Damage and healing retain their final integer rounding and healing cannot exceed missing HP. Hero automatic healing still occurs on rounds 3, 6, 9, 12 and 15 when the healer acts; regeneration passives are unchanged. The pending normal-budget revision is described in `../commander-normal/README.md`; it is not approved for release while energy and the new mage behavior are unresolved.
 
 The preview uses live team preparation and shows each healer's rate plus its potential single-heal amount before the missing-HP limit. Both the combined preparation screen and legacy comparison show healing power. The center slot explanation reflects the integrated permanent +15% defense rule, not former targeting immunity.
 

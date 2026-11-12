@@ -62,9 +62,9 @@ export function createArenaTeamRenderer({document,loadArt,onDefeated=()=>{}}){
    if(unit.shieldKnown===false)shieldBar.removeAttribute('aria-valuenow');else shieldBar.setAttribute('aria-valuenow',String(shield.current));
    shieldBar.setAttribute('aria-valuemax',String(Math.max(shield.current,shield.reference,1)));shieldBar.setAttribute('aria-valuetext',shield.label);
    card.title+=' · '+shield.label;
-   const stunned=unit.hp>0&&unit.commanderStunNextAttack===true,english=document.documentElement?.lang==='en';
+   const stunned=unit.hp>0&&(unit.commanderStunNextAction===true||unit.commanderStunNextAttack===true),english=document.documentElement?.lang==='en';
    stunBadge.hidden=!stunned;stunBadge.textContent=english?'✦ STUN':'✦ SERSEM';
-   const stunDescription=english?'Stunned: next attack skipped':'Sersemledi: sonraki saldırı atlanır';
+   const stunDescription=unit.commanderStunNextAction===true?(english?'Stunned: next action skipped, including healing and shields':'Sersemledi: şifa ve kalkan dahil sonraki eylem atlanır'):(english?'Stunned: next attack skipped':'Sersemledi: sonraki saldırı atlanır');
    stunBadge.title=stunDescription;stunBadge.setAttribute('aria-label',stunDescription);
    if(stunned)card.title+=' · '+stunDescription;
    const immortal=unit.hp>0&&Number.isInteger(unit.lastStandTriggeredRound)&&unit.lastStandTriggeredRound>=1&&Number.isInteger(unit.lastStandImmortalUntilRound)&&unit.lastStandImmortalUntilRound===unit.lastStandTriggeredRound+2;

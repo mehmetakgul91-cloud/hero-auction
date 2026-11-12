@@ -12,7 +12,7 @@ test('mage chooses one highest-attack eligible ally, energy role wins tie; no sn
  s.teams[1][0].attack=120;assert.deepEqual(chooseBotCast(s,'magic','medium',options),{ability:'ultimate',targetIds:['ally-a']});
  s.teams[1][0].arcaneSurgeUntilRound=3;assert.deepEqual(chooseBotCast(s,'magic','hard',options),{ability:'ultimate',targetIds:['ally-mage']});
  s.teams[1][1].arcaneSurgeUntilRound=5;assert.deepEqual(chooseBotCast(s,'magic','hard',options),{ability:'normal',targetIds:['enemy']});
- s.teams[0][0].commanderStunNextAttack=true;assert.equal(chooseBotCast(s,'magic','hard',options),null);
+ s.teams[0][0].commanderStunNextAction=true;assert.equal(chooseBotCast(s,'magic','hard',options),null);
  s.teams[1][0].arcaneSurgeUntilRound=2;assert.deepEqual(chooseBotCast(s,'magic','hard',options),{ability:'ultimate',targetIds:['ally-a']});
 });
 test('revival chooses one dead ally by visible power then maxHP and stable ID, even with living team full',()=>{
@@ -49,17 +49,17 @@ for(const commanderId of ['magic','support'])test('chosen '+commanderId+' ultima
  const s=snapshot();const c=createLiveCommanderCombat({round:3,teams:s.teams,abilities:createLiveCommanderAbilities({matchKey:'bot:newult',energy:[100,100],now:0}),commanders:[{commanderId:'attack',levels:{attack:0,defense:0,magic:0,support:0}},{commanderId,levels:{attack:0,defense:0,magic:0,support:0}}]});
  const view={...c,abilities:[{},viewLiveCommanderAbilities(c.abilities,1,10000)]};const choice=chooseBotCast(view,commanderId,'hard',options);const cast={side:1,...choice,requestId:'bot-valid-ultimate',matchKey:'bot:newult',now:10000};
  castLiveCommanderCombat(c,cast);assert.equal(c.abilities.ultimateEnergy[1],100-getCommanderAbilityCost(commanderId,'ultimate'));assert.equal(c.abilities.energy[1],100);const state=structuredClone(c.teams);assert.equal(castLiveCommanderCombat(c,cast).duplicate,true);assert.deepEqual(c.teams,state);
- if(commanderId==='magic')assert.equal(c.teams[1].find(u=>u.id==='ally-mage').arcaneSurgeBonusAttack,100);else{assert.equal(c.teams[1].find(u=>u.id==='fallen').hp,72);assert.equal(c.revivalUsed[1],true);}
+ if(commanderId==='magic')assert.equal(c.teams[1].find(u=>u.id==='ally-mage').arcaneSurgeBonusAttack,100);else{assert.equal(c.teams[1].find(u=>u.id==='fallen').hp,99);assert.equal(c.revivalUsed[1],true);}
 });
 test('hard mage respects one persistent next-attack stun at every level on either seat',()=>{
  for(const side of [0,1]){
   const s=snapshot();s.abilities[1].canUseUltimate=false;
   if(side===0){s.teams.reverse();s.abilities.reverse();}
   s.commanders=[null,null];s.commanders[side]={commanderId:'magic',levels:{magic:20}};
-  const enemy=s.teams[1-side][0];enemy.commanderStunNextAttack=true;
+  const enemy=s.teams[1-side][0];enemy.commanderStunNextAction=true;
   s.round=50;assert.equal(chooseBotCast(s,'magic','hard',{...options,side}),null);
   s.commanders[side].levels.magic=40;assert.equal(chooseBotCast(s,'magic','hard',{...options,side}),null);
-  delete enemy.commanderStunNextAttack;
+  delete enemy.commanderStunNextAction;
   assert.deepEqual(chooseBotCast(s,'magic','hard',{...options,side}),{ability:'normal',targetIds:['enemy']});
  }
 });
@@ -71,9 +71,9 @@ test('actual registry snapshot preserves level metadata but casts fixed stun on 
   const combat=createLiveCommanderCombat({round:3,teams,commanders:profiles,abilities:createLiveCommanderAbilities({matchKey:'rate-registry',energy:[100,100],ultimateEnergy:[0,0],now:0})});
   const registry=createLiveArenaRegistry();registry.register({matchKey:'rate-registry',tokens:['left-token','right-token'],combat});
   const s=registry.snapshot({matchKey:'rate-registry',token:side?'right-token':'left-token',now:10000});
-  assert.equal(s.commanders,undefined);assert.equal(s.abilityStats.normalRate,.42);
+  assert.equal(s.commanders,undefined);assert.equal(s.abilityStats.normalRate,.05);
   const choice=chooseBotCast(s,'magic','hard',{...options,side});assert.deepEqual(choice,{ability:'normal',targetIds:[side?'left':'right']});
   registry.cast({matchKey:'rate-registry',token:side?'right-token':'left-token',requestId:'apply-rate',now:10000,...choice});
-  assert.equal(combat.teams[1-side][0].commanderStunNextAttack,true);assert.equal(combat.teams[1-side][0].commanderWeaken,.385,'legacy snapshot weakening is not amplified or replaced');
+  assert.equal(combat.teams[1-side][0].commanderStunNextAction,true);assert.equal(combat.teams[1-side][0].commanderWeaken,.385,'legacy snapshot weakening is not amplified or replaced');
  }
 });

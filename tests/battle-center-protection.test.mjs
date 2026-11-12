@@ -80,7 +80,7 @@ test('Hunt Order overrides cover for all attacking roles until the marked enemy 
 test('all explicit commander target types and commander area damage keep their existing effects',()=>{
  const units=protectedTeam();
  const stun=applyLiveCommanderEffect([[h('a')],units],{side:0,ability:'normal',commanderId:'magic',round:1,targetIds:['e3']});
- assert.equal(stun.teams[1][3].commanderStunNextAttack,true);
+ assert.equal(stun.teams[1][3].commanderStunNextAction,true);
  for(const commanderId of ['defense','magic']){
   const result=applyLiveCommanderEffect([units,[h('b')]],{side:0,ability:'ultimate',commanderId,round:1,targetIds:['e3']});
   assert.ok(commanderId==='defense'?result.teams[0][3].lastStandReady:result.teams[0][3].arcaneSurgeBonusAttack);
@@ -96,7 +96,7 @@ test('all explicit commander target types and commander area damage keep their e
 test('a center killed by an exempt effect can be revived without moving the protected identity',()=>{
  const units=protectedTeam();applyHeroDamage(units[3],2000,{round:1,allies:units});
  const result=applyLiveCommanderEffect([units,[h('b')]],{side:0,ability:'ultimate',commanderId:'support',round:2,targetIds:['e3']});
- assert.equal(result.teams[0][3].hp,400);assert.equal(isCenterProtected(result.teams[0][3],result.teams[0]),true);
+ assert.equal(result.teams[0][3].hp,550);assert.equal(isCenterProtected(result.teams[0][3],result.teams[0]),true);
  assert.equal(result.teams[0].filter(u=>u.centerProtection).length,1);
 });
 

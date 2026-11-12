@@ -5,7 +5,7 @@ import {createLiveCommanderCombat,castLiveCommanderCombat} from '../commander-li
 import {stepBasicHeroCombat,advanceBasicCombatRound} from '../commander-incremental-basic.js';
 import {selectBattleTarget} from '../battle-target-selection.js';
 function make(){
- const teams=[0,1].map(side=>Array.from({length:5},(_,i)=>({id:side+'-'+i,hp:200,maxHp:200,attack:20,defense:0,shield:0,lane:i<2?'front':'back',position:i})));
+ const teams=[0,1].map(side=>Array.from({length:5},(_,i)=>({id:side+'-'+i,role:i===4?'tank':'fighter',hp:200,maxHp:200,attack:20,defense:i===4?400:0,shield:0,lane:i<2?'front':'back',position:i})));
  const abilities=createLiveCommanderAbilities({matchKey:'shield:1',energy:[100,100],now:1000});
  return createLiveCommanderCombat({abilities,teams,commanders:[{commanderId:'defense'},{commanderId:'attack'}]});
 }

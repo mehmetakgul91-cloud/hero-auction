@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createLiveCommanderAbilities} from '../commander-live-abilities.js';
+import {createLiveCommanderAbilities,grantLiveCommanderEnergy} from '../commander-live-abilities.js';
 import {createLiveCommanderCombat} from '../commander-live-combat.js';
 import {createLiveArenaRegistry} from '../commander-live-arena-registry.js';
 function fixture(kind='magic',matchKey='normal-authority'){
@@ -37,9 +37,9 @@ test('opponent global effect lock remains shared while normal timer and rematch 
  assert.equal(state.abilities[0].normalCooldownUntil,0);assert.equal(state.abilities[0].effectLockMs,0);assert.equal(state.abilities[0].ultimateUsed,false);assert.equal(state.abilities[0].canUseUltimate,true);
 });
 test('ultimate near normal readiness does not reset five seconds but still holds the global1.2second effect lock',()=>{
- const f=fixture();f.normal();f.cast('ultimate',4900,['a0']);assert.equal(f.combat.abilities.cooldownUntil[0],5000);
+ const f=fixture();f.normal();grantLiveCommanderEnergy(f.combat.abilities,0,20);f.cast('ultimate',4900,['a0']);assert.equal(f.combat.abilities.cooldownUntil[0],5000);
  const readyTime=f.registry.snapshot({matchKey:f.matchKey,token:'token-a',now:5000}).abilities[0];
  assert.equal(readyTime.normalCooldownMs,0);assert.equal(readyTime.effectLockMs,1100);assert.equal(readyTime.canUseNormal,false);
  const before=structuredClone(f.combat);assert.throws(()=>f.cast('normal',6099,['b0']),/efekti/);assert.deepEqual(f.combat,before);
- f.cast('normal',6100,['b0']);assert.equal(f.combat.abilities.cooldownUntil[0],11100);assert.equal(f.combat.abilities.energy[0],20);
+ f.cast('normal',6100,['b0']);assert.equal(f.combat.abilities.cooldownUntil[0],11100);assert.equal(f.combat.abilities.energy[0],0);
 });

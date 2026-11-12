@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {applyLiveCommanderEffect} from '../commander-live-effects.js';
-const team=()=>Array.from({length:5},(_,i)=>({id:String(i),hp:100,maxHp:100,attack:50,shield:0}));
+const team=()=>Array.from({length:5},(_,i)=>({id:String(i),role:['fighter','assassin','tank','support','energy'][i],hp:100,maxHp:100,attack:50,shield:0}));
 const teams=()=>[team(),team()];
 test('attack deals damage to enemy only, preserving input',()=>{
  const initial=teams();
@@ -33,7 +33,7 @@ test('magic ultimate buffs exactly one living friendly hero without weakening en
 test('support ultimate revives exactly selected fallen ally instead of healing living allies',()=>{
  const input=teams();input[0][0].hp=0;input[0][1].hp=20;
  const out=applyLiveCommanderEffect(input,{side:0,ability:'ultimate',commanderId:'support',targetIds:['0'],round:2});
- assert.equal(out.teams[0][0].hp,40);assert.equal(out.teams[0][0].shield,0);assert.equal(out.teams[0][0].canActFromRound,3);
+ assert.equal(out.teams[0][0].hp,55);assert.equal(out.teams[0][0].shield,0);assert.equal(out.teams[0][0].canActFromRound,3);
  assert.equal(out.teams[0][1].hp,20);assert.deepEqual(out.teams[1],input[1]);assert.equal(out.revivalUsed,true);assert.equal(input[0][0].hp,0);
 });
 test('rejects invalid commands and completed battles',()=>{
@@ -45,14 +45,14 @@ test('rejects invalid commands and completed battles',()=>{
 test('impact records report actual shield absorption and capped health loss',()=>{
  const input=teams();input[1][0].shield=50;input[1][1].hp=2;
  const out=applyLiveCommanderEffect(input,{side:0,ability:'normal',commanderId:'attack'}),impacts=out.log.at(-1).impacts;
- assert.deepEqual(impacts[0],{target:'0',kind:'damage',value:2,absorbed:4});
+ assert.deepEqual(impacts[0],{target:'0',kind:'damage',value:1,absorbed:1});
  assert.deepEqual(impacts[1],{target:'1',kind:'damage',value:2,absorbed:0});
  for(const effect of impacts)assert.equal(effect.value,input[1][Number(effect.target)].hp-out.teams[1][Number(effect.target)].hp);
 });
 test('healing impact records only the injured recipients actually healed',()=>{
  const input=teams();input[0][0].hp=20;input[0][1].hp=50;
  const out=applyLiveCommanderEffect(input,{side:0,ability:'normal',commanderId:'support'});
- assert.deepEqual(out.log.at(-1).impacts,[{target:'0',kind:'heal',value:16}]);
+ assert.deepEqual(out.log.at(-1).impacts,[{target:'0',kind:'heal',value:1}]);
  assert.throws(()=>applyLiveCommanderEffect(teams(),{side:0,ability:'normal',commanderId:'support'}),/yaralı kahraman yok/);
 });
 test('shield impact records exclude dead heroes and report gained shield, not total shield',()=>{
@@ -66,9 +66,9 @@ test('shield impact records exclude dead heroes and report gained shield, not to
 test('magic stun records only the chosen target without applying another weakening',()=>{
  const input=teams();input[1][2].commanderWeaken=.4;input[1][2].commanderWeakenNextAttack=true;
  const out=applyLiveCommanderEffect(input,{side:0,ability:'normal',commanderId:'magic',targetIds:['2']});
- assert.deepEqual(out.log.at(-1).impacts,[{target:'2',kind:'stun',value:1,nextAttack:true}]);
- assert.equal(out.teams[1][2].commanderStunNextAttack,true);
+ assert.deepEqual(out.log.at(-1).impacts,[{target:'2',kind:'damage',value:3,absorbed:0},{target:'1',kind:'damage',value:1,absorbed:0},{target:'3',kind:'damage',value:1,absorbed:0},{target:'2',kind:'stun',value:1,nextAction:true}]);
+ assert.equal(out.teams[1][2].commanderStunNextAction,true);
  assert.equal(out.teams[1][2].commanderWeaken,.4,'pre-existing legacy weakening is not amplified');
- assert.equal(out.teams[1].filter(u=>u.commanderStunNextAttack).length,1);
- assert.equal(input[1][2].commanderStunNextAttack,undefined,'effect preparation leaves its input unchanged');
+ assert.equal(out.teams[1].filter(u=>u.commanderStunNextAction).length,1);
+ assert.equal(input[1][2].commanderStunNextAction,undefined,'effect preparation leaves its input unchanged');
 });

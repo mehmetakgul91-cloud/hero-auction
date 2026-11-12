@@ -52,7 +52,7 @@ export function applyHeroDamage(target,raw,{round,executeThreshold=0,allies}={})
   }
  }
  target.hp=oldHp-damage-executedDamage;
- if(target.hp===0){clearLastStand(target);delete target.commanderFocusUntilDeath;delete target.commanderStunNextAttack;delete target.commanderHuntNextAttack;breakCenterProtectionOnDeath(target,allies);}
+ if(target.hp===0){clearLastStand(target);delete target.commanderFocusUntilDeath;delete target.commanderStunNextAttack;delete target.commanderStunNextAction;delete target.commanderHuntNextAttack;breakCenterProtectionOnDeath(target,allies);}
  const arcaneTransfer=target.hp===0&&allies?transferArcaneSurgeOnDeath(target,allies,round):null;
  return {damage,executedDamage,absorbed,rawDamage:raw,guardTriggered,...(guardTriggered&&isLastStandImmortal(target,round)?{lastStandTriggeredRound:target.lastStandTriggeredRound,lastStandImmortalUntilRound:target.lastStandImmortalUntilRound}:{}),...(arcaneTransfer?{arcaneTransfer}:{})};
 }

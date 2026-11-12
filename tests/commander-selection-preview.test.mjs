@@ -148,7 +148,8 @@ test('round-trip selected profiles drive live attack versus healing abilities, n
   assert.equal(combat.abilities.commanderIds[0],selected.commanderId);
   const stats=commanderAbilityStats(selected);
   assert.equal(stats.level,selected.commanderId==='support'?40:12);
-  assert.equal(stats.normalRate,selected.commanderId==='support'?.168:.1344);
+  assert.equal(stats.normalRate,selected.commanderId==='support'?.05:.10);
+  assert.equal(stats.normalBase,stats.level);
   const result=castLiveCommanderCombat(combat,{side:0,ability:'normal',requestId:'retention-normal',matchKey:'retained-levels',now:0});
   const event=result.events.at(-1);
   assert.equal(event.action,`commander-${selected.commanderId}-normal`);

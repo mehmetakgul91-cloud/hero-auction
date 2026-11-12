@@ -1,3 +1,4 @@
+import {clearCommanderStun} from './commander-stun-status.js';
 import {clearCommanderHunt} from './commander-hunt-status.js';
 import {clearCommanderFocus} from './battle-commander-focus.js';
 // Experimental server-owned live arena coordinator.
@@ -20,7 +21,7 @@ export function stepLiveArenaHero(session){
  // Exhausting the final round must produce a finished snapshot, not only stop the runner.
  if(!session.combat.finished&&session.combat.round>=15&&!peekBasicTurn(session.turns)){
   session.combat.finished=true;session.combat.abilities.finished=true;
-  clearCommanderFocus(session.combat.teams);clearCommanderHunt(session.combat.teams);
+  clearCommanderFocus(session.combat.teams);clearCommanderHunt(session.combat.teams);clearCommanderStun(session.combat.teams);
   result.result.teams=structuredClone(session.combat.teams);
   result.finished=true;
  }

@@ -14,8 +14,9 @@ for(const kind of ['attack','defense','magic','support'])test(`${kind}: one succ
  assert.equal(viewLiveCommanderAbilities(c.abilities,0,7000).canUseUltimate,false);assert.equal(viewLiveCommanderAbilities(c.abilities,0,7000).canUseNormal,true);
  castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'normal_001',matchKey:'once-match',now:7000,...(kind==='magic'?{targetIds:['b0']}: {})});
  if(kind==='support')c.teams[0][0].hp=30;
+ if(kind==='magic')grantLiveCommanderEnergy(c.abilities,0,20);
  castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'normal_002',matchKey:'once-match',now:13000,...(kind==='magic'?{targetIds:['b0']}: {})});
- assert.equal(c.abilities.energy[0],20);assert.deepEqual(make(kind).ultimateUsed,[false,false]);
+ assert.equal(c.abilities.energy[0],kind==='magic'?0:20);assert.deepEqual(make(kind).ultimateUsed,[false,false]);
 });
 test('invalid target and insufficient energy do not consume ultimate or mutate effects',()=>{
  for(const kind of ['defense','magic','support']){const c=make(kind),before=viewLiveCommanderCombat(c);assert.throws(()=>cast(c,kind,{targetIds:['missing']}));assert.deepEqual(viewLiveCommanderCombat(c),before);assert.equal(c.abilities.energy[0],100);cast(c,kind);}

@@ -1,9 +1,11 @@
-import {grantCommanderStun} from './commander-stun-status.js';
+import {captureMagicNormalPower,commanderMagicNormalBudget} from './commander-magic-normal-power.js';
+import {captureCommanderFormation} from './public/commander-formation.js';
+import {grantCommanderActionStun,expireCommanderStun} from './commander-stun-status.js';
 import {COMMANDER_HUNT_ATTACK_RATE,grantCommanderHunt,expireCommanderHunt} from './commander-hunt-status.js';
 import {applyHeroDamage,grantLastStand,isLastStandActive} from './battle-hp-damage.js';
 import {commanderAbilityStats} from './public/commander-ability-rules.js';
-import {commanderAttackPower,distributeCommanderAttack} from './commander-attack-damage.js';
-import {commanderShieldAmounts,commanderHealingBudget} from './commander-protection-budget.js';
+import {commanderNormalPower,commanderNormalBudget,splitCommanderNormalBudget} from './commander-normal-power.js';
+import {commanderShieldAmounts} from './commander-protection-budget.js';
 import {grantCommanderFocus,expireCommanderFocus} from './battle-commander-focus.js';
 import {grantArcaneSurge,reviveCommanderAlly} from './commander-ultimate-status.js';
 function selectedFriendly(allies,targetIds,{dead=false}={}){
@@ -12,7 +14,7 @@ function selectedFriendly(allies,targetIds,{dead=false}={}){
  if(!target)throw Error(dead?'Select a fallen friendly hero':'Select a living friendly hero');return target;
 }
 // Pure transaction preparation: no energy, battle flags or input teams mutate.
-export function applyLiveCommanderEffect(teams,{side,ability,commanderId,commanderProfile={commanderId},attackBasis,round=1,targetIds,revivalUsed=false}){
+export function applyLiveCommanderEffect(teams,{side,ability,commanderId,commanderProfile={commanderId},normalBasis,magicPower,enemyFormation,round=1,targetIds,revivalUsed=false}){
  if(!Array.isArray(teams)||teams.length!==2||teams.some(t=>!Array.isArray(t))||![0,1].includes(side)||!Number.isInteger(round)||round<1)throw Error('Invalid battle snapshot');
  if(!['normal','ultimate'].includes(ability))throw Error('Invalid ability');
  if(!['attack','defense','magic','support'].includes(commanderId))throw Error('Invalid commander');
@@ -27,7 +29,7 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
   impacts.push({target:focused.targetId,kind:'focus',value:focused.allyIds.length,untilDeath:true});
   for(const ally of allies){grantCommanderHunt(ally);impacts.push({target:ally.id,kind:'hunt-buff',value:COMMANDER_HUNT_ATTACK_RATE*100,nextAttack:true});}
  }else if(commanderId==='attack'){
-  const budget=distributeCommanderAttack(attackBasis??commanderAttackPower(next[side]),rate,enemies.length);
+  const budget=splitCommanderNormalBudget(commanderNormalBudget(normalBasis??commanderNormalPower(next[side]),commanderProfile),enemies.length);
   for(const[index,u]of enemies.entries()){
    const hit=applyHeroDamage(u,budget[index],{round,allies:next[1-side]});value+=hit.damage;
    impacts.push({target:u.id,kind:'damage',value:hit.damage,absorbed:hit.absorbed,...(hit.guardTriggered?{guardTriggered:true}:{}),...(hit.lastStandImmortalUntilRound?{lastStandTriggeredRound:hit.lastStandTriggeredRound,lastStandImmortalUntilRound:hit.lastStandImmortalUntilRound}:{}),...(hit.arcaneTransfer?{arcaneTransfer:hit.arcaneTransfer}:{})});
@@ -36,7 +38,7 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
  }else if(commanderId==='defense'){
   // Validate the chosen own living ally before preparing any shield effects.
   const selected=strong?selectedFriendly(next[side],targetIds):null;
-  const amounts=commanderShieldAmounts(allies,rate);
+  const amounts=strong?commanderShieldAmounts(allies,rate):splitCommanderNormalBudget(commanderNormalBudget(normalBasis??commanderNormalPower(next[side]),commanderProfile),allies.length);
   for(const[index,u]of allies.entries()){const each=amounts[index];u.shield=(u.shield||0)+each;value+=each;if(each>0)impacts.push({target:u.id,kind:'shield',value:each});}
   if(strong){
    // Never accumulate several simultaneous death guards or refresh a live one.
@@ -49,7 +51,9 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
   impacts.push({target:target.id,kind:'revive',value});
   log.push({round,side,actor:'commander:'+side,action:'commander-revive',target:target.id,value,canActFromRound:target.canActFromRound});
  }else if(commanderId==='support'){
-  let budget=commanderHealingBudget(allies,rate);
+  const missing=allies.reduce((sum,u)=>sum+Math.max(0,u.maxHp-u.hp),0);
+  if(missing<=0)throw Error('İyileştirilebilecek yaralı kahraman yok.');
+  let budget=Math.min(missing,commanderNormalBudget(normalBasis??commanderNormalPower(next[side]),commanderProfile));
   for(const u of [...allies].sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp||(b.maxHp-b.hp)-(a.maxHp-a.hp))){const healed=Math.max(0,Math.min(budget,u.maxHp-u.hp));u.hp+=healed;budget-=healed;value+=healed;if(healed>0)impacts.push({target:u.id,kind:'heal',value:healed});}
  }else if(strong){
   const target=selectedFriendly(next[side],targetIds);
@@ -57,11 +61,27 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
   value=target.arcaneSurgeBonusAttack;impacts.push({target:target.id,kind:'buff',value,fromRound:target.arcaneSurgeFromRound,untilRound:target.arcaneSurgeUntilRound});
  }else{
   if(!Array.isArray(targetIds)||targetIds.length!==1||typeof targetIds[0]!=='string'||!enemies.some(u=>u.id===targetIds[0]))throw Error('Invalid magic targets');
-  const target=enemies.find(u=>u.id===targetIds[0]);grantCommanderStun(target);value=1;
-  impacts.push({target:target.id,kind:'stun',value:1,nextAttack:true});
+  const target=enemies.find(u=>u.id===targetIds[0]);
+  // Live and legacy engines supply immutable battle-start values. Defaults are
+  // only for this pure helper's standalone fixtures, never HTTP cast inputs.
+  const budget=commanderMagicNormalBudget(magicPower??captureMagicNormalPower(next[side]),{...commanderProfile,levels:{attack:0,defense:0,magic:0,support:0,...commanderProfile.levels}});
+  const formation=enemyFormation??captureCommanderFormation(next[1-side]);
+  const neighborIds=formation[target.id];
+  if(!Array.isArray(neighborIds))throw Error('Invalid commander formation');
+  // Capture living occupants before the primary hit triggers death transfers.
+  // Dead fixed slots stay empty and never redirect damage to a farther hero.
+  const areaTargets=neighborIds.map(id=>enemies.find(unit=>unit.id===id)).filter(Boolean);
+  for(const [index,victim] of [target,...areaTargets].entries()){
+   const rawDamage=index===0?budget.mainDamage:budget.areaDamage;
+   const hit=applyHeroDamage(victim,rawDamage,{round,allies:next[1-side]});value+=hit.damage;
+   const metadata={...(hit.guardTriggered?{guardTriggered:true}:{}),...(hit.lastStandImmortalUntilRound?{lastStandTriggeredRound:hit.lastStandTriggeredRound,lastStandImmortalUntilRound:hit.lastStandImmortalUntilRound}:{}),...(hit.arcaneTransfer?{arcaneTransfer:hit.arcaneTransfer}:{})};
+   impacts.push({target:victim.id,kind:'damage',value:hit.damage,absorbed:hit.absorbed,...metadata});
+   log.push({round,side,actor:'commander:'+side,action:'commander-hit',target:victim.id,value:hit.damage,absorbed:hit.absorbed,rawDamage,damageType:'commander',...metadata});
+  }
+  if(target.hp>0){grantCommanderActionStun(target);impacts.push({target:target.id,kind:'stun',value:1,nextAction:true});}
  }
  expireCommanderFocus(next,round);
- expireCommanderHunt(next);
+ expireCommanderHunt(next);expireCommanderStun(next);
  log.push({round,side,actor:'commander:'+side,action:'commander-'+commanderId+'-'+ability,value,impacts,...(commanderId==='attack'&&strong?{focusUntilDeath:true}:{}),commanderLevel:stats.level,abilityBonusPercent:stats.bonusPercent});
  return {teams:next,log,revivalUsed:nextRevivalUsed,finished:next.some(team=>team.every(u=>u.hp<=0))};
 }

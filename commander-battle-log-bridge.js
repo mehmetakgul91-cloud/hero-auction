@@ -27,5 +27,5 @@ export function applyBattleLogHeroEvent(combat,event){
  // Do not grant next-round energy until all event validations have passed.
  if(event.round===combat.round+1)beginServerCombatRound(combat,event.round);
  return applyServerHeroAction(combat,{side:event.side,actorId:event.actor,targetId:event.target,
-  action:isHeal?'heal':isShield?'shield':'attack',value:amount,round:event.round});
+  action:event.action==='passive-heal'?'passive-heal':isHeal?'heal':isShield?'shield':'attack',value:amount,round:event.round});
 }

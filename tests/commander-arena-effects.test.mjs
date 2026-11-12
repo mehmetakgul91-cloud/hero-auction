@@ -230,3 +230,8 @@ for(const english of [false,true])for(const side of [0,1])test(`Hunt Order shows
 test('Hunt Order cosmetic bonus requires explicit next-attack metadata, not an inferred focus mark',()=>{
  const h=effectHarness();h.emit({action:'commander-attack-ultimate',side:0,sequence:1,impacts:[{target:'same',kind:'hunt-buff',value:20},{target:'other',kind:'hunt-buff',value:40,nextAttack:true}]});assert.equal(h.targetFx().length,0);h.advance(1200);assert.equal(h.impacts().length,0);
 });
+
+for(const english of [false,true])test(`new mage stun impact labels the next whole action (${english?'EN':'TR'})`,()=>{
+ const h=effectHarness({english});h.emit({action:'commander-magic-normal',side:1,sequence:1,impacts:[{target:'same',kind:'stun',value:1,nextAction:true}]});h.advance(1200);
+ assert.equal(h.impacts().length,1);assert.match(textOf(h.impacts()[0]),english?/NEXT ACTION SKIPPED/:/SONRAKİ EYLEM ATLANIR/);assert.doesNotMatch(textOf(h.impacts()[0]),/NEXT ATTACK|SONRAKİ SALDIRI/);
+});

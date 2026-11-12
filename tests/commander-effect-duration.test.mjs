@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import {createLiveCommanderAbilities} from '../commander-live-abilities.js';
 import {createLiveCommanderCombat,castLiveCommanderCombat,applyServerHeroAction,beginServerCombatRound} from '../commander-live-combat.js';
 function combat(commanderId){
- const teams=[0,1].map(side=>Array.from({length:5},(_,i)=>({id:side+'-'+i,hp:100,maxHp:100,attack:20,defense:0,shield:0,lane:i<2?'front':'back',position:i})));
+ const teams=[0,1].map(side=>Array.from({length:5},(_,i)=>({id:side+'-'+i,role:['fighter','assassin','tank','support','energy'][i],hp:100,maxHp:100,attack:20,defense:0,shield:0,lane:i<2?'front':'back',position:i})));
  return createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'effects:1',energy:[100,100],now:1000}),teams,commanders:[{commanderId},{commanderId:'defense'}]});
 }
 test('attack commander inflicts immediate damage but no repeated round damage',()=>{
  const c=combat('attack');
  castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'attack_once_01',matchKey:'effects:1',now:2000});
  const hp=c.teams[1].map(u=>u.hp);
- assert.ok(hp.every(n=>n<100));
+ assert.ok(hp.some(n=>n<100));
  beginServerCombatRound(c,2);
  assert.deepEqual(c.teams[1].map(u=>u.hp),hp);
 });
@@ -24,13 +24,13 @@ test('support commander normal heals once, retains HP next round and never excee
  beginServerCombatRound(c,2);
  assert.equal(c.teams[0][0].hp,hp);
 });
-test('magic stun remains pending across round boundaries until an attack',()=>{
+test('magic stun remains pending across round boundaries until an action',()=>{
  const c=combat('magic');
  castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'magic_once_01',targetIds:['1-0'],matchKey:'effects:1',now:2000});
- assert.equal(c.teams[1].filter(u=>u.commanderStunNextAttack).length,1);
+ assert.equal(c.teams[1].filter(u=>u.commanderStunNextAction).length,1);
  assert.ok(c.teams[1].every(u=>u.commanderWeaken===undefined));
  beginServerCombatRound(c,2);
- assert.equal(c.teams[1].filter(u=>u.commanderStunNextAttack).length,1);
+ assert.equal(c.teams[1].filter(u=>u.commanderStunNextAction).length,1);
 });
 
 test('magic stun waits beyond three rounds and consumes exactly the next attack',()=>{
@@ -39,27 +39,27 @@ test('magic stun waits beyond three rounds and consumes exactly the next attack'
  castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'magic_fourth_01',targetIds:['1-0'],matchKey:'effects:1',now:2000});
  for(const round of [5,6,7]){
   beginServerCombatRound(c,round);
-  assert.equal(c.teams[1][0].commanderStunNextAttack,true);
+  assert.equal(c.teams[1][0].commanderStunNextAction,true);
  }
  const before=c.teams[0][0].hp;
  const skipped=applyServerHeroAction(c,{side:1,actorId:'1-0',targetId:'0-0',value:1});
  assert.equal(skipped.event.action,'stun-skip');assert.equal(skipped.event.value,0);
- assert.equal(c.teams[0][0].hp,before);assert.ok(c.teams[1].every(u=>!u.commanderStunNextAttack));
+ assert.equal(c.teams[0][0].hp,before);assert.ok(c.teams[1].every(u=>!u.commanderStunNextAction));
  beginServerCombatRound(c,8);applyServerHeroAction(c,{side:1,actorId:'1-0',targetId:'0-0',value:1});
  assert.equal(c.teams[0][0].hp,before-1);
 });
 test('recast keeps one pending stun without accumulating skipped attacks',()=>{
  const c=combat('magic');
  castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'magic_first_01',targetIds:['1-0'],matchKey:'effects:1',now:2000});
- assert.equal(c.teams[1][0].commanderStunNextAttack,true);
- beginServerCombatRound(c,2);
+ assert.equal(c.teams[1][0].commanderStunNextAction,true);
+ beginServerCombatRound(c,2);beginServerCombatRound(c,3);
  castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'magic_again_01',targetIds:['1-0'],matchKey:'effects:1',now:7000});
- assert.equal(c.teams[1][0].commanderStunNextAttack,true);
- assert.equal(c.abilities.energy[0],32,'each accepted normal cast costs its normal energy');
- for(const round of [3,4,5])beginServerCombatRound(c,round);
+ assert.equal(c.teams[1][0].commanderStunNextAction,true);
+ assert.equal(c.abilities.energy[0],4,'two mage normals cost 120; two round gains restore 24');
+ for(const round of [4,5,6])beginServerCombatRound(c,round);
  const before=c.teams[0][0].hp;
  assert.equal(applyServerHeroAction(c,{side:1,actorId:'1-0',targetId:'0-0',value:1}).event.action,'stun-skip');
- assert.equal(c.teams[0][0].hp,before);assert.ok(c.teams[1].every(u=>!u.commanderStunNextAttack));
- beginServerCombatRound(c,6);applyServerHeroAction(c,{side:1,actorId:'1-0',targetId:'0-0',value:1});
+ assert.equal(c.teams[0][0].hp,before);assert.ok(c.teams[1].every(u=>!u.commanderStunNextAction));
+ beginServerCombatRound(c,7);applyServerHeroAction(c,{side:1,actorId:'1-0',targetId:'0-0',value:1});
  assert.equal(c.teams[0][0].hp,before-1,'recasting does not create a second skip');
 });

@@ -55,7 +55,7 @@ jobs:
         env:
           HERO_BROWSER_SCREENSHOTS: ${{ runner.temp }}/commander-switch-shots/match-picker
         run: env -u DATABASE_URL node tools/test-match-commander-picker-browser.mjs
-      - name: Verify portrait cards, same-lane swaps and protected center at all lane counts
+      - name: Verify portrait cards, same-lane swaps and permanent center defense at all lane counts
         env:
           HERO_BROWSER_SCREENSHOTS: ${{ runner.temp }}/commander-switch-shots/portrait-preparation
         run: env -u DATABASE_URL node tools/test-portrait-preparation-browser.mjs

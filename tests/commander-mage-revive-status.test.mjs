@@ -29,8 +29,8 @@ test('real energy role has one damage boost with integer rounding',()=>{
 });
 for(const bad of[0,-1,1.5,NaN,Infinity])test('invalid arcane/revive round rejected '+bad,()=>{assert.throws(()=>grantArcaneSurge(unit(),bad));assert.throws(()=>reviveCommanderAlly(unit({hp:0}),bad));});
 test('dead, invalid attack, and invalid target cannot gain surge',()=>{for(const h of[unit({hp:0}),unit({attack:Infinity}),unit({attack:-1}),null])assert.throws(()=>grantArcaneSurge(h,1));});
-test('revive restores forty-percent HP, zero shield and no same-round action',()=>{
- const h=unit({hp:0,maxHp:101,shield:50});const r=reviveCommanderAlly(h,4);assert.deepEqual(r,{value:40,canActFromRound:5});assert.equal(h.hp,40);assert.equal(h.shield,0);assert.equal(h.revivedAtRound,4);assert.equal(h.lastActionRound,4);assert.equal(h.canActFromRound,5);assert.throws(()=>reviveCommanderAlly(h,4));
+test('revive restores fifty-five-percent HP, zero shield and no same-round action',()=>{
+ const h=unit({hp:0,maxHp:101,shield:50});const r=reviveCommanderAlly(h,4);assert.deepEqual(r,{value:55,canActFromRound:5});assert.equal(h.hp,55);assert.equal(h.shield,0);assert.equal(h.revivedAtRound,4);assert.equal(h.lastActionRound,4);assert.equal(h.canActFromRound,5);assert.throws(()=>reviveCommanderAlly(h,4));
 });
 test('revive clears temporary statuses without rebuilding stats or reapplying rage',()=>{
  const h=unit({hp:0,attack:117,defense:63,speed:91,rageActivated:true,arcaneSurgeBonusAttack:100,arcaneSurgeFromRound:2,arcaneSurgeUntilRound:4,commanderWeaken:.3,commanderWeakenUntilRound:4,delayDueRound:3,delayProtectedThroughRound:4,lastStandReady:true,lastStandPersistent:true,lastStandUntilRound:4,commanderFocusTargetId:'enemy',commanderFocusUntilRound:4});reviveCommanderAlly(h,3);

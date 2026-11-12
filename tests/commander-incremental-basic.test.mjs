@@ -5,7 +5,7 @@ import {createLiveCommanderCombat,castLiveCommanderCombat} from '../commander-li
 import {stepBasicHeroCombat,advanceBasicCombatRound} from '../commander-incremental-basic.js';
 import {selectBattleTarget} from '../battle-target-selection.js';
 function make(){
- const teams=[0,1].map(side=>Array.from({length:5},(_,i)=>({id:side+'-'+i,hp:100,maxHp:100,attack:30,defense:0,shield:0,lane:i<2?'front':'back',position:i})));
+ const teams=[0,1].map(side=>Array.from({length:5},(_,i)=>({id:side+'-'+i,role:i===4?'tank':'fighter',hp:100,maxHp:100,attack:30,defense:i===4?200:0,shield:0,lane:i<2?'front':'back',position:i})));
  const abilities=createLiveCommanderAbilities({matchKey:'step:1',energy:[40,40],now:1000});
  return createLiveCommanderCombat({abilities,teams,commanders:[{commanderId:'defense'},{commanderId:'attack'}]});
 }
@@ -46,9 +46,9 @@ test('magic skips only the next actual basic attack',()=>{
  c.commanders[0]={commanderId:'magic'};
  c.abilities.energy[0]=100;c.abilities.ultimateEnergy[0]=100;
  castLiveCommanderCombat(c,{side:0,ability:'normal',requestId:'stun_hit_01',targetIds:['1-0'],matchKey:'step:1',now:2000});
- const stunned=c.teams[1].find(u=>u.commanderStunNextAttack);
+ const stunned=c.teams[1].find(u=>u.commanderStunNextAction);
  assert.ok(stunned);
- assert.equal(stunned.commanderStunNextAttack,true);assert.equal(stunned.commanderWeaken,undefined);
+ assert.equal(stunned.commanderStunNextAction,true);assert.equal(stunned.commanderWeaken,undefined);
  for(let round=1;round<=3;round++){
   if(round>1)advanceBasicCombatRound(c);
   const target=selectBattleTarget(c.teams[0],stunned,c.round);
@@ -57,7 +57,7 @@ test('magic skips only the next actual basic attack',()=>{
   assert.equal(before-c.teams[0].find(u=>u.id===target.id).hp,round===1?0:30);
  }
  advanceBasicCombatRound(c);
- assert.equal(c.teams[1].find(u=>u.id===stunned.id).commanderStunNextAttack,undefined);
+ assert.equal(c.teams[1].find(u=>u.id===stunned.id).commanderStunNextAction,undefined);
  const target=selectBattleTarget(c.teams[0],stunned,c.round);
  const before=target.hp;
  stepBasicHeroCombat(c,{side:1,actorId:stunned.id});

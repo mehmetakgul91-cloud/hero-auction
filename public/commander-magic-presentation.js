@@ -1,0 +1,4 @@
+// Shared, read-only descriptions of the current mage normal ability.
+export function commanderMagicNormalDescription({english=false}={}){
+ return english?'60 energy. Main damage = commander level + 5% of total energy-hero attack at battle start. Each living enemy in an adjacent or diagonal original formation slot takes 25% of main damage; it does not spread through empty slots. Only the selected target, if it survives, skips its next action, including healing and shields. Automatic passives are unaffected. Stun does not stack.':'60 enerji. Ana hasar = komutan seviyesi + savaş başındaki enerji kahramanlarının toplam saldırısının %5’i. Başlangıç dizilimindeki komşu ve çapraz yaşayan rakiplerin her biri ana hasarın %25’ini alır; boş yuvalar üzerinden yayılmaz. Yalnızca seçilen hedef hayatta kalırsa şifa ve kalkan dahil sonraki eylemini atlar. Otomatik pasifler etkilenmez. Sersemletme birikmez.';
+}

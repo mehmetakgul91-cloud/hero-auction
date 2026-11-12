@@ -64,11 +64,11 @@ for(const side of [0,1])for(const [id,ability,mode] of targetedAbilities)test(`$
  const payload=JSON.parse(h.requests[1].options.body);assert.equal(payload.ability,ability);assert.deepEqual(payload.targetIds,[targetSide+'b']);
  await h.accept(1);
  assert.equal(h.confirm.hidden,true);assert.equal(h.normal.hidden,false);assert.equal(h.visuals.filter(event=>event.action===`commander-${id}-${ability}`).length,1);
- assert.equal(h.c.abilities.energy[side],ability==='normal'?60:100);assert.equal(h.c.abilities.ultimateEnergy[side],ability==='ultimate'?100-getCommanderAbilityCost(id,ability):100);
+ assert.equal(h.c.abilities.energy[side],ability==='normal'?100-getCommanderAbilityCost(id,ability):100);assert.equal(h.c.abilities.ultimateEnergy[side],ability==='ultimate'?100-getCommanderAbilityCost(id,ability):100);
  if(ability==='ultimate')assert.equal(h.c.abilities.ultimateUsed[side],true);
  if(id==='attack')assert.equal(h.c.teams[targetSide][1].commanderFocusUntilDeath,true);
  if(id==='defense')assert.equal(h.c.teams[side][1].lastStandReady,true);
- if(id==='support')assert.equal(h.c.teams[side][1].hp,40);
+ if(id==='support')assert.equal(h.c.teams[side][1].hp,55);
 });
 
 for(const side of [0,1])for(const [id,ability,mode] of targetedAbilities)test(`${id} ${ability} seat ${side}: cancel before choosing leaves both pools and usage intact`,async()=>{
@@ -103,7 +103,7 @@ test('server rejection has no success effect or charge and the same target retri
  const h=harness();await h.respond(0,h.snapshot());h.click(h.normal);h.target(1);
  await h.respond(1,{error:'Hedef artık hayatta değil'},false);
  assert.equal(h.visuals.length,0);assert.equal(h.energy.textContent,'100 / 100');assert.equal(h.confirm.hidden,true);assert.match(h.status.textContent,/Hedef artık hayatta değil/);
- await h.respond(2,h.snapshot());h.target(1);assert.equal(h.requests.length,4);await h.accept(3);assert.equal(h.c.abilities.energy[0],60);assert.equal(h.visuals.length,1);
+ await h.respond(2,h.snapshot());h.target(1);assert.equal(h.requests.length,4);await h.accept(3);assert.equal(h.c.abilities.energy[0],40);assert.equal(h.visuals.filter(e=>e.action==='commander-magic-normal').length,1);assert.equal(h.visuals.filter(e=>e.action==='commander-hit').length,3);
 });
 
 test('finish while selecting or submitting prevents later clicks and late responses from reactivating controls',async()=>{
@@ -156,4 +156,14 @@ for(const side of [0,1])test(`seat ${side}: charged support has no ready cue unt
 });
 test('readiness observes explicit authoritative canUseUltimate=false despite full meter',async()=>{
  const h=harness(0,'attack');await h.respond(0,h.snapshot({abilities:[{energy:100,ultimateEnergy:100,canUseUltimate:false,cooldownMs:0}]}));assert.equal(h.ultimate.disabled,true);assert.equal(h.ultimate.classes.has('commander-ultimate-ready'),false);assert.doesNotMatch(h.ultimate.textContent,/Hazır/);
+});
+
+for(const side of [0,1])test(`mage seat ${side}: live normal shows 60, rejects 59 and accepts exactly 60`,async()=>{
+ const h=harness(side);h.c.abilities.energy[side]=59;
+ await h.respond(0,h.snapshot());assert.equal(h.normal.textContent,'Normal · 60');assert.equal(h.normal.disabled,true);
+ h.click(h.normal);h.target(0);assert.equal(h.requests.length,1,'insufficient normal energy cannot enter targeting or submit');
+ h.c.abilities.energy[side]=60;h.tick();await h.respond(1,h.snapshot({version:1}));
+ assert.equal(h.normal.disabled,false);h.click(h.normal);h.target(0);assert.equal(h.requests.length,3);
+ await h.accept(2);assert.equal(h.c.abilities.energy[side],0);assert.equal(h.c.abilities.ultimateEnergy[side],100);
+ assert.equal(h.normal.disabled,true);assert.equal(h.normal.textContent,'Normal · 60');
 });

@@ -73,7 +73,7 @@ test('actual death/revival clears every guard field, and no mage transfer occurs
  const ally=hero('chosen',{hp:10}),other=hero('other');grantLastStand(ally,1);grantArcaneSurge(ally,4);const team=[ally,other];
  assert.equal(applyHeroDamage(ally,100,{round:4,allies:team}).arcaneTransfer,undefined);assert.equal(applyHeroDamage(ally,100,{round:5,allies:team}).arcaneTransfer,undefined);assert.equal(ally.hp,1);
  const dead=applyHeroDamage(ally,100,{round:7,allies:team});assert.equal(ally.hp,0);assert.equal(dead.arcaneTransfer,undefined,'surge expired while protected; no fresh duration on death');for(const field of fields)assert.equal(ally[field],undefined);
- Object.assign(ally,{lastStandReady:true,lastStandPersistent:true,lastStandImmortalRounds:2,lastStandTriggeredRound:7,lastStandImmortalUntilRound:9});reviveCommanderAlly(ally,7);assert.equal(ally.hp,4000);for(const field of fields)assert.equal(ally[field],undefined);assert.equal(applyHeroDamage(ally,10000,{round:8}).guardTriggered,false);assert.equal(ally.hp,0);
+ Object.assign(ally,{lastStandReady:true,lastStandPersistent:true,lastStandImmortalRounds:2,lastStandTriggeredRound:7,lastStandImmortalUntilRound:9});reviveCommanderAlly(ally,7);assert.equal(ally.hp,5500);for(const field of fields)assert.equal(ally[field],undefined);assert.equal(applyHeroDamage(ally,10000,{round:8}).guardTriggered,false);assert.equal(ally.hp,0);
 });
 test('old snapshots keep their original one-hit protection and malformed/future/expired immortality never protects',()=>{
  const old=hero('old',{hp:10,lastStandReady:true,lastStandPersistent:true});assert.equal(applyHeroDamage(old,100,{round:3}).lastStandImmortalUntilRound,undefined);assert.equal(old.hp,1);applyHeroDamage(old,1,{round:3});assert.equal(old.hp,0);

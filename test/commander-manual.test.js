@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {simulateBattle} from '../battle-engine.js';
-const team=(prefix)=>Array.from({length:5},(_,i)=>({id:prefix+i,name:prefix+i,power:65,role:'tank',lane:'front',passive:{effect:'regen',value:.95}}));
+const team=(prefix)=>Array.from({length:5},(_,i)=>({id:prefix+i,name:prefix+i,power:65,role:i===0?'fighter':'tank',lane:'front',passive:{effect:'regen',value:.95}}));
 const commanders=[{commanderId:'attack',levels:{attack:0,defense:0,magic:0,support:0}},null];
 test('normal cannot fire with the initial 30 energy',()=>{
  assert.throws(()=>simulateBattle(team('a'),team('b'),{commanders,commanderActions:[{side:0,round:1,ability:'normal'}]}),/Insufficient commander energy/);

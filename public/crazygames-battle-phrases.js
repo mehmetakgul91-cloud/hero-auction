@@ -1,3 +1,4 @@
+import {commanderMagicNormalDescription} from './commander-magic-presentation.js';
 import {commanderUltimatePhrases} from './commander-ultimate-presentation.js';
 // Presentation-only copy for formation, live combat, and hero abilities.
 // Hero identities and battle rules are intentionally not changed.
@@ -209,7 +210,7 @@ export const battlePhrases = {
 // These generated sentences must be translated before their individual labels.
 export function translateCommanderDescription(text) {
  const percent = value => value.replace(',', '.');
- let translated=text
+ let translated=text.replaceAll(commanderMagicNormalDescription(),commanderMagicNormalDescription({english:true}))
   .replace(/Normal: savaş başındaki takım saldırısının %([\d,]+)'i; nihai: %([\d,]+)'i kadar toplam hasar düşmanlara bölünür\./g,
    (_,normal,ultimate)=>`Normal: ${percent(normal)}% of starting team attack; ultimate: ${percent(ultimate)}%. Total damage is split between enemies.`)
   .replace(/Normal: yaşayan takımın azami canının %([\d,]+)'i; nihai: %([\d,]+)'i kadar toplam kalkan paylaşılır\./g,
@@ -219,6 +220,10 @@ export function translateCommanderDescription(text) {
   .replace(/Normal: seçilen 1 hedefin saldırısı %([\d,]+); nihai: en fazla 2 hedefin saldırısı %([\d,]+) azalır\./g,
    (_,normal,ultimate)=>`Normal: reduces one selected target’s attack by ${percent(normal)}%; ultimate: reduces the attack of up to two targets by ${percent(ultimate)}%.`);
  translated=translated
+  .replace(/Normal: (\d+) \+ \(%([\d,]+) × savaş başındaki savaşçı ve suikastçıların toplam saldırısı\) kadar toplam hasar yaşayan düşmanlara bölünür\./g,(_,base,n)=>`Normal: ${base} + (${percent(n)}% × total fighter and assassin attack at battle start) damage is split among living enemies.`)
+  .replace(/Normal: (\d+) \+ \(%([\d,]+) × savaş başındaki tankların toplam savunması\) kadar toplam kalkan yaşayan müttefiklere paylaştırılır\./g,(_,base,n)=>`Normal: ${base} + (${percent(n)}% × total tank defense at battle start) shield is shared among living allies.`)
+  .replace(/Normal: (\d+) \+ \(%([\d,]+) × savaş başındaki desteklerin toplam ham şifa gücü\) kadar toplam şifa verir\. Ham şifa gücü = saldırı × temel şifa oranı; komutan şifa bonusu dahil değildir\. Can oranı en düşük kahraman önceliklidir\./g,(_,base,n)=>`Normal: provides ${base} + (${percent(n)}% × total raw support healing power at battle start) healing. Raw healing power = attack × base healing rate, excluding the commander healing bonus. Prioritizes the hero with the lowest health ratio.`)
+  .replace(/Savaş başındaki değerler sabitlenir; sonraki ölümler, güçlendirmeler ve zayıflatmalar bu hesabı değiştirmez\./g,'Battle-start values are fixed; later deaths, buffs and debuffs do not change this basis.')
   .replace(/Normal: savaş başındaki takım saldırısının %([\d,]+)'i kadar toplam hasar düşmanlara bölünür\./g,(_,n)=>`Normal: deals ${percent(n)}% of starting team attack, split between enemies.`)
   .replace(/Normal: yaşayan takımın azami canının %([\d,]+)'i kadar toplam kalkan paylaşılır\./g,(_,n)=>`Normal: shares a total shield equal to ${percent(n)}% of living allies' maximum health.`)
   .replace(/Normal: eksik canın %([\d,]+)'i iyileştirilir\. Can oranı en düşük kahraman önceliklidir\./g,(_,n)=>`Normal: restores ${percent(n)}% of missing health, prioritizing the hero with the lowest health ratio.`)
@@ -226,7 +231,7 @@ export function translateCommanderDescription(text) {
   .replace(/Normal: seçilen 1 rakibin yapacağı ilk saldırının gücü %([\d,]+) azalır\. Etki saldırana kadar bekler; aynı saldırının tüm alan vuruşlarına uygulanır\. Şifa ve kalkan etkilenmez\./g,(_,n)=>`Normal: reduces the power of 1 selected enemy's next actual attack by ${percent(n)}%. Waits until it attacks; also affects every area hit of that attack. Healing and shields are unaffected.`)
   .replace(/Normal: seçilen yaşayan rakibi sersemletir; bir sonraki saldırısı, alan vuruşlarıyla birlikte atlanır\. Saldırana kadar bekler; tur değişiminde bitmez\. Şifa ve kalkan eylemleri etkilenmez\. Birikmez; her seviyede 1 saldırı atlanır\./g,"Normal: stuns the selected living enemy; skips its next attack and all area hits. Waits until it attacks and persists across rounds. Healing and shield actions are unaffected. Does not stack; skips 1 attack at every level.")
   .replace(/Nihai \((\d+) enerji\):/g,'Ultimate ($1 energy):')
-  .replace(/Normal beceri 40 normal enerji harcar; ulti dolumu azalmaz\./g,'Normal abilities spend 40 normal energy; ultimate charge is unaffected.')
+  .replace(/Normal beceri (\d+) normal enerji harcar; ulti dolumu azalmaz\./g,'Normal abilities spend $1 normal energy; ultimate charge is unaffected.')
   .replace(/Nihai \((\d+) ulti dolumu\):/g,'Ultimate ($1 ultimate charge):');
  for(const [tr,en]of Object.entries(commanderUltimatePhrases).sort((a,b)=>b[0].length-a[0].length))translated=translated.split(tr).join(en);
  return translated;

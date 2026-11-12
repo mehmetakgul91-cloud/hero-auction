@@ -48,7 +48,7 @@ export function expireCommanderUltimateStatuses(teams,round){
   if(!Number.isInteger(unit.arcaneSurgeUntilRound)||round>unit.arcaneSurgeUntilRound)for(const key of arcaneFields)delete unit[key];
  }
 }
-const revivalClearFields=[...arcaneFields,'commanderHuntNextAttack','commanderStunNextAttack','commanderWeaken','commanderWeakenUntilRound','commanderWeakenNextAttack','delayDueRound','delayProtectedThroughRound','lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound','commanderFocusTargetId','commanderFocusUntilRound','commanderFocusUntilDeath','focusTargetId','focusUntilRound','focusRemaining'];
+const revivalClearFields=[...arcaneFields,'commanderHuntNextAttack','commanderStunNextAttack','commanderStunNextAction','commanderWeaken','commanderWeakenUntilRound','commanderWeakenNextAttack','delayDueRound','delayProtectedThroughRound','lastStandReady','lastStandPersistent','lastStandUntilRound','lastStandImmortalRounds','lastStandTriggeredRound','lastStandImmortalUntilRound','commanderFocusTargetId','commanderFocusUntilRound','commanderFocusUntilDeath','focusTargetId','focusUntilRound','focusRemaining'];
 // The cast transaction validates own-side selection, combat still running and
 // its once-per-battle allowance BEFORE calling this helper. It charges energy
 // only after successful effect validation. This helper rejects an already-live
@@ -57,7 +57,7 @@ export function reviveCommanderAlly(target,round){
  if(!validRound(round))throw Error('Invalid revival round');
  if(!target||target.hp!==0||!Number.isSafeInteger(target.maxHp)||target.maxHp<=0)throw Error('Revival requires a fallen ally');
  for(const key of revivalClearFields)delete target[key];
- target.hp=Math.min(target.maxHp,Math.max(1,Math.floor(target.maxHp*.40)));
+ target.hp=Math.min(target.maxHp,Math.max(1,Math.floor(target.maxHp*.55)));
  target.shield=0;
  target.revivedAtRound=round;
  target.canActFromRound=round+1;

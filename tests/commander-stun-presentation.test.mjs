@@ -72,11 +72,49 @@ for(const english of [false,true])test(`pending badge and fixed-level skill card
  assert.equal(card.classes.has('cast'),false);assert.equal(card.classes.has('hit'),false);
  delete unit.commanderStunNextAttack;update();assert.equal(badge.hidden,true);
  unit.commanderStunNextAttack=true;unit.hp=0;update();assert.equal(badge.hidden,true);
- for(const level of [0,20,40]){const skills=new Element();renderCommanderSkills(skills,{commanderId:'magic',levels:{magic:level}},{document,english});const normal=skills.children[0];assert.match(normal.textContent,english?/1 ATTACK.*Stun/:/1 SALDIRI.*Sersemletme/);assert.doesNotMatch(normal.textContent,/%|Weaken|Zayıflat/);}
+ for(const level of [0,20,40]){const skills=new Element();renderCommanderSkills(skills,{commanderId:'magic',levels:{magic:level}},{document,english});const normal=skills.children[0];assert.match(normal.textContent,english?/5%.*Stun/:/%5.*Sersemletme/);assert.match(normal.textContent,english?/25%.*next action/:/%25.*sonraki eylem/);assert.doesNotMatch(normal.textContent,/Weaken|Zayıflat/);}
 });
 
 test('3D replay never creates an attack actor, target or projectile for a skipped attack',()=>{
  const scene=Object.create(Arena3dScene.prototype);
  scene.teams=teams();scene.models=new Map();
  for(const side of [0,1]){scene.startFrame({events:[{side,actor:'same',target:'same',action:'stun-skip',value:0}],teams:teams()});assert.equal(scene.active.action.action,'stun-skip');assert.equal(scene.active.actor,undefined);assert.equal(scene.active.target,undefined);assert.equal(scene.active.projectile,undefined);scene.finishFrame();}
+});
+
+const actionCast=(side=0)=>({...cast(side),impacts:[{target:'same',kind:'stun',value:1,nextAction:true}]});
+for(const english of [false,true])test(`new action stun explicitly describes all actions and preserves legacy logs (${english?'EN':'TR'})`,()=>{
+ assert.match(describeBattleEvent(actionCast(),{english}),english?/Next action skipped, including healing and shields/:/Şifa ve kalkan dahil sonraki eylem atlanır/);
+ assert.match(describeBattleEvent({action:'stun-skip',stunScope:'action'},{english}),english?/Action skipped/:/Eylem atlandı/);
+ assert.match(describeBattleEvent(cast(),{english}),english?/Next attack skipped/:/Sonraki saldırı atlanır/);
+});
+for(const side of [0,1])test(`new replay action stun on seat ${side} grants, supersedes old, consumes and cleans up`,()=>{
+ const replay=createBattleReplayHealth(teams());
+ replay.apply(cast(1-side));replay.apply(actionCast(1-side));
+ assert.equal(replay.statusSnapshot()[side][0].commanderStunNextAction,true);
+ assert.equal(replay.statusSnapshot()[side][0].commanderStunNextAttack,undefined);
+ replay.apply({side,actor:'same',action:'stun-skip',stunScope:'attack'});
+ assert.equal(replay.statusSnapshot()[side][0].commanderStunNextAction,true);
+ replay.apply({side,actor:'same',action:'stun-skip',stunScope:'action'});
+ assert.equal(replay.statusSnapshot()[side][0].commanderStunNextAction,undefined);
+ for(const action of ['revive','commander-revive']){replay.apply(actionCast(1-side));replay.apply({side,target:'same',action,value:55});assert.equal(replay.statusSnapshot()[side][0].commanderStunNextAction,undefined);}
+ replay.apply(actionCast(1-side));replay.finish();assert.equal(replay.statusSnapshot()[side][0].commanderStunNextAction,undefined);
+ replay.apply(actionCast(1-side));replay.apply({side:1-side,actor:'same',target:'same',action:'commander-hit',value:100});assert.equal(replay.statusSnapshot()[side][0].commanderStunNextAction,undefined);
+});
+for(const english of [false,true])test(`new action stun badge is distinct from legacy attack stun (${english?'EN':'TR'})`,()=>{
+ const document={documentElement:{lang:english?'en':'tr'},createElement:()=>new Element()},root=new Element(),unit=teams()[0][0];
+ const renderer=createArenaTeamRenderer({document,loadArt:()=>null});
+ const update=()=>renderer.update(root,[unit],{side:0,rows:1,laneRows:{front:[1],back:[]},fittedRows:{front:[1],back:[]},roleNames:{fighter:'Fighter'}});
+ unit.commanderStunNextAction=true;update();const badge=root.children[0].children[4];assert.equal(badge.hidden,false);assert.match(badge.attributes['aria-label'],english?/next action skipped, including healing and shields/:/şifa ve kalkan dahil sonraki eylem/);
+ delete unit.commanderStunNextAction;update();assert.equal(badge.hidden,true);
+ unit.commanderStunNextAction=true;unit.hp=0;update();assert.equal(badge.hidden,true);
+});
+test('new live snapshot and match finish clear stale action-stun markers',()=>{
+ const state=teams();state[1][0].commanderStunNextAction=true;let receive;
+ const context={window:{addEventListener:(name,fn)=>receive=fn},timer:null,victoryRevealDone:false,states:state,feedbackVersion:0,heroAttacks:{prune(){}},render(){},$:()=>({}),liveArenaMode:false};
+ const start=source.indexOf("window.addEventListener('heroarena:experimental-round-end',e=>{");
+ runInNewContext(source.slice(start,source.indexOf('\n});',start)+4),context);
+ receive({detail:{teams:teams(),round:2,events:[]}});assert.equal(state[1][0].commanderStunNextAction,undefined);
+ const fresh=teams();fresh[1][0].commanderStunNextAction=true;
+ receive({detail:{teams:fresh,round:2,events:[]}});assert.equal(state[1][0].commanderStunNextAction,true);
+ receive({detail:{teams:fresh,round:2,events:[],finished:true}});assert.equal(state[1][0].commanderStunNextAction,undefined);
 });

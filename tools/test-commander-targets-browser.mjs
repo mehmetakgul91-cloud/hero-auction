@@ -71,7 +71,7 @@ try{
   await target.dispatchEvent('click');await target.dispatchEvent('keydown',{key:'Enter',repeat:true});
   await page.waitForFunction(()=>!document.querySelector('[data-command="normal"]').hidden);
   assert.equal(f.posts,1,`${id} ${ability} seat ${side} mobile=${mobile}`);assert.deepEqual(f.payload.targetIds,[targetSide+'b']);
-  assert.equal(f.c.abilities.energy[side],ability==='normal'?60:100);if(ability==='ultimate')assert.equal(f.c.abilities.ultimateUsed[side],true);
+  assert.equal(f.c.abilities.energy[side],ability==='normal'?40:100);if(ability==='ultimate')assert.equal(f.c.abilities.ultimateUsed[side],true);
   assert.equal(await page.locator('[data-magic-confirm]').count(),0);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   await context.close();
  }

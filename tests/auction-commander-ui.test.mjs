@@ -10,7 +10,8 @@ for(const english of [false,true])for(const commanderId of ['attack','defense','
   const badge=auctionCommanderMarkup(input,seat,{english});assert.match(badge,new RegExp(`data-auction-commander="${seat}"`));assert.match(badge,/aria-haspopup="dialog"/);assert.match(badge,/<img.*alt=""/);
   assert.doesNotMatch(badge,/9999|SENSITIVE|level|seviye/i);
  }
- const popup=auctionCommanderDialogMarkup(input,{english});assert.match(popup,english?/Normal ability.*Ultimate/s:/Normal yetenek.*Nihai yetenek/s);assert.match(popup,/form method="dialog"/);assert.doesNotMatch(popup,/9999|SENSITIVE|level|seviye/i);
+ const popup=auctionCommanderDialogMarkup(input,{english});assert.match(popup,english?/Normal ability.*Ultimate/s:/Normal yetenek.*Nihai yetenek/s);assert.match(popup,/form method="dialog"/);assert.doesNotMatch(popup,/9999|SENSITIVE/);
+ assert.equal(popup,auctionCommanderDialogMarkup({commanderId},{english}),'only the public class may affect the generic formula');
  assert.ok(fs.existsSync(new URL('../public'+decodeURIComponent(view.portrait),import.meta.url)));
 });
 test('missing and forged classes never become markup or image paths',()=>{
@@ -85,4 +86,22 @@ test('integrated heading remains full-width accessible and compact without a sep
  assert.match(css,/@media\(max-width:520px\)\{#game \.auction-commander\{[^}]*min-height:48px/);
  const app=fs.readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
  assert.match(app,/playerName:displayPlayerName\(p,r.mode==='bot'&&seat===1\),isMe:r.me===seat/);
+});
+
+for(const english of [false,true])test(`auction normal formulas use public class rules, never saved levels (${english?'EN':'TR'})`,()=>{
+ for(const [commanderId,rate] of [['attack',10],['defense',20],['support',5]]){
+  const view=auctionCommanderView({commanderId},{english});
+  assert.match(view.normal,english?/commander level \+/:/komutan seviyesi \+/);
+  assert.ok(view.normal.includes(english?`${rate}%`:`%${rate}`));
+  assert.match(view.normal,english?/at battle start/:/savaş başındaki/);
+  assert.match(view.normal,english?/Later deaths and buffs do not change/:/sonraki ölümler ve güçlendirmelerle değişmez/);
+  assert.doesNotMatch(view.normal,/maximum health|azami can|missing health|Eksik can/);
+  const privateProfile={commanderId,levels:{attack:17,defense:29,magic:31,support:38},gold:9999};
+  assert.deepEqual(auctionCommanderView(privateProfile,{english}),view);
+ }
+ const support=auctionCommanderView({commanderId:'support'},{english});
+ assert.match(support.normal,english?/attack × base healing rate, excluding the commander healing bonus/:/saldırı × temel şifa oranı; komutan şifa bonusu dahil değildir/);
+ const magic=auctionCommanderView({commanderId:'magic'},{english});
+ assert.match(magic.normal,english?/skips its next action/:/sonraki eylemini atlar/);
+ assert.match(magic.normal,english?/25%/:/%25/);assert.match(magic.normal,/60/);assert.doesNotMatch(magic.normal,/10%|%10|40/);
 });

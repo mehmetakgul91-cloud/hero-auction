@@ -1,3 +1,4 @@
+import {applyServerStunSkip} from './commander-live-combat.js';
 // Server-owned heal/hybrid action. Never accepts client effect amounts.
 import {resolveSpecialHealing} from './battle-special-formulas.js';
 export function applyServerSpecialHeal(combat,{side,actorId,round=combat?.round}={}){
@@ -7,6 +8,7 @@ export function applyServerSpecialHeal(combat,{side,actorId,round=combat?.round}
  if(!actor||!Number.isFinite(actor.attack)||actor.attack<0)throw Error('Invalid healing actor');
  const resolved=resolveSpecialHealing(actor,next[side]);
  if(!resolved)throw Error('No applicable special heal');
+ const skipped=applyServerStunSkip(combat,{side,actorId,round,attacking:false});if(skipped)return skipped;
  const {target,heal,shield}=resolved;
  target.hp+=heal;actor.healing=(actor.healing||0)+heal;
  if(shield)target.shield=(target.shield||0)+shield;

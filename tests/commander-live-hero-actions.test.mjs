@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createLiveCommanderAbilities} from '../commander-live-abilities.js';
 import {createLiveCommanderCombat,applyServerHeroAction,beginServerCombatRound,castLiveCommanderCombat} from '../commander-live-combat.js';
 const make=()=>{
- const teams=[0,1].map(side=>Array.from({length:5},(_,i)=>({id:side+'-'+i,hp:100,maxHp:100,attack:50,shield:0})));
+ const teams=[0,1].map(side=>Array.from({length:5},(_,i)=>({id:side+'-'+i,role:'fighter',hp:100,maxHp:100,attack:50,shield:0})));
  const abilities=createLiveCommanderAbilities({matchKey:'room:1',energy:[40,40],now:1000});
  return createLiveCommanderCombat({abilities,teams,commanders:[{commanderId:'attack'},{commanderId:'support'}]});
 };

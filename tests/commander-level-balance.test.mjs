@@ -6,12 +6,12 @@ import {applyLiveCommanderEffect} from '../commander-live-effects.js';
 import {createLiveCommanderCombat,castLiveCommanderCombat,beginServerCombatRound} from '../commander-live-combat.js';
 import {createLiveArenaRegistry} from '../commander-live-arena-registry.js';
 const profile=(commanderId,level)=>({commanderId,levels:{attack:0,defense:0,magic:0,support:0,[commanderId]:level}});
-const teams=()=>[0,1].map(side=>Array.from({length:5},(_,i)=>({id:side+'-'+i,hp:2500,maxHp:5000,attack:1000,defense:100,shield:0,speed:50,position:i,lane:i<2?'front':'back'})));
+const teams=()=>[0,1].map(side=>Array.from({length:5},(_,i)=>({id:side+'-'+i,role:['fighter','assassin','tank','support','support'][i],hp:2500,maxHp:5000,attack:1000,defense:100,shield:0,speed:50,position:i,lane:i<2?'front':'back'})));
 for(const kind of ['attack','defense','magic','support'])test(kind+' normal follows its magnitude rule with the saved specialty level',()=>{
  const cast=level=>applyLiveCommanderEffect(teams(),{side:0,ability:'normal',commanderId:kind,commanderProfile:profile(kind,level),targetIds:['1-0']});
  const base=cast(0),upgraded=cast(40);
- if(kind==='magic'){assert.equal(upgraded.teams[1][0].commanderStunNextAttack,true);assert.equal(upgraded.teams[1][0].commanderWeaken,undefined);assert.deepEqual(upgraded.log.at(-1).impacts,base.log.at(-1).impacts,'one skipped attack at every level');}
- else assert.equal(upgraded.log.at(-1).value,base.log.at(-1).value*1.4);
+ if(kind==='magic'){assert.equal(upgraded.teams[1][0].commanderStunNextAction,true);assert.equal(upgraded.teams[1][0].commanderWeaken,undefined);assert.deepEqual(upgraded.log.at(-1).impacts.filter(i=>i.kind==='stun'),base.log.at(-1).impacts.filter(i=>i.kind==='stun'),'one skipped action at every level');assert.equal(upgraded.log[0].rawDamage,40);assert.equal(base.log[0].rawDamage,0);}
+ else assert.equal(upgraded.log.at(-1).value,base.log.at(-1).value+40);
  assert.equal(upgraded.log.at(-1).commanderLevel,40);
  assert.equal(upgraded.log.at(-1).abilityBonusPercent,40);
 });
@@ -36,7 +36,7 @@ for(const kind of ['attack','magic','support'])test(kind+' ultimate utility magn
    assert.equal(hero.arcaneSurgeFromRound,2);
    assert.equal(hero.arcaneSurgeUntilRound,4);
   }else{
-   assert.equal(hero.hp,2000);assert.equal(hero.shield,0);
+   assert.equal(hero.hp,2750);assert.equal(hero.shield,0);
    assert.equal(hero.canActFromRound,3);assert.equal(out.revivalUsed,true);
   }
   assert.equal(summary.commanderLevel,level);
@@ -79,10 +79,10 @@ test('incoming cast values cannot forge level and changing the source profile ca
  const combat=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'level',energy:[100,100],now:0}),teams:teams(),commanders:[saved,profile('attack',0)]});
  saved.levels.magic=40;
  const cast=castLiveCommanderCombat(combat,{side:0,ability:'normal',requestId:'level_cast_01',matchKey:'level',now:1000,targetIds:['1-0'],commanderProfile:saved,commanderLevel:40});
- assert.equal(cast.teams[1][0].commanderStunNextAttack,true);assert.equal(cast.teams[1][0].commanderWeaken,undefined);
- assert.deepEqual(cast.events.at(-1).impacts,[{target:'1-0',kind:'stun',value:1,nextAttack:true}]);
+ assert.equal(cast.teams[1][0].commanderStunNextAction,true);assert.equal(cast.teams[1][0].commanderWeaken,undefined);
+ assert.deepEqual(cast.events.at(-1).impacts.filter(i=>i.kind==='stun'),[{target:'1-0',kind:'stun',value:1,nextAction:true}]);assert.equal(cast.events[0].rawDamage,6);assert.ok(cast.events.slice(1,-1).every(e=>e.rawDamage===2));
  assert.equal(cast.events.at(-1).commanderLevel,6);
- beginServerCombatRound(combat,2);assert.equal(combat.abilities.energy[0],75);
+ beginServerCombatRound(combat,2);assert.equal(combat.abilities.energy[0],55);
 });
 test('own seat snapshot exposes the correct level and per-round gain without opponent energy',()=>{
  const combat=createLiveCommanderCombat({abilities:createLiveCommanderAbilities({matchKey:'view'}),teams:teams(),commanders:[profile('support',20),profile('attack',40)]});
