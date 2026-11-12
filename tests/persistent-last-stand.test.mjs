@@ -3,15 +3,15 @@ import {applyHeroDamage,grantLastStand,expireLastStandGuards} from '../battle-hp
 import {applyLiveCommanderEffect} from '../commander-live-effects.js';
 import {grantArcaneSurge,reviveCommanderAlly} from '../commander-ultimate-status.js';
 const hero=(id,extra={})=>({id,hp:100,maxHp:100,shield:0,attack:40,defense:10,...extra});
-test('new last stand persists through round15 and starts its fixed two-following-round protection only on first lethal hit',()=>{
+test('new last stand persists through round15 and starts its fixed one-following-round protection only on first lethal hit',()=>{
  const t=hero('a',{hp:10});grantLastStand(t,1);assert.equal(t.lastStandPersistent,true);assert.equal(t.lastStandUntilRound,undefined);
  const saved=JSON.parse(JSON.stringify(t));assert.deepEqual(saved,t);
  for(let round=2;round<=15;round++)expireLastStandGuards([[saved]],round);
  const first=applyHeroDamage(saved,100,{round:15});assert.equal(first.guardTriggered,true);assert.equal(saved.hp,1);
  assert.equal(saved.lastStandReady,undefined);assert.equal(saved.lastStandPersistent,undefined);assert.equal(saved.lastStandUntilRound,undefined);
- assert.equal(saved.lastStandTriggeredRound,15);assert.equal(saved.lastStandImmortalUntilRound,17);
- for(const round of [15,16,17]){const hit=applyHeroDamage(saved,1,{round});assert.equal(hit.guardTriggered,true);assert.equal(saved.hp,1);assert.equal(saved.lastStandImmortalUntilRound,17);}
- const second=applyHeroDamage(saved,1,{round:18});assert.equal(second.guardTriggered,false);assert.equal(saved.hp,0);
+ assert.equal(saved.lastStandTriggeredRound,15);assert.equal(saved.lastStandImmortalUntilRound,16);
+ for(const round of [15,16]){const hit=applyHeroDamage(saved,1,{round});assert.equal(hit.guardTriggered,true);assert.equal(saved.hp,1);assert.equal(saved.lastStandImmortalUntilRound,16);}
+ const second=applyHeroDamage(saved,1,{round:17});assert.equal(second.guardTriggered,false);assert.equal(saved.hp,0);
 });
 test('nonlethal hits and shields do not consume persistent guard; execute is one atomic lethal hit',()=>{
  const t=hero('a',{hp:30,shield:100});grantLastStand(t,1);const first=applyHeroDamage(t,20,{round:10});assert.equal(first.absorbed,14);assert.equal(first.damage,6);assert.equal(first.guardTriggered,false);assert.equal(t.lastStandPersistent,true);

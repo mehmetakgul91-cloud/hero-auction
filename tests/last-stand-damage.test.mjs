@@ -15,12 +15,12 @@ function make(actorExtra={},targetExtra={}){
  const actor=hero('actor',actorExtra),target=hero('target',{hp:10,...targetExtra});grantLastStand(target,2);
  return createLiveCommanderCombat({round:3,teams:[[actor],[target]],abilities:createLiveCommanderAbilities({matchKey:'laststand:damage',energy:[0,0]}),commanders:[{commanderId:'attack'},{commanderId:'defense'}]});
 }
-test('guard caps lethal damage at HP−1 without healing until the two full following rounds expire',()=>{
+test('guard caps lethal damage at HP−1 without healing until the one full following round expires',()=>{
  const target=hero('t',{hp:10});assert.equal(grantLastStand(target,2),true);
- const first=applyHeroDamage(target,50,{round:3});assert.deepEqual(first,{damage:9,executedDamage:0,absorbed:0,rawDamage:50,guardTriggered:true,lastStandTriggeredRound:3,lastStandImmortalUntilRound:5});assert.equal(target.hp,1);assert.equal(Object.hasOwn(target,'lastStandReady'),false);
- for(const round of [3,4,5]){assert.equal(applyHeroDamage(target,1,{round}).damage,0);assert.equal(target.hp,1);}
- assert.equal(applyHeroDamage(target,1,{round:6}).damage,1);assert.equal(target.hp,0);
- assert.equal(grantLastStand(target,6),false);assert.equal(applyHeroDamage(target,100,{round:6}).damage,0);assert.equal(target.hp,0);
+ const first=applyHeroDamage(target,50,{round:3});assert.deepEqual(first,{damage:9,executedDamage:0,absorbed:0,rawDamage:50,guardTriggered:true,lastStandTriggeredRound:3,lastStandImmortalUntilRound:4});assert.equal(target.hp,1);assert.equal(Object.hasOwn(target,'lastStandReady'),false);
+ for(const round of [3,4]){assert.equal(applyHeroDamage(target,1,{round}).damage,0);assert.equal(target.hp,1);}
+ assert.equal(applyHeroDamage(target,1,{round:5}).damage,1);assert.equal(target.hp,0);
+ assert.equal(grantLastStand(target,5),false);assert.equal(applyHeroDamage(target,100,{round:5}).damage,0);assert.equal(target.hp,0);
 });
 test('shield absorption and guard are independent budgets, including 1HP and integer small hits',()=>{
  for(const raw of [1,2,3,5,10,50]){const t=hero('t',{hp:1,shield:100});grantLastStand(t,1);const r=applyHeroDamage(t,raw,{round:2});assert.equal(r.absorbed,Math.floor(raw*7/10));assert.equal(r.damage,0);assert.equal(t.hp,1);assert.equal(r.guardTriggered,true);assert.equal(t.shield,100-r.absorbed);}
@@ -54,14 +54,14 @@ const primaryCases=[
 for(const[name,extra,step]of primaryCases)test(name+' honors guard and does not award premature kill/casualty energy',()=>{
  const c=make(extra);step(c);assert.equal(c.teams[1][0].hp,1);assert.equal(c.teams[0][0].damage,9);assert.equal(c.teams[0][0].kills,0);assert.equal(c.abilities.energy[1],0);assert.equal(c.finished,false);assert.equal(c.events.filter(e=>e.guardTriggered).length,1);
  applyServerHeroAction(c,{side:0,actorId:'actor',targetId:'target',value:1});assert.equal(c.teams[1][0].hp,1);assert.equal(c.teams[0][0].kills,0);assert.equal(c.abilities.energy[1],0);
- for(let round=4;round<=6;round++)beginServerCombatRound(c,round);const energy=c.abilities.energy[1];
+ for(let round=4;round<=5;round++)beginServerCombatRound(c,round);const energy=c.abilities.energy[1];
  applyServerHeroAction(c,{side:0,actorId:'actor',targetId:'target',value:1});assert.equal(c.teams[1][0].hp,0);assert.equal(c.teams[0][0].kills,1);assert.equal(c.abilities.energy[1],energy+10);
 });
 test('live execute credits only actual ordinary+execution HP loss, then one later kill',()=>{
  const c=make({attack:13,role:'assassin',active:{effect:'execute',name:'execute',power:1.12}},{hp:14,shield:100});
  const r=stepParityExecute(c,{side:0,actorId:'actor'});assert.equal(r.event.rawDamage,10);assert.equal(r.event.value,3);assert.equal(r.event.executedDamage,10);assert.equal(r.event.guardTriggered,true);assert.equal(c.teams[0][0].damage,13);assert.equal(c.teams[0][0].kills,0);assert.equal(c.abilities.energy[1],0);assert.equal(c.teams[1][0].hp,1);
  applyServerHeroAction(c,{side:0,actorId:'actor',targetId:'target',value:1});assert.equal(c.teams[0][0].damage,13);assert.equal(c.teams[0][0].kills,0);
- for(let round=4;round<=6;round++)beginServerCombatRound(c,round);const energy=c.abilities.energy[1];
+ for(let round=4;round<=5;round++)beginServerCombatRound(c,round);const energy=c.abilities.energy[1];
  applyServerHeroAction(c,{side:0,actorId:'actor',targetId:'target',value:1});assert.equal(c.teams[0][0].damage,14);assert.equal(c.teams[0][0].kills,1);assert.equal(c.abilities.energy[1],energy+10);
 });
 for(const [name,extra,step]of [

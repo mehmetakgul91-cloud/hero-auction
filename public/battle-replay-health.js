@@ -32,13 +32,13 @@ export function createBattleReplayHealth(teams){
   // Historical one-hit logs must never be reinterpreted as immortality.
   if(entry.action==='commander-defense-ultimate'&&[0,1].includes(entry.side))for(const impact of entry.impacts||[]){
    const index=teams[entry.side].findIndex(hero=>hero.id===impact.target);
-   if(impact.kind==='guard'&&impact.immortalRounds===2&&index>=0&&health[entry.side][index]>0)Object.assign(statuses[entry.side][index],{lastStandReady:true,lastStandPersistent:true,lastStandImmortalRounds:2});
+   if(impact.kind==='guard'&&[1,2].includes(impact.immortalRounds)&&index>=0&&health[entry.side][index]>0)Object.assign(statuses[entry.side][index],{lastStandReady:true,lastStandPersistent:true,lastStandImmortalRounds:impact.immortalRounds});
   }
   if(entry.guardTriggered===true&&[0,1].includes(entry.side)){
    const targetSide=1-entry.side,index=teams[targetSide].findIndex(hero=>hero.id===entry.target);
    if(index>=0&&health[targetSide][index]>0){
     clearLastStand(statuses[targetSide][index]);
-    if(Number.isInteger(entry.lastStandTriggeredRound)&&entry.lastStandTriggeredRound>=1&&Number.isInteger(entry.lastStandImmortalUntilRound)&&entry.lastStandImmortalUntilRound===entry.lastStandTriggeredRound+2&&Number.isInteger(entry.round)&&entry.round>=entry.lastStandTriggeredRound&&entry.round<=entry.lastStandImmortalUntilRound&&currentRound<=entry.lastStandImmortalUntilRound)Object.assign(statuses[targetSide][index],{lastStandTriggeredRound:entry.lastStandTriggeredRound,lastStandImmortalUntilRound:entry.lastStandImmortalUntilRound});
+    if(Number.isInteger(entry.lastStandTriggeredRound)&&entry.lastStandTriggeredRound>=1&&Number.isInteger(entry.lastStandImmortalUntilRound)&&[1,2].includes(entry.lastStandImmortalUntilRound-entry.lastStandTriggeredRound)&&Number.isInteger(entry.round)&&entry.round>=entry.lastStandTriggeredRound&&entry.round<=entry.lastStandImmortalUntilRound&&currentRound<=entry.lastStandImmortalUntilRound)Object.assign(statuses[targetSide][index],{lastStandTriggeredRound:entry.lastStandTriggeredRound,lastStandImmortalUntilRound:entry.lastStandImmortalUntilRound});
    }
   }
   if(entry.action==='commander-magic-ultimate'&&[0,1].includes(entry.side))for(const impact of entry.impacts||[]){

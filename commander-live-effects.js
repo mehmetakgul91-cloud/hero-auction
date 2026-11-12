@@ -43,7 +43,7 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
   if(strong){
    // Never accumulate several simultaneous death guards or refresh a live one.
    const already=allies.some(u=>isLastStandActive(u,round));
-   if(!already){if(grantLastStand(selected,round))impacts.push({target:selected.id,kind:'guard',value:1,immortalRounds:2});}
+   if(!already){if(grantLastStand(selected,round))impacts.push({target:selected.id,kind:'guard',value:1,immortalRounds:selected.lastStandImmortalRounds});}
   }
  }else if(commanderId==='support'&&strong){
   if(revivalUsed)throw Error('Revival already used this battle');

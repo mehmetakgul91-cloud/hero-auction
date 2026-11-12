@@ -1,9 +1,6 @@
-# Son Kale: seçilen müttefikte ölümcül darbe sonrası 2 tam tur
+# Son Kale: tetiklendiği tur dahil toplam 2 tur
 
-Yerel taslak, 27 Ekim 2026. Temel: onaylanmış ancak henüz birleşmemiş büyücü PR #58,
-`5e6beda10761cf5dba885e4e3caef8758630fe54`; temel ağaç
-`f058c16ee688a11f36b065df632cc831ac887cba` ile birebir yerel kopya.
-Bu savunma değişikliği yayımlanmadı; push, PR, merge veya deployment yapılmadı.
+12 Kasım 2026: yeni kullanımların koruması 3 turdan 2 tura indirildi.
 
 ## Kesin davranış
 
@@ -15,9 +12,9 @@ Bu savunma değişikliği yayımlanmadı; push, PR, merge veya deployment yapıl
 - Kullanım takımın mevcut kalkan bütçesini korur ve seçilen kahramanı ilk ölümcül
   darbeye kadar süresiz hazır durumda bekletir. Hazır durum başka kahramana geçmez.
 - İlk ölümcül vuruş (normal hasar ve varsa aynı vuruşun infaz kısmı birlikte)
-  kahramanı **1 canla** bırakır. O turun kalanında ve **sonraki 2 tam turda** can
+  kahramanı **1 canla** bırakır. O turun kalanında ve **sonraki 1 tam turda** can
   1’in altına düşmez. Örnek: 3. turun ilk veya son saldırısında tetiklenirse
-  3, 4 ve 5. tur boyunca korunur; 6. tur başında biter.
+  3 ve 4. tur boyunca korunur; 5. tur başında biter.
 - Bu, bütün hasarı sıfırlayan dokunulmazlık değildir. Şifa normal çalışır;
   iyileşen kahraman ölümcül olmayan hasarı alır, yalnızca son can korunur.
   Her vuruşta mevcut %70 kalkan emilimi aynen sürer.
@@ -30,26 +27,20 @@ Bu savunma değişikliği yayımlanmadı; push, PR, merge veya deployment yapıl
 - Sersemleyen kahramanın saldırısı yine atlanır; ölümsüzlük zamanı durmaz.
   15. tur maç sınırı uzamaz. Yeni maçta durumlar taşınmaz.
 - 85 ulti dolumu, normal enerji, beklemeler, seviye bazlı kalkan ve savaşta tek
-  ulti hakkı değişmez. Koruma süresi her seviyede sabit 2 tam turdur.
+  ulti hakkı değişmez. Koruma süresi her seviyede tetiklendiği turun kalanı ve sonraki 1 tam turdur.
 
 ## Kayıt ve uyumluluk
 
-Yeni hazır durumda `lastStandImmortalRounds: 2` sürüm işareti vardır. Tetiklenince
-hazır işaretler temizlenir; `lastStandTriggeredRound` ve
-`lastStandImmortalUntilRound` saklanır. Hasar olayları bu iki alanı da taşır;
-TR/EN rozet ve tekrar oynatma gerçek bitiş turunu gösterir, yerelde hasar hesaplamaz.
-Eski süreli veya kalıcı hazır kayıtlar sürüm işareti yoksa eski tek-vuruş kuralını
-korur. Geçmiş tekrarlar sessizce iki turluk koruma olarak yeniden yorumlanmaz.
+Yeni hazır durumda `lastStandImmortalRounds: 1` sonraki tam tur sayısını belirtir.
+Tetiklenince hazır işaretler temizlenir; `lastStandTriggeredRound` ve
+`lastStandImmortalUntilRound` (tetiklenme turu + 1) saklanır. Hasar olayları bu iki
+alanı da taşır. TR/EN rozet ve tekrar oynatma gerçek bitiş turunu gösterir,
+yerelde hasar hesaplamaz. Sunucu ve simülasyon aynı hasar işlevini kullanır.
 
-## Denge notu
-
-Bu bilinçli bir savunma güçlendirmesidir: eskiden sonraki vuruşta ölen kahraman,
-artık aynı turdaki birden çok saldırıdan ve sonraki iki tam turdan sağ çıkabilir.
-Özellikle Av Emri ile odaklanan hedef aynı hedef olarak kalır; saldırılar boşa
-çıkarak ek eylem/şifa fırsatı sağlayabilir. Seçim artık otomatik olmadığı için
-oyuncu düşük-canlı kahraman yerine stratejik bir taşıyıcıyı koruyabilir.
-Bunlar mekanik sonuçlardır, gerçek oyuncu kazanma oranı veya kusursuz denge iddiası
- değildir. Kalkan miktarı ya da enerji maliyeti izinsiz dengelenmemiştir.
+Önceden kaydedilmiş `lastStandImmortalRounds: 2` hazır etkiler ve tetiklenme turu
++ 2 bitişli aktif etkiler, eski toplam 3 tur süresini korur. Geçmiş tekrarların
+metni ve rozetleri kayıtlı süreyi gösterir. Süreli veya kalıcı hazır kayıtlar
+sürüm işareti yoksa eski tek-vuruş kuralını korur. Eski kayıtlar yeniden hesaplanmaz.
 
 ## Doğrulama
 

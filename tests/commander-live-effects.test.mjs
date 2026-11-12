@@ -59,7 +59,7 @@ test('shield impact records exclude dead heroes and report gained shield, not to
  const input=teams();input[1][0].hp=0;input[1][1].shield=100;
  const out=applyLiveCommanderEffect(input,{side:1,ability:'ultimate',commanderId:'defense',targetIds:['1']});
  const shields=out.log.at(-1).impacts.filter(e=>e.kind==='shield'),guards=out.log.at(-1).impacts.filter(e=>e.kind==='guard');
- assert.equal(shields.length,4);assert.deepEqual(guards,[{target:'1',kind:'guard',value:1,immortalRounds:2}]);
+ assert.equal(shields.length,4);assert.deepEqual(guards,[{target:'1',kind:'guard',value:1,immortalRounds:1}]);
  for(const impact of shields){assert.equal(impact.kind,'shield');assert.equal(impact.value,20);assert.notEqual(impact.target,'0');}
  assert.equal(out.teams[1][1].shield,120);
 });

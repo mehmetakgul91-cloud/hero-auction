@@ -116,7 +116,7 @@ test('lethal main is capped and not stunned; captured living areas still settle 
 });
 test('guarded main survives at one, gains stun; area deaths clear their statuses and cannot steal it',()=>{
  const c=make();c.teams[1][3].hp=1;grantLastStand(c.teams[1][3],2);c.teams[1][0].hp=2;c.teams[1][0].commanderStunNextAction=true;
- const out=cast(c);assert.equal(c.teams[1][3].hp,1);assert.equal(c.teams[1][3].lastStandImmortalUntilRound,4);assert.equal(c.teams[1][3].commanderStunNextAction,true);
+ const out=cast(c);assert.equal(c.teams[1][3].hp,1);assert.equal(c.teams[1][3].lastStandImmortalUntilRound,3);assert.equal(c.teams[1][3].commanderStunNextAction,true);
  assert.equal(c.teams[1][0].hp,0);assert.equal(c.teams[1][0].commanderStunNextAction,undefined);assert.equal(hits(out)[0].guardTriggered,true);
 });
 test('main and area deaths transfer arcane surge in chronological hit order',()=>{
