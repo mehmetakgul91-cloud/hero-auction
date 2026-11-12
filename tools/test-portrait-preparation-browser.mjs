@@ -46,10 +46,10 @@ try{
    await page.waitForFunction(()=>Array.from(document.querySelectorAll('.combined-portrait')).length===5);
    const geometry=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,cards:document.querySelectorAll('.combined-hero').length,badges:document.querySelectorAll('.combined-center-badge').length,buttons:Array.from(document.querySelectorAll('.combined-preparation button')).filter(e=>!e.hidden).map(e=>({height:e.getBoundingClientRect().height,width:e.getBoundingClientRect().width})),rows:Array.from(document.querySelectorAll('.combined-row')).map(row=>({count:row.dataset.count,rects:Array.from(row.querySelectorAll('.combined-hero')).map(e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width}})}))}));
    assert.equal(geometry.overflow,false,`${width} ${english} mask ${mask}`);assert.equal(geometry.cards,5);assert.ok(geometry.buttons.every(b=>b.height>=44&&b.width>=44));assert.equal(geometry.badges,base.lanes.filter((_,i)=>mask&(1<<i)).length===2?1:0);
-   if(mask===0||mask===31){const rects=geometry.rows.find(r=>r.count==='5').rects;assert.equal(rects[0].y,rects[2].y);assert.ok(rects[3].y>rects[2].y);assert.equal(rects[3].y,rects[4].y);assert.ok(rects[3].x>rects[0].x,'last two centered');}
+   if(mask===0||mask===31){const rects=geometry.rows.find(r=>r.count==='5').rects;assert.equal(rects[0].y,rects[2].y);assert.ok(rects.every(r=>r.y===rects[0].y),'all five in one row');assert.ok(rects.slice(1).every((r,i)=>r.x-(rects[i].x+rects[i].width)>=5.9),'visible gaps');}
    if([0,3,31].includes(mask))await page.screenshot({path:path.join(artifacts,`mask-${mask}-${width}-${english?'en':'tr'}.png`),fullPage:true});
   }
   assert.equal(confirmations,0);report.push({width,english,allMasks:32,confirmations});await page.close();
  }
- assert.deepEqual(errors,[]);await writeFile(path.join(artifacts,'report.json'),JSON.stringify(report,null,2));console.log('PASS: portrait A, same-lane swaps, live-engine values, center identity, 3+2 wraps, all 32 lane masks, focus, localization and 44px controls at 320/390/1440. No live requests or confirmations.');
+ assert.deepEqual(errors,[]);await writeFile(path.join(artifacts,'report.json'),JSON.stringify(report,null,2));console.log('PASS: portrait A, same-lane swaps, live-engine values, center identity, five-card single rows, all 32 lane masks, focus, localization and 44px controls at 320/390/1440. No live requests or confirmations.');
 }finally{await browser?.close();await new Promise(resolve=>server.close(resolve))}

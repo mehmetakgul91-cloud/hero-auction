@@ -552,7 +552,7 @@ body:not(.arena-room) .formation{margin-top:6px;padding:10px}
    Every hero spans its lane's share of 60 tracks (LCM of 1,2,3,4,5).
    Zero row gap avoids multiplying gutters across these presentation tracks. */
 .arena-room .arena-side .team,.arena-side .team{grid-template-rows:repeat(60,minmax(0,1fr));row-gap:0;min-height:calc(var(--arena-row-count,5) * 110px)}
-.arena-room.arena-fit .arena-side .team{grid-template-rows:repeat(60,minmax(0,1fr));row-gap:0;min-height:0}
+.arena-room.arena-fit .arena-side .team{grid-template-rows:repeat(60,minmax(0,1fr));row-gap:0;min-height:0;column-gap:clamp(6px,2vw,16px)}
 .arena-room.arena-fit .arena-side .arena-hero{height:calc(100% - 3px);align-self:center}
 
 /* Server-owned pending stun; no timer or inferred status duration. */
@@ -574,3 +574,10 @@ body:not(.arena-room) .formation{margin-top:6px;padding:10px}
    visible arena therefore has its final field height, not a cover-crop resize. */
 .arena-room.arena-fit .arena-commander-dock{min-height:142px}
 @media(min-width:600px) and (max-height:600px){.arena-room.arena-fit .arena-commander-dock{min-height:180px}}
+
+/* Open space between teams and between heroes, without changing tactical
+   positions or the 60-track lane placement used by combat effects. */
+.arena-room.arena-fit #battle-arena{column-gap:clamp(16px,5vw,42px)}
+.arena-room.arena-fit .arena-side .arena-hero{height:calc(100% - 12px);max-height:82px;align-self:center}
+.arena-room.arena-fit .arena-portrait{width:min(62px,100cqw,calc(100cqh - 26px));height:min(52px,100cqw,calc(100cqh - 26px));aspect-ratio:auto}
+@media(max-height:600px){.arena-room.arena-fit .arena-side .arena-hero{height:calc(100% - 8px)}}
