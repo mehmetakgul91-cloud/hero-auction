@@ -1019,6 +1019,20 @@ async function api(url,b,requestContext){
  const requested=rooms.get(String(b.code||'').toUpperCase());
  if(requested){if(!['/api/state','/api/room/detach'].includes(url))requireRoomOpen(requested);roomRequestFlights.set(requested,(roomRequestFlights.get(requested)||0)+1);}
  try{
+  // Automatic navigation must check absence before a state poll refreshes presence.
+  // Ordinary state/result reads and settlement remain available to connected players.
+  if(b.automaticReturn===true&&(url==='/api/room/current'||url==='/api/state')){
+   const user=readLogin(b.authToken);if(!user)error('Odaya erişmek için giriş yapmalısın.',401);
+   const pointer=activeSeats.get(user.sub);
+   if(pointer?.detached)return{room:null,returnExpired:true};
+   const found=resolveAccountRoom({accountId:user.sub,pointer,rooms});
+   if(url==='/api/room/current'){
+    if(found&&!roomPresence.canAutoReturn(found.room,found.seat))return{room:null,returnExpired:true};
+   }else{
+    const {r,seat}=authorize(b,{allowClosed:true});
+    if((found&&found.room!==r)||!roomPresence.canAutoReturn(r,seat))return{room:null,returnExpired:true};
+   }
+  }
   // Latch a capable seat before any awaited work can race an old Ready request.
   if(url==='/api/room/current'&&requestContext){const user=readLogin(b.authToken);if(user){const found=resolveAccountRoom({accountId:user.sub,pointer:activeSeats.get(user.sub),rooms});if(found)noteCommanderSelectionClient(found.room,found.seat,requestContext,{body:b});}}
   if(requested&&requestContext){const user=readLogin(b.authToken),seat=requested.players.findIndex(p=>p&&p.token===b.token&&p.accountId===user?.sub);if(seat>=0)noteCommanderSelectionClient(requested,seat,requestContext,{body:b});}

@@ -1,5 +1,6 @@
 import {createRevealedTeams,renderDeliveryPortraits} from '../public/auction-delivery-portraits.js';
 import {deliveryBox,deliveryDocument} from './helpers/delivery-dom.mjs';
+import {watchRoomDeparture} from '../public/room-return-window.js';
 import {roomResumePath} from '../public/room-resume.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -124,6 +125,7 @@ function coldRestoreHarness(recovery,{receipts=createTailReceipts(),hidden=false
  });
  Object.assign(h.context.document,{hidden,createElement:deliveryDocument().createElement,addEventListener:(name,fn)=>listeners[name]=fn});
  h.context.window.HeroPlatform={setRoom(){},gameplay(){},beforeNavigate:path=>calls.push(['beforeNavigate',path])};
+ h.context.roomDeparture=watchRoomDeparture({storage:localStorage,window:{addEventListener(){}},document:{addEventListener(){}},getSeat:()=>h.context.session,onExpire(){}});
  const restoreStart=app.indexOf('async function readSavedRoom()'),restoreEnd=app.indexOf('const homePlayTab=',restoreStart);
  const saveStart=app.indexOf('function save('),saveEnd=app.indexOf('// Guard reconnects',saveStart);
  const showStart=app.indexOf('function showCancelledRoom('),showEnd=app.indexOf('// Recover game progress',showStart);

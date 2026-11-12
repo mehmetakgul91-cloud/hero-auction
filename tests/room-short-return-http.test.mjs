@@ -26,7 +26,7 @@ test('30-second transport absence recovers the same paid seat; 100-second absenc
   const paid=await Promise.all([0,1].map(async seat=>(await post('/api/wallet',auth(seat))).gold));
   const absent=await connect(seats[0]),survivor=await connect(seats[1]);await disconnect(absent);
   await tick(now+30_000);
-  const returning=await post('/api/room/current',auth(0));
+  const returning=await post('/api/room/current',{...auth(0),automaticReturn:true});
   assert.equal(returning.room.presence.serverNow,now+30_000,'the real server clock advanced exactly 30 seconds');
   assert.equal(returning.room.code,first.room.code);assert.equal(returning.token,first.token);assert.equal(returning.room.matchKey,second.room.matchKey);
   assert.equal(returning.resumeStage,'auction');assert.equal(returning.room.idleClosed,null);assert.equal(returning.room.forfeit,null);
@@ -37,6 +37,12 @@ test('30-second transport absence recovers the same paid seat; 100-second absenc
   assert.deepEqual(await Promise.all([0,1].map(async seat=>(await post('/api/wallet',auth(seat))).gold)),paid,'return and repeated recovery cannot charge a second entry');
   await disconnect(reconnected);await disconnect(survivor);
   await tick(now+130_000);
+  for(const at of [now+130_000,now+3_630_000]){
+   await tick(at);
+   for(const [route,body] of [['/api/room/current',auth(0)],['/api/state',seats[0]]]){
+    assert.deepEqual(await post(route,{...body,automaticReturn:true}),{room:null,returnExpired:true});
+   }
+  }
   const terminal=await post('/api/room/current',auth(0));
   assert.equal(terminal.room.code,first.room.code);assert.equal(terminal.token,first.token);assert.equal(terminal.resumeStage,'result');assert.ok(terminal.room.idleClosed);assert.equal(terminal.room.forfeit,null);
   assert.deepEqual(await Promise.all([0,1].map(async seat=>(await post('/api/wallet',auth(seat))).gold)),paid,'closed auction recovery neither debits nor refunds');

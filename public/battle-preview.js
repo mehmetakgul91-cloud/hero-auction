@@ -1,3 +1,4 @@
+import {watchRoomDeparture} from '/room-return-window.js';
 import {mountCombinedPreparation} from '/combined-preparation.js';
 import {watchRecoveredRoom} from '/room-recovery-watch.js';
 import {roomReturnStatus} from '/room-return-status.js';
@@ -34,6 +35,31 @@ import {mountArenaSceneLayout} from '/arena-scene-layout.js';
 const pendingEntryUrl=new URL(location.href);
 if(pendingEntryUrl.searchParams.has('auctionCode')&&pendingEntryUrl.searchParams.has('auctionToken')){
  pendingEntryUrl.searchParams.delete('commanderTest');pendingEntryUrl.searchParams.delete('room');history.replaceState(null,'',pendingEntryUrl);
+}
+// A mobile browser can reopen the formation/arena URL directly, bypassing the lobby.
+const returnSeat={code:pendingEntryUrl.searchParams.get('auctionCode'),token:pendingEntryUrl.searchParams.get('auctionToken')};
+if(returnSeat.code&&returnSeat.token){
+ const home=window.HeroPlatform?'/crazygames/':'/';
+ let returningHome=false;
+ const goHome=()=>{returningHome=true;window.HeroPlatform?.beforeNavigate(home);location.replace(home);};
+ const departure=watchRoomDeparture({window,document,storage:localStorage,getSeat:()=>returningHome?null:returnSeat,onExpire:goHome});
+ let expired=departure.expired(returnSeat);
+ if(!expired){
+  try{
+   const auth=JSON.parse(localStorage.getItem('hero-auction-login'));
+   if(auth?.authToken){
+    const response=await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...returnSeat,authToken:auth.authToken,automaticReturn:true})});
+    if(response.ok)expired=(await response.json()).returnExpired===true;
+    else if([403,404,410].includes(response.status))expired=true;
+    else throw Error('Automatic room recovery unavailable');
+   }
+  }catch{
+   // Defer to authenticated lobby recovery before any arena polling can renew presence.
+   goHome();await new Promise(()=>{});
+  }
+ }
+ if(expired){departure.forget(returnSeat);goHome();await new Promise(()=>{});}
+ if(!document.hidden)departure.activate(returnSeat);
 }
 // Verify the current portal account before accessing any saved arena seat.
 if(window.HeroPlatform){
