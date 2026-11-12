@@ -1662,7 +1662,7 @@ if(req.method==='GET'&&url.pathname==='/api/battle-auction-team'){
   const teams=prepareBattleTeams(state);
   const sync=ensureBattlePreparation(room,preparationTeams(teams));
   noteCommanderSelectionClient(room,seat,req,{searchParams:url.searchParams});
-  return send(200,{ready:true,seat,commanderSelection:{ready:sync.commanderChoices.map(Boolean),profile:sync.commanderChoices[seat]?structuredClone(sync.commanderChoices[seat]):null},arenaPresentation:roomArenaPresentation(room),preparation:preparationView(sync,seat),credits:[state.remainingCreditsA,state.remainingCreditsB],teams:teams.map(team=>team.map(card=>{const hero=battleRoster.find(h=>h.id===card.id);return {...card,name:hero.name,universe:hero.universe,role:hero.role,laneModifiers:hero.laneModifiers}}))});
+  return send(200,{ready:true,seat,commanderSelection:{ready:sync.commanderChoices.map(Boolean),profile:sync.commanderChoices[seat]?structuredClone(sync.commanderChoices[seat]):null},arenaPresentation:roomArenaPresentation(room),preparation:preparationView(sync,seat),credits:[state.remainingCreditsA,state.remainingCreditsB],teams:teams.map(team=>team.map(card=>{const hero=battleRoster.find(h=>h.id===card.id);return {...card,name:hero.name,universe:hero.universe,role:hero.role,displayRole:hero.displayRole||hero.role,laneModifiers:hero.laneModifiers}}))});
  }catch(e){return send(e.status||422,{error:e.message,...(e.cancellation?{cancellation:e.cancellation}:{})})}
 }
 if(req.method==='GET'&&url.pathname==='/api/battle-room'){const session=battleSessions.get(String(url.searchParams.get('code')||'').toUpperCase());const view=session&&battleSessionView(session,url.searchParams.get('token'));return view?send(200,view):send(404,{error:'Oda veya oturum bulunamadı.'})}

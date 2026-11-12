@@ -44,10 +44,15 @@ try{
    await page.evaluate(mask=>{const f={...window.fixtureBase,lanes:Array.from({length:5},(_,i)=>mask&(1<<i)?'front':'back')};window.mount(f)},mask);
    await page.waitForFunction(()=>!window.picker.state.snapshot().previewPending);await page.locator('.combined-choice').nth(3).click();
    await page.waitForFunction(()=>Array.from(document.querySelectorAll('.combined-portrait')).length===5);
-   const geometry=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,cards:document.querySelectorAll('.combined-hero').length,badges:document.querySelectorAll('.combined-center-badge').length,buttons:Array.from(document.querySelectorAll('.combined-preparation button')).filter(e=>!e.hidden).map(e=>({height:e.getBoundingClientRect().height,width:e.getBoundingClientRect().width})),rows:Array.from(document.querySelectorAll('.combined-row')).map(row=>({count:row.dataset.count,rects:Array.from(row.querySelectorAll('.combined-hero')).map(e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width}})}))}));
+   const geometry=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,cards:document.querySelectorAll('.combined-hero').length,badges:document.querySelectorAll('.combined-center-badge').length,buttons:Array.from(document.querySelectorAll('.combined-preparation button')).filter(e=>!e.hidden).map(e=>({height:e.getBoundingClientRect().height,width:e.getBoundingClientRect().width})),rows:Array.from(document.querySelectorAll('.combined-row')).map(row=>({count:row.dataset.count,left:row.getBoundingClientRect().left,width:row.getBoundingClientRect().width,rects:Array.from(row.querySelectorAll('.combined-hero')).map(e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width}})}))}));
    assert.equal(geometry.overflow,false,`${width} ${english} mask ${mask}`);assert.equal(geometry.cards,5);assert.ok(geometry.buttons.every(b=>b.height>=44&&b.width>=44));assert.equal(geometry.badges,base.lanes.filter((_,i)=>mask&(1<<i)).length===2?1:0);
-   if(mask===0||mask===31){const rects=geometry.rows.find(r=>r.count==='5').rects;assert.equal(rects[0].y,rects[2].y);assert.ok(rects.every(r=>r.y===rects[0].y),'all five in one row');assert.ok(rects.slice(1).every((r,i)=>r.x-(rects[i].x+rects[i].width)>=5.9),'visible gaps');}
-   if([0,3,31].includes(mask))await page.screenshot({path:path.join(artifacts,`mask-${mask}-${width}-${english?'en':'tr'}.png`),fullPage:true});
+   const cardWidth=geometry.rows.flatMap(row=>row.rects)[0].width;
+   for(const row of geometry.rows)for(const [i,card] of row.rects.entries()){
+    assert.equal(card.y,row.rects[0].y);assert.equal(card.width,cardWidth);
+    const expected=row.left+row.width*(i+.5)/row.rects.length;
+    assert.ok(Math.abs(card.x+card.width/2-expected)<.1,'card centered in its own share of the lane');
+   }
+   if([0,3,15,31].includes(mask))await page.screenshot({path:path.join(artifacts,`mask-${mask}-${width}-${english?'en':'tr'}.png`),fullPage:true});
   }
   assert.equal(confirmations,0);report.push({width,english,allMasks:32,confirmations});await page.close();
  }
