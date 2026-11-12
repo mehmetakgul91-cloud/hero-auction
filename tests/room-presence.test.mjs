@@ -79,7 +79,7 @@ test('last SSE close starts grace immediately even after a recent authenticated 
 });
 
 test('automatic return uses the absent seat’s last contact across all match stages',()=>{
- for(const extra of [{},{mode:'bot'},{phase:'finished'},{battleSync:{result:{live:true}}},{idleClosed:{}}]){
+ for(const extra of [{},{mode:'bot'},{phase:'finished'},{battleSync:{result:{live:true}}},{matchSettled:true,battleSync:{result:{finished:true}}},{idleClosed:{}}]){
   const {r,p,a}=setup(extra);p.disconnect(r,a,5000);
   p.touch(r,1,104000);
   assert.equal(p.canAutoReturn(r,0,104999),true);
