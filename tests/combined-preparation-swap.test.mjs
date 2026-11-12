@@ -41,8 +41,8 @@ test('first tap selects, same tap cancels, and a cross-lane tap never swaps hero
  s.selectHero(2);s.selectHero(0);assert.equal(s.snapshot().selectedHeroSlot,0);assert.deepEqual(s.snapshot().formation,formation);assert.equal(saved.length,0);
  for(const invalid of [-1,5,NaN,1.5,null,'2'])s.selectHero(invalid);assert.equal(s.snapshot().selectedHeroSlot,0);
 });
-test('a single-hero lane cannot enter an impossible swap selection',async()=>{
- const s=setup({preparation:{...formation,lanes:['front','back','back','back','back']}});await s.refresh();s.selectHero(0);assert.equal(s.snapshot().selectedHeroSlot,null);s.selectHero(1);s.selectHero(0);assert.equal(s.snapshot().selectedHeroSlot,1);
+test('a single hero can be selected and moved without swapping',async()=>{
+ const s=setup({preparation:{...formation,lanes:['front','back','back','back','back']}});await s.refresh();s.selectHero(0);assert.equal(s.snapshot().selectedHeroSlot,0);s.move(0,'back');assert.equal(s.snapshot().formation.lanes.filter(l=>'front'===l).length,0);
 });
 test('second same-row tap swaps positions and roles, preserves commander, saves and previews exact order',async()=>{
  const saved=[],calls=[],s=setup({saveDraft:f=>saved.push(f),request:async(kind,p)=>{calls.push(p.formation);return payload(p.formation)}});await s.refresh();s.select('magic');s.selectHero(2);s.selectHero(3);
@@ -84,7 +84,8 @@ async function mounted(english=false){
 test('real component renders five portrait buttons, roles, new move labels and center on correct hero',async()=>{
  const h=await mounted();try{
   assert.equal(h.root.querySelectorAll('.combined-hero-pick').length,5);assert.equal(h.root.querySelectorAll('.combined-hero-role').length,5);assert.equal(h.root.querySelectorAll('.combined-portrait').length,5);
-  assert.deepEqual(h.root.querySelectorAll('.combined-move').map(n=>n.textContent),['↓ Arkaya çek','↓ Arkaya çek','↑ Öne çek','↑ Öne çek','↑ Öne çek']);
+  assert.equal(h.root.querySelector('.combined-move').hidden,true);
+  h.root.querySelector('.combined-hero-pick').click();assert.equal(h.root.querySelector('.combined-move').textContent,'↓ Arkaya al');
   assert.equal(h.root.querySelectorAll('.combined-center-badge').length,1);assert.equal(h.root.querySelector('.combined-center-badge').parentNode.dataset.heroId,'h3');
   assert.ok(h.root.querySelectorAll('.combined-hero-pick').every(n=>n.tagName==='BUTTON'&&!n.querySelector('button')));
  }finally{h.close()}
@@ -95,8 +96,8 @@ test('component swap updates card order, center badge, role, focus and per-hero 
   h.root.querySelector('.combined-hero-pick[data-slot="3"]').click();await flush();
   assert.deepEqual(h.root.querySelectorAll('.combined-hero').map(n=>n.dataset.heroId),['h0','h1','h3','h2','h4']);assert.equal(h.root.querySelector('.combined-center-badge').parentNode.dataset.heroId,'h2');
   assert.equal(h.document.activeElement.dataset.heroId,'h3');assert.equal(h.document.activeElement.className,'combined-hero-pick');assert.equal(h.root.querySelectorAll('.combined-hero-pick').filter(n=>n.attributes['aria-pressed']==='true').length,0);
-  const hero=h.root.querySelector('.combined-hero[data-hero-id="h3"]');assert.equal(hero.querySelector('.combined-hero-role').textContent,'Suikastçı');assert.match(hero.querySelector('.combined-effect-values').textContent,/103 → 110/);assert.equal(h.calls.some(c=>c.url.endsWith('/battle-auction-commander')),false);
-  h.root.querySelector('.combined-move[data-hero-id="h3"]').click();await flush();assert.equal(h.picker.state.snapshot().formation.lanes[2],'front');assert.equal(h.root.querySelectorAll('.combined-center-badge').length,0);assert.equal(h.document.activeElement.dataset.heroId,'h3');
+  const hero=h.root.querySelector('.combined-hero[data-hero-id="h3"]');assert.equal(hero.querySelector('.combined-hero-role').textContent,'Suikastçı');hero.querySelector('.combined-hero-pick').click();assert.match(h.root.querySelector('.combined-selection').textContent,/103 → 110/);assert.equal(h.calls.some(c=>c.url.endsWith('/battle-auction-commander')),false);
+  h.root.querySelector('.combined-move').click();await flush();assert.equal(h.picker.state.snapshot().formation.lanes[2],'front');assert.equal(h.root.querySelectorAll('.combined-center-badge').length,0);assert.equal(h.document.activeElement.dataset.heroId,'h3');
  }finally{h.close()}
 });
 test('every distribution keeps all five cards and correct counts; no false center in single-lane rows',async()=>{
@@ -109,22 +110,22 @@ test('every distribution keeps all five cards and correct counts; no false cente
 });
 test('English controls are localized, and locking disables both swap and move buttons',async()=>{
  const h=await mounted(true);try{
-  assert.equal(h.root.querySelector('.combined-move').textContent,'↓ Move back');assert.match(h.root.querySelector('.combined-center-badge').textContent,/\+15% defense/);h.root.querySelectorAll('.combined-choice')[2].click();await h.picker.state.confirm();
+  h.root.querySelector('.combined-hero-pick').click();assert.equal(h.root.querySelector('.combined-move').textContent,'↓ Move back');assert.match(h.root.querySelector('.combined-center-badge').parentNode.attributes['aria-label'],/\+15% defense/);h.root.querySelectorAll('.combined-choice')[2].click();await h.picker.state.confirm();
   assert.ok(h.root.querySelectorAll('.combined-hero-pick').every(n=>n.disabled));assert.ok(h.root.querySelectorAll('.combined-move').every(n=>n.disabled));assert.match(h.root.querySelector('.combined-formation-note').textContent,/locked/);
  }finally{h.close()}
 });
-test('approved compact layout keeps five heroes in one row and minimum touch controls',()=>{
- const css=readFileSync(new URL('../public/combined-preparation.css',import.meta.url),'utf8');assert.match(css,/\.combined-lane \.combined-row\{[^}]*flex-wrap:nowrap/);assert.match(css,/\.combined-lane \.combined-row \.combined-hero\{[^}]*\/5\)/);assert.match(css,/\.combined-lane \.combined-hero-pick\{height:100px;min-height:100px/);assert.match(css,/background:#f3ded7/);assert.match(css,/background:#223c55/);assert.match(css,/\.combined-move\{[^}]*min-height:44px/);assert.match(css,/justify-content:center/);assert.match(css,/object-position:center 18%/);assert.match(css,/combined-swap-selected/);
+test('reset restores the roster defaults and clears the commander before locking',async()=>{
+ const h=await mounted();try{
+  h.root.querySelectorAll('.combined-choice')[2].click();h.picker.state.move(0,'back');await flush();
+  h.root.querySelector('.combined-reset').click();await flush();assert.deepEqual(h.picker.state.snapshot().formation,formation);assert.equal(h.picker.state.snapshot().selected,null);
+ }finally{h.close()}
 });
 
 for(const english of [false,true])test(`healing preview shows additive rate and healing amount in ${english?'English':'Turkish'}`,async()=>{
  const h=await mounted(english);try{
   h.root.querySelectorAll('.combined-choice')[3].click();
-  const hero=h.root.querySelector('.combined-hero[data-hero-id="h4"]');
-  assert.match(hero.querySelector('.combined-hero-effect').textContent,/40.*55.*\+15/);
-  assert.match(hero.querySelector('.combined-effect-label').textContent,english?/Healing rate/:/Şifa oranı/);
-  assert.match(h.root.querySelector('.combined-stat-deltas').textContent,english?/\+15 Healing power/:/\+15 Şifa gücü/);
-  h.root.querySelectorAll('.combined-choice')[0].click();
-  assert.match(h.root.querySelector('.combined-hero[data-hero-id="h4"]').querySelector('.combined-hero-effect').textContent,/40.*40/);
+  const list=h.root.querySelector('.combined-comparisons');assert.match(list.textContent,/40 → 55\+15/);assert.match(list.textContent,/42 → 57\+15/);
+  assert.match(list.textContent,english?/Healing rate/:/Şifa oranı/);
+  h.root.querySelectorAll('.combined-choice')[0].click();assert.doesNotMatch(h.root.querySelector('.combined-comparisons').textContent,/Fırtına Çağıran/);
  }finally{h.close()}
 });
