@@ -8,7 +8,8 @@ import {readFile} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {auctionRevealSnapshot,recordTailAward} from '../auction-reveal-events.js';
-const {chromium}=await import(process.env.HERO_BROWSER_TEST_RUNTIME||'playwright');
+const {chromium,webkit,devices}=await import(process.env.HERO_BROWSER_TEST_RUNTIME||'playwright');
+const iPhone=process.env.HERO_RETURN_BROWSER==='webkit';
 const root=path.resolve(fileURLToPath(new URL('../public/',import.meta.url)));
 const source=process.env.HERO_RETURN_APP_SOURCE||path.join(root,'app.js');
 // Observation and the existing read-only snapshot entry point only. Cold restore
@@ -45,9 +46,9 @@ let browser;
 try{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const origin='http://127.0.0.1:'+server.address().port;
- browser=await chromium.launch({headless:true,...(process.env.HERO_BROWSER_EXECUTABLE?{executablePath:process.env.HERO_BROWSER_EXECUTABLE}:{}),args:['--no-sandbox']});
+ browser=iPhone?await webkit.launch():await chromium.launch({headless:true,...(process.env.HERO_BROWSER_EXECUTABLE?{executablePath:process.env.HERO_BROWSER_EXECUTABLE}:{}),args:['--no-sandbox']});
  async function run(width,label,test){
-  const context=await browser.newContext({viewport:{width,height:900},isMobile:width===390,hasTouch:width===390,reducedMotion:'reduce',serviceWorkers:'block'});
+  const context=await browser.newContext({...(iPhone?devices['iPhone 13']:{}),viewport:{width,height:900},isMobile:width===390,hasTouch:width===390,reducedMotion:'reduce',serviceWorkers:'block'});
   const page=await context.newPage(),errors=[],requests=[],unexpected=[],navigations=[];
   const state={room:fixture(),status:200,error:null,currentMissing:false,gate:null};
   page.setDefaultTimeout(10000);
@@ -144,7 +145,7 @@ try{
   }catch(error){console.error(`FAIL ${width}px: ${label}; URL=${page.url()}; APIs=${JSON.stringify(requests.map(r=>r.path))}; page errors=${JSON.stringify(errors)}`);throw error;}
   finally{state.gate?.release.resolve();await context.close();}
  }
- for(const width of [1440,390]){
+ for(const width of iPhone?[390]:[1440,390]){
   for(const gap of [99_000,100_000,3_600_000])await run(width,`resume after ${gap/1000} seconds`,async({page,boot,tail,suspend} )=>{
    await boot();await tail().waitFor();
    await suspend('visibility');
@@ -200,6 +201,7 @@ try{
    await page.evaluate(()=>window.__returnTest.restored());assert.equal(await page.locator('#home').isVisible(),true);
    assert.equal(requests.slice(before).some(r=>r.path==='/api/battle-auction-preview'),false);
   });
+  if(iPhone)continue; // The iPhone run covers foreground recovery, cold starts and a restored arena URL.
   await run(width,'cold reload and interrupted seven-card review preserve separate confirmation',async h=>{
    const {page,state,requests,tail,review,proceed,receiptIds,noPrematureEntry,boot,suspend,resume}=h;
    await boot();await tail().waitFor({state:'visible'});await noPrematureEntry();
@@ -265,5 +267,5 @@ try{
    });
   }
  }
- console.log('PASS: 28 isolated Chromium scenarios, desktop 1440px/mobile 390px; no real accounts, paid endpoints or external traffic. Lifecycle dispatch is synthetic; server inactivity/fees and actual iOS/BFCache require separate coverage.');
+ console.log(iPhone?'PASS: iPhone WebKit return window, frozen tabs, old seats and direct arena URLs.':'PASS: 28 isolated Chromium scenarios, desktop 1440px/mobile 390px; no real accounts, paid endpoints or external traffic. Lifecycle dispatch is synthetic; server inactivity/fees and actual iOS/BFCache require separate coverage.');
 }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
