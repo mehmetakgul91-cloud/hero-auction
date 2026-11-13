@@ -75,34 +75,12 @@ button:disabled{color:#536171;background:#d8ded8;border-color:#acb7b8}
 #login-gate .showcase-mini-board i{background:linear-gradient(155deg,#506376,#314154);color:#f1dfb7;border-color:#a78d5e}
 
 /* Existing compact play panel; geometry and image stay unchanged. */
-#home #home-play-panel{background:radial-gradient(ellipse at 100% 0,#dde4de66,transparent 55%),#f1f2ed;border-color:#c8cfd2;box-shadow:0 8px 24px #2030470c;color:#203047}
-#home #home-play-panel #play-lobby-back{background:#e4e8e4;border-color:#aebbc2;color:#203047}
-#home-play-panel .play-compact-heading span{color:#586676}#home-play-panel .play-compact-heading h2{color:#80642e}
-#home #home-play-panel .play-compact-name{background:#e9ede9;border-color:#aebbc2}
-#home #home-play-panel .play-compact-name label{color:#586676}#home #home-play-panel .play-compact-name input{color:#203047}
-#home-play-panel .play-compact-name:focus-within{outline-color:#28627f}
-#home-play-panel .play-compact-mode{border-color:#b4c2c6}
-#home-play-panel .play-compact-match{background:linear-gradient(90deg,#e5eae4 26%,#e5eae4ef 49%,#e5eae433),url('/images/original/hero-11-v2.webp') right 23%/56% auto no-repeat,#e5eae4;border-color:#b4c2c6}
-#home-play-panel .play-mode-eyebrow{color:#3f6972}
-#home-play-panel .play-compact-match h3,#home-play-panel .play-mode-heading h3{color:#203047}
-#home-play-panel .play-compact-mode p,#home-play-panel .play-search-time{color:#4e6070}
-#home #home-play-panel .play-compact-action,#home #home-play-panel .play-compact-join button{background:#dbe4e0;border-color:#9bafb6;color:#203047}
-#home #home-play-panel #match,#home #home-play-panel #create{background:linear-gradient(105deg,#e4cd9e,#d7b97d);color:#203047;border-color:#b89b61}
-#home-play-panel .play-compact-friend{background:linear-gradient(135deg,#e9ddc645,transparent 65%),#eeede6;border-color:#c8b88e}
-#home-play-panel .play-compact-bot{background:linear-gradient(135deg,#dcd5e545,transparent 65%),#eae8ed;border-color:#bbb0cd}
-#home-play-panel .play-mode-symbol{color:#80642e}#home-play-panel .play-compact-bot .play-mode-symbol{color:#745a94}
-#home #home-play-panel #bot{background:#ddd6e7;border-color:#a894bb;color:#503c6a}
-#home #home-play-panel .play-field-label,#home #home-play-panel #catalogue{color:#586676}
-#home #home-play-panel .play-compact-join input{background:#f0f2ed;border-color:#aebbc2;color:#203047}
-#home #home-play-panel .play-compact-bot select{background:#f0eeef;border-color:#aca1bc;color:#503c6a;color-scheme:light}
-#home-play-panel .play-compact-note{border-color:#c8cfd2;color:#586676}#home-play-panel .play-compact-note strong{color:#735626}#home-play-panel .play-reward{border-color:#c8cfd2}
 #home #home-play-panel .cinema-extras .panel{background:#e9ede9;border-color:#c8cfd2;box-shadow:none}
 #home #home-play-panel .social-panel summary{color:#203047}
 #home #home-play-panel :is(button,input,select,summary):focus-visible{outline-color:#28627f}
 #home #home-play-panel button:not(:disabled):hover{filter:none;box-shadow:inset 0 0 0 1px #80642e40}
 #home #home-play-panel button:disabled{color:#536171;background:#d8ded8;border-color:#acb7b8;box-shadow:none}
 #home #home-play-panel :is(#match,#create,#bot):disabled{color:#536171;background:#d8ded8;border-color:#acb7b8;box-shadow:none;opacity:1}
-@media(max-width:520px){#home-play-panel .play-compact-match{background-size:auto,58% auto}}
 
 /* Public documents and the existing manual training page. */
 body[data-theme-page="privacy"] main,body[data-theme-page="crazygames-privacy"] main{background:#f8f7f3;color:#203047}

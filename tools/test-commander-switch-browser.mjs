@@ -24,7 +24,9 @@ try{
   await context.route('**/*',async route=>{
    const request=route.request(),url=new URL(request.url());if(url.origin!==origin)return route.abort();if(!url.pathname.startsWith('/api/'))return route.continue();
    const body=request.postData()?JSON.parse(request.postData()):{},wallet={gold,diamonds:0,magicDust:0};let result={...wallet,incoming:[],outgoing:[],friends:[],players:0,matches:0,waiting:0};
-   if(url.pathname==='/api/info')result={catalogueCount:50,playerAnalytics:{enabled:false},botEconomy:{available:false},victoryChests:{enabled:false,available:false}};
+   if(url.pathname==='/api/info')result={catalogueCount:50,playerAnalytics:{enabled:false},botEconomy:{
+    available:true,entryGold:0,version:'bot-free-v2',difficulties:{easy:{level:15,gold:100,magicDust:0},medium:{level:25,gold:125,magicDust:2},hard:{level:40,gold:175,magicDust:5}}
+   },victoryChests:{enabled:true,available:true,goldOptions:[100,105,110,115,120],goldWeights:[1,1,1,1,1],magicDustOptions:[3,4,5],magicDustChance:40,diamondChance:10}};
    if(url.pathname==='/api/auth/check')result={...wallet,user:identity.user};
    if(url.pathname==='/api/commander/get')result={...wallet,profile,progression:null,exchange:{available:false}};
    if(url.pathname==='/api/store/status')result={...wallet,diamondsEnabled:false,loginRewards:{enabled:false,available:false},purchase:{available:false},rewardedAds:{enabled:false},exchange:{available:false}};
@@ -67,6 +69,42 @@ try{
    await page.locator('#first-match-guide [data-guide=skip]').click();
    await guide.locator('#home-guide-play').click();
    await page.locator('#home-play-panel').waitFor({state:'visible'});
+   const lobby=page.locator('#home-play-panel'),rewards=lobby.locator('.play-rewards');
+   for(const size of width===390?[320,390]:[768,1440]){
+    await page.setViewportSize({width:size,height:900});
+    await lobby.locator('.play-mode-art').evaluateAll(images=>Promise.all(images.map(img=>img.decode())));
+    const bounds=await lobby.evaluate(el=>{
+     const box=selector=>el.querySelector(selector).getBoundingClientRect();
+     const a=box('.play-compact-friend'),b=box('.play-compact-bot');
+     return {aligned:a.right<=b.left&&Math.abs(a.top-b.top)<1&&Math.abs(a.bottom-b.bottom)<1,
+      inside:el.scrollWidth<=el.clientWidth+1&&[...el.querySelectorAll('.play-mode-body,.play-match-footer')].every(node=>node.scrollWidth<=node.clientWidth+1),
+      invite:box('#room-invite-open').left>=box('#match').right, duel:getComputedStyle(el.querySelector('.play-match-copy')).backgroundImage};
+    });
+    assert.ok(bounds.aligned&&bounds.inside&&bounds.invite,JSON.stringify({size,...bounds}));
+    assert.match(bounds.duel,/play-duel/);
+    assert.ok(await lobby.locator('#roomcode').isVisible());
+    assert.equal(await rewards.evaluate(el=>el.open),false);
+    await lobby.screenshot({path:path.join(artifacts,`play-lobby-${size}.png`)});
+   }
+   await lobby.locator('#room-invite-open').click();
+   await lobby.locator('#room-invite-compose').waitFor({state:'visible'});
+   await lobby.locator('#room-invite-open').click();
+   await lobby.locator('#room-invite-compose').waitFor({state:'hidden'});
+   await rewards.locator('summary').click();
+   assert.match(await lobby.locator('#play-reward-odds').innerText(),/%40/);
+   await rewards.locator('summary').click();
+   for(const [difficulty,amount] of [['easy','100 altın'],['medium','125 altın + 2 büyü tozu'],['hard','175 altın + 5 büyü tozu']]){
+    await lobby.locator('#bot-difficulty').selectOption(difficulty);
+    assert.equal(await lobby.locator('#bot-economy').innerText(),amount);
+   }
+   for(const [id,endpoint] of [['match','match'],['create','create'],['join','join']]){
+    // Exercise the wired buttons without creating a room in the synthetic fixture.
+    await page.route('**/api/'+endpoint,route=>route.fulfill({status:409,json:{error:'Oda işlemi sürüyor.'}}));
+    if(id==='join')await lobby.locator('#roomcode').fill('123');
+    const [request]=await Promise.all([page.waitForRequest(req=>new URL(req.url()).pathname==='/api/'+endpoint),lobby.locator('#'+id).click()]);
+    assert.equal(request.postDataJSON().authToken,authToken);
+    if(id==='join')assert.equal(request.postDataJSON().code,'123');
+   }
    await page.locator('#play-lobby-back').click();
   }
   await page.locator('#commander-open-profile').click();

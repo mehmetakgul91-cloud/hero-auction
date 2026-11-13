@@ -9,7 +9,7 @@ function fixture(lang='tr'){
  return {ui:createBotInfo({document}),document,events,label,trigger,content,details};
 }
 test('info details show exact dynamic rules without a start question in both languages',()=>{
- for(const lang of ['tr','en']){const f=fixture(lang);for(const [difficulty,rule] of Object.entries(cap.difficulties)){f.ui.update(cap,difficulty);assert.ok(f.content.textContent.includes(String(rule.level)));assert.ok(f.content.textContent.includes(String(rule.gold)));assert.match(f.content.textContent,lang==='en'?/no gold is required/:/altın gerekmez/);assert.doesNotMatch(f.content.textContent,/başlatılsın mı|Start a free computer game/);assert.equal(f.details.open,false);}assert.equal(f.label.textContent,lang==='en'?'Info':'Bilgi');}
+ for(const lang of ['tr','en']){const f=fixture(lang);for(const [difficulty,rule] of Object.entries(cap.difficulties)){f.ui.update(cap,difficulty);assert.ok(f.content.textContent.includes(String(rule.level)));assert.ok(f.content.textContent.includes(String(rule.gold)));assert.match(f.content.textContent,lang==='en'?/no gold is required/:/altın gerekmez/);assert.doesNotMatch(f.content.textContent,/başlatılsın mı|Start a free computer game/);assert.equal(f.details.open,false);}}
 });
 test('info updates while open and unavailable/unknown rules are not misrepresented',()=>{
  const f=fixture();f.details.open=true;f.ui.update(cap,'easy');f.ui.update(cap,'hard');assert.match(f.content.textContent,/175 altın \+ 5 büyü tozu/);assert.equal(f.details.open,true);
@@ -26,8 +26,8 @@ test('missing info nodes are safe and info controller cannot make network or wal
  const ui=createBotInfo({document:{getElementById(){return null}}});ui.update(cap,'easy');ui.close();
  const source=readFileSync(new URL('../public/bot-info.js',import.meta.url),'utf8');assert.doesNotMatch(source,/fetch\(|post\(|confirm\(|alert\(/);
 });
-test('info summary is a separate accessible control after play button within bot card',()=>{
- const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8'),css=readFileSync(new URL('../public/style.css',import.meta.url),'utf8');
+test('info summary is a separate accessible control in the heading within bot card',()=>{
+ const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8'),css=readFileSync(new URL('../public/play-lobby.css',import.meta.url),'utf8');
  const card=html.match(/<section class="play-compact-mode play-compact-bot"[\s\S]*?<\/section>/)[0];
- assert.match(card,/<button id="bot"[^>]*>[\s\S]*?<\/button>\s*<details id="bot-info"/);assert.match(card,/summary id="bot-info-trigger" aria-label=/);assert.match(card,/aria-controls="bot-info-content"/);assert.match(css,/min-height:44px/);assert.match(css,/\.bot-info summary[^}]*margin-left:auto/);
+ assert.match(card,/<h3 id="bot-mode-title">[^<]+<\/h3>\s*<details id="bot-info"/);assert.match(card,/summary id="bot-info-trigger" aria-label=/);assert.match(card,/aria-controls="bot-info-content"/);assert.match(css,/min-height:\s*44px/);
 });

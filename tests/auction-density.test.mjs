@@ -7,7 +7,7 @@ const css=read('auction-density.css'),app=read('app.js');
 test('both supported entry surfaces load the compact stylesheet after the theme and invalidate changed script caches',()=>{
  for(const html of [read('index.html'),crazyGamesSource(read('index.html'),'.html')]){
   assert.ok(html.indexOf('/auction-density.css?v=compact-auction-reveal-fix-20261106')>html.indexOf('/theme.css?'));
-  assert.match(html,/app\.js\?v=illustrated-guide-20261113/);
+  assert.match(html,/app\.js\?v=illustrated-play-20261113/);
   assert.equal((html.match(/auction-density\.css/g)||[]).length,1);
  }
  assert.match(crazyGamesSource(app,'.js'),/from '\/crazygames\/auction-team-portraits\.js\?v=compact-auction-20261106'/);

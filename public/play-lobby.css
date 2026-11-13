@@ -1,0 +1,243 @@
+/* Play lobby: parchment controls and artwork from the three mode cards. */
+#home #home-play-panel {
+  --ink: #312b25;
+  --bronze: #a48657;
+  --inset: clamp(8px, 2.3vw, 20px);
+  max-width: 760px;
+  margin: 0 auto;
+  padding: var(--inset);
+  scroll-margin-top: 12px;
+  border: 1px solid var(--bronze);
+  border-radius: 17px;
+  background: radial-gradient(ellipse at 50% 10%, #f8f1df, transparent 65%), linear-gradient(114deg,#e6d9bf,#f4ecde 52%,#ddceb1);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 3px #f7edd9, 0 3px 12px #38312626;
+}
+
+#home-play-panel .play-lobby-header,
+#home #home-play-panel .play-compact-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#home-play-panel .play-lobby-header {
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding: 0 2px 8px;
+  border-bottom: 1px solid #bba680;
+}
+
+#home-play-panel .play-lobby-header h2 {
+  margin: 0;
+  color: #563b1b;
+  font-size: clamp(24px, 5vw, 38px);
+  line-height: 1.1;
+}
+
+#home #home-play-panel #play-lobby-back,
+#home #home-play-panel :is(#room-invite-open,#create,#join) {
+  min-height: 44px;
+  margin: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--bronze);
+  border-radius: 8px;
+  background: linear-gradient(115deg,#faf2e1,#e9dcc4);
+  box-shadow: inset 0 1px #fff8;
+  color: var(--ink);
+  font-size: clamp(13px, 2.4vw, 16px);
+  font-weight: 720;
+  line-height: 1.15;
+}
+
+#home #home-play-panel .cinema-dashboard { display: block; padding: 0; }
+#home #home-play-panel .cinema-command { margin: 0; padding: 0; background: none; border: 0; box-shadow: none; }
+
+#home #home-play-panel .play-compact-name {
+  margin: 0 0 10px;
+  padding: 0 10px;
+  border: 1px solid #b5a189;
+  border-radius: 9px;
+  background: #f4ecdd;
+}
+
+#home #home-play-panel .play-compact-name label { margin: 0; font-size: 12px; color: #63543d; }
+#home #home-play-panel #name {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 4px 0;
+  margin: 0;
+  font-size: 16px;
+  border: none;
+  color: #283345;
+  background: transparent;
+  box-shadow: none;
+}
+#home #home-play-panel .play-name-edit { font-size: 19px; cursor: text; }
+#name:read-only + .play-name-edit { display: none; }
+
+#home-play-panel .play-compact-modes,
+#home-play-panel .play-compact-secondary { display: grid; gap: var(--inset); }
+#home-play-panel .play-compact-secondary { grid-template-columns: repeat(2,minmax(0,1fr)); }
+#home-play-panel .play-compact-mode, #home-play-panel .play-rewards {
+  min-width: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--bronze);
+  border-radius: 12px;
+  background: linear-gradient(115deg,#f8f0df,#ecdfc7);
+  box-shadow: inset 0 -1px #fff8, 0 2px 4px #51432b24;
+}
+
+#home-play-panel .play-match-copy {
+  min-height: clamp(110px, 32vw, 220px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(12px, 3.1vw, 27px);
+  border-bottom: 1px solid var(--bronze);
+  background: linear-gradient(90deg,#0b2934 0%,#0c2b35fa 23%,#102c38c7 38%,transparent 62%),
+    url('/images/optimized/play-duel.2ef1b6baae0d932d.webp') right 43% / 78% auto no-repeat, #0e2d37;
+}
+#home-play-panel .play-match-copy h3 {
+  max-width: 46%;
+  margin: 0;
+  color: #fff3df;
+  font-size: clamp(23px, 5vw, 39px);
+  letter-spacing: -.03em;
+  line-height: 1.08;
+}
+#home-play-panel .play-match-copy p { margin: 9px 0 0; color: #fff0d9; font-size: clamp(13px, 2.1vw, 17px); }
+#home-play-panel .play-match-copy strong { color: #ffce79; }
+#home-play-panel .play-match-footer {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  align-items: stretch;
+  gap: 8px;
+  padding: var(--inset);
+}
+#home #home-play-panel #match, #home #home-play-panel #bot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  margin: 0;
+  padding: 8px 5px;
+  font-size: clamp(14px, 2.7vw, 19px);
+  font-weight: 800;
+  line-height: 1.2;
+  border: 1px solid #906d30;
+  border-radius: 8px;
+  color: #2b2821;
+  background: linear-gradient(120deg,#efd18b,#e8ba59 57%,#c99a43);
+  box-shadow: inset 0 1px #fff1c3;
+}
+#home #home-play-panel #room-invite-open { width: 100%; white-space: normal; }
+#home-play-panel #room-invite-compose { padding: 0 var(--inset) var(--inset); }
+#home-play-panel #room-invite-compose :is(select,button) { max-width: 100%; }
+
+#home-play-panel .play-mode-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2.34;
+  object-fit: cover;
+  border-bottom: 1px solid #aa977c;
+}
+#home-play-panel .play-mode-body {
+  --pad: clamp(7px, 1.6vw, 15px);
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  padding: var(--pad);
+}
+#home-play-panel .play-mode-body h3 {
+  margin: 0;
+  color: #2a2520;
+  font-size: clamp(16px, 3.5vw, 24px);
+  line-height: 1.2;
+  letter-spacing: -.025em;
+}
+#home #home-play-panel #create { width: 100%; }
+#home #home-play-panel .play-field-label, #home-play-panel #bot-entry-fee {
+  margin: 0;
+  color: #615443;
+  font-size: clamp(12px, 1.8vw, 15px);
+  line-height: 1.35;
+  font-weight: 500;
+}
+#home #home-play-panel .play-compact-join { display:flex; align-items:stretch; gap:4px; margin:0; }
+#home #home-play-panel #roomcode, #home #home-play-panel #bot-difficulty {
+  min-height:44px;
+  width:100%;
+  min-width:0;
+  margin:0;
+  padding:4px 5px;
+  border:1px solid #a28e72;
+  border-radius:7px;
+  background:#fbf4e8;
+  color:var(--ink);
+  font-size:16px;
+  color-scheme:light;
+}
+#home #home-play-panel #roomcode { flex:1; text-align:center; letter-spacing:.08em; }
+#home #home-play-panel #join { min-width:44px; padding:4px 6px; }
+#home-play-panel .play-compact-bot { background:linear-gradient(115deg,#f7f0e8,#eee3eb); }
+#home-play-panel .play-mode-heading { position:relative; min-height:32px; display:grid; align-items:center; }
+#home-play-panel .play-mode-heading h3 { margin-inline-end:35px; }
+#home-play-panel .bot-info summary {
+  position:absolute;
+  inset: -5px -5px auto auto;
+  display:grid;
+  place-items:center;
+  min-width:44px;
+  min-height:44px;
+  cursor:pointer;
+  list-style:none;
+  color:#513d65;
+  font-size:21px;
+}
+#home-play-panel .bot-info summary::-webkit-details-marker { display:none; }
+#home-play-panel #bot-info-content {
+  margin:8px 0 0;
+  padding:8px;
+  background:#f9f4ed;
+  border:1px solid #bdabc5;
+  border-radius:6px;
+  font-size:13px;
+  line-height:1.4;
+  white-space:pre-line;
+  overflow-wrap:anywhere;
+  color:#403547;
+}
+#home-play-panel #bot-economy { margin:0; color:#483253; font-size:clamp(13px,2vw,16px); font-weight:700; line-height:1.35; }
+#home #home-play-panel #bot { border-color:#917aa0; background:linear-gradient(110deg,#e2d5e9,#c5a9d1); color:#392b48; }
+#home-play-panel #bot-entry-fee:empty { display:none; }
+
+#home-play-panel .play-rewards { margin-top:var(--inset); }
+#home-play-panel .play-rewards summary {
+  display:flex; align-items:center; gap:8px;
+  padding:6px 12px; min-height:44px; list-style:none; cursor:pointer; font-size:15px;
+}
+#home-play-panel .play-rewards summary::-webkit-details-marker { display:none; }
+#home-play-panel .play-rewards summary::after {
+  content:""; width:7px; height:7px; margin-inline-start:auto;
+  border:solid #775b31; border-width:0 2px 2px 0; transform:rotate(45deg);
+}
+#home-play-panel .play-rewards[open] summary::after { transform:rotate(225deg); }
+#home-play-panel .play-rewards p { margin:0; padding:0 12px 8px; color:#51463a; font-size:13px; line-height:1.45; }
+#home #home-play-panel #catalogue { margin:8px 0; font-size:11px; text-align:center; color:#5f574e; }
+#home #home-play-panel .cinema-extras { display:flex; flex-direction:column; gap:8px; }
+#home #home-play-panel .cinema-extras .panel { margin:0; padding:0 12px; }
+#home #home-play-panel .social-panel summary { min-height:44px; padding:12px 0; }
+#home #home-play-panel :is(button,input,select,summary):focus-visible { outline:2px solid #255e78; outline-offset:-2px; }
+
+@media(max-width:380px) {
+  #home-play-panel .play-mode-heading h3 { font-size:15px; margin-inline-end:30px; }
+  #home #home-play-panel #bot-difficulty { padding-inline:2px; font-size:14px; }
+}

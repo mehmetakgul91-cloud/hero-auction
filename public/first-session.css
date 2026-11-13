@@ -9,9 +9,6 @@
 .cg-first-session .first-session-reference{margin-top:10px}
 .cg-first-session .first-session-reference summary{cursor:pointer;min-height:44px;padding:12px 0;font-weight:700}
 .cg-first-session #home #home-play-panel .play-compact-modes{display:flex;flex-direction:column}
-.cg-first-session #home #home-play-panel .play-compact-modes>.play-compact-bot{display:grid;grid-template-columns:minmax(0,1fr) minmax(140px,1fr);gap:10px;align-items:center;border:2px solid #5ba6b3;padding:16px}
-.cg-first-session .play-compact-modes>.play-compact-bot .play-mode-heading,.cg-first-session .play-compact-modes>.play-compact-bot>p{grid-column:1}
-.cg-first-session .play-compact-modes>.play-compact-bot .play-practice-note{display:none}
 .cg-first-session #home #home-play-panel .play-compact-secondary{grid-template-columns:minmax(0,1fr)}
 .cg-first-session .commander-option{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:left}
 .cg-first-session .first-commander-summary{display:block;line-height:1.5;font-size:13px;font-weight:400;letter-spacing:0;color:inherit}
@@ -23,4 +20,4 @@
 .cg-first-session .first-commander-skills .cp-skill-top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:11px}
 .cg-first-session .first-commander-skills .cp-skill-main{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px;font-weight:800}
 .cg-first-session .first-commander-skills p{font-size:13px;line-height:1.45}
-@media(max-width:540px){.cg-first-session .first-commander-skills{grid-template-columns:minmax(0,1fr)}.cg-first-session #home #home-play-panel .play-compact-modes>.play-compact-bot{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:540px){.cg-first-session .first-commander-skills{grid-template-columns:minmax(0,1fr)}}
