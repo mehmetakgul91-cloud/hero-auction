@@ -176,25 +176,24 @@ try{
    }
   });
   for(const fallback of [false,true])await run(width,'one-hour-old saved room opens the main menu on repeated cold starts',async({page,state,boot,tail})=>{
-   await boot();await tail().waitFor();
+   // Seed the discarded tab before its first navigation. An expired cold start
+   // must never mount a room, open a stream or issue an ordinary state poll.
    state.currentMissing=fallback;
-   await page.addInitScript(()=>{
-    const seat=JSON.parse(localStorage.getItem('hero-auction-session'));
-    if(seat)localStorage.setItem('hero-auction-room-departure',JSON.stringify({...seat,at:Date.now()-3_600_000}));
-   });
+   await page.addInitScript(seat=>{
+    localStorage.setItem('hero-auction-room-departure',JSON.stringify({...seat,at:Date.now()-3_600_000}));
+   },seat);
    for(let n=0;n<2;n++){
-    await boot(true);assert.equal(await page.locator('#home').isVisible(),true);
+    await boot(n>0);assert.equal(await page.locator('#home').isVisible(),true);
     assert.equal(await page.locator('#game').isVisible(),false);
+    assert.equal(await page.evaluate(()=>Boolean(window.__returnStream)),false);
     assert.ok(await page.evaluate(()=>JSON.parse(localStorage.getItem('hero-auction-login')).authToken));
    }
   });
   await run(width,'restored arena URL with expired seat leads straight to home',async({page,state,boot,tail,requests})=>{
-   await boot();await tail().waitFor();
    state.realArena=true;
-   await page.addInitScript(()=>{
-    const seat=JSON.parse(localStorage.getItem('hero-auction-session'));
-    if(seat)localStorage.setItem('hero-auction-room-departure',JSON.stringify({...seat,at:Date.now()-3_600_000}));
-   });
+   await page.addInitScript(seat=>{
+    localStorage.setItem('hero-auction-room-departure',JSON.stringify({...seat,at:Date.now()-3_600_000}));
+   },seat);
    const before=requests.length;
    await page.goto(origin+'/battle-preview.html?'+new URLSearchParams({auctionCode:seat.code,auctionToken:seat.token,room:'arena'}),{waitUntil:'commit'});
    await page.waitForURL(origin+'/');await page.waitForFunction(()=>!!window.__returnTest);
