@@ -8,7 +8,7 @@ const app=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
 const source=app.slice(app.indexOf('let victoryChestCapability=null;'),app.indexOf('function showGold(value)'));
 const configured={enabled:true,available:true,goldOptions:[100,105,110,115,120],goldWeights:[1,1,1,1,1],magicDustOptions:[3,4,5],magicDustChance:40,diamondChance:10};
 function fixture(lang='tr'){
- const nodes=Object.fromEntries(['play-reward-label','play-reward-prefix','play-reward-odds','home-guide-economy','home-guide-reward-detail'].map(id=>[id,{textContent:'',hidden:true}]));
+ const nodes=Object.fromEntries(['play-reward-label','play-reward-odds','home-guide-economy','home-guide-reward-detail'].map(id=>[id,{textContent:'',hidden:true}]));
  const context=vm.createContext({botSettlementCopy,victoryChestReceipt,auctionMatchKey:r=>r.matchId,document:{documentElement:{lang}},$:id=>nodes[id]});vm.runInContext(source,context);
  return {context,nodes,lobby:config=>context.renderLobbyEconomy(config),result:(room={},tied=false,iWon=true)=>context.legacyRewardCopy(room,tied,iWon)};
 }

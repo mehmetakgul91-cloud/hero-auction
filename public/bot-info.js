@@ -13,7 +13,6 @@ export function createBotInfo({document=globalThis.document}={}){
   const english=document.documentElement.lang==='en',terms=botTerms(capability,difficulty);
   trigger.setAttribute('aria-label',english?'Computer match information':'Bilgisayar maçı bilgileri');
   content.setAttribute('aria-label',english?'Computer match rules':'Bilgisayar maçı kuralları');
-  const label=trigger.querySelector('.bot-info-label');if(label)label.textContent=english?'Info':'Bilgi';
   content.textContent=terms?botTermsCopy(terms,english):(english?'Match information is unavailable. Please try again later.':'Maç bilgileri alınamadı. Lütfen daha sonra tekrar dene.');
   if(terms&&capability.available!==true)content.textContent+='\n'+(english?'Computer matches are temporarily unavailable.':'Bilgisayar maçları şu anda kullanılamıyor.');
  }};

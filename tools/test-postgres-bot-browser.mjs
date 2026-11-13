@@ -100,7 +100,9 @@ try{
  for(const [index,difficulty] of ['easy','medium','hard'].entries()){
   const width=[320,390,1440][index],auth=await identity('Browser '+difficulty),{context,page}=await pageFor(auth,width);await lobby(page);
   await page.selectOption('#bot-difficulty',difficulty);const copy=await page.locator('#bot-economy').innerText(),rule=BOT_ECONOMY.difficulties[difficulty];
-  assert.match(copy,/Ücretsiz giriş/);assert.doesNotMatch(copy,/50 altın/);assert.ok(copy.includes(rule.gold+' altın'));assert.ok(copy.includes('Seviye '+rule.level));assert.match(copy,/Elmas yok/);
+  assert.match(await page.locator('#bot-entry-fee').innerText(),/Ücretsiz giriş/);
+  assert.equal(copy,rule.gold+' altın'+(rule.magicDust?' + '+rule.magicDust+' büyü tozu':''));
+  assert.ok((await page.locator('#bot-difficulty option:checked').innerText()).includes(String(rule.level)));
   await capture(page,'before-free-entry-'+difficulty+(index===1?'-mobile':'-desktop'));
   const inspected=await inspectInlineInfo(page,auth,difficulty,width);assert.equal(await entries(auth.user.sub),0);assert.equal(await page.locator('#bot').isDisabled(),false);
   let release,held=0;const gate=new Promise(resolve=>release=resolve);

@@ -344,9 +344,8 @@ let walletGold=0;
 let victoryChestCapability=null;
 function renderLobbyEconomy(capability){
  victoryChestCapability=capability&&typeof capability.enabled==='boolean'?capability:null;
- const english=document.documentElement.lang==='en',label=$('play-reward-label'),prefix=$('play-reward-prefix'),odds=$('play-reward-odds');
+ const english=document.documentElement.lang==='en',label=$('play-reward-label'),odds=$('play-reward-odds');
  if(!label||!odds)return;
- if(prefix)prefix.textContent=english?'Winner':'Kazanan';
  const guide=$('home-guide-economy'),guideCopy=reward=>{if(guide)guide.textContent=english?`Live match: 50 gold each · ${reward}. Computer games are free; fixed rewards for wins.`:`Oyunculu maç: kişi başı 50 altın · ${reward}. Bilgisayar maçına giriş ücretsiz; galibiyette sabit ödül.`;};
  const detail=$('home-guide-reward-detail');
  if(detail)detail.textContent=english?'Reward information unavailable.':'Ödül bilgisi alınamadı.';
@@ -830,9 +829,19 @@ async function enterBotGame(url,difficulty,currentRoom=null){
 $('bot').onclick=()=>enterBotGame('/api/bot',newPlayerIntro.pending()?'easy':$('bot-difficulty').value);
 $('bot-difficulty').onchange=()=>renderBotEconomy();
 function renderBotEconomy(){
- const english=document.documentElement.lang==='en',terms=botTerms(botEconomyCapability,$('bot-difficulty').value),label=$('bot-economy');
- botInfo.update(botEconomyCapability,$('bot-difficulty').value);
- if(label)label.textContent=terms?(english?`Level ${terms.level} · Free entry · Win: ${terms.gold} gold${terms.magicDust?' + '+terms.magicDust+' magic dust':''} · No diamonds`:`Seviye ${terms.level} · Ücretsiz giriş · Galibiyet: ${terms.gold} altın${terms.magicDust?' + '+terms.magicDust+' büyü tozu':''} · Elmas yok`):(english?'Free entry · fixed win reward · unavailable until durable reward storage is ready.':'Ücretsiz giriş · galibiyette sabit ödül · kalıcı ödül altyapısı hazır olana kadar kullanılamaz.');
+ const english=document.documentElement.lang==='en';
+ const difficulty=$('bot-difficulty').value;
+ const terms=botTerms(botEconomyCapability,difficulty);
+ const label=$('bot-economy'),fee=$('bot-entry-fee');
+ botInfo.update(botEconomyCapability,difficulty);
+ fee.textContent=terms?(english?'Free entry':'Ücretsiz giriş'):'';
+ if(!terms || botEconomyCapability.available!==true){
+  label.textContent=english?'Currently unavailable.':'Şu anda kullanılamıyor.';
+  return;
+ }
+ const gold=english?terms.gold+' gold':terms.gold+' altın';
+ const dust=english?' magic dust':' büyü tozu';
+ label.textContent=terms.magicDust?gold+' + '+terms.magicDust+dust:gold;
 }
 
 $('match').onclick=async()=>{if(newPlayerIntro.pending()){newPlayerIntro.showStart();return;}if(!await validateLogin())return;try{const j=await post('/api/match',{...gameIdentity(),name:$('name').value,universe:world});save(j.token,j.room)}catch(e){notify(e.message)}};
