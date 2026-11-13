@@ -8,7 +8,8 @@ import {readFile} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {auctionRevealSnapshot,recordTailAward} from '../auction-reveal-events.js';
-const {chromium}=await import(process.env.HERO_BROWSER_TEST_RUNTIME||'playwright');
+const {chromium,webkit,devices}=await import(process.env.HERO_BROWSER_TEST_RUNTIME||'playwright');
+const iPhone=process.env.HERO_RETURN_BROWSER==='webkit';
 const root=path.resolve(fileURLToPath(new URL('../public/',import.meta.url)));
 const source=process.env.HERO_RETURN_APP_SOURCE||path.join(root,'app.js');
 // Observation and the existing read-only snapshot entry point only. Cold restore
@@ -45,9 +46,9 @@ let browser;
 try{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const origin='http://127.0.0.1:'+server.address().port;
- browser=await chromium.launch({headless:true,...(process.env.HERO_BROWSER_EXECUTABLE?{executablePath:process.env.HERO_BROWSER_EXECUTABLE}:{}),args:['--no-sandbox']});
+ browser=iPhone?await webkit.launch():await chromium.launch({headless:true,...(process.env.HERO_BROWSER_EXECUTABLE?{executablePath:process.env.HERO_BROWSER_EXECUTABLE}:{}),args:['--no-sandbox']});
  async function run(width,label,test){
-  const context=await browser.newContext({viewport:{width,height:900},isMobile:width===390,hasTouch:width===390,reducedMotion:'reduce',serviceWorkers:'block'});
+  const context=await browser.newContext({...(iPhone?devices['iPhone 13']:{}),viewport:{width,height:900},isMobile:width===390,hasTouch:width===390,reducedMotion:'reduce',serviceWorkers:'block'});
   const page=await context.newPage(),errors=[],requests=[],unexpected=[],navigations=[];
   const state={room:fixture(),status:200,error:null,currentMissing:false,gate:null};
   page.setDefaultTimeout(10000);
@@ -139,12 +140,12 @@ try{
    const admissions=requests.filter(r=>/^\/api\/(create|join|match|bot(?:-accept)?|rematch|room\/detach|diamonds\/exchange|login-rewards\/claim)$/.test(r.path));
    assert.deepEqual(admissions,[],'restore never creates, joins, pays for, detaches or rematches a room');
    for(const r of requests.filter(r=>r.path==='/api/room/current'))assert.deepEqual(r.body,{authToken:account.authToken,automaticReturn:true},'account recovery sends only its identity, not an admission request');
-   for(const r of requests.filter(r=>r.path==='/api/state'))assert.deepEqual(r.body,{authToken:account.authToken,...seat,...(r.body.automaticReturn===true?{automaticReturn:true}:{})},'snapshot reads keep the same saved seat');
+   for(const r of requests.filter(r=>r.path==='/api/state'))assert.deepEqual(r.body,{authToken:account.authToken,...seat,...(r.body.automaticReturn===true?{automaticReturn:true}:{foreground:true})},'snapshot reads keep the same saved seat');
    console.log(`PASS ${width}px: ${label}.`);
   }catch(error){console.error(`FAIL ${width}px: ${label}; URL=${page.url()}; APIs=${JSON.stringify(requests.map(r=>r.path))}; page errors=${JSON.stringify(errors)}`);throw error;}
   finally{state.gate?.release.resolve();await context.close();}
  }
- for(const width of [1440,390]){
+ for(const width of iPhone?[390]:[1440,390]){
   for(const gap of [99_000,100_000,3_600_000])await run(width,`resume after ${gap/1000} seconds`,async({page,boot,tail,suspend} )=>{
    await boot();await tail().waitFor();
    await suspend('visibility');
@@ -159,32 +160,47 @@ try{
     assert.equal(await page.evaluate(()=>localStorage.getItem('hero-auction-session')),null);
    }
   });
-  for(const fallback of [false,true])await run(width,'one-hour-old saved room opens the main menu on repeated cold starts',async({page,state,boot,tail})=>{
+  for(const gap of [99_000,100_000,3_600_000])await run(width,'OS kills or freezes a tab without a close event at '+gap+'ms',async({page,boot,tail})=>{
    await boot();await tail().waitFor();
-   state.currentMissing=fallback;
-   await page.addInitScript(()=>{
-    const seat=JSON.parse(localStorage.getItem('hero-auction-session'));
-    if(seat)localStorage.setItem('hero-auction-room-departure',JSON.stringify({...seat,at:Date.now()-3_600_000}));
-   });
-   for(let n=0;n<2;n++){
-    await boot(true);assert.equal(await page.locator('#home').isVisible(),true);
+   await page.evaluate(gap=>{
+    // No hide or pagehide. Native suspension can leave the EventSource connected.
+    const seen=JSON.parse(localStorage.getItem('hero-auction-room-departure')).at;
+    Date.now=()=>seen+gap;
+    window.dispatchEvent(new Event('focus'));
+   },gap);
+   if(gap<100_000)assert.equal(await page.locator('#game').isVisible(),true);
+   else{
+    await page.locator('#home').waitFor();
     assert.equal(await page.locator('#game').isVisible(),false);
+    await boot(true);assert.equal(await page.locator('#home').isVisible(),true);
+   }
+  });
+  for(const fallback of [false,true])await run(width,'one-hour-old saved room opens the main menu on repeated cold starts',async({page,state,boot,tail})=>{
+   // Seed the discarded tab before its first navigation. An expired cold start
+   // must never mount a room, open a stream or issue an ordinary state poll.
+   state.currentMissing=fallback;
+   await page.addInitScript(seat=>{
+    localStorage.setItem('hero-auction-room-departure',JSON.stringify({...seat,at:Date.now()-3_600_000}));
+   },seat);
+   for(let n=0;n<2;n++){
+    await boot(n>0);assert.equal(await page.locator('#home').isVisible(),true);
+    assert.equal(await page.locator('#game').isVisible(),false);
+    assert.equal(await page.evaluate(()=>Boolean(window.__returnStream)),false);
     assert.ok(await page.evaluate(()=>JSON.parse(localStorage.getItem('hero-auction-login')).authToken));
    }
   });
   await run(width,'restored arena URL with expired seat leads straight to home',async({page,state,boot,tail,requests})=>{
-   await boot();await tail().waitFor();
    state.realArena=true;
-   await page.addInitScript(()=>{
-    const seat=JSON.parse(localStorage.getItem('hero-auction-session'));
-    if(seat)localStorage.setItem('hero-auction-room-departure',JSON.stringify({...seat,at:Date.now()-3_600_000}));
-   });
+   await page.addInitScript(seat=>{
+    localStorage.setItem('hero-auction-room-departure',JSON.stringify({...seat,at:Date.now()-3_600_000}));
+   },seat);
    const before=requests.length;
    await page.goto(origin+'/battle-preview.html?'+new URLSearchParams({auctionCode:seat.code,auctionToken:seat.token,room:'arena'}),{waitUntil:'commit'});
    await page.waitForURL(origin+'/');await page.waitForFunction(()=>!!window.__returnTest);
    await page.evaluate(()=>window.__returnTest.restored());assert.equal(await page.locator('#home').isVisible(),true);
    assert.equal(requests.slice(before).some(r=>r.path==='/api/battle-auction-preview'),false);
   });
+  if(iPhone)continue; // The iPhone run covers foreground recovery, cold starts and a restored arena URL.
   await run(width,'cold reload and interrupted seven-card review preserve separate confirmation',async h=>{
    const {page,state,requests,tail,review,proceed,receiptIds,noPrematureEntry,boot,suspend,resume}=h;
    await boot();await tail().waitFor({state:'visible'});await noPrematureEntry();
@@ -250,5 +266,5 @@ try{
    });
   }
  }
- console.log('PASS: 22 isolated Chromium scenarios, desktop 1440px/mobile 390px; no real accounts, paid endpoints or external traffic. Lifecycle dispatch is synthetic; server inactivity/fees and actual iOS/BFCache require separate coverage.');
+ console.log(iPhone?'PASS: iPhone WebKit return window, frozen tabs, old seats and direct arena URLs.':'PASS: 28 isolated Chromium scenarios, desktop 1440px/mobile 390px; no real accounts, paid endpoints or external traffic. Lifecycle dispatch is synthetic; server inactivity/fees and actual iOS/BFCache require separate coverage.');
 }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}

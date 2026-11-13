@@ -80,7 +80,7 @@ test('last SSE close starts grace immediately even after a recent authenticated 
 
 test('automatic return uses the absent seat’s last contact across all match stages',()=>{
  for(const extra of [{},{mode:'bot'},{phase:'finished'},{battleSync:{result:{live:true}}},{matchSettled:true,battleSync:{result:{finished:true}}},{idleClosed:{}}]){
-  const {r,p,a}=setup(extra);p.disconnect(r,a,5000);
+  const {r,p,a}=setup(extra);p.touch(r,0,5000);p.disconnect(r,a,5000);
   p.touch(r,1,104000);
   assert.equal(p.canAutoReturn(r,0,104999),true);
   for(const at of [105000,3605000])assert.equal(p.canAutoReturn(r,0,at),false);
@@ -91,4 +91,17 @@ test('automatic return reads do not renew a polling lease or an old stored room 
  p.initialize(r,1_000_000);assert.equal(p.canAutoReturn(r,0,1_000_000),false);
  p.touch(r,0,2_000_000);
  assert.equal(p.canAutoReturn(r,0,2_099_999),true);assert.equal(p.canAutoReturn(r,0,2_100_000),false);
+});
+
+test('an open or recently closed stream and background polling cannot reopen an old seat',()=>{
+ const {r,p,a}=setup();p.touch(r,0,2000);
+ p.touch(r,0,101999,false);assert.equal(p.canAutoReturn(r,0,101999),true);
+ assert.equal(p.canAutoReturn(r,0,102000),false,'socket is still open');
+ p.disconnect(r,a,3_602_000);p.connect(r,0,3_603_000);p.touch(r,0,3_603_001,false);
+ assert.equal(p.canAutoReturn(r,0,3_603_002),false,'transport reconnect or legacy polling is not a foreground visit');
+});
+test('restarted server uses the seat’s own action, including when another player is still active',()=>{
+ const r=room({playerActivity:{match:'123:1:1',at:3_600_000,seats:[2000,3_600_000]}});
+ const p=createRoomPresence();assert.equal(p.canAutoReturn(r,0,3_600_001),false);assert.equal(p.canAutoReturn(r,1,3_600_001),true);
+ delete r.playerActivity.seats;assert.equal(p.canAutoReturn(r,0,3_600_001),false,'legacy room-wide activity cannot revive the abandoned seat');
 });

@@ -32,6 +32,8 @@ export function recordRoomAction(room, {action, seat, now = Date.now()} = {}) {
   // Server clock moving backwards must not make an older action overwrite a
   // more recent durable action. Call ONLY after authorization and validation.
   room.playerActivity.at = Math.max(room.playerActivity.at, now);
+  room.playerActivity.seats ??= [null,null];
+  room.playerActivity.seats[seat] = Math.max(room.playerActivity.seats[seat] ?? 0, now);
   return true;
 }
 

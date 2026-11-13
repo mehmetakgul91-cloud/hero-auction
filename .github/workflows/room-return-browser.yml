@@ -5,6 +5,9 @@ on:
     paths:
       - 'public/app.js'
       - 'public/room-resume.js'
+      - 'public/room-return-window.js'
+      - 'public/room-recovery-watch.js'
+      - 'public/battle-preview.js'
       - 'public/auction-tail-reveal.js'
       - 'public/auction-delivery-state.js'
       - 'public/auction-delivery-portraits.js'
@@ -26,9 +29,12 @@ jobs:
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
           npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
-          ./node_modules/.bin/playwright install --with-deps --only-shell chromium
+          ./node_modules/.bin/playwright install --with-deps --only-shell chromium webkit
       - uses: actions/setup-node@v4
         with:
           node-version-file: package.json
       - name: Test room return with isolated synthetic accounts
         run: node tools/test-room-return-browser.mjs
+
+      - name: Check iPhone WebKit automatic return
+        run: HERO_RETURN_BROWSER=webkit node tools/test-room-return-browser.mjs

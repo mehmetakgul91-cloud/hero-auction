@@ -42,7 +42,6 @@ export function createRoomPresence({now = Date.now, fallbackLeaseMs = 45_000} = 
       if (!human(room, seat)) return null;
       const state = context(room, at), entry = state.seats[seat];
       const handle = Object.freeze({match: state.key, seat});
-      entry.lastContactAt = state.lastAt;
       entry.connections.add(handle);refresh(entry, state.lastAt);
       return handle;
     },
@@ -52,7 +51,6 @@ export function createRoomPresence({now = Date.now, fallbackLeaseMs = 45_000} = 
       if (handle.match !== state.key || !human(room, handle.seat)) return false;
       const entry = state.seats[handle.seat];
       if (!entry.connections.delete(handle)) return false;
-      entry.lastContactAt = state.lastAt;
       // A dead SSE connection is evidence as of now, not an ancient poll.
       if (!entry.connections.size) {
         // An authenticated closed transport is stronger evidence than an older
@@ -69,10 +67,10 @@ export function createRoomPresence({now = Date.now, fallbackLeaseMs = 45_000} = 
       if (entry.online) {entry.online = false;entry.presentSince = null;entry.absentSince = state.lastAt;}
       return true;
     },
-    touch(room, seat, at = now()) {
+    touch(room, seat, at = now(), foreground = true) {
       if (!human(room, seat)) return false;
       const state = context(room, at), entry = state.seats[seat];
-      entry.lastContactAt = state.lastAt;
+      if (foreground) entry.lastContactAt = state.lastAt;
       entry.leaseUntil = Math.max(entry.leaseUntil, state.lastAt + fallbackLeaseMs);
       refresh(entry, state.lastAt);
       return true;
@@ -80,10 +78,10 @@ export function createRoomPresence({now = Date.now, fallbackLeaseMs = 45_000} = 
     canAutoReturn(room, seat, at = now()) {
       if (!human(room, seat)) return false;
       const state = context(room, at), entry = state.seats[seat];
-      if (entry.connections.size) return true;
-      // Poll leases govern forfeit decisions. A recovery read uses actual contact
-      // and never adds the polling lease to the player's return window.
-      const lastContact = entry.lastContactAt ?? (room.playerActivity?.at ?? room.lastActivity ?? room.created ?? 0);
+      // Open sockets, opponent activity and delayed disconnects do not show when
+      // this player last had the game in front of them.
+      const lastAction = room.playerActivity?.match===state.key ? room.playerActivity.seats?.[seat] : null;
+      const lastContact = Math.max(entry.lastContactAt ?? 0,lastAction ?? 0,room.created ?? 0);
       return state.lastAt - lastContact < ROOM_IDLE_MS;
     },
     snapshot(room, {at = now(), liveArena = false} = {}) {

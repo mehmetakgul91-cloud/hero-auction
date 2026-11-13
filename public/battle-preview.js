@@ -81,7 +81,7 @@ if(returnSeat.code&&returnSeat.token){
   }
  }
  if(expired){departure.forget(returnSeat);goHome();await new Promise(()=>{});}
- if(!document.hidden)departure.activate(returnSeat);
+ departure.activate(returnSeat);
 }
 // Browser-only battle replay preview. No wallet or live room mutations.
 const $=id=>document.getElementById(id);

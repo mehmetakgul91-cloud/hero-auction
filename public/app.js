@@ -612,7 +612,7 @@ function save(token,r,{render=true}={}){newPlayerIntro.played();session={token,c
 async function syncRoomSnapshot({force=false}={}){
  const current=session,auth=login?.authToken;if(!current)return;
  let result;
- try{result=await post('/api/state',current);}catch(e){
+ try{result=await post('/api/state',{...current,foreground:globalThis.document?.hidden===false});}catch(e){
   // Foreground recovery must not depend on a suspended EventSource reporting an error.
   if(e.status===401&&session===current&&login?.authToken===auth)clearExpiredLogin(auth,current);
   else if(e.message==='Oda bulunamadı.'||e.message==='Oyuncu yetkisi geçersiz.')clearMissingRoom(current,auth);

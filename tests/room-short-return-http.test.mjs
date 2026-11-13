@@ -46,6 +46,18 @@ test('30-second transport absence recovers the same paid seat; 100-second absenc
   const terminal=await post('/api/room/current',auth(0));
   assert.equal(terminal.room.code,first.room.code);assert.equal(terminal.token,first.token);assert.equal(terminal.resumeStage,'result');assert.ok(terminal.room.idleClosed);assert.equal(terminal.room.forfeit,null);
   assert.deepEqual(await Promise.all([0,1].map(async seat=>(await post('/api/wallet',auth(seat))).gold)),paid,'closed auction recovery neither debits nor refunds');
+  // A legacy tab can keep its SSE open and poll /state after the phone is locked.
+  // Neither the open transport nor those background reads prove a new visit.
+  const another=await post('/api/create',auth(0));
+  const visible={...auth(0),code:another.room.code,token:another.token};
+  await connect(visible);
+  await post('/api/state',{...visible,foreground:true});
+  const since=now+3_630_000;
+  await tick(since+99_999);
+  assert.equal((await post('/api/room/current',{...auth(0),automaticReturn:true})).token,another.token);
+  await tick(since+100_000);
+  await post('/api/state',visible);
+  assert.equal((await post('/api/room/current',{...auth(0),automaticReturn:true})).returnExpired,true);
  }finally{
   for(const reader of readers)await reader.cancel().catch(()=>{});
   child.kill('SIGTERM');await new Promise(resolve=>{if(child.exitCode!==null)resolve();else child.once('exit',resolve);});
