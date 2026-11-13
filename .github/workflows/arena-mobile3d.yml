@@ -1,0 +1,24 @@
+name: Mobile 3D prototype
+on:
+  push:
+    branches: ['feature/arena-3d-prototype-*']
+    paths: ['prototypes/arena-mobile3d/**', 'tools/*mobile3d*', 'tools/*android-package*', 'tests/arena-mobile3d.test.mjs', '.github/workflows/arena-mobile3d.yml', 'package*.json']
+  pull_request:
+    paths: ['prototypes/arena-mobile3d/**', 'tools/*mobile3d*', 'tools/*android-package*', 'tests/arena-mobile3d.test.mjs', '.github/workflows/arena-mobile3d.yml', 'package*.json']
+permissions:
+  contents: read
+jobs:
+  prototype:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: 'package.json'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run test:arena-mobile3d
+      - run: python3 tools/test-android-package-size.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mobile3d-preview-and-size-report
+          path: .artifacts/mobile3d

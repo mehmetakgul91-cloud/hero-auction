@@ -1,0 +1,7 @@
+Hero Auction prototype character assets — 2026-10-30
+
+Obsidyen and Morvan were generated in the project owner's Meshy workspace from the approved original Hero Auction character references. These are project-generated assets, not downloaded community models. The Meshy workspace license selection was Private. This notice records provenance; it does not grant a separate open-source license for the models.
+
+The exported 4K master models remain in that workspace. The committed GLBs are mobile texture repacks, retaining the exported geometry, UVs, skin weights and animation clips. Source hashes and exact clip names are recorded in manifest.json. Weapons and the arena are code-authored prototype geometry.
+
+Two archetypes represent all ten slots in the fixture. This does not constitute ten unique hero models or the complete fifty-hero roster. Cloth weighting, hands and weapon contact still require art review on a GPU-enabled device.
