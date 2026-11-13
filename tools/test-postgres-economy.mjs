@@ -135,6 +135,43 @@ try{
  await check('actual upgrade/exchange/claim concurrent wallet locks preserve net balances',async()=>{
   for(const order of [[0,1,2],[2,1,0],[1,0,2]]){const sub='pgtest-cross-'+order.join('');await member(sub,{gold:20000,diamonds:20,commander:true});const actions=[()=>claim(sub),()=>upgradeCommanderWithDiamonds({database:pool,accountId:sub,policy:diamondPolicy,request:{stat:'attack',commanderId:'attack',expectedCurrentLevel:20,requestId:'pgtest-upgrade-0001'}}),()=>exchangeDiamondsForGold({database:pool,accountId:sub,policy:exchangePolicy,request:{requestId:'pgtest-exchange-0001',diamondsToSpend:3,expectedRate:500,pricingVersion:'diamonds-to-gold-500-v1'}})];await Promise.all(order.map(index=>actions[index]()));const wallet=await snapshot(sub);assert.equal(wallet.gold,13932);assert.equal(wallet.diamonds,7);assert.equal(wallet.receipts,1);assert.equal((await sql('SELECT profile FROM hero_auction_commanders WHERE account_id=$1',[sub])).rows[0].profile.levels.attack,21)}
  });
+ await check('exchange duplicate request races debit once and isolate accounts',async()=>{
+  const sub='pgtest-exchange-duplicates',request={requestId:'pgtest-exchange-duplicate-01',diamondsToSpend:3,expectedRate:500,pricingVersion:'diamonds-to-gold-500-v1'};
+  await member(sub,{diamonds:10});await member(sub+'-other',{diamonds:10});
+  const results=await Promise.all(Array.from({length:12},()=>exchangeDiamondsForGold({database:pool,accountId:sub,policy:exchangePolicy,request})));
+  assert.equal(results.filter(r=>!r.replayed).length,1);assert.equal((await snapshot(sub)).gold,2000);assert.equal((await snapshot(sub)).diamonds,7);
+  assert.equal((await sql('SELECT count(*)::int AS n FROM hero_auction_diamond_exchanges WHERE account_id=$1',[sub])).rows[0].n,1);
+  const other=await exchangeDiamondsForGold({database:pool,accountId:sub+'-other',policy:exchangePolicy,request});assert.equal(other.replayed,false);assert.equal(other.diamonds,7);
+  await assert.rejects(exchangeDiamondsForGold({database:pool,accountId:sub,policy:exchangePolicy,request:{...request,diamondsToSpend:4}}),e=>e.status===409);
+  assert.equal((await snapshot(sub)).diamonds,7);
+ });
+ await check('exchange distinct request races cannot overdraw or grant duplicate gold',async()=>{
+  const sub='pgtest-exchange-overdraw';await member(sub,{diamonds:5});
+  const results=await Promise.allSettled(Array.from({length:12},(_,i)=>exchangeDiamondsForGold({database:pool,accountId:sub,policy:exchangePolicy,request:{requestId:'pgtest-exchange-race-'+String(i).padStart(3,'0'),diamondsToSpend:2,expectedRate:500,pricingVersion:'diamonds-to-gold-500-v1'}})));
+  assert.equal(results.filter(r=>r.status==='fulfilled').length,2);for(const r of results.filter(r=>r.status==='rejected'))assert.equal(r.reason.status,409);
+  assert.equal((await snapshot(sub)).gold,2500);assert.equal((await snapshot(sub)).diamonds,1);
+  const receipt=(await sql('SELECT count(*)::int AS n,sum(diamonds_spent)::int AS spent,sum(gold_granted)::int AS granted FROM hero_auction_diamond_exchanges WHERE account_id=$1',[sub])).rows[0];assert.deepEqual(receipt,{n:2,spent:4,granted:2000});
+ });
+ await check('exchange real receipt trigger failure rolls back both wallets and permits same-key retry',async()=>{
+  const sub='pgtest-exchange-rollback',request={requestId:'pgtest-exchange-rollback-01',diamondsToSpend:3,expectedRate:500,pricingVersion:'diamonds-to-gold-500-v1'};await member(sub,{diamonds:10});const before=await snapshot(sub);
+  await sql("CREATE FUNCTION pgtest_reject_exchange() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'isolated exchange receipt fault'; END $$; CREATE TRIGGER pgtest_exchange_failure BEFORE INSERT ON hero_auction_diamond_exchanges FOR EACH ROW WHEN (NEW.account_id='pgtest-exchange-rollback') EXECUTE FUNCTION pgtest_reject_exchange();");
+  try{await assert.rejects(exchangeDiamondsForGold({database:pool,accountId:sub,policy:exchangePolicy,request}),/isolated exchange receipt fault/);assert.deepEqual(await snapshot(sub),before);assert.equal((await sql('SELECT count(*)::int AS n FROM hero_auction_diamond_exchanges WHERE account_id=$1',[sub])).rows[0].n,0)}finally{await sql('DROP TRIGGER pgtest_exchange_failure ON hero_auction_diamond_exchanges; DROP FUNCTION pgtest_reject_exchange();')}
+  const retry=await exchangeDiamondsForGold({database:pool,accountId:sub,policy:exchangePolicy,request});assert.equal(retry.replayed,false);assert.equal(retry.gold,2000);assert.equal(retry.diamonds,7);
+ });
+ await check('exchange committed response loss retries original key without a second debit',async()=>{
+  const sub='pgtest-exchange-uncertain',request={requestId:'pgtest-exchange-uncertain-01',diamondsToSpend:3,expectedRate:500,pricingVersion:'diamonds-to-gold-500-v1'};await member(sub,{diamonds:10});
+  await assert.rejects(exchangeDiamondsForGold({database:loseCommitResponse(),accountId:sub,policy:exchangePolicy,request}),/lost COMMIT/);
+  assert.equal((await snapshot(sub)).gold,2000);assert.equal((await snapshot(sub)).diamonds,7);
+  const next=await exchangeDiamondsForGold({database:pool,accountId:sub,policy:exchangePolicy,request:{...request,requestId:'pgtest-exchange-uncertain-02',diamondsToSpend:1}});assert.equal(next.gold,2500);
+  const retry=await exchangeDiamondsForGold({database:pool,accountId:sub,policy:exchangePolicy,request});assert.equal(retry.replayed,true);assert.equal(retry.gold,2500);assert.equal(retry.diamonds,6);
+  assert.equal((await sql('SELECT count(*)::int AS n FROM hero_auction_diamond_exchanges WHERE account_id=$1',[sub])).rows[0].n,2);
+ });
+ await check('exchange pricing, insufficient balance, disabled flag and overflow leave no receipts',async()=>{
+  const sub='pgtest-exchange-refused',request={requestId:'pgtest-exchange-refused-001',diamondsToSpend:1,expectedRate:500,pricingVersion:'diamonds-to-gold-500-v1'};await member(sub,{gold:2147483647,diamonds:2});const before=await snapshot(sub);
+  for(const [change,message] of [[{expectedRate:1},/oranı değişti/],[{pricingVersion:'stale-v1'},/oranı değişti/],[{diamondsToSpend:3},/Yetersiz elmas/],[{},/altın sınırını/]])await assert.rejects(exchangeDiamondsForGold({database:pool,accountId:sub,policy:exchangePolicy,request:{...request,...change}}),e=>e.status===409&&message.test(e.message));
+  await assert.rejects(exchangeDiamondsForGold({database:pool,accountId:sub,policy:createDiamondExchangePolicy(),request}),e=>e.status===503);
+  assert.deepEqual(await snapshot(sub),before);assert.equal((await sql('SELECT count(*)::int AS n FROM hero_auction_diamond_exchanges WHERE account_id=$1',[sub])).rows[0].n,0);
+ });
  await check('new Google welcome10 is once-only and separate from day1gold; existing accounts excluded',async()=>{
   const sub='pgtest-new-google';const results=await Promise.all(Array.from({length:6},()=>registerDiamondMember({database:pool,accountId:sub,provider:'google',policy:signupPolicy})));assert.equal(results.filter(r=>r.awarded===10).length,1);assert.equal((await snapshot(sub)).diamonds,10);const daily=await claim(sub);assert.equal(daily.gold,600);assert.equal(daily.diamonds,10);
   const old=await registerDiamondMember({database:pool,accountId:'pgtest-other',provider:'google',policy:signupPolicy});assert.equal(old.eligible,false);assert.equal(old.awarded,0);assert.equal((await claim('pgtest-other')).gold,600);
