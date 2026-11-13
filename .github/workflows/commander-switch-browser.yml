@@ -14,6 +14,8 @@ on:
       - 'tools/test-match-commander-picker-browser.mjs'
       - 'public/index.html'
       - 'public/lobby-chrome.css'
+      - 'public/home-guide.css'
+      - 'public/images/optimized/guide-*.webp'
       - 'public/images/optimized/home-play-arena.*.webp'
       - 'tests/home-play-artwork.test.mjs'
       - 'tools/test-home-play-artwork-browser.mjs'

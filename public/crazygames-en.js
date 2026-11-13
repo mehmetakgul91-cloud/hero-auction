@@ -157,6 +157,7 @@ export const phrases = {
 "Arenaya giden yol":"Your path to the arena",
 "Topla. Yerleştir. Komutanını yönet.":"Collect. Position. Lead your commander.",
 "Kahramanlarını kazan":"Win your heroes",
+"20 krediyle 5 kahraman topla.":"Recruit 5 heroes with 20 credits.",
 "Teklif ver, 20 kredinle 5 kahraman topla.":"Bid for 5 heroes with your 20 credits.",
 "Takımını yerleştir":"Set your formation",
 "Ön safı koru, arka saftan destek ver.":"Protect the front and support from the back.",

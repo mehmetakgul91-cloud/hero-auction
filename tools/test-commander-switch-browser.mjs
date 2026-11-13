@@ -37,6 +37,35 @@ try{
   await page.goto(origin+'/?lang='+language,{waitUntil:'networkidle'});
   assert.equal(await page.locator('#home').isVisible(),true);
   assert.equal(await page.locator('#commander-onboarding').isVisible(),false);
+  if(!newAccount && language==='tr'){
+   const guide=page.locator('.home-guide');
+   for(const size of width===390?[320,390]:[768,1440]){
+    await page.setViewportSize({width:size,height:900});
+    await guide.scrollIntoViewIfNeeded();
+    const art=guide.locator('img.home-guide-art');
+    assert.equal(await art.count(),4);
+    await art.evaluateAll(images=>Promise.all(images.map(image=>image.decode())));
+    const geometry=await guide.evaluate(el=>{
+     const cards=[...el.querySelectorAll('.home-guide-card')];
+     return {
+      columns:getComputedStyle(el.querySelector('.home-guide-grid')).gridTemplateColumns.split(' ').length,
+      clipped:cards.some(card=>card.scrollWidth>card.clientWidth+1||card.scrollHeight>card.clientHeight+1),
+      overflowsPage:el.getBoundingClientRect().right>document.documentElement.clientWidth+1,
+      header:getComputedStyle(el.querySelector('.home-guide-head'),'::before').backgroundImage
+     };
+    });
+    assert.equal(geometry.columns,size<760?2:4);
+    assert.equal(geometry.clipped,false);
+    assert.equal(geometry.overflowsPage,false);
+    assert.match(geometry.header,/guide-gate/);
+    assert.equal(await guide.locator('a[href*="arena-3d"]').count(),0);
+    assert.match(await guide.locator('#home-guide-reward-detail').innerText(),/120/);
+    await guide.screenshot({path:path.join(artifacts,`guide-${size}.png`)});
+   }
+   await guide.locator('#home-guide-play').click();
+   await page.locator('#home-play-panel').waitFor({state:'visible'});
+   await page.locator('#play-lobby-back').click();
+  }
   await page.locator('#commander-open-profile').click();
   if(newAccount){
    await page.locator('#commander-onboarding').waitFor({state:'visible'});

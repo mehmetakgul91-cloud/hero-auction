@@ -348,14 +348,13 @@ function renderLobbyEconomy(capability){
  if(!label||!odds)return;
  if(prefix)prefix.textContent=english?'Winner':'Kazanan';
  const guide=$('home-guide-economy'),guideCopy=reward=>{if(guide)guide.textContent=english?`Live match: 50 gold each · ${reward}. Computer games are free; fixed rewards for wins.`:`Oyunculu maç: kişi başı 50 altın · ${reward}. Bilgisayar maçına giriş ücretsiz; galibiyette sabit ödül.`;};
- const prize=$('home-guide-prize-value'),kind=$('home-guide-prize-kind'),detail=$('home-guide-reward-detail');
- const prizeCopy=(value,type,text)=>{if(prize)prize.textContent=value;if(kind)kind.textContent=type;if(detail)detail.textContent=text;};
- prizeCopy('—',english?'REWARD':'ÖDÜL',english?'Reward information unavailable.':'Ödül bilgisi alınamadı.');
+ const detail=$('home-guide-reward-detail');
+ if(detail)detail.textContent=english?'Reward information unavailable.':'Ödül bilgisi alınamadı.';
  odds.hidden=true;odds.textContent='';
  if(!victoryChestCapability){label.textContent=english?'Reward unavailable':'Ödül bilgisi alınamadı';guideCopy(label.textContent);return;}
- if(!capability.enabled){prizeCopy('120',english?'GOLD':'ALTIN',english?'Winner receives 120 gold.':'Kazanana 120 altın.');label.textContent=english?'120 gold':'120 altın';guideCopy(english?'Winner receives 120 gold':'Kazanana 120 altın');return;}
+ if(!capability.enabled){if(detail)detail.textContent=english?'Winner receives 120 gold.':'Kazanana 120 altın.';label.textContent=english?'120 gold':'120 altın';guideCopy(english?'Winner receives 120 gold':'Kazanana 120 altın');return;}
  if(capability.available!==true){label.textContent=english?'Chest unavailable':'Sandık hazırlanıyor';guideCopy(label.textContent);odds.hidden=false;odds.textContent=english?'Victory chest storage is unavailable; new live matches are paused.':'Zafer sandığı altyapısı kullanılamıyor; yeni canlı maçlara giriş bekletiliyor.';return;}
- prizeCopy('✦',english?'CHEST':'SANDIK',english?'Winner receives a victory chest.':'Kazanana zafer sandığı.');
+ if(detail)detail.textContent=english?'Winner receives a victory chest.':'Kazanana zafer sandığı.';
  label.textContent=english?'Victory chest':'Zafer sandığı';guideCopy(english?'Winner receives a victory chest':'Kazanana zafer sandığı');
  const gold=Array.isArray(capability.goldOptions)&&capability.goldOptions.every(n=>Number.isSafeInteger(n)&&n>0)?capability.goldOptions.join(' / '):null;
  const chance=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100?n:null,dust=chance(capability.magicDustChance),diamonds=chance(capability.diamondChance);
