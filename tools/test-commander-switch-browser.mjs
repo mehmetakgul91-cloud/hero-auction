@@ -62,6 +62,9 @@ try{
     assert.match(await guide.locator('#home-guide-reward-detail').innerText(),/120/);
     await guide.screenshot({path:path.join(artifacts,`guide-${size}.png`)});
    }
+   await guide.locator('#first-match-guide-open').click();
+   await page.locator('#first-match-guide[open]').waitFor({state:'visible'});
+   await page.locator('#first-match-guide [data-guide=skip]').click();
    await guide.locator('#home-guide-play').click();
    await page.locator('#home-play-panel').waitFor({state:'visible'});
    await page.locator('#play-lobby-back').click();

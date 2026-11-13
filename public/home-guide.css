@@ -28,12 +28,22 @@
     url('/images/optimized/guide-gate.3cf35c7e873df737.webp') center 53% / cover;
 }
 
-.home-guide-eyebrow {
+.home-guide-head .home-guide-eyebrow {
+  display: inline-block;
+  min-height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
   color: #edc375;
   font-size: clamp(10px, 1.7vw, 12px);
   font-weight: 800;
   letter-spacing: .16em;
 }
+
+.home-guide-head .home-guide-eyebrow:hover { text-decoration: underline; }
 
 .home-guide-head h2 {
   margin: 4px 0;

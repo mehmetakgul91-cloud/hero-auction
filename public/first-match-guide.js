@@ -14,15 +14,15 @@ export const guideSteps = {
 export function guideCanAutoOpen({seen,homeVisible,invited}) { return !seen && homeVisible && !invited; }
 export function mountFirstMatchGuide(doc = document, storage) {
  if(!storage){try{storage=window.localStorage}catch{}}
- const home=doc.getElementById('home'), anchor=doc.querySelector('.home-guide');
- if(!home||!anchor)return;
+ const home=doc.getElementById('home'), replay=doc.getElementById('first-match-guide-open');
+ if(!home||!replay)return;
  const english=doc.documentElement.lang==='en'||location.pathname.startsWith('/crazygames/');
  const locale=english?'en':'tr', steps=guideSteps[locale];
  const labels=english?{open:'Quick tutorial',skip:'Skip tutorial',back:'Back',next:'Next',done:'Got it',count:'Step'}:{open:'Kısa öğretici',skip:'Öğreticiyi atla',back:'Geri',next:'İleri',done:'Anladım',count:'Adım'};
  const key='hero-auction-first-match-guide';
  let seen=false;try{seen=storage.getItem(key)==='seen'}catch{}
  let step=0, previousFocus=null;
- const replay=doc.createElement('button');replay.type='button';replay.id='first-match-guide-open';replay.className='first-match-guide-open';replay.textContent=labels.open;anchor.append(replay);
+ replay.title=labels.open;
  const dialog=doc.createElement('dialog');dialog.id='first-match-guide';dialog.className='first-match-guide';dialog.setAttribute('translate','no');dialog.setAttribute('aria-labelledby','first-match-guide-title');
  dialog.innerHTML='<div class="guide-top"><span class="guide-progress"></span><button type="button" data-guide="skip"></button></div><div class="guide-visual" aria-hidden="true"></div><h2 id="first-match-guide-title"></h2><p class="guide-copy"></p><p class="guide-tip"></p><div class="guide-actions"><button type="button" data-guide="back"></button><button type="button" data-guide="next"></button></div>';
  const find=s=>dialog.querySelector(s),back=find('[data-guide="back"]'),next=find('[data-guide="next"]');
@@ -48,6 +48,6 @@ export function mountFirstMatchGuide(doc = document, storage) {
   if(guideCanAutoOpen({seen,homeVisible,invited:new URLSearchParams(location.search).has('join')}))open();
  };
  const observer=new MutationObserver(sync);observer.observe(home,{attributes:true,attributeFilter:['hidden','data-first-bot-intro']});sync();
- return {open,close,destroy(){observer.disconnect();close();dialog.remove();replay.remove()}};
+ return {open,close,destroy(){observer.disconnect();close();dialog.remove();replay.removeEventListener('click',open)}};
 }
 if(typeof document!=='undefined')mountFirstMatchGuide();
