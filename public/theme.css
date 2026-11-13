@@ -154,37 +154,7 @@ body:before{opacity:.24;background-image:linear-gradient(#6c7e8910 1px,transpare
 #friends-online-count{color:#3d6a59}
 #home .store-nav-art{color:#39718c;text-shadow:0 2px 14px #6ca8bd20}
 .nav-art-leagues>img,.nav-art-contact>img{filter:drop-shadow(0 2px 3px #20304718)}
-#home .home-guide{background:radial-gradient(ellipse at 0 0,#edf0e9,transparent 55%),#f8f7f3;border-color:#c8cfd2;box-shadow:0 8px 20px #20304708;color:#203047}
-#home .home-guide-eyebrow{color:#80642e}
-#home .home-guide-head h2{color:#203047}
-#home .home-guide-head p{color:#586676}
-#home .home-guide-stats{border-color:#cfd5d5}
-#home .home-guide-stats>span{color:#586676}
-#home .home-guide-stats>span+span{border-color:#cfd5d5}
-#home .home-guide-stats strong{color:#203047}
-#home .home-guide-card{background:linear-gradient(150deg,#f0f2ed,#e9ede9);border-color:#cbd2d4;box-shadow:inset 0 1px #ffffff80}
-#home .home-guide-step{color:#5f6a77}
-#home .home-guide-card h3{color:#203047}
-#home .home-guide-card p{color:#586676}
-.guide-card-fan img{box-shadow:0 4px 9px #20304728}
-.guide-bid-chip{background:#eee2c9;border-color:#b99b61;color:#5d451c}
-.guide-mini-board>span{color:#536e7a}
-.guide-mini-board i{background:linear-gradient(150deg,#a6c9cc,#6a9ba5);border-color:#4d8a98;box-shadow:0 3px 0 #b8c9cb,0 0 15px #77d6e912}
-.guide-mini-board>div:last-child i{border-color:#8d79ab;background:linear-gradient(150deg,#c2b5d6,#a895c1)}
-.guide-cast img{box-shadow:0 0 20px #a26bf320}
-.guide-cast svg{fill:#8865ae;filter:drop-shadow(0 0 6px #a782d030)}
-.guide-energy{background:#d4ccdf}
-.guide-energy i{background:linear-gradient(90deg,#589db9,#a47dca,#d3ae66)}
-.guide-medal{fill:#e9ddc4;stroke:#a8874a}
-.guide-star{fill:#b28e48;stroke:#d7bc86}
-.guide-prize svg{filter:drop-shadow(0 3px 8px #ad8b4e20)}
-.guide-prize>span{color:#735626}
-#home .home-guide-cta{background:linear-gradient(105deg,#e4cd9e,#d7b97d);color:#203047;border-color:#b89b61;box-shadow:inset 0 1px #f7e9cd,0 5px 12px #8b71331a}
-#home .home-guide-cta:hover,#home .home-guide-cta:focus-visible{filter:none;background:linear-gradient(105deg,#dec28e,#cfa967)}
-#home .arena-3d-launch{background:#eeede6;color:#65512e;border-color:#c8b88e}
-#home .arena-3d-launch span{background:#e1d5bb;color:#6b542a}
-#home .arena-3d-launch:hover,#home .arena-3d-launch:focus-visible{background:#e5dfcf;border-color:#ad8b4e}
-#home .home-guide-note,footer{color:#586676}
+footer{color:#586676}
 :is(button,a):focus-visible,#home .home-quick-nav .quick-nav-item:focus-visible,.lobby-header .lobby-brand:focus-visible,.lobby-header .account-identity:focus-visible{outline:3px solid #28627f;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 /* Commander selection, constellation progression, hero collection and details.
