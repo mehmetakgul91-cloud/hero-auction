@@ -139,7 +139,7 @@ try{
    const admissions=requests.filter(r=>/^\/api\/(create|join|match|bot(?:-accept)?|rematch|room\/detach|diamonds\/exchange|login-rewards\/claim)$/.test(r.path));
    assert.deepEqual(admissions,[],'restore never creates, joins, pays for, detaches or rematches a room');
    for(const r of requests.filter(r=>r.path==='/api/room/current'))assert.deepEqual(r.body,{authToken:account.authToken,automaticReturn:true},'account recovery sends only its identity, not an admission request');
-   for(const r of requests.filter(r=>r.path==='/api/state'))assert.deepEqual(r.body,{authToken:account.authToken,...seat,...(r.body.automaticReturn===true?{automaticReturn:true}:{})},'snapshot reads keep the same saved seat');
+   for(const r of requests.filter(r=>r.path==='/api/state'))assert.deepEqual(r.body,{authToken:account.authToken,...seat,...(r.body.automaticReturn===true?{automaticReturn:true}:{foreground:true})},'snapshot reads keep the same saved seat');
    console.log(`PASS ${width}px: ${label}.`);
   }catch(error){console.error(`FAIL ${width}px: ${label}; URL=${page.url()}; APIs=${JSON.stringify(requests.map(r=>r.path))}; page errors=${JSON.stringify(errors)}`);throw error;}
   finally{state.gate?.release.resolve();await context.close();}
@@ -157,6 +157,21 @@ try{
    else{
     await page.locator('#home').waitFor();assert.equal(await page.locator('#game').isVisible(),false);
     assert.equal(await page.evaluate(()=>localStorage.getItem('hero-auction-session')),null);
+   }
+  });
+  for(const gap of [99_000,100_000,3_600_000])await run(width,'OS kills or freezes a tab without a close event at '+gap+'ms',async({page,boot,tail})=>{
+   await boot();await tail().waitFor();
+   await page.evaluate(gap=>{
+    // No hide or pagehide. Native suspension can leave the EventSource connected.
+    const seen=JSON.parse(localStorage.getItem('hero-auction-room-departure')).at;
+    Date.now=()=>seen+gap;
+    window.dispatchEvent(new Event('focus'));
+   },gap);
+   if(gap<100_000)assert.equal(await page.locator('#game').isVisible(),true);
+   else{
+    await page.locator('#home').waitFor();
+    assert.equal(await page.locator('#game').isVisible(),false);
+    await boot(true);assert.equal(await page.locator('#home').isVisible(),true);
    }
   });
   for(const fallback of [false,true])await run(width,'one-hour-old saved room opens the main menu on repeated cold starts',async({page,state,boot,tail})=>{
@@ -250,5 +265,5 @@ try{
    });
   }
  }
- console.log('PASS: 22 isolated Chromium scenarios, desktop 1440px/mobile 390px; no real accounts, paid endpoints or external traffic. Lifecycle dispatch is synthetic; server inactivity/fees and actual iOS/BFCache require separate coverage.');
+ console.log('PASS: 28 isolated Chromium scenarios, desktop 1440px/mobile 390px; no real accounts, paid endpoints or external traffic. Lifecycle dispatch is synthetic; server inactivity/fees and actual iOS/BFCache require separate coverage.');
 }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}

@@ -5,8 +5,8 @@ export function watchRecoveredRoom({code,token,readAuth,onRoom,fetch:fetcher=glo
  const current=()=>!stopped&&readAuth()?.authToken===original.authToken;
  const deliver=room=>{if(current()&&room?.code===code)onRoom(room);};
  async function refresh(){
-  if(!current()){stop();return;}if(busy)return;busy=true;
-  try{const response=await fetcher('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,token,authToken:original.authToken})});if(response.ok)deliver((await response.json()).room);}catch{}finally{busy=false;}
+  if(!current()){stop();return;}if(busy||globalThis.document?.hidden)return;busy=true;
+  try{const response=await fetcher('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,token,authToken:original.authToken,foreground:true})});if(response.ok)deliver((await response.json()).room);}catch{}finally{busy=false;}
  }
  function stop(){if(stopped)return;stopped=true;cancel(timer);source?.close();}
  const timer=schedule(refresh,5000);

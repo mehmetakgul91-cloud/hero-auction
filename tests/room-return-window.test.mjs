@@ -11,7 +11,7 @@ function device() {
   const events=new Map(),listen=(event,callback)=>events.set(event,callback);
   const document={hidden:false,addEventListener:listen};
   let current=seat;
-  const guard=watchRoomDeparture({window:{addEventListener:listen},document,storage,getSeat:()=>current,onExpire(){current=null;},now:()=>clock});
+  const guard=watchRoomDeparture({window:{addEventListener:listen,setInterval:fn=>listen('heartbeat',fn)},document,storage,getSeat:()=>current,onExpire(){current=null;},now:()=>clock});
   return {guard,events,document,current:()=>current};
  }
  return {tab,seat,states,tick:ms=>clock+=ms};
@@ -31,4 +31,18 @@ test('expiry of an old tab leaves a new saved seat and login intact',()=>{
  const next={code:'456',token:'other'};
  d.states.set('hero-auction-session',JSON.stringify(next));t.events.get('pageshow')();
  assert.deepEqual(JSON.parse(d.states.get('hero-auction-session')),next);assert.equal(t.guard.expired(next),false);
+});
+
+for(const gap of [99_999,100_000,3_600_000])test('OS suspension without a departure event: '+gap+' ms',()=>{
+ const d=device(),t=d.tab();t.guard.activate(d.seat);d.tick(12_000);t.events.get('heartbeat')();
+ d.tick(gap);
+ assert.equal(d.tab().guard.expired(d.seat),gap>=100_000,'cold launch reads the last foreground checkpoint');
+ t.events.get('heartbeat')();
+ assert.equal(Boolean(t.current()),gap<100_000,'a thawed timer checks expiry before refreshing it');
+ assert.equal(d.states.get('hero-auction-login'),'signed-in');
+});
+test('delayed pagehide cannot renew a discarded seat, and background timers never renew it',()=>{
+ const d=device(),t=d.tab();t.guard.activate(d.seat);d.tick(3_600_000);
+ t.document.hidden=true;t.events.get('pagehide')();t.events.get('heartbeat')();
+ assert.equal(d.tab().guard.expired(d.seat),true);
 });

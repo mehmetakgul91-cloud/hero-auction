@@ -911,7 +911,7 @@ function inviteCanJoin(invite){if(moderation.blocked(invite.from,invite.to))retu
 function validInviteRoom(invite){const r=rooms.get(invite.code);return r&&!r.idleClosed&&!idleRoomJobs.has(r.code)&&r.created===invite.created&&r.phase==='waiting'&&r.mode==='friend'&&r.players[0]?.accountId===invite.from&&!r.players[1]&&activeSeats.get(invite.from)?.code===r.code&&activeSeats.get(invite.from)?.created===r.created?r:null}
 function invitationView(account){
  const view=i=>{const entry={id:i.id,from:friends.publicPlayer(i.from),to:friends.publicPlayer(i.to),code:i.code,status:i.status,expiresAt:i.expiresAt,...(i.reason?{reason:i.reason}:{})};
-  if(i.to===account&&i.status==='joined'&&!i.delivered){const r=rooms.get(i.code);if(r&&r.created===i.created&&r.players[1]?.accountId===account&&r.players[1]?.token===i.joinedToken&&sameSeat(activeSeats.get(account),{code:r.code,created:r.created,matchNumber:r.matchNumber||1,seat:1})){entry.token=i.joinedToken;entry.room=publicRoom(r,1)}else{entry.status='failed';entry.reason='Davet edilen maç artık kullanılamıyor.'}}
+  if(i.to===account&&i.status==='joined'&&!i.delivered){const r=rooms.get(i.code);if(r&&r.created===i.created&&r.players[1]?.accountId===account&&r.players[1]?.token===i.joinedToken&&sameSeat(activeSeats.get(account),{code:r.code,created:r.created,matchNumber:r.matchNumber||1,seat:1})&&roomPresence.canAutoReturn(r,1)){entry.token=i.joinedToken;entry.room=publicRoom(r,1)}else{entry.status='failed';entry.reason='Davet edilen maç artık kullanılamıyor.'}}
   return entry};
  const all=[...roomInvites.items.values()];return{incoming:all.filter(i=>i.to===account).map(view),outgoing:all.filter(i=>i.from===account).map(view)};
 }
@@ -1040,7 +1040,7 @@ async function api(url,b,requestContext){
   const room=result?.room&&rooms.get(result.room.code)||requested;
   if(room&&requestContext){const user=readLogin(b.authToken),seat=room.players.findIndex(p=>p?.accountId===user?.sub);if(seat>=0)noteCommanderSelectionClient(room,seat,requestContext,{body:b});}
   const action=({'/api/create':'create','/api/join':'join','/api/match':'match','/api/bot':'bot','/api/bot-accept':'bot-accept','/api/rematch':'rematch','/api/bid':'bid','/api/pass':'pass','/api/chat':'chat','/api/friend/invite':'invite'})[url];
-  if(room&&(action||url==='/api/state')&&!room.idleClosed&&!idleRoomJobs.has(room.code)){const user=readLogin(b.authToken),seat=room.players.findIndex(p=>p?.accountId===user?.sub);if(seat>=0)roomPresence.touch(room,seat);}
+  if(room&&(action||url==='/api/state')&&!room.idleClosed&&!idleRoomJobs.has(room.code)){const user=readLogin(b.authToken),seat=room.players.findIndex(p=>p?.accountId===user?.sub);if(seat>=0)roomPresence.touch(room,seat,Date.now(),Boolean(action)||b.foreground===true&&!b.automaticReturn);}
   if(room&&action&&!room.idleClosed&&!room.matchSettled&&!idleRoomJobs.has(room.code)){const user=readLogin(b.authToken),seat=room.players.findIndex(p=>p?.accountId===user?.sub);if(recordRoomAction(room,{action,seat}))markRoom(room);}
   return result;
  }finally{if(requested){const n=(roomRequestFlights.get(requested)||1)-1;if(n)roomRequestFlights.set(requested,n);else roomRequestFlights.delete(requested);}}
@@ -1078,7 +1078,7 @@ async function apiInner(url,b,requestContext){
   try{
   requireModerationForInteraction(moderationReady,url);
   if([...roomInvites.items.values()].some(i=>[i.from,i.to].includes(user.sub)&&i.status==='queued'&&rooms.get(i.code)?.inviteUncertain))error('Davet işlemi doğrulanıyor. Biraz sonra tekrar dene.',503);
-  if([...roomInvites.items.values()].some(i=>i.to===user.sub&&i.status==='joined'&&!i.delivered&&activeSeats.get(user.sub)?.code===i.code&&activeSeats.get(user.sub)?.created===i.created))error('Davet odasına geçiş tamamlanıyor. Biraz sonra tekrar dene.',409);
+  if([...roomInvites.items.values()].some(i=>i.to===user.sub&&i.status==='joined'&&!i.delivered&&activeSeats.get(user.sub)?.code===i.code&&activeSeats.get(user.sub)?.created===i.created&&rooms.has(i.code)&&roomPresence.canAutoReturn(rooms.get(i.code),1)))error('Davet odasına geçiş tamamlanıyor. Biraz sonra tekrar dene.',409);
   if(url==='/api/room/detach'){
    // A terminal timeout result must still let its authenticated owner leave the
    // result screen. Pending decisions remain protected and no settlement changes.
