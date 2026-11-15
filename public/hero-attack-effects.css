@@ -4,6 +4,9 @@
 .hero-fx::before,.hero-fx::after,.hero-fx i{content:'';position:absolute;display:block}
 .hero-fx.signature-magic{--ink:#cc9eff}.hero-fx.signature-arrow{--ink:#d4f59b}.hero-fx.signature-lightning{--ink:#a2ecff}.hero-fx.signature-dagger{--ink:#ef9ccc}.hero-fx.signature-hammer{--ink:#ffd68a}.hero-fx.signature-heal{--ink:#87efb8}.hero-fx.signature-shield,.hero-fx.signature-light{--ink:#a6e7ff}
 .hero-fx-cast{animation-name:heroCharge}
+.hero-fx-emerge{overflow:visible;animation-name:heroEmerge;animation-duration:calc(var(--hero-ms) + var(--hero-return-ms));animation-timing-function:cubic-bezier(.2,.65,.35,1);z-index:97}
+.hero-fx-emerge-portrait{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 25%;border-radius:50%;opacity:.78;filter:saturate(.76) brightness(1.2);mask-image:radial-gradient(ellipse at 50% 44%,#000 30%,rgba(0,0,0,.78) 57%,transparent 77%);-webkit-mask-image:radial-gradient(ellipse at 50% 44%,#000 30%,rgba(0,0,0,.78) 57%,transparent 77%)}
+.hero-fx-emerge::after{inset:15%;border:1px solid color-mix(in srgb,var(--ink) 62%,transparent);border-radius:50%;opacity:.42;box-shadow:0 0 15px color-mix(in srgb,var(--ink) 22%,transparent)}
 .hero-fx-cast::before{inset:8%;border:2px solid currentColor;border-left-color:transparent;border-radius:50%;transform:rotate(-30deg)}
 .hero-fx-cast::after{inset:22%;border:1px solid currentColor;transform:rotate(45deg)}
 .hero-fx-cast.signature-blade::before,.hero-fx-cast.signature-dagger::before,.hero-fx-cast.signature-hammer::before{inset:10% -8%;border-width:4px;border-bottom-color:transparent;border-right-color:transparent}
@@ -37,6 +40,7 @@
 .hero-fx-flight.is-special{height:24px;margin-top:-12px}.hero-fx-flight.is-special:not(.signature-arrow):not(.signature-hammer)::after{width:66px}
 .hero-fx.is-splash{--hero-opacity:.7}
 @keyframes heroCharge{0%{opacity:0;transform:scale(.65)}40%,75%{opacity:.85}100%{opacity:0;transform:scale(1.08)}}
+@keyframes heroEmerge{0%{opacity:0;transform:translate(0,0) scale(.64)}12%{opacity:.58}43%,64%{opacity:.76;transform:translate(calc(var(--hero-dx)*.42),calc(var(--hero-dy)*.42)) scale(1.14)}100%{opacity:0;transform:translate(calc(var(--hero-dx)*.15),calc(var(--hero-dy)*.15)) scale(.74)}}
 @keyframes heroTravel{0%{opacity:0;transform:translate(0,0) rotate(var(--hero-angle)) scale(.8)}12%{opacity:1}90%{opacity:1}100%{opacity:0;transform:translate(var(--hero-dx),var(--hero-dy)) rotate(var(--hero-angle)) scale(1)}}
 @keyframes heroImpact{0%{opacity:0;scale:.72}15%,45%{opacity:var(--hero-opacity,1)}100%{opacity:0;scale:1.12}}
 @keyframes heroRing{from{scale:.7}to{scale:1.16}}
