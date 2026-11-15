@@ -1,3 +1,4 @@
+import {preloadMeleeSprite} from '/hero-melee-sprites.js';
 import {watchRoomDeparture} from '/room-return-window.js';
 import {mountCombinedPreparation} from '/combined-preparation.js';
 import {watchRecoveredRoom} from '/room-recovery-watch.js';
@@ -626,7 +627,7 @@ function animateMove(e,onContact){
    const ar=actor.getBoundingClientRect(),tr=target.getBoundingClientRect();
    const dx=(tr.left+tr.width/2)-(ar.left+ar.width/2),dy=(tr.top+tr.height/2)-(ar.top+ar.height/2);
    if(!ranged){
-    const choreography=heroClassMotion(hero,{dx,dy,arrival:timing.arrival,special});
+    const choreography=timing.painted?null:heroClassMotion(hero,{dx,dy,arrival:timing.arrival,special});
     if(choreography)combatEffects.animate(actor,choreography.frames,choreography.options);
     else combatEffects.animate(actor,[{transform:'translate(0,0) scale(1)'},{transform:'translate(0,0) scale(1.06)',offset:.28},{transform:`translate(${dx*.22}px,${dy*.22}px) scale(1.1)`,offset:.7},{transform:'translate(0,0) scale(1)'}],{duration:timing?.arrival||600,easing:'ease-in-out'});
    }
@@ -815,6 +816,7 @@ window.addEventListener('hero:login-changed',()=>{arenaWeatherReady=false;arenaW
 window.addEventListener('storage',event=>{if(event.key==='hero-auction-login')resetVictoryChestPresentation()});
 window.addEventListener('hero:login-changed',resetVictoryChestPresentation);
 function render(flash,displayRound){
+ for(const unit of states.flat())preloadMeleeSprite(document,unit);
  const round=Number.isInteger(displayRound)?displayRound:cursor?events[cursor-1].round:Number($('round').textContent)||0;
  const fittedLayout=getArenaLaneLayout(states);
  for(let side=0;side<2;side++){

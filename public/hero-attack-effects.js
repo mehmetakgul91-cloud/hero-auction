@@ -1,3 +1,4 @@
+import {appendMeleeSprite,meleeSpriteProfile} from './hero-melee-sprites.js';
 import {targetMeleeWeapon,targetSwingGeometry,targetWeaponProfile,appendTargetWeapon} from './hero-target-swing.js';
 import {appendHeroImpactArt} from './hero-impact-art.js';
 import {createCombatEffects} from './arena-combat-effects.js';
@@ -157,13 +158,15 @@ export function playHeroAttack({document,effects,actor,target,hero,kind,special=
   }
   effects.node(node,document.body,delay+ms+(['swing','emerge'].includes(phase)?recovery:0)+80);return node;
  }
+ let painted=false;
  if(!splash&&!settled&&!reducedMotion&&timing.arrival>0&&actor!==target){
   make('cast',from,timing.charge);
-  if(weapon&&actor.querySelector('.arena-portrait-image')&&['fighter','tank','assassin'].includes(String(hero?.role||'').toLowerCase()))make('emerge',from,timing.arrival);
-  if(weapon){
+  painted=!!meleeSpriteProfile(hero)&&!['heal','shield'].includes(signature)&&appendMeleeSprite({document,effects,hero,from,to,width:a.width,arrival:timing.arrival,special,clock,valid});
+  if(!painted&&weapon&&actor.querySelector('.arena-portrait-image')&&['fighter','tank','assassin'].includes(String(hero?.role||'').toLowerCase()))make('emerge',from,timing.arrival);
+  if(weapon&&!painted){
    const swing=Math.min(timing.travel,timing.arrival);
    make('swing',to,swing,timing.arrival-swing);
-  }else make('flight',from,timing.travel,timing.charge);
+  }else if(!painted)make('flight',from,timing.travel,timing.charge);
  }
  // Healing state and its +value are already immediate. This gentle target cue
  // starts with them and hands over to the arriving ring, without another heal,
@@ -173,5 +176,5 @@ export function playHeroAttack({document,effects,actor,target,hero,kind,special=
  }
  make('impact',to,timing.impact,timing.arrival);
  if(['heal','shield'].includes(signature)){if(timing.arrival>0)effects.schedule?.(()=>{if(valid())onImpact?.()},timing.arrival);else onImpact?.();}
- return {signature,impactAt,...timing};
+ return {signature,impactAt,...timing,...(painted?{painted:true}:{})};
 }

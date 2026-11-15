@@ -3,6 +3,9 @@
 .hero-fx{--ink:#ffcc8c;position:fixed;z-index:98;width:var(--hero-size);height:var(--hero-size);margin-left:calc(var(--hero-size)*-.5);margin-top:calc(var(--hero-size)*-.5);color:var(--ink);animation:heroImpact var(--hero-ms) ease-out var(--hero-delay) both}
 .hero-fx::before,.hero-fx::after,.hero-fx i{content:'';position:absolute;display:block}
 .hero-fx.signature-magic{--ink:#cc9eff}.hero-fx.signature-arrow{--ink:#d4f59b}.hero-fx.signature-lightning{--ink:#a2ecff}.hero-fx.signature-dagger{--ink:#ef9ccc}.hero-fx.signature-hammer{--ink:#ffd68a}.hero-fx.signature-heal{--ink:#87efb8}.hero-fx.signature-shield,.hero-fx.signature-light{--ink:#a6e7ff}
+.hero-melee-sprite{position:fixed;z-index:97;pointer-events:none;transform-origin:center;will-change:transform,opacity}
+.hero-melee-sprite canvas{display:block;width:100%;height:100%;pointer-events:none}
+@media(prefers-reduced-motion:reduce){.hero-melee-sprite{display:none}}
 .hero-fx-cast{animation-name:heroCharge}
 .hero-fx-emerge{overflow:visible;animation-name:heroEmerge;animation-duration:calc(var(--hero-ms) + var(--hero-return-ms));animation-timing-function:cubic-bezier(.2,.65,.35,1);z-index:97}
 .hero-fx-emerge-portrait{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 25%;border-radius:50%;opacity:.78;mask-image:radial-gradient(ellipse at 50% 44%,#000 30%,rgba(0,0,0,.78) 57%,transparent 77%);-webkit-mask-image:radial-gradient(ellipse at 50% 44%,#000 30%,rgba(0,0,0,.78) 57%,transparent 77%)}
