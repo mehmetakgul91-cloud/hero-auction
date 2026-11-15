@@ -96,6 +96,21 @@ export function playHeroAttack({document,effects,actor,target,hero,kind,special=
    node.style.setProperty('--hero-contact-x',position.contactX*100+'%');node.style.setProperty('--hero-contact-y',position.contactY*100+'%');
    appendTargetWeapon(document,node,weapon);
   }
+  // Melee casts briefly step out of their card before the existing weapon
+  // swing reaches contact. Reuse the actor's current portrait so every hero,
+  // including future roster additions, gets their own recognizable silhouette.
+  if(phase==='emerge'){
+   const portrait=actor.querySelector('.arena-portrait-image');
+   if(portrait){
+    node.classList.add('hero-fx-emerge');
+    const emergeSize=Math.max(64,Math.min(116,a.width*1.3));
+    node.style.width=emergeSize+'px';
+    node.style.marginLeft=(-emergeSize/2)+'px';node.style.marginTop=(-emergeSize/2)+'px';
+    node.style.height=node.style.width;
+    node.style.setProperty('--hero-return-ms',Math.max(220,Math.round(recovery))+'ms');
+    const image=portrait.cloneNode(false);image.removeAttribute('id');image.setAttribute('aria-hidden','true');image.className='hero-fx-emerge-portrait';node.append(image);
+   }
+  }
   if(contact){
    node.style.left=b.left+'px';node.style.top=b.top+'px';node.style.width=b.width+'px';node.style.height=b.height+'px';
    const art=appendHeroImpactArt(document,node,signature,special,{width:b.width,height:b.height});
@@ -122,6 +137,7 @@ export function playHeroAttack({document,effects,actor,target,hero,kind,special=
  }
  if(!splash&&!settled&&!reducedMotion&&timing.arrival>0&&actor!==target){
   make('cast',from,timing.charge);
+  if(weapon&&['fighter','tank','assassin'].includes(String(hero?.role||'').toLowerCase()))make('emerge',from,timing.arrival);
   if(weapon){
    const swing=Math.min(timing.travel,timing.arrival);
    make('swing',to,swing,timing.arrival-swing);
