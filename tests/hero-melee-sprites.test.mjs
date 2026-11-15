@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 import {MELEE_SPRITES} from '../public/hero-melee-sprites-data.js';
 import {meleeSpriteProfile,meleeSpritePose,appendMeleeSprite} from '../public/hero-melee-sprites.js';
 import {heroCombatPresentation} from '../public/hero-combat-presentation.js';
-import {playHeroAttack} from '../public/hero-attack-effects.js';
+import {playHeroAttack,createHeroAttackPlayer} from '../public/hero-attack-effects.js';
 import {createCombatEffects} from '../public/arena-combat-effects.js';
 
 test('every current melee hero has independent full-body artwork and the actual ability identity',()=>{
@@ -44,7 +44,7 @@ function fixture(){
  const gradient={addColorStop(){}};
  const ctx=new Proxy({}, {get:(_,key)=>['createLinearGradient','createRadialGradient'].includes(key)?()=>gradient:()=>{}});
  function element(tag){
-  return {tag,className:'',children:[],style:{setProperty(){}},classList:{add(){}},width:1152,height:768,
+  return {tag,className:'',children:[],style:{setProperty(){}},classList:{add(){},contains(){return false}},width:1152,height:768,
    complete:true,naturalWidth:1152,setAttribute(){},removeAttribute(){},append(n){this.children.push(n)},
    getContext:()=>ctx,remove(){this.removed=true},cloneNode(){return element('img')},
    querySelector:()=>null,getBoundingClientRect:()=>({left:30,top:50,width:54,height:54})};
@@ -54,13 +54,15 @@ function fixture(){
   requestAnimationFrame(fn){const id=++serial;frames.set(id,fn);return id},
   cancelAnimationFrame(id){frames.delete(id)}
  }};
- const effects=createCombatEffects({document,maxResources:12,setTimer(fn,ms){const id=++serial;timers.set(id,{fn,at:now+ms});return id},clearTimer(id){timers.delete(id)}});
+ const setTimer=(fn,ms)=>{const id=++serial;timers.set(id,{fn,at:now+ms});return id};
+ const clearTimer=id=>timers.delete(id);
+ const effects=createCombatEffects({document,maxResources:12,setTimer,clearTimer});
  function advance(time){
   now=time;
   const pending=[...frames.entries()];frames.clear();for(const [,fn] of pending)fn();
   for(const [id,t] of [...timers])if(t.at<=now){timers.delete(id);t.fn()}
  }
- return {document,effects,nodes,frames,timers,advance,clock:()=>now,element};
+ return {document,effects,nodes,frames,timers,advance,clock:()=>now,element,setTimer,clearTimer};
 }
 
 test('full-body normal and special casts reach contact once and fade there in both directions',()=>{
@@ -91,4 +93,23 @@ test('Kael special remains a physical body strike while lightning contact emits 
  h.advance(timing.arrival);assert.equal(hits,1);
  h.advance(timing.arrival+100);assert.equal(hits,1);
  h.effects.clear();assert.equal(h.frames.size,0);assert.equal(h.timers.size,0);
+});
+
+
+test('self shield and drain-healing events cannot suppress the following physical special pose',()=>{
+ for(const [id,role,kind] of [['original:01','tank','shield'],['original:expansion-04','fighter','heal']]){
+  const h=fixture(),actor=h.element('div'),target=h.element('div');
+  actor.querySelector=selector=>selector==='.arena-portrait-image'?h.element('img'):null;
+  target.getBoundingClientRect=()=>({left:320,top:50,width:54,height:54});
+  const player=createHeroAttackPlayer(h);
+  const immediate=player.play({actor,target:actor,hero:{id,role},kind,special:true,castKey:37});
+  assert.equal(immediate.arrival,0);
+  let hits=0;
+  const strike=player.play({actor,target,hero:{id,role},kind:'strike',special:true,castKey:37,onImpact(){hits++}});
+  assert.equal(strike.arrival,840);
+  assert.equal(strike.painted,true);
+  h.advance(839);assert.equal(hits,0);
+  h.advance(840);assert.equal(hits,1);
+  player.clear();assert.equal(h.frames.size,0);assert.equal(h.timers.size,0);
+ }
 });

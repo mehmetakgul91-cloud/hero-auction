@@ -53,10 +53,11 @@ export function createHeroAttackPlayer({document,clock=()=>Date.now(),setTimer=s
   if(records.length>=32)return; // A malformed decorative group cannot grow forever.
   const settled=!!(actor.classList?.contains('dead')||target.classList?.contains('dead'));
   const effects=createCombatEffects({document,maxResources:8,setTimer,clearTimer});
-  const first=records[0];
+  // Immediate healing/shields must not collapse the following attack's wind-up.
+  const first=records.find(r=>!['heal','shield'].includes(r.kind));
   const record={kind:options.kind,actor,target,effects,deadActor:!!actor.classList?.contains('dead'),deadTarget:!!target.classList?.contains('dead')};
   const valid=()=>actor.isConnected!==false&&target.isConnected!==false&&!!actor.classList?.contains('dead')===record.deadActor&&!!target.classList?.contains('dead')===record.deadTarget;
-  const timing=playHeroAttack({...options,document,effects,settled,clock,valid,arrivalAtOverride:first?.arrivalAt});
+  const timing=playHeroAttack({...options,document,effects,settled,clock,valid,arrivalAtOverride:['heal','shield'].includes(options.kind)?undefined:first?.arrivalAt});
   if(timing)records.push(Object.assign(record,{arrivalAt:timing.impactAt,until:clock()+timing.total+80}));
   return timing;
  }
