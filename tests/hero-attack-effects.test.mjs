@@ -179,3 +179,38 @@ test('about 21% shorter cadence preserves every contact and full tail without qu
   assert.deepEqual(hits.map(h=>h.cast),Array.from({length:40},(_,i)=>i));
  }
 });
+
+test('healing creates one green-link flight to the committed friendly target with owned cleanup',()=>{
+ const h=setup();
+ h.target.getBoundingClientRect=()=>({left:190,top:170,width:54,height:54});
+ const timing=playHeroAttack({...h,hero:{id:'original:expansion-05',role:'support'},kind:'heal'});
+ const links=h.document.body.children.filter(n=>n.className.includes('hero-fx-link'));
+ assert.equal(links.length,1);
+ assert.equal(parseFloat(links[0].style.props['--hero-distance']),200);
+ assert.equal(parseFloat(links[0].style.props['--hero-delay']),timing.charge);
+ assert.equal(parseFloat(links[0].style.props['--hero-ms']),timing.travel);
+ h.effects.clear();assert.equal(h.timers.size,0);assert.ok(h.document.body.children.every(n=>n.removed));
+ const self=setup();
+ playHeroAttack({...self,hero:{role:'support'},kind:'heal',target:self.actor});
+ assert.ok(self.document.body.children.every(n=>!n.className.includes('hero-fx-link')));
+});
+
+test('Morvan uses his own wave color with one synchronized impact, while archers keep arrows',()=>{
+ const h=setup();
+ const timing=playHeroAttack({...h,hero:{id:'original:09',role:'energy'},kind:'magic'});
+ const flight=h.document.body.children.find(n=>n.className.includes('hero-fx-flight'));
+ assert.match(flight.className,/hero-morvan/);
+ assert.match(flight.className,/signature-magic/);
+ assert.doesNotMatch(flight.className,/hero-fx-link|signature-arrow/);
+ const hits=h.document.body.children.filter(n=>n.className.includes('hero-fx-impact'));
+ assert.equal(hits.length,1);
+ assert.equal(parseFloat(hits[0].style.props['--hero-delay']),timing.arrival);
+ h.effects.clear();assert.equal(h.timers.size,0);
+ for(const id of ['original:08','original:13']){
+  const archer=setup();
+  playHeroAttack({...archer,hero:{id,role:'fighter'},kind:'strike'});
+  const arrow=archer.document.body.children.find(n=>n.className.includes('hero-fx-flight'));
+  assert.match(arrow.className,/signature-arrow/);
+  assert.doesNotMatch(arrow.className,/hero-fx-link|hero-morvan/);
+ }
+});

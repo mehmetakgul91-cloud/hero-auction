@@ -51,7 +51,7 @@ export function createHeroAttackPlayer({document,clock=()=>Date.now(),setTimer=s
   if(records.some(r=>r.actor===actor&&r.target===target&&r.kind===options.kind))return;
   if(records.length>=32)return; // A malformed decorative group cannot grow forever.
   const settled=!!(actor.classList?.contains('dead')||target.classList?.contains('dead'));
-  const effects=createCombatEffects({document,maxResources:6,setTimer,clearTimer});
+  const effects=createCombatEffects({document,maxResources:8,setTimer,clearTimer});
   const first=records[0];
   const record={kind:options.kind,actor,target,effects,deadActor:!!actor.classList?.contains('dead'),deadTarget:!!target.classList?.contains('dead')};
   const valid=()=>actor.isConnected!==false&&target.isConnected!==false&&!!actor.classList?.contains('dead')===record.deadActor&&!!target.classList?.contains('dead')===record.deadTarget;
@@ -88,6 +88,12 @@ export function playHeroAttack({document,effects,actor,target,hero,kind,special=
   if(contact)node.className+=' hero-contact';
   for(const [key,value] of Object.entries({'--hero-size':size+'px','--hero-ms':ms+'ms','--hero-delay':delay+'ms','--hero-angle':angle+'rad','--hero-dx':(to.x-from.x)+'px','--hero-dy':(to.y-from.y)+'px'}))node.style.setProperty(key,value);
   node.style.left=point.x+'px';node.style.top=point.y+'px';
+  if(phase==='flight'&&signature==='heal'&&visualClass==='healer'){
+   node.className+=' hero-fx-link';
+   node.style.setProperty('--hero-distance',Math.hypot(to.x-from.x,to.y-from.y)+'px');
+  }
+  if(hero?.id==='original:09')node.className+=' hero-morvan';
+
   if(phase==='swing'){
    const direction=to.x>=from.x?1:-1,position=targetSwingGeometry(b,direction,size,weapon);
    node.style.left=position.left+'px';node.style.top=position.top+'px';
@@ -130,14 +136,14 @@ export function playHeroAttack({document,effects,actor,target,hero,kind,special=
     }
    };
    if(delay>0)effects.schedule?.(start,delay);else start();
-  }else if(phase!=='swing'){
+  }else if(phase!=='swing'&&phase!=='emerge'){
    for(let i=0;i<4;i++){const part=document.createElement('i');part.style.setProperty('--part',i);node.append(part)}
   }
-  effects.node(node,document.body,delay+ms+(phase==='swing'?recovery:0)+80);return node;
+  effects.node(node,document.body,delay+ms+(['swing','emerge'].includes(phase)?recovery:0)+80);return node;
  }
  if(!splash&&!settled&&!reducedMotion&&timing.arrival>0&&actor!==target){
   make('cast',from,timing.charge);
-  if(weapon&&['fighter','tank','assassin'].includes(String(hero?.role||'').toLowerCase()))make('emerge',from,timing.arrival);
+  if(weapon&&actor.querySelector('.arena-portrait-image')&&['fighter','tank','assassin'].includes(String(hero?.role||'').toLowerCase()))make('emerge',from,timing.arrival);
   if(weapon){
    const swing=Math.min(timing.travel,timing.arrival);
    make('swing',to,swing,timing.arrival-swing);

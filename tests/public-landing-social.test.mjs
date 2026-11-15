@@ -25,7 +25,7 @@ test('social preview is dedicated, small and absolute; privacy and CG remain iso
  const bytes=await readFile(new URL('../public/images/social/hero-auction-share.jpg',import.meta.url));
  assert.ok(bytes.length<300000);assert.equal(bytes.readUInt16BE(0),0xffd8);
  assert.equal((await readFile(new URL('../public/images/original/hero-01.png',import.meta.url))).length,3067229);
- assert.match(await read('public/privacy.html'),/content="noindex,follow"/);
+ assert.match(await read('public/privacy.html'),/content="index,follow"/);
  assert.match(await read('crazygames-build.js'),/\.landing-story,\.landing-gameplay,/);
  assert.ok(html.indexOf('/landing-content.css')<html.indexOf('/theme.css'));
 });

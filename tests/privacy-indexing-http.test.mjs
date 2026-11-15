@@ -12,7 +12,7 @@ async function freePort(){
  return port;
 }
 
-test('privacy aliases stay accessible but not indexable; homepage remains indexable',{timeout:20000},async()=>{
+test('privacy aliases stay accessible and indexable with one canonical; homepage remains indexable',{timeout:20000},async()=>{
  const port=await freePort(),base=`http://127.0.0.1:${port}`;
  const child=spawn(process.execPath,['server.js'],{cwd:new URL('..',import.meta.url),env:{...process.env,PORT:String(port),DATABASE_URL:''},stdio:['ignore','pipe','pipe']});
  let logs='';child.stdout.on('data',b=>logs+=b);child.stderr.on('data',b=>logs+=b);
@@ -30,12 +30,15 @@ test('privacy aliases stay accessible but not indexable; homepage remains indexa
    assert.match(response.headers.get('content-type'),/text\/html/);
    const html=await response.text();
    const head=html.match(/<head>([\s\S]*?)<\/head>/i)?.[1]||'';
-   assert.match(head,/<meta name="robots" content="noindex,follow">/,path);
+   assert.match(head,/<meta name="robots" content="index,follow">/,path);
    assert.equal((head.match(/name="robots"/g)||[]).length,1,path);
    assert.match(html,/<h1>Hero Auction Gizlilik Politikası<\/h1>/);
    const home=path.startsWith('/crazygames/')?'/crazygames/':'/';
    assert.ok(html.includes(`<a href="${home}">← Hero Auction'a dön</a>`),path);
-   assert.doesNotMatch(head,/rel="canonical"|http-equiv="refresh"/i);
+   const canonical=path.startsWith('/crazygames/')?'/crazygames/privacy':'https://heroauction.com.tr/privacy';
+   assert.ok(head.includes('<link rel="canonical" href="'+canonical+'">'),path);
+   assert.equal((head.match(/rel="canonical"/g)||[]).length,1,path);
+   assert.doesNotMatch(head,/http-equiv="refresh"/i);
   }
   const homeResponse=await fetch(base+'/',{redirect:'manual'});
   assert.equal(homeResponse.status,200);
@@ -83,7 +86,7 @@ test('privacy aliases stay accessible but not indexable; homepage remains indexa
   assert.match(robotsResponse.headers.get('content-type'),/^text\/plain/);
   const robots=await robotsResponse.text();
   assert.match(robots,/User-agent: \*\s+Allow: \//);
-  assert.doesNotMatch(robots,/^Disallow:\s*\S/im,'Google must crawl privacy to see noindex');
+  assert.doesNotMatch(robots,/^Disallow:\s*\S/im,'Public privacy aliases must remain crawlable');
   const sitemapResponse=await fetch(base+'/sitemap.xml');
   assert.equal(sitemapResponse.status,200);
   assert.match(sitemapResponse.headers.get('content-type'),/^application\/xml/);
