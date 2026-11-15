@@ -214,3 +214,30 @@ test('Morvan uses his own wave color with one synchronized impact, while archers
   assert.doesNotMatch(arrow.className,/hero-fx-link|hero-morvan/);
  }
 });
+
+test('melee silhouette reaches the enemy edge at contact and fades there without returning',()=>{
+ for(const left of [300,-240]){
+  const h=setup(),animations=[];
+  const create=h.document.createElement;
+  h.document.createElement=()=>{
+   const node=create();node.classList={add(name){node.className+=' '+name}};
+   node.animate=(frames,options)=>{animations.push({node,frames,options});return {cancel(){}}};return node;
+  };
+  const portrait={cloneNode(){return {removeAttribute(){},setAttribute(){}}}};
+  h.actor.querySelector=selector=>selector==='.arena-portrait-image'?portrait:null;
+  h.target.getBoundingClientRect=()=>({left,top:50,width:54,height:54});
+  const timing=playHeroAttack({...h,hero:{id:'original:14',role:'fighter'},kind:'strike'});
+  const animation=animations.find(a=>a.node.className.includes('hero-fx-emerge'));
+  assert.ok(animation);
+  const contact=animation.frames[2],last=animation.frames.at(-1);
+  assert.equal(contact.offset*animation.options.duration,timing.arrival);
+  assert.equal(last.transform,contact.transform);
+  assert.equal(last.opacity,0);
+  const distance=left-30;
+  const x=parseFloat(contact.transform.match(/translate\(([-.\d]+)/)[1]);
+  assert.equal(Math.sign(x),Math.sign(distance));
+  assert.ok(Math.abs(x)>.7*Math.abs(distance));
+  assert.ok(Math.abs(x)<Math.abs(distance));
+  h.effects.clear();assert.equal(h.timers.size,0);
+ }
+});

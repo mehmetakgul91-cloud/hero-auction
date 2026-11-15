@@ -40,7 +40,7 @@
 .hero-fx-flight.is-special{height:24px;margin-top:-12px}.hero-fx-flight.is-special:not(.signature-arrow):not(.signature-hammer)::after{width:66px}
 .hero-fx.is-splash{--hero-opacity:.7}
 @keyframes heroCharge{0%{opacity:0;transform:scale(.65)}40%,75%{opacity:.85}100%{opacity:0;transform:scale(1.08)}}
-@keyframes heroEmerge{0%{opacity:0;transform:translate(0,0) scale(.64)}12%{opacity:.58}43%,64%{opacity:.76;transform:translate(calc(var(--hero-dx)*.42),calc(var(--hero-dy)*.42)) scale(1.14)}100%{opacity:0;transform:translate(calc(var(--hero-dx)*.15),calc(var(--hero-dy)*.15)) scale(.74)}}
+@keyframes heroEmerge{0%{opacity:0;transform:translate(0,0) scale(.64)}12%{opacity:.58}43%,64%{opacity:.76;transform:translate(var(--hero-dx),var(--hero-dy)) scale(1.14)}100%{opacity:0;transform:translate(var(--hero-dx),var(--hero-dy)) scale(1.14)}}
 @keyframes heroTravel{0%{opacity:0;transform:translate(0,0) rotate(var(--hero-angle)) scale(.8)}12%{opacity:1}90%{opacity:1}100%{opacity:0;transform:translate(var(--hero-dx),var(--hero-dy)) rotate(var(--hero-angle)) scale(1)}}
 @keyframes heroImpact{0%{opacity:0;scale:.72}15%,45%{opacity:var(--hero-opacity,1)}100%{opacity:0;scale:1.12}}
 @keyframes heroRing{from{scale:.7}to{scale:1.16}}

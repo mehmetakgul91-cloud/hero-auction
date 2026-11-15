@@ -113,7 +113,23 @@ export function playHeroAttack({document,effects,actor,target,hero,kind,special=
     node.style.width=emergeSize+'px';
     node.style.marginLeft=(-emergeSize/2)+'px';node.style.marginTop=(-emergeSize/2)+'px';
     node.style.height=node.style.width;
-    node.style.setProperty('--hero-return-ms',Math.max(220,Math.round(recovery))+'ms');
+    const fadeMs=Math.max(220,Math.round(recovery));
+    node.style.setProperty('--hero-return-ms',fadeMs+'ms');
+    const dx=to.x-from.x,dy=to.y-from.y,distance=Math.hypot(dx,dy);
+    const gap=(b.width+emergeSize*.7)/2;
+    const close=distance?Math.max(0,1-gap/distance):0;
+    const x=dx*close,y=dy*close;
+    node.style.setProperty('--hero-dx',x+'px');node.style.setProperty('--hero-dy',y+'px');
+    if(typeof node.animate==='function'){
+     node.style.animation='none';
+     const duration=ms+fadeMs,contact=ms/duration;
+     effects.animate(node,[
+      {offset:0,opacity:0,transform:'translate(0,0) scale(.64)'},
+      {offset:contact*.22,opacity:.58,transform:'translate(0,0) scale(.85)',easing:'cubic-bezier(.2,.65,.35,1)'},
+      {offset:contact,opacity:.76,transform:'translate('+x+'px,'+y+'px) scale(1.14)',easing:'ease-out'},
+      {offset:1,opacity:0,transform:'translate('+x+'px,'+y+'px) scale(1.14)'}
+     ],{duration,fill:'both',easing:'linear'});
+    }
     const image=portrait.cloneNode(false);image.removeAttribute('id');image.setAttribute('aria-hidden','true');image.className='hero-fx-emerge-portrait';node.append(image);
    }
   }
