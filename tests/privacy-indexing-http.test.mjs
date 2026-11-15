@@ -92,7 +92,7 @@ test('privacy aliases stay accessible and indexable with one canonical; homepage
   assert.match(sitemapResponse.headers.get('content-type'),/^application\/xml/);
   const sitemap=await sitemapResponse.text();
   assert.match(sitemap,/<loc>https:\/\/heroauction\.com\.tr\/<\/loc>/);
-  assert.doesNotMatch(sitemap,/privacy/);
+  assert.match(sitemap,/<loc>https:\/\/heroauction\.com\.tr\/privacy<\/loc>/);
  }finally{
   child.kill('SIGTERM');
   await new Promise(resolve=>{if(child.exitCode!==null)return resolve();child.once('exit',resolve);setTimeout(resolve,2000).unref()});
