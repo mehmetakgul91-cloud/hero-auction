@@ -1,3 +1,4 @@
+import {mountArenaSilhouette} from './arena-silhouettes.js';
 import {arcaneSurgePresentation} from './arcane-surge-presentation.js';
 import {heroHealthMeter} from './hero-health-meter.js';
 import {applyHeroRarity} from './hero-rarity.js';
@@ -38,7 +39,7 @@ export function createArenaTeamRenderer({document,loadArt,onDefeated=()=>{}}){
     const surgeBadge=document.createElement('span');surgeBadge.className='arena-surge-status';surgeBadge.hidden=true;
     card.append(portrait,label,bar,shieldBar,stunBadge,lastStandBadge,huntBadge,surgeBadge);parent.append(card);
     entry={card,portrait,bar,fill,shieldBar,shieldFill,stunBadge,lastStandBadge,huntBadge,surgeBadge,name:unit.name,hp:unit.hp};cards.set(unit.id,entry);
-    Promise.resolve(loadArt(unit)).then(url=>{
+    mountArenaSilhouette({document,unit,card,portrait,fallback,side}).then(loaded=>loaded?null:loadArt(unit)).then(url=>{
      if(!url||!portrait.isConnected)return;
      const image=document.createElement('img');image.className='arena-portrait-image';image.alt=unit.name;image.decoding='async';
      image.onload=()=>{if(!portrait.isConnected)return;image.classList.toggle('hero-portrait-wide',image.naturalWidth>image.naturalHeight);fallback.remove();portrait.append(image);};

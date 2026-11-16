@@ -1,0 +1,19 @@
+/* Only the arena's painted roster changes. Formation/gallery/results stay cards. */
+.battle-arena .arena-side .arena-hero.arena-silhouette{border:0;border-radius:0;background:none;box-shadow:none;overflow:visible}
+.battle-arena .arena-silhouette .arena-portrait{border:0;border-radius:0;background:none;box-shadow:none;outline:0;overflow:visible;container-type:normal;isolation:isolate}
+.battle-arena .arena-silhouette .arena-portrait::after,.battle-arena .arena-silhouette .hero-rarity-badge{display:none}
+.battle-arena .arena-silhouette .arena-portrait::before{content:"";position:absolute;bottom:0;left:12%;width:76%;height:12%;border:1px solid #76d6ff;border-radius:50%;background:#48c6ff18;box-shadow:0 0 7px #52c7ff44;z-index:-1}
+.battle-arena .arena-silhouette[data-team=red] .arena-portrait::before{border-color:#ff839b;background:#ff537218;box-shadow:0 0 7px #ff527244}
+.arena-silhouette-body{display:block;position:absolute;inset:0;background-size:300% 200%;background-position:0 0;background-repeat:no-repeat;filter:drop-shadow(0 2px 2px #0009);pointer-events:none}
+[data-team=red] .arena-silhouette-body{transform:scaleX(-1)}
+.silhouette-performing .arena-silhouette-body{visibility:hidden}
+.battle-arena .arena-silhouette .arena-hero-label{color:#f2f7ff;text-shadow:0 1px 3px #000,0 0 5px #000;font-weight:700}
+.battle-arena .arena-silhouette .hp{border:1px solid #071322;border-radius:4px;box-shadow:0 1px 3px #0008}
+.arena-room.arena-fit .arena-side .arena-hero.arena-silhouette{max-height:100px;height:calc(100% - 8px)}
+.arena-room.arena-fit .arena-silhouette .arena-portrait{width:min(84px,100cqw,calc(100cqh - 26px));height:min(84px,100cqw,calc(100cqh - 26px));aspect-ratio:1}
+.battle-arena .arena-silhouette.dead .arena-silhouette-body{filter:grayscale(1);opacity:.45}
+.battle-arena .arena-silhouette.special-cast .arena-silhouette-body{filter:drop-shadow(0 0 4px #f7d278)}
+.battle-arena .arena-silhouette.healing-aura .arena-silhouette-body{filter:drop-shadow(0 0 4px #64ffb0)}
+.battle-arena .arena-silhouette.shield-aura .arena-silhouette-body{filter:drop-shadow(0 0 4px #78dcff)}
+.battle-arena .arena-silhouette.arcane-surge-active .arena-portrait::before{border-color:#dba0ff}
+@media(forced-colors:active){.battle-arena .arena-silhouette .arena-portrait::before{border-color:CanvasText}}
