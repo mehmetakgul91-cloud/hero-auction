@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {MELEE_SPRITES} from '../public/hero-melee-sprites-data.js';
-import {meleeSpriteProfile,meleeSpritePose,appendMeleeSprite} from '../public/hero-melee-sprites.js';
+import {CASTER_SPRITES} from '../public/hero-caster-sprites-data.js';
+import {heroSpriteProfile,casterEmissionPoint,appendHeroSprite,meleeSpriteProfile,meleeSpritePose,appendMeleeSprite} from '../public/hero-melee-sprites.js';
 import {heroCombatPresentation} from '../public/hero-combat-presentation.js';
 import {playHeroAttack,createHeroAttackPlayer} from '../public/hero-attack-effects.js';
 import {createCombatEffects} from '../public/arena-combat-effects.js';
@@ -44,7 +45,7 @@ function fixture(){
  const gradient={addColorStop(){}};
  const ctx=new Proxy({}, {get:(_,key)=>['createLinearGradient','createRadialGradient'].includes(key)?()=>gradient:()=>{}});
  function element(tag){
-  return {tag,className:'',children:[],style:{setProperty(){}},classList:{add(){},contains(){return false}},width:1152,height:768,
+  return {tag,className:'',children:[],style:{setProperty(k,v){this[k]=v}},classList:{add(){},contains(){return false}},width:1152,height:768,
    complete:true,naturalWidth:1152,setAttribute(){},removeAttribute(){},append(n){this.children.push(n)},
    getContext:()=>ctx,remove(){this.removed=true},cloneNode(){return element('img')},
    querySelector:()=>null,getBoundingClientRect:()=>({left:30,top:50,width:54,height:54})};
@@ -112,4 +113,65 @@ test('self shield and drain-healing events cannot suppress the following physica
   h.advance(840);assert.equal(hits,1);
   player.clear();assert.equal(h.frames.size,0);assert.equal(h.timers.size,0);
  }
+});
+
+test('the remaining 22 ranged heroes complete all 50 independent normal/special sheets',()=>{
+ const roster=JSON.parse(readFileSync(new URL('../battle-roster.json',import.meta.url))).characters;
+ assert.equal(Object.keys(CASTER_SPRITES).length,22);
+ const hashes=new Set();
+ for(const hero of roster){
+  const p=heroSpriteProfile(hero);assert.ok(p,hero.id);
+  assert.equal(p.effect,hero.active.effect,hero.id);
+  assert.equal(p.stationary===true,heroCombatPresentation(hero).stationary,hero.id);
+  const file=readFileSync(new URL('../public'+p.src,import.meta.url));
+  assert.equal(file.subarray(8,12).toString(),'WEBP');assert.ok(file.length>50000,hero.id);
+  hashes.add(createHash('sha256').update(file).digest('hex'));
+ }
+ assert.equal(hashes.size,50);
+});
+
+test('casters remain beside their own card in both directions, with a stable release point through travel',()=>{
+ for(const profile of Object.values(CASTER_SPRITES))for(const special of [false,true])for(const direction of [-1,1]){
+  const h=fixture(),from={x:400,y:200},to={x:400+direction*300,y:270};
+  assert.equal(appendHeroSprite({...h,hero:profile,from,to,width:54,arrival:840,charge:360,special}),true);
+  h.advance(360);const node=h.nodes[0];
+  const x=Number.parseFloat(node.style.left),y=Number.parseFloat(node.style.top);
+  assert.equal(x,from.x+direction*54*.6);assert.equal(y,from.y+54*.18);
+  h.advance(840);assert.equal(Number.parseFloat(node.style.left),x);assert.equal(Number.parseFloat(node.style.top),y);
+  h.advance(950);assert.equal(Number.parseFloat(node.style.left),x);
+  const contact=casterEmissionPoint(profile,{from,to,width:54,special});
+  assert.ok(Math.abs(contact.x-from.x)<120);assert.ok(Math.abs(contact.y-from.y)<110);
+  h.effects.clear();assert.equal(h.frames.size,0);assert.equal(h.timers.size,0);
+ }
+});
+
+test('mage wave and archer arrow leave the painted hand or bow and commit damage once',()=>{
+ for(const [id,role,kind] of [['original:09','mage','magic'],['original:08','marksman','arrow']]){
+  const h=fixture(),actor=h.element('div'),target=h.element('div');
+  target.getBoundingClientRect=()=>({left:320,top:90,width:54,height:54});
+  let hits=0;const result=playHeroAttack({...h,actor,target,hero:{id,role},kind,special:true,onImpact(){hits++}});
+  assert.equal(result.painted,true);
+  const flight=h.nodes.find(n=>n.className.includes('hero-fx-flight'));
+  assert.ok(flight.className.includes('signature-'+kind));
+  assert.equal(flight.style.left,result.castOrigin.x+'px');
+  assert.equal(flight.style['--hero-dx'],347-result.castOrigin.x+'px');
+  assert.equal(flight.style['--hero-dy'],117-result.castOrigin.y+'px');
+  h.advance(result.arrival-1);assert.equal(hits,0);h.advance(result.arrival);assert.equal(hits,1);
+  h.advance(result.arrival+100);assert.equal(hits,1);h.effects.clear();
+ }
+});
+
+test('friendly healing retains its green link and self healing commits immediately with one caster body per cast',()=>{
+ const h=fixture(),actor=h.element('div'),ally=h.element('div');
+ ally.getBoundingClientRect=()=>({left:320,top:90,width:54,height:54});
+ const hero={id:'original:expansion-11',role:'support'},player=createHeroAttackPlayer(h);
+ let self=0,other=0;
+ const immediate=player.play({actor,target:actor,hero,kind:'heal',special:true,castKey:5,onImpact(){self++}});
+ assert.equal(immediate.arrival,0);assert.equal(self,1);assert.equal(immediate.painted,true);
+ const linked=player.play({actor,target:ally,hero,kind:'heal',special:true,castKey:5,onImpact(){other++}});
+ assert.equal(h.nodes.filter(n=>n.className.includes('hero-melee-sprite')).length,1);
+ const flight=h.nodes.find(n=>n.className.includes('hero-fx-link'));
+ assert.ok(flight);assert.deepEqual(linked.castOrigin,immediate.castOrigin);
+ assert.equal(other,0);h.advance(linked.arrival);assert.equal(other,1);assert.equal(self,1);
+ player.clear();assert.equal(h.frames.size,0);assert.equal(h.timers.size,0);
 });
