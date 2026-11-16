@@ -21,7 +21,7 @@ test('badge counts only authoritative inclusive rounds, with a separate schedule
 });
 for(const english of [false,true])test(`special scaling description and tooltip explicitly cover normal, special and area damage (${english?'EN':'TR'})`,()=>{
  const desc=commanderUltimateDescription('magic',{english});assert.match(desc,english?/special ability damage multiplier.*boosted attack/:/özel yeteneğin hasar çarpanı.*güçlendirilmiş saldırıya/);
- assert.match(desc,english?/Healing and shields are unchanged/:/Şifa ve kalkan değişmez/);
+ assert.match(desc,english?/damage bonus does not amplify the hero’s healing or shield abilities/:/Hasar bonusu, kahramanın şifa ve kalkan yeteneklerini güçlendirmez/);
  const presentation=arcaneSurgePresentation({hp:100,...status},{round:3,english});assert.match(presentation.description,english?/\+100 attack.*normal, special and area/:/normal, özel ve alan.*\+100 saldırı/);
  assert.equal(translate(commanderUltimateDescription('magic')),commanderUltimateDescription('magic',{english:true}));
 });

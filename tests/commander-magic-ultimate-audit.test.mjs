@@ -57,7 +57,7 @@ for(const side of [0,1])for(const alreadyActed of [false,true])test(`live cursor
 });
 
 for(const originalActed of [false,true])test(`actual scheduled death transfers remaining mage duration without another same-round boost after original acted=${originalActed}`,()=>{
- const original=hero('original',{hp:1,attack:40,speed:100});
+ const original=hero('original',{hp:1,maxHp:100,attack:40,speed:100});
  const high=hero('high-current-hp',{hp:9000,attack:80,speed:70,lane:'back',position:1});
  const low=hero('highest-hp-percent',{hp:6000,maxHp:6000,attack:30,speed:60,lane:'back',position:2});
  const session=arena([[original,high,low],[hero('enemy',{speed:originalActed?90:110})]]);

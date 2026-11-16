@@ -58,6 +58,10 @@ export function applyLiveCommanderEffect(teams,{side,ability,commanderId,command
  }else if(strong){
   const target=selectedFriendly(next[side],targetIds);
   if(!grantArcaneSurge(target,round))throw Error('Hero already has active arcane surge');
+  // One-time cast heal, independent of damage amplification and death transfers.
+  const healed=Math.max(0,Math.min(Math.floor(target.maxHp*.30),target.maxHp-target.hp));
+  target.hp+=healed;
+  if(healed>0)impacts.push({target:target.id,kind:'heal',value:healed});
   value=target.arcaneSurgeBonusAttack;impacts.push({target:target.id,kind:'buff',value,fromRound:target.arcaneSurgeFromRound,untilRound:target.arcaneSurgeUntilRound});
  }else{
   if(!Array.isArray(targetIds)||targetIds.length!==1||typeof targetIds[0]!=='string'||!enemies.some(u=>u.id===targetIds[0]))throw Error('Invalid magic targets');
