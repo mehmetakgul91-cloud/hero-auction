@@ -121,6 +121,15 @@
 .hero-fx-flight.signature-arrow::after{right:-7px;top:3px;width:17px;height:12px;background:#e5ece7;clip-path:polygon(0 0,100% 50%,0 100%,25% 50%)}
 @media(prefers-reduced-motion:reduce){.hero-fx-link,.hero-fx-link i{animation:none;display:none}}
 
+/* Painted casters keep their own elemental color and distinct special shape. */
+.hero-fx.hero-fx-flight.painted-caster.class-mage.signature-magic::before{inset:-5px -12px -5px 4px;background:radial-gradient(ellipse at 70% 50%,#fff 0 7%,var(--caster-ink) 22%,transparent 70%);clip-path:polygon(0 50%,64% 0,92% 15%,100% 50%,92% 85%,64% 100%)}
+.hero-fx.hero-fx-flight.painted-caster.class-mage::after{top:2px;right:24%;height:34px;width:90px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--caster-ink) 38%,transparent) 45%,var(--caster-ink));clip-path:polygon(0 50%,65% 4%,100% 28%,100% 72%,65% 96%)}
+.hero-fx.hero-fx-flight.painted-caster.class-mage.is-special.signature-magic::before{inset:-17px -12px;height:68px;border:3px solid var(--caster-ink);border-left-color:transparent;border-right-color:transparent;border-radius:50%;background:none;clip-path:none;transform:rotate(-22deg)}
+.hero-fx.hero-fx-flight.painted-caster.class-mage.is-special::after{width:108px;height:50px;top:-6px;clip-path:polygon(0 50%,65% 0,100% 18%,78% 50%,100% 82%,65% 100%)}
+.hero-fx.hero-fx-flight.hero-fx-link.painted-caster.is-special::before{border-width:3px;box-shadow:0 4px 12px #69e39a66}
+.hero-fx.hero-fx-flight.hero-fx-link.painted-caster.is-special::after{top:-18px;height:24px;border-width:2px;border-top-color:#e2ffc8;border-bottom-color:transparent;border-radius:50% 50% 0 0}
+.hero-fx.hero-fx-flight.hero-fx-link.painted-caster.is-special i{left:calc(var(--hero-distance)*(.18 + var(--part)*.2));top:calc(-9px + var(--part)*3px);width:10px;height:5px;border-radius:80% 20%;background:#c8ffdc;transform:rotate(-30deg)}
+
 /* Class choreography is opt-in: bow identities and approved contact canvases
    keep their existing geometry, colors, clocks and accessibility behavior. */
 .hero-fx-flight.class-mage,.hero-fx-flight.class-fighter,.hero-fx-flight.class-tank,.hero-fx-flight.class-healer{animation-name:heroClassTravel}

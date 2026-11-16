@@ -1,4 +1,5 @@
 import {MELEE_SPRITES} from './hero-melee-sprites-data.js';
+import {CASTER_SPRITES} from './hero-caster-sprites-data.js';
 
 const clamp = value => Math.max(0, Math.min(1, value));
 const ease = value => {const t = clamp(value);return t * t * (3 - 2 * t)};
@@ -6,6 +7,34 @@ const images = new Map();
 
 export function meleeSpriteProfile(hero = {}) {
  return MELEE_SPRITES[hero.id] || null;
+}
+export function heroSpriteProfile(hero={}) {
+ return MELEE_SPRITES[hero.id] || CASTER_SPRITES[hero.id] || null;
+}
+export function casterEmissionPoint(profile,{from,to,width,special=false}){
+ const size=Math.max(110,Math.min(220,width*2.7)),direction=to.x>=from.x?1:-1;
+ const hand=special?profile.specialContact:profile.contact;
+ return {x:from.x+direction*(width*.6+(hand[0]-.5)*size),y:from.y+width*.18+(hand[1]-.5)*size};
+}
+// The special channel belongs to this body, so multi-target abilities draw it
+// once. It is decoration only and shares the body's frame/cancellation owner.
+export function drawCasterChannel(ctx,profile,{x,y,progress,size=100}){
+ if(progress<=0||progress>=1.45)return;
+ const t=clamp(progress),r=size*(.1+.13*t),fade=Math.sin(Math.min(1,progress/1.45)*Math.PI);
+ ctx.save();ctx.translate(x,y);ctx.globalAlpha=fade*.85;
+ ctx.strokeStyle=profile.role==='support'?'#92f3b0':profile.color;ctx.fillStyle=ctx.strokeStyle;ctx.lineWidth=Math.max(1.4,size*.008);
+ for(const direction of [-1,1]){ctx.beginPath();ctx.arc(0,0,r,direction*t*2,direction*t*2+Math.PI*.72);ctx.stroke()}
+ const motif=profile.motif;
+ for(let i=0;i<6;i++){
+  const a=i*Math.PI/3+t,radius=r*1.25,px=Math.cos(a)*radius,py=Math.sin(a)*radius;
+  ctx.save();ctx.translate(px,py);ctx.rotate(a);
+  ctx.beginPath();
+  if(profile.role==='support'){ctx.ellipse(0,0,r*.18,r*.07,.5,0,Math.PI*2);ctx.fill()}
+  else if(['storm','wind'].includes(motif)){ctx.moveTo(-r*.15,-r*.12);ctx.lineTo(r*.04,0);ctx.lineTo(-r*.04,r*.04);ctx.lineTo(r*.17,r*.14);ctx.stroke()}
+  else{ctx.moveTo(0,-r*.14);ctx.lineTo(r*.09,0);ctx.lineTo(0,r*.14);ctx.lineTo(-r*.09,0);ctx.closePath();ctx.stroke()}
+  ctx.restore();
+ }
+ ctx.restore();
 }
 export function meleeSpritePose(progress, special = false) {
  const t = clamp(progress);
@@ -38,7 +67,7 @@ export function drawMeleeSprite(ctx, image, profile, {progress=0,special=false,s
  ctx.restore();
 }
 export function preloadMeleeSprite(document, hero) {
- const profile = meleeSpriteProfile(hero);
+ const profile = heroSpriteProfile(hero);
  if(!profile)return null;
  if(images.has(profile.src))return images.get(profile.src);
  const image = document.createElement('img');
@@ -88,8 +117,8 @@ export function drawMeleeSpecial(ctx, profile, {x,y,age,size=100,direction=1}) {
  }
  ctx.restore();
 }
-export function appendMeleeSprite({document,effects,hero,from,to,width,arrival,special=false,clock=()=>Date.now(),valid=()=>true}) {
- const profile = meleeSpriteProfile(hero);
+export function appendHeroSprite({document,effects,hero,from,to,width,arrival,charge,special=false,clock=()=>Date.now(),valid=()=>true}) {
+ const profile = heroSpriteProfile(hero);
  if(!profile || !document.defaultView?.requestAnimationFrame || arrival <= 0)return false;
  const entry = preloadMeleeSprite(document,hero);
  const canvas = document.createElement('canvas'),ctx=canvas.getContext?.('2d');
@@ -102,21 +131,24 @@ export function appendMeleeSprite({document,effects,hero,from,to,width,arrival,s
  canvas.width=canvas.height=384;
  const direction=to.x>=from.x?1:-1,started=clock(),fadeMs=special?430:260,total=arrival+fadeMs;
  const hand=special?profile.specialContact:profile.contact;
+ const poseAt=profile.stationary?Math.max(120,charge??arrival*.4):arrival;
  let active=true,frame;
  const view=document.defaultView;
  effects.node(node,document.body,total+80);
  effects.own(()=>{active=false;if(frame!==undefined)view.cancelAnimationFrame(frame)},total+80);
  function draw(){
   if(!active||!valid())return;
-  const elapsed=clock()-started,p=clamp(elapsed/arrival),out=ease(p/.3),approach=ease((p-.22)/.78);
+  const elapsed=clock()-started,p=clamp(elapsed/poseAt),out=ease(p/.3),approach=ease((p-.22)/.78);
   const endX=to.x-direction*(hand[0]-.5)*size,endY=to.y-(hand[1]-.5)*size;
-  const x=from.x+(endX-from.x)*approach,y=from.y+(endY-from.y)*approach;
+  const x=profile.stationary?from.x+direction*width*.6*out:from.x+(endX-from.x)*approach;
+  const y=profile.stationary?from.y+width*.18*out:from.y+(endY-from.y)*approach;
   node.style.left=x+'px';node.style.top=y+'px';
   node.style.opacity=String(out*(special?.94:.84)*(1-ease((elapsed-arrival)/fadeMs)));
   node.style.transform='translate(-50%,-50%) scaleX('+direction+')';
   if(entry.ready){
    drawMeleeSprite(ctx,entry.image,profile,{progress:p,special,size:384});
-   if(special)drawMeleeSpecial(ctx,profile,{
+   if(special&&profile.stationary)drawCasterChannel(ctx,profile,{x:hand[0]*384,y:hand[1]*384,progress:elapsed/poseAt,size:384});
+   if(special&&!profile.stationary)drawMeleeSpecial(ctx,profile,{
     x:(profile.effect==='shield'?.43:hand[0])*384,
     y:(profile.effect==='shield'?.47:hand[1])*384,
     age:(elapsed-arrival)/1000,size:384*width/size
@@ -125,4 +157,10 @@ export function appendMeleeSprite({document,effects,hero,from,to,width,arrival,s
   if(elapsed<total)frame=view.requestAnimationFrame(draw);
  }
  draw();return true;
+}
+
+
+export function appendMeleeSprite(options){
+ if(!meleeSpriteProfile(options.hero))return false;
+ return appendHeroSprite(options);
 }

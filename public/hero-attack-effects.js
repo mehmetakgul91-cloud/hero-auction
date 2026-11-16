@@ -1,4 +1,4 @@
-import {appendMeleeSprite,meleeSpriteProfile} from './hero-melee-sprites.js';
+import {appendHeroSprite,heroSpriteProfile,casterEmissionPoint} from './hero-melee-sprites.js';
 import {targetMeleeWeapon,targetSwingGeometry,targetWeaponProfile,appendTargetWeapon} from './hero-target-swing.js';
 import {appendHeroImpactArt} from './hero-impact-art.js';
 import {createCombatEffects} from './arena-combat-effects.js';
@@ -55,10 +55,11 @@ export function createHeroAttackPlayer({document,clock=()=>Date.now(),setTimer=s
   const effects=createCombatEffects({document,maxResources:8,setTimer,clearTimer});
   // Immediate healing/shields must not collapse the following attack's wind-up.
   const first=records.find(r=>!['heal','shield'].includes(r.kind));
+  const body=records.find(r=>r.actor===actor&&r.painted);
   const record={kind:options.kind,actor,target,effects,deadActor:!!actor.classList?.contains('dead'),deadTarget:!!target.classList?.contains('dead')};
   const valid=()=>actor.isConnected!==false&&target.isConnected!==false&&!!actor.classList?.contains('dead')===record.deadActor&&!!target.classList?.contains('dead')===record.deadTarget;
-  const timing=playHeroAttack({...options,document,effects,settled,clock,valid,arrivalAtOverride:['heal','shield'].includes(options.kind)?undefined:first?.arrivalAt});
-  if(timing)records.push(Object.assign(record,{arrivalAt:timing.impactAt,until:clock()+timing.total+80}));
+  const timing=playHeroAttack({...options,document,effects,settled,clock,valid,suppressBody:!!body,castOriginOverride:body?.castOrigin,arrivalAtOverride:['heal','shield'].includes(options.kind)?undefined:first?.arrivalAt});
+  if(timing)records.push(Object.assign(record,{arrivalAt:timing.impactAt,painted:timing.painted,castOrigin:timing.castOrigin,until:clock()+timing.total+80}));
   return timing;
  }
  return {play,prune,clear,acceptContact,get remaining(){prune();return Math.max(0,...[...casts.values()].flat().map(r=>r.until-clock()));},get size(){prune();return casts.size;}};
@@ -66,10 +67,11 @@ export function createHeroAttackPlayer({document,clock=()=>Date.now(),setTimer=s
 // All nodes use the shared bounded owner; cancellation removes delayed CSS too.
 // Fixed, portrait-sized transparent overlays escape portrait/board clipping but
 // never cover HP bars with a filled panel. Damage labels retain their higher layer.
-export function playHeroAttack({document,effects,actor,target,hero,kind,special=false,splash=false,settled=false,time=850,onImpact,reducedMotion=false,clock=()=>Date.now(),valid=()=>true,arrivalAtOverride}){
+export function playHeroAttack({document,effects,actor,target,hero,kind,special=false,splash=false,settled=false,time=850,onImpact,reducedMotion=false,clock=()=>Date.now(),valid=()=>true,arrivalAtOverride,suppressBody=false,castOriginOverride}){
  if(!actor||!target)return;
  const signature=heroAttackSignature(hero,kind);
  const roleClass=heroVisualClass(hero);
+ const sprite=heroSpriteProfile(hero),stationary=sprite?.stationary===true;
  const weapon=targetMeleeWeapon(hero,signature),weaponProfile=targetWeaponProfile(weapon),recovery=weaponProfile.recovery;
  // Shield casts and non-healer healing are outside the attack redesign.
  const visualClass=signature==='shield'||(signature==='heal'&&roleClass!=='healer')?null:roleClass;
@@ -84,15 +86,21 @@ export function playHeroAttack({document,effects,actor,target,hero,kind,special=
   const node=document.createElement('span');
   node.className=`hero-fx hero-fx-${phase} signature-${signature}${special?' is-special':''}${splash?' is-splash':''}`;
   if(visualClass)node.className+=' class-'+visualClass;
+  if(stationary&&sprite){node.className+=' painted-caster';node.style.setProperty('--ink',sprite.color);node.style.setProperty('--caster-ink',sprite.color);}
   node.setAttribute('aria-hidden','true');
   const contact=phase==='impact'&&!['heal','shield'].includes(signature);
   const size=phase==='swing'?Math.max(weaponProfile.min,Math.min(weaponProfile.max,b.width*weaponProfile.scale*(special?1.08:1))):contact?Math.max(44,Math.min(84,b.width*(special?1.12:1.02))):Math.max(56,Math.min(special?112:94,(phase==='cast'?a.width:b.width)*(special?1.4:1.2)));
   if(contact)node.className+=' hero-contact';
   for(const [key,value] of Object.entries({'--hero-size':size+'px','--hero-ms':ms+'ms','--hero-delay':delay+'ms','--hero-angle':angle+'rad','--hero-dx':(to.x-from.x)+'px','--hero-dy':(to.y-from.y)+'px'}))node.style.setProperty(key,value);
   node.style.left=point.x+'px';node.style.top=point.y+'px';
+  if(phase==='flight'){
+   const dx=to.x-point.x,dy=to.y-point.y;
+   node.style.setProperty('--hero-dx',dx+'px');node.style.setProperty('--hero-dy',dy+'px');
+   node.style.setProperty('--hero-angle',Math.atan2(dy,dx)+'rad');
+  }
   if(phase==='flight'&&signature==='heal'&&visualClass==='healer'){
    node.className+=' hero-fx-link';
-   node.style.setProperty('--hero-distance',Math.hypot(to.x-from.x,to.y-from.y)+'px');
+   node.style.setProperty('--hero-distance',Math.hypot(to.x-point.x,to.y-point.y)+'px');
   }
   if(hero?.id==='original:09')node.className+=' hero-morvan';
 
@@ -159,15 +167,24 @@ export function playHeroAttack({document,effects,actor,target,hero,kind,special=
   }
   effects.node(node,document.body,delay+ms+(['swing','emerge'].includes(phase)?recovery:0)+80);return node;
  }
- let painted=false;
+ let painted=false,castOrigin=castOriginOverride;
  if(!splash&&!settled&&!reducedMotion&&timing.arrival>0&&actor!==target){
   make('cast',from,timing.charge);
-  painted=!!meleeSpriteProfile(hero)&&!['heal','shield'].includes(signature)&&appendMeleeSprite({document,effects,hero,from,to,width:a.width,arrival:timing.arrival,special,clock,valid});
+  painted=!suppressBody&&!!sprite&&(stationary||!['heal','shield'].includes(signature))&&appendHeroSprite({document,effects,hero,from,to,width:a.width,arrival:timing.arrival,charge:timing.charge,special,clock,valid});
+  if(stationary&&(painted||castOrigin))castOrigin??=casterEmissionPoint(sprite,{from,to,width:a.width,special});
   if(!painted&&weapon&&actor.querySelector('.arena-portrait-image')&&['fighter','tank','assassin'].includes(String(hero?.role||'').toLowerCase()))make('emerge',from,timing.arrival);
   if(weapon&&!painted){
    const swing=Math.min(timing.travel,timing.arrival);
    make('swing',to,swing,timing.arrival-swing);
-  }else if(!painted)make('flight',from,timing.travel,timing.charge);
+  }else if(!painted||stationary)make('flight',castOrigin||from,timing.travel,timing.charge);
+ }
+ if(!painted&&!suppressBody&&!splash&&!settled&&!reducedMotion&&stationary&&actor===target&&['heal','shield'].includes(signature)){
+  const poseArrival=special?840:600;
+  painted=appendHeroSprite({document,effects,hero,from,to,width:a.width,arrival:poseArrival,charge:special?360:240,special,clock,valid});
+  if(painted){
+   castOrigin=casterEmissionPoint(sprite,{from,to,width:a.width,special});
+   timing.total=Math.max(timing.total,poseArrival+(special?430:260));
+  }
  }
  // Healing state and its +value are already immediate. This gentle target cue
  // starts with them and hands over to the arriving ring, without another heal,
@@ -177,5 +194,5 @@ export function playHeroAttack({document,effects,actor,target,hero,kind,special=
  }
  make('impact',to,timing.impact,timing.arrival);
  if(['heal','shield'].includes(signature)){if(timing.arrival>0)effects.schedule?.(()=>{if(valid())onImpact?.()},timing.arrival);else onImpact?.();}
- return {signature,impactAt,...timing,...(painted?{painted:true}:{})};
+ return {signature,impactAt,...timing,...(painted?{painted:true}:{}),...(castOrigin?{castOrigin}:{})};
 }
