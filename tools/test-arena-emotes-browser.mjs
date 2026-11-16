@@ -187,7 +187,7 @@ try{
     for(const side of ['a','b'])document.getElementById('team-hp-'+side+'-label').textContent='5000 / 5000 HP';
     refreshArenaViewport({document});mountArenaSceneLayout(stage).refresh();
    },fixtureHeroes);
-   await page.waitForFunction(()=>document.querySelectorAll('.arena-portrait-image').length===10&&[...document.querySelectorAll('.arena-portrait-image')].every(img=>img.complete&&img.naturalWidth>0));
+   await page.waitForFunction(()=>document.querySelectorAll('.arena-portrait').length===10&&[...document.querySelectorAll('.arena-portrait')].every(p=>p.querySelector('.arena-silhouette-body')||p.querySelector('.arena-portrait-image')?.naturalWidth>0));
   }else{
    await page.goto(origin);await page.waitForFunction(()=>!!window.__emoteAuction);await page.waitForLoadState('networkidle');
    await page.evaluate(r=>{window.__emoteAuction.setContext();window.__emoteAuction.show(r);window.__emoteAuction.connect();},data);
