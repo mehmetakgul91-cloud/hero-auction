@@ -17,3 +17,6 @@
 .battle-arena .arena-silhouette.shield-aura .arena-silhouette-body{filter:drop-shadow(0 0 4px #78dcff)}
 .battle-arena .arena-silhouette.arcane-surge-active .arena-portrait::before{border-color:#dba0ff}
 @media(forced-colors:active){.battle-arena .arena-silhouette .arena-portrait::before{border-color:CanvasText}}
+
+/* Living idle silhouettes retain readable color against every arena floor. */
+.battle-arena .arena-silhouette:not(.dead):not(.special-cast):not(.healing-aura):not(.shield-aura) .arena-silhouette-body{opacity:1;filter:brightness(1.22) saturate(1.45) contrast(1.08) drop-shadow(0 0 1px #e8f5ffb3) drop-shadow(0 2px 2px #000b)}
