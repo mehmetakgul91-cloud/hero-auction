@@ -171,6 +171,8 @@ export function playHeroAttack({document,effects,actor,target,hero,kind,special=
  if(!splash&&!settled&&!reducedMotion&&timing.arrival>0&&actor!==target){
   make('cast',from,timing.charge);
   painted=!suppressBody&&!!sprite&&(stationary||!['heal','shield'].includes(signature))&&appendHeroSprite({document,effects,hero,from,to,width:a.width,arrival:timing.arrival,charge:timing.charge,special,clock,valid});
+  // Owned by the existing effect lifecycle: pause/reset/death restores the idle body.
+  if(painted&&actor.classList?.contains('arena-silhouette'))effects.mark?.(actor,['silhouette-performing'],timing.arrival+(special?430:260));
   if(stationary&&(painted||castOrigin))castOrigin??=casterEmissionPoint(sprite,{from,to,width:a.width,special});
   if(!painted&&weapon&&actor.querySelector('.arena-portrait-image')&&['fighter','tank','assassin'].includes(String(hero?.role||'').toLowerCase()))make('emerge',from,timing.arrival);
   if(weapon&&!painted){

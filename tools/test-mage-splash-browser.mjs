@@ -46,7 +46,7 @@ try{
   await page.route('**/*',async route=>{const u=new URL(route.request().url());if(u.origin!==base)return route.abort();if(u.pathname==='/api/battle-preview')return route.fulfill({json:fixture});return route.continue()});
   await page.clock.install({time:new Date('2026-11-09T12:00:00Z')});
   await page.goto(base+'/battle-preview.html?room=arena');await page.waitForSelector('#team-a .hero');
-  await page.waitForFunction(()=>[...document.querySelectorAll('.arena-portrait')].every(p=>p.querySelector('img.arena-portrait-image')?.naturalWidth>0));
+  await page.waitForFunction(()=>[...document.querySelectorAll('.arena-portrait')].every(p=>p.querySelector('.arena-silhouette-body')||p.querySelector('img.arena-portrait-image')?.naturalWidth>0));
   await page.clock.pauseAt(new Date('2026-11-09T12:01:00Z'));
   const emit=frame=>page.evaluate(frame=>window.dispatchEvent(new CustomEvent('heroarena:experimental-round-end',{detail:{...frame,presentation:{}}})),frame);
   await emit({...sample.before,events:[]});
