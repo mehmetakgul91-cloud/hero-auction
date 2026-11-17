@@ -28,7 +28,7 @@ import {createArenaContactHealth} from '/arena-contact-health.js';
 import {combatEffectKind,combatEffectActors,createCombatEffects} from '/arena-combat-effects.js';
 import {stationaryArenaAction,heroClassMotion} from '/hero-combat-presentation.js';
 import {createArenaThemePresentation} from '/arena-theme.js';
-import {createArenaWeather} from '/arena-weather.js';
+import {createArenaWeather} from '/arena-weather.js?v=slate-20261117';
 import {mountVikingLayout} from '/arena-viking-layout.js';
 import {mountArenaSceneLayout} from '/arena-scene-layout.js';
 // Remove premature combat flags before portal authentication yields to other modules.
@@ -87,7 +87,7 @@ if(returnSeat.code&&returnSeat.token){
 // Browser-only battle replay preview. No wallet or live room mutations.
 const $=id=>document.getElementById(id);
 const arenaTheme=createArenaThemePresentation({element:$('battle-arena'),language:document.documentElement.lang});
-const arenaWeather=createArenaWeather({root:$('battle-arena')});
+const arenaWeather=createArenaWeather({root:$('battle-arena'),suppressForSlate:true});
 // Static floor geometry survives replay pause/results; it never depends on motion.
 const arenaSceneLayout=createArenaWeather({root:$('battle-arena'),mounts:{ruins:mountArenaSceneLayout,savanna:mountArenaSceneLayout,fjord:mountVikingLayout}});
 let arenaWeatherReady=false,arenaWeatherPageHidden=false;
