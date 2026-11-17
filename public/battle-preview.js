@@ -18,7 +18,7 @@ import {createFriendsUI} from '/friends.js';
 import {translate} from '/crazygames-en.js';
 import {describeBattleEvent} from '/battle-event-text.js';
 import {createBattleReplayHealth} from '/battle-replay-health.js';
-import {createArenaTeamRenderer} from '/arena-team-renderer.js?v=approved-idle-20261117';
+import {createArenaTeamRenderer} from '/arena-team-renderer.js?v=courtyard-readability-20261118';
 import {summarizeBattle} from '/battle-summary-data.js?v=complete-results-20261021';
 import {commanderAbilityStats,commanderAbilityDescription} from '/commander-ability-rules.js?v=commander-attack-fix-20261021';
 import {getArenaLaneLayout,refreshArenaViewport} from '/arena-viewport.js?v=equal-lanes-20261026';
