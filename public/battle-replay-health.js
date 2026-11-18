@@ -94,6 +94,11 @@ export function createBattleReplayHealth(teams){
   if(![0,1].includes(side))return copy();
   const actor=teams[side].find(hero=>hero.id===entry.actor);
   const namedLegacyAttack=typeof actor?.active?.name==='string'&&entry.action===actor.active.name&&!['heal','passive-heal','shield','delay','haste','armor-break','weaken','rage','tank-front-shield','tank-self-shield'].includes(entry.action);
+  // Only explicit heal impacts from new casts heal; historical surge logs do not.
+  if(entry.action==='commander-magic-ultimate')for(const impact of entry.impacts||[]){
+   const index=teams[side].findIndex(hero=>hero.id===impact.target);
+   if(impact.kind==='heal'&&index>=0&&health[side][index]>0)health[side][index]=Math.min(teams[side][index].maxHp,health[side][index]+amount(impact.value));
+  }
   if(entry.action==='revive'||entry.action==='commander-revive'){
    const index=teams[side].findIndex(hero=>hero.id===entry.target);
    if(index>=0)health[side][index]=Math.min(teams[side][index].maxHp,amount(entry.value));
