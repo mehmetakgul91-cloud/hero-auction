@@ -20,3 +20,16 @@ test('failed final build hooks clear readiness and every weather resource',()=>{
  test('both active scenes bind without retaining a previous theme instance',()=>{const h=setup();for(const [i,theme] of ['ruins','savanna','ruins','savanna','ruins'].entries()){h.root.dataset.arenaTheme=theme;h.weather.update({theme,matchKey:`123:${i+1}:567`},{active:true});assert.equal(h.weather.state().theme,theme);}assert.equal(h.calls.filter(c=>c.startsWith('mount:')).length,5);assert.equal(h.calls.filter(c=>c.startsWith('dispose:')).length,4);h.weather.clear();assert.equal(h.calls.filter(c=>c.startsWith('dispose:')).length,5);});
 
  test('Viking mounts selected weather and disposes the prior theme without duplicate layers',()=>{const h=setup();h.weather.update(h.presentation,{active:true});h.root.dataset.arenaTheme='fjord';const view={theme:'fjord',matchKey:'123:5:568'};assert.deepEqual(h.weather.update(view,{active:true}),view);assert.deepEqual(h.weather.state(),{...view,mounted:true});assert.deepEqual(h.calls,['mount:savanna','dispose:savanna','mount:fjord']);h.weather.clear();assert.equal(h.calls.at(-1),'dispose:fjord');});
+
+test('slate suppresses decorative weather while preserving the separate layout mount',()=>{
+ const h=setup();h.root.dataset.arenaSurface='slate';
+ const decorative=createArenaWeather({root:h.root,mounts:h.mounts,suppressForSlate:true});
+ assert.equal(decorative.update(h.presentation,{active:true}),null);
+ assert.deepEqual(h.calls,[]);
+ assert.deepEqual(h.weather.update(h.presentation,{active:true}),h.presentation);
+ assert.deepEqual(h.calls,['mount:savanna']);
+ h.root.dataset.arenaSurface='legacy';decorative.update(h.presentation,{active:true});
+ h.root.dataset.arenaSurface='slate';decorative.update(h.presentation,{active:true});
+ assert.deepEqual(h.calls,['mount:savanna','mount:savanna','dispose:savanna']);
+ decorative.dispose();h.weather.dispose();
+});

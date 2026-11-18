@@ -4,12 +4,12 @@ import {isArenaTheme,validArenaMatchKey} from './arena-theme.js';
 import {mountSavannaDust} from './arena-dust.js';
 import {mountForestGust} from './arena-forest-gust.js';
 import {mountVikingWeather} from './arena-viking-weather.js';
-export function createArenaWeather({root,mounts={savanna:mountSavannaDust,ruins:mountForestGust,fjord:mountVikingWeather}}={}){
+export function createArenaWeather({root,suppressForSlate=false,mounts={savanna:mountSavannaDust,ruins:mountForestGust,fjord:mountVikingWeather}}={}){
  let instance=null,binding=null,disposed=false;
  function clear(){const old=instance;instance=null;binding=null;try{old?.dispose?.();}catch{/* Decoration cannot interrupt a match. */}}
  return {
   update(presentation,{active=false}={}){
-   const usable=active&&!disposed&&root&&!root.hidden&&root.isConnected!==false&&isArenaTheme(presentation?.theme)&&validArenaMatchKey(presentation?.matchKey)&&root.dataset?.arenaTheme===presentation.theme;
+   const usable=!(suppressForSlate&&root?.dataset?.arenaSurface==='slate')&&active&&!disposed&&root&&!root.hidden&&root.isConnected!==false&&isArenaTheme(presentation?.theme)&&validArenaMatchKey(presentation?.matchKey)&&root.dataset?.arenaTheme===presentation.theme;
    if(!usable){clear();return null;}
    if(binding?.matchKey===presentation.matchKey&&binding.theme===presentation.theme)return {...binding};
    clear();

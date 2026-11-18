@@ -1,0 +1,41 @@
+/* Approved tactile slate theme. Cosmetic only; retain fitted hero geometry. */
+body:has(#battle-arena) #battle-arena[data-arena-surface="slate"][data-arena-surface="slate"] {
+ background-color:#36383b;
+ background-image:linear-gradient(90deg,#0b172733,transparent 28% 72%,#26101733),url('/images/arena-themes/slate-stone-20261117.webp');
+ background-size:100% 100%,cover;
+ background-position:center;
+ background-repeat:no-repeat;
+ border:1px solid #757572;
+ box-shadow:inset 0 0 36px #11151b55,0 8px 24px #0003;
+}
+body:has(#battle-arena) #battle-arena[data-arena-surface="slate"][data-arena-surface="slate"]::before {
+ inset:0;left:0;top:0;width:auto;height:auto;
+ background:none;box-shadow:inset 0 0 0 3px #191e2466;
+}
+#battle-arena[data-arena-surface="slate"][data-arena-surface="slate"]::after{display:none}
+/* Keep scene layout measurements; side accents never wash over the sprites. */
+#battle-arena[data-arena-surface="slate"][data-arena-surface="slate"]>.arena-blue {
+ background:linear-gradient(90deg,#59b9ef18,transparent 18%);
+ box-shadow:inset 2px 0 #71c7ff99;
+}
+#battle-arena[data-arena-surface="slate"][data-arena-surface="slate"]>.arena-red {
+ background:linear-gradient(270deg,#ee6b8218,transparent 18%);
+ box-shadow:inset -2px 0 #ff859b99;
+}
+#battle-arena[data-arena-surface="slate"][data-arena-surface="slate"] .arena-silhouette .arena-portrait::before {
+ border-width:2px;box-shadow:0 1px 3px #0009;background:#13273844;
+}
+#battle-arena[data-arena-surface="slate"][data-arena-surface="slate"] .arena-silhouette[data-team="red"] .arena-portrait::before {
+ border-style:dashed;background:#3b162344;
+}
+#battle-arena[data-arena-surface="slate"][data-arena-surface="slate"] .arena-hero-label {
+ color:#f6f5ee;background:#151b24ed;text-shadow:0 1px 2px #000;
+}
+/* Defensive fallback for cached weather modules: no foreground decoration. */
+#battle-arena[data-arena-surface="slate"][data-arena-surface="slate"] :is([data-savanna-dust],[data-forest-gust],[data-viking-weather]){display:none!important}
+@media(forced-colors:active){
+ body:has(#battle-arena) #battle-arena[data-arena-surface="slate"][data-arena-surface="slate"]{background:Canvas;color:CanvasText;border-color:CanvasText;box-shadow:none}
+ #battle-arena[data-arena-surface="slate"][data-arena-surface="slate"]::before{box-shadow:none}
+ #battle-arena[data-arena-surface="slate"][data-arena-surface="slate"]>.arena-side{background:none;box-shadow:none}
+ #battle-arena[data-arena-surface="slate"][data-arena-surface="slate"] .arena-hero-label{background:Canvas;color:CanvasText;text-shadow:none}
+}

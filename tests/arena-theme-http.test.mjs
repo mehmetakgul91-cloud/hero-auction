@@ -68,7 +68,7 @@ test('real HTTP room, both seats, lane edits, rematch, blocked no-DB bot, previe
   }
   for(const prefix of ['', '/crazygames'])for(const file of ['forest-leaf.svg','viking-snow-far.svg','viking-snow-middle.svg','viking-snow-near.svg','viking-snow-gust.svg']){const path='/images/arena-themes/'+file,response=await fetch(base+prefix+path);assert.equal(response.status,200);assert.match(response.headers.get('content-type'),/image\/svg\+xml/);assert.equal(await response.text(),readFileSync(new URL('../public'+path,import.meta.url),'utf8'));}
   const cgBattle=await fetch(base+'/crazygames/battle-preview.js');assert.match(await cgBattle.text(),/from '\/crazygames\/arena-theme\.js'/);
-  assert.match(await(await fetch(base+'/crazygames/battle-preview.js')).text(),/from '\/crazygames\/arena-weather\.js'/);
+  assert.match(await(await fetch(base+'/crazygames/battle-preview.js')).text(),/from '\/crazygames\/arena-weather\.js(?:\?v=slate-20261117)?'/);
   assert.match(await(await fetch(base+'/crazygames/battle-preview.js')).text(),/from '\/crazygames\/arena-scene-layout\.js'/);
  }finally{child.kill('SIGTERM');await new Promise(resolve=>{if(child.exitCode!==null)return resolve();child.once('exit',resolve);setTimeout(resolve,2000).unref()})}
 });
