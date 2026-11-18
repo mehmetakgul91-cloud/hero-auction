@@ -18,24 +18,34 @@
 
 /* Optional sample theme for the solo replay. The underlying formation is shared. */
 body:has(#battle-arena) #battle-arena[data-arena-theme][data-stone-preview] {
-  background-color: #373c3e;
+  background-color: #343634;
   background-image:
-    radial-gradient(ellipse at 50% 47%, #a6abb012, transparent 67%),
-    linear-gradient(90deg, #15191bd9, transparent 12% 88%, #15191bd9),
-    repeating-linear-gradient(0deg, transparent 0 58px, #20242680 58px 60px),
-    repeating-linear-gradient(90deg, transparent 0 88px, #282d3055 88px 90px),
-    linear-gradient(#41484a, #303537);
+    linear-gradient(90deg, #171a19b8, transparent 17% 83%, #171a19b8),
+    linear-gradient(180deg, transparent 17%, #a594703b 18%, #171a19ab 19%, transparent 29%),
+    repeating-conic-gradient(from 114deg at 50% 12%, transparent 0 14deg, #181b1960 14deg 14.4deg, #a69a7e33 14.4deg 14.7deg),
+    linear-gradient(180deg,
+      transparent 26%, #22262188 26% 26.4%, transparent 26.4% 35%,
+      #22262188 35% 35.5%, transparent 35.5% 47%,
+      #22262188 47% 47.6%, transparent 47.6% 62%,
+      #22262188 62% 62.7%, transparent 62.7% 80%,
+      #22262188 80% 80.8%, transparent 80.8%),
+    radial-gradient(ellipse at 50% 28%, #68655b, #3b3f3c 66%, #252827);
   background-size: auto;
   background-position: center;
-  background-repeat: repeat;
-  box-shadow: inset 0 0 24px #101416a6;
+  background-repeat: no-repeat;
+  box-shadow: inset 0 0 38px #101416b3;
 }
 body:has(#battle-arena) #battle-arena[data-arena-theme][data-stone-preview]::before {
-  inset: 0;
+  inset: 0 0 auto;
   width: auto;
-  height: auto;
-  box-shadow: inset 0 1px #92867470, inset 0 -1px #92867470;
-  background: none;
+  height: 19%;
+  border: 0;
+  border-radius: 0;
+  background:
+    linear-gradient(180deg, #28333040 0%, #21282570 65%, #161b18e8 100%),
+    url('/images/arena-themes/ruins-premium.webp') center 12% / cover no-repeat;
+  box-shadow: inset 0 -2px #9c8c6580, 0 4px 10px #15181380;
+  z-index: -1;
   pointer-events: none;
 }
 #battle-arena[data-stone-preview] .arena-hero-label {
