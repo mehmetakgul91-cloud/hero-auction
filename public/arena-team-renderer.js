@@ -1,4 +1,3 @@
-import {approvedArenaPositions} from './arena-approved-formation.js';
 import {mountArenaSilhouette} from './arena-silhouettes.js';
 import {arcaneSurgePresentation} from './arcane-surge-presentation.js';
 import {heroHealthMeter} from './hero-health-meter.js';
@@ -22,7 +21,7 @@ export function createArenaTeamRenderer({document,loadArt,onDefeated=()=>{}}){
   const ids=new Set(units.map(unit=>unit.id));
   for(const [id,entry] of cards)if(!ids.has(id)){entry.card.remove();cards.delete(id);}
   parent.style.setProperty('--arena-row-count',String(rows));
-  const laneIndices={front:0,back:0},positions=approvedArenaPositions(units,side);
+  const laneIndices={front:0,back:0};
   units.forEach((unit,index)=>{
    let entry=cards.get(unit.id);
    if(entry&&entry.name!==unit.name){entry.card.remove();cards.delete(unit.id);entry=null;}
@@ -52,7 +51,6 @@ export function createArenaTeamRenderer({document,loadArt,onDefeated=()=>{}}){
    card.classList.toggle('frontline',lane==='front');card.classList.toggle('backline',lane==='back');card.classList.toggle('dead',unit.hp<=0);
    card.classList.toggle('cast',flash?.action!=='stun-skip'&&flash?.actorId===unit.id);card.classList.toggle('hit',flash?.action!=='stun-skip'&&flash?.targetId===unit.id);
    card.dataset.lane=lane;card.dataset.role=unit.role||'';
-   const [x,y]=positions.get(unit.id);card.style.setProperty('--approved-x',(x*100)+'%');card.style.setProperty('--approved-y',(10+y*96)+'%');card.style.zIndex=String(Math.round(y*100));
    card.style.gridColumn=lane==='front'?(side?'1':'2'):(side?'2':'1');card.style.gridRow=String(laneRows[lane][laneIndex]);card.style.setProperty('--arena-fitted-row',String(fittedRows[lane][laneIndex]));
    const rarityLabel=applyHeroRarity(document,portrait,unit);
    card.title=unit.name+' · '+rarityLabel+' · '+roleNames[unit.role]+(unit.hp<=0?(document.documentElement?.lang==='en'?' · Defeated':' · Yenildi'):'')+' · Can '+unit.hp+'/'+unit.maxHp;

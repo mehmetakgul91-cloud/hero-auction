@@ -18,7 +18,7 @@ import {createFriendsUI} from '/friends.js';
 import {translate} from '/crazygames-en.js';
 import {describeBattleEvent} from '/battle-event-text.js';
 import {createBattleReplayHealth} from '/battle-replay-health.js';
-import {createArenaTeamRenderer} from '/arena-team-renderer.js?v=courtyard-readability-20261118';
+import {createArenaTeamRenderer} from '/arena-team-renderer.js';
 import {summarizeBattle} from '/battle-summary-data.js?v=complete-results-20261021';
 import {commanderAbilityStats,commanderAbilityDescription} from '/commander-ability-rules.js?v=commander-attack-fix-20261021';
 import {getArenaLaneLayout,refreshArenaViewport} from '/arena-viewport.js?v=equal-lanes-20261026';
@@ -96,8 +96,6 @@ function syncArenaWeather(){
  // weather; static floor geometry stays until the arena is hidden or left.
  const visible=arenaWeatherReady&&!arenaWeatherPageHidden&&!document.hidden&&!leavingBattle;
  const active=visible&&!battlePresentationFinished&&(liveArenaMode||timer!==null);
- // Approved courtyard has its own geometry; legacy rooms keep their binders.
- if(document.getElementById?.('battle-arena')?.dataset.approvedCourtyard==='v1'){arenaSceneLayout.clear();arenaWeather.clear();return;}
  arenaSceneLayout.update(arenaTheme.current(),{active:visible});
  arenaWeather.update(arenaTheme.current(),{active});
 }
