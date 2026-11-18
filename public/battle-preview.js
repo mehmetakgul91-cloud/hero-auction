@@ -682,7 +682,7 @@ async function build(overrideResult){
  try{
   let result=overrideResult;
   if(!result&&auctionMode){const response=await fetch('/api/battle-auction-preview?matchCommanderSelection=1&code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});const data=await response.json();if(!response.ok)throw Error(data.error||'Savaş alınamadı');if(!data.started){$('message').textContent='Rakibin dizilişi bekleniyor… '+data.ready.filter(Boolean).length+'/2 hazır';return}result=data.result}
-  if(!result){const response=await fetch('/api/battle-preview?roles='+encodeURIComponent(positions.map((i,slot)=>roleAt(slot)).join(','))+'&positions='+encodeURIComponent(positions.join(','))+'&lanes='+encodeURIComponent(lanes.join(',')),{cache:'no-store'});if(!response.ok)throw Error('Savaş verisi alınamadı ('+response.status+')');result=await response.json()}
+  if(!result){const response=await fetch('/api/battle-preview?roles='+encodeURIComponent(positions.map((i,slot)=>lanes[slot]==='back'?'energy':roleAt(slot)==='tank'?'tank':'fighter').join(','))+'&positions='+encodeURIComponent(positions.join(','))+'&lanes='+encodeURIComponent(lanes.join(',')),{cache:'no-store'});if(!response.ok)throw Error('Savaş verisi alınamadı ('+response.status+')');result=await response.json()}
   // Only already-validated room identity selects the decorative board; no URL override.
   const arenaMatch=auctionMode?(preparationMatchKey?auctionCode+':'+preparationMatchKey:null):multiplayerArenaKey||previewMusicMatchKey;
   arenaTheme.apply(result.arenaPresentation,arenaMatch);
