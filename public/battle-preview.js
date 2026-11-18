@@ -97,7 +97,7 @@ function syncArenaWeather(){
  const visible=arenaWeatherReady&&!arenaWeatherPageHidden&&!document.hidden&&!leavingBattle;
  const active=visible&&!battlePresentationFinished&&(liveArenaMode||timer!==null);
  arenaSceneLayout.update(arenaTheme.current(),{active:visible});
- arenaWeather.update(arenaTheme.current(),{active});
+ arenaWeather.update(arenaTheme.current(),{active:active&&!stoneThemePreview});
 }
 
 let demoA=[["Obsidyen Muhafız", "tank", 90, "original"], ["Demir Sur", "tank", 69, "original"], ["Kaya Titanı", "tank", 80, "original"], ["Buz Kalesi", "tank", 83, "original"], ["Gölge Suikastçı", "assassin", 90, "original"]];
@@ -287,6 +287,7 @@ function finishCommanderControls(){
 }
 const multiplayerCode=query.get('code');
 const multiplayerToken=query.get('token');
+const stoneThemePreview=!auctionMode&&!multiplayerCode&&query.get('themePreview')==='stone';
 let battlePoll=null;
 let leavingBattle=false;
 // The formation page remains an authenticated participant while waiting; reads
@@ -686,6 +687,10 @@ async function build(overrideResult){
   // Only already-validated room identity selects the decorative board; no URL override.
   const arenaMatch=auctionMode?(preparationMatchKey?auctionCode+':'+preparationMatchKey:null):multiplayerArenaKey||previewMusicMatchKey;
   arenaTheme.apply(result.arenaPresentation,arenaMatch);
+  if(stoneThemePreview){
+   $('battle-arena').setAttribute('data-stone-preview','');
+   $('battle-arena').setAttribute('aria-label',document.documentElement.lang==='en'?'Battle arena · Matte stone preview':'Savaş arenası · Sade taş önizlemesi');
+  }
   renderArenaCommanderMatchup(result.commanders);
   // Persisted completed live results render directly, even without a live registry.
   if(result.live===true&&result.finished===true){
