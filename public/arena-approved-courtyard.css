@@ -1,18 +1,31 @@
 /* Accepted courtyard and preview coordinates. Presentation only. */
-body:has(#battle-arena) #battle-arena{container-type:size;position:relative;display:block;background-image:url('/images/arena-themes/courtyard-approved-20261117.webp')!important;background-size:cover!important;background-position:center!important;background-color:#222b30;padding:0!important;isolation:isolate}
+body:has(#battle-arena) #battle-arena{container-type:size;position:relative;background-image:url('/images/arena-themes/courtyard-approved-20261117.webp')!important;background-size:cover!important;background-position:center!important;background-color:#222b30;padding:0!important;isolation:isolate}
+body:has(#battle-arena) #battle-arena:not([hidden]){display:block}
 body:has(#battle-arena) #battle-arena::before,body:has(#battle-arena) #battle-arena::after{display:none}
 body:has(#battle-arena) #battle-arena .arena-side{position:absolute;inset:0;width:100%;height:100%;padding:0;background:none;border:0;box-shadow:none;pointer-events:none}
 body:has(#battle-arena) #battle-arena .arena-side h2{display:none}
 body:has(#battle-arena) #battle-arena .arena-side .team{position:absolute;inset:0;display:block;width:100%;height:100%;min-height:0;margin:0;padding:0}
-body:has(#battle-arena) #battle-arena .arena-side .arena-hero{--approved-size:clamp(84px,min(16.667cqw,26.667cqh),240px);position:absolute;left:var(--approved-x);top:var(--approved-y);transform:translate(-50%,calc(-100% + 24px));display:flex;flex-direction:column;align-items:center;justify-content:end;gap:2px;width:var(--approved-size);height:auto;max-width:none;max-height:none;min-height:0;padding:0;margin:0;container-type:normal;background:none;border:0;box-shadow:none;overflow:visible;pointer-events:auto}
+body:has(#battle-arena) #battle-arena .arena-side .arena-hero{--approved-size:clamp(84px,min(19cqw,29cqh),240px);position:absolute;left:var(--approved-x);top:var(--approved-y);transform:translate(-50%,calc(-100% + 24px));display:flex;flex-direction:column;align-items:center;justify-content:end;gap:2px;width:var(--approved-size);height:auto;max-width:none;max-height:none;min-height:0;padding:0;margin:0;container-type:normal;background:none;border:0;box-shadow:none;overflow:visible;pointer-events:auto}
 body:has(#battle-arena) #battle-arena .arena-hero .arena-portrait{width:var(--approved-size);height:var(--approved-size);min-width:0;max-height:none;flex:none;aspect-ratio:1;container-type:normal}
-body:has(#battle-arena) #battle-arena .arena-hero-label{width:78%;max-width:100%;height:auto;min-height:12px;font-size:clamp(10px,1.1cqw,14px);line-height:1.2;margin:0;position:relative;z-index:2}
-body:has(#battle-arena) #battle-arena .arena-hero .hp,body:has(#battle-arena) #battle-arena .arena-hero .arena-shield{width:50%;margin:0;flex:none}
-body:has(#battle-arena) #battle-arena .arena-hero .hp{height:5px;min-height:5px}
+body:has(#battle-arena) #battle-arena .arena-hero-label{width:76%;max-width:100%;height:auto;min-height:13px;font-size:clamp(9px,1.15cqw,14px);line-height:1.25;margin:0;position:relative;z-index:2}
+body:has(#battle-arena) #battle-arena .arena-hero .hp,body:has(#battle-arena) #battle-arena .arena-hero .arena-shield{width:54%;margin:0;flex:none}
+body:has(#battle-arena) #battle-arena .arena-hero .hp{height:6px;min-height:6px}
 body:has(#battle-arena) #battle-arena .arena-hero .arena-shield{height:3px;min-height:3px}
 .arena-silhouette-body canvas{display:block;width:100%;height:100%;pointer-events:none}
-body:has(#battle-arena) #battle-arena .arena-silhouette:not(.dead):not(.special-cast):not(.healing-aura):not(.shield-aura) .arena-silhouette-body{filter:drop-shadow(0 2px 2px #000b);opacity:1}
+body:has(#battle-arena) #battle-arena .arena-silhouette:not(.dead):not(.special-cast):not(.healing-aura):not(.shield-aura) .arena-silhouette-body{filter:brightness(1.22) saturate(1.45) contrast(1.08) drop-shadow(0 0 1px #e8f5ffb3) drop-shadow(0 2px 2px #000b);opacity:1}
 body:has(#battle-arena) #battle-arena .arena-silhouette[data-team=red] .arena-portrait::before{border-style:dashed}
 @media(forced-colors:active){body:has(#battle-arena) #battle-arena{background:Canvas!important}}
 
-body:has(#battle-arena) #battle-arena .arena-silhouette .arena-portrait::before{width:48%;left:26%;height:7%}
+body:has(#battle-arena) #battle-arena .arena-silhouette .arena-portrait::before{width:58%;left:21%;height:8%;border-width:2px}
+
+/* Give long hero names breathing room on landscape boards. */
+@container (min-aspect-ratio: 3/2) {
+ #battle-arena .arena-hero-label { padding-inline: 3px; }
+}
+
+@media (max-width: 600px) {
+ body:has(#battle-arena) #battle-arena .arena-side .arena-hero {
+  --approved-size: clamp(72px, min(23cqw, 26cqh), 122px);
+ }
+ body:has(#battle-arena) #battle-arena .arena-hero-label { width: 88%; }
+}
