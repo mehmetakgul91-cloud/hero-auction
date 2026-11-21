@@ -1175,16 +1175,19 @@ async function recoverBotServerFailure(){
 let battleRematchShown=false;
 async function showAuctionRematch(){
  if(battleRematchShown||!auctionMode)return;battleRematchShown=true;
- const completedMatchKey=preparationMatchKey;
- try{const response=await fetch('/api/battle-auction-complete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken})});const data=await response.json();if(!response.ok)throw Error(data.error||'Savaş tamamlanamadı');
+ const completedMatchKey=preparationMatchKey,expectedMatchId=auctionCode+':'+completedMatchKey;
+ try{const response=await fetch('/api/battle-auction-complete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,...(completedMatchKey?{expectedMatchId}:{})})});const data=await response.json();if(!response.ok)throw Error(data.error||'Savaş tamamlanamadı');
  if(leavingBattle||preparationMatchKey!==completedMatchKey)return;
  showVictoryChest(data);showBotSettlementStatus(data);
  const controls=$('battle-summary');if(!controls)return;
- const button=document.createElement('button');button.type='button';button.textContent='⚔ RÖVANŞ İSTE';button.className='primary arena-rematch-button';
- const title=$('battle-summary-title');if(title)title.after(button);else controls.prepend(button);
- const series=document.createElement('div');series.id='arena-rematch-series';series.setAttribute('role','status');series.style.cssText='display:block;width:100%;box-sizing:border-box;margin:12px 0;padding:16px;border:2px solid #58dfff;border-radius:12px;background:#11233b;color:#fff;text-align:center;font-weight:700';
+ const actions=document.createElement('section');actions.className='arena-rematch-actions';
+ const notice=document.createElement('div');notice.className='arena-rematch-status';notice.setAttribute('role','status');notice.setAttribute('aria-atomic','true');
+ const button=document.createElement('button');button.type='button';button.className='primary arena-rematch-button';
+ const errorNotice=document.createElement('p');errorNotice.className='arena-rematch-error';errorNotice.setAttribute('role','alert');
+ actions.append(notice,button,errorNotice);
+ const title=$('battle-summary-title');if(title)title.after(actions);else controls.prepend(actions);
+ const series=document.createElement('div');series.id='arena-rematch-series';series.setAttribute('role','status');
  const seat=Number(data.seat),scores=Array.isArray(data.series)?data.series:[0,0],players=Array.isArray(data.players)?data.players:[];
- series.removeAttribute('style');
  const caption=document.createElement('small');caption.textContent='RÖVANŞ SERİSİ';
  const scoreline=document.createElement('div');scoreline.className='arena-series-scoreline';
  const own=document.createElement('span');own.textContent=players[seat]?.name||'SEN';
@@ -1192,16 +1195,85 @@ async function showAuctionRematch(){
  const rival=document.createElement('span');rival.textContent=players[1-seat]?.name||'RAKİP';
  scoreline.append(own,score,rival);series.append(caption,scoreline);
 
- button.after(series);
- button.onclick=async()=>{button.disabled=true;try{const auth=JSON.parse(localStorage.getItem('hero-auction-login')||'null');
- const identity={code:auctionCode,token:auctionToken,authToken:auth?.authToken};
- const stateResponse=await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(identity)});
- const state=await stateResponse.json();if(!stateResponse.ok)throw Error(state.error||'Maç durumu doğrulanamadı');
- const botScope=String(auth?.user?.sub||'unidentified')+':'+auctionCode+':'+completedMatchKey;
- const consent=state.room?.mode==='bot'?await botEntryConsent.request(botScope,state.room.difficulty||'medium'):{};
- if(!consent){button.disabled=false;return;}
- if(leavingBattle||preparationMatchKey!==completedMatchKey||JSON.parse(localStorage.getItem('hero-auction-login')||'null')?.authToken!==auth?.authToken){button.disabled=false;return;}
- const response=await fetch('/api/rematch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...identity,...consent,...(state.room?.mode==='bot'?{expectedMatchId:auctionCode+':'+completedMatchKey}:{})})});const result=await response.json();if(!response.ok)throw Error(result.error||'Rövanş gönderilemedi');botEntryConsent.complete(botScope);button.textContent='✓ RÖVANŞ İSTEĞİ GÖNDERİLDİ';const watch=setInterval(async()=>{try{const response=await fetch('/api/battle-auction-team?matchCommanderSelection=1&code='+encodeURIComponent(auctionCode)+'&token='+encodeURIComponent(auctionToken),{cache:'no-store'});if(response.status===409){clearInterval(watch);window.HeroPlatform?.beforeNavigate('/crazygames/');location.replace('/')} }catch{}},2500);}catch(e){button.disabled=false;$('message').textContent='⚠ '+e.message}};
+ actions.after(series);
+ const english=document.documentElement.lang==='en', copy=(tr,en)=>english?en:tr;
+ const isBot=data.mode==='bot';
+ const isCurrent=()=>actions.isConnected&&preparationMatchKey===completedMatchKey;
+ const navigate=()=>{
+  if(leavingBattle||!isCurrent())return;
+  leavingBattle=true;
+  const home=window.HeroPlatform?'/crazygames/':'/';
+  window.HeroPlatform?.beforeNavigate(home);location.replace(home);
+ };
+ let status=null,submitting=false,pollVersion=0,statusExpired=false;
+ function update(statusNext){
+  if(status!==statusNext){
+   status=statusNext;
+   actions.classList.toggle('arena-rematch-has-incoming',status==='incoming');
+   notice.replaceChildren();
+   if(status==='incoming'){
+    const headline=document.createElement('strong');headline.className='arena-rematch-incoming';
+    headline.textContent=copy('Rakibin rövanş istiyor!','Your opponent wants a rematch!');
+    const detail=document.createElement('small');detail.textContent=copy('Kabul edersen yeni maç başlar.','Accept to start a new match.');
+    notice.append(headline,detail);
+   }else if(status==='sent')notice.textContent=copy('Rövanş isteğin gönderildi. Rakibin onayı bekleniyor.','Rematch requested. Waiting for your opponent.');
+   else if(status==='starting')notice.textContent=copy('Rövanş hazırlanıyor…','Starting the rematch…');
+   else if(status==='unavailable')notice.textContent=copy('Rövanş artık kullanılamıyor.','Rematch is no longer available.');
+   button.textContent=status==='incoming'?copy('Rövanşı kabul et','Accept rematch'):copy('Rövanş iste','Request rematch');
+  }
+  button.disabled=submitting||status==='sent'||status==='starting'||status==='unavailable';
+  actions.setAttribute('aria-busy',String(submitting));
+ }
+ update('available');
+ const statusUrl='/api/battle-rematch-status?'+new URLSearchParams({code:auctionCode,token:auctionToken,matchKey:completedMatchKey||''});
+ async function poll(){
+  if(!isCurrent())return;
+  const version=pollVersion;
+  if(!leavingBattle&&!document.hidden&&!submitting){
+   try{
+    const response=await fetch(statusUrl,{cache:'no-store',signal:AbortSignal.timeout(7000)});
+    if(!isCurrent()||leavingBattle||document.hidden||version!==pollVersion)return;
+    if(response.status===403){statusExpired=true;update('unavailable');}
+    else if(response.ok){
+     const state=await response.json();
+     if(!isCurrent()||leavingBattle||document.hidden||version!==pollVersion)return;
+     if(state.status==='started'){navigate();return;}
+     if(['available','incoming','sent','starting','unavailable'].includes(state.status))update(state.status);
+    }
+   }catch{}
+  }
+ }
+ async function watch(){
+  await poll();
+  if(isCurrent()&&!leavingBattle&&!statusExpired)setTimeout(watch,1800);
+ }
+ if(!isBot&&completedMatchKey)void watch();
+ button.onclick=async()=>{
+  if(button.disabled||leavingBattle||!isCurrent())return;
+  submitting=true;pollVersion++;errorNotice.textContent='';update(status);
+  try{
+   const auth=JSON.parse(localStorage.getItem('hero-auction-login')||'null');
+   const botScope=String(auth?.user?.sub||'unidentified')+':'+expectedMatchId;
+   let consent={};
+   if(isBot){
+    const stateResponse=await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,authToken:auth?.authToken})});
+    const state=await stateResponse.json();
+    if(!stateResponse.ok)throw Error(state.error||'Maç durumu doğrulanamadı');
+    if(state.room?.mode!=='bot'||state.room?.matchId!==expectedMatchId)throw Error('Maç değişti. Yeniden onayla.');
+    consent=await botEntryConsent.request(botScope,state.room.difficulty||'medium');
+    if(!consent)return;
+   }
+   if(leavingBattle||!isCurrent()||JSON.parse(localStorage.getItem('hero-auction-login')||'null')?.authToken!==auth?.authToken)return;
+   const response=await fetch('/api/rematch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:auctionCode,token:auctionToken,authToken:auth?.authToken,...consent,expectedMatchId})});
+   const result=await response.json();if(!response.ok)throw Error(result.error||'Rövanş gönderilemedi');
+   if(!isCurrent()||leavingBattle)return;
+   if(isBot)botEntryConsent.complete(botScope);
+   if(result.room?.phase==='auction'){navigate();return;}
+   update('sent');
+  }catch(e){if(isCurrent()&&!leavingBattle)errorNotice.textContent='⚠ '+(english?translate(e.message):e.message);}
+  finally{submitting=false;update(status);}
+ };
+
  }catch(e){battleRematchShown=false;$('message').textContent='⚠ '+e.message}
 }
 

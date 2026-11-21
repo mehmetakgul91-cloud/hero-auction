@@ -409,6 +409,18 @@ body.arena-results .shell{height:auto;min-height:100dvh;padding-top:8px}
 .arena-results #battle-summary-title{font-size:clamp(23px,5vw,32px);letter-spacing:1px;margin:4px 0 16px;color:#a7e7f3}
 .arena-results [data-winner="red"] #battle-summary-title{color:#f0b4c3}
 .arena-rematch-button{display:block;width:100%;min-height:48px;margin:10px 0 12px;background:linear-gradient(110deg,#167b9c,#315a9b);border:1px solid #79c7df;border-radius:10px;color:#fff;font-weight:800}
+.arena-rematch-actions{margin:10px 0 12px}
+.arena-rematch-actions .arena-rematch-button{margin:0;line-height:1.25;white-space:normal}
+.arena-rematch-status:not(:empty){margin:0 0 8px;color:inherit;font-size:.9rem}
+.arena-rematch-has-incoming{padding:clamp(10px,3vw,16px);border:2px solid #cb8827;border-radius:14px;background:#fff2ce;color:#402704;text-align:center}
+.arena-rematch-has-incoming .arena-rematch-status{padding:2px 0 4px;color:#402704}
+.arena-rematch-incoming{display:block;font-size:clamp(1.06rem,4vw,1.4rem);line-height:1.25}
+.arena-rematch-status small{display:block;margin-top:4px;font-size:.86rem}
+.arena-rematch-has-incoming .arena-rematch-button:not(:disabled){background:#734300!important;border-color:#734300!important;color:#fff!important;box-shadow:none}
+.arena-rematch-has-incoming .arena-rematch-button:not(:disabled):hover{background:#583200!important}
+.arena-rematch-error:empty{display:none}
+.arena-rematch-error{margin:8px 0 0;padding:8px;border-radius:6px;background:#fae2e3;color:#751f2a;font-size:.9rem}
+.arena-rematch-button:focus-visible{outline:3px solid #134a88;outline-offset:3px}
 #arena-rematch-series{padding:12px;margin:12px 0;border:1px solid #576b83;border-radius:12px;background:#09152480;text-align:center}
 #arena-rematch-series>small{display:block;color:#9aafc5;font-size:9px;letter-spacing:1.5px;margin-bottom:8px}
 .arena-series-scoreline{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px}

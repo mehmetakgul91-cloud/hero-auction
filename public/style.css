@@ -307,6 +307,10 @@ header{gap:14px;flex-wrap:wrap}
 #game .victory-teams .final-team{min-width:0;background:linear-gradient(150deg,#13213b,#0b1528);border-color:#3c6887}
 #game .victory-teams .final-team h3{font-size:13px;color:#7feef1}
 #game .victory-teams .final-hero{gap:8px;overflow-wrap:anywhere}
+#game .victory-rematch-incoming{border:2px solid #cb8827;border-radius:14px;background:#fff2ce;padding:12px;margin:12px auto;max-width:470px;box-sizing:border-box}
+#game .victory-rematch-incoming .victory-rematch-note{margin:0 0 8px;color:#402704;font-weight:800;font-size:clamp(1.06rem,4vw,1.4rem)}
+#game .victory-rematch-incoming #rematch:not(:disabled){background:#734300!important;color:#fff!important;border-color:#734300!important;box-shadow:none}
+#game .victory-rematch-incoming .victory-controls{margin-bottom:0}
 #game .victory-rematch-note{margin:22px 0 12px}
 #game .victory-controls{max-width:470px;margin:0 auto 12px}
 #game .victory-controls button{min-height:54px;font-size:14px;box-shadow:0 0 22px #3ee4ef2a}

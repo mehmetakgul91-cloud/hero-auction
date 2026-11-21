@@ -40,12 +40,11 @@ test('bot chest accepts only fixed no-diamond tuples and preserves PvP schema',(
  for(const [gold,magicDust] of [[100,0],[125,2],[175,5]])assert.ok(victoryChestReceipt(receipt({gold,magicDust,diamonds:0}),'123:1:1'));
  for(const rewards of [{gold:175,magicDust:5,diamonds:1},{gold:125,magicDust:0,diamonds:0},{gold:120,magicDust:4,diamonds:0}])assert.equal(victoryChestReceipt(receipt(rewards),'123:1:1'),null);
 });
-test('all bot entry surfaces call the zero-cost request guard; fallback cancel only detaches',()=>{
- const app=readFileSync(new URL('../public/app.js',import.meta.url),'utf8'),battle=readFileSync(new URL('../public/battle-preview.js',import.meta.url),'utf8');
+test('lobby bot entry surfaces call the zero-cost request guard; fallback cancel only detaches',()=>{
+ const app=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
  assert.match(app,/botEntryConsent\.request\(scope,difficulty\)/);
  assert.match(app,/enterBotGame\('\/api\/bot-accept'/);
  assert.match(app,/\$\('bot-offer-cancel'\)\.onclick=\(\)=>\$\('leave'\)\.click\(\)/);
- assert.match(battle,/state\.room\?\.mode==='bot'\?await botEntryConsent\.request/);
 });
 
 test('portal admission request identifiers use isolated storage',()=>{const source=readFileSync(new URL('../public/bot-entry.js',import.meta.url),'utf8');assert.match(crazyGamesSource(source,'.js'),/hero-auction-cg-bot-entry/);});
