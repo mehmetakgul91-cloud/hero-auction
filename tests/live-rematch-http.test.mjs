@@ -26,6 +26,8 @@ test('two completed live matches retain the correct series for both seats and ch
   const code=created.body.room.code;players[0].token=created.body.token;
   const joined=await post('/api/join',{code,...players[1]});assert.equal(joined.status,200);players[1].token=joined.body.token;
   const expectedSeries=[0,0];
+  let firstMatchId;
+  const status=(player,matchId)=>get('/api/battle-rematch-status',{code,token:player.token,matchKey:matchId.slice(code.length+1)});
   for(let match=0;match<2;match++){
    let room=(await post('/api/state',{code,...players[0]})).body.room;
    assert.deepEqual(room.series,expectedSeries);
@@ -33,6 +35,10 @@ test('two completed live matches retain the correct series for both seats and ch
     const passed=await post('/api/pass',{code,...players[room.turn]});assert.equal(passed.status,200);room=passed.body.room;
    }
    assert.equal(room.phase,'finished');
+   const matchId=room.matchId;
+   assert.ok(matchId.startsWith(code+':'));
+   assert.deepEqual(await status(players[0],matchId),{status:'unavailable'},'uncompleted seats cannot see a rematch');
+   if(match===0)firstMatchId=matchId;
    const {teams}=await get('/api/battle-auction-team',{code,token:players[0].token});
    for(let i=0;i<2;i++){
     const formation=await post('/api/battle-auction-preview',{code,token:players[i].token,positions:[0,1,2,3,4],lanes:['front','front','back','back','back'],roles:teams[i].map(h=>h.role)});
@@ -61,17 +67,31 @@ test('two completed live matches retain the correct series for both seats and ch
    assert.deepEqual(finalDelta.summary,live.summary,'even an empty final poll retains full battle statistics');
    assert.deepEqual(reversed.summary.teams,[live.summary.teams[1],live.summary.teams[0]]);
    for(let repeat=0;repeat<2;repeat++)for(const player of players){
-    const completed=await post('/api/battle-auction-complete',{code,token:player.token});
+    const completed=await post('/api/battle-auction-complete',{code,token:player.token,expectedMatchId:matchId});
     assert.equal(completed.status,200);assert.deepEqual(completed.body.series,expectedSeries);
    }
    assert.deepEqual((await post('/api/state',{code,...players[0]})).body.room.series,expectedSeries);
+   assert.deepEqual(await status(players[0],matchId),{status:'available'});
+   assert.deepEqual(await status(players[1],matchId),{status:'available'});
+   const bad=await fetch(base+'/api/battle-rematch-status?'+new URLSearchParams({code,token:'not-a-seat',matchKey:matchId.slice(code.length+1)}));
+   assert.equal(bad.status,403);
+   assert.equal(bad.headers.get('cache-control'),'no-store');
+   if(match===1){
+    assert.deepEqual(await status(players[0],firstMatchId),{status:'unavailable'},'an old result must never display the next match’s offers');
+    assert.equal((await post('/api/rematch',{code,...players[0],expectedMatchId:firstMatchId})).status,409);
+    assert.equal((await post('/api/battle-auction-complete',{code,token:players[0].token,expectedMatchId:firstMatchId})).status,409);
+    assert.deepEqual(await status(players[1],matchId),{status:'available'},'old clicks did not generate a request');
+   }
    if(match===0){
     const before=await Promise.all(players.map(p=>post('/api/wallet',p)));
-    assert.equal((await post('/api/rematch',{code,...players[0]})).status,200);
-    const requests=await Promise.all([0,1].map(()=>post('/api/rematch',{code,...players[1]})));
+    assert.equal((await post('/api/rematch',{code,...players[0],expectedMatchId:matchId})).status,200);
+    assert.deepEqual(await status(players[0],matchId),{status:'sent'});
+    assert.deepEqual(await status(players[1],matchId),{status:'incoming'},'recipient sees a request without initiating a rematch');
+    const requests=await Promise.all([0,1].map(()=>post('/api/rematch',{code,...players[1],expectedMatchId:matchId})));
     assert.equal(requests.filter(r=>r.status===200).length,1,'duplicate rematch must not start twice');
     const next=requests.find(r=>r.status===200).body.room;
     assert.equal(next.phase,'auction');assert.deepEqual(next.series,expectedSeries);
+    for(const player of players)assert.deepEqual(await status(player,matchId),{status:'started'});
     assert.ok(next.players.every(p=>p.credits===20&&p.team.length===0));
     const after=await Promise.all(players.map(p=>post('/api/wallet',p)));
     for(let i=0;i<2;i++)assert.equal(after[i].body.gold,before[i].body.gold-50);

@@ -446,6 +446,8 @@ Object.assign(phrases, {
  "Savaş durumu alınamadı": "Could not load battle status",
  "Savaş verisi alınamadı": "Could not load battle data",
  "Rövanş gönderilemedi": "Could not request a rematch",
+ "Maç değişti. Yeniden onayla.": "The match has changed. Return to the lobby and try again.",
+ "Maç durumu doğrulanamadı": "Could not verify the match status",
  "Açık artırmada seçilen kahramanlar yüklenemedi:": "Could not load heroes selected in the auction:",
  "2. OYUNCU": "PLAYER 2",
  "Katılması bekleniyor…": "Waiting to join…",

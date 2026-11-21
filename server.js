@@ -1247,6 +1247,7 @@ if(url==='/api/join'){const r=rooms.get(String(b.code||'').toUpperCase());if(!r)
 if(url==='/api/rematch'){
  const{r,seat}=authorize(b);
  if(r.mode==='bot')return startPaidBot(b,r,'rematch');
+ if(b.expectedMatchId!==undefined&&b.expectedMatchId!==victoryMatchId(r))error('Maç değişti. Yeniden onayla.',409);
  if(r.rematchPending)error('Rövanş hazırlanıyor.',409);
  if((r.battleSettlementPending||r.victoryChestPending)&&!r.matchSettled)error('Savaş sonucu ve ödülleri henüz kesinleşmedi.');
  if(r.players.every(p=>p?.team?.length===5)&&r.battleSync?.result&&!r.battleCompleted?.[seat])error('Önce 2.0 savaşını tamamlamalısın.');
@@ -1421,11 +1422,29 @@ function battlePreparationResponse(room,sync,seat){return {matchKey:sync.key,com
 
 function battleSessionResult(session){const cards=(ids,formation)=>formation.map((index,slot)=>({id:ids[index],power:stablePower(ids[index]),lane:session.players[ids===battleIdsA?0:1].lanes?.[slot]||(slot<2?'front':'back'),role:session.players[ids===battleIdsA?0:1].roles?.[slot]||((slot<2)?'tank':'energy')}));const a=cards(battleIdsA,session.players[0].positions),b=cards(battleIdsB,session.players[1].positions);const result=simulateRosterBattle(a,b,{seed:'battle-room-'+session.code+'-'+session.created});return {arenaPresentation:roomArenaPresentation(session),winner:result.winner,rounds:result.rounds,teams:result.teams,initialShields:result.initialShields,log:result.log};}
 function validBattlePositions(v){return Array.isArray(v)&&v.length===5&&new Set(v).size===5&&v.every(x=>Number.isInteger(x)&&x>=0&&x<5)}
-const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data))};try{const url=new URL(req.url,'http://localhost');if(nativeCors(req,res,url.pathname))return;if(req.method==='POST'&&url.pathname==='/api/battle-auction-complete'){
+const server=http.createServer(async(req,res)=>{const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data))};try{const url=new URL(req.url,'http://localhost');if(nativeCors(req,res,url.pathname))return;if(req.method==='GET'&&url.pathname==='/api/battle-rematch-status'){
+ // Result-screen polling does not register a room action, touch presence or write room state.
+ const code=String(url.searchParams.get('code')||'').toUpperCase(),room=rooms.get(code);
+ const seat=room?.players?.findIndex(p=>p?.token===url.searchParams.get('token'))??-1;
+ if(!room||seat<0)return send(403,{error:'Oda veya oyuncu yetkisi geçersiz.'});
+ const matchKey=url.searchParams.get('matchKey')||'';
+ if(!/^\d{1,15}:\d{1,15}$/.test(matchKey))return send(400,{error:'Maç anahtarı geçersiz.'});
+ if(!moderationReady||room.mode==='bot'||room.idleClosed||idleRoomJobs.has(code)||room.cancelled||moderation.blocked(room.players[0]?.accountId,room.players[1]?.accountId))return send(200,{status:'unavailable'});
+ if(code+':'+matchKey!==victoryMatchId(room)){
+  // A different preparation/result must never be displayed as an offer for this match.
+  const previous=Number(matchKey.split(':')[0]);
+  return send(200,{status:(room.matchNumber||1)===previous+1&&room.phase==='auction'?(room.rematchPending?'starting':'started'):'unavailable'});
+ }
+ if(room.phase!=='finished'||!room.battleCompleted?.[seat])return send(200,{status:'unavailable'});
+ const status=room.rematchPending?'starting':room.rematch?.[seat]?'sent':room.rematch?.[1-seat]?'incoming':'available';
+ return send(200,{status});
+}
+if(req.method==='POST'&&url.pathname==='/api/battle-auction-complete'){
  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>1000)return send(413,{error:'İstek çok büyük'})}
  let body;try{body=JSON.parse(raw)}catch{return send(400,{error:'Geçersiz veri'})}
  const room=rooms.get(String(body?.code||'').toUpperCase());const seat=room?.players?.findIndex(p=>p?.token===body?.token)??-1;
  if(!room||seat<0)return send(403,{error:'Yetkisiz'});
+ if(body.expectedMatchId!==undefined&&body.expectedMatchId!==victoryMatchId(room))return send(409,{error:'Maç değişti. Yeniden onayla.'});
  if(room.phase!=='finished')return send(409,{error:'Açık artırma bitmedi'});
  try{prepareBattleTeams(auctionRoomToBattleState(room))}catch(e){return send(422,{error:e.message})}
  if(!room.battleSync?.result)return send(409,{error:'Savaş henüz başlamadı'});
