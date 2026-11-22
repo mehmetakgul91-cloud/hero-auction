@@ -12,9 +12,9 @@ export function heroSpriteProfile(hero={}) {
  return MELEE_SPRITES[hero.id] || CASTER_SPRITES[hero.id] || null;
 }
 export function casterEmissionPoint(profile,{from,to,width,special=false}){
- const size=Math.max(110,Math.min(220,width*2.7)),direction=to.x>=from.x?1:-1;
+ const direction=to.x>=from.x?1:-1;
  const hand=special?profile.specialContact:profile.contact;
- return {x:from.x+direction*(width*.6+(hand[0]-.5)*size),y:from.y+width*.18+(hand[1]-.5)*size};
+ return {x:from.x+direction*(hand[0]-.5)*width,y:from.y+(hand[1]-.5)*width};
 }
 // The special channel belongs to this body, so multi-target abilities draw it
 // once. It is decoration only and shares the body's frame/cancellation owner.
@@ -126,7 +126,7 @@ export function appendHeroSprite({document,effects,hero,from,to,width,arrival,ch
  const node = document.createElement('span');
  node.className = 'hero-melee-sprite' + (special ? ' is-special' : '');
  node.setAttribute('aria-hidden','true');
- const size = Math.max(110,Math.min(220,width*2.7));
+ const size = profile.stationary ? width : Math.max(110,Math.min(220,width*2.7));
  node.style.width=size+'px';node.style.height=size+'px';node.append(canvas);
  canvas.width=canvas.height=384;
  const direction=to.x>=from.x?1:-1,started=clock(),fadeMs=special?430:260,total=arrival+fadeMs;
@@ -140,8 +140,8 @@ export function appendHeroSprite({document,effects,hero,from,to,width,arrival,ch
   if(!active||!valid())return;
   const elapsed=clock()-started,p=clamp(elapsed/poseAt),out=ease(p/.3),approach=ease((p-.22)/.78);
   const endX=to.x-direction*(hand[0]-.5)*size,endY=to.y-(hand[1]-.5)*size;
-  const x=profile.stationary?from.x+direction*width*.6*out:from.x+(endX-from.x)*approach;
-  const y=profile.stationary?from.y+width*.18*out:from.y+(endY-from.y)*approach;
+  const x=profile.stationary?from.x:from.x+(endX-from.x)*approach;
+  const y=profile.stationary?from.y:from.y+(endY-from.y)*approach;
   node.style.left=x+'px';node.style.top=y+'px';
   node.style.opacity=String(out*(special?.94:.84)*(1-ease((elapsed-arrival)/fadeMs)));
   node.style.transform='translate(-50%,-50%) scaleX('+direction+')';
